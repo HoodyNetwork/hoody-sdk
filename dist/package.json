@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "browser": "./hoody-sdk.browser.esm.js"
+}

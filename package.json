@@ -1,0 +1,189 @@
+{
+  "name": "@hoody-ai/hoody-sdk",
+  "version": "1.0.0-beta.1",
+  "description": "Official Hoody Platform SDK - unified access to all Hoody APIs",
+  "license": "Apache-2.0",
+  "author": "Hoody Platform",
+  "keywords": [
+    "hoody",
+    "sdk",
+    "api",
+    "typescript",
+    "hoody-api",
+    "hoody-kit",
+    "browser"
+  ],
+  "main": "./dist-ts/lib/index.js",
+  "types": "./dist-ts/lib/index.d.ts",
+  "browser": "./dist/hoody-sdk.browser.esm.js",
+  "unpkg": "./dist/hoody-sdk.browser.min.js",
+  "jsdelivr": "./dist/hoody-sdk.browser.min.js",
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "bin": {
+    "hoody": "./cli/dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "browser": {
+        "types": "./dist-ts/lib/index.browser.d.ts",
+        "default": "./dist/hoody-sdk.browser.esm.js"
+      },
+      "types": "./dist-ts/lib/index.d.ts",
+      "default": "./dist-ts/lib/index.js"
+    },
+    "./vault-crypto": {
+      "types": "./dist-ts/lib/vault-crypto.d.ts",
+      "default": "./dist-ts/lib/vault-crypto.js"
+    },
+    "./ssh-keys": {
+      "types": "./dist-ts/lib/ssh-keys.d.ts",
+      "default": "./dist-ts/lib/ssh-keys.js"
+    },
+    "./api": {
+      "types": "./dist-ts/generated/api/index.d.ts",
+      "default": "./dist-ts/generated/api/index.js"
+    },
+    "./browser": {
+      "types": "./dist-ts/generated/browser/index.d.ts",
+      "default": "./dist-ts/generated/browser/index.js"
+    },
+    "./code": {
+      "types": "./dist-ts/lib/subpath/code.d.ts",
+      "default": "./dist-ts/lib/subpath/code.js"
+    },
+    "./cron": {
+      "types": "./dist-ts/generated/cron/index.d.ts",
+      "default": "./dist-ts/generated/cron/index.js"
+    },
+    "./curl": {
+      "types": "./dist-ts/generated/curl/index.d.ts",
+      "default": "./dist-ts/generated/curl/index.js"
+    },
+    "./daemon": {
+      "types": "./dist-ts/generated/daemon/index.d.ts",
+      "default": "./dist-ts/generated/daemon/index.js"
+    },
+    "./display": {
+      "types": "./dist-ts/generated/display/index.d.ts",
+      "default": "./dist-ts/generated/display/index.js"
+    },
+    "./exec": {
+      "types": "./dist-ts/lib/subpath/exec.d.ts",
+      "default": "./dist-ts/lib/subpath/exec.js"
+    },
+    "./files": {
+      "types": "./dist-ts/lib/subpath/files.d.ts",
+      "default": "./dist-ts/lib/subpath/files.js"
+    },
+    "./mount": {
+      "types": "./dist-ts/lib/subpath/mount.d.ts",
+      "default": "./dist-ts/lib/subpath/mount.js"
+    },
+    "./notes": {
+      "types": "./dist-ts/generated/notes/index.d.ts",
+      "default": "./dist-ts/generated/notes/index.js"
+    },
+    "./notifications": {
+      "types": "./dist-ts/generated/notifications/index.d.ts",
+      "default": "./dist-ts/generated/notifications/index.js"
+    },
+    "./pipe": {
+      "types": "./dist-ts/generated/pipe/index.d.ts",
+      "default": "./dist-ts/generated/pipe/index.js"
+    },
+    "./proxyLogs": {
+      "types": "./dist-ts/generated/proxyLogs/index.d.ts",
+      "default": "./dist-ts/generated/proxyLogs/index.js"
+    },
+    "./sqlite": {
+      "types": "./dist-ts/generated/sqlite/index.d.ts",
+      "default": "./dist-ts/generated/sqlite/index.js"
+    },
+    "./terminal": {
+      "types": "./dist-ts/generated/terminal/index.d.ts",
+      "default": "./dist-ts/generated/terminal/index.js"
+    },
+    "./watch": {
+      "types": "./dist-ts/generated/watch/index.d.ts",
+      "default": "./dist-ts/generated/watch/index.js"
+    },
+    "./tunnel": {
+      "types": "./dist-ts/generated/tunnel/index.d.ts",
+      "default": "./dist-ts/generated/tunnel/index.js"
+    },
+    "./app": {
+      "types": "./dist-ts/generated/app/index.d.ts",
+      "default": "./dist-ts/generated/app/index.js"
+    },
+    "./chat": {
+      "types": "./dist-ts/lib/chat/index.d.ts",
+      "default": "./dist-ts/lib/chat/index.js"
+    },
+    "./ai": {
+      "types": "./dist-ts/lib/ai/index.d.ts",
+      "default": "./dist-ts/lib/ai/index.js"
+    },
+    "./update-check": {
+      "types": "./dist-ts/lib/update-check/index.d.ts",
+      "default": "./dist-ts/lib/update-check/index.js"
+    },
+    "./openapi.json": "./generated/openapi.public.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "generated",
+    "!generated/docs",
+    "!generated/openapi.json",
+    "!generated/openapi.yaml",
+    "generated/openapi.public.json",
+    "lib",
+    "!lib/chat/system-prompt.txt",
+    "dist",
+    "dist-ts",
+    "!dist-ts/**/*.js.map",
+    "!dist-ts/**/*.d.ts.map",
+    "cli/dist",
+    "cli/CLI_AUTHENTICATION.md",
+    "docs/reference",
+    "assets",
+    "README.md",
+    "QUICK_REFERENCE.md",
+    "CHANGELOG.md",
+    "THIRD-PARTY-NOTICES.md",
+    "!**/*.backup",
+    "!**/*.bak",
+    "!**/*.orig",
+    "!**/*.rej",
+    "!**/*.tmp",
+    "!**/*.swp",
+    "!**/.DS_Store",
+    "!**/*.phase*-backup",
+    "!**/.gitignore"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HoodyNetwork/hoody-sdk.git"
+  },
+  "homepage": "https://hoody.com",
+  "bugs": {
+    "url": "https://github.com/HoodyNetwork/hoody-sdk/issues"
+  },
+  "dependencies": {
+    "@noble/ciphers": "^2.1.1",
+    "@noble/hashes": "^2.0.1",
+    "chalk": "^5.3.0",
+    "commander": "^13.1.0",
+    "libsodium-wrappers-sumo": "^0.8.4",
+    "semver": "^7.7.4",
+    "socket.io-client": "^4.8.3",
+    "tweetnacl": "^1.0.3",
+    "undici": "^8.1.0",
+    "ws": "^8.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

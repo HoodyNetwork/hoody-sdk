@@ -1,0 +1,18 @@
+{
+  "name": "hoody-cli",
+  "version": "1.0.0-beta.1",
+  "description": "Production-grade API for provisioning and managing containerized workloads",
+  "license": "Apache-2.0",
+  "author": "Hoody Platform",
+  "dependencies": {
+    "commander": "^13.1.0",
+    "chalk": "^5.3.0",
+    "ws": "^8.18.0",
+    "undici": "^8.1.0",
+    "libsodium-wrappers-sumo": "^0.8.4"
+  },
+  "bin": {
+    "hoody": "./dist/index.js"
+  },
+  "type": "module"
+}

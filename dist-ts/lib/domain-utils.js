@@ -1,0 +1,51 @@
+/**
+ * Domain derivation utilities for Hoody SDK.
+ *
+ * Derives sibling domains (containers, ip) from a configured API base URL.
+ * The operator configures ONE value (baseURL); everything else is derived:
+ *   api.custom.com -> containers.custom.com, ip.custom.com, {realm}.api.custom.com
+ */
+/**
+ * Derive a sibling domain from a base URL by replacing the 'api' subdomain.
+ *
+ * Examples:
+ *   deriveSiblingDomain('https://api.custom.com', 'containers') -> 'containers.custom.com'
+ *   deriveSiblingDomain('https://abc123.api.custom.com', 'ip') -> 'ip.custom.com'
+ *   deriveSiblingDomain('https://backend.custom.com', 'containers') -> 'containers.backend.custom.com'
+ *
+ * @param baseURL - The configured API base URL
+ * @param sibling - The sibling subdomain prefix (e.g., 'containers', 'ip')
+ * @returns The derived sibling domain (hostname only, no protocol)
+ */
+export function deriveSiblingDomain(baseURL, sibling) {
+    try {
+        const host = new URL(baseURL).hostname;
+        if (!host)
+            return `${sibling}.hoody.com`;
+        // Already the target sibling
+        if (host.startsWith(`${sibling}.`))
+            return host;
+        // Strip realm prefix (24-hex ObjectId)
+        const realmPattern = /^[a-f0-9]{24}\.api\./i;
+        if (realmPattern.test(host)) {
+            return host.replace(realmPattern, `${sibling}.`);
+        }
+        // Standard: api.X -> sibling.X
+        if (host.startsWith('api.')) {
+            return `${sibling}.${host.slice(4)}`;
+        }
+        // Infix: Y.api.X -> Y.sibling.X
+        const replaced = host.replace('.api.', `.${sibling}.`);
+        if (replaced !== host)
+            return replaced;
+        // Guard: localhost and IP literals — don't prepend sibling
+        if (host === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')) {
+            return `${sibling}.hoody.com`;
+        }
+        // Catch-all: prepend sibling
+        return `${sibling}.${host}`;
+    }
+    catch {
+        return `${sibling}.hoody.com`;
+    }
+}

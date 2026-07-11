@@ -1,0 +1,76 @@
+/**
+ * Platform detection + update-command rendering.
+ *
+ * `process.platform` strings we recognize: 'linux' | 'darwin' | 'win32'.
+ * Anything else (freebsd, openbsd, sunos, aix, android, cygwin) falls through
+ * to the docs page URL — we don't ship binaries for those yet.
+ *
+ * Multi-domain: `INSTALL_URL` and `DOCS_INSTALL_URL` are derived per-call
+ * from the active domain (selected via `selectDomain()`). No hardcoded
+ * `hoody.com` constant — same render logic serves every realm.
+ */
+
+export type Platform = 'posix' | 'windows' | 'other';
+
+/** Build the install-script URL for a given domain (used by curl|sh / iex). */
+export function installUrlFor(domain: string): string {
+  return `https://install.${domain}`;
+}
+
+/** Build the docs landing page URL for a given domain. Note: docs live on the
+ *  apex (`hoody.com/install`), not the install. subdomain. */
+export function docsInstallUrlFor(domain: string): string {
+  return `https://${domain}/install`;
+}
+
+export function detectPlatform(p: NodeJS.Platform = process.platform): Platform {
+  if (p === 'linux' || p === 'darwin') return 'posix';
+  if (p === 'win32') return 'windows';
+  return 'other';
+}
+
+export interface UpdateCommandLines {
+  /** Primary copy-pasteable command (or docs URL for unknown platforms). */
+  primary: string;
+  /** Additional options shown on `hoody update` (empty on "up-to-date"). */
+  alternatives: string[];
+}
+
+/** Render the update-command block for a given platform + domain. */
+export function renderUpdateCommands(
+  platform: Platform,
+  version: string,
+  domain: string,
+): UpdateCommandLines {
+  const installUrl = installUrlFor(domain);
+  const docsUrl = docsInstallUrlFor(domain);
+  const versionedBinaryUrl = `${installUrl}/${encodeURIComponent(version)}/`;
+
+  if (platform === 'posix') {
+    return {
+      primary: `curl -fsSL ${installUrl} | sh`,
+      alternatives: [
+        `wget -qO-  ${installUrl} | sh`,
+        `# Download the binary directly (for manual verification)`,
+        versionedBinaryUrl,
+        `# Other methods (package managers, etc.)`,
+        docsUrl,
+      ],
+    };
+  }
+  if (platform === 'windows') {
+    return {
+      primary: `irm ${installUrl}/install.ps1 | iex`,
+      alternatives: [
+        `# Download the binary directly (for manual verification)`,
+        versionedBinaryUrl,
+        `# Other methods`,
+        docsUrl,
+      ],
+    };
+  }
+  return {
+    primary: `See ${docsUrl}`,
+    alternatives: [],
+  };
+}
