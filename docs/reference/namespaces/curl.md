@@ -4,7 +4,7 @@
 **Accessor:** `client.curl`
 
 ```typescript
-import * as curl from '@hoody-ai/hoody-sdk/curl';
+import * as curl from 'hoody-sdk/curl';
 ```
 
 ---

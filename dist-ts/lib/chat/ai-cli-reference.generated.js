@@ -1,4 +1,4 @@
-// SHA256: 17b779ff1d01668096d400dd8c9129173af093156d34d8a3e06f2f21385a8839
+// SHA256: 7546e5ce8815e664f785454df0c55067ab7f40c452c8bf4803f680903c80b696
 /**
  * CLI reference for `hoody chat` retrieval.
  *
@@ -220,8 +220,6 @@ export const CLI_REFERENCE = {
                     "path": "hoody agent github branches",
                     "summary": "List GitHub branches",
                     "flags": [
-                        "--page",
-                        "--limit",
                         "--x-hoody-cwd",
                         "--x-hoody-config-dir",
                         "--x-hoody-container",
@@ -297,8 +295,6 @@ export const CLI_REFERENCE = {
                     "path": "hoody agent github repos",
                     "summary": "List GitHub repos",
                     "flags": [
-                        "--page",
-                        "--limit",
                         "--x-hoody-cwd",
                         "--x-hoody-config-dir",
                         "--x-hoody-container",
@@ -1925,6 +1921,7 @@ export const CLI_REFERENCE = {
                     "summary": "Read one workflow definition",
                     "flags": [
                         "--name",
+                        "--include-revision",
                         "--x-hoody-cwd",
                         "--x-hoody-config-dir",
                         "--x-hoody-container",
@@ -1987,7 +1984,9 @@ export const CLI_REFERENCE = {
                         "--x-hoody-config-dir",
                         "--x-hoody-container",
                         "--x-hoody-realm",
-                        "--definition"
+                        "--definition",
+                        "--expected-revision",
+                        "--expected-absent"
                     ]
                 },
                 {
@@ -2000,7 +1999,8 @@ export const CLI_REFERENCE = {
                         "--x-hoody-config-dir",
                         "--x-hoody-container",
                         "--x-hoody-realm",
-                        "--prompt"
+                        "--prompt",
+                        "--inputs"
                     ]
                 }
             ]
@@ -2145,6 +2145,7 @@ export const CLI_REFERENCE = {
                         "--allow-no-realm",
                         "--vault-access",
                         "--event-access",
+                        "--deny-reauthorization",
                         "--expires-at",
                         "--otp-code"
                     ]
@@ -2167,7 +2168,8 @@ export const CLI_REFERENCE = {
                     "flags": [
                         "--token",
                         "--response-mode",
-                        "--code-challenge"
+                        "--code-challenge",
+                        "--print-token"
                     ]
                 },
                 {
@@ -2579,7 +2581,8 @@ export const CLI_REFERENCE = {
                         "--show-devtools",
                         "--stealth",
                         "--iframe",
-                        "--iframe-url"
+                        "--iframe-url",
+                        "--maximize-new-windows"
                     ]
                 },
                 {
@@ -2634,7 +2637,8 @@ export const CLI_REFERENCE = {
                         "--geolocation",
                         "--stealth",
                         "--iframe",
-                        "--iframe-url"
+                        "--iframe-url",
+                        "--maximize-new-windows"
                     ]
                 },
                 {
@@ -3749,6 +3753,7 @@ export const CLI_REFERENCE = {
                         "--decorations",
                         "--toolbar",
                         "--menu",
+                        "--maximize-new-windows",
                         "--readonly",
                         "--dark-mode",
                         "--node",
@@ -8522,6 +8527,13 @@ export const CLI_REFERENCE = {
                     "flags": []
                 },
                 {
+                    "path": "hoody users redeem-invite",
+                    "summary": "Redeem a free-tier invite code to claim your free server",
+                    "flags": [
+                        "--code"
+                    ]
+                },
+                {
                     "path": "hoody users retry-setup",
                     "summary": "Retry free-tier account setup",
                     "flags": [
@@ -8678,20 +8690,6 @@ export const CLI_REFERENCE = {
                     ]
                 },
                 {
-                    "path": "hoody wallet payments create",
-                    "summary": "Process a payment",
-                    "flags": [
-                        "--payment-method-id",
-                        "--amount",
-                        "--reason"
-                    ]
-                },
-                {
-                    "path": "hoody wallet payments status",
-                    "summary": "Get payment status",
-                    "flags": []
-                },
-                {
                     "path": "hoody wallet transactions fees",
                     "summary": "List AI credit fee history (platform fees charged on AI transfers)",
                     "flags": [
@@ -8719,7 +8717,9 @@ export const CLI_REFERENCE = {
                     "path": "hoody wallet transfer",
                     "summary": "Transfer from general balance to AI credits",
                     "flags": [
-                        "--amount"
+                        "--amount",
+                        "--idempotency-key",
+                        "--expected-fee-bps"
                     ]
                 }
             ]

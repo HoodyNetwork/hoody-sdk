@@ -4,7 +4,7 @@
 **Accessor:** `client.cron`
 
 ```typescript
-import * as cron from '@hoody-ai/hoody-sdk/cron';
+import * as cron from 'hoody-sdk/cron';
 ```
 
 ---

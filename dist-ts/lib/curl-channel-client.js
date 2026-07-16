@@ -90,7 +90,7 @@ export async function openWebSocket(url) {
         mod = (await import(/* @vite-ignore */ "ws"));
     }
     catch (e) {
-        throw new Error("@hoody/curl-channel-sdk: no global WebSocket and the optional `ws` " +
+        throw new Error("hoody-sdk: no global WebSocket and the optional `ws` " +
             "package is not installed. Either upgrade to Node ≥21 (which has " +
             "a global WebSocket) or `npm install ws`. Original error: " +
             (e instanceof Error ? e.message : String(e)));
@@ -1362,7 +1362,7 @@ async function buildCurlRequest(input, init, defaults) {
         // clone(), reading .body locks the source Request and any caller that
         // retries with the same Request object gets an opaque runtime TypeError.
         if (input.bodyUsed) {
-            throw new TypeError("@hoody/curl-channel-sdk: Request body has already been consumed. " +
+            throw new TypeError("hoody-sdk: Request body has already been consumed. " +
                 "Pass `init` directly or clone the Request before reuse.");
         }
         const req = input.clone();
@@ -1465,7 +1465,7 @@ async function applyRequestGzip(req) {
         }
     }
     if (found !== undefined && found.toLowerCase() !== "gzip") {
-        throw new TypeError(`@hoody/curl-channel-sdk: requestEncoding="gzip" conflicts with caller-set Content-Encoding: ${found}`);
+        throw new TypeError(`hoody-sdk: requestEncoding="gzip" conflicts with caller-set Content-Encoding: ${found}`);
     }
     headers["Content-Encoding"] = "gzip";
     req.headers = headers;
@@ -1518,7 +1518,7 @@ async function bodyToData(body) {
                 hasFile = true;
         });
         if (hasFile) {
-            throw new TypeError("@hoody/curl-channel-sdk: FormData with File entries is not supported. " +
+            throw new TypeError("hoody-sdk: FormData with File entries is not supported. " +
                 "Use `form: {...}` on the CurlRequest directly (string fields only), " +
                 "or pass the file bytes as a Blob/Uint8Array body with an explicit " +
                 "Content-Type header.");
@@ -1555,7 +1555,7 @@ async function bodyToData(body) {
     else {
         // Reject any non-standard BodyInit explicitly rather than silently
         // coercing to "[object Object]" via String(body).
-        throw new TypeError("@hoody/curl-channel-sdk: unsupported request body type. Pass string, " +
+        throw new TypeError("hoody-sdk: unsupported request body type. Pass string, " +
             "URLSearchParams, ArrayBuffer/Uint8Array/Blob/ReadableStream, or " +
             "FormData without File entries.");
     }

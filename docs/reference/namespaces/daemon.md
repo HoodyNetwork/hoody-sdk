@@ -4,7 +4,7 @@
 **Accessor:** `client.daemon`
 
 ```typescript
-import * as daemon from '@hoody-ai/hoody-sdk/daemon';
+import * as daemon from 'hoody-sdk/daemon';
 ```
 
 ---

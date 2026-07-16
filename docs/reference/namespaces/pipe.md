@@ -4,7 +4,7 @@
 **Accessor:** `client.pipe`
 
 ```typescript
-import * as pipe from '@hoody-ai/hoody-sdk/pipe';
+import * as pipe from 'hoody-sdk/pipe';
 ```
 
 ---

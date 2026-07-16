@@ -8,11 +8,11 @@
 
 <p align="center"><strong>Everything is a URL.</strong></p>
 
-<p align="center"><em>Disposable Linux containers, every capability as a typed HTTP API —</em><br/>
+<p align="center"><em>Durable Linux containers, every capability as a typed HTTP API —</em><br/>
 <em>terminal, files, cloud browser, GUI display, AI agent, cron, and tunnels, callable from Node.js, Bun, or a plain browser tab. No proxy server or backend of your own to run.</em></p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@hoody-ai/hoody-sdk"><img src="https://img.shields.io/npm/v/@hoody-ai/hoody-sdk.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/hoody-sdk"><img src="https://img.shields.io/npm/v/hoody-sdk.svg" alt="npm version"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="license Apache-2.0"></a>
   <img src="https://img.shields.io/badge/TypeScript-5.0+-3178c6.svg" alt="TypeScript 5.0+">
   <img src="https://img.shields.io/badge/runtime-Node.js_%7C_Bun_%7C_Browser-green.svg" alt="Node.js | Bun | Browser">
@@ -27,14 +27,16 @@
 
 ---
 
-TypeScript SDK for [Hoody](https://hoody.com). Hoody runs disposable Linux containers and exposes their terminal, files, browsers, AI agent, GUI display, cron, databases, notifications, and tunnels as one typed HTTP API — callable from Node.js, Bun, and the browser. You build on primitives, not on a framework that shifts under you: the client, the auth model, and the URL layout don't change as your product grows.
+TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers and exposes their terminal, files, browsers, AI agent, GUI display, cron, databases, notifications, and tunnels as one typed HTTP API — callable from Node.js, Bun, and the browser. You build on primitives, not on a framework that shifts under you: the client, the auth model, and the URL layout don't change as your product grows.
 
 | | |
 |---|---|
 | **Batteries included** | Create a container with the Kit (`hoody_kit: true`) and the full service layer is already answering at stable HTTPS URLs — shell, files, cloud browser, GUI desktop, databases, cron, tunnels, and a built-in AI agent. |
 | **Who it's for** | Cloud IDEs, AI-agent platforms, browser-automation pipelines, remote-desktop products, education — anything needing a real Linux environment on demand without running the infrastructure. |
 | **The economics** | Flat-rate bare metal underneath — a whole dedicated machine, marketplace-priced from ~$30/month, no per-container fee, no usage meter. Dev-to-prod for every project on one box. [How ↓](#bare-metal-underneath) |
-| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1065<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->827<!-- /ref:cli-commands --> CLI commands — one client, one URL grammar, one SDK that handles every auth mode for you. |
+| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1065<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->825<!-- /ref:cli-commands --> CLI commands — one client, one URL grammar, one SDK that handles every auth mode for you. |
+
+**Prefer the raw list to the tour?** The entire surface fits in three flat, clickable references — [CLI commands](./docs/reference/CLI-COMMANDS.md) · [SDK methods](./docs/reference/SDK-METHODS.md) · [HTTP endpoints](./docs/reference/HTTP-METHODS.md) (every endpoint ↔ SDK method ↔ CLI command) — often the fastest way to see what's here.
 
 **At a glance** — one account client (`hoody.api.*`) plus eighteen container-scoped `box.*` Kit namespaces:
 
@@ -90,7 +92,7 @@ And it isn't only the Kit: anything *you* run becomes a URL the moment it binds 
 Here is what that feels like through the SDK — launch Firefox in the cloud and get a link to the live window:
 
 ```typescript
-import { HoodyClient } from '@hoody-ai/hoody-sdk';
+import { HoodyClient } from 'hoody-sdk';
 
 const hoody     = await HoodyClient.authenticate('https://api.hoody.com', { username, password });
 const container = (await hoody.api.containers.list()).data!.containers![0]!;
@@ -115,22 +117,22 @@ That's the whole model, and it's why the SDK comes in two halves: `hoody` for yo
 > **Requires** Node.js >= 22.19.0 or Bun; the browser build has no runtime requirement.
 
 ```bash
-npm install @hoody-ai/hoody-sdk
+npm install hoody-sdk@beta
 # or
-bun add @hoody-ai/hoody-sdk
+bun add hoody-sdk@beta
 ```
 
 Browser (IIFE global, exposes `window.HoodySDK`) — pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@hoody-ai/hoody-sdk@1.0.0-beta.1-beta.1-beta.1/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.1/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/@hoody-ai/hoody-sdk@1.0.0-beta.1-beta.1-beta.1/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.1/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -144,7 +146,7 @@ Sign in, grab a container, run a command — the whole loop in one file.
 
 ```typescript
 // quickstart.ts
-import { HoodyClient } from '@hoody-ai/hoody-sdk';
+import { HoodyClient } from 'hoody-sdk';
 
 const hoody = await HoodyClient.authenticate('https://api.hoody.com', {
   username: process.env.HOODY_EMAIL!,
@@ -248,7 +250,7 @@ https://{projectId}-{containerId}-{service}-{index}.{server}.containers.hoody.co
 | `containerId`  | `662ec3…` (24-hex) | The container itself                                   | **Confidential** |
 | `service`      | `terminal`, `display`, `files`, … ([full list](#namespaces)) | Which Kit service inside the container | Public       |
 | `index`        | `1`, `2`, …        | Which instance (terminal 1 vs terminal 2)              | Public       |
-| `server`       | `node-sg-sin-1`    | Physical host. Stable per container                    | Public       |
+| `server`       | `node-example-1`    | Physical host. Stable per container                    | Public       |
 
 Beyond the indexed services in [Namespaces](#namespaces), raw container ports are reachable as `http-{port}` / `https-{port}`, and `ssh` / `proxy` are un-indexed special routes (no `-{index}` segment). Build any of them with `hoody.getKitUrl('terminal', container, 1)` or compose the string by hand. Three namespaces use a shorter URL slug than their SDK name — `notifications` → `n`, `proxyLogs` → `logs`, `app` → `run` — so reach those with `getKitUrl()` (it applies the mapping) rather than hand-composing by the namespace name.
 
@@ -351,7 +353,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/@hoody-ai/hoody-sdk@1.0.0-beta.1-beta.1-beta.1/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.1/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = await HoodyClient.authenticate('https://api.hoody.com', {
@@ -467,7 +469,7 @@ The container is a real Debian box. Anything in the package ecosystem — pandoc
 Expose a local HTTP / TCP / WebSocket service from your laptop through a Hoody container. The `tunnelExpose` / `tunnelPull` helpers run on Node.js or Bun (they're not in the browser build):
 
 ```typescript
-import { tunnelExpose, tunnelPull } from '@hoody-ai/hoody-sdk';
+import { tunnelExpose, tunnelPull } from 'hoody-sdk';
 
 // Expose: world-reachable container port 80 → your local HTTP server on :3000
 const handle = await tunnelExpose({
@@ -494,7 +496,7 @@ World-reachable HTTPS for whatever's running on your laptop. No router config, n
 
 ### The built-in agent
 
-You don't have to bring an agent — every Hoody Kit container ships one. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->212<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the largest container-scoped namespace in the SDK.
+You don't have to bring an agent — every Hoody Kit container ships one. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->208<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the largest container-scoped namespace in the SDK.
 
 The agent is the one kit that needs more than the URL: it's **claim-gated**, so the
 first agent call after a bare `withContainer(container)` returns `401 CLAIM_REQUIRED`.
@@ -533,7 +535,7 @@ The model behind a session is per-container configuration: provider API keys, OA
 For streaming (on Node.js or Bun), use the hand-written `streamAgentPrompt` helper exported from the package root — it POSTs the turn, parses the daemon's SSE stream, and hands you text deltas, every turn event, and a `done` promise (it also mints the Kit-auth handshake for you via `hoody.api.containers.authorize()`):
 
 ```typescript
-import { streamAgentPrompt } from '@hoody-ai/hoody-sdk';
+import { streamAgentPrompt } from 'hoody-sdk';
 
 const run = await streamAgentPrompt(hoody, {
   container,
@@ -684,7 +686,7 @@ const a = await hoody.api.proxyAliases.create({
   expires_at: '2026-12-31T00:00:00Z',
 });
 console.log(a.data!.url);
-// → https://team-dashboard.node-sg-sin-1.containers.hoody.com
+// → https://team-dashboard.node-example-1.containers.hoody.com
 ```
 
 | Field                  | Effect                                                                  |
@@ -703,7 +705,7 @@ console.log(a.data!.url);
 Aliases are stable subdomains, so any domain you own can front one with a single DNS record:
 
 ```text
-CNAME  api.example.com  →  team-dashboard.node-sg-sin-1.containers.hoody.com
+CNAME  api.example.com  →  team-dashboard.node-example-1.containers.hoody.com
 ```
 
 The first time someone hits `https://api.example.com`, Hoody's reverse proxy issues a TLS certificate for it on the fly and forwards the request to the alias's container. Combine with permission rules on the edge and realm-scoped API tokens for tenant isolation: your domain on the outside, Hoody's controls underneath.
@@ -835,7 +837,7 @@ You don't have to wire any of this up — it's how the platform is built. Your j
 | `notifications`   | Container | Desktop and mobile push notifications, real-time stream                                | `box.notifications.notify.trigger({ summary, body, display: '0' })`        |
 | `tunnel`          | Container | Reverse tunnels — expose HTTP / TCP / WebSocket services on the public internet ([recipe](#reverse-tunnel-localhost-to-a-public-url)) | `box.tunnel.listSessions()`                                                |
 | `proxyLogs`       | Container | Reverse-proxy access logs and stats                                                     | `box.proxyLogs.logs.list()`                                                |
-| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->212<!-- /ref:agent-sdk-methods --> methods) — sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.promptSync(id, { text })`                              |
+| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->208<!-- /ref:agent-sdk-methods --> methods) — sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.promptSync(id, { text })`                              |
 
 </details>
 
@@ -863,7 +865,7 @@ import {
   VaultCryptoError,
   isApiError,
   isRetryableApiError,
-} from '@hoody-ai/hoody-sdk';
+} from 'hoody-sdk';
 
 try {
   await box.files.get('/nonexistent');
@@ -914,7 +916,7 @@ await box.files.get('/bigfile', {
 ### Middleware
 
 ```typescript
-import type { IHttpClientMiddleware } from '@hoody-ai/hoody-sdk';
+import type { IHttpClientMiddleware } from 'hoody-sdk';
 
 const tracing: IHttpClientMiddleware = {
   onRequest: async (ctx) => { /* mutate headers, inject request-id, etc. */ return ctx; },
@@ -935,7 +937,7 @@ Middleware fires on every retry attempt. If `onRequest` throws, it flows through
 For token-only flows (no username/password on file), supply an `onTokenExpired` callback. On 401 the SDK calls it once, adopts the returned token, and replays the original request. No global state, no login race — concurrent 401s coalesce through a single refresh.
 
 ```typescript
-import type { ApiError } from '@hoody-ai/hoody-sdk';
+import type { ApiError } from 'hoody-sdk';
 
 const hoody = new HoodyClient({
   baseURL: 'https://api.hoody.com',
@@ -966,7 +968,7 @@ The SDK is one way in, not the only one. Hoody is reachable from wherever you ha
 | **`ssh hoody_<token>@hoody.com`**                     | Same as above, but the SSH username carries your auth token — the sandbox auto-authenticates the moment the connection lands. Use a narrow, short-expiry token: the username is visible in shell history and host logs. | Scripts, cron, one-liners, CI pipelines — no interactive step. |
 | **`npx https://hoody.com`** *(or `bunx`, `pnpm dlx`, `yarn dlx`, `deno run`)* | Run the latest `hoody` CLI without installing anything globally.                          | Quick checks from a workstation that already has Node.js, Bun, or Deno. |
 | **`curl https://hoody.com/hoody-cli`**                | Download a single static binary for your platform — no runtime needed.                    | Air-gapped boxes, container build steps, locked-down CI.             |
-| **`npm i @hoody-ai/hoody-sdk`** *(URL mirror: `npm i https://sdk.hoody.com`)* | Install this very SDK from the npm registry — pin a version in production; the URL mirror always tracks latest. | TypeScript / JavaScript projects of any shape.                      |
+| **`npm i hoody-sdk`** *(URL mirror: `npm i https://sdk.hoody.com`)* | Install this very SDK from the npm registry — pin a version in production; the URL mirror always tracks latest. | TypeScript / JavaScript projects of any shape.                      |
 | **`os.hoody.com`**                                    | A full Hoody WebOS in any browser. The UI itself is served by *your own* container — `os.hoody.com` only signs you in and forwards you there. The OS *is* your container. | Users on phones, tablets, Chromebooks, ChromeOS-Flex laptops; anyone without a terminal. |
 | **`@hoody.com`**                                      | Paste `@hoody.com` into ChatGPT, Claude, Gemini, Codex, Cline, Roo Code, or any web-fetching agent. The agent fetches a Skill — a structured HTTP map of every Hoody capability — and drives your account with a token you give it, no SDK, MCP server, or plugin in between. | Letting any web-fetching AI assistant operate Hoody from a paste plus a scoped token. |
 
@@ -974,7 +976,7 @@ The SDK is one way in, not the only one. Hoody is reachable from wherever you ha
 
 ## CLI
 
-The CLI is the `hoody` command shipped inside `@hoody-ai/hoody-sdk`. Run it with zero install straight from the URL — no global package, nothing added to your project:
+The CLI is the `hoody` command shipped inside `hoody-sdk`. Run it with zero install straight from the URL — no global package, nothing added to your project:
 
 ```bash
 npx https://hoody.com login       # interactive sign-in (or OAuth) — also bunx / pnpm dlx / deno run
@@ -1000,7 +1002,7 @@ hoody signup                                 # create an account, verify, and la
 Or install it globally — the `hoody` command lives in the SDK package:
 
 ```bash
-npm install -g @hoody-ai/hoody-sdk           # installs the `hoody` command
+npm install -g hoody-sdk           # installs the `hoody` command
 hoody login
 hoody ps
 ```
@@ -1087,7 +1089,6 @@ Privacy model and data-retention details: [Chat privacy](./docs/reference/guides
 - [Per-namespace docs](./docs/reference/namespaces/_INDEX.md)
 - [CLI commands](./docs/reference/CLI-COMMANDS.md)
 - [HTTP endpoint map](./docs/reference/HTTP-METHODS.md) — every HTTP method + path ↔ its SDK method ↔ its CLI command
-- [Quick reference](./QUICK_REFERENCE.md) — condensed cheat sheet
 - [Changelog](./CHANGELOG.md)
 
 ## Versioning & support

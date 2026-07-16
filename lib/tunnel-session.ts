@@ -584,7 +584,7 @@ export class TunnelSession {
         const streamId = (frame.header as any).stream_id ?? frame.header.streamId;
 
         // WINDOW routing: replenish send-side credit. Zero-increment is a
-        // protocol error per spec §4.5. DO NOT forward to stream handler.
+        // protocol error. DO NOT forward to stream handler.
         if (frame.header.frameType === FrameType.Window) {
           if (frame.payload.length < 4) return;
           const increment =

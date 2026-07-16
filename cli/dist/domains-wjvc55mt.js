@@ -1,0 +1,1 @@
+import"./index-ecrvt0as.js";var b={"hoody.com":{pubkey:"RWRpngXprNcILzU05dVs9Bkws5tS4KqPkg2FVm7vnS1sowCpg42ax3Ek"}},q="1.0.0-beta.1",x="1.0.0-beta.1";export{x as HOODY_VERSION_FLOOR,q as HOODY_VERSION,b as HOODY_PINNED_DOMAINS};

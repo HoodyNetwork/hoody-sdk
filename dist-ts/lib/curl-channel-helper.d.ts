@@ -36,7 +36,7 @@ export interface CurlChannelHelperOptions {
      */
     containerId?: string;
     projectId?: string;
-    /** Server slug, e.g. `code-sg-sin-1`. Required only with explicit ids. */
+    /** Server slug, e.g. `code-example-1`. Required only with explicit ids. */
     server?: string;
     /** Service index (replica slot). Default 1, matching the curl URL template. */
     serviceIndex?: number;

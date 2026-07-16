@@ -5,7 +5,7 @@
  *   https://jedisct1.github.io/minisign/
  *
  * The signing side (producing `SHA256SUMS.minisig` + `channel.json.minisig`)
- * lives in hoody-cdn's deploy script. We only ever VERIFY here.
+ * is produced by the Hoody release signing process. We only ever VERIFY here.
  *
  * Signature file (4 lines):
  *   untrusted comment: signature from minisign secret key

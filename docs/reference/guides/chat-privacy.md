@@ -66,9 +66,8 @@ raw text so the LLM still sees what you actually typed.
 
 ### Secret patterns detected
 
-The pattern set is copied byte-for-byte from the Hoody chatbot server's
-`chat-handler.ts` so local-redaction matches the service's own detection.
-The set currently covers:
+The pattern set matches the Hoody chat service's own secret detection, so
+local redaction is consistent with the service. The set currently covers:
 
 - Hoody tokens (`hdy_…`)
 - OpenAI-style keys (`sk-…`)
@@ -80,8 +79,7 @@ The set currently covers:
 - AWS access keys (`AKIA…`) and STS temporary session credentials (`ASIA…`)
 - Slack (`xox[bpras]-…`)
 
-Matches are replaced with `<REDACTED>`. Parity with the upstream set is
-locked by a CI unit test that reads the upstream file at test time.
+Matches are replaced with `<REDACTED>`.
 
 ### CLI flag values
 
@@ -90,8 +88,7 @@ Values following any of a broad set of credential-bearing flags (e.g.
 `--api-secret`, `--private-key`, `--secret-access-key`, `--session-token`,
 `--bearer-token`, `--auth-token`, `--client-secret`, `--ssh-password`,
 `--ssh-key`, `--db-password`, `--proxy-password`, `--passphrase`, …) in
-written content are also replaced with `<REDACTED>` (the full list is
-`ai-fix`'s sensitive set; parity locked by test).
+written content are also replaced with `<REDACTED>`.
 
 ### Residuals — NOT fixed, documented
 
@@ -258,5 +255,3 @@ rm -rf ~/.hoody/chats/
 
 - [`chat.md`](./chat.md) — full command reference
 - [CLI_AUTHENTICATION.md](../../../cli/CLI_AUTHENTICATION.md) — all auth methods
-- The CLI chat design documents every design decision and its review
-  history.

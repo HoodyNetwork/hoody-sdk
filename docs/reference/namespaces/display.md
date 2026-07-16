@@ -4,7 +4,7 @@
 **Accessor:** `client.display`
 
 ```typescript
-import * as display from '@hoody-ai/hoody-sdk/display';
+import * as display from 'hoody-sdk/display';
 ```
 
 ---
@@ -18,7 +18,7 @@ import * as display from '@hoody-ai/hoody-sdk/display';
 Access the HTML5 Display client interface
 
 ```typescript
-client.display.accessClient(options?: { displayId?: number; decorations?: boolean; toolbar?: boolean; menu?: boolean; readonly?: boolean; dark_mode?: boolean; node?: string; project_id?: string; container_id?: string; url_display_id?: string; ssl?: boolean; webtransport?: boolean; path?: string; action?: "connect" | "start" | "shadow"; display?: string; encoding?: "auto" | "webp" | "jpeg" | "png" | "rgb" | "rgb24" | "rgb32" | "h264" | "vp8" | "vp9" | "mpeg1" | "mpeg4+mp4" | "h264+mp4" | "vp8+webm" | "scroll" | "void"; offscreen?: boolean; bandwidth_limit?: number; override_width?: string; override_height?: string; vrefresh?: number; suspend_inactive_tab?: boolean; sound?: boolean; audio_codec?: string; keyboard?: boolean; keyboard_layout?: string; swap_keys?: boolean; clipboard?: boolean; clipboard_preferred_format?: "text/plain" | "text/html" | "UTF8_STRING"; clipboard_poll?: boolean; printing?: boolean; file_transfer?: boolean; video?: boolean; mediasource_video?: boolean; open_url?: boolean; notification_server_url?: string; web_notifications?: boolean; display_notifications?: boolean; notification_connection_type?: "websocket" | "polling"; sharing?: boolean; steal?: boolean; reconnect?: boolean; floating_menu?: boolean; clock?: boolean; scroll_reverse_y?: "auto" | "true" | "false"; scroll_reverse_x?: boolean; title_show_hoody?: boolean; title_show_display_id?: boolean; app?: string; remote_logging?: boolean; insecure?: boolean; debug_main?: boolean; debug_keyboard?: boolean; debug_geometry?: boolean; debug_mouse?: boolean; debug_clipboard?: boolean; debug_draw?: boolean; debug_audio?: boolean; debug_network?: boolean; debug_file?: boolean }): Promise<ApiResponse<unknown>>
+client.display.accessClient(options?: { displayId?: number; decorations?: boolean; toolbar?: boolean; menu?: boolean; maximize_new_windows?: boolean; readonly?: boolean; dark_mode?: boolean; node?: string; project_id?: string; container_id?: string; url_display_id?: string; ssl?: boolean; webtransport?: boolean; path?: string; action?: "connect" | "start" | "shadow"; display?: string; encoding?: "auto" | "webp" | "jpeg" | "png" | "rgb" | "rgb24" | "rgb32" | "h264" | "vp8" | "vp9" | "mpeg1" | "mpeg4+mp4" | "h264+mp4" | "vp8+webm" | "scroll" | "void"; offscreen?: boolean; bandwidth_limit?: number; override_width?: string; override_height?: string; vrefresh?: number; suspend_inactive_tab?: boolean; sound?: boolean; audio_codec?: string; keyboard?: boolean; keyboard_layout?: string; swap_keys?: boolean; clipboard?: boolean; clipboard_preferred_format?: "text/plain" | "text/html" | "UTF8_STRING"; clipboard_poll?: boolean; printing?: boolean; file_transfer?: boolean; video?: boolean; mediasource_video?: boolean; open_url?: boolean; notification_server_url?: string; web_notifications?: boolean; display_notifications?: boolean; notification_connection_type?: "websocket" | "polling"; sharing?: boolean; steal?: boolean; reconnect?: boolean; floating_menu?: boolean; clock?: boolean; scroll_reverse_y?: "auto" | "true" | "false"; scroll_reverse_x?: boolean; title_show_hoody?: boolean; title_show_display_id?: boolean; app?: string; remote_logging?: boolean; insecure?: boolean; debug_main?: boolean; debug_keyboard?: boolean; debug_geometry?: boolean; debug_mouse?: boolean; debug_clipboard?: boolean; debug_draw?: boolean; debug_audio?: boolean; debug_network?: boolean; debug_file?: boolean }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -27,9 +27,10 @@ client.display.accessClient(options?: { displayId?: number; decorations?: boolea
 | `decorations` | `boolean` | No | query | Show window decorations (title bar with close/minimize/maximize buttons). Set to false for headless/kiosk mode. |
 | `toolbar` | `boolean` | No | query | Show entire toolbar/menu area (menu trigger + menu). Set to false to hide all menu UI elements. Takes precedence over the menu parameter. |
 | `menu` | `boolean` | No | query | Show Hoody menu trigger icon. Set to false to hide menu completely. Note: toolbar parameter takes precedence over this. |
+| `maximize_new_windows` | `boolean` | No | query | Open new top-level application windows maximized instead of centered at the default size (max 1024x1024). Only applies to windows that do not request their own position, and skips override-redirect windows, dialogs, other non-NORMAL window types, and windows the app itself marks undecorated via metadata (which would have no title bar to un-maximize from). Windows can still be un-maximized from their title bar. Combining with the global decorations=false parameter is honoured as explicit kiosk intent: windows open maximized without a title bar. |
 | `readonly` | `boolean` | No | query | Enable read-only/view-only mode. Blocks all keyboard and mouse input from the client. Perfect for dashboards, monitoring, or demo scenarios. Works independently or combines with server readonly setting. |
 | `dark_mode` | `boolean` | No | query | Enable dark mode theme |
-| `node` | `string` | No | query | Hoody node identifier (e.g., sg-sin-1, us-nyc-1) |
+| `node` | `string` | No | query | Hoody node identifier (e.g., example-1, example-2) |
 | `project_id` | `string` | No | query | Hoody project ID |
 | `container_id` | `string` | No | query | Hoody container ID |
 | `url_display_id` | `string` | No | query | Display ID for URL construction |

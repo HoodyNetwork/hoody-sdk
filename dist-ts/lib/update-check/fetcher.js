@@ -1,6 +1,6 @@
 /**
  * HTTP fetcher with AbortController-based per-attempt timeout,
- * exponential backoff, and narrow retry classification (PLAN-v3 §hoody update).
+ * exponential backoff, and narrow retry classification.
  *
  * Exports:
  *   - `fetchWithRetry`: foreground / `hoody update` — 3 attempts, 1s+3s backoff

@@ -5630,7 +5630,7 @@ var UsersServiceBase = class {
   /**
    * Update user profile
    *
-   * Update user profile. Regular users can update their own alias and password (with current_password verification). Admins can update any user and set is_admin/is_banned flags. Admin users cannot be banned. Note: when authenticated with an auth token that lacks the `resources.read_account` permission, the returned profile is reduced to identity fields; email and other account PII are omitted.
+   * Update user profile. Regular users can update their own alias and password (with current_password verification). Admins can update any user and set is_admin/is_banned flags. Note: when authenticated with an auth token that lacks the `resources.read_account` permission, the returned profile is reduced to identity fields; email and other account PII are omitted.
    * @param options._realm - Realm host-scope override (subdomain routing only)
    */
   async update(id, data, options) {
@@ -16567,6 +16567,9 @@ var ActivityLogsServiceBase = class {
       if (page < 1) {
         throw new ValidationError("page must be >= 1", "page");
       }
+      if (page > 10001) {
+        throw new ValidationError("page must be <= 10001", "page");
+      }
     }
     if (limit !== void 0 && limit !== null) {
       if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
@@ -17113,7 +17116,7 @@ var MetaServiceBase = class {
   1. Fetch this endpoint once (cache for 24h+)
   2. Locate the key by `kid` from the `keys[]` array
   3. For response signatures: parse `X-Hoody-Signature: t=<ts>,kid=<id>,path=<url>,sig=<hex>`
-     and verify sig against `t + "." + responseBody`
+   and verify sig against `t + "." + responseBody`
   4. For identity/container claims: verify `claim.signature_hex` against `claim.payload_b64` bytes
   5. If `kid` in a signature/claim does not match any cached key, re-fetch this endpoint.
   
@@ -17165,11 +17168,10 @@ var MetaServiceBase = class {
   Telegram members, Discord members (total + currently online), X followers,
   and LinkedIn followers.
   
-  Values are persisted to disk (auto.json) and refreshed in the background
+  Values are persisted to disk and refreshed in the background
   (default every 10 minutes), so the endpoint is cheap, has no upstream
   rate-limit risk, and survives process restarts even when upstreams are
-  unreachable. A separate overrides.json file lets operators pin any field
-  to a manually chosen value (per-field; refresher never touches that file).
+  unreachable.
   
   A field is `null` only when no value has ever been persisted for it (e.g.
   first boot before the first successful refresh). Once populated it stays
@@ -17493,6 +17495,50 @@ var WalletServiceBase = class {
   async getAggregateBalances(options) {
     const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     let requestUrl = this.buildRealmUrl(`/api/v1/wallet/balances`, _realm, {
+      optional: true,
+      baseDomain: "api.hoody.com",
+      subdomainPattern: "{realm}.api.hoody.com",
+      parameterName: "realm_id"
+    });
+    const requestData = {};
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.get(requestUrl, requestData);
+  }
+  /**
+   * Get top-up payment availability (providers, bounds, AI transfer fee)
+   *
+   * Which top-up providers are usable right now (enabled + configured), the min/max USD per top-up, and the AI-credit transfer fee in basis points. Used by the wallet UI to render the correct top-up affordance. No secrets are returned.
+   * @param options._realm - Realm host-scope override (subdomain routing only)
+   */
+  async getPaymentAvailability(options) {
+    const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payment-availability`, _realm, {
       optional: true,
       baseDomain: "api.hoody.com",
       subdomainPattern: "{realm}.api.hoody.com",
@@ -18523,107 +18569,6 @@ var WalletServiceBase = class {
     return this.http.put(requestUrl, requestData);
   }
   /**
-   * Process a payment
-   *
-   * Process a payment using a specified payment method
-   * @param options._realm - Realm host-scope override (subdomain routing only)
-   */
-  async processPayment(data, options) {
-    const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-    if (data === void 0 || data === null) {
-      throw new ValidationError("data is required", "data");
-    }
-    let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payments/`, _realm, {
-      optional: true,
-      baseDomain: "api.hoody.com",
-      subdomainPattern: "{realm}.api.hoody.com",
-      parameterName: "realm_id"
-    });
-    const requestData = {};
-    requestData.body = data;
-    if (signal) {
-      requestData.signal = signal;
-    }
-    if (timeoutMs !== void 0) {
-      requestData.timeoutMs = timeoutMs;
-    }
-    if (retries !== void 0) {
-      requestData.retries = retries;
-    }
-    if (retryDelayMs !== void 0) {
-      requestData.retryDelayMs = retryDelayMs;
-    }
-    if (retryOnStatuses !== void 0) {
-      requestData.retryOnStatuses = retryOnStatuses;
-    }
-    if (middlewareContext !== void 0) {
-      requestData.middlewareContext = middlewareContext;
-    }
-    if (authRetry !== void 0) {
-      requestData.authRetry = authRetry;
-    }
-    if (rawResponse !== void 0) {
-      requestData.rawResponse = rawResponse;
-    }
-    if (responseType !== void 0) {
-      requestData.responseType = responseType;
-    }
-    return this.http.post(requestUrl, requestData);
-  }
-  /**
-   * Get payment status
-   *
-   * Get the status of a payment by ID
-   * @param options._realm - Realm host-scope override (subdomain routing only)
-   */
-  async getPaymentStatus(id, options) {
-    const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-    if (id === void 0 || id === null) {
-      throw new ValidationError("id is required", "id");
-    }
-    if (id !== void 0 && id !== null) {
-      if (typeof id === "string" && !new RegExp("^[0-9a-f]{24}$").test(id)) {
-        throw new ValidationError("id must match pattern: ^[0-9a-f]{24}$", "id");
-      }
-    }
-    let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payments/{id}`, _realm, {
-      optional: true,
-      baseDomain: "api.hoody.com",
-      subdomainPattern: "{realm}.api.hoody.com",
-      parameterName: "realm_id"
-    });
-    requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-    const requestData = {};
-    if (signal) {
-      requestData.signal = signal;
-    }
-    if (timeoutMs !== void 0) {
-      requestData.timeoutMs = timeoutMs;
-    }
-    if (retries !== void 0) {
-      requestData.retries = retries;
-    }
-    if (retryDelayMs !== void 0) {
-      requestData.retryDelayMs = retryDelayMs;
-    }
-    if (retryOnStatuses !== void 0) {
-      requestData.retryOnStatuses = retryOnStatuses;
-    }
-    if (middlewareContext !== void 0) {
-      requestData.middlewareContext = middlewareContext;
-    }
-    if (authRetry !== void 0) {
-      requestData.authRetry = authRetry;
-    }
-    if (rawResponse !== void 0) {
-      requestData.rawResponse = rawResponse;
-    }
-    if (responseType !== void 0) {
-      requestData.responseType = responseType;
-    }
-    return this.http.get(requestUrl, requestData);
-  }
-  /**
    * Start a card payment (Stripe Checkout)
    *
    * Creates a payment intent and a hosted Stripe Checkout session. Redirect the user to checkout_url; the wallet is credited only after Stripe confirms settlement via webhook.
@@ -18680,8 +18625,8 @@ var WalletServiceBase = class {
   async listStripePaymentIntents(options) {
     const { limit, offset, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (limit !== void 0 && limit !== null) {
-      if (!Number.isFinite(limit)) {
-        throw new ValidationError("limit must be a finite number", "limit");
+      if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
+        throw new ValidationError("limit must be an integer", "limit");
       }
       if (limit < 1) {
         throw new ValidationError("limit must be >= 1", "limit");
@@ -18691,8 +18636,11 @@ var WalletServiceBase = class {
       }
     }
     if (offset !== void 0 && offset !== null) {
-      if (!Number.isFinite(offset)) {
-        throw new ValidationError("offset must be a finite number", "offset");
+      if (!Number.isFinite(offset) || !Number.isInteger(offset)) {
+        throw new ValidationError("offset must be an integer", "offset");
+      }
+      if (offset > 9007199254740991) {
+        throw new ValidationError("offset must be <= 9007199254740991", "offset");
       }
     }
     let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payments/stripe/intents`, _realm, {
@@ -18755,6 +18703,177 @@ var WalletServiceBase = class {
       }
     }
     let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payments/stripe/intents/{id}`, _realm, {
+      optional: true,
+      baseDomain: "api.hoody.com",
+      subdomainPattern: "{realm}.api.hoody.com",
+      parameterName: "realm_id"
+    });
+    requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+    const requestData = {};
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.get(requestUrl, requestData);
+  }
+  /**
+   * Start a crypto payment (hosted invoice)
+   *
+   * Creates a payment intent and a hosted crypto payment invoice. Redirect the user to invoice_url; the wallet is credited only after the payment provider confirms settlement via IPN.
+   * @param options._realm - Realm host-scope override (subdomain routing only)
+   */
+  async createCryptoInvoice(data, options) {
+    const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payments/crypto/invoice`, _realm, {
+      optional: true,
+      baseDomain: "api.hoody.com",
+      subdomainPattern: "{realm}.api.hoody.com",
+      parameterName: "realm_id"
+    });
+    const requestData = {};
+    requestData.body = data;
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
+   * List crypto payment intents
+   *
+   * Lists the authenticated user's crypto payment intents, newest first.
+   * @param options._realm - Realm host-scope override (subdomain routing only)
+   */
+  async listCryptoPaymentIntents(options) {
+    const { limit, offset, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (limit !== void 0 && limit !== null) {
+      if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
+        throw new ValidationError("limit must be an integer", "limit");
+      }
+      if (limit < 1) {
+        throw new ValidationError("limit must be >= 1", "limit");
+      }
+      if (limit > 100) {
+        throw new ValidationError("limit must be <= 100", "limit");
+      }
+    }
+    if (offset !== void 0 && offset !== null) {
+      if (!Number.isFinite(offset) || !Number.isInteger(offset)) {
+        throw new ValidationError("offset must be an integer", "offset");
+      }
+      if (offset > 9007199254740991) {
+        throw new ValidationError("offset must be <= 9007199254740991", "offset");
+      }
+    }
+    let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payments/crypto/intents`, _realm, {
+      optional: true,
+      baseDomain: "api.hoody.com",
+      subdomainPattern: "{realm}.api.hoody.com",
+      parameterName: "realm_id"
+    });
+    const requestData = {};
+    requestData.query = {};
+    if (limit !== void 0) {
+      requestData.query["limit"] = limit;
+    }
+    if (offset !== void 0) {
+      requestData.query["offset"] = offset;
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.get(requestUrl, requestData);
+  }
+  /**
+   * Get a crypto payment intent
+   *
+   * Returns one of the authenticated user's crypto payment intents (poll after invoice redirect).
+   * @param options._realm - Realm host-scope override (subdomain routing only)
+   */
+  async getCryptoPaymentIntent(id, options) {
+    const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (id === void 0 || id === null) {
+      throw new ValidationError("id is required", "id");
+    }
+    if (id !== void 0 && id !== null) {
+      if (typeof id === "string" && !new RegExp("^[0-9a-fA-F]{24}$").test(id)) {
+        throw new ValidationError("id must match pattern: ^[0-9a-fA-F]{24}$", "id");
+      }
+    }
+    let requestUrl = this.buildRealmUrl(`/api/v1/wallet/payments/crypto/intents/{id}`, _realm, {
       optional: true,
       baseDomain: "api.hoody.com",
       subdomainPattern: "{realm}.api.hoody.com",
@@ -21842,10 +21961,9 @@ var InstanceManagementServiceBase = class {
   
   The response includes the `webSocketDebuggerUrl` field which provides the Chrome DevTools
   WebSocket endpoint for remote debugging (when available with `useRemoteDebuggingPort: true`).
-  
      */
   async start(options, _templateVars) {
-    const { browser_id, chromiumVersion, fingerprintId, useRemoteDebuggingPort, remoteDebuggingPort, remoteDebuggingAddress, extensions, extensionsDir, extensionsStoreIds, proxyServer, proxyUsername, proxyPassword, proxyBypass, enableQuic, enableDnsOverHttps, dnsOverHttpsUrl, display, showBrowser, sessionName, timezoneId, locale, userAgent, viewport, noViewport, geolocation, stealth, iframe, iframe_url, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    const { browser_id, chromiumVersion, fingerprintId, useRemoteDebuggingPort, remoteDebuggingPort, remoteDebuggingAddress, extensions, extensionsDir, extensionsStoreIds, proxyServer, proxyUsername, proxyPassword, proxyBypass, enableQuic, enableDnsOverHttps, dnsOverHttpsUrl, display, showBrowser, sessionName, timezoneId, locale, userAgent, viewport, noViewport, geolocation, stealth, iframe, iframe_url, maximize_new_windows, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (browser_id !== void 0 && browser_id !== null) {
     }
     if (chromiumVersion !== void 0 && chromiumVersion !== null) {
@@ -21904,6 +22022,8 @@ var InstanceManagementServiceBase = class {
     if (iframe !== void 0 && iframe !== null) {
     }
     if (iframe_url !== void 0 && iframe_url !== null) {
+    }
+    if (maximize_new_windows !== void 0 && maximize_new_windows !== null) {
     }
     let requestUrl = this.buildTemplateUrl(`/start`, _templateVars || {});
     const requestData = {};
@@ -21992,6 +22112,9 @@ var InstanceManagementServiceBase = class {
     if (iframe_url !== void 0) {
       requestData.query["iframe_url"] = iframe_url;
     }
+    if (maximize_new_windows !== void 0) {
+      requestData.query["maximize_new_windows"] = maximize_new_windows;
+    }
     if (signal) {
       requestData.signal = signal;
     }
@@ -22026,7 +22149,6 @@ var InstanceManagementServiceBase = class {
      *
      * Stops an active browser instance for the provided `browser_id`.
   This terminates the child process and releases its resources.
-  
      */
   async stop(options, _templateVars) {
     const { browser_id, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -22072,10 +22194,9 @@ var InstanceManagementServiceBase = class {
      *
      * Stops and recreates a browser instance using the provided configuration.
   Accepts the same parameters as `/start`.
-  
      */
   async restart(options, _templateVars) {
-    const { browser_id, chromiumVersion, fingerprintId, useRemoteDebuggingPort, remoteDebuggingPort, remoteDebuggingAddress, extensions, extensionsDir, extensionsStoreIds, proxyServer, proxyUsername, proxyPassword, proxyBypass, enableQuic, enableDnsOverHttps, dnsOverHttpsUrl, display, showBrowser, sessionName, timezoneId, locale, userAgent, viewport, noViewport, geolocation, launchArguments, browser, firefoxVersion, firefoxExecutablePath, showDevtools, userProfile, stealth, iframe, iframe_url, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    const { browser_id, chromiumVersion, fingerprintId, useRemoteDebuggingPort, remoteDebuggingPort, remoteDebuggingAddress, extensions, extensionsDir, extensionsStoreIds, proxyServer, proxyUsername, proxyPassword, proxyBypass, enableQuic, enableDnsOverHttps, dnsOverHttpsUrl, display, showBrowser, sessionName, timezoneId, locale, userAgent, viewport, noViewport, geolocation, launchArguments, browser, firefoxVersion, firefoxExecutablePath, showDevtools, userProfile, stealth, iframe, iframe_url, maximize_new_windows, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (browser_id !== void 0 && browser_id !== null) {
     }
     if (chromiumVersion !== void 0 && chromiumVersion !== null) {
@@ -22149,6 +22270,8 @@ var InstanceManagementServiceBase = class {
     if (iframe !== void 0 && iframe !== null) {
     }
     if (iframe_url !== void 0 && iframe_url !== null) {
+    }
+    if (maximize_new_windows !== void 0 && maximize_new_windows !== null) {
     }
     let requestUrl = this.buildTemplateUrl(`/restart`, _templateVars || {});
     const requestData = {};
@@ -22254,6 +22377,9 @@ var InstanceManagementServiceBase = class {
     }
     if (iframe_url !== void 0) {
       requestData.query["iframe_url"] = iframe_url;
+    }
+    if (maximize_new_windows !== void 0) {
+      requestData.query["maximize_new_windows"] = maximize_new_windows;
     }
     if (signal) {
       requestData.signal = signal;
@@ -22392,7 +22518,6 @@ var BrowserInteractionServiceBase = class {
   - Quality control for JPEG compression
   
   **Common use cases**: Visual regression testing, website monitoring, content verification
-  
      */
   async takeScreenshot(options, _templateVars) {
     const { browser_id, start, url: url2, tabId, onlyIfNotExists, ignoreGetParameters, format, quality, fullPage, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -22830,7 +22955,6 @@ var IntrospectionControlServiceBase = class {
   
   The `webSocketDebuggerUrl` field provides the WebSocket endpoint for remote debugging.
   Use this URL to connect Chrome DevTools, Puppeteer, or Playwright to the browser instance.
-  
      */
   async getMetadata(options, _templateVars) {
     const { browser_id, start, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -23028,7 +23152,6 @@ var IntrospectionControlServiceBase = class {
   
   **Availability**: These URLs are populated when the instance is launched with
   `useRemoteDebuggingPort=true` and `browser=chromium`. Otherwise it will be `null`.
-  
      */
   async getDevtoolsUrl(options, _templateVars) {
     const { browser_id, start, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -23073,6 +23196,130 @@ var IntrospectionControlServiceBase = class {
       requestData.responseType = responseType;
     }
     return this.http.get(requestUrl, requestData);
+  }
+  /**
+     * Get the current viewport policy
+     *
+     * Read-only: returns the instance's current viewport policy without mutating anything.
+  `viewport: null` means fixed-viewport emulation is disabled (responsive — the page follows the real window size).
+  `source` is `creation` until the first successful `POST /viewport`, then `runtime`.
+  `converged` reports whether every live page currently reflects the policy.
+  
+  **Never auto-creates an instance.** `browser_host`/`browser_port` may be omitted when exactly one instance is running (it is selected); with zero instances the response is 404, with more than one it is 400 `AMBIGUOUS_INSTANCE`.
+     */
+  async getViewport(options, _templateVars) {
+    const { browser_host, browser_port, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (browser_host !== void 0 && browser_host !== null) {
+    }
+    if (browser_port !== void 0 && browser_port !== null) {
+      if (!Number.isFinite(browser_port) || !Number.isInteger(browser_port)) {
+        throw new ValidationError("browser_port must be an integer", "browser_port");
+      }
+    }
+    let requestUrl = this.buildTemplateUrl(`/viewport`, _templateVars || {});
+    const requestData = {};
+    requestData.query = {};
+    if (browser_host !== void 0) {
+      requestData.query["browser_host"] = browser_host;
+    }
+    if (browser_port !== void 0) {
+      requestData.query["browser_port"] = browser_port;
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.get(requestUrl, requestData);
+  }
+  /**
+     * Change the viewport at runtime
+     *
+     * Mutates the running instance's viewport policy. JSON body only:
+  - Fixed size: `{"viewport": {"width": 1280, "height": 800}}` (integers 1..8192; no other keys)
+  - Responsive (follow the real window): `{"viewport": null}`
+  
+  Applies to every currently-open tab; tabs opened later inherit the policy.
+  
+  **Constraints**:
+  - Responsive requires a Chromium instance that was CREATED responsive (`noViewport=true`/`viewport=null` on /start). Instances created with a fixed viewport respond `409 REQUIRES_RESTART` (close and recreate the instance responsive instead).
+  - Firefox: fixed sizes work; responsive responds `501 NOT_SUPPORTED`.
+  - Partial application failures respond `502 VIEWPORT_APPLY_INCOMPLETE` with `details.failedTabs`.
+  
+  **Never auto-creates an instance.** Instance selection rules are identical to `GET /viewport`.
+     */
+  async setViewport(data, options, _templateVars) {
+    const { browser_host, browser_port, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (browser_host !== void 0 && browser_host !== null) {
+    }
+    if (browser_port !== void 0 && browser_port !== null) {
+      if (!Number.isFinite(browser_port) || !Number.isInteger(browser_port)) {
+        throw new ValidationError("browser_port must be an integer", "browser_port");
+      }
+    }
+    let requestUrl = this.buildTemplateUrl(`/viewport`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (browser_host !== void 0) {
+      requestData.query["browser_host"] = browser_host;
+    }
+    if (browser_port !== void 0) {
+      requestData.query["browser_port"] = browser_port;
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
   }
 };
 
@@ -24430,7 +24677,6 @@ var VscodeServiceBase = class {
   ## Page Loader
   Enable `--page-loader` to show a branded loading overlay during initialization.
   The loader automatically dismisses when VS Code is ready.
-  
      */
   async getVSCode(options, _templateVars) {
     const { folder, workspace, extension, ew, locale, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -24507,7 +24753,6 @@ var VscodeServiceBase = class {
   - Icons for various sizes
   - Display mode (fullscreen with window controls overlay)
   - Start URL
-  
      */
   async getManifest(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/code/manifest.json`, _templateVars || {});
@@ -24551,7 +24796,6 @@ var VscodeServiceBase = class {
   - Stored in user-data-dir/serve-web-key-half
   - Created once and reused across restarts
   - Used by VS Code for secure communications
-  
      */
   async mintKey(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/code/mint-key`, _templateVars || {});
@@ -24684,7 +24928,6 @@ var AuthServiceBase = class {
   
   Only available when authentication is set to 'password'.
   If user is already authenticated, redirects to target page.
-  
      */
   async getLoginPage(options, _templateVars) {
     const { to, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -24740,7 +24983,6 @@ var AuthServiceBase = class {
   - Or compared against SHA-256 hash (if --password used)
   - Session cookie is set on success
   - Failed attempts are logged with IP and user agent
-  
      */
   async login(data, options, _templateVars) {
     const { to, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -24791,7 +25033,6 @@ var AuthServiceBase = class {
      * Clears the session cookie and redirects to home.
   
   Only available when authentication is enabled.
-  
      */
   async logout(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/code/logout`, _templateVars || {});
@@ -24928,7 +25169,6 @@ var StaticServiceBase = class {
   - LLM function calling
   - API testing tools
   - Documentation generators
-  
      */
   async getOpenAPI(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/openapi.yaml`, _templateVars || {});
@@ -24968,7 +25208,6 @@ var StaticServiceBase = class {
      * Returns security.txt file for vulnerability disclosure.
   
   Also available at `/.well-known/security.txt`
-  
      */
   async getSecurityPolicy(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/security.txt`, _templateVars || {});
@@ -25056,7 +25295,6 @@ var StaticServiceBase = class {
   ## Service Worker
   The service worker at `/_static/out/browser/serviceWorker.js` has
   special header `Service-Worker-Allowed: /` to allow registering at root scope.
-  
      */
   async get(path, _templateVars, requestOptions) {
     if (path === void 0 || path === null) {
@@ -25107,7 +25345,6 @@ var StaticServiceBase = class {
   - Can customize behavior and branding
   
   Also available under `/vscode/hoody-code/injected/{script}`
-  
      */
   async getInjectedScript(script, _templateVars, requestOptions) {
     if (script === void 0 || script === null) {
@@ -25257,7 +25494,6 @@ var ExtensionsServiceBase = class {
   If the extension is already cached, the cached version is used.
   
   **Security Note**: Only use this endpoint with trusted extension sources.
-  
      */
   async install(data, _templateVars, requestOptions) {
     if (data === void 0 || data === null) {
@@ -25305,7 +25541,6 @@ var ExtensionsServiceBase = class {
   - Inventory management
   - Debugging extension issues
   - Automated testing
-  
      */
   async list(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/code/extensions/list`, _templateVars || {});
@@ -25529,7 +25764,6 @@ var HealthServiceBase = class {
      * Returns standardized service health status with process and runtime info.
   This endpoint does NOT count towards heartbeat activity, allowing health
   checks without keeping hoody-code artificially alive.
-  
      */
   async check(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/code/health`, _templateVars || {});
@@ -25570,7 +25804,6 @@ var HealthServiceBase = class {
   
   Queries GitHub releases API (unless disabled with --disable-update-check).
   Checks every 6 hours and notifies once per week.
-  
      */
   async checkUpdate(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/code/update/check`, _templateVars || {});
@@ -25717,7 +25950,6 @@ var ProxyServiceBase = class {
   If you have an app on port 3000:
   - Direct: `http://localhost:3000/api/users`
   - Proxied: `https://code.example.com/proxy/3000/api/users`
-  
      */
   async resolve(port, path, _templateVars, requestOptions) {
     if (port === void 0 || port === null) {
@@ -25784,7 +26016,6 @@ var ProxyServiceBase = class {
   
   ## Configuration
   Set `--abs-proxy-base-path` to customize the base path.
-  
      */
   async resolveAbsolute(port, path, _templateVars, requestOptions) {
     if (port === void 0 || port === null) {
@@ -31100,7 +31331,6 @@ var HealthServiceBase4 = class {
      *
      * Returns the standardized 9-field health response. Unauthenticated.
   Always returns HTTP 200 with `application/json` when the service is up.
-  
      */
   async check(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/display/health`, _templateVars || {});
@@ -31238,7 +31468,6 @@ var ScreenshotsServiceBase = class {
   
   **Known Failure Mode:**
   Returns `SCREENSHOT_FAILED` when screenshot payload is unavailable (for example, inactive display or no running programs).
-  
      */
   async capture(options, _templateVars) {
     const { base64, displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31298,7 +31527,6 @@ var ScreenshotsServiceBase = class {
      *
      * Takes a new screenshot but returns only metadata without the image data.
   Standardized API version of [`/screenshot/info`](#/Screenshots/captureScreenshotMetadata).
-  
      */
   async captureMetadata(options, _templateVars) {
     const { displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31353,7 +31581,6 @@ var ScreenshotsServiceBase = class {
      *
      * Returns the latest screenshot that was previously captured.
   Standardized API version of [`/screenshot/last`](#/Screenshots/getLatestScreenshot).
-  
      */
   async getLatest(options, _templateVars) {
     const { base64, displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31413,7 +31640,6 @@ var ScreenshotsServiceBase = class {
      *
      * Returns metadata about the latest screenshot without downloading the image.
   Standardized API version of [`/screenshot/last/info`](#/Screenshots/getLatestScreenshotMetadata).
-  
      */
   async getLatestMetadata(options, _templateVars) {
     const { displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31468,7 +31694,6 @@ var ScreenshotsServiceBase = class {
      *
      * Retrieves a previously captured screenshot using its Unix timestamp.
   Standardized API version of [`/screenshot/{timestamp}`](#/Screenshots/getScreenshotByTimestamp).
-  
      */
   async getByTimestamp(timestamp, options, _templateVars) {
     const { base64, displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31629,7 +31854,6 @@ var ThumbnailsServiceBase = class {
      *
      * Captures a new screenshot and returns the thumbnail version (320x180 scaled).
   Standardized API version of [`/thumbnail`](#/Thumbnails/captureThumbnail).
-  
      */
   async capture(options, _templateVars) {
     const { base64, displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31689,7 +31913,6 @@ var ThumbnailsServiceBase = class {
      *
      * Returns the thumbnail of the latest screenshot.
   Standardized API version of [`/thumbnail/last`](#/Thumbnails/getLatestThumbnail).
-  
      */
   async getLatest(options, _templateVars) {
     const { base64, displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31749,7 +31972,6 @@ var ThumbnailsServiceBase = class {
      *
      * Retrieves the thumbnail for a specific screenshot by its Unix timestamp.
   Standardized API version of [`/thumbnail/{timestamp}`](#/Thumbnails/getThumbnailByTimestamp).
-  
      */
   async getByTimestamp(timestamp, options, _templateVars) {
     const { base64, displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -31923,10 +32145,9 @@ var DisplayServiceBase = class {
   ```bash
   https://domain.com/api/v1/display/?displayId=10&readonly=true&decorations=false
   ```
-  
      */
   async accessClient(options, _templateVars) {
-    const { displayId, decorations, toolbar, menu, readonly, dark_mode, node, project_id, container_id, url_display_id, ssl, webtransport, path, action, display, encoding, offscreen, bandwidth_limit, override_width, override_height, vrefresh, suspend_inactive_tab, sound, audio_codec, keyboard, keyboard_layout, swap_keys, clipboard, clipboard_preferred_format, clipboard_poll, printing, file_transfer, video, mediasource_video, open_url, notification_server_url, web_notifications, display_notifications, notification_connection_type, sharing, steal, reconnect, floating_menu, clock, scroll_reverse_y, scroll_reverse_x, title_show_hoody, title_show_display_id, app, remote_logging, insecure, debug_main, debug_keyboard, debug_geometry, debug_mouse, debug_clipboard, debug_draw, debug_audio, debug_network, debug_file, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    const { displayId, decorations, toolbar, menu, maximize_new_windows, readonly, dark_mode, node, project_id, container_id, url_display_id, ssl, webtransport, path, action, display, encoding, offscreen, bandwidth_limit, override_width, override_height, vrefresh, suspend_inactive_tab, sound, audio_codec, keyboard, keyboard_layout, swap_keys, clipboard, clipboard_preferred_format, clipboard_poll, printing, file_transfer, video, mediasource_video, open_url, notification_server_url, web_notifications, display_notifications, notification_connection_type, sharing, steal, reconnect, floating_menu, clock, scroll_reverse_y, scroll_reverse_x, title_show_hoody, title_show_display_id, app, remote_logging, insecure, debug_main, debug_keyboard, debug_geometry, debug_mouse, debug_clipboard, debug_draw, debug_audio, debug_network, debug_file, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (displayId !== void 0 && displayId !== null) {
       if (!Number.isFinite(displayId) || !Number.isInteger(displayId)) {
         throw new ValidationError("displayId must be an integer", "displayId");
@@ -31943,6 +32164,8 @@ var DisplayServiceBase = class {
     if (toolbar !== void 0 && toolbar !== null) {
     }
     if (menu !== void 0 && menu !== null) {
+    }
+    if (maximize_new_windows !== void 0 && maximize_new_windows !== null) {
     }
     if (readonly !== void 0 && readonly !== null) {
     }
@@ -32091,6 +32314,9 @@ var DisplayServiceBase = class {
     }
     if (menu !== void 0) {
       requestData.query["menu"] = menu;
+    }
+    if (maximize_new_windows !== void 0) {
+      requestData.query["maximize_new_windows"] = maximize_new_windows;
     }
     if (readonly !== void 0) {
       requestData.query["readonly"] = readonly;
@@ -32299,7 +32525,6 @@ var DisplayServiceBase = class {
   - RESTful API integrations
   - Display management systems
   - Screenshot inventory queries
-  
      */
   async getInformation(options, _templateVars) {
     const { displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -32359,7 +32584,6 @@ var DisplayServiceBase = class {
   - RESTful API integrations
   - Screenshot management applications
   - Historical screenshot browsing
-  
      */
   async listScreenshots(options, _templateVars) {
     const { displayId, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -36888,7 +37112,7 @@ var RouteServiceBase = class {
   /**
    * Discover Routes
    *
-   * Discover all available routes in the script directory, classified by Next.js-style type. Scans for .js and .ts files and classifies each as: static, dynamic ([param]), catch-all ([...slug]), or optional catch-all ([[...path]]). Returns the route pattern, file path, type, and extracted parameter names for each route. Optionally includes file metadata (size, modification time) when includeMetadata is true.
+   * Discover all available routes in the script directory, classified by Next.js-style type. Scans for.js and.ts files and classifies each as: static, dynamic ([param]), catch-all ([...slug]), or optional catch-all ([[...path]]). Returns the route pattern, file path, type, and extracted parameter names for each route. Optionally includes file metadata (size, modification time) when includeMetadata is true.
    */
   async discover(data, _templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/exec/route/discover`, _templateVars || {});
@@ -43224,7 +43448,7 @@ var FilesServiceBase = class {
   /**
    * Find files by glob pattern
    *
-   * Find files and directories matching a glob pattern. Supports recursive patterns (** /*.rs), brace expansion ({ts,tsx}), character classes [a-z], and standard wildcards (*). Returns file metadata sorted by modification time (newest first) by default. Respects .gitignore by default.
+   * Find files and directories matching a glob pattern. Supports recursive patterns (** /*.rs), brace expansion ({ts,tsx}), character classes [a-z], and standard wildcards (*). Returns file metadata sorted by modification time (newest first) by default. Respects.gitignore by default.
    */
   async glob(path, options, _templateVars) {
     const { pattern, max_results, max_depth, max_files_scanned, timeout, no_ignore, sort, order, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -43342,7 +43566,7 @@ var FilesServiceBase = class {
   /**
    * Search file contents (grep)
    *
-   * Search file or directory contents using regex patterns. Powered by ripgrep engine with .gitignore support, binary file detection, and configurable limits. Returns matching lines with optional context.
+   * Search file or directory contents using regex patterns. Powered by ripgrep engine with.gitignore support, binary file detection, and configurable limits. Returns matching lines with optional context.
    */
   async grep(path, options, _templateVars) {
     const { pattern, ignore_case, fixed_string, glob, context, max_count, max_matches, max_depth, max_filesize, timeout, no_ignore, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -48087,7 +48311,6 @@ var NotificationsServiceBase2 = class {
      *
      * Establishes a WebSocket connection for real-time notification updates.
   Clients can subscribe to one or more displays and receive immediate notifications.
-  
      */
   async connectStream(options, _templateVars) {
     const { displays, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -67272,7 +67495,7 @@ var LogsServiceBase2 = class {
      *
      * Opens a persistent SSE connection streaming new log entries.
   
-  **v8 §6.4 framing** — every frame carries an `id: <ringSeq>` line:
+  ** framing** — every frame carries an `id: <ringSeq>` line:
   ```
   id: 12345
   data: <LogEntry JSON>
@@ -67538,7 +67761,7 @@ var SettingsServiceBase = class {
   /**
    * Store an ACP per-agent secret value.
    *
-   * Stores (or clears) one per-backend env VALUE for a BYOA ACP agent (acp.set_secret) in the dedicated 0600 ~/.hoody/acp-secrets.env store under acp/<agent>/<ENVKEY> (atomic temp+rename, flock). settings.json holds only the env KEY NAMES; the VALUE lives ONLY in the 0600 store. An empty value DELETES (unsets) the reference. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). SECURITY: the value is NEVER returned — the reply confirms only (agent, key, stored|cleared). 404 unknown_agent for an agent that is not a known BYOA backend (codex/claude/gemini/opencode).
+   * Stores (or clears) one per-backend env VALUE for a BYOA ACP agent (acp.set_secret) in the dedicated 0600 ~/.hoody/acp-secrets.env store under acp/<agent>/<ENVKEY> (atomic temp+rename, flock). settings.json holds only the env KEY NAMES; the VALUE lives ONLY in the 0600 store. An empty value DELETES (unsets) the reference. SECURITY: the value is NEVER returned — the reply confirms only (agent, key, stored|cleared). 404 unknown_agent for an agent that is not a known BYOA backend (codex/claude/gemini/opencode).
    */
   async setACPSecret(agent, key, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -67616,7 +67839,7 @@ var SettingsServiceBase = class {
   /**
    * Get settings.
    *
-   * Returns the effective merged settings (home → project → settings.local.json, top-level merge) plus the home-layer object that settings.patch mutates. Process-wide config (global/no-realm): settings have no realm dimension at any layer, so a per-request realm header returns 400 realm_scope_unsupported. Net-new daemon RPC settings.get.
+   * Returns the effective merged settings (home → project → settings.local.json, top-level merge) plus the home-layer object that settings.patch mutates. Process-wide config (global/no-realm): settings have no realm dimension at any layer, so a per-request realm header returns 400 realm_scope_unsupported.
    */
   async getSettings(options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -67681,7 +67904,7 @@ var SettingsServiceBase = class {
   /**
    * Patch settings.
    *
-   * Applies a SHALLOW top-level merge into the home ~/.hoody/settings.json (a nil value deletes a key). Top-level only: sending {"features":{...}} REPLACES the whole features object. Process-wide config (global/no-realm): settings have no realm dimension, so a per-request realm header returns 400 realm_scope_unsupported. SECURITY: security-load-bearing keys (deny_list, deny_urls, features, allowed_directories, hooks, disableAllHooks, mcp_servers, tools) cannot be modified over HTTP and return 403 settings_key_protected — edit settings.json at the host to change a guardrail. Returns the resulting home object. Net-new daemon RPC settings.patch.
+   * Applies a SHALLOW top-level merge into the home ~/.hoody/settings.json (a nil value deletes a key). Top-level only: sending {"features":{...}} REPLACES the whole features object. Process-wide config (global/no-realm): settings have no realm dimension, so a per-request realm header returns 400 realm_scope_unsupported. SECURITY: security-load-bearing keys (deny_list, deny_urls, features, allowed_directories, hooks, disableAllHooks, mcp_servers, tools) cannot be modified over HTTP and return 403 settings_key_protected — edit settings.json at the host to change a guardrail. Returns the resulting home object.
    */
   async patchSettings(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -68448,7 +68671,7 @@ var AgentsServiceBase = class {
   /**
    * Delete a custom chat agent.
    *
-   * Deletes one custom chat-agent definition (the validated delete_agent tool, run through the gated choke point with allow_mutations). Shipped-default agents and the configured default chat agent are refused by the daemon guard rails (is_error:true — use putAgentSource or resetAgentToShipped instead). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust).
+   * Deletes one custom chat-agent definition. Shipped-default agents and the configured default chat agent are refused by the daemon guard rails (is_error:true — use putAgentSource or resetAgentToShipped instead).
    */
   async deleteAgent(name, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -68741,7 +68964,7 @@ var AgentsServiceBase = class {
   /**
    * Reset an agent to its shipped default.
    *
-   * Restores one agent to its shipped default (the validated reset_agent_to_shipped tool, run through the gated choke point with allow_mutations), discarding local customizations. An agent with no shipped default is refused (is_error:true). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust).
+   * Restores one agent to its shipped default, discarding local customizations. An agent with no shipped default is refused (is_error:true).
    */
   async resetAgentToShipped(name, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -69750,7 +69973,7 @@ var SystemServiceBase5 = class {
   /**
    * API documentation UI.
    *
-   * Net-new Swagger/Redoc UI. Auth-gated; no conformance weight; may be dropped.
+   * API documentation UI.
    */
   async docs(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/agent/docs`, _templateVars || {});
@@ -69824,7 +70047,7 @@ var SystemServiceBase5 = class {
   /**
    * Prometheus metrics.
    *
-   * Prometheus exposition of the hoody_agent_* series. Namespaced per operator hard-req #1.
+   * Prometheus exposition of the hoody_agent_* series.
    */
   async metrics(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/agent/metrics`, _templateVars || {});
@@ -70027,7 +70250,7 @@ var GithubServiceBase = class {
   /**
    * Start a GitHub device-flow login (or add a PAT).
    *
-   * Begins a GitHub login (github.gw.login.start). With NO body token this starts a DEVICE flow and returns the non-secret {device_code, user_code, verification_uri, interval, expires_in}; the user authorizes that URL out of band, then POST /github/auth/login/poll completes the login. With a body `token` (a PAT) this instead validates + persists the token directly (no device flow), returning the linked {login, host}. For GitHub Enterprise (GHES) set body `host` (default github.com) on BOTH the device-flow start and the PAT-add. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). SECURITY: the token lives only in env / the validate call and is never returned.
+   * Begins a GitHub login. With NO body token this starts a DEVICE flow and returns the non-secret {device_code, user_code, verification_uri, interval, expires_in}; the user authorizes that URL out of band, then POST /github/auth/login/poll completes the login. With a body `token` (a PAT) this instead validates + persists the token directly (no device flow), returning the linked {login, host}. For GitHub Enterprise (GHES) set body `host` (default github.com) on BOTH the device-flow start and the PAT-add. SECURITY: the token lives only in env / the validate call and is never returned.
    */
   async githubLogin(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -70093,7 +70316,7 @@ var GithubServiceBase = class {
   /**
    * Poll a GitHub device-flow login to completion.
    *
-   * Polls an in-flight GitHub device-flow login (github.gw.login.poll → github.auth.login_poll). Forward the {device_code, interval, expires_in} the start reply returned; the call blocks until the user authorizes (or the flow expires/cancels), then validates + persists the resulting token. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). Required to COMPLETE a device-flow login over HTTP (the start RPC only returns the verification URL / device code). SECURITY: the token lives only in env and is never returned; only the linked {login, host} is echoed.
+   * Polls an in-flight GitHub device-flow login. Forward the {device_code, interval, expires_in} the start reply returned; the call blocks until the user authorizes (or the flow expires/cancels), then validates + persists the resulting token. Required to COMPLETE a device-flow login over HTTP (the start call only returns the verification URL / device code) — BLOCK. SECURITY: the token lives only in env and is never returned; only the linked {login, host} is echoed.
    */
   async githubLoginPoll(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -70162,7 +70385,7 @@ var GithubServiceBase = class {
   /**
    * GitHub auth status.
    *
-   * Reports the GitHub authentication state (github.auth.status) from the PROCESS-WIDE singleton account store. Token only in env; never returned. It has NO realm/container/cwd/config_dir dimension (unlike the cwd-scoped github status/repos/branches reads), so EVERY per-request scope header returns 400 realm_scope_unsupported. The device-flow login (githubLogin) and the clone/commit/sync/pr mutators (githubClone/githubCommit/githubSync/githubPullRequest) are write routes.
+   * Reports the GitHub authentication state (github.auth.status) from the account store. Token only in env; never returned. It has NO realm/container/cwd/config_dir dimension (unlike the cwd-scoped github status/repos/branches reads), so EVERY per-request scope header returns 400 realm_scope_unsupported. The device-flow login (githubLogin) and the clone/commit/sync/pr mutators (githubClone/githubCommit/githubSync/githubPullRequest) are write routes.
    */
   async githubAuthStatus(options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -70227,20 +70450,10 @@ var GithubServiceBase = class {
   /**
    * List GitHub branches.
    *
-   * Lists branches for the requesting cwd's repo (github.branch.list). cwd-scoped, not realm-scoped — a per-request realm header returns 400 realm_scope_unsupported.
+   * Lists branches for the requesting cwd's repo (github.branch.list). Returns {status, branches} verbatim; not paginated. cwd-scoped, not realm-scoped — a per-request realm header returns 400 realm_scope_unsupported.
    */
   async githubBranches(options, _templateVars) {
-    const { page, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-    if (page !== void 0 && page !== null) {
-      if (!Number.isFinite(page) || !Number.isInteger(page)) {
-        throw new ValidationError("page must be an integer", "page");
-      }
-    }
-    if (limit !== void 0 && limit !== null) {
-      if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
-        throw new ValidationError("limit must be an integer", "limit");
-      }
-    }
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (realm !== void 0 && realm !== null) {
     }
     if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
@@ -70254,12 +70467,6 @@ var GithubServiceBase = class {
     let requestUrl = this.buildTemplateUrl(`/api/v1/agent/github/branches`, _templateVars || {});
     const requestData = {};
     requestData.query = {};
-    if (page !== void 0) {
-      requestData.query["page"] = page;
-    }
-    if (limit !== void 0) {
-      requestData.query["limit"] = limit;
-    }
     if (realm !== void 0) {
       requestData.query["realm"] = realm;
     }
@@ -70306,121 +70513,9 @@ var GithubServiceBase = class {
     return this.http.get(requestUrl, requestData);
   }
   /**
-   * Async iterator helper for paginated operation githubBranches.
-   */
-  async *githubBranchesIterator(...args) {
-    const paginationType = "page-number";
-    const itemsPath = "data.items";
-    const totalPath = "meta.total";
-    const nextCursorPath = "data.next_cursor";
-    const hasMorePath = "data.has_more";
-    const limitParam = "limit";
-    const offsetParam = "offset";
-    const requestArgs = [...args];
-    const optionsIndex = 0;
-    const initialOptions = requestArgs[optionsIndex] || {};
-    const rawInitialOffset = initialOptions[offsetParam];
-    const parsedInitialOffset = typeof rawInitialOffset === "number" ? rawInitialOffset : typeof rawInitialOffset === "string" && /^\d+$/.test(rawInitialOffset.trim()) ? Number(rawInitialOffset.trim()) : Number.NaN;
-    let hasNext = true;
-    let currentOffset = Number.isFinite(parsedInitialOffset) ? Number(parsedInitialOffset) : paginationType.includes("page") ? 1 : 0;
-    let cursor;
-    let pageCount = 0;
-    let fetchedCount = 0;
-    const maxPages = 1e3;
-    while (hasNext && pageCount < maxPages) {
-      pageCount += 1;
-      for (const maybeOpts of requestArgs) {
-        const sig = maybeOpts == null ? void 0 : maybeOpts.signal;
-        if (sig && sig.aborted) {
-          const reason = sig.reason;
-          throw reason instanceof Error ? reason : new Error("Paginator aborted before fetching next page.");
-        }
-      }
-      const options = {
-        ...requestArgs[optionsIndex] || {}
-      };
-      if (cursor !== void 0) {
-        options[offsetParam] = cursor;
-      } else {
-        options[offsetParam] = currentOffset;
-      }
-      if (!Object.prototype.hasOwnProperty.call(options, limitParam) && "") {
-        options[limitParam] = Number("0");
-      }
-      requestArgs[optionsIndex] = options;
-      const response = await this.githubBranches(...requestArgs);
-      const items = this.getPathValue(response, itemsPath);
-      const normalizedItems = Array.isArray(items) ? items : items === void 0 || items === null ? [] : [items];
-      fetchedCount += normalizedItems.length;
-      for (const item of normalizedItems) {
-        yield item;
-      }
-      if (normalizedItems.length === 0) {
-        break;
-      }
-      const hasMore = this.getPathValue(response, hasMorePath);
-      const nextCursor = this.getPathValue(response, nextCursorPath);
-      const total = this.getPathValue(response, totalPath);
-      if (typeof hasMore === "boolean") {
-        hasNext = hasMore;
-      } else if (typeof nextCursor === "string" && nextCursor.length > 0) {
-        hasNext = true;
-      } else if (typeof total === "number" && Number.isFinite(total)) {
-        if (paginationType.includes("page")) {
-          hasNext = fetchedCount < total;
-        } else {
-          const nextOffset = currentOffset + normalizedItems.length;
-          hasNext = nextOffset < total;
-        }
-      } else {
-        hasNext = normalizedItems.length > 0;
-      }
-      if (typeof nextCursor === "string" && nextCursor.length > 0) {
-        cursor = nextCursor;
-      } else {
-        cursor = void 0;
-      }
-      if (cursor === void 0 && normalizedItems.length > 0) {
-        currentOffset += paginationType.includes("page") ? 1 : normalizedItems.length;
-      }
-    }
-  }
-  githubBranchesAll(...args) {
-    const expectedArgCount = 0 + 1;
-    const maybeControl = args.length > 0 ? args[args.length - 1] : void 0;
-    const controlMode = maybeControl && typeof maybeControl === "object" && !Array.isArray(maybeControl) && maybeControl.__allMode;
-    const isOnlyControlObject = Boolean(
-      controlMode !== void 0 && maybeControl && Object.keys(maybeControl).every((key) => key === "__allMode")
-    );
-    const hasControl = Boolean(
-      args.length > expectedArgCount && controlMode !== void 0 || args.length === expectedArgCount && isOnlyControlObject
-    );
-    const requestArgs = hasControl ? args.slice(0, -1) : args;
-    if (!hasControl && requestArgs.length > 0) {
-      const optionsArgIndex = 0;
-      const optionsArg = requestArgs[optionsArgIndex];
-      if (optionsArg && typeof optionsArg === "object" && !Array.isArray(optionsArg) && Object.prototype.hasOwnProperty.call(optionsArg, "__allMode")) {
-        const sanitizedOptions = { ...optionsArg };
-        delete sanitizedOptions.__allMode;
-        requestArgs[optionsArgIndex] = sanitizedOptions;
-      }
-    }
-    const iterator = this.githubBranchesIterator(...requestArgs);
-    if (hasControl && controlMode === "iterator") {
-      return iterator;
-    }
-    return (async () => {
-      const items = [];
-      for await (const item of iterator) {
-        items.push(item);
-      }
-      return items;
-    })();
-  }
-  /**
    * Clone a GitHub repository.
    *
-   * Clones a GitHub repository (github.gw.clone → github.repo.clone) through the hardened argv builder (token only in env, cwd-scoped). The facade translates `repo` (owner/name OR an https github URL) into the daemon's server-authoritative {full_name, clone_url}: the clone runs against the ACTIVE account host (a URL whose host does not match is rejected), and the destination is derived traversal-safe under the managed clone root (`dir` overrides it). Destructive (x-cli-mode interactive); the HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust).
+   * Clones a GitHub repository. The service translates `repo` (owner/name OR an https github URL) into the server-authoritative {full_name, clone_url}: the clone runs against the ACTIVE account host (a URL whose host does not match is rejected), and the destination is derived traversal-safe under the managed clone root (`dir` overrides it). Destructive (x-cli-mode interactive).
    */
   async githubClone(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -70486,7 +70581,7 @@ var GithubServiceBase = class {
   /**
    * Stage all and commit.
    *
-   * Stages all changes and commits in the requesting cwd's repo (github.gw.commit → github.commit) through the hardened argv builder, cwd-scoped. Destructive; the HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust).
+   * Stages all changes and commits in the requesting cwd's repo. Destructive.
    */
   async githubCommit(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -70555,10 +70650,13 @@ var GithubServiceBase = class {
   /**
    * Open a pull request.
    *
-   * Opens a pull request for the requesting cwd's repo (github.gw.pr → github.pr.create) through the hardened argv builder (token only in env, cwd-scoped). Destructive; the HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust).
+   * Opens a pull request for the requesting cwd's repo. Destructive.
    */
   async githubPullRequest(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
     if (realm !== void 0 && realm !== null) {
     }
     if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
@@ -70621,20 +70719,10 @@ var GithubServiceBase = class {
   /**
    * List GitHub repos.
    *
-   * Lists known/configured repos (github.repo.list).
+   * Lists known/configured repos (github.repo.list). Returns the daemon reply verbatim ({status, repos, account}); not paginated.
    */
   async githubRepos(options, _templateVars) {
-    const { page, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-    if (page !== void 0 && page !== null) {
-      if (!Number.isFinite(page) || !Number.isInteger(page)) {
-        throw new ValidationError("page must be an integer", "page");
-      }
-    }
-    if (limit !== void 0 && limit !== null) {
-      if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
-        throw new ValidationError("limit must be an integer", "limit");
-      }
-    }
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (realm !== void 0 && realm !== null) {
     }
     if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
@@ -70648,12 +70736,6 @@ var GithubServiceBase = class {
     let requestUrl = this.buildTemplateUrl(`/api/v1/agent/github/repos`, _templateVars || {});
     const requestData = {};
     requestData.query = {};
-    if (page !== void 0) {
-      requestData.query["page"] = page;
-    }
-    if (limit !== void 0) {
-      requestData.query["limit"] = limit;
-    }
     if (realm !== void 0) {
       requestData.query["realm"] = realm;
     }
@@ -70698,118 +70780,6 @@ var GithubServiceBase = class {
       requestData.responseType = responseType;
     }
     return this.http.get(requestUrl, requestData);
-  }
-  /**
-   * Async iterator helper for paginated operation githubRepos.
-   */
-  async *githubReposIterator(...args) {
-    const paginationType = "page-number";
-    const itemsPath = "data.items";
-    const totalPath = "meta.total";
-    const nextCursorPath = "data.next_cursor";
-    const hasMorePath = "data.has_more";
-    const limitParam = "limit";
-    const offsetParam = "offset";
-    const requestArgs = [...args];
-    const optionsIndex = 0;
-    const initialOptions = requestArgs[optionsIndex] || {};
-    const rawInitialOffset = initialOptions[offsetParam];
-    const parsedInitialOffset = typeof rawInitialOffset === "number" ? rawInitialOffset : typeof rawInitialOffset === "string" && /^\d+$/.test(rawInitialOffset.trim()) ? Number(rawInitialOffset.trim()) : Number.NaN;
-    let hasNext = true;
-    let currentOffset = Number.isFinite(parsedInitialOffset) ? Number(parsedInitialOffset) : paginationType.includes("page") ? 1 : 0;
-    let cursor;
-    let pageCount = 0;
-    let fetchedCount = 0;
-    const maxPages = 1e3;
-    while (hasNext && pageCount < maxPages) {
-      pageCount += 1;
-      for (const maybeOpts of requestArgs) {
-        const sig = maybeOpts == null ? void 0 : maybeOpts.signal;
-        if (sig && sig.aborted) {
-          const reason = sig.reason;
-          throw reason instanceof Error ? reason : new Error("Paginator aborted before fetching next page.");
-        }
-      }
-      const options = {
-        ...requestArgs[optionsIndex] || {}
-      };
-      if (cursor !== void 0) {
-        options[offsetParam] = cursor;
-      } else {
-        options[offsetParam] = currentOffset;
-      }
-      if (!Object.prototype.hasOwnProperty.call(options, limitParam) && "") {
-        options[limitParam] = Number("0");
-      }
-      requestArgs[optionsIndex] = options;
-      const response = await this.githubRepos(...requestArgs);
-      const items = this.getPathValue(response, itemsPath);
-      const normalizedItems = Array.isArray(items) ? items : items === void 0 || items === null ? [] : [items];
-      fetchedCount += normalizedItems.length;
-      for (const item of normalizedItems) {
-        yield item;
-      }
-      if (normalizedItems.length === 0) {
-        break;
-      }
-      const hasMore = this.getPathValue(response, hasMorePath);
-      const nextCursor = this.getPathValue(response, nextCursorPath);
-      const total = this.getPathValue(response, totalPath);
-      if (typeof hasMore === "boolean") {
-        hasNext = hasMore;
-      } else if (typeof nextCursor === "string" && nextCursor.length > 0) {
-        hasNext = true;
-      } else if (typeof total === "number" && Number.isFinite(total)) {
-        if (paginationType.includes("page")) {
-          hasNext = fetchedCount < total;
-        } else {
-          const nextOffset = currentOffset + normalizedItems.length;
-          hasNext = nextOffset < total;
-        }
-      } else {
-        hasNext = normalizedItems.length > 0;
-      }
-      if (typeof nextCursor === "string" && nextCursor.length > 0) {
-        cursor = nextCursor;
-      } else {
-        cursor = void 0;
-      }
-      if (cursor === void 0 && normalizedItems.length > 0) {
-        currentOffset += paginationType.includes("page") ? 1 : normalizedItems.length;
-      }
-    }
-  }
-  githubReposAll(...args) {
-    const expectedArgCount = 0 + 1;
-    const maybeControl = args.length > 0 ? args[args.length - 1] : void 0;
-    const controlMode = maybeControl && typeof maybeControl === "object" && !Array.isArray(maybeControl) && maybeControl.__allMode;
-    const isOnlyControlObject = Boolean(
-      controlMode !== void 0 && maybeControl && Object.keys(maybeControl).every((key) => key === "__allMode")
-    );
-    const hasControl = Boolean(
-      args.length > expectedArgCount && controlMode !== void 0 || args.length === expectedArgCount && isOnlyControlObject
-    );
-    const requestArgs = hasControl ? args.slice(0, -1) : args;
-    if (!hasControl && requestArgs.length > 0) {
-      const optionsArgIndex = 0;
-      const optionsArg = requestArgs[optionsArgIndex];
-      if (optionsArg && typeof optionsArg === "object" && !Array.isArray(optionsArg) && Object.prototype.hasOwnProperty.call(optionsArg, "__allMode")) {
-        const sanitizedOptions = { ...optionsArg };
-        delete sanitizedOptions.__allMode;
-        requestArgs[optionsArgIndex] = sanitizedOptions;
-      }
-    }
-    const iterator = this.githubReposIterator(...requestArgs);
-    if (hasControl && controlMode === "iterator") {
-      return iterator;
-    }
-    return (async () => {
-      const items = [];
-      for await (const item of iterator) {
-        items.push(item);
-      }
-      return items;
-    })();
   }
   /**
    * GitHub working-tree status.
@@ -70879,7 +70849,7 @@ var GithubServiceBase = class {
   /**
    * Sync (fetch → pull → push).
    *
-   * Runs fetch → pull → push as one logical sync (github.gw.sync), stopping at the FIRST non-ok step so a later push never runs against a half-synced tree. The body `direction` lets a caller pull-only (fetch+pull) or push-only; default is the full sync (this is BODY-only — the shared github mutator handler does not read query params, so there is no ?direction alias). Each step runs through the hardened argv builder with a fresh request copy (a stray body admin_token is stripped from every step). Destructive; the HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). 502 sync_step_failed carries the steps that ran plus the failing one under details.
+   * Runs fetch → pull → push as one logical sync, stopping at the FIRST non-ok step so a later push never runs against a half-synced tree. The body `direction` lets a caller pull-only (fetch+pull) or push-only; default is the full sync (this is BODY-only — there is no ?direction alias). Destructive. 502 sync_step_failed carries the steps that ran plus the failing one under details.
    */
   async githubSync(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -71245,7 +71215,7 @@ var AgentCreateHeadlessRunWebSocket = class {
     this.ws.send(JSON.stringify(message));
   }
   /**
-   * Stream opened; carries the run prompt/workflow echo. | The captured headless Result {result, session_id, usage, num_turns, …}. | The run failed/timed out; carries {code,message}. This is where a DAEMON-side failure surfaces in the stream form — e.g. code:"timeout" when the run exceeds its bound, or code:"admin_unauthorized" if the daemon's own socket admin gate rejects it (these are NOT HTTP statuses on this op — the run starts after the 200 SSE response). | Stream complete (always last).
+   * Stream opened; carries the run prompt/workflow echo. | The captured headless Result {result, session_id, usage, num_turns, …}. | The run failed/timed out; carries {code,message}. This is where a server-side failure surfaces in the stream form — e.g. code:"timeout" when the run exceeds its bound, or code:"admin_unauthorized" if the daemon's own socket admin gate rejects it (these are NOT HTTP statuses on this op — the run starts after the 200 SSE response). | Stream complete (always last).
    * @param callback Function to call when unknown message received
    * @returns Unsubscribe function
    */
@@ -71427,7 +71397,7 @@ var HeadlessServiceBase = class {
   /**
    * Create a headless one-shot run.
    *
-   * Drives the FULL agent loop once over an ephemeral gateway-owned session (headless.run) and returns text|json|stream-json. The default (json/text) form is an ASYNC job: it returns 202 {job_id}; poll GET /jobs/{id} / GET /jobs/{id}/result for the captured Result. format:stream-json (or stream:true) instead STREAMS the run over SSE (start → result/error → end). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). RISK: headless.run is ARBITRARY CODE EXECUTION on the bind — every confirm/plan/question auto-approves and bash/exec are NOT write-gated, so hoody-proxy (network-position trust, fronting this surface) is the boundary (write-permission OFF + dir-scope home limit only file writes, not bash). DAEMON-FAILURE DELIVERY: the initial HTTP exchange returns only the pre-dispatch statuses (400/403/413/429/503/500 — 403 is the network-position guard) plus the 200 SSE / 202 job ack — it CANNOT return 404/504, because the daemon run starts AFTER the response. A daemon-side failure (admin_unauthorized rejected by the daemon's own socket admin gate, or a run that exceeds its timeout_ms bound) is delivered LATER: in the ASYNC form it completes the job (the failure shows in GET /jobs/{id}/result as {status:"failed", error}); in the STREAM form it is the `error` SSE frame ({code,message}, e.g. code:"timeout"/"admin_unauthorized").
+   * Drives the FULL agent loop once over an ephemeral gateway-owned session and returns text|json|stream-json. The default (json/text) form is an ASYNC job: it returns 202 {job_id}; poll GET /jobs/{id} / GET /jobs/{id}/result for the captured Result. format:stream-json (or stream:true) instead STREAMS the run over SSE (start → result/error → end). RISK: headless.run is ARBITRARY CODE EXECUTION on the bind — every confirm/plan/question auto-approves and bash/exec are NOT write-gated. DAEMON-FAILURE DELIVERY: the initial HTTP exchange returns only the pre-dispatch statuses (400/403/413/429/503/500 — 403 is the access guard) plus the 200 SSE / 202 job ack — it CANNOT return 404/504, because the daemon run starts AFTER the response. A server-side failure is delivered LATER: in the ASYNC form it completes the job (the failure shows in GET /jobs/{id}/result as {status:"failed", error}); in the STREAM form it is the `error` SSE frame.
    */
   async createHeadlessRun(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -71696,7 +71666,7 @@ var HooksServiceBase = class {
   /**
    * Upsert a hook.
    *
-   * Creates or updates a hook (hooks.upsert). Requires the begin-write nonce and a live session_id (hooks are session-scoped). Defining a hook persists an arbitrary command that fires on lifecycle events. Creating a NEW hook requires non-empty `name` and `description` (the daemon rejects an undocumented create); updating an existing hook may omit them to preserve the current values. The daemon's human-only `_machine_confirmed` denial lives only on the model-facing hook-write tool path, NOT on the hooks.upsert RPC this route dispatches. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); securing the public surface (a hook persists an arbitrary command) is hoody-proxy's responsibility.
+   * Creates or updates a hook (hooks.upsert). Requires the begin-write nonce and a live session_id (hooks are session-scoped). Defining a hook persists an arbitrary command that fires on lifecycle events. Creating a NEW hook requires non-empty `name` and `description` (the daemon rejects an undocumented create); updating an existing hook may omit them to preserve the current values.
    */
   async upsertHook(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -72038,7 +72008,7 @@ var HooksServiceBase = class {
   /**
    * Test-fire a hook.
    *
-   * Test-fires a hook command (hooks.test) — this EXECUTES an arbitrary command now. The daemon's human-only `_machine_confirmed` denial lives only on the model-facing tool path, NOT on the hooks.test RPC this route dispatches. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); securing the public surface (this EXECUTES an arbitrary command) is hoody-proxy's responsibility. Requires a live session_id (hooks are session-scoped).
+   * Test-fires a hook command (hooks.test) — this EXECUTES an arbitrary command now. Requires a live session_id (hooks are session-scoped).
    */
   async testHook(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -73026,7 +72996,7 @@ var LogsServiceBase3 = class {
   /**
    * Query logs.
    *
-   * Queries the active-supervisor log stream (logs.query). Filters ride query params (source, level, host, since, until, ...). ?limit=N caps the result set (the daemon default is 200) and is forwarded; the stream paginates by cursor (since_seq/before_seq), not by page. Active-only: logs have NO realm parameter at any layer — a realm header returns 400 realm_scope_unsupported. The SSE log tail is GET /logs/stream (streamLogs).
+   * Queries the active log stream (logs.query). Filters ride query params (source, level, host, since, until,...). ?limit=N caps the result set (the daemon default is 200) and is forwarded; the stream paginates by cursor (since_seq/before_seq), not by page. Active-only: logs have NO realm parameter at any layer — a realm header returns 400 realm_scope_unsupported. The SSE log tail is GET /logs/stream (streamLogs).
    */
   async queryLogs(options, _templateVars) {
     const { source, level, host, since, until, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -73325,7 +73295,7 @@ var LogsServiceBase3 = class {
   /**
    * Stream the log tail (SSE).
    *
-   * Tails the active-supervisor log stream over Server-Sent Events (logs.tail). The gateway forward-pages the daemon with a cursor it advances each round (since_seq = the previous reply's next_seq) and DRAINS capped pages before idling, so no row is skipped under load. The tail rides the SAME seq/replay convention the session stream uses: an `entry` frame per redacted row CARRYING `id: <seq>` (so a reconnecting client resumes via the Last-Event-ID header, which overrides ?since_seq), a `lagged` {code:replay_gap} frame when the caller's cursor fell behind the ring, periodic heartbeats, and `end` on disconnect. Filters ride query params (source, level, host, since_seq, ...); ?limit caps each poll batch. Local sources only. Active-only: a realm header returns 400 realm_scope_unsupported. Entries are ALWAYS redacted.
+   * Tails the active log stream over Server-Sent Events (logs.tail). Paginates with a cursor it advances each round (since_seq = the previous reply's next_seq), so no row is skipped under load. The tail rides the SAME seq/replay convention the session stream uses: an `entry` frame per redacted row CARRYING `id: <seq>` (so a reconnecting client resumes via the Last-Event-ID header, which overrides ?since_seq), a `lagged` {code:replay_gap} frame when the caller's cursor fell behind the ring, periodic heartbeats, and `end` on disconnect. Filters ride query params (source, level, host, since_seq,...); ?limit caps each poll batch. Local sources only. Active-only: a realm header returns 400 realm_scope_unsupported. Entries are ALWAYS redacted.
    */
   async streamLogs(options, _templateVars) {
     const { source, level, host, since_seq, limit, realm, LastEventID, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -73555,7 +73525,7 @@ var AgentServiceBase = class {
   /**
    * Export logs as a downloadable file.
    *
-   * Streams the filtered, ALWAYS-redacted log set as a download (Content-Disposition: attachment). format=jsonl (default, one wire row per line) or txt (human-readable). Local sources export a point-in-time-consistent snapshot of the in-daemon ring (bounded at the seq observed when the export starts); source=activity|events|proxy exports ONE platform query page (default limit 2000) and marks the export partial when more remained. Every export ends with an in-band terminator (jsonl: a final {"_hoody_export":{...}} line; txt: a trailing '# export: ...' comment) carrying rows/gap/partial — its absence means the download was truncated. Filters mirror the Logs tab exactly (source, min_level, comp, session_id, text, since, until, event, tool, model, status, method, min_status, max_status, errors_only, event_type, resource_type, container_id, kind, host); ?since_seq exports incrementally; ?limit caps total rows; ?filename overrides the download name (reduced to a safe basename). Active-only: a realm header returns 400 realm_scope_unsupported.
+   * Streams the filtered, ALWAYS-redacted log set as a download (Content-Disposition: attachment). format=jsonl (default, one wire row per line) or txt (human-readable). Local sources export a point-in-time-consistent snapshot of the in-daemon ring (bounded at the seq observed when the export starts); source=activity|events|proxy exports ONE platform query page (default limit 2000) and marks the export partial when more remained. Every export ends with an in-band terminator (jsonl: a final {"_hoody_export":{...}} line; txt: a trailing '# export:...' comment) carrying rows/gap/partial — its absence means the download was truncated. Filters mirror the Logs tab exactly (source, min_level, comp, session_id, text, since, until, event, tool, model, status, method, min_status, max_status, errors_only, event_type, resource_type, container_id, kind, host); ?since_seq exports incrementally; ?limit caps total rows; ?filename overrides the download name (reduced to a safe basename). Active-only: a realm header returns 400 realm_scope_unsupported.
    */
   async exportLogs(options, _templateVars) {
     const { source, min_level, comp, session_id, text, since, until, event, tool, model, status, method, min_status, max_status, errors_only, event_type, resource_type, container, kind, host, since_seq, limit, format, filename, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -73844,7 +73814,7 @@ var MemoryServiceBase = class {
   /**
    * Trigger a memory consolidation pass (human-only).
    *
-   * Requests a consolidation pass for a project (memory.consolidate). HUMAN-ONLY: consolidation spends multi-LLM passes and evolves memory state IRREVERSIBLY, so an autonomous caller may NEVER self-approve it. An HTTP request has no interactive human at the daemon, so the gateway server-STAMPS the machine marker and the daemon's human-only gate ALWAYS refuses an HTTP call with 403 human_only (the HTTP edge has no service-level auth, hoody-proxy is the boundary — but the human-only gate is a second, non-bypassable daemon factor, mirroring the tool choke point's machine stamp). This is the documented, enforced guarantee: there is no machine success path over HTTP. Run consolidation from an interactive human session (TUI/CLI) instead. Active-realm-scoped (realm header rejected). The 200 success/503 consolidate_unavailable shapes apply only to the in-process/socket human path the seam may serve; an ordinary HTTP caller receives 403 human_only.
+   * Requests a consolidation pass for a project. HUMAN-ONLY: consolidation spends multi-LLM passes and evolves memory state IRREVERSIBLY, so an autonomous caller may NEVER self-approve it. An HTTP call to this operation ALWAYS returns 403 human_only — a documented, enforced guarantee. Run consolidation from an interactive human session (TUI/CLI) instead. Active-realm-scoped (realm header rejected).
    */
   async consolidateMemory(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -73913,7 +73883,7 @@ var MemoryServiceBase = class {
   /**
    * Toggle memory capture.
    *
-   * Flips the memory privacy switch (memory.set_enabled) — persists features.memory and flips the live store. NOT admin-gated (the daemon RPC has no memAdminGate). Body: {enabled: bool}.
+   * Flips the memory privacy switch (memory.set_enabled) — persists features.memory and applies it immediately. Not restricted to admins. Body: {enabled: bool}.
    */
   async setMemoryEnabled(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -73979,7 +73949,7 @@ var MemoryServiceBase = class {
   /**
    * Flush the memory store.
    *
-   * Forces the memory store durability barrier (memory.flush). NOT admin-gated.
+   * Forces the memory store durability barrier (memory.flush). Not restricted to admins.
    */
   async flushMemory(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74045,7 +74015,7 @@ var MemoryServiceBase = class {
   /**
    * Read a project&#x27;s memory relation graph.
    *
-   * Returns a paginated page of a project's memory relation graph (memory.graph): nodes, edges, stats. Filter via ?project=&node_type=; page via ?limit=&offset=. The HTTP edge has no service-level auth (hoody-proxy is the boundary); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured. Active-realm-scoped (realm header rejected). 503 store_unavailable when the memory store is not warm.
+   * Returns a paginated page of a project's memory relation graph (memory.graph): nodes, edges, stats. Filter via ?project=&node_type=; page via ?limit=&offset=. Active-realm-scoped (realm header rejected). 503 store_unavailable when the memory store is not warm.
    */
   async getMemoryGraph(options, _templateVars) {
     const { project, node_type, limit, offset, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74136,7 +74106,7 @@ var MemoryServiceBase = class {
   /**
    * List memory items.
    *
-   * Lists memory records for a project (memory.list). Filter via ?project=&kind=&type=&query=. DAEMON-PAGINATED (unlike the client-paginated collections): the daemon caps the page size at 200 and never returns an unbounded set, so the response ALWAYS carries meta.page + meta.limit reflecting the EFFECTIVE page size — an omitted ?limit (or one over 200) pages at 200, NOT "no pagination". The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured. Active-realm-scoped: a realm header is rejected.
+   * Lists memory records for a project (memory.list). Filter via ?project=&kind=&type=&query=. The ?type= and ?query= filters apply ONLY to kind=memory (the default store); the lesson/slot/observation stores do not filter server-side, so passing type/query with one of those kinds is REJECTED 400 rather than silently returning an unfiltered page. DAEMON-PAGINATED (unlike the client-paginated collections): the daemon caps the page size at 200 and never returns an unbounded set, so the response ALWAYS carries meta.page + meta.limit reflecting the EFFECTIVE page size — an omitted ?limit (or one over 200) pages at 200, NOT "no pagination". Active-realm-scoped: a realm header is rejected.
    */
   async listMemoryItems(options, _templateVars) {
     const { project, kind, type, query, page, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74349,10 +74319,13 @@ var MemoryServiceBase = class {
   /**
    * Save a memory item.
    *
-   * Stores a new memory record (memory.save). The HTTP edge has no service-level auth (hoody-proxy is the boundary); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured.
+   * Stores a new memory record (memory.save).
    */
   async saveMemoryItem(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
     if (realm !== void 0 && realm !== null) {
     }
     if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
@@ -74415,7 +74388,7 @@ var MemoryServiceBase = class {
   /**
    * Delete a memory item.
    *
-   * Deletes a memory record (memory.delete). This is the cross-project delete. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured. Body carries {id, project, kind}.
+   * Deletes a memory record (memory.delete). This is the cross-project delete. Body carries {id, project, kind}.
    */
   async deleteMemoryItem(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74484,7 +74457,7 @@ var MemoryServiceBase = class {
   /**
    * Read a memory item.
    *
-   * Reads one memory record by id (memory.detail). Pass ?project=&kind=. The HTTP edge has no service-level auth (hoody-proxy is the boundary); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured.
+   * Reads one memory record by id (memory.detail). Pass ?project=&kind=.
    */
   async getMemoryItem(id, options, _templateVars) {
     const { project, kind, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74565,7 +74538,7 @@ var MemoryServiceBase = class {
   /**
    * Edit a memory item.
    *
-   * Patches a memory record by id (memory.edit). The HTTP edge has no service-level auth (hoody-proxy is the boundary); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured.
+   * Patches a memory record by id (memory.edit).
    */
   async editMemoryItem(id, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74637,7 +74610,7 @@ var MemoryServiceBase = class {
   /**
    * List memory projects.
    *
-   * Lists the memory projects (memory.projects). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured. Active-realm-scoped: a realm header is rejected.
+   * Lists the memory projects (memory.projects). Active-realm-scoped: a realm header is rejected.
    */
   async listMemoryProjects(options, _templateVars) {
     const { page, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74830,7 +74803,7 @@ var MemoryServiceBase = class {
   /**
    * Search memory (hybrid recall).
    *
-   * Hybrid recall across a project (memory.search): BM25 + vector + graph fusion. The query is privacy-Strip'd before any tokenize/embed; the read is no-touch (it never strengthens future ranking). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's memAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured. Active-realm-scoped: a realm header is rejected. 503 store_unavailable when the memory store is not warm.
+   * Hybrid recall across a project (memory.search): BM25 + vector + graph fusion. The query is privacy-Strip'd before any tokenize/embed; the read is no-touch (it never strengthens future ranking). Active-realm-scoped: a realm header is rejected. 503 store_unavailable when the memory store is not warm.
    */
   async searchMemory(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -74988,7 +74961,7 @@ var ModelsServiceBase = class {
   /**
    * List models.
    *
-   * Lists the MERGED model catalogue: every catalogued provider model (spec, display name, context window, output limit, reasoning flag, display prices) AND every selectable fusion composite (spec fusion/<slug>, with its method + member specs). Each entry carries source:"provider" or source:"fusion" so a caller can tell them apart; a composite's context_window is the minimum across its catalogued members and it carries no per-token price. A single read returns the full set of bindable specs — no separate listFusion round-trip is required. Only SELECTABLE composites appear (a broken composite is excluded; fetch listFusion?include_invalid=true to manage those). Fusion composites are cwd/config_dir scoped, so X-Hoody-Cwd / X-Hoody-Config-Dir are honored to resolve them; a per-request realm header (and X-Hoody-Container, which has no model dimension) returns 400 realm_scope_unsupported. Net-new daemon RPC models.list.
+   * Lists the MERGED model catalogue: every catalogued provider model (spec, display name, context window, output limit, reasoning flag, display prices) AND every selectable fusion composite (spec fusion/<slug>, with its method + member specs). Each entry carries source:"provider" or source:"fusion" so a caller can tell them apart; a composite's context_window is the minimum across its catalogued members and it carries no per-token price. A single read returns the full set of bindable specs — no separate listFusion round-trip is required. Only SELECTABLE composites appear (a broken composite is excluded; fetch listFusion?include_invalid=true to manage those). Fusion composites are cwd/config_dir scoped, so X-Hoody-Cwd / X-Hoody-Config-Dir are honored to resolve them; a per-request realm header (and X-Hoody-Container, which has no model dimension) returns 400 realm_scope_unsupported.
    */
   async listModels(options, _templateVars) {
     const { page, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -75252,7 +75225,7 @@ var ModelsServiceBase = class {
   /**
    * List LLM providers.
    *
-   * Lists every catalogued LLM provider (id, display name, model prefix, wire format, model count) from the merged providers.json catalogue. global/no-realm: the catalogue is process-wide with no realm dimension, so a per-request realm header returns 400 realm_scope_unsupported. Net-new daemon RPC providers.list.
+   * Lists every catalogued LLM provider (id, display name, model prefix, wire format, model count) from the merged providers.json catalogue. global/no-realm: the catalogue is process-wide with no realm dimension, so a per-request realm header returns 400 realm_scope_unsupported.
    */
   async listProviders(options, _templateVars) {
     const { page, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -75587,7 +75560,7 @@ var ModelsServiceBase = class {
   /**
    * List a provider&#x27;s OAuth account pool.
    *
-   * Lists the secret-free OAuth account pool for a provider (providers.accounts.list): key, label, active flag, cooldown — never a token. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). 422 oauth_unsupported when the provider has no OAuth flow.
+   * Lists the secret-free OAuth account pool for a provider (providers.accounts.list): key, label, active flag, cooldown — never a token. 422 oauth_unsupported when the provider has no OAuth flow.
    */
   async listProviderAccounts(id, options, _templateVars) {
     const { page, limit, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -75786,7 +75759,7 @@ var ModelsServiceBase = class {
   /**
    * Add an OAuth account to a provider&#x27;s pool.
    *
-   * Begins an OAuth login that ADDS to the provider's account pool (providers.accounts.add). Returns a {job_id}; drive it with the same poll/submit endpoints as startProviderOAuth. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). 422 oauth_unsupported.
+   * Begins an OAuth login that ADDS to the provider's account pool (providers.accounts.add). Returns a {job_id}; drive it with the same poll/submit endpoints as startProviderOAuth. 422 oauth_unsupported.
    */
   async addProviderAccount(id, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -75858,7 +75831,7 @@ var ModelsServiceBase = class {
   /**
    * Remove a pooled OAuth account.
    *
-   * Drops one pooled OAuth account for a provider (providers.accounts.remove). The {key} path value names the account. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). Returns the resulting secret-free account pool. 422 oauth_unsupported.
+   * Drops one pooled OAuth account for a provider (providers.accounts.remove). The {key} path value names the account. Returns the resulting secret-free account pool. 422 oauth_unsupported.
    */
   async removeProviderAccount(id, key, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -75935,7 +75908,7 @@ var ModelsServiceBase = class {
   /**
    * Make a pooled OAuth account active.
    *
-   * Makes one pooled OAuth account active for a provider (providers.accounts.set_active). The {key} path value names the account; the trailing /active sub-resource names the activation verb. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). Returns the resulting secret-free account pool. 422 oauth_unsupported.
+   * Makes one pooled OAuth account active for a provider (providers.accounts.set_active). The {key} path value names the account; the trailing /active sub-resource names the activation verb. Returns the resulting secret-free account pool. 422 oauth_unsupported.
    */
   async setProviderAccountActive(id, key, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76013,7 +75986,7 @@ var ModelsServiceBase = class {
   /**
    * Store a provider API key.
    *
-   * Stores a provider's API key in the 0600 atomic ~/.hoody/.env keychainless store (providers.auth.set_key). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). SECURITY: the key is written 0600-atomic and is NEVER returned — the reply carries only the secret-free auth status (10-char prefix). 422 auth_method_unsupported for a passwordless provider.
+   * Stores a provider's API key in the 0600 atomic ~/.hoody/.env keychainless store (providers.auth.set_key). SECURITY: the key is written 0600-atomic and is NEVER returned — the reply carries only the secret-free auth status (10-char prefix). 422 auth_method_unsupported for a passwordless provider.
    */
   async setProviderAPIKey(id, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76088,7 +76061,7 @@ var ModelsServiceBase = class {
   /**
    * Delete a provider API key.
    *
-   * Removes a provider's stored API key and its default-method marker (providers.auth.delete_key). Idempotent. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). Returns the resulting secret-free auth status.
+   * Removes a provider's stored API key and its default-method marker (providers.auth.delete_key). Idempotent. Returns the resulting secret-free auth status.
    */
   async deleteProviderAPIKey(id, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76159,7 +76132,7 @@ var ModelsServiceBase = class {
   /**
    * Set a provider&#x27;s default credential method.
    *
-   * Sets the effective default credential method for a provider — api_key | oauth (providers.auth.set_default). The daemon validates the method against the provider's capabilities AND that a credential of that kind is actually stored (else 422). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). 422 oauth_unsupported / auth_method_unsupported / credential_not_stored.
+   * Sets the effective default credential method for a provider — api_key | oauth (providers.auth.set_default). The daemon validates the method against the provider's capabilities AND that a credential of that kind is actually stored (else 422). 422 oauth_unsupported / auth_method_unsupported / credential_not_stored.
    */
   async setProviderDefault(id, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76234,7 +76207,7 @@ var ModelsServiceBase = class {
   /**
    * Start a provider OAuth login.
    *
-   * Begins an interactive OAuth login for a provider (providers.oauth.start) and returns {success, job_id, verification_uri, user_code?}. Drive the flow with GET .../oauth/{job} (poll) and, for a manual/PKCE code, POST .../oauth/{job}/code (submit) — the github.auth.login_* poll precedent, NOT a generic /jobs/{id}/result fetch. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's systemAdminGate over the Unix socket may still 403 admin_unauthorized when a socket admin capability is configured. SECURITY: the job carries only the non-secret verification URL / user code — never a token. 422 oauth_unsupported when the provider has no OAuth flow.
+   * Begins an interactive OAuth login for a provider (providers.oauth.start) and returns {success, job_id, verification_uri, user_code?}. Drive the flow with GET.../oauth/{job} (poll) and, for a manual/PKCE code, POST.../oauth/{job}/code (submit) — the github.auth.login_* poll precedent, NOT a generic /jobs/{id}/result fetch. SECURITY: the job carries only the non-secret verification URL / user code — never a token. 422 oauth_unsupported when the provider has no OAuth flow.
    */
   async startProviderOAuth(id, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76306,7 +76279,7 @@ var ModelsServiceBase = class {
   /**
    * Remove a provider&#x27;s OAuth login.
    *
-   * Removes a provider's stored OAuth credentials (providers.oauth.logout). Idempotent. Returns the resulting secret-free auth status. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). 422 oauth_unsupported when the provider has no OAuth flow.
+   * Removes a provider's stored OAuth credentials (providers.oauth.logout). Idempotent. Returns the resulting secret-free auth status. 422 oauth_unsupported when the provider has no OAuth flow.
    */
   async logoutProviderOAuth(id, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76377,7 +76350,7 @@ var ModelsServiceBase = class {
   /**
    * Poll a provider OAuth login.
    *
-   * Polls an in-flight OAuth login job (providers.oauth.poll) — the github.auth.login_poll analogue. Reports state:"pending" until the user authorizes, then state:"complete" (with the now-current secret-free auth status) or state:"error" (with a scrubbed error message). IMPORTANT: a FAILED login is reported under the 200 body's state:"error", NOT as an HTTP error — clients MUST inspect `state` (pending|complete|error), never the HTTP status, to decide success. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). 404 job_not_found when the job is unknown/expired; 422 oauth_unsupported when the provider has no OAuth flow.
+   * Polls an in-flight OAuth login job (providers.oauth.poll) — the github.auth.login_poll analogue. Reports state:"pending" until the user authorizes, then state:"complete" (with the now-current secret-free auth status) or state:"error" (with a scrubbed error message). IMPORTANT: a FAILED login is reported under the 200 body's state:"error", NOT as an HTTP error — clients MUST inspect `state` (pending|complete|error), never the HTTP status, to decide success. 404 job_not_found when the job is unknown/expired; 422 oauth_unsupported when the provider has no OAuth flow.
    */
   async pollProviderOAuth(id, job, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76454,7 +76427,7 @@ var ModelsServiceBase = class {
   /**
    * Submit a provider OAuth authorization code.
    *
-   * Supplies the authorization code (or full redirect URL) a blocked OAuth flow is waiting for (providers.oauth.submit) — the explicit code-exchange step for manual-paste / PKCE flows. Idempotent-safe: a second submit on an already-fed job is a no-op (submitted:false). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust). 404 job_not_found when the job is unknown/expired.
+   * Supplies the authorization code (or full redirect URL) a blocked OAuth flow is waiting for (providers.oauth.submit) — the explicit code-exchange step for manual-paste / PKCE flows. Idempotent-safe: a second submit on an already-fed job is a no-op (submitted:false). 404 job_not_found when the job is unknown/expired.
    */
   async submitProviderOAuthCode(id, job, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -76835,7 +76808,7 @@ var AgentPromptStreamWebSocket = class {
     this.ws.send(JSON.stringify(message));
   }
   /**
-   * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | Daemon-global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
+   * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
    * @param callback Function to call when unknown message received
    * @returns Unsubscribe function
    */
@@ -77233,7 +77206,7 @@ var AgentStreamSessionWebSocket = class {
     });
   }
   /**
-   * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | Daemon-global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
+   * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
    * @param callback Function to call when unknown message received
    * @returns Unsubscribe function
    */
@@ -77613,7 +77586,7 @@ var SessionsServiceBase2 = class {
   /**
    * Create, fork, or attach a session.
    *
-   * Opens a new agent session (or forks/attaches an existing one), freezing realm/container/cwd/tool_mode/dir_scope/backend at start (session-frozen scope, §6.1). BYOA: backend:"acp" + delegated_agent delegate the session to an external CLI agent; the daemon enforces the per-agent enable gate (the local sandbox is mandatory; there is no trust gate).
+   * Opens a new agent session (or forks/attaches an existing one), freezing realm/container/cwd/tool_mode/dir_scope/backend at start (session-frozen scope). BYOA: backend:"acp" + delegated_agent delegate the session to an external CLI agent; the daemon enforces the per-agent enable gate (the local sandbox is mandatory; there is no trust gate).
    */
   async createSession(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -77815,7 +77788,7 @@ var SessionsServiceBase2 = class {
   /**
    * Close (and optionally hard-delete) a session.
    *
-   * Closes the live session connection (the daemon cancels the session). ?hard=true also removes the persisted record (net-new daemon RPC). Without ?hard, only the live connection is torn down. CONFIG-DIR: a hard delete resolves the persisted record under the request's X-Hoody-Config-Dir header (NOT a body field). A session CREATED with a body config_dir override (POST /sessions config_dir) is persisted under THAT override's sessions dir, so to hard-delete it you MUST send the SAME directory as X-Hoody-Config-Dir — otherwise the delete resolves the home sessions dir, finds nothing, and returns 404 (the record is undeletable via the bare call).
+   * Closes the live session connection (the daemon cancels the session). ?hard=true also removes the persisted record. Without ?hard, only the live connection is torn down. CONFIG-DIR: a hard delete resolves the persisted record under the request's X-Hoody-Config-Dir header (NOT a body field). A session CREATED with a body config_dir override (POST /sessions config_dir) is persisted under THAT override's sessions dir, so to hard-delete it you MUST send the SAME directory as X-Hoody-Config-Dir — otherwise the delete resolves the home sessions dir, finds nothing, and returns 404 (the record is undeletable via the bare call).
    */
   async deleteSession(id, options, _templateVars) {
     const { hard, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -78322,7 +78295,7 @@ var SessionsServiceBase2 = class {
   /**
    * Close the session (teardown).
    *
-   * Tears the session down (the daemon cancels it and removes it from the live map).
+   * Tears the session down (the daemon cancels it and removes the live session).
    */
   async closeSession(id, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -78753,7 +78726,7 @@ var SessionsServiceBase2 = class {
   /**
    * Dispatch a turn and stream the response.
    *
-   * Dispatches a turn and streams the resulting events over SSE from the seq captured just before the dispatch — only this turn's events, not the whole retained ring. The explicit X-Hoody-Gate-Policy: auto_approve header (or ?policy=auto_approve) auto-answers confirm gates with approved=true for the life of the stream — off by default; the HTTP edge has no service-level auth, so it works on any bind (loopback or not) — hoody-proxy is the boundary (network-position trust).
+   * Dispatches a turn and streams the resulting events over SSE from the seq captured just before the dispatch — only this turn's events, not the whole retained ring. The explicit X-Hoody-Gate-Policy: auto_approve header (or ?policy=auto_approve) auto-answers confirm gates with approved=true for the life of the stream — off by default.
    */
   async promptStream(id, data, options, _templateVars) {
     const { policy, realm, XHoodyGatePolicy, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -78872,7 +78845,7 @@ var SessionsServiceBase2 = class {
   /**
    * Dispatch a turn and block to completion.
    *
-   * Dispatches a turn and blocks until agent_done. By default (interactive posture) it returns {pending_gate} the moment a turn parks — it NEVER auto-approves implicitly. Repeated prompt:sync against a parked session returns the SAME pending_gate (no duplicate parked turns). The explicit X-Hoody-Gate-Policy: auto_approve header (or ?policy=auto_approve) adopts the headless posture and auto-answers confirm gates with approved=true — off by default; the HTTP edge has no service-level auth, so it works on any bind (loopback or not) — hoody-proxy is the boundary (network-position trust). A server read-timeout prevents a parked turn from wedging the request.
+   * Dispatches a turn and blocks until agent_done. By default (interactive posture) it returns {pending_gate} the moment a turn parks — it NEVER auto-approves implicitly. Repeated prompt:sync against a parked session returns the SAME pending_gate (no duplicate parked turns). The explicit X-Hoody-Gate-Policy: auto_approve header (or ?policy=auto_approve) adopts the headless posture and auto-answers confirm gates with approved=true — off by default. A server read-timeout prevents a parked turn from wedging the request.
    */
   async promptSync(id, data, options, _templateVars) {
     const { policy, realm, XHoodyGatePolicy, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -79025,7 +78998,7 @@ var SessionsServiceBase2 = class {
   /**
    * Attach to a session&#x27;s event stream (WebSocket / SSE).
    *
-   * WebSocket (primary) or SSE attach to a live session's full event.* taxonomy. Events carry a gateway-stamped monotonic int64 seq; ?since=<seq> / Last-Event-ID resume from the 1024-event replay ring (a gap past eviction emits event: lagged {code:replay_gap} then streams from min_seq). A slow client is dropped lagged and never backpressures the daemon (invariant G3). WS clients may post inline answer frames (confirm/answer/cancel/workflow_message). A `plan` frame is NOT part of the shipped contract: the daemon has no plan-mode approval producer/consumer today (see the absent /sessions/{id}/plan route), so it is omitted until that path exists.
+   * WebSocket (primary) or SSE attach to a live session's full event.* taxonomy. Events carry a gateway-stamped monotonic int64 seq; ?since=<seq> / Last-Event-ID resume from the 1024-event replay ring (a gap past eviction emits event: lagged {code:replay_gap} then streams from min_seq). A slow client is dropped lagged and never backpressures the daemon. WS clients may post inline answer frames (confirm/answer/cancel/workflow_message).
    */
   async streamSession(id, options, _templateVars) {
     const { since, realm, LastEventID, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -81317,7 +81290,7 @@ var ToolsServiceBase = class {
   /**
    * Run a tool inside a live session (gated).
    *
-   * Runs a tool through the gated choke point on a LIVE session: the gateway scrubs caller-supplied control keys and routes the run through executeToolDirect against the session's frozen realm/container/cwd/tool-mode/dir-scope, with the full gate chain. It claims the session's single serial turn slot so a direct tool run never races the turn loop (409 turn_in_flight if a turn is running; 409 gate_parked if a gate is parked). Because it occupies the turn slot it is also CANCELLABLE the same way a turn is: a concurrent POST /sessions/{id}/cancel (or a WS cancel frame, or session close) aborts the in-flight run. A parked confirmation returns 409 tool_needs_confirmation with the echoed params; re-issue with confirm:true. 404 tool_not_found when the tool is not in the session's effective tool list. NOTE (headless-live exception): a session CREATED with headless:true HARD-DENIES the static-stakes bash shapes (rm -rf /, curl|sh, git push --force) and outside-cwd file writes (200 is_error, no 409 confirm round) — those confirm-gated shapes are parkable only on a non-headless session or the sessionless ephemeral path; a headless live session has no interactive confirmer for them.
+   * Runs a tool through the gated policy gate on a LIVE session, against the session's frozen realm/container/cwd/tool-mode/dir-scope, with the full permission checks. It claims the session's single serial turn slot so a direct tool run never races the turn loop (409 turn_in_flight if a turn is running; 409 gate_parked if a gate is parked). Because it occupies the turn slot it is also CANCELLABLE the same way a turn is: a concurrent POST /sessions/{id}/cancel (or a WS cancel frame, or session close) aborts the in-flight run. A parked confirmation returns 409 tool_needs_confirmation with the echoed params; re-issue with confirm:true. 404 tool_not_found when the tool is not in the session's effective tool list. NOTE (headless-live exception): a session CREATED with headless:true HARD-DENIES the dangerous bash shapes (rm -rf /, curl|sh, git push --force) and outside-cwd file writes (200 is_error, no 409 confirm round) — those confirm-gated shapes are parkable only on a non-headless session or the sessionless ephemeral path; a headless live session has no interactive confirmer for them.
    */
   async runSessionTool(id, name, data, options, _templateVars) {
     const { confirm, confirm_token, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -81862,7 +81835,7 @@ var ToolsServiceBase = class {
   /**
    * Run a tool (sessionless, gated).
    *
-   * Runs a tool through the single gated choke point with NO open session: the gateway scrubs caller-supplied control keys, mints an ephemeral local session from the scope headers (X-Hoody-Cwd / X-Hoody-Config-Dir), and runs the FULL executeToolDirect gate chain (deny_list / static-stakes / read-before-edit / dir-scope / write-permission / tool-membership). Sessionless runs are read-only by default — a non-read-only tool requires allow_mutations:true or confirm:true (else 400 tool_mutation_refused). A parked confirmation returns 409 tool_needs_confirmation with the echoed tool+params; re-issue with confirm:true. The flat, ungated tool.* socket handlers are never reachable here. FILESYSTEM REACH: a sessionless run resolves paths under the caller-supplied X-Hoody-Cwd subtree (dir-scope defaults to home/restricted-to-cwd), so the operator deny_list is the floor — size it to cover sensitive trees (e.g. ~/.ssh, ~/.aws) since a caller may point X-Hoody-Cwd anywhere it can read.
+   * Runs a tool through the single gated policy gate with NO open session: creates an ephemeral local session from the scope headers (X-Hoody-Cwd / X-Hoody-Config-Dir), and runs the full permission checks. Sessionless runs are read-only by default — a non-read-only tool requires allow_mutations:true or confirm:true (else 400 tool_mutation_refused). A parked confirmation returns 409 tool_needs_confirmation with the echoed tool+params; re-issue with confirm:true. FILESYSTEM REACH: a sessionless run resolves paths under the caller-supplied X-Hoody-Cwd subtree (dir-scope defaults to home/restricted-to-cwd).
    */
   async runTool(name, data, options, _templateVars) {
     const { confirm, confirm_token, realm, XHoodyToolMode, XHoodyDirScope, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -82267,7 +82240,7 @@ var WorkflowsServiceBase = class {
   /**
    * Run a workflow onto an existing session.
    *
-   * Dispatches a workflow run onto a live session (workflows.run requires a live session_id) and returns {job_id}. The daemon returns no RunID synchronously, so the gateway mints its own job_id and correlates the daemon RunID lazily — job.run_id is null during the brief dispatch window and is populated once the workflow loop registers the run (observe workflow_start on the session's stream). Run events flow on the owning session's WS/SSE attach; there is no per-run event bus.
+   * Dispatches a workflow run onto a live session (workflows.run requires a live session_id) and returns {job_id}. job.run_id is null during the brief dispatch window and is populated once the workflow loop registers the run (observe workflow_start on the session's stream). Run events flow on the owning session's WS/SSE attach; there is no per-run event bus.
    */
   async runSessionWorkflow(id, name, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -82731,7 +82704,7 @@ var WorkflowsServiceBase = class {
   /**
    * Get one workflow run by id.
    *
-   * Returns a single workflow run row by run id from the registry snapshot (the daemon exposes WorkflowRegistry.Snapshot(), so the gateway filters the same set listWorkflowRuns surfaces). 404 not_found when the run id is no longer in the snapshot (evicted or never existed).
+   * Returns a single workflow run by run id via the indexed workflows.get_run RPC — including its per-step outcomes (step id, status, duration, tokens, and error), which the leaner listWorkflowRuns snapshot omits. 404 not_found when the run id is no longer retained (evicted or never existed), or belongs to another realm/account (never revealed as existing).
    */
   async getWorkflowRun(run_id, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -82948,7 +82921,7 @@ var WorkflowsServiceBase = class {
   /**
    * Read one workflow definition.
    *
-   * Returns one workflow definition as JSON (the validated read_workflow tool, run read-only through the gated choke point against an ephemeral session scoped by X-Hoody-Cwd / X-Hoody-Config-Dir). The result rides the {output,is_error} tool envelope; is_error:true with output "workflow X not found" for an unknown name. With ?include_revision=true the output's FIRST line is `revision: r1:<64hex>` — the optimistic-concurrency baseline to send back as putWorkflow's expected_revision — and the JSON below it is unchanged.
+   * Returns one workflow definition as JSON (the validated read_workflow tool, run read-only through the gated policy gate against an ephemeral session scoped by X-Hoody-Cwd / X-Hoody-Config-Dir). The result rides the {output,is_error} tool envelope; is_error:true with output "workflow X not found" for an unknown name. With ?include_revision=true the output's FIRST line is `revision: r1:<64hex>` — the optimistic-concurrency baseline to send back as putWorkflow's expected_revision — and the JSON below it is unchanged.
    */
   async getWorkflow(name, options, _templateVars) {
     const { include_revision, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -83024,7 +82997,7 @@ var WorkflowsServiceBase = class {
   /**
    * Create or replace a workflow definition.
    *
-   * Creates or replaces one workflow definition (the validated upsert_workflow tool, run through the gated choke point with allow_mutations). The body carries the `definition` object; the {name} path value is authoritative. The daemon validates the definition STRICTLY before writing atomically (unknown fields rejected, the loader's structural gate enforced), so a malformed definition is refused (is_error:true) rather than corrupting workflow.json. The system flag is authoritative from the embedded defaults — a caller cannot forge it. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); securing the public surface is hoody-proxy's responsibility.
+   * Creates or replaces one workflow definition. The body carries the `definition` object; the {name} path value is authoritative. The daemon validates the definition STRICTLY before writing atomically (unknown fields rejected, the loader's structural gate enforced), so a malformed definition is refused (is_error:true) rather than corrupting workflow.json. The system flag is authoritative from the embedded defaults — a caller cannot forge it.
    */
   async putWorkflow(name, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -83099,7 +83072,7 @@ var WorkflowsServiceBase = class {
   /**
    * Delete a workflow definition.
    *
-   * Deletes one USER workflow definition (the validated delete_workflow tool, run through the gated choke point with allow_mutations). System workflows are refused (is_error:true — they re-seed on boot; hide them instead via hideWorkflow). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust).
+   * Deletes one USER workflow definition. System workflows are refused (is_error:true — they re-seed on boot; hide them instead via hideWorkflow).
    */
   async deleteWorkflow(name, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -83170,7 +83143,7 @@ var WorkflowsServiceBase = class {
   /**
    * Hide or un-hide a workflow.
    *
-   * Hides one workflow from the Workflows tab (workflows.set_hidden → settings.json "ui.hidden_workflows"). Hiding is the ONLY way to remove a SYSTEM workflow from view — system workflows are re-seeded on every boot and can never be deleted; user workflows can be hidden too. Pass hidden:false in the body to un-hide. Realm-scoped to the GATEWAY's OWN realm (its pinned realm, or its active realm when unpinned) so a hide stays realm-private; a client-supplied X-Hoody-Realm/?realm= is IGNORED (it cannot hide in another realm). The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust).
+   * Hides one workflow from the Workflows tab (workflows.set_hidden → settings.json "ui.hidden_workflows"). Hiding is the ONLY way to remove a SYSTEM workflow from view — system workflows are re-seeded on every boot and can never be deleted; user workflows can be hidden too. Pass hidden:false in the body to un-hide. Realm-scoped to the GATEWAY's OWN realm (its pinned realm, or its active realm when unpinned) so a hide stays realm-private; a client-supplied X-Hoody-Realm/?realm= is IGNORED (it cannot hide in another realm).
    */
   async hideWorkflow(name, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -83795,7 +83768,7 @@ var SkillsServiceBase = class {
   /**
    * Install a hub skill.
    *
-   * Installs a skill from the hub (skills.hub_install) — this writes arbitrary skill code to disk. The daemon's human-only `_machine_confirmed` denial lives only on the model-facing tool path, NOT on the skills.hub_install RPC this route dispatches. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); securing the public surface (this writes arbitrary skill code) is hoody-proxy's responsibility.
+   * Installs a skill from the hub (skills.hub_install) — this writes arbitrary skill code to disk.
    */
   async installSkillHub(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -84427,7 +84400,7 @@ var SkillsServiceBase = class {
   /**
    * Set a skill&#x27;s trust state.
    *
-   * Sets a skill's trust state (skills.set_trust). Identify the skill by the daemon keys root_dir + rel_dir (aliases root/rel accepted); the trust flag is `trusted` (boolean). Trust gates arbitrary code execution. The daemon's human-only `_machine_confirmed` denial lives ONLY on the model-facing skill-edit tool path, NOT on the skills.set_trust RPC this route dispatches — so scrubbing the body cannot make the RPC reject an autonomous caller. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); securing the public surface (and the trust-gated code-execution risk) is hoody-proxy's responsibility under the kit network-position-trust convention. (When the P3 tool choke point / daemon-side RPC gate lands, the human-only denial is re-applied there too.)
+   * Sets a skill's trust state (skills.set_trust). Identify the skill by the daemon keys root_dir + rel_dir (aliases root/rel accepted); the trust flag is `trusted` (boolean). Trust gates arbitrary code execution.
    */
   async trustSkill(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -84658,7 +84631,7 @@ var StatisticsServiceBase = class {
   /**
    * Usage rollup by account.
    *
-   * Per-(provider,account) usage rollup from the daemon-global usage_calls store. ?since=<unix-seconds>. global/no-realm: a realm header returns 400 realm_scope_unsupported. Net-new daemon RPC usage.by_account.
+   * Per-(provider,account) usage rollup from the global usage store. ?since=<unix-seconds>. global/no-realm: a realm header returns 400 realm_scope_unsupported.
    */
   async usageByAccount(options, _templateVars) {
     const { since, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -84731,7 +84704,7 @@ var StatisticsServiceBase = class {
   /**
    * Usage rollup by model.
    *
-   * Per-(model,provider) usage rollup from the daemon-global usage_calls store (calls, success rate, cost, latency). ?since=<unix-seconds> (default all-time). global/no-realm: the usage store is daemon-global + cwd-independent + NOT realm-scoped (AGENTS.md S1), so a realm header returns 400 realm_scope_unsupported and the rollup is identical regardless of the active realm. Net-new daemon RPC usage.by_model.
+   * Per-(model,provider) usage rollup from the global usage store (calls, success rate, cost, latency). ?since=<unix-seconds> (default all-time). global/no-realm: the usage store is global + cwd-independent + NOT realm-scoped, so a realm header returns 400 realm_scope_unsupported and the rollup is identical regardless of the active realm.
    */
   async usageByModel(options, _templateVars) {
     const { since, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -85159,7 +85132,7 @@ var TodosServiceBase = class {
   /**
    * Purge archived todos.
    *
-   * Permanently and irreversibly removes archived todos (todos.purge) — the tombstones are destroyed with no `_machine_confirmed` gate on the daemon RPC. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's own systemAdminGate may still 403 admin_unauthorized when a Unix-socket admin capability is configured.
+   * Permanently and irreversibly removes archived todos (todos.purge).
    */
   async purgeTodos(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -85290,7 +85263,7 @@ var TodosServiceBase = class {
   /**
    * Run an LLM triage pass.
    *
-   * Kicks an LLM triage pass over the inbox (todos.triage) and returns {job_id}. This is a J-class op: it spends model budget on an autonomous LLM run with no `_machine_confirmed` gate on the daemon RPC — the same property that makes todos.run a privileged op. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's own systemAdminGate may still 403 admin_unauthorized when a Unix-socket admin capability is configured.
+   * Kicks an LLM triage pass over the inbox (todos.triage) and returns {job_id}. This is a J-class op: it spends model budget on an autonomous LLM run — the same property that makes todos.run a privileged op.
    */
   async triageTodos(data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -85871,7 +85844,7 @@ var TodosServiceBase = class {
   /**
    * Approve a todo proposal.
    *
-   * Approves a run proposal on a todo (todos.approve_proposal). Approval is NOT inert: the daemon hands the approved proposal to startApprovedProposal, which spawns a background worker session equivalent to todos.run — a J-class autonomous run with no `_machine_confirmed` gate on the daemon RPC. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's own systemAdminGate may still 403 admin_unauthorized when a Unix-socket admin capability is configured. (The paired denyTodoProposal spawns no worker.)
+   * Approves a run proposal on a todo (todos.approve_proposal). Approval is NOT inert: the daemon hands the approved proposal to a background worker session equivalent to todos.run — a J-class autonomous run. (The paired denyTodoProposal spawns no worker.)
    */
   async approveTodoProposal(id, pid, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -86099,7 +86072,7 @@ var TodosServiceBase = class {
   /**
    * Run a todo&#x27;s orchestrator.
    *
-   * Dispatches a background worker to autonomously work a todo (todos.run) and returns {job_id, session_id}. The daemon treats reaching the todos.run RPC as the human approval itself ("issued by the TUI Run action or the CLI, both human-driven") — it has NO `_machine_confirmed` gate; that denial lives only on the model-facing run_todo tool. The HTTP edge has no service-level auth (hoody-proxy is the boundary, kit network-position trust); the daemon's own systemAdminGate may still 403 admin_unauthorized when a Unix-socket admin capability is configured. The minted job completes at DISPATCH (it carries the worker session_id for correlation, but the resident worker runs asynchronously and is NOT tracked by the job lifecycle): a `succeeded` job means the run was STARTED, not that the TODO is finished. Poll the TODO itself (getTodo) — it lands in `review` when the worker is done.
+   * Dispatches a background worker to autonomously work a todo (todos.run) and returns {job_id, session_id}. The daemon treats reaching the todos.run RPC as the human approval itself ("issued by the TUI Run action or the CLI, both human-driven"). The minted job completes at DISPATCH (it carries the worker session_id for correlation, but the resident worker runs asynchronously and is NOT tracked by the job lifecycle): a `succeeded` job means the run was STARTED, not that the TODO is finished. Poll the TODO itself (getTodo) — it lands in `review` when the worker is done.
    */
   async runTodo(id, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -89665,7 +89638,7 @@ var KIT_CATALOG = [
   {
     slug: "agent",
     kind: "named",
-    description: "AI agent \u2014 sessions/prompt, models, providers, skills, memory, todos, workflows, hooks, github, tools, logs (hoody-agent-d HTTP gateway).",
+    description: "AI agent \u2014 sessions/prompt, models, providers, skills, memory, todos, workflows, hooks, github, tools, logs (HTTP gateway).",
     serviceSegmentPattern: "agent-{index}",
     urlTemplateSample: "https://{projectId}-{containerId}-agent-{index}.{server}.containers.hoody.com",
     supportsIndex: true,
@@ -98307,7 +98280,7 @@ async function openWebSocket(url2) {
     mod = await Promise.resolve().then(() => __toESM(require_browser(), 1));
   } catch (e) {
     throw new Error(
-      "@hoody/curl-channel-sdk: no global WebSocket and the optional `ws` package is not installed. Either upgrade to Node \u226521 (which has a global WebSocket) or `npm install ws`. Original error: " + (e instanceof Error ? e.message : String(e))
+      "hoody-sdk: no global WebSocket and the optional `ws` package is not installed. Either upgrade to Node \u226521 (which has a global WebSocket) or `npm install ws`. Original error: " + (e instanceof Error ? e.message : String(e))
     );
   }
   const ws = new mod.default(url2);
@@ -99274,7 +99247,7 @@ async function buildCurlRequest(input, init, defaults) {
   } else {
     if (input.bodyUsed) {
       throw new TypeError(
-        "@hoody/curl-channel-sdk: Request body has already been consumed. Pass `init` directly or clone the Request before reuse."
+        "hoody-sdk: Request body has already been consumed. Pass `init` directly or clone the Request before reuse."
       );
     }
     const req2 = input.clone();
@@ -99342,7 +99315,7 @@ async function applyRequestGzip(req) {
   }
   if (found !== void 0 && found.toLowerCase() !== "gzip") {
     throw new TypeError(
-      `@hoody/curl-channel-sdk: requestEncoding="gzip" conflicts with caller-set Content-Encoding: ${found}`
+      `hoody-sdk: requestEncoding="gzip" conflicts with caller-set Content-Encoding: ${found}`
     );
   }
   headers["Content-Encoding"] = "gzip";
@@ -99374,7 +99347,7 @@ async function bodyToData(body) {
     });
     if (hasFile) {
       throw new TypeError(
-        "@hoody/curl-channel-sdk: FormData with File entries is not supported. Use `form: {...}` on the CurlRequest directly (string fields only), or pass the file bytes as a Blob/Uint8Array body with an explicit Content-Type header."
+        "hoody-sdk: FormData with File entries is not supported. Use `form: {...}` on the CurlRequest directly (string fields only), or pass the file bytes as a Blob/Uint8Array body with an explicit Content-Type header."
       );
     }
     const params = new URLSearchParams();
@@ -99401,7 +99374,7 @@ async function bodyToData(body) {
     bytes = concat(chunks);
   } else {
     throw new TypeError(
-      "@hoody/curl-channel-sdk: unsupported request body type. Pass string, URLSearchParams, ArrayBuffer/Uint8Array/Blob/ReadableStream, or FormData without File entries."
+      "hoody-sdk: unsupported request body type. Pass string, URLSearchParams, ArrayBuffer/Uint8Array/Blob/ReadableStream, or FormData without File entries."
     );
   }
   const asText = tryDecodeUtf8(bytes);

@@ -4,7 +4,7 @@
 **Accessor:** `client.proxyLogs`
 
 ```typescript
-import * as proxyLogs from '@hoody-ai/hoody-sdk/proxyLogs';
+import * as proxyLogs from 'hoody-sdk/proxyLogs';
 ```
 
 ---
@@ -49,7 +49,7 @@ client.proxyLogs.logs.list(options?: { limit?: number; offset?: number; projectI
 | `includeResponseBody` | `boolean` | No | query |  |
 | `last` | `number` | No | query | Return only the last N entries |
 | `afterId` | `number` | No | query | Return entries with SQLite row ID greater than this (ASC cursor) |
-| `cursor` | `string` | No | query | pagination cursor (signed opaque base64). |
+| `cursor` | `string` | No | query | — pagination cursor (signed opaque base64).. |
 | `kind` | `"request" \| "response" \| "event"` | No | query |  |
 | `method` | `string` | No | query |  |
 | `source` | `"backend" \| "edge"` | No | query |  |
@@ -82,7 +82,7 @@ client.proxyLogs.logs.listAll(options?: { limit?: number; offset?: number; proje
 | `includeResponseBody` | `boolean` | No | query |  |
 | `last` | `number` | No | query | Return only the last N entries |
 | `afterId` | `number` | No | query | Return entries with SQLite row ID greater than this (ASC cursor) |
-| `cursor` | `string` | No | query | pagination cursor (signed opaque base64). |
+| `cursor` | `string` | No | query | — pagination cursor (signed opaque base64).. |
 | `kind` | `"request" \| "response" \| "event"` | No | query |  |
 | `method` | `string` | No | query |  |
 | `source` | `"backend" \| "edge"` | No | query |  |
@@ -115,7 +115,7 @@ client.proxyLogs.logs.listIterator(options?: { limit?: number; offset?: number; 
 | `includeResponseBody` | `boolean` | No | query |  |
 | `last` | `number` | No | query | Return only the last N entries |
 | `afterId` | `number` | No | query | Return entries with SQLite row ID greater than this (ASC cursor) |
-| `cursor` | `string` | No | query | pagination cursor (signed opaque base64). |
+| `cursor` | `string` | No | query | — pagination cursor (signed opaque base64).. |
 | `kind` | `"request" \| "response" \| "event"` | No | query |  |
 | `method` | `string` | No | query |  |
 | `source` | `"backend" \| "edge"` | No | query |  |
@@ -142,7 +142,7 @@ client.proxyLogs.logs.streamLogs(options?: { projectId?: string; containerId?: s
 | `containerId` | `string` | No | query | Filter to a single container |
 | `kind` | `"request" \| "response" \| "event"` | No | query |  |
 | `level` | `"debug" \| "info" \| "warn" \| "error"` | No | query |  |
-| `LastEventID` | `string` | No | header | numeric ringSeq of the last event received. Server skips entries ≤ this value from the ring buffer on reconnect. |
+| `LastEventID` | `string` | No | header | — numeric ringSeq of the last event received. Server skips entries ≤ this value from the ring buffer on reconnect. |
 
 **Returns:** `ApiResponse&lt;unknown&gt;`
 

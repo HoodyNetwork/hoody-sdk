@@ -103,7 +103,7 @@ export function redactSensitiveValue(v, _depth = 0, seen = new WeakSet()) {
     // Value-shape scrub: an hdy_ launch token embedded in a string VALUE (e.g. a
     // redirect URL under a non-secret key) is invisible to the SECRET_FIELD_RE
     // name pass below, so scrub it by shape here — mirrors redactUrl's belt-and-
-    // suspenders HDY_TOKEN_VALUE_RE pass (URL_TOKEN_AUTOLOGIN_PLAN §4 value-shape).
+    // suspenders HDY_TOKEN_VALUE_RE pass (token value-shape).
     if (typeof v === 'string')
         return v.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER);
     if (typeof v !== 'object')

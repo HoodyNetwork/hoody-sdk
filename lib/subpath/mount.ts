@@ -1,8 +1,8 @@
 /**
- * Subpath entry for `@hoody-ai/hoody-sdk/mount`.
+ * Subpath entry for `hoody-sdk/mount`.
  *
  * Re-exports the mount module so consumers can `import { mount, unmount,
- * listMounts, probeKit } from '@hoody-ai/hoody-sdk/mount'` without
+ * listMounts, probeKit } from 'hoody-sdk/mount'` without
  * pulling the full HoodyClient surface.
  */
 

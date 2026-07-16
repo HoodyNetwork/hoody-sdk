@@ -351,7 +351,7 @@ export class AgentCreateHeadlessRunWebSocket {
         this.ws.send(JSON.stringify(message));
     }
     /**
-     * Stream opened; carries the run prompt/workflow echo. | The captured headless Result {result, session_id, usage, num_turns, …}. | The run failed/timed out; carries {code,message}. This is where a DAEMON-side failure surfaces in the stream form — e.g. code:"timeout" when the run exceeds its bound, or code:"admin_unauthorized" if the daemon's own socket admin gate rejects it (these are NOT HTTP statuses on this op — the run starts after the 200 SSE response). | Stream complete (always last).
+     * Stream opened; carries the run prompt/workflow echo. | The captured headless Result {result, session_id, usage, num_turns, …}. | The run failed/timed out; carries {code,message}. This is where a server-side failure surfaces in the stream form — e.g. code:"timeout" when the run exceeds its bound, or code:"admin_unauthorized" if the daemon's own socket admin gate rejects it (these are NOT HTTP statuses on this op — the run starts after the 200 SSE response). | Stream complete (always last).
      * @param callback Function to call when unknown message received
      * @returns Unsubscribe function
      */

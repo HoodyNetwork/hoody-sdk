@@ -1,5 +1,5 @@
 /**
- * @hoody-ai/hoody-sdk/update-check — minisign-verified version check.
+ * hoody-sdk/update-check — minisign-verified version check.
  *
  * ┌────────────────────────────────────────────────────────────────────────┐
  * │ Trust chain (multi-domain)                                              │

@@ -11,8 +11,8 @@ Key concepts:
 - Container: an isolated Linux instance with a project and firewall rules. CRUD via \`hoody containers …\`.
 - Project: groups containers for billing, shared storage, and access control.
 - Server: the underlying host (node) that runs containers. Users can rent servers from the marketplace.
-- Subserver: a cgroup-v2 resource scope above projects; lets one tenant subdivide a rented server.
-- Realm: a subdomain-routed tenant boundary used by Hoody's multi-tenant SaaS.
+- Subserver: a resource scope above projects; lets you subdivide a rented server.
+- Realm: a subdomain-routed tenant boundary.
 - Hoody Proxy: the reverse proxy that routes \`<projectId>-<containerId>-<service>.<server>.containers.hoody.com\` into the container.
 - Hoody Kit: a named service inside the container (terminal, files, code, browser, curl, display, exec, notifications, sqlite, cron, watch, logs) with a versioned API.
 - Hoody Agent: the full agentic AI — file edits, command execution, tool use, session history. Open the in-container TUI via \`hoody agent\`, the HTTP API at the container's \`-agent-1\` kit URL, or the browser GUI at that same \`-agent-1\` URL.

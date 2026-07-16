@@ -4,7 +4,7 @@
 **Accessor:** `client.sqlite`
 
 ```typescript
-import * as sqlite from '@hoody-ai/hoody-sdk/sqlite';
+import * as sqlite from 'hoody-sdk/sqlite';
 ```
 
 ---
@@ -23,7 +23,7 @@ client.sqlite.database.create(options?: { path: string; init_kv?: boolean; kv_ta
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `path` | `string` | Yes | query | Database path (absolute path, bare name, or ./name shorthand resolved to /hoody/databases/*.db) |
+| `path` | `string` | Yes | query | Database path (absolute path, bare name, or./name shorthand resolved to /hoody/databases/*.db) |
 | `init_kv` | `boolean` | No | query | Initialize KV store tables |
 | `kv_table` | `string` | No | query | Custom KV table name |
 
@@ -46,7 +46,7 @@ client.sqlite.database.executeTransaction(data: SqliteDatabaseExecuteTransaction
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `SqliteDatabaseExecuteTransactionRequest` | Yes | body |  |
-| `db` | `string` | Yes | query | Database path (absolute path, bare name, or ./name shorthand resolved to /hoody/databases/*.db) |
+| `db` | `string` | Yes | query | Database path (absolute path, bare name, or./name shorthand resolved to /hoody/databases/*.db) |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing |
 
 **Returns:** `ApiResponse&lt;unknown&gt;`
@@ -745,7 +745,7 @@ client.sqlite.sql.runMaintenance(data: RunMaintenanceRequest, options?: { db: st
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `RunMaintenanceRequest` | Yes | body |  |
-| `db` | `string` | Yes | query | Database path (absolute path, bare name, or ./name shorthand resolved to /hoody/databases/*.db) |
+| `db` | `string` | Yes | query | Database path (absolute path, bare name, or./name shorthand resolved to /hoody/databases/*.db) |
 | `timeout` | `number` | No | query | Request deadline in seconds (clamped to [1, 300]) |
 
 **Returns:** `ApiResponse&lt;unknown&gt;`

@@ -5,7 +5,7 @@
  *   - Never throw on read failure: missing/corrupt cache returns `null`.
  *   - Atomic write via temp-file + rename, with Windows EPERM/EBUSY retry.
  *   - No `current_version` field — banner compares `latest_version` against
- *     the baked HOODY_VERSION constant at render time (PLAN-v3 §Cache schema).
+ *     the baked HOODY_VERSION constant at render time.
  *   - Opportunistic tmp cleanup on startup: delete `*.tmp.*` older than 10 min.
  */
 export type CacheStatus = 'up-to-date' | 'behind' | 'ahead' | 'error';
@@ -30,8 +30,8 @@ export declare const TMP_CLEANUP_MAX_AGE_MS: number;
  *   4. %LOCALAPPDATA%\hoody on Windows
  *   5. ~/.hoody fallback
  *
- * HOME env override is respected (Bun's os.homedir() ignores HOME per the
- * session's bun-homedir-ignores-HOME note; tests rely on HOME override).
+ * HOME env override is respected (Bun's os.homedir() ignores HOME;
+ * tests rely on HOME override).
  */
 export declare function cacheDir(platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv): string;
 export declare function cachePath(platform?: NodeJS.Platform, env?: NodeJS.ProcessEnv): string;

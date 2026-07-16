@@ -1,9 +1,9 @@
 /**
- * OpenAI-compatible Chat Completions client — shared between `hoody chat`
- * and `ai-fix.ts`.
+ * OpenAI-compatible Chat Completions client — shared across the CLI's
+ * AI-powered code paths.
  *
  * Two entry points:
- *   - completeOnce(opts):  Promise<{text}>           (blocking, used by ai-fix)
+ *   - completeOnce(opts):  Promise<{text}>           (blocking)
  *   - streamCompletion(opts): async yields deltas     (streaming, used by chat)
  *
  * Uses native fetch (works on Node >=18 and Bun compiled binaries). Never

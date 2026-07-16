@@ -4,7 +4,7 @@
 **Accessor:** `client.notes`
 
 ```typescript
-import * as notes from '@hoody-ai/hoody-sdk/notes';
+import * as notes from 'hoody-sdk/notes';
 ```
 
 ---

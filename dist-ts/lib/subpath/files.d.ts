@@ -1,5 +1,5 @@
 /**
- * Subpath entry for `@hoody-ai/hoody-sdk/files`.
+ * Subpath entry for `hoody-sdk/files`.
  *
  * Runs `patchFilesServiceExtensions()` as a side-effect on module load, then
  * re-exports the raw generated surface. Consumers who import a FilesService

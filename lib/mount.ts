@@ -1,5 +1,5 @@
 /**
- * `@hoody-ai/hoody-sdk/mount` — programmatic and CLI-facing module for
+ * `hoody-sdk/mount` — programmatic and CLI-facing module for
  * mounting Hoody container filesystems locally via rclone+WebDAV.
  *
  * Architecture:

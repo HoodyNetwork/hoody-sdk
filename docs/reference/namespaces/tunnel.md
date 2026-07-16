@@ -4,7 +4,7 @@
 **Accessor:** `client.tunnel`
 
 ```typescript
-import * as tunnel from '@hoody-ai/hoody-sdk/tunnel';
+import * as tunnel from 'hoody-sdk/tunnel';
 ```
 
 ---

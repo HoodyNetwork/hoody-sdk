@@ -4,7 +4,7 @@
 **Accessor:** `client.terminal`
 
 ```typescript
-import * as terminal from '@hoody-ai/hoody-sdk/terminal';
+import * as terminal from 'hoody-sdk/terminal';
 ```
 
 ---
@@ -69,7 +69,7 @@ client.terminal.execution.execute(data: TerminalExecutionExecuteRequest, options
 | `env` | `string` | No | query | Environment variable in KEY=VALUE format (can be repeated for multiple variables, e.g., ?env=DEBUG=1&env=API_KEY=abc) |
 | `skip_display_wait` | `boolean` | No | query | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the endpoint blocks until the display server on port 4000+display_num is ready (default: false) |
 | `display_wait_timeout` | `number` | No | query | Timeout in seconds for display readiness wait (default: 10, capped at 10 seconds to prevent event-loop pin; values &lt;=0 or malformed also map to the 10-second cap). Ignored if skip_display_wait=true |
-| `display` | `string` | No | query | DISPLAY environment variable for X11 applications (auto-formats :display if number provided, e.g., ?display=1 becomes DISPLAY=:1) |
+| `display` | `string` | No | query | DISPLAY environment variable for X11 applications (auto-formats:display if number provided, e.g., ?display=1 becomes DISPLAY=:1) |
 | `ssh_host` | `string` | No | query | SSH server hostname or IP address (creates SSH session if provided with ssh_user) |
 | `ssh_user` | `string` | No | query | SSH username (required if ssh_host is provided) |
 | `ssh_port` | `string` | No | query | SSH port number (default: 22) |
@@ -171,7 +171,7 @@ client.terminal.sessions.connectWebSocket(options?: { terminal_id?: string; read
 | `user` | `string` | No | query | System user to spawn shell as (requires permissions) |
 | `cmd` | `string` | No | query | Base64-encoded command to auto-execute on spawn |
 | `env` | `string` | No | query | Environment variable KEY=VALUE (repeatable) |
-| `display` | `string` | No | query | DISPLAY variable for X11 apps (auto-formats :N) |
+| `display` | `string` | No | query | DISPLAY variable for X11 apps (auto-formats:N) |
 | `pid` | `number` | No | query | Attach to existing process PID for monitoring |
 | `ssh_host` | `string` | No | query | SSH server hostname/IP for remote connections |
 | `ssh_user` | `string` | No | query | SSH username (required if ssh_host provided) |
@@ -1040,7 +1040,7 @@ client.terminal.web.get(options?: { terminal_id?: string; cwd?: string; cwd_auto
 | `reset` | `boolean` | No | query | Kill existing terminal process and reconfigure session (default: false). Use to switch shell, user, or from shell to SSH |
 | `pid` | `number` | No | query | Attach to an existing process by PID instead of spawning a new shell. Implies reset |
 | `env` | `string` | No | query | Inject environment variable as KEY=VALUE. Can be repeated for multiple variables (e.g., ?env=FOO=bar&env=BAZ=qux) |
-| `display` | `string` | No | query | X11 display number for GUI applications. Accepts number (e.g., 1) or :number (e.g., :1). Shorthand for ?env=DISPLAY=:N |
+| `display` | `string` | No | query | X11 display number for GUI applications. Accepts number (e.g., 1) or:number (e.g.,:1). Shorthand for ?env=DISPLAY=:N |
 | `env_inject` | `boolean` | No | query | Inject HOODY_* environment variables into shell session (default: true). Set to false to disable |
 | `startup_script` | `string` | No | query | Path to startup script to execute before shell launch (only applied on first session creation) |
 | `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key-based authentication (prefer over password-based auth) |

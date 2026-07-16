@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
 **Version:** 1.0.0-beta.1
-**Total endpoints:** 927
+**Total endpoints:** 931
 **Namespaces:** 19
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -193,7 +193,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `api` — 219 endpoints
+## `api` — 221 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -402,14 +402,16 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/wallet/invoices/{id}` | `api.wallet.getInvoice` | `hoody wallet invoices get` | Get invoice by ID |
 | GET | `/api/v1/wallet/invoices/{id}/pdf` | `api.wallet.downloadInvoicePdf` | `hoody wallet invoices download` | Download invoice PDF |
 | POST | `/api/v1/wallet/invoices/generate/{id}` | `api.wallet.generateInvoice` | `hoody wallet invoices generate` | Generate invoice for transaction |
+| GET | `/api/v1/wallet/payment-availability` | `api.wallet.getPaymentAvailability` | — | Get top-up payment availability (providers, bounds, AI transfer fee) |
 | GET | `/api/v1/wallet/payment-methods/` | `api.wallet.listPaymentMethods` | `hoody wallet payment-methods list` | Get all payment methods |
 | POST | `/api/v1/wallet/payment-methods/` | `api.wallet.addPaymentMethod` | `hoody wallet payment-methods create` | Add a new payment method |
 | DELETE | `/api/v1/wallet/payment-methods/{id}` | `api.wallet.deletePaymentMethod` | `hoody wallet payment-methods delete` | Delete a payment method |
 | GET | `/api/v1/wallet/payment-methods/{id}` | `api.wallet.getPaymentMethod` | `hoody wallet payment-methods get` | Get payment method by ID |
 | PUT | `/api/v1/wallet/payment-methods/{id}` | `api.wallet.updatePaymentMethod` | `hoody wallet payment-methods update` | Update a payment method |
 | PUT | `/api/v1/wallet/payment-methods/{id}/default` | `api.wallet.setDefaultPaymentMethod` | `hoody wallet payment-methods set-default` | Set a payment method as default |
-| POST | `/api/v1/wallet/payments/` | `api.wallet.processPayment` | `hoody wallet payments create` | Process a payment |
-| GET | `/api/v1/wallet/payments/{id}` | `api.wallet.getPaymentStatus` | `hoody wallet payments status` | Get payment status |
+| GET | `/api/v1/wallet/payments/crypto/intents` | `api.wallet.listCryptoPaymentIntents` | — | List crypto payment intents |
+| GET | `/api/v1/wallet/payments/crypto/intents/{id}` | `api.wallet.getCryptoPaymentIntent` | — | Get a crypto payment intent |
+| POST | `/api/v1/wallet/payments/crypto/invoice` | `api.wallet.createCryptoInvoice` | — | Start a crypto payment (hosted invoice) |
 | POST | `/api/v1/wallet/payments/stripe/checkout` | `api.wallet.createStripeCheckout` | — | Start a card payment (Stripe Checkout) |
 | GET | `/api/v1/wallet/payments/stripe/intents` | `api.wallet.listStripePaymentIntents` | — | List card payment intents |
 | GET | `/api/v1/wallet/payments/stripe/intents/{id}` | `api.wallet.getStripePaymentIntent` | — | Get a card payment intent |
@@ -459,7 +461,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `browser` — 27 endpoints
+## `browser` — 29 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -490,6 +492,8 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/tab/close` | `browser.introspection.closeTab` | `hoody browser tabs close` | Close a browser tab |
 | GET | `/tabs` | `browser.introspection.listTabs` | `hoody browser tabs list` | List browser tabs |
 | GET | `/text` | `browser.page.getText` | `hoody browser text` | Get page text |
+| GET | `/viewport` | `browser.introspection.getViewport` | — | Get the current viewport policy |
+| POST | `/viewport` | `browser.introspection.setViewport` | — | Change the viewport at runtime |
 
 ---
 

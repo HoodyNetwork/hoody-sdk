@@ -4,10 +4,10 @@
 
 | Namespace | Methods | Services | Accessor |
 |-----------|---------|----------|----------|
-| [`agent`](agent.md) | 212 | 20 | `client.agent` |
-| [`api`](api.md) | 273 | 31 | `client.api` |
+| [`agent`](agent.md) | 208 | 20 | `client.agent` |
+| [`api`](api.md) | 275 | 31 | `client.api` |
 | [`app`](app.md) | 35 | 8 | `client.app` |
-| [`browser`](browser.md) | 27 | 8 | `client.browser` |
+| [`browser`](browser.md) | 29 | 8 | `client.browser` |
 | [`code`](code.md) | 19 | 6 | `client.code` |
 | [`cron`](cron.md) | 15 | 4 | `client.cron` |
 | [`curl`](curl.md) | 31 | 8 | `client.curl` |

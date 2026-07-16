@@ -450,9 +450,9 @@ export interface ApiUsersUpdateRequest {
    * @maxLength 128
    */
   current_password?: string;
-  /** Admin status (ADMIN-ONLY field). Grants full system access. */
+  /** Admin status (read-only) */
   is_admin?: boolean;
-  /** Ban status (ADMIN-ONLY field). Banned users cannot access the API. Admin users cannot be banned. */
+  /** Ban status. Banned users cannot access the API. */
   is_banned?: boolean;
 }
 
@@ -862,7 +862,7 @@ export interface ApiContainersGetNetworkConfigResponse {
 export interface ApiContainersUpdateNetworkConfigRequest {
   /** Network configuration type - proxy type or block for traffic blocking */
   type: "socks5" | "http" | "https" | "block";
-  /** Proxy server URL (required for non-block types, e.g., "socks5://user:pass@proxy.example.com:1080") */
+  /** Proxy server URL (required for non-block types, e.g., "socks5://proxy.example.com:1080") */
   proxy?: string;
   /** Optional country for geographical proxy selection */
   country?: string;
@@ -1204,7 +1204,7 @@ export interface ApiProxyPermissionsProjectGetResponse {
 
 export interface ApiProxyPermissionsProjectReplaceRequest {
   /**
-   * Project ID (must match path :id)
+   * Project ID (must match path:id)
    * @pattern ^[0-9a-f]{24}$
    */
   project: string;
@@ -1268,7 +1268,7 @@ export interface ApiProxyPermissionsProjectSetJwtGroupRequest {
   /** JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys. */
   algorithm: "HS256" | "RS256" | "ES256";
   /**
-   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" (param: was removed; see logs-permissions.md §5.4)
+   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" (param: was removed;)
    * @minItems 1
    */
   sources: string[];
@@ -1374,7 +1374,7 @@ export interface ApiProxyPermissionsContainerReplaceRequest {
    */
   project: string;
   /**
-   * Container ID (must match path :id)
+   * Container ID (must match path:id)
    * @pattern ^[0-9a-f]{24}$
    */
   container: string;
@@ -1440,7 +1440,7 @@ export interface ApiProxyPermissionsContainerSetJwtGroupRequest {
   /** JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys. */
   algorithm: "HS256" | "RS256" | "ES256";
   /**
-   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" (param: was removed; see logs-permissions.md §5.4)
+   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" (param: was removed;)
    * @minItems 1
    */
   sources: string[];
@@ -1764,7 +1764,7 @@ export interface ApiStorageSharesListResponse {
 
 export interface ApiStorageSharesCreateRequest {
   /**
-   * ARCHITECTURE: Source containers control WHAT to share (this path). Target mount paths are determined by the server, NOT by users. SECURITY-HARDENED: Character whitelist (a-z A-Z 0-9 / - _ .), path normalization applied, blocks system paths (/proc/*, /sys/*, /dev/*, /boot/*, /run/*, /var/run/*), no path traversal (..), no null bytes. Returns normalized canonical path.
+   * ARCHITECTURE: Source containers control WHAT to share (this path). Target mount paths are determined by the server, NOT by users. SECURITY-HARDENED: Character whitelist (a-z A-Z 0-9 / - _.), path normalization applied, blocks system paths (/proc/*, /sys/*, /dev/*, /boot/*, /run/*, /var/run/*), no path traversal (..), no null bytes. Returns normalized canonical path.
    * @minLength 1
    * @maxLength 4096
    * @pattern ^/.*
@@ -1988,7 +1988,13 @@ export interface ApiRealmsListResponse {
 export interface ApiWalletGetAggregateBalancesResponse {
   statusCode: number;
   message: string;
-  data: { general_balance?: string; ai_limit?: string; ai_usage?: string; ai_remaining?: string };
+  data: { general_balance?: string; ai_limit?: string; ai_usage?: string; ai_remaining?: string; ai_usage_status?: "live" | "unavailable" };
+}
+
+export interface GetPaymentAvailabilityResponse {
+  statusCode: number;
+  message: string;
+  data: { stripe?: { enabled?: boolean; min_usd?: number; max_usd?: number }; nowpayments?: { enabled?: boolean; min_usd?: number; max_usd?: number }; ai_credit_fee_bps?: number };
 }
 
 export interface ApiWalletGetGeneralBalanceResponse {
@@ -2009,12 +2015,25 @@ export interface ApiWalletTransferToAiRequest {
    * @pattern ^(0|[1-9]\d*)(\.\d{1,2})?$
    */
   amount: string;
+  /**
+   * Optional caller idempotency key. Retrying with the SAME key AND same amount returns the original receipt without moving funds again; the same key with a different amount is rejected (409 TRANSFER_IDEMPOTENCY_KEY_REUSED). Recommended for the UI to make a double-click / retry-after-timeout safe.
+   * @minLength 1
+   * @maxLength 128
+   * @pattern \S
+   */
+  idempotency_key?: string;
+  /**
+   * Optional: the platform fee (basis points) the client displayed at confirmation. If it no longer matches the current server fee, the transfer is rejected (409 TRANSFER_FEE_CHANGED) so the user re-confirms — so an irreversible transfer can never be charged a fee the user was not shown.
+   * @minimum 0
+   * @maximum 9999
+   */
+  expected_fee_bps?: number /* min: 0, max: 9999 */;
 }
 
 export interface ApiWalletTransferToAiResponse {
   statusCode: number;
   message: string;
-  data: { gross_transferred?: string; net_ai_credit?: string; fee?: string; general_balance?: string; ai_balance?: string; key_created?: boolean };
+  data: { gross_transferred?: string; net_ai_credit?: string; fee?: string; general_balance?: string; ai_balance?: string; key_created?: boolean; limit_sync_pending?: boolean; replayed?: boolean };
 }
 
 export interface ApiWalletListAiFeeHistoryResponse {
@@ -2071,33 +2090,6 @@ export interface ApiWalletSetDefaultPaymentMethodResponse {
   data: { id: string; user_id?: string; type?: string; name?: string; status?: string; details?: Record<string, unknown>; is_default?: boolean; created_at?: string; updated_at?: string };
 }
 
-export interface ApiWalletProcessPaymentRequest {
-  /** ID of an active payment method owned by the caller. */
-  payment_method_id: string;
-  /**
-   * USD amount as a strict string with up to 2 decimals (e.g., "10", "10.00"). No negatives, no exponent.
-   * @pattern ^(0|[1-9]\d*)(\.\d{1,2})?$
-   */
-  amount: string;
-  /** Optional; currently informational. If provided, amounts must be strict dollar strings. */
-  credit_distribution?: { type: "general"; amount: string }[];
-  reason?: string;
-}
-
-export interface ApiWalletProcessPaymentResponse {
-  statusCode: number;
-  message: string;
-  data: { transaction?: { id: string; user_id?: string; payment_method_id?: string; transaction_type?: string; status?: string; amount?: number; currency?: string; gateway_name?: string; gateway_transaction_id?: string; reason?: string; created_at?: string; updated_at?: string }; invoice?: { id: string; invoice_number?: string }; balance?: { id: string; user_id?: string; balance?: number; created_at?: string; updated_at?: string } };
-  example?: unknown;
-}
-
-export interface ApiWalletGetPaymentStatusResponse {
-  statusCode: number;
-  message: string;
-  data: { id: string; user_id?: string; payment_method_id?: string; transaction_type?: string; status?: string; amount?: number; currency?: string; gateway_name?: string; gateway_transaction_id?: string; reason?: string; created_at?: string; updated_at?: string; details?: { id: string; transaction_id?: string; credit_type?: string; amount?: number; created_at?: string }[]; invoice?: { id: string; invoice_number?: string; status?: string; issue_date?: string; paid_date?: string } };
-  example?: unknown;
-}
-
 export interface CreateStripeCheckoutRequest {
   /**
    * USD amount as a strict decimal string (e.g., "25" or "25.00")
@@ -2105,9 +2097,10 @@ export interface CreateStripeCheckoutRequest {
    */
   amount: string;
   /**
-   * Optional caller idempotency key; repeats return the original intent
+   * Optional caller idempotency key (must contain a non-whitespace character); repeats return the original intent
    * @minLength 1
    * @maxLength 128
+   * @pattern \S
    */
   idempotency_key?: string;
 }
@@ -2125,6 +2118,39 @@ export interface ListStripePaymentIntentsResponse {
 }
 
 export interface GetStripePaymentIntentResponse {
+  statusCode: 200;
+  message: string;
+  data: { id: string; provider?: string; status?: "creating" | "pending" | "processing" | "completed" | "failed" | "expired" | "cancelled" | "admin_review"; amount?: number; currency?: string; redirect_url?: null | string; credited_at?: null | string; expires_at?: null | string; created_at?: string; updated_at?: string };
+}
+
+export interface CreateCryptoInvoiceRequest {
+  /**
+   * USD amount as a strict decimal string (e.g., "25" or "25.00")
+   * @pattern ^(0|[1-9]\d*)(\.\d{1,2})?$
+   */
+  amount: string;
+  /**
+   * Optional caller idempotency key (must contain a non-whitespace character); repeats return the original intent
+   * @minLength 1
+   * @maxLength 128
+   * @pattern \S
+   */
+  idempotency_key?: string;
+}
+
+export interface CreateCryptoInvoiceResponse {
+  statusCode: 201;
+  message: string;
+  data: { intent?: { id: string; provider?: string; status?: "creating" | "pending" | "processing" | "completed" | "failed" | "expired" | "cancelled" | "admin_review"; amount?: number; currency?: string; redirect_url?: null | string; credited_at?: null | string; expires_at?: null | string; created_at?: string; updated_at?: string }; invoice_url?: string };
+}
+
+export interface ListCryptoPaymentIntentsResponse {
+  statusCode: 200;
+  message: string;
+  data: { intents?: ({ id: string; provider?: string; status?: "creating" | "pending" | "processing" | "completed" | "failed" | "expired" | "cancelled" | "admin_review"; amount?: number; currency?: string; redirect_url?: null | string; credited_at?: null | string; expires_at?: null | string; created_at?: string; updated_at?: string })[]; total?: number };
+}
+
+export interface GetCryptoPaymentIntentResponse {
   statusCode: 200;
   message: string;
   data: { id: string; provider?: string; status?: "creating" | "pending" | "processing" | "completed" | "failed" | "expired" | "cancelled" | "admin_review"; amount?: number; currency?: string; redirect_url?: null | string; credited_at?: null | string; expires_at?: null | string; created_at?: string; updated_at?: string };
@@ -2571,7 +2597,7 @@ export interface OauthDeviceTokenResponse {
 export interface BrowserInstancesStartResponse {
   statusCode: number;
   message: string;
-  data: { engine?: "playwright" | "patchright"; stealth?: boolean; headless?: boolean; chromiumBuildId?: string; chromiumExecutablePath?: string; browserExecutablePath?: string; fingerprintId?: string; display?: string; iframe_url?: string | null; browser_id?: string; browser_host?: string; browser_port?: number; sessionId?: string; sessionName?: string; timezoneId?: string; locale?: string; geolocation?: Geolocation; viewport?: Viewport; userAgentString?: string; browserName?: string; browserFullVersion?: string; operatingSystemName?: string; operatingSystemPlatform?: string; operatingSystemVersion?: string; renderingEngine?: string; renderingEngineVersion?: string; webSocketDebuggerUrl?: string | null; devtoolsHttpUrl?: string | null; devtoolsFrontendUrl?: string | null; extensions?: string[]; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number | null; remoteDebuggingAddress?: string | null; quicDisabled?: boolean; http3Disabled?: boolean; dnsOverHttpsEnabled?: boolean; dnsOverHttpsUrl?: string | null; tabs?: { id: number; url?: string }[] };
+  data: { engine?: "playwright" | "patchright"; stealth?: boolean; headless?: boolean; chromiumBuildId?: string; chromiumExecutablePath?: string; browserExecutablePath?: string; fingerprintId?: string; display?: string; iframe_url?: string | null; browser_id?: string; browser_host?: string; browser_port?: number; sessionId?: string; sessionName?: string; timezoneId?: string; locale?: string; geolocation?: Geolocation; viewport?: Viewport; viewportSource?: "creation" | "runtime"; userAgentString?: string; browserName?: string; browserFullVersion?: string; operatingSystemName?: string; operatingSystemPlatform?: string; operatingSystemVersion?: string; renderingEngine?: string; renderingEngineVersion?: string; webSocketDebuggerUrl?: string | null; devtoolsHttpUrl?: string | null; devtoolsFrontendUrl?: string | null; extensions?: string[]; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number | null; remoteDebuggingAddress?: string | null; quicDisabled?: boolean; http3Disabled?: boolean; dnsOverHttpsEnabled?: boolean; dnsOverHttpsUrl?: string | null; tabs?: { id: number; url?: string }[] };
 }
 
 export interface BrowserInstancesStopResponse {
@@ -2640,7 +2666,7 @@ export interface EvalPostResponse {
 export interface BrowserIntrospectionGetMetadataResponse {
   statusCode: number;
   message: string;
-  data: { engine?: "playwright" | "patchright"; stealth?: boolean; headless?: boolean; chromiumBuildId?: string; chromiumExecutablePath?: string; browserExecutablePath?: string; fingerprintId?: string; display?: string; iframe_url?: string | null; browser_id?: string; browser_host?: string; browser_port?: number; sessionId?: string; sessionName?: string; timezoneId?: string; locale?: string; geolocation?: Geolocation; viewport?: Viewport; userAgentString?: string; browserName?: string; browserFullVersion?: string; operatingSystemName?: string; operatingSystemPlatform?: string; operatingSystemVersion?: string; renderingEngine?: string; renderingEngineVersion?: string; webSocketDebuggerUrl?: string | null; devtoolsHttpUrl?: string | null; devtoolsFrontendUrl?: string | null; extensions?: string[]; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number | null; remoteDebuggingAddress?: string | null; quicDisabled?: boolean; http3Disabled?: boolean; dnsOverHttpsEnabled?: boolean; dnsOverHttpsUrl?: string | null; tabs?: { id: number; url?: string }[] };
+  data: { engine?: "playwright" | "patchright"; stealth?: boolean; headless?: boolean; chromiumBuildId?: string; chromiumExecutablePath?: string; browserExecutablePath?: string; fingerprintId?: string; display?: string; iframe_url?: string | null; browser_id?: string; browser_host?: string; browser_port?: number; sessionId?: string; sessionName?: string; timezoneId?: string; locale?: string; geolocation?: Geolocation; viewport?: Viewport; viewportSource?: "creation" | "runtime"; userAgentString?: string; browserName?: string; browserFullVersion?: string; operatingSystemName?: string; operatingSystemPlatform?: string; operatingSystemVersion?: string; renderingEngine?: string; renderingEngineVersion?: string; webSocketDebuggerUrl?: string | null; devtoolsHttpUrl?: string | null; devtoolsFrontendUrl?: string | null; extensions?: string[]; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number | null; remoteDebuggingAddress?: string | null; quicDisabled?: boolean; http3Disabled?: boolean; dnsOverHttpsEnabled?: boolean; dnsOverHttpsUrl?: string | null; tabs?: { id: number; url?: string }[] };
 }
 
 export interface BrowserIntrospectionListTabsResponse {
@@ -2688,6 +2714,29 @@ export interface BrowserIntrospectionGetDevtoolsUrlResponse {
   statusCode: number;
   message: string;
   data: { webSocketDebuggerUrl?: string | null; devtoolsHttpUrl?: string | null; devtoolsFrontendUrl?: string | null };
+}
+
+/**
+ * Live viewport policy of a browser instance.
+ */
+export interface GetViewportResponse {
+  statusCode: number;
+  message: string;
+  data: { viewport: { width: number /* min: 1, max: 8192 */; height: number /* min: 1, max: 8192 */ } | null; source: "creation" | "runtime"; tabs: number /* min: 0 */; converged: boolean };
+}
+
+export interface SetViewportRequest {
+  /** Fixed size {width,height} (integers 1..8192, no other keys), or null for responsive. */
+  viewport: { width: number /* min: 1, max: 8192 */; height: number /* min: 1, max: 8192 */ } | null;
+}
+
+/**
+ * Live viewport policy of a browser instance.
+ */
+export interface SetViewportResponse {
+  statusCode: number;
+  message: string;
+  data: { viewport: { width: number /* min: 1, max: 8192 */; height: number /* min: 1, max: 8192 */ } | null; source: "creation" | "runtime"; tabs: number /* min: 0 */; converged: boolean };
 }
 
 export interface BrowserCookiesGetResponse {
@@ -2739,12 +2788,10 @@ export interface BrowserHistoryClearResponse {
 export interface CodeExtensionsInstallRequest {
   /** URL to the VSIX file to install. Supports:
 - HTTPS URLs (recommended)
-- HTTP URLs
- */
+- HTTP URLs */
   url: string;
   /** If true, install as a system/built-in extension.
-Built-in extensions cannot be uninstalled by users.
- */
+Built-in extensions cannot be uninstalled by users. */
   asBuiltin?: boolean;
 }
 
@@ -4216,8 +4263,8 @@ Archived blobs can be restored by setting access tier to hot, cool or
 cold. Leave blank if you intend to use default access tier, which is
 set at account level
 
-If there is no "access tier" specified, hoody-vfs doesn't apply any tier.
-hoody-vfs performs "Set Tier" operation on blobs while uploading, if objects
+If there is no "access tier" specified, Hoody doesn't apply any tier.
+Hoody performs "Set Tier" operation on blobs while uploading, if objects
 are not modified, specifying "access tier" to new one will have no effect.
 If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
@@ -4230,23 +4277,21 @@ Set this to the Azure Storage Account Name in use.
 Leave blank to use SAS URL or Emulator, otherwise it needs to be set.
 
 If this is blank and if env_auth is set it will be read from the
-environment variable `AZURE_STORAGE_ACCOUNT_NAME` if possible.
- */
+environment variable `AZURE_STORAGE_ACCOUNT_NAME` if possible. */
   account?: string;
   /** Delete archive tier blobs before overwriting.
 
 Archive tier blobs cannot be updated. So without this flag, if you
-attempt to update an archive tier blob, then hoody-vfs will produce the
+attempt to update an archive tier blob, then Hoody will produce the
 error:
 
-    can't update archive tier blob without --azureblob-archive-tier-delete
+ can't update archive tier blob without --azureblob-archive-tier-delete
 
-With this flag set then before hoody-vfs attempts to overwrite an archive
+With this flag set then before Hoody attempts to overwrite an archive
 tier blob, it will delete the existing blob before uploading its
-replacement.  This has the potential for data loss if the upload fails
+replacement. This has the potential for data loss if the upload fails
 (unlike updating a normal blob) and also may cost more since deleting
-archive tier blobs early may be chargable.
- */
+archive tier blobs early may be chargable. */
   archive_tier_delete?: boolean;
   /** Upload chunk size.
 
@@ -4259,28 +4304,24 @@ in memory. */
 Optionally set this if using
 - Service principal with certificate
 
-And the certificate has a password.
- */
+And the certificate has a password. */
   client_certificate_password?: string;
   /** Path to a PEM or PKCS12 certificate file including the private key.
 
 Set this if using
-- Service principal with certificate
- */
+- Service principal with certificate */
   client_certificate_path?: string;
   /** The ID of the client in use.
 
 Set this if using
 - Service principal with client secret
 - Service principal with certificate
-- User with username and password
- */
+- User with username and password */
   client_id?: string;
   /** One of the service principal's client secrets
 
 Set this if using
-- Service principal with client secret
- */
+- Service principal with client secret */
   client_secret?: string;
   /** Send the certificate chain when using certificate auth.
 
@@ -4289,8 +4330,7 @@ to support subject name / issuer based authentication. When set to
 true, authentication requests include the x5c header.
 
 Optionally set this if using
-- Service principal with certificate
- */
+- Service principal with certificate */
   client_send_certificate_chain?: boolean;
   /** Set to specify how to deal with snapshots on blob deletion. */
   delete_snapshots?: "" | "include" | "only";
@@ -4302,12 +4342,11 @@ Empty folders are unsupported for bucket based remotes, this option
 creates an empty object ending with "/", to persist the folder.
 
 This object also has the metadata "hdi_isfolder = true" to conform to
-the Microsoft standard.
-  */
+the Microsoft standard. */
   directory_markers?: boolean;
   /** Don't store MD5 checksum with object metadata.
 
-Normally hoody-vfs will calculate the MD5 checksum of the input before
+Normally Hoody will calculate the MD5 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
 to start uploading. */
@@ -4317,13 +4356,12 @@ to start uploading. */
 This should be set true only by applications authenticating in
 disconnected clouds, or private clouds such as Azure Stack.
 
-It determines whether hoody-vfs requests Microsoft Entra instance
+It determines whether Hoody requests Microsoft Entra instance
 metadata from `https://login.microsoft.com/` before
 authenticating.
 
 Setting this to true will skip this request, making you responsible
-for ensuring the configured authority is valid and trustworthy.
- */
+for ensuring the configured authority is valid and trustworthy. */
   disable_instance_discovery?: boolean;
   /** The encoding for the backend.
 
@@ -4370,16 +4408,14 @@ Leave blank if msi_client_id or msi_mi_res_id specified. */
   /** If set, don't attempt to check the container exists or create it.
 
 This can be useful when trying to minimise the number of transactions
-hoody-vfs does if you know the container exists already.
- */
+Hoody does if you know the container exists already. */
   no_check_container?: boolean;
   /** If set, do not do HEAD before GET when getting objects. */
   no_head_object?: boolean;
   /** The user's password
 
 Set this if using
-- User with username and password
- */
+- User with username and password */
   password?: string;
   /** Public access level of a container: blob or container. */
   public_access?: "" | "blob" | "container";
@@ -4391,25 +4427,23 @@ Leave blank if using account/key or Emulator. */
 
 Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
 
-    $ az ad sp create-for-rbac --name "<name>" \
-      --role "Storage Blob Data Owner" \
-      --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
-      > azure-principal.json
+ $ az ad sp create-for-rbac --name "<name>" \
+ --role "Storage Blob Data Owner" \
+ --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
+ > azure-principal.json
 
 See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 
 It may be more convenient to put the credentials directly into the
-hoody-vfs config file under the `client_id`, `tenant` and `client_secret`
-keys instead of setting `service_principal_file`.
- */
+Hoody config file under the `client_id`, `tenant` and `client_secret`
+keys instead of setting `service_principal_file`. */
   service_principal_file?: string;
   /** ID of the service principal's tenant. Also called its directory ID.
 
 Set this if using
 - Service principal with client secret
 - Service principal with certificate
-- User with username and password
- */
+- User with username and password */
   tenant?: string;
   /** Concurrency for multipart uploads.
 
@@ -4438,8 +4472,7 @@ as the sole means of authentication.
 Setting this can be useful if you wish to use the az CLI on a host with
 a System Managed Identity that you do not want to use.
 
-Don't set env_auth at the same time.
- */
+Don't set env_auth at the same time. */
   use_az?: boolean;
   /** Uses local storage emulator if provided as 'true'.
 
@@ -4459,8 +4492,7 @@ msi_client_id, or msi_mi_res_id parameters. */
   /** User name (usually an email address)
 
 Set this if using
-- User with username and password
- */
+- User with username and password */
   username?: string;
 }
 
@@ -4482,8 +4514,7 @@ Set this to the Azure Storage Account Name in use.
 Leave blank to use SAS URL or connection string, otherwise it needs to be set.
 
 If this is blank and if env_auth is set it will be read from the
-environment variable `AZURE_STORAGE_ACCOUNT_NAME` if possible.
- */
+environment variable `AZURE_STORAGE_ACCOUNT_NAME` if possible. */
   account?: string;
   /** Upload chunk size.
 
@@ -4496,28 +4527,24 @@ in memory. */
 Optionally set this if using
 - Service principal with certificate
 
-And the certificate has a password.
- */
+And the certificate has a password. */
   client_certificate_password?: string;
   /** Path to a PEM or PKCS12 certificate file including the private key.
 
 Set this if using
-- Service principal with certificate
- */
+- Service principal with certificate */
   client_certificate_path?: string;
   /** The ID of the client in use.
 
 Set this if using
 - Service principal with client secret
 - Service principal with certificate
-- User with username and password
- */
+- User with username and password */
   client_id?: string;
   /** One of the service principal's client secrets
 
 Set this if using
-- Service principal with client secret
- */
+- Service principal with client secret */
   client_secret?: string;
   /** Send the certificate chain when using certificate auth.
 
@@ -4526,8 +4553,7 @@ to support subject name / issuer based authentication. When set to
 true, authentication requests include the x5c header.
 
 Optionally set this if using
-- Service principal with certificate
- */
+- Service principal with certificate */
   client_send_certificate_chain?: boolean;
   /** Azure Files Connection String. */
   connection_string?: string;
@@ -4552,16 +4578,15 @@ Leave blank to use SAS URL or connection string. */
   /** Max size for streamed files.
 
 Azure files needs to know in advance how big the file will be. When
-hoody-vfs doesn't know it uses this value instead.
+Hoody doesn't know it uses this value instead.
 
-This will be used when hoody-vfs is streaming data, the most common uses are:
+This will be used when Hoody is streaming data, the most common uses are:
 
-- Uploading files with `--vfs-cache-mode off` with `hoody-vfs mount`
-- Using `hoody-vfs rcat`
+- Uploading files with `--vfs-cache-mode off` with `Hoody mount`
+- Using `Hoody rcat`
 - Copying files with unknown length
 
-You will need this much free space in the share as the file will be this size temporarily.
- */
+You will need this much free space in the share as the file will be this size temporarily. */
   max_stream_size?: string;
   /** Object ID of the user-assigned MSI to use, if any.
 
@@ -4578,8 +4603,7 @@ Leave blank if msi_client_id or msi_mi_res_id specified. */
   /** The user's password
 
 Set this if using
-- User with username and password
- */
+- User with username and password */
   password?: string;
   /** SAS URL.
 
@@ -4589,32 +4613,29 @@ Leave blank if using account/key or connection string. */
 
 Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
 
-    $ az ad sp create-for-rbac --name "<name>" \
-      --role "Storage Files Data Owner" \
-      --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
-      > azure-principal.json
+ $ az ad sp create-for-rbac --name "<name>" \
+ --role "Storage Files Data Owner" \
+ --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
+ > azure-principal.json
 
 See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to files data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 
 **NB** this section needs updating for Azure Files - pull requests appreciated!
 
 It may be more convenient to put the credentials directly into the
-hoody-vfs config file under the `client_id`, `tenant` and `client_secret`
-keys instead of setting `service_principal_file`.
- */
+Hoody config file under the `client_id`, `tenant` and `client_secret`
+keys instead of setting `service_principal_file`. */
   service_principal_file?: string;
   /** Azure Files Share Name.
 
-This is required and is the name of the share to access.
- */
+This is required and is the name of the share to access. */
   share_name?: string;
   /** ID of the service principal's tenant. Also called its directory ID.
 
 Set this if using
 - Service principal with client secret
 - Service principal with certificate
-- User with username and password
- */
+- User with username and password */
   tenant?: string;
   /** Concurrency for multipart uploads.
 
@@ -4643,8 +4664,7 @@ msi_client_id, or msi_mi_res_id parameters. */
   /** User name (usually an email address)
 
 Set this if using
-- User with username and password
- */
+- User with username and password */
   username?: string;
 }
 
@@ -4681,14 +4701,14 @@ The minimum is 0 and the maximum is 4.6 GiB. */
   description?: string;
   /** Disable checksums for large (> upload cutoff) files.
 
-Normally hoody-vfs will calculate the SHA1 checksum of the input before
+Normally Hoody will calculate the SHA1 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
 to start uploading. */
   disable_checksum?: boolean;
   /** Time before the public link authorization token will expire in s or suffix ms|s|m|h|d.
 
-This is used in combination with "hoody-vfs link" for making files
+This is used in combination with "Hoody link" for making files
 accessible to the public and sets the duration before the download
 authorization token will expire.
 
@@ -4704,7 +4724,7 @@ e.g., in Cloudflare Workers, this header needs to be handled properly.
 Leave blank if you want to use the endpoint provided by Backblaze.
 
 The URL provided here SHOULD have the protocol and SHOULD NOT have
-a trailing slash or specify the /file/bucket subpath as hoody-vfs will
+a trailing slash or specify the /file/bucket subpath as Hoody will
 request files with "{download_url}/file/{bucket_name}/{path}".
 
 Example:
@@ -4742,8 +4762,7 @@ You can also enable hard_delete in the config also which will mean
 deletions won't cause versions but overwrites will still cause
 versions to be made.
 
-See: [hoody-vfs backend lifecycle](#lifecycle) for setting lifecycles after bucket creation.
- */
+See: [Hoody backend lifecycle](#lifecycle) for setting lifecycles after bucket creation. */
   lifecycle?: number;
   /** How often internal memory buffer pools will be flushed. (no longer used) (in seconds) */
   memory_pool_flush_time?: number;
@@ -4754,9 +4773,9 @@ See: [hoody-vfs backend lifecycle](#lifecycle) for setting lifecycles after buck
 This is for debugging purposes only. Setting it to one of the strings
 below will cause b2 to return specific errors:
 
-  * "fail_some_uploads"
-  * "expire_some_account_authorization_tokens"
-  * "force_cap_exceeded"
+ * "fail_some_uploads"
+ * "expire_some_account_authorization_tokens"
+ * "force_cap_exceeded"
 
 These will be set in the "X-Bz-Test-Mode" header which is documented
 in the [b2 integrations checklist](https://www.backblaze.com/docs/cloud-storage-integration-checklist). */
@@ -4836,7 +4855,7 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   encoding?: string;
   /** Impersonate this user ID when using a service account.
 
-Setting this flag allows hoody-vfs, when using a JWT service account, to
+Setting this flag allows Hoody, when using a JWT service account, to
 act on behalf of another user by setting the as-user header.
 
 The user ID is the Box identifier for a user. User IDs can found for
@@ -4844,14 +4863,13 @@ any user via the GET /users endpoint, which is only available to
 admins, or by calling the GET /users/me endpoint with an authenticated
 user session.
 
-See: https://developer.box.com/guides/authentication/jwt/as-user/
- */
+See: https://developer.box.com/guides/authentication/jwt/as-user/ */
   impersonate?: string;
   /** Size of listing chunk 1-1000. */
   list_chunk?: number;
   /** Only show items owned by the login (email address) passed in. */
   owned_by?: string;
-  /** Fill in for hoody-vfs to use a non root folder as its starting point. */
+  /** Fill in for Hoody to use a non root folder as its starting point. */
   root_folder_id?: string;
   /** OAuth Access Token as a JSON blob. */
   token?: string;
@@ -4923,7 +4941,7 @@ The remote name is used as the DB file name. */
   db_purge?: boolean;
   /** How long to wait for the DB to be available - 0 is unlimited.
 
-Only one process can have the DB open at any one time, so hoody-vfs waits
+Only one process can have the DB open at any one time, so Hoody waits
 for this duration for the DB to become available before it gives an
 error.
 
@@ -4949,7 +4967,7 @@ this value very large as the cache store will also be updated in real time. (in 
 
 Since reading from a cache stream is independent from downloading file
 data, readers can get to a point where there's no more data in the
-cache.  Most of the times this can indicate a connectivity issue if
+cache. Most of the times this can indicate a connectivity issue if
 cache isn't able to provide file data anymore.
 
 For really slow connections, increase this to a point where the stream is
@@ -4998,9 +5016,9 @@ to start the upload if a queue formed for this purpose. (in seconds) */
   /** How many workers should run in parallel to download chunks.
 
 Higher values will mean more parallel processing (better CPU needed)
-and more concurrent requests on the cloud provider.  This impacts
+and more concurrent requests on the cloud provider. This impacts
 several aspects like the cloud provider API limits, more stress on the
-hardware that hoody-vfs runs on but it also means that streams will be
+hardware that Hoody runs on but it also means that streams will be
 more fluid and data will be available much more faster to readers.
 
 **Note**: If the optional Plex integration is enabled then this
@@ -5110,16 +5128,14 @@ export interface FilesBackendsConnectCombineRequest {
 
 These should be in the form
 
-    dir=remote:path dir2=remote2:path
+ dir=remote:path dir2=remote2:path
 
 Where before the = is specified the root directory and after is the remote to
 put there.
 
 Embedded spaces can be added using quotes
 
-    "dir=remote:path with space" "dir2=remote2:path with space"
-
- */
+ "dir=remote:path with space" "dir2=remote2:path with space" */
   upstreams: string;
 }
 
@@ -5214,7 +5230,7 @@ pointing to the same backend you can use it.
 This can be used, for example, to change file name encryption type
 without re-uploading all the data. Just make two crypt backends
 pointing to two different directories with the single changed
-parameter and use hoody-vfs move to move the files between the crypt
+parameter and use Hoody move to move the files between the crypt
 remotes. */
   server_side_across_configs?: boolean;
   /** For all files listed show how the names encrypt.
@@ -5229,7 +5245,7 @@ names, or for debugging purposes. */
   show_mapping?: boolean;
   /** If set, this will raise an error when crypt comes across a filename that can't be decrypted.
 
-(By default, hoody-vfs will just log a NOTICE and continue as normal.)
+(By default, Hoody will just log a NOTICE and continue as normal.)
 This can happen if encrypted and unencrypted files are stored in the same
 directory (which is not recommended.) It may also indicate a more serious
 problem that should be investigated. */
@@ -5256,8 +5272,8 @@ export interface FilesBackendsConnectDriveRequest {
 
 If downloading a file returns the error "This file has been identified
 as malware or spam and cannot be downloaded" with the error code
-"cannotDownloadAbusiveFile" then supply this flag to hoody-vfs to
-indicate you acknowledge the risks of downloading the file and hoody-vfs
+"cannotDownloadAbusiveFile" then supply this flag to Hoody to
+indicate you acknowledge the risks of downloading the file and Hoody
 will download it anyway.
 
 Note that if you are using service account it will need Manager
@@ -5291,7 +5307,6 @@ This will use the OAUTH2 client Credentials Flow as described in RFC 6749. */
   client_credentials?: boolean;
   /** Google Application Client Id
 Setting your own is recommended.
-See https://hoody-vfs.org/drive/#making-your-own-client-id for how to create your own.
 If you leave this blank, it will use an internal key which is low performance. */
   client_id?: string;
   /** OAuth Client Secret.
@@ -5300,10 +5315,10 @@ Leave blank normally. */
   client_secret?: string;
   /** Server side copy contents of shortcuts instead of the shortcut.
 
-When doing server side copies, normally hoody-vfs will copy shortcuts as
+When doing server side copies, normally Hoody will copy shortcuts as
 shortcuts.
 
-If this flag is used then hoody-vfs will copy the contents of shortcuts
+If this flag is used then Hoody will copy the contents of shortcuts
 rather than shortcuts themselves when doing server side copies. */
   copy_shortcut_content?: boolean;
   /** Description of the remote. */
@@ -5311,13 +5326,11 @@ rather than shortcuts themselves when doing server side copies. */
   /** Disable drive using http2.
 
 There is currently an unsolved issue with the google drive backend and
-HTTP/2.  HTTP/2 is therefore disabled by default for the drive backend
-but can be re-enabled here.  When the issue is solved this flag will
+HTTP/2. HTTP/2 is therefore disabled by default for the drive backend
+but can be re-enabled here. When the issue is solved this flag will
 be removed.
 
-See: https://github.com/hoody-vfs/hoody-vfs/issues/3631
-
- */
+See: https://github.com/Hoody/Hoody/issues/3631 */
   disable_http2?: boolean;
   /** The encoding for the backend.
 
@@ -5331,7 +5344,7 @@ Only applies if service_account_file and service_account_credentials is blank. *
   export_formats?: string;
   /** Work around a bug in Google Drive listing.
 
-Normally hoody-vfs will work around a bug in Google Drive when using
+Normally Hoody will work around a bug in Google Drive when using
 --fast-list (ListR) where the search "(A in parents) or (B in
 parents)" returns nothing sometimes. See #3114, #4289 and
 https://issuetracker.google.com/issues/149522397
@@ -5339,14 +5352,13 @@ https://issuetracker.google.com/issues/149522397
 Hoody-VFS detects this by finding no items in more than one directory
 when listing and retries them as lists of individual directories.
 
-This means that if you have a lot of empty directories hoody-vfs will end
+This means that if you have a lot of empty directories Hoody will end
 up listing them all individually and this can take many more API
 calls.
 
 This flag allows the work-around to be disabled. This is **not**
 recommended in normal use - only if you have a particular case you are
-having trouble with like many empty directories.
- */
+having trouble with like many empty directories. */
   fast_list_bug_fix?: boolean;
   /** Deprecated: See export_formats. */
   formats?: string;
@@ -5366,14 +5378,13 @@ from the metadata.
 
 The format of labels is documented in the drive API documentation at
 https://developers.google.com/drive/api/reference/rest/v3/Label -
-hoody-vfs just provides a JSON dump of this format.
+Hoody just provides a JSON dump of this format.
 
-When setting labels, the label and fields must already exist - hoody-vfs
+When setting labels, the label and fields must already exist - Hoody
 will not create them. This means that if you are transferring labels
 from two different accounts you will have to create the labels in
 advance and use the metadata mapper to translate the IDs between the
-two accounts.
- */
+two accounts. */
   metadata_labels?: "off" | "read" | "write" | "failok" | "read,write";
   /** Control whether owner should be read or written in metadata.
 
@@ -5383,18 +5394,16 @@ isn't always desirable to set the owner from the metadata.
 Note that you can't set the owner on Shared Drives, and that setting
 ownership will generate an email to the new owner (this can't be
 disabled), and you can't transfer ownership to someone outside your
-organization.
- */
+organization. */
   metadata_owner?: "off" | "read" | "write" | "failok" | "read,write";
   /** Control whether permissions should be read or written in metadata.
 
 Reading permissions metadata from files can be done quickly, but it
 isn't always desirable to set the permissions from the metadata.
 
-Note that hoody-vfs drops any inherited permissions on Shared Drives and
+Note that Hoody drops any inherited permissions on Shared Drives and
 any owner permission on My Drives as these are duplicated in the owner
-metadata.
- */
+metadata. */
   metadata_permissions?: "off" | "read" | "write" | "failok" | "read,write";
   /** Number of API calls to allow without sleeping. */
   pacer_burst?: number;
@@ -5404,7 +5413,7 @@ metadata.
 
 If you need to access files shared with a link like this
 
-    https://drive.google.com/drive/folders/XXX?resourcekey=YYY&usp=sharing
+ https://drive.google.com/drive/folders/XXX?resourcekey=YYY&usp=sharing
 
 Then you will need to use the first part "XXX" as the "root_folder_id"
 and the second part "YYY" as the "resource_key" otherwise you will get
@@ -5415,25 +5424,23 @@ See: https://developers.google.com/drive/api/guides/resource-keys
 This resource key requirement only applies to a subset of old files.
 
 Note also that opening the folder once in the web interface (with the
-user you've authenticated hoody-vfs with) seems to be enough so that the
-resource key is not needed.
- */
+user you've authenticated Hoody with) seems to be enough so that the
+resource key is not needed. */
   resource_key?: string;
   /** ID of the root folder.
 Leave blank normally.
 
-Fill in to access "Computers" folders (see docs), or for hoody-vfs to use
-a non root folder as its starting point.
- */
+Fill in to access "Computers" folders (see docs), or for Hoody to use
+a non root folder as its starting point. */
   root_folder_id?: string;
-  /** Comma separated list of scopes that hoody-vfs should use when requesting access from drive. */
+  /** Comma separated list of scopes that Hoody should use when requesting access from drive. */
   scope?: "drive" | "drive.readonly" | "drive.file" | "drive.appfolder" | "drive.metadata.readonly";
   /** Deprecated: use --server-side-across-configs instead.
 
 Allow server-side operations (e.g. copy) to work across different drive configs.
 
 This can be useful if you wish to do a server-side copy between two
-different Google drives.  Note that this isn't enabled by default
+different Google drives. Note that this isn't enabled by default
 because it isn't easy to tell if it will work between any two
 configurations. */
   server_side_across_configs?: boolean;
@@ -5451,7 +5458,7 @@ Leading `~` will be expanded in the file name as will environment variables such
   service_account_file?: string;
   /** Only show files that are shared with me.
 
-Instructs hoody-vfs to operate on your "Shared with me" folder (where
+Instructs Hoody to operate on your "Shared with me" folder (where
 Google Drive lets you access the files and folders others have shared
 with you).
 
@@ -5463,16 +5470,15 @@ commands (copy, sync, etc.), and with all other commands too. */
 If you try a server side copy on a Google Form without this flag, you
 will get this error:
 
-    No export formats found for "application/vnd.google-apps.form"
+ No export formats found for "application/vnd.google-apps.form"
 
 However adding this flag will allow the form to be server side copied.
 
-Note that hoody-vfs doesn't add extensions to the Google Docs file names
+Note that Hoody doesn't add extensions to the Google Docs file names
 in this mode.
 
-Do **not** use this flag when trying to download Google Docs - hoody-vfs
-will fail to download them.
- */
+Do **not** use this flag when trying to download Google Docs - Hoody
+will fail to download them. */
   show_all_gdocs?: boolean;
   /** Show sizes as storage quota usage, not actual size.
 
@@ -5484,7 +5490,7 @@ forever.
 
 It is not recommended to set this flag in your config - the
 recommended usage is using the flag form --drive-size-as-quota when
-doing hoody-vfs ls/lsl/lsf/lsjson/etc only.
+doing Hoody ls/lsl/lsf/lsjson/etc only.
 
 If you do use this flag for syncing (not recommended) then you will
 need to use --ignore size also. */
@@ -5504,19 +5510,17 @@ not updating the checksum. */
   skip_checksum_gphotos?: boolean;
   /** If set skip dangling shortcut files.
 
-If this is set then hoody-vfs will not show any dangling shortcuts in listings.
- */
+If this is set then Hoody will not show any dangling shortcuts in listings. */
   skip_dangling_shortcuts?: boolean;
   /** Skip google documents in all listings.
 
-If given, gdocs practically become invisible to hoody-vfs. */
+If given, gdocs practically become invisible to Hoody. */
   skip_gdocs?: boolean;
   /** If set skip shortcut files.
 
-Normally hoody-vfs dereferences shortcut files making them appear as if
+Normally Hoody dereferences shortcut files making them appear as if
 they are the original file (see [the shortcuts section](#shortcuts)).
-If this flag is set then hoody-vfs will ignore shortcut files completely.
- */
+If this flag is set then Hoody will ignore shortcut files completely. */
   skip_shortcuts?: boolean;
   /** Only show files that are starred. */
   starred_only?: boolean;
@@ -5525,26 +5529,24 @@ If this flag is set then hoody-vfs will ignore shortcut files completely.
 At the time of writing it is only possible to download 10 TiB of data from
 Google Drive a day (this is an undocumented limit). When this limit is
 reached Google Drive produces a slightly different error message. When
-this flag is set it causes these errors to be fatal.  These will stop
+this flag is set it causes these errors to be fatal. These will stop
 the in-progress sync.
 
 Note that this detection is relying on error message strings which
-Google don't document so it may break in the future.
- */
+Google don't document so it may break in the future. */
   stop_on_download_limit?: boolean;
   /** Make upload limit errors be fatal.
 
 At the time of writing it is only possible to upload 750 GiB of data to
 Google Drive a day (this is an undocumented limit). When this limit is
 reached Google Drive produces a slightly different error message. When
-this flag is set it causes these errors to be fatal.  These will stop
+this flag is set it causes these errors to be fatal. These will stop
 the in-progress sync.
 
 Note that this detection is relying on error message strings which
 Google don't document so it may break in the future.
 
-See: https://github.com/hoody-vfs/hoody-vfs/issues/3857
- */
+See: https://github.com/Hoody/Hoody/issues/3857 */
   stop_on_upload_limit?: boolean;
   /** ID of the Shared Drive (Team Drive). */
   team_drive?: string;
@@ -5569,7 +5571,7 @@ place of the last modified date.
 
 When uploading to your drive all files will be overwritten unless they
 haven't been modified since their creation. And the inverse will occur
-while downloading.  This side effect can be avoided by using the
+while downloading. This side effect can be avoided by using the
 "--checksum" flag.
 
 This feature was implemented to retain photos capture date as recorded
@@ -5614,9 +5616,9 @@ Leave blank to use the provider defaults. */
   batch_commit_timeout?: number;
   /** Upload file batching sync|async|off.
 
-This sets the batch mode used by hoody-vfs.
+This sets the batch mode used by Hoody.
 
-For full info see [the main docs](https://hoody-vfs.org/dropbox/#batch-mode)
+For full info
 
 This has 3 possible values
 
@@ -5625,14 +5627,13 @@ This has 3 possible values
 - async - batch upload and don't check completion
 
 Hoody-VFS will close any outstanding batches when it exits which may make
-a delay on quit.
- */
+a delay on quit. */
   batch_mode?: string;
   /** Max number of files in upload batch.
 
 This sets the batch size of files to upload. It has to be less than 1000.
 
-By default this is 0 which means hoody-vfs will calculate the batch size
+By default this is 0 which means Hoody will calculate the batch size
 depending on the setting of batch_mode.
 
 - batch_mode: async - default batch_size is 100
@@ -5644,15 +5645,14 @@ a delay on quit.
 
 Setting this is a great idea if you are uploading lots of small files
 as it will make them a lot quicker. You can use --transfers 32 to
-maximise throughput.
- */
+maximise throughput. */
   batch_size?: number;
   /** Max time to allow an idle upload batch before uploading.
 
 If an upload batch is idle for more than this long then it will be
 uploaded.
 
-The default for this is 0 which means hoody-vfs will choose a sensible
+The default for this is 0 which means Hoody will choose a sensible
 default based on the batch_mode in use.
 
 - batch_mode: async - default batch_timeout is 10s
@@ -5663,10 +5663,10 @@ default based on the batch_mode in use.
 
 Any files larger than this will be uploaded in chunks of this size.
 
-Note that chunks are buffered in memory (one at a time) so hoody-vfs can
-deal with retries.  Setting this larger will increase the speed
+Note that chunks are buffered in memory (one at a time) so Hoody can
+deal with retries. Setting this larger will increase the speed
 slightly (at most 10% for 128 MiB in tests) at the cost of using more
-memory.  It can be set smaller if you are tight on memory. */
+memory. It can be set smaller if you are tight on memory. */
   chunk_size?: string;
   /** Use client credentials OAuth flow.
 
@@ -5689,7 +5689,7 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   /** Impersonate this user when using a business account.
 
 Note that if you want to use impersonate, you should make sure this
-flag is set when running "hoody-vfs config" as this will cause hoody-vfs to
+flag is set when running "Hoody config" as this will cause Hoody to
 request the "members.read" scope which it won't normally. This is
 needed to lookup a members email address into the internal ID that
 dropbox uses in the API.
@@ -5698,27 +5698,26 @@ Using the "members.read" scope will require a Dropbox Team Admin
 to approve during the OAuth flow.
 
 You will have to use your own App (setting your own client_id and
-client_secret) to use this option as currently hoody-vfs's default set of
+client_secret) to use this option as currently Hoody's default set of
 permissions doesn't include "members.read". This can be added once
-v1.55 or later is in use everywhere.
- */
+v1.55 or later is in use everywhere. */
   impersonate?: string;
   /** Minimum time to sleep between API calls. (in seconds) */
   pacer_min_sleep?: number;
   /** Specify a different Dropbox namespace ID to use as the root for all paths. */
   root_namespace?: string;
-  /** Instructs hoody-vfs to work on individual shared files.
+  /** Instructs Hoody to work on individual shared files.
 
-In this mode hoody-vfs's features are extremely limited - only list (ls, lsl, etc.) 
+In this mode Hoody's features are extremely limited - only list (ls, lsl, etc.) 
 operations and read operations (e.g. downloading) are supported in this mode.
 All other operations will be disabled. */
   shared_files?: boolean;
-  /** Instructs hoody-vfs to work on shared folders.
-			
+  /** Instructs Hoody to work on shared folders.
+ 
 When this flag is used with no path only the List operation is supported and 
 all available shared folders will be listed. If you specify a path the first part 
 will be interpreted as the name of shared folder. Hoody-VFS will then try to mount this 
-shared to the root namespace. On success shared folder hoody-vfs proceeds normally. 
+shared to the root namespace. On success shared folder Hoody proceeds normally. 
 The shared folder is now pretty much a normal folder and all normal operations 
 are supported. 
 
@@ -5792,35 +5791,30 @@ to create one.
 
 These tokens are normally valid for several years.
 
-For more info see: https://docs.storagemadeeasy.com/organisationcloud/api-tokens
- */
+For more info see: https://docs.storagemadeeasy.com/organisationcloud/api-tokens */
   permanent_token?: string;
   /** ID of the root folder.
 
 Leave blank normally.
 
-Fill in to make hoody-vfs start with directory of a given ID.
- */
+Fill in to make Hoody start with directory of a given ID. */
   root_folder_id?: string;
   /** Session Token.
 
-This is a session token which hoody-vfs caches in the config file. It is
+This is a session token which Hoody caches in the config file. It is
 usually valid for 1 hour.
 
-Don't set this value - hoody-vfs will set it automatically.
- */
+Don't set this value - Hoody will set it automatically. */
   token?: string;
   /** Token expiry time.
 
-Don't set this value - hoody-vfs will set it automatically.
- */
+Don't set this value - Hoody will set it automatically. */
   token_expiry?: string;
   /** URL of the Enterprise File Fabric to connect to. */
   url: "https://storagemadeeasy.com" | "https://eu.storagemadeeasy.com" | "https://yourfabric.smestorage.com";
   /** Version read from the file fabric.
 
-Don't set this value - hoody-vfs will set it automatically.
- */
+Don't set this value - Hoody will set it automatically. */
   version?: string;
 }
 
@@ -5864,8 +5858,7 @@ export interface FilesBackendsConnectFilescomResponse {
 export interface FilesBackendsConnectFtpRequest {
   /** Allow asking for FTP password when needed.
 
-If this is set and no password is supplied then hoody-vfs will ask for a password
- */
+If this is set and no password is supplied then Hoody will ask for a password */
   ask_password?: boolean;
   /** Maximum time to wait for a response to close. (in seconds) */
   close_timeout?: number;
@@ -5881,9 +5874,7 @@ If you use `--check-first` then it just needs to be one more than the
 maximum of `--checkers` and `--transfers`.
 
 So for `concurrency 3` you'd use `--checkers 2 --transfers 2
---check-first` or `--checkers 1 --transfers 1`.
-
- */
+--check-first` or `--checkers 1 --transfers 1`. */
   concurrency?: number;
   /** Description of the remote. */
   description?: string;
@@ -5914,7 +5905,7 @@ E.g. "ftp.example.com". */
   /** Max time before closing idle connections.
 
 If no connections have been returned to the connection pool in the time
-given, hoody-vfs will empty the connection pool.
+given, Hoody will empty the connection pool.
 
 Set to 0 to keep connections indefinitely. (in seconds) */
   idle_timeout?: number;
@@ -5922,16 +5913,15 @@ Set to 0 to keep connections indefinitely. (in seconds) */
   no_check_certificate?: boolean;
   /** Don't check the upload is OK
 
-Normally hoody-vfs will try to check the upload exists after it has
+Normally Hoody will try to check the upload exists after it has
 uploaded a file to make sure the size and modification time are as
 expected.
 
-This flag stops hoody-vfs doing these checks. This enables uploading to
+This flag stops Hoody doing these checks. This enables uploading to
 folders which are write only.
 
 You will likely need to use the --inplace flag also if uploading to
-a write only folder.
- */
+a write only folder. */
   no_check_upload?: boolean;
   /** FTP password. */
   pass?: string;
@@ -5940,13 +5930,12 @@ a write only folder.
   /** Maximum time to wait for data connection closing status. (in seconds) */
   shut_timeout?: number;
   /** Socks 5 proxy host.
-		
+ 
 Supports the format user:pass@host:port, user@host:port, host:port.
-		
+ 
 Example:
-		
-    myUser:myPass@localhost:9005
- */
+ 
+ myUser:myPass@localhost:9005 */
   socks_proxy?: string;
   /** Use Implicit FTPS (FTP over TLS).
 
@@ -5984,8 +5973,7 @@ You can get this from the web control panel. */
   access_token?: string;
   /** Account ID
 
-Leave this blank normally, hoody-vfs will fill it in automatically.
- */
+Leave this blank normally, Hoody will fill it in automatically. */
   account_id?: string;
   /** Description of the remote. */
   description?: string;
@@ -5997,11 +5985,10 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   list_chunk?: number;
   /** ID of the root folder
 
-Leave this blank normally, hoody-vfs will fill it in automatically.
+Leave this blank normally, Hoody will fill it in automatically.
 
-If you want hoody-vfs to be restricted to a particular folder you can
-fill it in - see the docs for more info.
- */
+If you want Hoody to be restricted to a particular folder you can
+fill it in - see the docs for more info. */
   root_folder_id?: string;
 }
 
@@ -6036,14 +6023,13 @@ Leave blank to use the provider defaults. */
 If you want to upload objects to a bucket with Bucket Policy Only set
 then you will need to set this.
 
-When it is set, hoody-vfs:
+When it is set, Hoody:
 
 - ignores ACLs set on buckets
 - ignores ACLs set on objects
 - creates buckets with Bucket Policy Only set
 
-Docs: https://cloud.google.com/storage/docs/bucket-policy-only
- */
+Docs: https://cloud.google.com/storage/docs/bucket-policy-only */
   bucket_policy_only?: boolean;
   /** Use client credentials OAuth flow.
 
@@ -6060,20 +6046,18 @@ Leave blank normally. */
   /** If set this will decompress gzip encoded objects.
 
 It is possible to upload objects to GCS with "Content-Encoding: gzip"
-set. Normally hoody-vfs will download these files as compressed objects.
+set. Normally Hoody will download these files as compressed objects.
 
-If this flag is set then hoody-vfs will decompress these files with
-"Content-Encoding: gzip" as they are received. This means that hoody-vfs
-can't check the size and hash but the file contents will be decompressed.
- */
+If this flag is set then Hoody will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that Hoody
+can't check the size and hash but the file contents will be decompressed. */
   decompress?: boolean;
   /** Description of the remote. */
   description?: string;
   /** Upload an empty object with a trailing slash when a new directory is created
 
 Empty folders are unsupported for bucket based remotes, this option creates an empty
-object ending with "/", to persist the folder.
- */
+object ending with "/", to persist the folder. */
   directory_markers?: boolean;
   /** The encoding for the backend.
 
@@ -6092,8 +6076,7 @@ Only applies if service_account_file and service_account_credentials is blank. *
   /** If set, don't attempt to check the bucket exists or create it.
 
 This can be useful when trying to minimise the number of transactions
-hoody-vfs does if you know the bucket exists already.
- */
+Hoody does if you know the bucket exists already. */
   no_check_bucket?: boolean;
   /** Access Control List for new objects. */
   object_acl?: "authenticatedRead" | "bucketOwnerFullControl" | "bucketOwnerRead" | "private" | "projectPrivate" | "publicRead";
@@ -6146,7 +6129,7 @@ Leave blank to use the provider defaults. */
   batch_commit_timeout?: number;
   /** Upload file batching sync|async|off.
 
-This sets the batch mode used by hoody-vfs.
+This sets the batch mode used by Hoody.
 
 This has 3 possible values
 
@@ -6155,14 +6138,13 @@ This has 3 possible values
 - async - batch upload and don't check completion
 
 Hoody-VFS will close any outstanding batches when it exits which may make
-a delay on quit.
- */
+a delay on quit. */
   batch_mode?: string;
   /** Max number of files in upload batch.
 
 This sets the batch size of files to upload. It has to be less than 50.
 
-By default this is 0 which means hoody-vfs will calculate the batch size
+By default this is 0 which means Hoody will calculate the batch size
 depending on the setting of batch_mode.
 
 - batch_mode: async - default batch_size is 50
@@ -6174,15 +6156,14 @@ a delay on quit.
 
 Setting this is a great idea if you are uploading lots of small files
 as it will make them a lot quicker. You can use --transfers 32 to
-maximise throughput.
- */
+maximise throughput. */
   batch_size?: number;
   /** Max time to allow an idle upload batch before uploading.
 
 If an upload batch is idle for more than this long then it will be
 uploaded.
 
-The default for this is 0 which means hoody-vfs will choose a sensible
+The default for this is 0 which means Hoody will choose a sensible
 default based on the batch_mode in use.
 
 - batch_mode: async - default batch_timeout is 10s
@@ -6209,7 +6190,7 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   encoding?: string;
   /** Also view and download archived media.
 
-By default, hoody-vfs does not request archived media. Thus, when syncing,
+By default, Hoody does not request archived media. Thus, when syncing,
 archived media is not visible in directory listings or transferred.
 
 Note that media in albums is always visible and synced, no matter
@@ -6231,32 +6212,31 @@ unchanged images.
 
 This runs a headless browser in the background.
 
-Download the software from [gphotosdl](https://github.com/hoody-vfs/gphotosdl)
+Download the software from [gphotosdl](https://github.com/Hoody/gphotosdl)
 
 First run with
 
-    gphotosdl -login
+ gphotosdl -login
 
 Then once you have logged into google photos close the browser window
 and run
 
-    gphotosdl
+ gphotosdl
 
 Then supply the parameter `--gphotos-proxy "http://localhost:8282"` to make
-hoody-vfs use the proxy.
- */
+Hoody use the proxy. */
   proxy?: string;
   /** Set to make the Google Photos backend read only.
 
-If you choose read only then hoody-vfs will only request read only access
-to your photos, otherwise hoody-vfs will request full access. */
+If you choose read only then Hoody will only request read only access
+to your photos, otherwise Hoody will request full access. */
   read_only?: boolean;
   /** Set to read the size of media items.
 
-Normally hoody-vfs does not read the size of media items since this takes
-another transaction.  This isn't necessary for syncing.  However
-hoody-vfs mount needs to know the size of files in advance of reading
-them, so setting this flag when using hoody-vfs mount is recommended if
+Normally Hoody does not read the size of media items since this takes
+another transaction. This isn't necessary for syncing. However
+Hoody mount needs to know the size of files in advance of reading
+them, so setting this flag when using Hoody mount is recommended if
 you want to read the media. */
   read_size?: boolean;
   /** Year limits the photos to be downloaded to those which are uploaded after the given year. */
@@ -6385,11 +6365,11 @@ This is the URL that API-calls will be made to. */
   /** The root/parent folder for all paths.
 
 Fill in to use the specified folder as the parent for all paths given to the remote.
-This way hoody-vfs can use any folder as its starting point. */
+This way Hoody can use any folder as its starting point. */
   root_prefix?: "/" | "root" | "";
-  /** Access permissions that hoody-vfs should use when requesting access from HiDrive. */
+  /** Access permissions that Hoody should use when requesting access from HiDrive. */
   scope_access?: "rw" | "ro";
-  /** User-level that hoody-vfs should use when requesting access from HiDrive. */
+  /** User-level that Hoody should use when requesting access from HiDrive. */
   scope_role?: "user" | "admin" | "owner";
   /** OAuth Access Token as a JSON blob. */
   token?: string;
@@ -6433,7 +6413,7 @@ export interface FilesBackendsConnectHttpRequest {
 
 Use this to set additional HTTP headers for all transactions.
 
-The input format is comma separated list of key,value pairs.  Standard
+The input format is comma separated list of key,value pairs. Standard
 [CSV encoding](https://godoc.org/encoding/csv) may be used.
 
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
@@ -6446,15 +6426,15 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 
 HEAD requests are mainly used to find file sizes in dir listing.
 If your site is being very slow to load then you can try this option.
-Normally hoody-vfs does a HEAD request for each potential file in a
+Normally Hoody does a HEAD request for each potential file in a
 directory listing to:
 
 - find its size
 - check it really exists
 - check to see if it is a directory
 
-If you set this option, hoody-vfs will not do the HEAD request. This will mean
-that directory listings are much quicker, but hoody-vfs won't have the times or
+If you set this option, Hoody will not do the HEAD request. This will mean
+that directory listings are much quicker, but Hoody won't have the times or
 sizes of any files, and some files that don't exist may be in the listing. */
   no_head?: boolean;
   /** Set this if the site doesn't end directories with /.
@@ -6462,17 +6442,17 @@ sizes of any files, and some files that don't exist may be in the listing. */
 Use this if your target website does not use / on the end of
 directories.
 
-A / on the end of a path is how hoody-vfs normally tells the difference
-between files and directories.  If this flag is set, then hoody-vfs will
+A / on the end of a path is how Hoody normally tells the difference
+between files and directories. If this flag is set, then Hoody will
 treat all files with Content-Type: text/html as directories and read
 URLs from them rather than downloading them.
 
-Note that this may cause hoody-vfs to confuse genuine HTML files with
+Note that this may cause Hoody to confuse genuine HTML files with
 directories. */
   no_slash?: boolean;
   /** URL of HTTP host to connect to.
 
-E.g. "https://example.com", or "https://user:pass@example.com" to use a username and password. */
+E.g. "https://example.com", or "https://example.com" to use a username and password. */
   url: string;
 }
 
@@ -6501,7 +6481,7 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   encoding?: string;
   /** Password. */
   password: string;
-  /** Trust token (internal use) */
+  /** Trust token */
   trust_token?: string;
 }
 
@@ -6554,8 +6534,8 @@ You can find one here: https://archive.org/account/s3.php */
   access_key_id?: string;
   /** Description of the remote. */
   description?: string;
-  /** Don't ask the server to test against MD5 checksum calculated by hoody-vfs.
-Normally hoody-vfs will calculate the MD5 checksum of the input before
+  /** Don't ask the server to test against MD5 checksum calculated by Hoody.
+Normally Hoody will calculate the MD5 checksum of the input before
 uploading it so it can ask the server to check the object against checksum.
 This is great for data integrity checking but can cause long delays for
 large files to start uploading. */
@@ -6658,7 +6638,7 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
 
 If omitted, the primary mount is used. */
   mountid?: string;
-  /** Your password for hoody-vfs (generate one at your service's settings page). */
+  /** Your password for Hoody (generate one at your service's settings page). */
   password: string;
   /** Choose your storage provider. */
   provider?: "koofr" | "digistorage" | "other";
@@ -6701,13 +6681,13 @@ export interface FilesBackendsConnectLocalRequest {
   /** Force the filesystem to report itself as case insensitive.
 
 Normally the local backend declares itself as case insensitive on
-Windows/macOS and case sensitive for everything else.  Use this flag
+Windows/macOS and case sensitive for everything else. Use this flag
 to override the default choice. */
   case_insensitive?: boolean;
   /** Force the filesystem to report itself as case sensitive.
 
 Normally the local backend declares itself as case insensitive on
-Windows/macOS and case sensitive for everything else.  Use this flag
+Windows/macOS and case sensitive for everything else. Use this flag
 to override the default choice. */
   case_sensitive?: boolean;
   /** Follow symlinks and copy the pointed to item. */
@@ -6722,18 +6702,18 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   links?: boolean;
   /** Don't check to see if the files change during upload.
 
-Normally hoody-vfs checks the size and modification time of files as they
+Normally Hoody checks the size and modification time of files as they
 are being uploaded and aborts with a message which starts "can't copy -
 source file is being updated" if the file changes during upload.
 
 However on some file systems this modification time check may fail (e.g.
-[Glusterfs #2206](https://github.com/hoody-vfs/hoody-vfs/issues/2206)) so this
+[Glusterfs #2206](https://github.com/Hoody/Hoody/issues/2206)) so this
 check can be disabled with this flag.
 
-If this flag is set, hoody-vfs will use its best efforts to transfer a
+If this flag is set, Hoody will use its best efforts to transfer a
 file which is being updated. If the file is only having things
-appended to it (e.g. a log) then hoody-vfs will transfer the log file with
-the size it had the first time hoody-vfs saw it.
+appended to it (e.g. a log) then Hoody will transfer the log file with
+the size it had the first time Hoody saw it.
 
 If the file is being modified throughout (not just appended to) then
 the transfer may fail with a hash check failure.
@@ -6749,12 +6729,11 @@ time we:
 unknown reason, files in a VSS sometimes show different sizes from the
 directory listing (where the initial stat value comes from on Windows)
 and when stat is called on them directly. Other copy tools always use
-the direct stat value and setting this flag will disable that.
- */
+the direct stat value and setting this flag will disable that. */
   no_check_updated?: boolean;
   /** Disable reflink cloning for server-side copies.
 
-Normally, for local-to-local transfers, hoody-vfs will "clone" the file when
+Normally, for local-to-local transfers, Hoody will "clone" the file when
 possible, and fall back to "copying" only when cloning is not supported.
 
 Cloning creates a shallow copy (or "reflink") which initially shares blocks with
@@ -6763,7 +6742,7 @@ neither will affect the other if subsequently modified.
 
 Cloning is usually preferable to copying, as it is much faster and is
 deduplicated by default (i.e. having two identical files does not consume more
-storage than having just one.)  However, for use cases where data redundancy is
+storage than having just one.) However, for use cases where data redundancy is
 preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
 
 Currently, cloning is only supported when using APFS on macOS (support for other
@@ -6779,15 +6758,15 @@ Use this flag to disable preallocation. */
   no_preallocate?: boolean;
   /** Disable setting modtime.
 
-Normally hoody-vfs updates modification time of files after they are done
+Normally Hoody updates modification time of files after they are done
 uploading. This can cause permissions issues on Linux platforms when 
-the user hoody-vfs is running as does not own the file uploaded, such as
+the user Hoody is running as does not own the file uploaded, such as
 when copying to a CIFS mount owned by another user. If this option is 
-enabled, hoody-vfs will no longer update the modtime after copying a file. */
+enabled, Hoody will no longer update the modtime after copying a file. */
   no_set_modtime?: boolean;
   /** Disable sparse files for multi-thread downloads.
 
-On Windows platforms hoody-vfs will make sparse files when doing
+On Windows platforms Hoody will make sparse files when doing
 multi-thread downloads. This avoids long pauses on large files where
 the OS zeros the file. However sparse files may be undesirable as they
 cause disk fragmentation and can be slow to work with. */
@@ -6803,13 +6782,13 @@ points, as you explicitly acknowledge that they should be skipped. */
   skip_links?: boolean;
   /** Set what kind of time is returned.
 
-Normally hoody-vfs does all operations on the mtime or Modification time.
+Normally Hoody does all operations on the mtime or Modification time.
 
-If you set this flag then hoody-vfs will return the Modified time as whatever
-you set here. So if you use "hoody-vfs lsl --local-time-type ctime" then
+If you set this flag then Hoody will return the Modified time as whatever
+you set here. So if you use "Hoody lsl --local-time-type ctime" then
 you will see ctimes in the listing.
 
-If the OS doesn't support returning the time_type specified then hoody-vfs
+If the OS doesn't support returning the time_type specified then Hoody
 will silently replace it with the modification time which all OSes support.
 
 - mtime is supported by all OSes
@@ -6818,8 +6797,7 @@ will silently replace it with the modification time which all OSes support.
 - ctime is supported on all Oses except: Windows, plan9, js
 
 Note that setting the time will still set the modified time so this is
-only useful for reading.
- */
+only useful for reading. */
   time_type?: "mtime" | "atime" | "btime" | "ctime";
   /** Apply unicode NFC normalization to paths and filenames.
 
@@ -6833,7 +6811,7 @@ This can be useful when using macOS as it normally provides decomposed (NFD)
 unicode which in some language (eg Korean) doesn't display properly on
 some OSes.
 
-Note that hoody-vfs compares filenames with unicode normalization in the sync
+Note that Hoody compares filenames with unicode normalization in the sync
 routine so this flag shouldn't normally be used. */
   unicode_normalization?: boolean;
   /** Assume the Stat size of links is zero (and read them instead) (deprecated).
@@ -6844,8 +6822,7 @@ Hoody-VFS used to use the Stat size of links as the link size, but this fails in
 - On some virtual filesystems (such ash LucidLink)
 - Android
 
-So hoody-vfs now always reads the link.
- */
+So Hoody now always reads the link. */
   zero_size_links?: boolean;
 }
 
@@ -6886,10 +6863,9 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   encoding?: string;
   /** Password.
 
-This must be an app password - hoody-vfs will not work with your normal
+This must be an app password - Hoody will not work with your normal
 password. See the Configuration section in the docs for how to make an
-app password.
- */
+app password. */
   pass: string;
   /** Comma separated list of internal maintenance flags.
 
@@ -6905,9 +6881,9 @@ This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
 It is meaningless and ineffective if source file is unique or encrypted.
-Please note that hoody-vfs may need local memory and disk space to calculate
+Please note that Hoody may need local memory and disk space to calculate
 content hash in advance and decide whether full upload is required.
-Also, if hoody-vfs does not know file size in advance (e.g. in case of
+Also, if Hoody does not know file size in advance (e.g. in case of
 streaming or partial uploads), it will not even try this optimization. */
   speedup_enable?: boolean;
   /** Comma separated list of file name patterns eligible for speedup (put by hash).
@@ -6930,7 +6906,7 @@ Leave blank to use the provider defaults. */
   user: string;
   /** HTTP user agent used internally by client.
 
-Defaults to "hoody-vfs/VERSION" or "--user-agent" provided on command line. */
+Defaults to "Hoody/VERSION" or "--user-agent" provided on command line. */
   user_agent?: string;
 }
 
@@ -6959,7 +6935,7 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   /** Delete files permanently rather than putting them into the trash.
 
 Normally the mega backend will put all deletions into the trash rather
-than permanently deleting them.  If you specify this then hoody-vfs will
+than permanently deleting them. If you specify this then Hoody will
 permanently delete objects instead. */
   hard_delete?: boolean;
   /** Password. */
@@ -7032,10 +7008,9 @@ export interface FilesBackendsConnectNetstorageResponse {
  * onedrive backend configuration
  */
 export interface FilesBackendsConnectOnedriveRequest {
-  /** Set scopes to be requested by hoody-vfs.
+  /** Set scopes to be requested by Hoody.
 
-Choose or manually enter a custom space separated list with all scopes, that hoody-vfs should request.
- */
+Choose or manually enter a custom space separated list with all scopes, that Hoody should request. */
   access_scopes?: "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access" | "Files.Read Files.Read.All Sites.Read.All offline_access" | "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All offline_access";
   /** Auth server URL.
 
@@ -7049,12 +7024,11 @@ block download of the file.
 
 In this case you will see a message like this
 
-    server reports this file is infected with a virus - use --onedrive-av-override to download anyway: Infected (name of virus): 403 Forbidden: 
+ server reports this file is infected with a virus - use --onedrive-av-override to download anyway: Infected (name of virus): 403 Forbidden: 
 
 If you are 100% sure you want to download this file anyway then use
 the --onedrive-av-override flag, or av_override = true in the config
-file.
- */
+file. */
   av_override?: boolean;
   /** Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 
@@ -7074,16 +7048,16 @@ Leave blank normally. */
 
 Leave blank normally. */
   client_secret?: string;
-  /** If set hoody-vfs will use delta listing to implement recursive listings.
+  /** If set Hoody will use delta listing to implement recursive listings.
 
 If this flag is set the onedrive backend will advertise `ListR`
 support for recursive listings.
 
 Setting this flag speeds up these things greatly:
 
-    hoody-vfs lsf -R onedrive:
-    hoody-vfs size onedrive:
-    hoody-vfs rc vfs/refresh recursive=true
+ Hoody lsf -R onedrive:
+ Hoody size onedrive:
+ Hoody rc vfs/refresh recursive=true
 
 **However** the delta listing API **only** works at the root of the
 drive. If you use it not at the root then it recurses from the root
@@ -7092,22 +7066,21 @@ for. So it will be correct but may not be very efficient.
 
 This is why this flag is not set as the default.
 
-As a rule of thumb if nearly all of your data is under hoody-vfs's root
+As a rule of thumb if nearly all of your data is under Hoody's root
 directory (the `root/directory` in `onedrive:root/directory`) then
 using this flag will be be a big performance win. If your data is
 mostly not under the root then using this flag will be a big
 performance loss.
 
 It is recommended if you are mounting your onedrive at the root
-(or near the root when using crypt) and using hoody-vfs `rc vfs/refresh`.
- */
+(or near the root when using crypt) and using Hoody `rc vfs/refresh`. */
   delta?: boolean;
   /** Description of the remote. */
   description?: string;
   /** Disable the request for Sites.Read.All permission.
 
 If set to true, you will no longer be able to search for a SharePoint site when
-configuring drive ID, because hoody-vfs will not request Sites.Read.All permission.
+configuring drive ID, because Hoody will not request Sites.Read.All permission.
 Set it to true if your organization didn't assign Sites.Read.All permission to the
 application, and your organization disallows users to consent app permission
 request on their own. */
@@ -7122,9 +7095,9 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   encoding?: string;
   /** Set to make OneNote files show up in directory listings.
 
-By default, hoody-vfs will hide OneNote files in directory listings because
-operations like "Open" and "Update" won't work on them.  But this
-behaviour may also prevent you from deleting them.  If you want to
+By default, Hoody will hide OneNote files in directory listings because
+operations like "Open" and "Update" won't work on them. But this
+behaviour may also prevent you from deleting them. If you want to
 delete OneNote files or otherwise want them to show up in directory
 listing, set this option. */
   expose_onenote_files?: boolean;
@@ -7134,15 +7107,14 @@ Normally files will get sent to the recycle bin on deletion. Setting
 this flag causes them to be permanently deleted. Use with care.
 
 OneDrive personal accounts do not support the permanentDelete API,
-it only applies to OneDrive for Business and SharePoint document libraries.
- */
+it only applies to OneDrive for Business and SharePoint document libraries. */
   hard_delete?: boolean;
   /** Specify the hash in use for the backend.
 
 This specifies the hash type in use. If set to "auto" it will use the
 default hash which is QuickXorHash.
 
-Before hoody-vfs 1.62 an SHA1 hash was used by default for Onedrive
+Before Hoody 1.62 an SHA1 hash was used by default for Onedrive
 Personal. For 1.62 and later the default is to use a QuickXorHash for
 all onedrive types. If an SHA1 hash is desired then set this option
 accordingly.
@@ -7154,13 +7126,11 @@ This can be set to "none" to not use any hashes.
 
 If the hash requested does not exist on the object, it will be
 returned as an empty string which is treated as a missing hash by
-hoody-vfs.
- */
+Hoody. */
   hash_type?: "auto" | "quickxor" | "sha1" | "sha256" | "crc32" | "none";
   /** Set the password for links created by the link command.
 
-At the time of writing this only works with OneDrive personal paid accounts.
- */
+At the time of writing this only works with OneDrive personal paid accounts. */
   link_password?: string;
   /** Set the scope of the links created by the link command. */
   link_scope?: "anonymous" | "organization";
@@ -7171,12 +7141,11 @@ At the time of writing this only works with OneDrive personal paid accounts.
   /** Control whether permissions should be read or written in metadata.
 
 Reading permissions metadata from files can be done quickly, but it
-isn't always desirable to set the permissions from the metadata.
- */
+isn't always desirable to set the permissions from the metadata. */
   metadata_permissions?: "off" | "read" | "write" | "read,write" | "failok";
   /** Remove all versions on modifying operations.
 
-Onedrive for business creates versions when hoody-vfs uploads new files
+Onedrive for business creates versions when Hoody uploads new files
 overwriting an existing one and when it sets the modification time.
 
 These versions take up space out of the quota.
@@ -7185,8 +7154,7 @@ This flag checks for versions after file upload and setting
 modification time and removes all but the last version.
 
 **NB** Onedrive personal can't currently delete versions so don't use
-this flag there.
- */
+this flag there. */
   no_versions?: boolean;
   /** Choose national cloud region for OneDrive. */
   region?: "global" | "us" | "de" | "cn";
@@ -7194,8 +7162,7 @@ this flag there.
 
 This isn't normally needed, but in special circumstances you might
 know the folder ID that you wish to access but not be able to get
-there through a path traversal.
- */
+there through a path traversal. */
   root_folder_id?: string;
   /** Deprecated: use --server-side-across-configs instead.
 
@@ -7205,13 +7172,12 @@ This will work if you are copying between two OneDrive *Personal* drives AND the
 copy are already shared between them. Additionally, it should also function for a user who
 has access permissions both between Onedrive for *business* and *SharePoint* under the *same
 tenant*, and between *SharePoint* and another *SharePoint* under the *same tenant*. In other
-cases, hoody-vfs will fall back to normal copy (which will be slightly slower). */
+cases, Hoody will fall back to normal copy (which will be slightly slower). */
   server_side_across_configs?: boolean;
   /** ID of the service principal's tenant. Also called its directory ID.
 
 Set this if using
-- Client Credential flow
- */
+- Client Credential flow */
   tenant?: string;
   /** OAuth Access Token as a JSON blob. */
   token?: string;
@@ -7266,13 +7232,12 @@ This will be helpful to speed up multipart transfers by resuming uploads from pa
 WARNING: If chunk size differs in resumed session from past incomplete session, then the resumed multipart upload is 
 aborted and a new multipart upload is started with the new chunk size.
 
-The flag leave_parts_on_error must be true to resume and optimize to skip parts that were already uploaded successfully.
- */
+The flag leave_parts_on_error must be true to resume and optimize to skip parts that were already uploaded successfully. */
   attempt_resume_upload?: boolean;
   /** Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (e.g. from "hoody-vfs rcat" or uploaded with "hoody-vfs mount" they will be uploaded 
+size (e.g. from "Hoody rcat" or uploaded with "Hoody mount" they will be uploaded 
 as multipart uploads using this chunk size.
 
 Note that "upload_concurrency" chunks of this size are buffered
@@ -7287,12 +7252,11 @@ large file of known size to stay below the 10,000 chunks limit.
 Files of unknown size are uploaded with the configured
 chunk_size. Since the default chunk size is 5 MiB and there can be at
 most 10,000 chunks, this means that by default the maximum size of
-a file you can stream upload is 48 GiB.  If you wish to stream upload
+a file you can stream upload is 48 GiB. If you wish to stream upload
 larger files then you will need to increase chunk_size.
 
 Increasing the chunk size decreases the accuracy of the progress
-statistics displayed with "-P" flag.
- */
+statistics displayed with "-P" flag. */
   chunk_size?: string;
   /** Specify compartment OCID, if you need to list buckets.
 
@@ -7317,7 +7281,7 @@ Copy is an asynchronous operation, specify timeout to wait for copy to succeed (
   description?: string;
   /** Don't store MD5 checksum with object metadata.
 
-Normally hoody-vfs will calculate the MD5 checksum of the input before
+Normally Hoody will calculate the MD5 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
 to start uploading. */
@@ -7335,8 +7299,7 @@ Leave blank to use the default endpoint for the region. */
 It should be set to true for resuming uploads across different sessions.
 
 WARNING: Storing parts of an incomplete multipart upload counts towards space usage on object storage and will add
-additional costs if not cleaned up.
- */
+additional costs if not cleaned up. */
   leave_parts_on_error?: boolean;
   /** Maximum number of parts in a multipart upload.
 
@@ -7346,19 +7309,17 @@ when doing a multipart upload.
 OCI has max parts limit of 10,000 chunks.
 
 Hoody-VFS will automatically increase the chunk size when uploading a
-large file of a known size to stay below this number of chunks limit.
- */
+large file of a known size to stay below this number of chunks limit. */
   max_upload_parts?: number;
   /** Object storage namespace */
   namespace: string;
   /** If set, don't attempt to check the bucket exists or create it.
 
 This can be useful when trying to minimise the number of transactions
-hoody-vfs does if you know the bucket exists already.
+Hoody does if you know the bucket exists already.
 
 It can also be needed if the user you are using does not have bucket
-creation permissions.
- */
+creation permissions. */
   no_check_bucket?: boolean;
   /** Choose your Auth Provider */
   provider: "env_auth" | "user_principal_auth" | "instance_principal_auth" | "workload_identity_auth" | "resource_principal_auth" | "no_auth";
@@ -7369,7 +7330,7 @@ Object Storage supports "AES256" as the encryption algorithm. For more informati
 Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm). */
   sse_customer_algorithm?: "" | "AES256";
   /** To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to
-encrypt or  decrypt the data. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is
+encrypt or decrypt the data. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is
 needed. For more information, see Using Your Own Keys for Server-Side Encryption 
 (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm) */
   sse_customer_key?: "";
@@ -7438,14 +7399,13 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   encoding?: string;
   /** Hostname to connect to.
 
-This is normally set when hoody-vfs initially does the oauth connection,
+This is normally set when Hoody initially does the oauth connection,
 however you will need to set it by hand if you are using remote config
-with hoody-vfs authorize.
- */
+with Hoody authorize. */
   hostname?: "api.pcloud.com" | "eapi.pcloud.com";
   /** Your pcloud password. */
   password?: string;
-  /** Fill in for hoody-vfs to use a non root folder as its starting point. */
+  /** Fill in for Hoody to use a non root folder as its starting point. */
   root_folder_id?: string;
   /** OAuth Access Token as a JSON blob. */
   token?: string;
@@ -7454,7 +7414,7 @@ with hoody-vfs authorize.
 Leave blank to use the provider defaults. */
   token_url?: string;
   /** Your pcloud username.
-			
+ 
 This is only required when you want to use the cleanup command. Due to a bug
 in the pcloud API the required API does not support OAuth authentication so
 we have to rely on user password authentication for it. */
@@ -7508,8 +7468,7 @@ This avoids issues caused by invalid media links, but may reduce download speeds
   /** ID of the root folder.
 Leave blank normally.
 
-Fill in for hoody-vfs to use a non root folder as its starting point.
- */
+Fill in for Hoody to use a non root folder as its starting point. */
   root_folder_id?: string;
   /** Only show files that are in the trash.
 
@@ -7579,8 +7538,7 @@ export interface FilesBackendsConnectPixeldrainResponse {
 export interface FilesBackendsConnectPremiumizemeRequest {
   /** API Key.
 
-This is not normally used - use oauth instead.
- */
+This is not normally used - use oauth instead. */
   api_key?: string;
   /** Auth server URL.
 
@@ -7655,7 +7613,7 @@ external changes.
 The files and folders on ProtonDrive are represented as links with keyrings, 
 which can be cached to improve performance and be friendly to the API server.
 
-The cache is currently built for the case when the hoody-vfs is the only instance 
+The cache is currently built for the case when the Hoody is the only instance 
 performing operations to the mount point. The event system, which is the proton
 API system that provides visibility of what has changed on the drive, is yet 
 to be implemented, so updates from other clients won’t be reflected in the 
@@ -7670,11 +7628,10 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
 
 For more information regarding the mailbox password, please check the 
 following official knowledge base article: 
-https://proton.me/support/the-difference-between-the-mailbox-password-and-login-password
- */
+https://proton.me/support/the-difference-between-the-mailbox-password-and-login-password */
   mailbox_password?: string;
   /** Return the file size before encryption
-			
+ 
 The size of the encrypted file will be different from (bigger than) the 
 original file size. Unless there is a reason to return the file size 
 after encryption is performed, otherwise, set this option to true, as 
@@ -7871,24 +7828,22 @@ Note that this ACL is applied when server-side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.
 
 If the acl is an empty string then no X-Amz-Acl: header is added and
-the default (private) will be used.
- */
+the default (private) will be used. */
   acl?: "default" | "private" | "public-read" | "public-read-write" | "authenticated-read" | "bucket-owner-read" | "bucket-owner-full-control" | "private" | "public-read" | "public-read-write" | "authenticated-read";
   /** Canned ACL used when creating buckets.
 
 For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 
-Note that this ACL is applied when only when creating buckets.  If it
+Note that this ACL is applied when only when creating buckets. If it
 isn't set then "acl" is used instead.
 
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
-header is added and the default (private) will be used.
- */
+header is added and the default (private) will be used. */
   bucket_acl?: "private" | "public-read" | "public-read-write" | "authenticated-read";
   /** Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (e.g. from "hoody-vfs rcat" or uploaded with "hoody-vfs mount" or google
+size (e.g. from "Hoody rcat" or uploaded with "Hoody mount" or google
 photos or google docs) they will be uploaded as multipart uploads
 using this chunk size.
 
@@ -7904,15 +7859,14 @@ large file of known size to stay below the 10,000 chunks limit.
 Files of unknown size are uploaded with the configured
 chunk_size. Since the default chunk size is 5 MiB and there can be at
 most 10,000 chunks, this means that by default the maximum size of
-a file you can stream upload is 48 GiB.  If you wish to stream upload
+a file you can stream upload is 48 GiB. If you wish to stream upload
 larger files then you will need to increase chunk_size.
 
 Increasing the chunk size decreases the accuracy of the progress
 statistics displayed with "-P" flag. Hoody-VFS treats chunk as sent when
 it's buffered by the AWS SDK, when in fact it may still be uploading.
 A bigger chunk size means a bigger AWS SDK buffer and progress
-reporting more deviating from the truth.
- */
+reporting more deviating from the truth. */
   chunk_size?: string;
   /** Cutoff for switching to multipart copy.
 
@@ -7924,12 +7878,11 @@ The minimum is 0 and the maximum is 5 GiB. */
   /** If set this will decompress gzip encoded objects.
 
 It is possible to upload objects to S3 with "Content-Encoding: gzip"
-set. Normally hoody-vfs will download these files as compressed objects.
+set. Normally Hoody will download these files as compressed objects.
 
-If this flag is set then hoody-vfs will decompress these files with
-"Content-Encoding: gzip" as they are received. This means that hoody-vfs
-can't check the size and hash but the file contents will be decompressed.
- */
+If this flag is set then Hoody will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that Hoody
+can't check the size and hash but the file contents will be decompressed. */
   decompress?: boolean;
   /** Description of the remote. */
   description?: string;
@@ -7950,23 +7903,21 @@ Note that Directory Buckets do not support:
 
 Hoody-VFS limitations with Directory Buckets:
 
-- hoody-vfs does not support creating Directory Buckets with `hoody-vfs mkdir`
-- ... or removing them with `hoody-vfs rmdir` yet
-- Directory Buckets do not appear when doing `hoody-vfs lsf` at the top level.
+- Hoody does not support creating Directory Buckets with `Hoody mkdir`
+-... or removing them with `Hoody rmdir` yet
+- Directory Buckets do not appear when doing `Hoody lsf` at the top level.
 - Hoody-VFS can't remove auto created directories yet. In theory this should
-  work with `directory_markers = true` but it doesn't.
-- Directories don't seem to appear in recursive (ListR) listings.
- */
+ work with `directory_markers = true` but it doesn't.
+- Directories don't seem to appear in recursive (ListR) listings. */
   directory_bucket?: boolean;
   /** Upload an empty object with a trailing slash when a new directory is created
 
 Empty folders are unsupported for bucket based remotes, this option creates an empty
-object ending with "/", to persist the folder.
- */
+object ending with "/", to persist the folder. */
   directory_markers?: boolean;
   /** Don't store MD5 checksum with object metadata.
 
-Normally hoody-vfs will calculate the MD5 checksum of the input before
+Normally Hoody will calculate the MD5 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
 to start uploading. */
@@ -7974,12 +7925,10 @@ to start uploading. */
   /** Disable usage of http2 for S3 backends.
 
 There is currently an unsolved issue with the s3 (specifically minio) backend
-and HTTP/2.  HTTP/2 is enabled by default for the s3 backend but can be
-disabled here.  When the issue is solved this flag will be removed.
+and HTTP/2. HTTP/2 is enabled by default for the s3 backend but can be
+disabled here. When the issue is solved this flag will be removed.
 
-See: https://github.com/hoody-vfs/hoody-vfs/issues/4673, https://github.com/hoody-vfs/hoody-vfs/issues/3631
-
- */
+See: https://github.com/Hoody/Hoody/issues/4673, https://github.com/Hoody/Hoody/issues/3631 */
   disable_http2?: boolean;
   /** Custom endpoint for downloads.
 This is usually set to a CloudFront CDN URL as AWS S3 offers
@@ -7999,42 +7948,38 @@ Only applies if access_key_id and secret_access_key is blank. */
   env_auth?: boolean;
   /** If true use path style access if false use virtual hosted style.
 
-If this is true (the default) then hoody-vfs will use path style access,
-if false then hoody-vfs will use virtual path style. See [the AWS S3
+If this is true (the default) then Hoody will use path style access,
+if false then Hoody will use virtual path style. See [the AWS S3
 docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
 for more info.
 
 Some providers (e.g. AWS, Aliyun OSS, Netease COS, or Tencent COS) require this set to
-false - hoody-vfs will do this automatically based on the provider
+false - Hoody will do this automatically based on the provider
 setting.
 
 Note that if your bucket isn't a valid DNS name, i.e. has '.' or '_' in,
-you'll need to set this to true.
- */
+you'll need to set this to true. */
   force_path_style?: boolean;
   /** If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
 
 It should be set to true for resuming uploads across different sessions.
 
-WARNING: Storing parts of an incomplete multipart upload counts towards space usage on S3 and will add additional costs if not cleaned up.
- */
+WARNING: Storing parts of an incomplete multipart upload counts towards space usage on S3 and will add additional costs if not cleaned up. */
   leave_parts_on_error?: boolean;
   /** Size of listing chunk (response list for each ListObject S3 request).
 
 This option is also known as "MaxKeys", "max-items", or "page-size" from the AWS S3 specification.
 Most services truncate the response list to 1000 objects even if requested more than that.
 In AWS S3 this is a global maximum and cannot be changed, see [AWS S3](https://docs.aws.amazon.com/cli/latest/reference/s3/ls.html).
-In Ceph, this can be increased with the "rgw list buckets max chunk" option.
- */
+In Ceph, this can be increased with the "rgw list buckets max chunk" option. */
   list_chunk?: number;
   /** Whether to url encode listings: true/false/unset
 
 Some providers support URL encoding listings and where this is
 available this is more reliable when using control characters in file
-names. If this is set to unset (the default) then hoody-vfs will choose
+names. If this is set to unset (the default) then Hoody will choose
 according to the provider setting what to apply, but you can override
-hoody-vfs's choice here.
- */
+Hoody's choice here. */
   list_url_encode?: string;
   /** Version of ListObjects to use: 1,2 or 0 for auto.
 
@@ -8044,10 +7989,9 @@ enumerate objects in a bucket.
 However in May 2016 the ListObjectsV2 call was introduced. This is
 much higher performance and should be used if at all possible.
 
-If set to the default, 0, hoody-vfs will guess according to the provider
+If set to the default, 0, Hoody will guess according to the provider
 set which list objects method to call. If it guesses wrong, then it
-may be set manually here.
- */
+may be set manually here. */
   list_version?: number;
   /** Location constraint - must be set to match the Region.
 
@@ -8062,8 +8006,7 @@ This can be useful if a service does not support the AWS S3
 specification of 10,000 chunks.
 
 Hoody-VFS will automatically increase the chunk size when uploading a
-large file of a known size to stay below this number of chunks limit.
- */
+large file of a known size to stay below this number of chunks limit. */
   max_upload_parts?: number;
   /** How often internal memory buffer pools will be flushed. (no longer used) (in seconds) */
   memory_pool_flush_time?: number;
@@ -8080,33 +8023,31 @@ with `Content-Encoding: gzip` (eg Cloudflare).
 
 A symptom of this would be receiving errors like
 
-    ERROR corrupted on transfer: sizes differ NNN vs MMM
+ ERROR corrupted on transfer: sizes differ NNN vs MMM
 
-If you set this flag and hoody-vfs downloads an object with
-Content-Encoding: gzip set and chunked transfer encoding, then hoody-vfs
+If you set this flag and Hoody downloads an object with
+Content-Encoding: gzip set and chunked transfer encoding, then Hoody
 will decompress the object on the fly.
 
-If this is set to unset (the default) then hoody-vfs will choose
+If this is set to unset (the default) then Hoody will choose
 according to the provider setting what to apply, but you can override
-hoody-vfs's choice here.
- */
+Hoody's choice here. */
   might_gzip?: string;
   /** If set, don't attempt to check the bucket exists or create it.
 
 This can be useful when trying to minimise the number of transactions
-hoody-vfs does if you know the bucket exists already.
+Hoody does if you know the bucket exists already.
 
 It can also be needed if the user you are using does not have bucket
 creation permissions. Before v1.52.0 this would have passed silently
-due to a bug.
- */
+due to a bug. */
   no_check_bucket?: boolean;
   /** If set, don't HEAD uploaded objects to check integrity.
 
 This can be useful when trying to minimise the number of transactions
-hoody-vfs does.
+Hoody does.
 
-Setting it means that if hoody-vfs receives a 200 OK message after
+Setting it means that if Hoody receives a 200 OK message after
 uploading an object with PUT then it will assume that it got uploaded
 properly.
 
@@ -8122,14 +8063,13 @@ It reads the following items from the response for a single part PUT:
 
 For multipart uploads these items aren't read.
 
-If an source object of unknown length is uploaded then hoody-vfs **will** do a
+If an source object of unknown length is uploaded then Hoody **will** do a
 HEAD request.
 
 Setting this flag increases the chance for undetected upload failures,
 in particular an incorrect size, so it isn't recommended for normal
 operation. In practice the chance of an undetected upload failure is
-very small even with this flag.
- */
+very small even with this flag. */
   no_head?: boolean;
   /** If set, do not do HEAD before GET when getting objects. */
   no_head_object?: boolean;
@@ -8137,12 +8077,11 @@ very small even with this flag.
   no_system_metadata?: boolean;
   /** Profile to use in the shared credentials file.
 
-If env_auth = true then hoody-vfs can use a shared credentials file. This
+If env_auth = true then Hoody can use a shared credentials file. This
 variable controls which profile is used in that file.
 
 If empty it will default to the environment variable "AWS_PROFILE" or
-"default" if that environment variable is also not set.
- */
+"default" if that environment variable is also not set. */
   profile?: string;
   /** Choose your S3 provider. */
   provider?: "AWS" | "Alibaba" | "ArvanCloud" | "Ceph" | "ChinaMobile" | "Cloudflare" | "DigitalOcean" | "Dreamhost" | "GCS" | "HuaweiOBS" | "IBMCOS" | "IDrive" | "IONOS" | "LyveCloud" | "Leviia" | "Liara" | "Linode" | "Magalu" | "Minio" | "Netease" | "Outscale" | "Petabox" | "RackCorp" | "Hoody-VFS" | "Scaleway" | "SeaweedFS" | "Selectel" | "StackPath" | "Storj" | "Synology" | "TencentCOS" | "Wasabi" | "Qiniu" | "Other";
@@ -8167,8 +8106,7 @@ This can be set to a comma separated list of the following functions:
 - `ResponseEventMessage`
 
 Use `Off` to disable and `All` to set all log levels. You will need to
-use `-vv` to see the debug level logs.
- */
+use `-vv` to see the debug level logs. */
   sdk_log_mode?: string;
   /** AWS Secret Access Key (password).
 
@@ -8180,15 +8118,14 @@ Leave blank for anonymous access or runtime credentials. */
   session_token?: string;
   /** Path to the shared credentials file.
 
-If env_auth = true then hoody-vfs can use a shared credentials file.
+If env_auth = true then Hoody can use a shared credentials file.
 
-If this variable is empty hoody-vfs will look for the
+If this variable is empty Hoody will look for the
 "AWS_SHARED_CREDENTIALS_FILE" env variable. If the env value is empty
 it will default to the current user's home directory.
 
-    Linux/OSX: "$HOME/.aws/credentials"
-    Windows:   "%USERPROFILE%\.aws\credentials"
- */
+ Linux/OSX: "$HOME/.aws/credentials"
+ Windows: "%USERPROFILE%\.aws\credentials" */
   shared_credentials_file?: string;
   /** If using SSE-C, the server-side encryption algorithm used when storing this object in S3. */
   sse_customer_algorithm?: "" | "AES256";
@@ -8202,8 +8139,7 @@ Alternatively you can provide --sse-customer-key. */
   sse_customer_key_base64?: "";
   /** If using SSE-C you may provide the secret encryption key MD5 checksum (optional).
 
-If you leave it blank, this is calculated automatically from the sse_customer_key provided.
- */
+If you leave it blank, this is calculated automatically from the sse_customer_key provided. */
   sse_customer_key_md5?: "";
   /** If using KMS ID you must provide the ARN of Key. */
   sse_kms_key_id?: "" | "arn:aws:kms:us-east-1:*";
@@ -8233,7 +8169,7 @@ See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/
   use_accelerate_endpoint?: boolean;
   /** Whether to send `Accept-Encoding: gzip` header.
 
-By default, hoody-vfs will append `Accept-Encoding: gzip` to the request to download
+By default, Hoody will append `Accept-Encoding: gzip` to the request to download
 compressed objects whenever possible.
 
 However some providers such as Google Cloud Storage may alter the HTTP headers, breaking
@@ -8243,10 +8179,9 @@ A symptom of this would be receiving errors like
 
 	SignatureDoesNotMatch: The request signature we calculated does not match the signature you provided.
 
-In this case, you might want to try disabling this option.
- */
+In this case, you might want to try disabling this option. */
   use_accept_encoding_gzip?: string;
-  /** Set if hoody-vfs should report BucketAlreadyExists errors on bucket creation.
+  /** Set if Hoody should report BucketAlreadyExists errors on bucket creation.
 
 At some point during the evolution of the s3 protocol, AWS started
 returning an `AlreadyOwnedByYou` error when attempting to create a
@@ -8257,18 +8192,17 @@ Unfortunately exactly what has been implemented by s3 clones is a
 little inconsistent, some return `AlreadyOwnedByYou`, some return
 `BucketAlreadyExists` and some return no error at all.
 
-This is important to hoody-vfs because it ensures the bucket exists by
+This is important to Hoody because it ensures the bucket exists by
 creating it on quite a lot of operations (unless
 `--s3-no-check-bucket` is used).
 
-If hoody-vfs knows the provider can return `AlreadyOwnedByYou` or returns
+If Hoody knows the provider can return `AlreadyOwnedByYou` or returns
 no error then it can report `BucketAlreadyExists` errors when the user
-attempts to create a bucket not owned by them. Otherwise hoody-vfs
+attempts to create a bucket not owned by them. Otherwise Hoody
 ignores the `BucketAlreadyExists` error which can lead to confusion.
 
-This should be automatically set correctly for all providers hoody-vfs
-knows about - please make a bug report if not.
- */
+This should be automatically set correctly for all providers Hoody
+knows about - please make a bug report if not. */
   use_already_exists?: string;
   /** If true use AWS S3 dual-stack endpoint (IPv6 support).
 
@@ -8276,28 +8210,25 @@ See [AWS Docs on Dualstack Endpoints](https://docs.aws.amazon.com/AmazonS3/lates
   use_dual_stack?: boolean;
   /** Whether to use ETag in multipart uploads for verification
 
-This should be true, false or left unset to use the default for the provider.
- */
+This should be true, false or left unset to use the default for the provider. */
   use_multipart_etag?: string;
-  /** Set if hoody-vfs should use multipart uploads.
+  /** Set if Hoody should use multipart uploads.
 
 You can change this if you want to disable the use of multipart uploads.
 This shouldn't be necessary in normal operation.
 
-This should be automatically set correctly for all providers hoody-vfs
-knows about - please make a bug report if not.
- */
+This should be automatically set correctly for all providers Hoody
+knows about - please make a bug report if not. */
   use_multipart_uploads?: string;
   /** Whether to use a presigned request or PutObject for single part uploads
 
-If this is false hoody-vfs will use PutObject from the AWS SDK to upload
+If this is false Hoody will use PutObject from the AWS SDK to upload
 an object.
 
-Versions of hoody-vfs < 1.59 use presigned requests to upload a single
+Versions of Hoody < 1.59 use presigned requests to upload a single
 part object and setting this flag to true will re-enable that
 functionality. This shouldn't be necessary except in exceptional
-circumstances or for testing.
- */
+circumstances or for testing. */
   use_presigned_request?: boolean;
   /** Whether to use an unsigned payload in PutObject
 
@@ -8305,13 +8236,12 @@ Hoody-VFS has to avoid the AWS SDK seeking the body when calling
 PutObject. The AWS provider can add checksums in the trailer to avoid
 seeking but other providers can't.
 
-This should be true, false or left unset to use the default for the provider.
- */
+This should be true, false or left unset to use the default for the provider. */
   use_unsigned_payload?: string;
   /** If true use v2 authentication.
 
-If this is false (the default) then hoody-vfs will use v4 authentication.
-If it is set then hoody-vfs will use v2 authentication.
+If this is false (the default) then Hoody will use v4 authentication.
+If it is set then Hoody will use v2 authentication.
 
 Use this only if v4 signatures don't work, e.g. pre Jewel/v10 CEPH. */
   v2_auth?: boolean;
@@ -8323,8 +8253,7 @@ The parameter should be a date, "2006-01-02", datetime "2006-01-02
 Note that when using this no file write operations are permitted,
 so you can't upload files or delete them.
 
-See [the time option docs](/docs/#time-option) for valid formats.
- */
+See [the time option docs](/docs/#time-option) for valid formats. */
   version_at?: string;
   /** Show deleted file markers when using versions.
 
@@ -8333,8 +8262,7 @@ as 0 size files. The only operation which can be performed on them is deletion.
 
 Deleting a delete marker will reveal the previous version.
 
-Deleted files will always show with a timestamp.
- */
+Deleted files will always show with a timestamp. */
   version_deleted?: boolean;
   /** Include old versions in directory listings. */
   versions?: boolean;
@@ -8355,7 +8283,7 @@ export interface FilesBackendsConnectSeafileRequest {
   "2fa"?: boolean;
   /** Authentication token. */
   auth_token?: string;
-  /** Should hoody-vfs create a library if it doesn't exist. */
+  /** Should Hoody create a library if it doesn't exist. */
   create_library?: boolean;
   /** Description of the remote. */
   description?: string;
@@ -8392,10 +8320,9 @@ export interface FilesBackendsConnectSeafileResponse {
 export interface FilesBackendsConnectSftpRequest {
   /** Allow asking for SFTP password when needed.
 
-If this is set and no password is supplied then hoody-vfs will:
+If this is set and no password is supplied then Hoody will:
 - ask for a password
-- not contact the ssh agent
- */
+- not contact the ssh agent */
   ask_password?: boolean;
   /** Upload and download chunk size.
 
@@ -8412,12 +8339,11 @@ and only use it if you always connect to the same server or after
 sufficiently broad testing. If you get errors such as
 "failed to send packet payload: EOF", lots of "connection lost",
 or "corrupted on transfer", when copying a larger file, try lowering
-the value. The server run by [hoody-vfs serve sftp](/commands/hoody-vfs_serve_sftp)
+the value. The server run by [Hoody serve sftp](/commands/hoody-vfs_serve_sftp)
 sends packets with standard 32k maximum payload so you must not
 set a different chunk_size when downloading files, but it accepts
 packets up to the 256k total size, so for uploads the chunk_size
-can be set as for the OpenSSH example above.
- */
+can be set as for the OpenSSH example above. */
   chunk_size?: string;
   /** Space separated list of ciphers to be used for session encryption, ordered by preference.
 
@@ -8427,15 +8353,13 @@ This must not be set if use_insecure_cipher is true.
 
 Example:
 
-    aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com
- */
+ aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com */
   ciphers?: string;
   /** The maximum number of outstanding requests for one file
 
 This controls the maximum number of outstanding requests for one file.
 Increasing it will increase throughput on high latency links at the
-cost of using more memory.
- */
+cost of using more memory. */
   concurrency?: number;
   /** Maximum number of SFTP simultaneous connections, 0 for unlimited.
 
@@ -8449,9 +8373,7 @@ If you use `--check-first` then it just needs to be one more than the
 maximum of `--checkers` and `--transfers`.
 
 So for `connections 3` you'd use `--checkers 2 --transfers 2
---check-first` or `--checkers 1 --transfers 1`.
-
- */
+--check-first` or `--checkers 1 --transfers 1`. */
   connections?: number;
   /** Set to enable server side copies using hardlinks.
 
@@ -8481,20 +8403,18 @@ Some servers limit the amount number of times a file can be
 downloaded. Using concurrent reads can trigger this limit, so if you
 have a server which returns
 
-    Failed to copy: file does not exist
+ Failed to copy: file does not exist
 
 Then you may need to enable this flag.
 
-If concurrent reads are disabled, the use_fstat option is ignored.
- */
+If concurrent reads are disabled, the use_fstat option is ignored. */
   disable_concurrent_reads?: boolean;
   /** If set don't use concurrent writes.
 
-Normally hoody-vfs uses concurrent writes to upload files. This improves
+Normally Hoody uses concurrent writes to upload files. This improves
 the performance greatly, especially for distant servers.
 
-This option disables concurrent writes should that be necessary.
- */
+This option disables concurrent writes should that be necessary. */
   disable_concurrent_writes?: boolean;
   /** Disable the execution of SSH commands to determine if remote file hashing is available.
 
@@ -8512,13 +8432,12 @@ Note: This can affect the outcome of key negotiation with the server even if ser
 
 Example:
 
-    ssh-ed25519 ssh-rsa ssh-dss
- */
+ ssh-ed25519 ssh-rsa ssh-dss */
   host_key_algorithms?: string;
   /** Max time before closing idle connections.
 
 If no connections have been returned to the connection pool in the time
-given, hoody-vfs will empty the connection pool.
+given, Hoody will empty the connection pool.
 
 Set to 0 to keep connections indefinitely. (in seconds) */
   idle_timeout?: number;
@@ -8530,8 +8449,7 @@ This must not be set if use_insecure_cipher is true.
 
 Example:
 
-    sntrup761x25519-sha512@openssh.com curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
- */
+ sntrup761x25519-sha512@openssh.com curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 */
   key_exchange?: string;
   /** Path to PEM-encoded private key file.
 
@@ -8548,11 +8466,11 @@ in the new OpenSSH format can't be used. */
 
 Note that this should be on a single line with line endings replaced with '\n', eg
 
-    key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+ key_pem = -----BEGIN RSA PRIVATE KEY-----\n<your PEM-encoded private key>\n-----END RSA PRIVATE KEY-----
 
 This will generate the single line correctly:
 
-    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
+ awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
 
 If specified, it will override the key_file parameter. */
   key_pem?: string;
@@ -8574,8 +8492,7 @@ At least one must match with server configuration. This can be checked for examp
 
 Example:
 
-    umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com
- */
+ umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com */
   macs?: string;
   /** The command used to read md5 hashes.
 
@@ -8590,23 +8507,23 @@ different. This issue affects among others Synology NAS boxes.
 
 E.g. if shared folders can be found in directories representing volumes:
 
-    hoody-vfs sync /home/local/directory remote:/directory --sftp-path-override /volume2/directory
+ Hoody sync /home/local/directory remote:/directory --sftp-path-override /volume2/directory
 
 E.g. if home directory can be found in a shared folder called "home":
 
-    hoody-vfs sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory
+ Hoody sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory
 	
-To specify only the path to the SFTP remote's root, and allow hoody-vfs to add any relative subpaths automatically (including unwrapping/decrypting remotes as necessary), add the '@' character to the beginning of the path.
+To specify only the path to the SFTP remote's root, and allow Hoody to add any relative subpaths automatically (including unwrapping/decrypting remotes as necessary), add the '@' character to the beginning of the path.
 
 E.g. the first example above could be rewritten as:
 
-	hoody-vfs sync /home/local/directory remote:/directory --sftp-path-override @/volume2
+	Hoody sync /home/local/directory remote:/directory --sftp-path-override @/volume2
 	
 Note that when using this method with Synology "home" folders, the full "/homes/USER" path should be specified instead of "/home".
 
 E.g. the second example above should be rewritten as:
 
-	hoody-vfs sync /home/local/directory remote:/homes/USER/directory --sftp-path-override @/volume1 */
+	Hoody sync /home/local/directory remote:/homes/USER/directory --sftp-path-override @/volume1 */
   path_override?: string;
   /** SSH port number. */
   port?: number;
@@ -8625,31 +8542,29 @@ Leading `~` will be expanded in the file name as will environment variables such
 The subsystem option is ignored when server_command is defined.
 
 If adding server_command to the configuration file please note that 
-it should not be enclosed in quotes, since that will make hoody-vfs fail.
+it should not be enclosed in quotes, since that will make Hoody fail.
 
 A working example is:
 
-    [remote_name]
-    type = sftp
-    server_command = sudo /usr/libexec/openssh/sftp-server */
+ [remote_name]
+ type = sftp
+ server_command = sudo /usr/libexec/openssh/sftp-server */
   server_command?: string;
   /** Environment variables to pass to sftp and commands
 
 Set environment variables in the form:
 
-    VAR=value
+ VAR=value
 
 to be passed to the sftp client and to any commands run (eg md5sum).
 
 Pass multiple variables space separated, eg
 
-    VAR1=value VAR2=value
+ VAR1=value VAR2=value
 
 and pass variables with spaces in quotes, eg
 
-    "VAR3=value with space" "VAR4=value with space" VAR5=nospacehere
-
- */
+ "VAR3=value with space" "VAR4=value with space" VAR5=nospacehere */
   set_env?: string;
   /** Set the modified time on the remote if set. */
   set_modtime?: boolean;
@@ -8669,12 +8584,11 @@ Supports the format user:pass@host:port, user@host:port, host:port.
 
 Example:
 
-	myUser:myPass@localhost:9005
-	 */
+	myUser:myPass@localhost:9005 */
   socks_proxy?: string;
   /** Path and arguments to external ssh binary.
 
-Normally hoody-vfs will use its internal ssh library to connect to the
+Normally Hoody will use its internal ssh library to connect to the
 SFTP server. However it does not implement all possible ssh options so
 it may be desirable to use an external ssh binary.
 
@@ -8693,11 +8607,10 @@ Any arguments with spaces in should be surrounded by "double quotes".
 
 An example setting might be:
 
-    ssh -o ServerAliveInterval=20 user@example.com
+ ssh -o ServerAliveInterval=20 user@example.com
 
-Note that when using an external ssh binary hoody-vfs makes a new ssh
-connection for every hash it calculates.
- */
+Note that when using an external ssh binary Hoody makes a new ssh
+connection for every hash it calculates. */
   ssh?: string;
   /** Specifies the SSH2 subsystem on the remote host. */
   subsystem?: string;
@@ -8709,8 +8622,7 @@ Fstat instead of Stat which is called on an already open file handle.
 
 It has been found that this helps with IBM Sterling SFTP servers which have
 "extractability" level set to 1 which means only 1 file can be opened at
-any given time.
- */
+any given time. */
   use_fstat?: boolean;
   /** Enable the use of insecure ciphers and key exchange methods.
 
@@ -8725,8 +8637,7 @@ This enables the use of the following insecure ciphers and key exchange methods:
 
 Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
 
-This must be false if you use either ciphers or key_exchange advanced options.
- */
+This must be false if you use either ciphers or key_exchange advanced options. */
   use_insecure_cipher?: boolean;
   /** SSH username. */
   user?: string;
@@ -8777,12 +8688,11 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   /** Endpoint for API calls.
 
 This is usually auto discovered as part of the oauth process, but can
-be set manually to something like: https://XXX.sharefile.com
- */
+be set manually to something like: https://XXX.sharefile.com */
   endpoint?: string;
   /** ID of the root folder.
 
-Leave blank to access "Personal Folders".  You can use one of the
+Leave blank to access "Personal Folders". You can use one of the
 standard values here or any folder ID (long hex number ID). */
   root_folder_id?: "" | "favorites" | "allshared" | "connectors" | "top";
   /** OAuth Access Token as a JSON blob. */
@@ -8859,7 +8769,7 @@ E.g. "example.com". */
   /** Max time before closing idle connections.
 
 If no connections have been returned to the connection pool in the time
-given, hoody-vfs will empty the connection pool.
+given, Hoody will empty the connection pool.
 
 Set to 0 to keep connections indefinitely. (in seconds) */
   idle_timeout?: number;
@@ -8872,10 +8782,9 @@ Set to 0 to keep connections indefinitely. (in seconds) */
 Hoody-VFS presents this name to the server. Some servers use this as further
 authentication, and it often needs to be set for clusters. For example:
 
-    cifs/remotehost:1020
+ cifs/remotehost:1020
 
-Leave blank if not sure.
- */
+Leave blank if not sure. */
   spn?: string;
   /** SMB username. */
   user?: string;
@@ -8923,23 +8832,23 @@ export interface FilesBackendsConnectStorjResponse {
 export interface FilesBackendsConnectSugarsyncRequest {
   /** Sugarsync Access Key ID.
 
-Leave blank to use hoody-vfs's. */
+Leave blank to use Hoody's. */
   access_key_id?: string;
   /** Sugarsync App ID.
 
-Leave blank to use hoody-vfs's. */
+Leave blank to use Hoody's. */
   app_id?: string;
   /** Sugarsync authorization.
 
-Leave blank normally, will be auto configured by hoody-vfs. */
+Leave blank normally, will be auto configured by Hoody. */
   authorization?: string;
   /** Sugarsync authorization expiry.
 
-Leave blank normally, will be auto configured by hoody-vfs. */
+Leave blank normally, will be auto configured by Hoody. */
   authorization_expiry?: string;
   /** Sugarsync deleted folder id.
 
-Leave blank normally, will be auto configured by hoody-vfs. */
+Leave blank normally, will be auto configured by Hoody. */
   deleted_id?: string;
   /** Description of the remote. */
   description?: string;
@@ -8952,19 +8861,19 @@ otherwise put them in the deleted files. */
   hard_delete?: boolean;
   /** Sugarsync Private Access Key.
 
-Leave blank to use hoody-vfs's. */
+Leave blank to use Hoody's. */
   private_access_key?: string;
   /** Sugarsync refresh token.
 
-Leave blank normally, will be auto configured by hoody-vfs. */
+Leave blank normally, will be auto configured by Hoody. */
   refresh_token?: string;
   /** Sugarsync root id.
 
-Leave blank normally, will be auto configured by hoody-vfs. */
+Leave blank normally, will be auto configured by Hoody. */
   root_id?: string;
   /** Sugarsync user.
 
-Leave blank normally, will be auto configured by hoody-vfs. */
+Leave blank normally, will be auto configured by Hoody. */
   user?: string;
 }
 
@@ -8998,8 +8907,7 @@ or a `.file-segments` directory. (See the `use_segments_container` option
 for more info). Default for this is 5 GiB which is its maximum value, which
 means only files above this size will be chunked.
 
-Hoody-VFS uploads chunked files as dynamic large objects (DLO).
- */
+Hoody-VFS uploads chunked files as dynamic large objects (DLO). */
   chunk_size?: string;
   /** Description of the remote. */
   description?: string;
@@ -9015,14 +8923,14 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   env_auth?: boolean;
   /** When paginating, always fetch unless we received an empty page.
 
-Consider using this option if hoody-vfs listings show fewer objects
+Consider using this option if Hoody listings show fewer objects
 than expected, or if repeated syncs copy unchanged objects.
 
-It is safe to enable this, but hoody-vfs may make more API calls than
+It is safe to enable this, but Hoody may make more API calls than
 necessary.
 
 This is one of a pair of workarounds to handle implementations
-of the Swift API that do not implement pagination as expected.  See
+of the Swift API that do not implement pagination as expected. See
 also "partial_page_fetch_threshold". */
   fetch_until_empty_page?: boolean;
   /** API key or password (OS_PASSWORD). */
@@ -9048,13 +8956,13 @@ normal copy operations. */
 
 Swift cannot transparently store files bigger than 5 GiB. There are
 two schemes for chunking large files, static large objects (SLO) or
-dynamic large objects (DLO), and the API does not allow hoody-vfs to
+dynamic large objects (DLO), and the API does not allow Hoody to
 determine whether a file is a static or dynamic large object without
 doing a HEAD on the object. Since these need to be treated
-differently, this means hoody-vfs has to issue HEAD requests for objects
+differently, this means Hoody has to issue HEAD requests for objects
 for example when reading checksums.
 
-When `no_large_objects` is set, hoody-vfs will assume that there are no
+When `no_large_objects` is set, Hoody will assume that there are no
 static or dynamic large objects stored. This means it can stop doing
 the extra HEAD calls which in turn increases performance greatly
 especially when doing a swift to swift transfer with `--checksum` set.
@@ -9065,19 +8973,18 @@ upload.
 
 If you set this option and there **are** static or dynamic large objects,
 then this will give incorrect hashes for them. Downloads will succeed,
-but other operations such as Remove and Copy will fail.
- */
+but other operations such as Remove and Copy will fail. */
   no_large_objects?: boolean;
   /** When paginating, fetch if the current page is within this percentage of the limit.
 
-Consider using this option if hoody-vfs listings show fewer objects
+Consider using this option if Hoody listings show fewer objects
 than expected, or if repeated syncs copy unchanged objects.
 
-It is safe to enable this, but hoody-vfs may make more API calls than
+It is safe to enable this, but Hoody may make more API calls than
 necessary.
 
 This is one of a pair of workarounds to handle implementations
-of the Swift API that do not implement pagination as expected.  See
+of the Swift API that do not implement pagination as expected. See
 also "fetch_until_empty_page". */
   partial_page_fetch_threshold?: number;
   /** Region name - optional (OS_REGION_NAME). */
@@ -9099,7 +9006,7 @@ provider. */
   tenant_id?: string;
   /** Choose destination for large object segments
 
-Swift cannot transparently store files bigger than 5 GiB and hoody-vfs
+Swift cannot transparently store files bigger than 5 GiB and Hoody
 will chunk files larger than `chunk_size` (default 5 GiB) in order to
 upload them.
 
@@ -9116,11 +9023,10 @@ providers (eg Blomp) require this mode as creating additional
 containers isn't allowed. If it is desired to see the `.file-segments`
 directory in the root then this flag must be set to `true`.
 
-If this value is `unset` (the default), then hoody-vfs will choose the value
-to use. It will be `false` unless hoody-vfs detects any `auth_url`s that
+If this value is `unset` (the default), then Hoody will choose the value
+to use. It will be `false` unless Hoody detects any `auth_url`s that
 it knows need it to be `true`. In this case you'll see a message in
-the DEBUG log.
- */
+the DEBUG log. */
   use_segments_container?: string;
   /** User name to log in (OS_USERNAME). */
   user?: string;
@@ -9181,7 +9087,7 @@ See the [encoding section in the overview](/overview/#encoding) for more info. *
   list_page_size?: number;
   /** The password for the user. */
   password?: string;
-  /** If set, hoody-vfs will use this folder as the root folder for all operations. For example,
+  /** If set, Hoody will use this folder as the root folder for all operations. For example,
 if the slug identifies 'foo/bar/', 'ulozto:baz' is equivalent to 'ulozto:foo/bar/baz' without
 any root slug set. */
   root_folder_slug?: string;
@@ -9261,17 +9167,16 @@ export interface FilesBackendsConnectUptoboxResponse {
 export interface FilesBackendsConnectWebdavRequest {
   /** Preserve authentication on redirect.
 
-If the server redirects hoody-vfs to a new domain when it is trying to
-read a file then normally hoody-vfs will drop the Authorization: header
+If the server redirects Hoody to a new domain when it is trying to
+read a file then normally Hoody will drop the Authorization: header
 from the request.
 
 This is standard security practice to avoid sending your credentials
 to an unknown webserver.
 
 However this is desirable in some circumstances. If you are getting
-an error like "401 Unauthorized" when hoody-vfs is attempting to read
-files from the webdav server then you can try this option.
- */
+an error like "401 Unauthorized" when Hoody is attempting to read
+files from the webdav server then you can try this option. */
   auth_redirect?: boolean;
   /** Bearer token instead of user/pass (e.g. a Macaroon). */
   bearer_token?: string;
@@ -9289,21 +9194,19 @@ Default encoding is Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Per
 
 Use this to set additional HTTP headers for all transactions
 
-The input format is comma separated list of key,value pairs.  Standard
+The input format is comma separated list of key,value pairs. Standard
 [CSV encoding](https://godoc.org/encoding/csv) may be used.
 
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
-You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
- */
+You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'. */
   headers?: string;
   /** Nextcloud upload chunk size.
 
 We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances.
 See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/big_file_upload_configuration.html#adjust-chunk-size-on-nextcloud-side
 
-Set to 0 to disable chunked uploading.
- */
+Set to 0 to disable chunked uploading. */
   nextcloud_chunk_size?: string;
   /** Exclude ownCloud mounted storages */
   owncloud_exclude_mounts?: boolean;
@@ -10822,7 +10725,6 @@ export interface AppExecutionRunBatchResponse {
 - dry-run: set_id + selected + shell_command (default command-only behavior)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
-
  */
 export interface AppRunAppGetResponse {
   status: RunStatus;
@@ -10847,7 +10749,6 @@ export type AppRunAppPostRequest = Selector;
 - dry-run: set_id + selected + shell_command (default command-only behavior)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
-
  */
 export interface AppRunAppPostResponse {
   status: RunStatus;
@@ -10870,7 +10771,6 @@ export interface AppRunAppPostResponse {
 - dry-run: set_id + selected + shell_command (default command-only behavior)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
-
  */
 export interface AppExecutionRunPathBasedResponse {
   status: RunStatus;
@@ -10893,7 +10793,6 @@ export interface AppExecutionRunPathBasedResponse {
 - dry-run: set_id + selected + shell_command (default command-only behavior)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
-
  */
 export interface AppExecutionRunTerminalAnchoredResponse {
   status: RunStatus;
@@ -11070,7 +10969,6 @@ export type AppRecipesRunRequest = RecipeExecutionRequest;
 - dry-run: set_id + selected + shell_command (default command-only behavior)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
-
  */
 export interface AppRecipesRunResponse {
   status: RunStatus;
@@ -11311,7 +11209,7 @@ export interface AgentGithubLoginRequest {
 }
 
 /**
- * The verbatim github.gw.login.start reply: a device flow {device_code, user_code, verification_uri, interval, expires_in}, or for a PAT {key, login, host}.
+ * The reply: a device flow {device_code, user_code, verification_uri, interval, expires_in}, or for a PAT {key, login, host}.
  */
 export interface AgentGithubLoginResponse {
   statusCode: number;
@@ -11331,7 +11229,7 @@ export interface AgentGithubLoginPollRequest {
 }
 
 /**
- * The verbatim github.gw.login.poll reply {key, login, host} — secret-free.
+ * The reply {key, login, host} — secret-free.
  */
 export interface AgentGithubLoginPollResponse {
   statusCode: number;
@@ -11349,14 +11247,12 @@ export interface AgentGithubAuthStatusResponse {
 }
 
 /**
- * Kit list envelope: a page of items plus pagination metadata.
+ * Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).
  */
 export interface AgentGithubBranchesResponse {
-  items: Record<string, unknown>[];
-  meta: { total?: number; page?: number; limit?: number };
   statusCode: number;
   message: string;
-  data: unknown;
+  data: Record<string, unknown>;
 }
 
 export interface AgentGithubCloneRequest {
@@ -11396,8 +11292,8 @@ export interface AgentGithubCommitResponse {
 }
 
 export interface AgentGithubPullRequestRequest {
-  /** The PR title. */
-  title?: string;
+  /** The PR title (required, non-empty). */
+  title: string;
   /** The PR description. */
   body?: string;
   /** Optional base branch (default the repo default). */
@@ -11414,14 +11310,12 @@ export interface AgentGithubPullRequestResponse {
 }
 
 /**
- * Kit list envelope: a page of items plus pagination metadata.
+ * Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).
  */
 export interface AgentGithubReposResponse {
-  items: Record<string, unknown>[];
-  meta: { total?: number; page?: number; limit?: number };
   statusCode: number;
   message: string;
-  data: unknown;
+  data: Record<string, unknown>;
 }
 
 /**
@@ -11439,7 +11333,7 @@ export interface AgentGithubSyncRequest {
 }
 
 /**
- * The verbatim github.gw.sync reply {steps:[…]}.
+ * The reply {steps:[…]}.
  */
 export interface AgentGithubSyncResponse {
   statusCode: number;
@@ -11750,9 +11644,9 @@ export interface AgentListMemoryItemsResponse {
 
 export interface AgentSaveMemoryItemRequest {
   /** Project key the memory belongs to. */
-  project?: string;
+  project: string;
   /** The memory content. */
-  content?: string;
+  content: string;
   /** Memory type (e.g. workflow, fact). */
   type?: string;
 }
@@ -12485,7 +12379,7 @@ export interface AgentRunSessionToolRequest {
   confirm?: boolean;
   /** The single-use token returned in the 409 tool_needs_confirmation details. Bound to the tool/session/params it was minted for; present it with confirm:true and the echoed params to approve the parked run. */
   confirm_token?: string;
-  /** Sessionless only: opt a non-read-only tool into running under the full gate chain (else a sessionless mutating run is refused 400 tool_mutation_refused). */
+  /** Sessionless only: opt a non-read-only tool into running under the full permission checks (else a sessionless mutating run is refused 400 tool_mutation_refused). */
   allow_mutations?: boolean;
 }
 
@@ -12550,8 +12444,10 @@ export interface AgentPostWorkflowMessageResponse {
 }
 
 export interface AgentRunSessionWorkflowRequest {
-  /** Optional input text fed to the workflow run. */
+  /** Optional input text fed to the workflow run ($(workflow.prompt)). */
   prompt?: string;
+  /** Optional run-time values for the workflow's DECLARED input parameters (declared name → string value; resolves to $(input.<name>) in every step). A workflow with a REQUIRED declared parameter cannot run without these. Values must be strings; a non-string value is a 400. */
+  inputs?: Record<string, unknown>;
 }
 
 /**
@@ -12598,7 +12494,7 @@ export interface AgentListFusionResponse {
 }
 
 export interface AgentUpsertFusionRequest {
-  /** The FusionSpec object (name, method, members, ...). */
+  /** The FusionSpec object (name, method, members,...). */
   spec: Record<string, unknown>;
 }
 
@@ -13104,7 +13000,7 @@ export interface AgentRunToolRequest {
   confirm?: boolean;
   /** The single-use token returned in the 409 tool_needs_confirmation details. Bound to the tool/session/params it was minted for; present it with confirm:true and the echoed params to approve the parked run. */
   confirm_token?: string;
-  /** Sessionless only: opt a non-read-only tool into running under the full gate chain (else a sessionless mutating run is refused 400 tool_mutation_refused). */
+  /** Sessionless only: opt a non-read-only tool into running under the full permission checks (else a sessionless mutating run is refused 400 tool_mutation_refused). */
   allow_mutations?: boolean;
 }
 
@@ -13124,7 +13020,7 @@ export interface AgentRunToolAsyncRequest {
   confirm?: boolean;
   /** The single-use token returned in the 409 tool_needs_confirmation details. Bound to the tool/session/params it was minted for; present it with confirm:true and the echoed params to approve the parked run. */
   confirm_token?: string;
-  /** Sessionless only: opt a non-read-only tool into running under the full gate chain (else a sessionless mutating run is refused 400 tool_mutation_refused). */
+  /** Sessionless only: opt a non-read-only tool into running under the full permission checks (else a sessionless mutating run is refused 400 tool_mutation_refused). */
   allow_mutations?: boolean;
 }
 
@@ -13144,7 +13040,7 @@ export interface AgentStreamToolRequest {
   confirm?: boolean;
   /** The single-use token returned in the 409 tool_needs_confirmation details. Bound to the tool/session/params it was minted for; present it with confirm:true and the echoed params to approve the parked run. */
   confirm_token?: string;
-  /** Sessionless only: opt a non-read-only tool into running under the full gate chain (else a sessionless mutating run is refused 400 tool_mutation_refused). */
+  /** Sessionless only: opt a non-read-only tool into running under the full permission checks (else a sessionless mutating run is refused 400 tool_mutation_refused). */
   allow_mutations?: boolean;
 }
 
@@ -13230,7 +13126,7 @@ export interface AgentGetWorkflowResponse {
 }
 
 export interface AgentPutWorkflowRequest {
-  /** The full workflow definition object (steps, entry_point, summary). Validated strictly daemon-side before an atomic write. */
+  /** The full workflow definition object (steps, entry_point, summary). Validated strictly server-side before an atomic write. */
   definition: Record<string, unknown>;
   /** Optional optimistic-concurrency guard: the 'revision:' value from getWorkflow (?include_revision=true). If the stored workflow changed since that read, the upsert is refused with [revision_conflict] and nothing is written. Omit to save unconditionally. */
   expected_revision?: string;
@@ -14360,8 +14256,7 @@ export interface BrowserMetadata {
   /** Whether the browser was launched headless */
   headless?: boolean;
   /** Puppeteer-style Chrome build identifier that was downloaded/used for this instance.
-Usually a full Chrome version string (e.g. `136.0.7103.113`).
- */
+Usually a full Chrome version string (e.g. `136.0.7103.113`). */
   chromiumBuildId?: string;
   /** Absolute path to the Chromium executable used for this instance. */
   chromiumExecutablePath?: string;
@@ -14389,6 +14284,8 @@ Usually a full Chrome version string (e.g. `136.0.7103.113`).
   locale?: string;
   geolocation?: Geolocation;
   viewport?: Viewport;
+  /** Where the current viewport policy came from: "creation" until the first successful POST /viewport, then "runtime". */
+  viewportSource?: "creation" | "runtime";
   /** User agent string */
   userAgentString?: string;
   /** Browser name */
@@ -14416,18 +14313,15 @@ Usually a full Chrome version string (e.g. `136.0.7103.113`).
 In Hoody container deployments this URL is rewritten to the `http-{PORT}` proxy hostname pattern.
 
 **Security Warning**: This URL provides full control over the browser instance.
-Only expose to trusted clients in secure environments.
- */
+Only expose to trusted clients in secure environments. */
   webSocketDebuggerUrl?: string | null;
   /** Chrome DevTools HTTP discovery URL (`/json/version`) for this instance.
 Tools can resolve the WebSocket URL from this endpoint.
-In Hoody container deployments this URL is rewritten to the `http-{PORT}` proxy hostname pattern.
- */
+In Hoody container deployments this URL is rewritten to the `http-{PORT}` proxy hostname pattern. */
   devtoolsHttpUrl?: string | null;
   /** Public URL to access Chrome DevTools frontend in a browser.
 Uses the `http-{PORT}` subdomain pattern routed by the Hoody reverse proxy.
-Open this URL to get a live DevTools inspector for the running browser.
- */
+Open this URL to get a live DevTools inspector for the running browser. */
   devtoolsFrontendUrl?: string | null;
   /** List of loaded Chrome extension directory paths (if any) */
   extensions?: string[];
@@ -14436,8 +14330,7 @@ Open this URL to get a live DevTools inspector for the running browser.
   /** DevTools remote debugging port if enabled */
   remoteDebuggingPort?: number | null;
   /** Interface address bound for DevTools. Defaults to `0.0.0.0` (all interfaces).
-Containers are behind a reverse proxy so this is safe by default.
- */
+Containers are behind a reverse proxy so this is safe by default. */
   remoteDebuggingAddress?: string | null;
   /** Whether QUIC transport is disabled for this instance. Defaults to `true` to enforce TCP-only transport. */
   quicDisabled?: boolean;
@@ -14465,6 +14358,23 @@ export interface Metrics {
   system?: { uptime?: number; memory?: Record<string, unknown>; cpu?: Record<string, unknown>; platform?: string; nodeVersion?: string };
   configuration?: Record<string, unknown>;
   timestamp?: string;
+}
+
+/**
+ * Live viewport policy of a browser instance.
+ */
+export interface ViewportStatus {
+  /** The runtime policy: {width,height} or null (responsive — the page follows the real window). */
+  viewport: { width: number /* min: 1, max: 8192 */; height: number /* min: 1, max: 8192 */ } | null;
+  /** "creation" until the first successful POST /viewport, then "runtime". */
+  source: "creation" | "runtime";
+  /**
+   * Number of live tabs at the time of the read.
+   * @minimum 0
+   */
+  tabs: number /* min: 0 */;
+  /** Whether every live page currently reflects the policy. */
+  converged: boolean;
 }
 
 export interface NavigationRecord {
@@ -14664,7 +14574,7 @@ export interface ProgramInput {
   /** X11 DISPLAY number for GUI programs. Accepts both "1" and ":1" formats (auto-prepends ":" if missing). Sets the DISPLAY environment variable for the program. */
   display?: string | null;
   /**
-   * Hoody Terminal integration: Session ID (1-65535). Designed for use with hoody-terminal web interface. When specified, program runs in a persistent terminal session accessible at http://hoody-terminal/?terminal_id=5000. Process I/O bridged via Unix socket using socat.
+   * Hoody Terminal integration: Session ID (1-65535). Designed for use with hoody-terminal web interface. When specified, program runs in a persistent terminal session.
    * @minimum 1
    * @maximum 65535
    */
@@ -14792,7 +14702,7 @@ export interface EphemeralProgramInput {
   /** X11 DISPLAY number for GUI programs. Accepts both "1" and ":1" formats (auto-prepends ":" if missing). Sets the DISPLAY environment variable for the program. */
   display?: string | null;
   /**
-   * Hoody Terminal integration: Session ID (1-65535). Enables web-based terminal access via hoody-terminal at http://hoody-terminal/?terminal_id=7000. Uses Unix socket bridge.
+   * Hoody Terminal integration: Session ID (1-65535). Enables web-based terminal access via hoody-terminal.
    * @minimum 1
    * @maximum 65535
    */
@@ -15524,7 +15434,7 @@ export interface CreateWatcherRequest {
   history_size?: number | null;
   /** Directory names or subdirectory paths to skip entirely (no inotify watches, no scanning).
 Supports simple names ("node_modules") and compound paths ("ibus/bus").
-Defaults to server-configured ignore list (node_modules, .git, target, etc.).
+Defaults to server-configured ignore list (node_modules,.git, target, etc.).
 Pass empty array to disable. */
   ignore_dirs?: string[] | null;
   /** Optional include glob patterns. If present, path must match one include. */
@@ -15980,13 +15890,18 @@ export interface Geolocation {
 
 /**
  * Fixed-viewport emulation settings. `null` means fixed-viewport emulation is disabled (`viewport=null` / `noViewport=true`) and the page follows the real browser window size.
-
  */
 export interface Viewport {
-  /** @minimum 1 */
-  width: number /* min: 1 */;
-  /** @minimum 1 */
-  height: number /* min: 1 */;
+  /**
+   * @minimum 1
+   * @maximum 8192
+   */
+  width: number /* min: 1, max: 8192 */;
+  /**
+   * @minimum 1
+   * @maximum 8192
+   */
+  height: number /* min: 1, max: 8192 */;
   deviceScaleFactor?: number;
   screenWidth?: number;
   screenHeight?: number;
@@ -16164,7 +16079,7 @@ export interface Program {
   /** X11 DISPLAY number for GUI programs. Accepts both "1" and ":1" formats (auto-prepends ":" if missing). Sets the DISPLAY environment variable for the program. */
   display?: string | null;
   /**
-   * Hoody Terminal integration: Session ID (1-65535). Designed for use with hoody-terminal web interface. When specified, program runs in a persistent terminal session accessible via browser at http://hoody-terminal/?terminal_id=5000. Process I/O is bridged via Unix socket (/var/run/hoody-terminal/pty-{terminal_id}.sock) using socat.
+   * Hoody Terminal integration: Session ID (1-65535). Designed for use with hoody-terminal web interface. When specified, program runs in a persistent terminal session.
    * @minimum 1
    * @maximum 65535
    */
@@ -16833,7 +16748,6 @@ export type BatchMode = "search" | "run";
  * Full selector (search/run request) combining query filters, pick mode,
 execution context, deferred execution, and output control fields. Can be
 expressed via query parameters, path segments, or JSON body.
-
  */
 export interface Selector {
   /** Primary name query (aliases q, name) */
@@ -16921,7 +16835,6 @@ export interface SearchResponse {
 - dry-run: set_id + selected + shell_command (default command-only behavior)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
-
  */
 export interface RunResponse {
   status: RunStatus;
@@ -16997,7 +16910,6 @@ export interface ProfileDefaults {
  * How a profile interacts with the global source list:
 - inherit: start from global sources, apply overrides
 - allowlist: disable all sources first, then enable only those listed in the profile's sources array
-
  */
 export type ProfileSourceMode = "inherit" | "allowlist";
 
@@ -17092,7 +17004,6 @@ export type WatchEventKind = "created" | "modified" | "removed" | "renamed" | "m
 - dry-run: candidate selected and exact shell command returned without delegation
 - printed-curl: equivalent curl command generated (print_curl set)
 - error: an error occurred during resolution or execution
-
  */
 export type RunStatus = "resolved" | "scheduled" | "dry-run" | "printed-curl" | "error";
 
@@ -17161,7 +17072,6 @@ export type Arch = "amd64" | "arm64" | "any";
 - first: automatically select the highest-ranked candidate
 - index: select by 0-based index (requires pick_index)
 - id: select by candidate_id (requires candidate_id)
-
  */
 export type PickMode = "ask" | "first" | "index" | "id";
 
@@ -17174,7 +17084,6 @@ export type OutputFormat = "json" | "html";
  * Curl command generation mode:
 - hoody-run: generate curl for the hoody-run /api/v1/run/run endpoint
 - hoody-terminal: generate curl for the hoody-terminal /api/v1/terminal/execute endpoint directly
-
  */
 export type PrintCurlMode = "hoody-run" | "hoody-terminal";
 

@@ -4,7 +4,7 @@
 **Accessor:** `client.exec`
 
 ```typescript
-import * as exec from '@hoody-ai/hoody-sdk/exec';
+import * as exec from 'hoody-sdk/exec';
 ```
 
 ---

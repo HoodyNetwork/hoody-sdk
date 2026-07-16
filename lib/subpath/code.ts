@@ -1,5 +1,5 @@
 /**
- * Subpath entry for `@hoody-ai/hoody-sdk/code`.
+ * Subpath entry for `hoody-sdk/code`.
  *
  * Runs `patchCodeServiceExtensions()` as a side-effect on module load, then
  * re-exports the raw generated surface. Consumers who import a CodeService

@@ -1,10 +1,9 @@
 /**
  * redact — secret pattern detection for on-disk writes.
  *
- * SECRET_PATTERNS is copied BYTE-FOR-BYTE from the upstream Hoody chatbot
- * service's `chat-handler.ts`; the unit test reads the upstream source at
- * test time and asserts byte-equality. Upstream drift → test fails → caller
- * regenerates. Do not edit the array in isolation.
+ * SECRET_PATTERNS detects common secret shapes (API keys, tokens, private
+ * keys, connection strings) and redacts them before any on-disk write, so the
+ * local redaction matches the Hoody chat service's own detection.
  *
  * Plus a sanitizeArgv-style pass that replaces values following sensitive
  * CLI flags (`--token`, `--password`, `--username`, …) with `<REDACTED>`.
@@ -23,7 +22,7 @@
 export declare const SECRET_PATTERNS: readonly RegExp[];
 /**
  * Sensitive flag names — value following any of these is redacted.
- * MUST match `ai-fix.ts:sanitizeArgv`'s sensitive set verbatim so the two
+ * MUST match the shared argv sanitizer's sensitive set verbatim so the two
  * code paths agree on which flag values to redact. Parity is locked by
  * a dedicated unit test.
  */
@@ -37,7 +36,7 @@ export declare function redactSecrets(text: string): string;
 /**
  * Redact values that follow sensitive CLI flags. Input is an argv-like array
  * (e.g., from process.argv); returns a new array with the value immediately
- * after any sensitive flag replaced. Matches ai-fix.ts sanitizeArgv semantics.
+ * after any sensitive flag replaced. Matches the shared argv sanitizer semantics.
  *
  * Handles both forms:
  *   - Space-separated:  `--token VALUE`   → VALUE replaced with <REDACTED>

@@ -4,7 +4,7 @@
 **Accessor:** `client.watch`
 
 ```typescript
-import * as watch from '@hoody-ai/hoody-sdk/watch';
+import * as watch from 'hoody-sdk/watch';
 ```
 
 ---

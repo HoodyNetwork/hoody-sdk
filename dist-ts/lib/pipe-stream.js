@@ -50,7 +50,7 @@ export function validatePipePath(path) {
     if (path.length > 1024) {
         throw new RangeError('pipe path must be <= 1024 characters');
     }
-    // Reserved paths (mirrors hoody-pipe/src/reserved-paths.ts; lower-case-compared).
+    // Reserved paths (lower-case-compared).
     const reserved = new Set(['/', '/noscript', '/help', '/favicon.ico', '/robots.txt']);
     const normalized = path.startsWith('/') ? path : '/' + path;
     if (reserved.has(normalized)) {

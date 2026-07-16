@@ -1,5 +1,5 @@
 /**
- * @hoody-ai/hoody-sdk/chat — programmatic access to the hoody chat feature.
+ * hoody-sdk/chat — programmatic access to the hoody chat feature.
  *
  * The CLI (`hoody chat` / `hoody chatbot`) is a thin Commander wrapper
  * around the runners and primitives re-exported here. Any consumer of the

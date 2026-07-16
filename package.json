@@ -1,5 +1,5 @@
 {
-  "name": "@hoody-ai/hoody-sdk",
+  "name": "hoody-sdk",
   "version": "1.0.0-beta.1",
   "description": "Official Hoody Platform SDK - unified access to all Hoody APIs",
   "license": "Apache-2.0",
@@ -136,7 +136,7 @@
   "files": [
     "generated",
     "!generated/docs",
-    "!generated/openapi.json",
+    "!generated/*.json",
     "!generated/openapi.yaml",
     "generated/openapi.public.json",
     "lib",
@@ -150,7 +150,6 @@
     "docs/reference",
     "assets",
     "README.md",
-    "QUICK_REFERENCE.md",
     "CHANGELOG.md",
     "THIRD-PARTY-NOTICES.md",
     "!**/*.backup",
@@ -184,6 +183,7 @@
     "ws": "^8.18.0"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

@@ -4,7 +4,7 @@
 **Accessor:** `client.notifications`
 
 ```typescript
-import * as notifications from '@hoody-ai/hoody-sdk/notifications';
+import * as notifications from 'hoody-sdk/notifications';
 ```
 
 ---

@@ -1,5 +1,5 @@
 /**
- * Provider Resolver — shared between `hoody chat` and `ai-fix.ts`.
+ * Provider Resolver — shared across the CLI's AI-powered code paths.
  *
  * Resolves an OpenAI-compatible chat-completions provider config from env vars,
  * atomically per tier. No cross-tier fallback: if any var in a tier is set, that
@@ -8,7 +8,7 @@
  * Tiers, highest precedence first:
  *   Tier 1 — Hoody chat-dedicated (preferred):
  *     HOODY_CHAT_KEY, HOODY_CHAT_URL, HOODY_CHAT_MODEL
- *   Tier 2 — Shared with ai-fix.ts:
+ *   Tier 2 — shared secondary tier:
  *     HOODY_CLI_AI_KEY, HOODY_CLI_AI_URL, HOODY_CLI_AI_MODEL
  *   Tier 3 — Plain OpenAI-compatible (last resort):
  *     OPENAI_API_KEY, OPENAI_BASE_URL (REQUIRED), OPENAI_MODEL (REQUIRED)
@@ -127,7 +127,7 @@ function readTier3(env: Record<string, string | undefined>) {
  * Resolve provider config for the given profile.
  *
  *   profile='chat'    → cascade tier1 → tier2 → tier3 → no-config error.
- *   profile='ai-fix'  → lock to tier 2 defaults (matches existing ai-fix.ts behavior).
+ *   profile='ai-fix'  → lock to tier 2 defaults.
  *
  * On success returns a ProviderConfig. On failure returns a ResolverError.
  * Never throws.
@@ -137,9 +137,7 @@ export function resolveProvider(
   env: Record<string, string | undefined> = process.env,
 ): ProviderResolution {
   if (profile === 'ai-fix') {
-    // ai-fix never cascades; it uses tier 2 defaults with optional overrides.
-    // This path is preserved for a future migration of ai-fix.ts onto the
-    // shared resolver. Current ai-fix.ts still has its own defaults.
+    // the ai-fix profile never cascades; it uses tier 2 defaults with optional overrides.
     const t2 = readTier2(env);
     if (t2) return finalizeTier(t2);
     return finalizeTier({

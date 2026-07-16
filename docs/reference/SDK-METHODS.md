@@ -6,7 +6,7 @@
 
 ---
 
-## `agent` (212 methods)
+## `agent` (208 methods)
 
 ### `client.agent`
 
@@ -50,16 +50,12 @@
 |--------|------|------|---------|
 | `githubAuthStatus` | GET | `/api/v1/agent/github/auth/status` | GitHub auth status. |
 | `githubBranches` | GET | `/api/v1/agent/github/branches` | List GitHub branches. |
-| `githubBranchesAll` | GET | `/api/v1/agent/github/branches` | List GitHub branches. (collect all pages) |
-| `githubBranchesIterator` | GET | `/api/v1/agent/github/branches` | List GitHub branches. (async iterator) |
 | `githubClone` | POST | `/api/v1/agent/github/clone` | Clone a GitHub repository. |
 | `githubCommit` | POST | `/api/v1/agent/github/commit` | Stage all and commit. |
 | `githubLogin` | POST | `/api/v1/agent/github/auth/login` | Start a GitHub device-flow login (or add a PAT). |
 | `githubLoginPoll` | POST | `/api/v1/agent/github/auth/login/poll` | Poll a GitHub device-flow login to completion. |
 | `githubPullRequest` | POST | `/api/v1/agent/github/pr` | Open a pull request. |
 | `githubRepos` | GET | `/api/v1/agent/github/repos` | List GitHub repos. |
-| `githubReposAll` | GET | `/api/v1/agent/github/repos` | List GitHub repos. (collect all pages) |
-| `githubReposIterator` | GET | `/api/v1/agent/github/repos` | List GitHub repos. (async iterator) |
 | `githubStatus` | GET | `/api/v1/agent/github/status` | GitHub working-tree status. |
 | `githubSync` | POST | `/api/v1/agent/github/sync` | Sync (fetch → pull → push). |
 
@@ -320,7 +316,7 @@
 | `resumeWorkflowRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `runSessionWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 
-## `api` (273 methods)
+## `api` (275 methods)
 
 ### `client.api.activity`
 
@@ -720,21 +716,24 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `addPaymentMethod` | POST | `/api/v1/wallet/payment-methods/` | Add a new payment method |
+| `createCryptoInvoice` | POST | `/api/v1/wallet/payments/crypto/invoice` | Start a crypto payment (hosted invoice) |
 | `createStripeCheckout` | POST | `/api/v1/wallet/payments/stripe/checkout` | Start a card payment (Stripe Checkout) |
 | `deletePaymentMethod` | DELETE | `/api/v1/wallet/payment-methods/{id}` | Delete a payment method |
 | `downloadInvoicePdf` | GET | `/api/v1/wallet/invoices/{id}/pdf` | Download invoice PDF |
 | `generateInvoice` | POST | `/api/v1/wallet/invoices/generate/{id}` | Generate invoice for transaction |
 | `getAggregateBalances` | GET | `/api/v1/wallet/balances` | Get aggregate balances (general + AI) |
 | `getAiBalance` | GET | `/api/v1/wallet/balances/ai` | Get AI balance (limit, usage, remaining) |
+| `getCryptoPaymentIntent` | GET | `/api/v1/wallet/payments/crypto/intents/{id}` | Get a crypto payment intent |
 | `getGeneralBalance` | GET | `/api/v1/wallet/balances/general` | Get general balance only |
 | `getInvoice` | GET | `/api/v1/wallet/invoices/{id}` | Get invoice by ID |
+| `getPaymentAvailability` | GET | `/api/v1/wallet/payment-availability` | Get top-up payment availability (providers, bounds, AI transfer fee) |
 | `getPaymentMethod` | GET | `/api/v1/wallet/payment-methods/{id}` | Get payment method by ID |
-| `getPaymentStatus` | GET | `/api/v1/wallet/payments/{id}` | Get payment status |
 | `getStripePaymentIntent` | GET | `/api/v1/wallet/payments/stripe/intents/{id}` | Get a card payment intent |
 | `getTransaction` | GET | `/api/v1/wallet/transactions/{id}` | Get transaction by ID |
 | `listAiFeeHistory` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history |
 | `listAiFeeHistoryAll` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history (collect all pages) |
 | `listAiFeeHistoryIterator` | GET | `/api/v1/wallet/ai-fee-history` | Get AI credit fee history (async iterator) |
+| `listCryptoPaymentIntents` | GET | `/api/v1/wallet/payments/crypto/intents` | List crypto payment intents |
 | `listInvoices` | GET | `/api/v1/wallet/invoices/` | Get all invoices |
 | `listInvoicesAll` | GET | `/api/v1/wallet/invoices/` | Get all invoices (collect all pages) |
 | `listInvoicesIterator` | GET | `/api/v1/wallet/invoices/` | Get all invoices (async iterator) |
@@ -745,7 +744,6 @@
 | `listTransactions` | GET | `/api/v1/wallet/transactions` | List transactions |
 | `listTransactionsAll` | GET | `/api/v1/wallet/transactions` | List transactions (collect all pages) |
 | `listTransactionsIterator` | GET | `/api/v1/wallet/transactions` | List transactions (async iterator) |
-| `processPayment` | POST | `/api/v1/wallet/payments/` | Process a payment |
 | `setDefaultPaymentMethod` | PUT | `/api/v1/wallet/payment-methods/{id}/default` | Set a payment method as default |
 | `transferToAi` | POST | `/api/v1/wallet/transfers` | Transfer from general balance to AI credits |
 | `updatePaymentMethod` | PUT | `/api/v1/wallet/payment-methods/{id}` | Update a payment method |
@@ -827,7 +825,7 @@
 | `syncAll` | POST | `/api/v1/run/sources/sync` | Sync all sources |
 | `update` | PATCH | `/api/v1/run/sources/{source_id}` | Update a package source |
 
-## `browser` (27 methods)
+## `browser` (29 methods)
 
 ### `client.browser.cookies`
 
@@ -885,7 +883,9 @@
 | `closeTab` | POST | `/tab/close` | Close a browser tab |
 | `getDevtoolsUrl` | GET | `/devtools-url` | Get DevTools URLs |
 | `getMetadata` | GET | `/metadata` | Get instance metadata |
+| `getViewport` | GET | `/viewport` | Get the current viewport policy |
 | `listTabs` | GET | `/tabs` | List browser tabs |
+| `setViewport` | POST | `/viewport` | Change the viewport at runtime |
 | `shutdown` | GET | `/shutdown` | Shutdown browser instance |
 
 ### `client.browser.page`

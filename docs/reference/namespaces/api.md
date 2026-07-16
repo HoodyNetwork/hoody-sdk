@@ -1,10 +1,10 @@
-# `api` — 273 methods
+# `api` — 275 methods
 
 **Version:** 1.0.0-beta.1
 **Accessor:** `client.api`
 
 ```typescript
-import * as api from '@hoody-ai/hoody-sdk/api';
+import * as api from 'hoody-sdk/api';
 ```
 
 ---
@@ -5171,7 +5171,7 @@ client.api.waitlist.waitlistJoin(data: WaitlistJoinRequest): Promise<WaitlistJoi
 
 ---
 
-## `client.api.wallet` (30 methods)
+## `client.api.wallet` (32 methods)
 
 ### `addPaymentMethod`
 
@@ -5190,6 +5190,24 @@ client.api.wallet.addPaymentMethod(data: ApiWalletAddPaymentMethodRequest): Prom
 **Returns:** `ApiWalletAddPaymentMethodResponse`
 
 **CLI:** `hoody wallet payment-methods create`
+
+---
+
+### `createCryptoInvoice`
+
+**POST** `/api/v1/wallet/payments/crypto/invoice`
+
+Start a crypto payment (hosted invoice)
+
+```typescript
+client.api.wallet.createCryptoInvoice(data: CreateCryptoInvoiceRequest): Promise<CreateCryptoInvoiceResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `CreateCryptoInvoiceRequest` | Yes | body |  |
+
+**Returns:** `CreateCryptoInvoiceResponse`
 
 ---
 
@@ -5303,6 +5321,24 @@ client.api.wallet.getAiBalance(): Promise<ApiWalletGetAiBalanceResponse>
 
 ---
 
+### `getCryptoPaymentIntent`
+
+**GET** `/api/v1/wallet/payments/crypto/intents/{id}`
+
+Get a crypto payment intent
+
+```typescript
+client.api.wallet.getCryptoPaymentIntent(id: string): Promise<GetCryptoPaymentIntentResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `GetCryptoPaymentIntentResponse`
+
+---
+
 ### `getGeneralBalance`
 
 **GET** `/api/v1/wallet/balances/general`
@@ -5339,6 +5375,20 @@ client.api.wallet.getInvoice(id: string): Promise<ApiWalletGetInvoiceResponse>
 
 ---
 
+### `getPaymentAvailability`
+
+**GET** `/api/v1/wallet/payment-availability`
+
+Get top-up payment availability (providers, bounds, AI transfer fee)
+
+```typescript
+client.api.wallet.getPaymentAvailability(): Promise<GetPaymentAvailabilityResponse>
+```
+
+**Returns:** `GetPaymentAvailabilityResponse`
+
+---
+
 ### `getPaymentMethod`
 
 **GET** `/api/v1/wallet/payment-methods/{id}`
@@ -5356,26 +5406,6 @@ client.api.wallet.getPaymentMethod(id: string): Promise<ApiWalletGetPaymentMetho
 **Returns:** `ApiWalletGetPaymentMethodResponse`
 
 **CLI:** `hoody wallet payment-methods get`
-
----
-
-### `getPaymentStatus`
-
-**GET** `/api/v1/wallet/payments/{id}`
-
-Get payment status
-
-```typescript
-client.api.wallet.getPaymentStatus(id: string): Promise<ApiWalletGetPaymentStatusResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path |  |
-
-**Returns:** `ApiWalletGetPaymentStatusResponse`
-
-**CLI:** `hoody wallet payments status`
 
 ---
 
@@ -5483,6 +5513,25 @@ client.api.wallet.listAiFeeHistoryIterator(options?: { page?: number; limit?: nu
 **Returns:** `AsyncIterableIterator&lt;unknown&gt;`
 
 **CLI:** `hoody wallet transactions fees`
+
+---
+
+### `listCryptoPaymentIntents`
+
+**GET** `/api/v1/wallet/payments/crypto/intents`
+
+List crypto payment intents
+
+```typescript
+client.api.wallet.listCryptoPaymentIntents(options?: { limit?: number; offset?: number }): Promise<ListCryptoPaymentIntentsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+
+**Returns:** `ListCryptoPaymentIntentsResponse`
 
 ---
 
@@ -5682,26 +5731,6 @@ client.api.wallet.listTransactionsIterator(options?: { limit?: number; sort_by?:
 **Returns:** `AsyncIterableIterator&lt;unknown&gt;`
 
 **CLI:** `hoody wallet transactions list`
-
----
-
-### `processPayment`
-
-**POST** `/api/v1/wallet/payments/`
-
-Process a payment
-
-```typescript
-client.api.wallet.processPayment(data: ApiWalletProcessPaymentRequest): Promise<ApiWalletProcessPaymentResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ApiWalletProcessPaymentRequest` | Yes | body |  |
-
-**Returns:** `ApiWalletProcessPaymentResponse`
-
-**CLI:** `hoody wallet payments create`
 
 ---
 

@@ -218,7 +218,7 @@ const KIT_CATALOG = [
     {
         slug: 'agent',
         kind: 'named',
-        description: 'AI agent — sessions/prompt, models, providers, skills, memory, todos, workflows, hooks, github, tools, logs (hoody-agent-d HTTP gateway).',
+        description: 'AI agent — sessions/prompt, models, providers, skills, memory, todos, workflows, hooks, github, tools, logs (HTTP gateway).',
         serviceSegmentPattern: 'agent-{index}',
         urlTemplateSample: 'https://{projectId}-{containerId}-agent-{index}.{server}.containers.hoody.com',
         supportsIndex: true,

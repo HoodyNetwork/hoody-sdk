@@ -15,8 +15,8 @@
  * documented debugging affordance; default path is the config file written
  * by `install.sh` at install time.
  *
- * Validation: domain string must match RFC-1123 hostname rules (matches
- * server-side `validateDomainKey` in hoody-server-admin).
+ * Validation: domain string must match RFC-1123 hostname rules (matches the
+ * server-side domain-key validation).
  */
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';

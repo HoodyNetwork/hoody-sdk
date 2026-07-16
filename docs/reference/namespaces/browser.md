@@ -1,10 +1,10 @@
-# `browser` — 27 methods
+# `browser` — 29 methods
 
 **Version:** 1.0.0-beta.1
 **Accessor:** `client.browser`
 
 ```typescript
-import * as browser from '@hoody-ai/hoody-sdk/browser';
+import * as browser from 'hoody-sdk/browser';
 ```
 
 ---
@@ -245,7 +245,7 @@ client.browser.history.list(options?: { since?: string; domain?: string; browser
 Restart browser instance
 
 ```typescript
-client.browser.instances.restart(options?: { browser_id: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: Viewport; noViewport?: boolean; geolocation?: Geolocation; launchArguments?: string[]; browser?: "chromium" | "firefox"; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: Record<string, unknown>; stealth?: boolean; iframe?: boolean; iframe_url?: string }): Promise<BrowserInstancesRestartResponse>
+client.browser.instances.restart(options?: { browser_id: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: Viewport; noViewport?: boolean; geolocation?: Geolocation; launchArguments?: string[]; browser?: "chromium" | "firefox"; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: Record<string, unknown>; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean }): Promise<BrowserInstancesRestartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -284,6 +284,7 @@ client.browser.instances.restart(options?: { browser_id: string; chromiumVersion
 | `stealth` | `boolean` | No | query | Launch Chromium in stealth mode using Patchright (anti-detection patches). Only applies to `browser=chromium`. Ignored for Firefox. Defaults to `true`. Bare `?stealth` is treated as `true`. |
 | `iframe` | `boolean` | No | query | Enable or disable the full-page display iframe on the root URL. |
 | `iframe_url` | `string` | No | query | Explicit URL for the display iframe. |
+| `maximize_new_windows` | `boolean` | No | query | Control the `maximize_new_windows` flag stamped onto the generated display URL (always explicit `true`/`false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to opt out. |
 
 **Returns:** `BrowserInstancesRestartResponse`
 
@@ -298,7 +299,7 @@ client.browser.instances.restart(options?: { browser_id: string; chromiumVersion
 Create or retrieve browser instance
 
 ```typescript
-client.browser.instances.start(options?: { browser_id: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; stealth?: boolean; iframe?: boolean; iframe_url?: string }): Promise<BrowserInstancesStartResponse>
+client.browser.instances.start(options?: { browser_id: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean }): Promise<BrowserInstancesStartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -331,6 +332,7 @@ client.browser.instances.start(options?: { browser_id: string; chromiumVersion?:
 | `stealth` | `boolean` | No | query | Launch Chromium in stealth mode using Patchright (anti-detection patches). Only applies to `browser=chromium`. Ignored for Firefox. Defaults to `true`. Bare `?stealth` is treated as `true`. |
 | `iframe` | `boolean` | No | query | Enable or disable the full-page display iframe on the root URL. When enabled (default), navigating to `/` serves an HTML page with an iframe pointing to the Hoody display URL. |
 | `iframe_url` | `string` | No | query | Explicit URL for the display iframe. If not provided, the URL is auto-detected from the Host header subdomain pattern. |
+| `maximize_new_windows` | `boolean` | No | query | Control the `maximize_new_windows` flag stamped onto generated display URLs (iframe pages, status pages, `iframe_url` metadata). The flag is always explicit (`true` or `false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to keep the display client's centered default-size placement (the explicit `false` also overrides a display-side `default-settings.txt` enable). Explicit `iframe_url` values are never modified. |
 
 **Returns:** `BrowserInstancesStartResponse`
 
@@ -480,7 +482,7 @@ client.browser.interaction.takeScreenshot(options?: { browser_id: string; start?
 
 ---
 
-## `client.browser.introspection` (5 methods)
+## `client.browser.introspection` (7 methods)
 
 ### `closeTab`
 
@@ -546,6 +548,25 @@ client.browser.introspection.getMetadata(options?: { browser_id: string; start?:
 
 ---
 
+### `getViewport`
+
+**GET** `/viewport`
+
+Get the current viewport policy
+
+```typescript
+client.browser.introspection.getViewport(options?: { browser_host?: string; browser_port?: number }): Promise<GetViewportResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `browser_host` | `string` | No | query | Instance host. Optional — must be paired with browser_port; when both are omitted the single running instance is selected (400 AMBIGUOUS_INSTANCE with more than one). |
+| `browser_port` | `number` | No | query | Instance port. Optional — must be paired with browser_host. |
+
+**Returns:** `GetViewportResponse`
+
+---
+
 ### `listTabs`
 
 **GET** `/tabs`
@@ -564,6 +585,26 @@ client.browser.introspection.listTabs(options?: { browser_id: string; start?: bo
 **Returns:** `BrowserIntrospectionListTabsResponse`
 
 **CLI:** `hoody browser tabs list`
+
+---
+
+### `setViewport`
+
+**POST** `/viewport`
+
+Change the viewport at runtime
+
+```typescript
+client.browser.introspection.setViewport(data: SetViewportRequest, options?: { browser_host?: string; browser_port?: number }): Promise<SetViewportResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `SetViewportRequest` | Yes | body |  |
+| `browser_host` | `string` | No | query | Instance host. Optional — must be paired with browser_port; when both are omitted the single running instance is selected (400 AMBIGUOUS_INSTANCE with more than one). |
+| `browser_port` | `number` | No | query | Instance port. Optional — must be paired with browser_host. |
+
+**Returns:** `SetViewportResponse`
 
 ---
 

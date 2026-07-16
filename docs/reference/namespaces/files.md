@@ -4,7 +4,7 @@
 **Accessor:** `client.files`
 
 ```typescript
-import * as files from '@hoody-ai/hoody-sdk/files';
+import * as files from 'hoody-sdk/files';
 ```
 
 ---
@@ -1712,7 +1712,7 @@ client.files.chown(path: string, options?: { chown: string }): Promise<FilesChow
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File or directory path |
-| `chown` | `string` | Yes | query | Owner and optional group (e.g., user:group, user, :group, or UID:GID) |
+| `chown` | `string` | Yes | query | Owner and optional group (e.g., user:group, user,:group, or UID:GID) |
 
 **Returns:** `FilesChownResponse`
 
@@ -1815,7 +1815,7 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 | `max_depth` | `number` | No | query | Directory recursion depth for grep |
 | `max_filesize` | `number` | No | query | Skip files larger than this (bytes) during grep |
 | `timeout` | `number` | No | query | Grep timeout in seconds |
-| `no_ignore` | `boolean` | No | query | Bypass .gitignore filtering during grep |
+| `no_ignore` | `boolean` | No | query | Bypass.gitignore filtering during grep |
 | `max_results` | `number` | No | query | Max entries returned for glob search |
 | `max_files_scanned` | `number` | No | query | Max filesystem entries scanned during glob search |
 | `sort` | `"mtime" \| "name" \| "size"` | No | query | Sort glob results by: mtime (default), name, or size |
@@ -1887,7 +1887,7 @@ client.files.glob(path: string, options?: { pattern: string; max_results?: numbe
 | `max_depth` | `number` | No | query | Maximum directory recursion depth |
 | `max_files_scanned` | `number` | No | query | Maximum filesystem entries to scan |
 | `timeout` | `number` | No | query | Search timeout in seconds |
-| `no_ignore` | `boolean` | No | query | Bypass .gitignore filtering |
+| `no_ignore` | `boolean` | No | query | Bypass.gitignore filtering |
 | `sort` | `"mtime" \| "name" \| "size"` | No | query | Sort results by: mtime (modification time), name, or size |
 | `order` | `"asc" \| "desc"` | No | query | Sort order. Default: desc for mtime, asc for name/size |
 
@@ -1920,7 +1920,7 @@ client.files.grep(path: string, options?: { pattern: string; ignore_case?: boole
 | `max_depth` | `number` | No | query | Maximum directory recursion depth |
 | `max_filesize` | `number` | No | query | Skip files larger than this (bytes) |
 | `timeout` | `number` | No | query | Search timeout in seconds |
-| `no_ignore` | `boolean` | No | query | Bypass .gitignore filtering |
+| `no_ignore` | `boolean` | No | query | Bypass.gitignore filtering |
 
 **Returns:** `FilesGrepResponse`
 

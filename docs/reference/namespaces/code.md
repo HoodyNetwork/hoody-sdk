@@ -4,7 +4,7 @@
 **Accessor:** `client.code`
 
 ```typescript
-import * as code from '@hoody-ai/hoody-sdk/code';
+import * as code from 'hoody-sdk/code';
 ```
 
 ---
