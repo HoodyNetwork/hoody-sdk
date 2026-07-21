@@ -1,11 +1,11 @@
 # Namespace Index
 
-**Version:** 1.0.0-beta.1
+**Version:** 1.0.0-beta.2
 
 | Namespace | Methods | Services | Accessor |
 |-----------|---------|----------|----------|
-| [`agent`](agent.md) | 208 | 20 | `client.agent` |
-| [`api`](api.md) | 275 | 31 | `client.api` |
+| [`agent`](agent.md) | 209 | 21 | `client.agent` |
+| [`api`](api.md) | 279 | 31 | `client.api` |
 | [`app`](app.md) | 35 | 8 | `client.app` |
 | [`browser`](browser.md) | 29 | 8 | `client.browser` |
 | [`code`](code.md) | 19 | 6 | `client.code` |

@@ -213,8 +213,8 @@ export class HoodyClient {
 
   public readonly terminal: terminal.TerminalService & {
     health: terminal.HealthService;
-    sessions: terminal.TerminalSessionsService;
     execution: terminal.TerminalExecutionService;
+    sessions: terminal.TerminalSessionsService;
     web: terminal.WebInterfaceService;
     docs: terminal.ApiDocumentationService;
     system: terminal.SystemMonitoringService;
@@ -287,6 +287,7 @@ export class HoodyClient {
     system: agent.SystemService;
     github: agent.GithubService;
     headless: agent.HeadlessService;
+    hoody: agent.HoodyService;
     hooks: agent.HooksService;
     jobs: agent.JobsService;
     logs: agent.LogsService;
@@ -493,8 +494,8 @@ export class HoodyClient {
 
     this.terminal = Object.assign(new terminal.TerminalService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')), {
       health: new terminal.HealthService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
-      sessions: new terminal.TerminalSessionsService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       execution: new terminal.TerminalExecutionService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
+      sessions: new terminal.TerminalSessionsService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       web: new terminal.WebInterfaceService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       docs: new terminal.ApiDocumentationService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       system: new terminal.SystemMonitoringService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
@@ -567,6 +568,7 @@ export class HoodyClient {
       system: new agent.SystemService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       github: new agent.GithubService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       headless: new agent.HeadlessService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      hoody: new agent.HoodyService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       hooks: new agent.HooksService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       jobs: new agent.JobsService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       logs: new agent.LogsService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
@@ -1209,7 +1211,7 @@ export class HoodyClient {
     container: ContainerLike | null,
     serviceIndexOrOptions: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean } = 1
   ): Record<string, string> {
-    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'app', 'pipe', 'tunnel', 'agent'];
+    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'app', 'pipe', 'tunnel', 'agent', 'proxy'];
     const urls: Record<string, string> = {};
 
     for (const kit of kits) {

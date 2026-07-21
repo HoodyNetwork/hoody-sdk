@@ -133,6 +133,13 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
   // a Blob frame requires async arrayBuffer() decode and a later string/
   // ArrayBuffer frame arrives synchronously.
   private _frameQueue: Promise<void> = Promise.resolve();
+  // Dispatch token for the CURRENT socket. Invalidated on manual
+  // disconnect() and on the onclose settle-timeout, so a late frame
+  // (hung Blob decode) can never dispatch after `disconnect` was
+  // announced. Deliberately separate from _socketGen: bumping the
+  // generation in disconnect() would make the gen-guarded onclose
+  // suppress the manual-disconnect event itself.
+  private _dispatchAlive: { alive: boolean } = { alive: true };
   // Generation counter. Bumped synchronously in connect()/reconnect()/
   // disconnect() so queued tasks tagged with an old generation become
   // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -188,6 +195,12 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
           // their captured value and bail.
           this._socketGen++;
           const installedGen = this._socketGen;
+          // Socket-local dispatch: a fresh frame queue (a hung decode on
+          // the OLD socket must not head-of-line-block this one) and a
+          // fresh dispatch token.
+          this._frameQueue = Promise.resolve();
+          const dispatchAlive = { alive: true };
+          this._dispatchAlive = dispatchAlive;
 
           // Request binary frames as ArrayBuffer rather than Blob.
           // Browser default is "blob" which would force every binary frame
@@ -207,10 +220,18 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
 
           this.ws.onmessage = (event) => {
             const raw: unknown = (event as { data: unknown }).data;
+            // Every dispatch callback is exception-fenced: a throwing frame
+            // handler would otherwise leave _frameQueue REJECTED, and since the
+            // chain grows via .then(fn) every subsequent frame would be
+            // silently dropped for the life of the socket.
             // Synchronous string fast path.
             if (typeof raw === "string") {
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(raw);
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
               return;
             }
@@ -218,7 +239,11 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
             if (raw instanceof ArrayBuffer) {
               const buf = new Uint8Array(raw);
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleBinary(buf);
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
               return;
             }
@@ -228,7 +253,11 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
               const v = raw as ArrayBufferView;
               const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleBinary(buf);
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
               return;
             }
@@ -242,7 +271,7 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
               this._frameQueue = this._frameQueue.then(async () => {
                 try {
                   const ab = await decode;
-                  if (this._socketGen === installedGen) {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) {
                     this.handleBinary(new Uint8Array(ab));
                   }
                 } catch (err) {
@@ -253,21 +282,46 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
             }
             // Unknown shape — best-effort string coercion.
             this._frameQueue = this._frameQueue.then(() => {
-              if (this._socketGen === installedGen) this.handleString(String(raw));
+              try {
+                if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+              } catch (err) {
+                this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+              }
             });
           };
 
           this.ws.onclose = (event) => {
-            this.emitEvent("disconnect", event.code, event.reason);
-            // Close-code filter. Do NOT reconnect on server-sent policy
-            // closes — 4xxx codes mean "stop trying" (auth failed, permission
-            // denied, bad request), and 1008/1003 are explicit policy rejections.
-            // Reconnecting against these would loop forever against a server that
-            // already told us to go away.
-            const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || (event.code >= 4000 && event.code < 5000);
-            if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-              this.scheduleReconnect();
-            }
+            // frame-settle barrier. Received frames dispatch through the
+            // _frameQueue microtask chain, so a close arriving in the same tick
+            // as the final data frames (typical when the remote process exits:
+            // last output + close land in one TCP batch) would otherwise emit
+            // `disconnect` BEFORE those frames reach handlers — consumers that
+            // tear down on disconnect (the CLI terminal bridge) would drop the
+            // tail bytes. Settle the queue first (settle-proof: both branches
+            // resolve; bounded so a hung Blob decode cannot wedge the close),
+            // then announce. Generation-guarded: if a newer socket superseded
+            // this one while we waited, its lifecycle owns the events.
+            const settled = this._frameQueue.then(() => undefined, () => undefined);
+            const cap = new Promise<void>((resolveCap) => {
+              const t = setTimeout(resolveCap, 1000);
+              (t as unknown as { unref?: () => void }).unref?.();
+            });
+            void Promise.race([settled, cap]).then(() => {
+              // Whether the queue settled or the cap fired, no frame may
+              // dispatch after the disconnect announcement below.
+              dispatchAlive.alive = false;
+              if (this._socketGen !== installedGen) return;
+              this.emitEvent("disconnect", event.code, event.reason);
+              // Close-code filter. Do NOT reconnect on server-sent policy
+              // closes — 4xxx codes mean "stop trying" (auth failed, permission
+              // denied, bad request), and 1008/1003 are explicit policy rejections.
+              // Reconnecting against these would loop forever against a server that
+              // already told us to go away.
+              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || (event.code >= 4000 && event.code < 5000);
+              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                this.scheduleReconnect();
+              }
+            });
           };
 
           this.ws.onerror = () => {
@@ -369,10 +423,12 @@ export class AgentCreateHeadlessRunWebSocket implements IAgentCreateHeadlessRunW
   disconnect(reason?: string): void {
     this.shouldReconnect = false;
     this.clearReconnectTimer();
-    // Bump generation synchronously. Any in-flight queued task
-    // (especially Blob arrayBuffer() microtasks) will see the bump
-    // and bail via the installedGen check.
-    this._socketGen++;
+    // Kill the dispatch token synchronously — any in-flight queued task
+    // (especially Blob arrayBuffer() microtasks) bails via the token
+    // check. Deliberately NOT a _socketGen bump: the generation guard
+    // in onclose would then suppress the disconnect event for this
+    // manual close, and onDisconnect consumers would never hear it.
+    this._dispatchAlive.alive = false;
     if (this.ws) {
       this.ws.close(1000, reason || "Normal closure");
       this.ws = null;

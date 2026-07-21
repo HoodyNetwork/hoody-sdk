@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.1
-**Total endpoints:** 931
+**Version:** 1.0.0-beta.2
+**Total endpoints:** 936
 **Namespaces:** 19
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -16,7 +16,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `agent` — 170 endpoints
+## `agent` — 171 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -48,6 +48,7 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/api/v1/agent/github/sync` | `agent.github.githubSync` | `hoody agent github sync` | Sync (fetch → pull → push). |
 | POST | `/api/v1/agent/headless/runs` | `agent.headless.createHeadlessRun` | — | Create a headless one-shot run. |
 | GET | `/api/v1/agent/health` | `agent.system.healthCheck` | `hoody agent system health-check` | Standardized health check. |
+| POST | `/api/v1/agent/hoody/auth/bootstrap` | `agent.hoody.bootstrapHoodyToken` | — | Bootstrap the Hoody platform credential (install-if-absent). |
 | DELETE | `/api/v1/agent/hooks` | `agent.hooks.deleteHook` | `hoody agent hooks delete` | Delete a hook. |
 | GET | `/api/v1/agent/hooks` | `agent.hooks.listHooks` | `hoody agent hooks list` | List hooks. |
 | PUT | `/api/v1/agent/hooks` | `agent.hooks.upsertHook` | `hoody agent hooks upsert` | Upsert a hook. |
@@ -193,16 +194,19 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `api` — 221 endpoints
+## `api` — 225 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
 | GET | `/api/v1/ai/models` | `api.ai.listModels` | `hoody ai list` | List available AI models (Hoody catalog) |
+| POST | `/api/v1/auth/authorize` | `api.authentication.oauthAuthorize` | — | Begin a PKCE OAuth authorization |
 | GET | `/api/v1/auth/available-regions` | `api.authentication.getAvailableRegions` | `hoody auth regions` | Get available server regions |
+| GET | `/api/v1/auth/config` | `api.authentication.getOAuthConfig` | — | Get the public sign-in configuration |
 | GET | `/api/v1/auth/device/authorize` | `api.authentication.oauthDeviceAuthorize` | — | Start the device-leg OAuth (cookie + ticket gated) |
 | POST | `/api/v1/auth/device/code` | `api.authentication.oauthDeviceCode` | — | Start an RFC 8628 device authorization flow |
 | POST | `/api/v1/auth/device/token` | `api.authentication.oauthDeviceToken` | — | Poll for device-flow tokens (RFC 8628 §3.5) |
 | POST | `/api/v1/auth/device/verify_code` | `api.authentication.oauthDeviceVerifyCode` | — | Confirm a device user_code (verification page) |
+| POST | `/api/v1/auth/exchange` | `api.authentication.oauthExchange` | — | Exchange a PKCE authorization code for tokens |
 | POST | `/api/v1/auth/forgot-password` | `api.authentication.forgotPassword` | `hoody auth password forgot` | Request password reset |
 | GET | `/api/v1/auth/github` | `api.authentication.githubOAuthRedirect` | `hoody auth oauth github redirect` | Redirect to GitHub OAuth |
 | GET | `/api/v1/auth/github/callback` | `api.authentication.githubOAuthCallback` | `hoody auth oauth github callback` | GitHub OAuth callback |
@@ -377,6 +381,7 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/api/v1/users/auth/2fa/verify-setup` | `api.tfa.verifySetup` | `hoody auth 2fa verify-setup` | Complete 2FA Setup |
 | GET | `/api/v1/users/auth/activity` | `api.activity.list` | `hoody activity logs` | Get activity logs |
 | GET | `/api/v1/users/auth/activity/stats` | `api.activity.getStats` | `hoody activity stats` | Get activity stats |
+| POST | `/api/v1/users/auth/identity-claim` | `api.authentication.api_issueIdentityClaim` | — | Issue a fresh audience-bound identity claim |
 | POST | `/api/v1/users/auth/login` | `api.authentication.login` | `hoody auth login` | Login with username and password |
 | POST | `/api/v1/users/auth/logout` | `api.authentication.logout` | `hoody auth logout` | Logout |
 | GET | `/api/v1/users/auth/me` | `api.authentication.getCurrentUser` | `hoody auth profile current` | Get current user profile |

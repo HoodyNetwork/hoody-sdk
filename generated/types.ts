@@ -278,7 +278,7 @@ export interface ApiAuthenticationLoginRequest {
 export interface ApiAuthenticationLoginResponse {
   statusCode: 200;
   message: string;
-  data: ({ requires_2fa?: boolean; temp_token?: string; method?: "totp"; token?: string; refreshToken?: string; expires_at?: string; expires_in?: number; refresh_expires_at?: string; refresh_expires_in?: number; auth_intent_token?: string; identity_claim?: { kid?: string; payload_b64?: string; signature_hex?: string } | null; client_ip?: string; recent_login_ips?: { ip?: string; timestamp?: string }[]; auth_token_count?: number; user?: { id: string; username?: string; email?: string; alias?: string; public_key?: string; metadata?: Record<string, unknown>; is_admin?: boolean; is_banned?: boolean; email_verified?: boolean; avatar_url?: string | null; signup_method?: string | null; free_tier_unlocked?: boolean; free_tier_unlocked_at?: string | null; free_tier_unlock_source?: string | null; onboarding?: Record<string, unknown>; created_at?: string; updated_at?: string }; server?: { id: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id: string; alias?: string } | null; container?: { id: string; name?: string } | null } & { token: string; refreshToken: string }) | { temp_token: string; token?: never; refreshToken?: never };
+  data: ({ requires_2fa?: boolean; temp_token?: string; method?: "totp"; token?: string; refreshToken?: string; expires_at?: string; expires_in?: number; refresh_expires_at?: string; refresh_expires_in?: number; auth_intent_token?: string; identity_claim?: { kid?: string; payload_b64?: string; signature_hex?: string }; client_ip?: string; recent_login_ips?: { ip?: string; timestamp?: string }[]; auth_token_count?: number; user?: { id: string; username?: string; email?: string; alias?: string; public_key?: string; metadata?: Record<string, unknown>; is_admin?: boolean; is_banned?: boolean; email_verified?: boolean; avatar_url?: string | null; signup_method?: string | null; free_tier_unlocked?: boolean; free_tier_unlocked_at?: string | null; free_tier_unlock_source?: string | null; onboarding?: Record<string, unknown>; created_at?: string; updated_at?: string }; server?: { id: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id: string; alias?: string } | null; container?: { id: string; name?: string } | null } & { token: string; refreshToken: string }) | { temp_token: string; token?: never; refreshToken?: never };
 }
 
 export interface ApiAuthenticationRefreshTokenRequest {
@@ -307,7 +307,7 @@ export interface ApiTfaVerifyRequest {
 export interface ApiTfaVerifyResponse {
   statusCode: 200;
   message: string;
-  data: { token?: string; refreshToken?: string; auth_intent_token?: string; user?: Record<string, unknown>; server?: { id: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id: string; alias?: string } | null; container?: { id: string; name?: string; status?: string | null } | null };
+  data: { token?: string; refreshToken?: string; auth_intent_token?: string; identity_claim?: { kid?: string; payload_b64?: string; signature_hex?: string }; user?: Record<string, unknown>; server?: { id: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id: string; alias?: string } | null; container?: { id: string; name?: string; status?: string | null } | null };
 }
 
 export interface ApiTfaSetupRequest {
@@ -336,7 +336,7 @@ export interface ApiTfaVerifySetupRequest {
 export interface ApiTfaVerifySetupResponse {
   statusCode: 200;
   message: string;
-  data: { enabled: boolean; enabled_at: string };
+  data: { enabled: boolean; enabled_at: string; token?: string; refreshToken?: string; sessions_revoked?: boolean };
 }
 
 export interface ApiTfaGetStatusResponse {
@@ -359,7 +359,7 @@ export interface ApiTfaDisableRequest {
 export interface ApiTfaDisableResponse {
   statusCode: 200;
   message: string;
-  data: null;
+  data: { token?: string; refreshToken?: string; sessions_revoked?: boolean };
 }
 
 export interface ApiTfaRegenerateBackupCodesRequest {
@@ -460,6 +460,28 @@ export interface ApiUsersUpdateResponse {
   statusCode: 200;
   message: string;
   data: { id: string; username?: string; email?: string; alias?: string; public_key?: string; metadata?: Record<string, unknown>; is_admin?: boolean; is_banned?: boolean; email_verified?: boolean; avatar_url?: string | null; signup_method?: string | null; free_tier_unlocked?: boolean; free_tier_unlocked_at?: string | null; free_tier_unlock_source?: string | null; onboarding?: Record<string, unknown>; created_at?: string; updated_at?: string };
+}
+
+export interface ApiIssueIdentityClaimRequest {
+  /**
+   * Consumer identifier this claim is bound to (e.g. your app hostname). Verifiers reject the claim unless they expect exactly this audience. Printable ASCII, no whitespace or double quotes.
+   * @minLength 1
+   * @maxLength 256
+   * @pattern ^[\x21\x23-\x7e]{1,256}$
+   */
+  audience: string;
+  /**
+   * Requested claim lifetime in seconds. Clamped to [60, min(server ceiling, remaining JWT lifetime)]. Default: server-configured (1h).
+   * @minimum 60
+   * @maximum 86400
+   */
+  expires_in?: number /* min: 60, max: 86400 */;
+}
+
+export interface ApiIssueIdentityClaimResponse {
+  statusCode: 200;
+  message: string;
+  data: { identity_claim?: { kid?: string; payload_b64?: string; signature_hex?: string }; expires_in?: number; expires_at?: string; audience?: string };
 }
 
 export interface MarkOnboardingMilestoneRequest {
@@ -662,7 +684,7 @@ export interface ApiContainersCreateRequest {
   cache?: boolean;
   /** Force the creation of a new cached image from the container image. This option is only available to admins or the owner of the image. */
   cache_image?: boolean;
-  /** Create container as prespawn cache. Prespawn containers are excluded from default listings and quota counts. Creation is limited by server.prespawn_count. */
+  /** INTERNAL — not user-settable. Prespawn cache containers are provisioned only by the system pool producer. Passing `true` is rejected (403); an explicit `false` is accepted. */
   prespawn?: boolean;
   /** Bypass prespawn container claiming and create a fresh container directly. By default (false), the system will attempt to claim a matching prespawn container if available. */
   bypass_prespawn?: boolean;
@@ -680,13 +702,13 @@ export interface ApiContainersCreateResponse {
 export interface ApiContainersListResponse {
   statusCode: number;
   message: string;
-  data: { containers?: ({ id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean } }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } })[]; pagination?: { total?: number; page?: number; limit?: number; totalPages?: number } };
+  data: { containers?: ({ id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } })[]; pagination?: { total?: number; page?: number; limit?: number; totalPages?: number } };
 }
 
 export interface ApiContainersGetResponse {
   statusCode: number;
   message: string;
-  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean } }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; warnings?: ({ type?: string; message?: string; expired_at?: null | string })[]; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } };
+  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; warnings?: ({ type?: string; message?: string; expired_at?: null | string })[]; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } };
 }
 
 export interface ApiContainersUpdateRequest {
@@ -720,7 +742,7 @@ export interface ApiContainersUpdateRequest {
 export interface ApiContainersUpdateResponse {
   statusCode: number;
   message: string;
-  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean } }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; pool_id?: null | string };
+  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; pool_id?: null | string };
 }
 
 export interface ApiContainersDeleteResponse {
@@ -775,7 +797,7 @@ export interface ApiContainersCopyRequest {
 export interface ApiContainersCopyResponse {
   statusCode: number;
   message: string;
-  data: { id: string; name?: string; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; source_container_id?: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean } }; ssh_hostname?: null | string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; container_image_id?: null | string; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; copy_firewall_rules?: boolean; copy_network_rules?: boolean; created_at?: string; updated_at?: string; realm_ids?: string[] };
+  data: { id: string; name?: string; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; source_container_id?: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; container_image_id?: null | string; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; copy_firewall_rules?: boolean; copy_network_rules?: boolean; created_at?: string; updated_at?: string; realm_ids?: string[] };
 }
 
 /**
@@ -1386,7 +1408,7 @@ export interface ApiProxyPermissionsContainerReplaceRequest {
   default?: "allow" | "deny";
   /** Enable or disable the proxy. Defaults to true. */
   enable_proxy?: boolean;
-  /** Per-service proxy hooks. Keys are service names; values are first-match-wins arrays of { match, script, timeout? } rules. Max 8 per service, 32 per file total. Reject-listed services: logs, proxy, workspaces. */
+  /** Per-service proxy hooks. Keys are service names; values are first-match-wins arrays of { match, script, timeout? } rules. Max 8 per service, 32 per file total. Reject-listed services: logs, proxy, workspaces, cdp. */
   hooks?: Record<string, unknown>;
 }
 
@@ -2590,8 +2612,40 @@ export interface OauthDeviceTokenRequest {
 
 export interface OauthDeviceTokenResponse {
   statusCode: number;
-  data: { token?: string; refreshToken?: string; expires_at?: string; expires_in?: number; refresh_expires_at?: string; refresh_expires_in?: number; user?: { id: string; username?: string; alias?: string; email?: string; is_admin?: boolean; email_verified?: boolean; signup_method?: string; avatar_url?: string | null; created_at?: string; updated_at?: string }; server?: { id: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id: string; alias?: string } | null; container?: { id: string; name?: string; status?: string | null } | null };
+  data: { token?: string; refreshToken?: string; expires_at?: string; expires_in?: number; refresh_expires_at?: string; refresh_expires_in?: number; identity_claim?: { kid?: string; payload_b64?: string; signature_hex?: string }; user?: { id: string; username?: string; alias?: string; email?: string; is_admin?: boolean; email_verified?: boolean; signup_method?: string; avatar_url?: string | null; created_at?: string; updated_at?: string }; server?: { id: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id: string; alias?: string } | null; container?: { id: string; name?: string; status?: string | null } | null };
   message: string;
+}
+
+export interface OauthAuthorizeRequest {
+  /**
+   * @minLength 43
+   * @maxLength 128
+   * @pattern ^[A-Za-z0-9_-]+$
+   */
+  code_challenge: string;
+  /**
+   * @minLength 1
+   * @maxLength 2048
+   * @pattern ^https://
+   */
+  redirect_uri: string;
+}
+
+export interface OauthExchangeRequest {
+  /** @pattern ^[0-9a-f]{64}$ */
+  code: string;
+  /**
+   * @minLength 43
+   * @maxLength 128
+   * @pattern ^[A-Za-z0-9_\-.~]+$
+   */
+  code_verifier: string;
+  /**
+   * @minLength 1
+   * @maxLength 2048
+   * @pattern ^https://
+   */
+  redirect_uri: string;
 }
 
 export interface BrowserInstancesStartResponse {
@@ -11365,6 +11419,22 @@ export interface AgentHealthCheckResponse {
   data: Record<string, unknown>;
 }
 
+export interface AgentBootstrapHoodyTokenRequest {
+  /** The raw Hoody platform token to install. Write-only; validated via the sidecar before install and never echoed. */
+  token: string;
+  /** The operator bootstrap capability (--http-bootstrap-token), required only when the daemon was started with one; a mismatch is answered 404. */
+  capability?: string;
+}
+
+/**
+ * {outcome:"renewed", connected, and the secret-free identity (username/email/alias)}.
+ */
+export interface AgentBootstrapHoodyTokenResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
 export interface AgentListHooksRequest {
   /** Live session id (hooks are session-scoped; required by the daemon RPC). */
   session_id?: string;
@@ -11957,9 +12027,9 @@ export interface AgentCreateSessionRequest {
   cwd?: string;
   /** Config directory override. */
   config_dir?: string;
-  /** Initial model id. */
+  /** Model for this session. On a fresh create/fork it OVERRIDES the chat agent's pinned model for this session only (it is NOT written to the agent; use PATCH /sessions/{id}/model to change it and repin the agent globally). Omit it to use the agent's pinned model (or your default). Rejected (400) together with attach (a resumed session keeps its model) or backend:"acp" (the delegated agent selects its own). */
   model?: string;
-  /** Initial chat-agent name. */
+  /** Initial chat-agent name. Rejected (400) together with fork (a fork inherits its parent's chat agent) or attach (a resumed session keeps its agent). */
   agent?: string;
   /** Initial tool mode (frozen at start). */
   tool_mode?: string;
@@ -12265,17 +12335,17 @@ export interface AgentPostSessionMessageResponse {
 }
 
 export interface AgentSetSessionModelRequest {
-  /** Model id to switch to. */
-  model?: string;
+  /** Model spec to switch to (provider-prefixed, e.g. anthropic/claude-opus-4-8, or fusion/<slug>). Required — a blank value is rejected, never a silent no-op. */
+  model: string;
 }
 
 /**
- * Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).
+ * The applied model switch.
  */
 export interface AgentSetSessionModelResponse {
   statusCode: number;
   message: string;
-  data: Record<string, unknown>;
+  data: { status?: string; model?: string; persisted?: boolean };
 }
 
 export interface AgentPromptStreamRequest {
@@ -14310,17 +14380,25 @@ Usually a full Chrome version string (e.g. `136.0.7103.113`). */
 - **Playwright**: `await playwright.chromium.connectOverCDP(url)`
 
 **Availability**: Only populated when browser is launched with `useRemoteDebuggingPort: true`.
-In Hoody container deployments this URL is rewritten to the `http-{PORT}` proxy hostname pattern.
+In Hoody container deployments this URL is rewritten onto the `cdp-{N}` proxy hostname
+(paired 1:1 with the `browser-{N}` instance it debugs). The raw WebSocket URL is not
+promised stable across browser restarts — prefer connecting with
+`chromium.connectOverCDP("https://…-cdp-{N}/")`, which resolves the live WebSocket URL via
+`/json/version` and cold-starts instance `N` on demand if it isn't already running.
 
 **Security Warning**: This URL provides full control over the browser instance.
 Only expose to trusted clients in secure environments. */
   webSocketDebuggerUrl?: string | null;
   /** Chrome DevTools HTTP discovery URL (`/json/version`) for this instance.
 Tools can resolve the WebSocket URL from this endpoint.
-In Hoody container deployments this URL is rewritten to the `http-{PORT}` proxy hostname pattern. */
+In Hoody container deployments this URL is rewritten onto the `cdp-{N}` proxy hostname
+pattern (paired 1:1 with the `browser-{N}` instance) — the same on-demand relay used by
+`connectOverCDP("https://…-cdp-{N}/")`. */
   devtoolsHttpUrl?: string | null;
   /** Public URL to access Chrome DevTools frontend in a browser.
-Uses the `http-{PORT}` subdomain pattern routed by the Hoody reverse proxy.
+Uses the `cdp-{N}` subdomain pattern routed by the Hoody reverse proxy, paired 1:1 with the
+`browser-{N}` instance; on-demand — hitting this URL cold-starts instance `N` if it is not
+already running.
 Open this URL to get a live DevTools inspector for the running browser. */
   devtoolsFrontendUrl?: string | null;
   /** List of loaded Chrome extension directory paths (if any) */

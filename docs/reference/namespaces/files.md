@@ -1,6 +1,6 @@
 # `files` — 127 methods
 
-**Version:** 1.0.0-beta.1
+**Version:** 1.0.0-beta.2
 **Accessor:** `client.files`
 
 ```typescript
@@ -1804,7 +1804,7 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 | `preview` | `""` | No | query | Preview archive contents (for zip/tar files). Alias: ?contents |
 | `contents` | `""` | No | query | Alias for ?preview - list archive contents |
 | `stat` | `""` | No | query | Get file/directory metadata (stat) without downloading content |
-| `thumbnail` | `string` | No | query | Generate thumbnail (not yet implemented in API v1, returns 501) |
+| `thumbnail` | `string` | No | query | Return a processed image (resize, format convert, blur, grayscale). Requires the service to be started with --allow-thumbnails; returns 403 when disabled. |
 | `grep` | `string` | No | query | Search file/directory contents for regex pattern (or literal if fixed_string=true). Requires --allow-grep. |
 | `ignore_case` | `boolean` | No | query | Case-insensitive grep matching |
 | `fixed_string` | `boolean` | No | query | Treat grep pattern as literal string, not regex |
@@ -2525,13 +2525,18 @@ client.files.ssh.access(path: string, options?: { type: "ssh"; server: string; u
 Upload file via SSH/SFTP
 
 ```typescript
-client.files.ssh.upload(path: string, data?: object): Promise<ApiResponse<unknown>>
+client.files.ssh.upload(path: string, data: object, options?: { server: string; user: string; pass?: string; key?: string; passphrase?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
-| `data` | `object` | No | body |  |
+| `data` | `object` | Yes | body |  |
+| `server` | `string` | Yes | query | Server hostname:port |
+| `user` | `string` | Yes | query | SSH username |
+| `pass` | `string` | No | query | Password (base64 encoded) |
+| `key` | `string` | No | query | Private key PEM (base64 encoded) |
+| `passphrase` | `string` | No | query | Key passphrase (base64 encoded) |
 
 **Returns:** `ApiResponse&lt;unknown&gt;`
 

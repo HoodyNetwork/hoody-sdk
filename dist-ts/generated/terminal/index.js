@@ -5,8 +5,8 @@
  * @packageDocumentation
  */
 export { HealthService } from './health.service.js';
-export { TerminalSessionsService } from './terminal-sessions.service.js';
 export { TerminalExecutionService } from './terminal-execution.service.js';
+export { TerminalSessionsService } from './terminal-sessions.service.js';
 export { WebInterfaceService } from './web-interface.service.js';
 export { ApiDocumentationService } from './api-documentation.service.js';
 export { SystemMonitoringService } from './system-monitoring.service.js';

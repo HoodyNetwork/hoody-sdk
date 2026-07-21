@@ -151,6 +151,7 @@ export declare class CurlWsRequestChannelWebSocket implements ICurlWsRequestChan
     private _reconnecting;
     private shouldReconnect;
     private _frameQueue;
+    private _dispatchAlive;
     private _socketGen;
     constructor(url: string, options?: IWebSocketConnectionOptions);
     /**

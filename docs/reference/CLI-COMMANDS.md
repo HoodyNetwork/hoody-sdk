@@ -1,6 +1,6 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.1
+**Version:** 1.0.0-beta.2
 **Total commands:** 825
 **Command groups:** 37
 **Top-level utility commands:** 24
@@ -603,9 +603,9 @@ File operations and remote backends
 | `hoody files access ftp` |  | read | Access file via FTP | `files.ftp.access` | `hoody files access ftp /home/user/file.txt --type ftp --server srv-abc --user anonymous --pass <pass> --ftp-secure --ftp-passive` |
 | `hoody files access s3` |  | read | Access file from S3 | `files.s3.access` | `hoody files access s3 /home/user/file.txt --type s3 --server srv-abc --s3-bucket <s3_bucket> --s3-region <s3_region> --user alice --pass <pass> --s3-endpoint <s3_endpoint>` |
 | `hoody files access ssh` |  | read | Access file via SSH/SFTP | `files.ssh.access` | `hoody files access ssh /home/user/file.txt --type ssh --server srv-abc --user alice --pass <pass> --key <key> --passphrase <passphrase>` |
-| `hoody files access ssh-upload` |  | write | Upload file via SSH/SFTP | `files.ssh.upload` | `hoody files access ssh-upload /home/user/file.txt` |
+| `hoody files access ssh-upload` |  | write | Upload file via SSH/SFTP | `files.ssh.upload` | `hoody files access ssh-upload /home/user/file.txt --server srv-abc --user alice --pass <pass> --key <key> --passphrase <passphrase> --input <input>` |
 | `hoody files access webdav` |  | read | Access file via WebDAV | `files.webdav.access` | `hoody files access webdav /home/user/file.txt --type webdav --server srv-abc --user alice --pass <pass> --webdav-path /` |
-| `hoody files append` |  | write | Append data to file | `files.append` | `hoody files append /home/user/file.txt --owner <owner>` |
+| `hoody files append` |  | write | Append data to file | `files.append` | `hoody files append /home/user/file.txt --owner <owner> --input <input>` |
 | `hoody files archive preview` |  | read | Preview archive contents or read file | `files.archives.preview` | `hoody files archive preview /home/user/archive.zip --preview <preview> --contents <contents>` |
 | `hoody files archive view` |  | read | View file from archive | `files.archives.viewFile` | `hoody files archive view /home/user/archive.zip --preview <preview>` |
 | `hoody files backends connect alias` |  | write | Connect to alias backend | `files.backends.connectAlias` | `hoody files backends connect alias --description "My description" --remote origin` |
@@ -709,12 +709,12 @@ File operations and remote backends
 | `hoody files options` |  | read | Get allowed methods | `files.webdav.getOptions` | `hoody files options /home/user/file.txt` |
 | `hoody files patch` |  | write | File operations | `files.patch` | `hoody files patch /home/user/file.txt --x-update-range append --body '{}'` |
 | `hoody files process-image` |  | read | Process and convert images | `files.images.process` | `hoody files process-image img-abc --thumbnail --format jpeg --size <size> --width 10 --height 10 --resize fit --quality low --q 85 --blur 10 --grayscale --bg <bg>` |
-| `hoody files put` |  | write | Upload or append file | `files.put` | `hoody files put /home/user/file.txt --backend <backend> --append --owner <owner>` |
+| `hoody files put` |  | write | Upload or append file | `files.put` | `hoody files put /home/user/file.txt --backend <backend> --append --owner <owner> --input <input>` |
 | `hoody files realpath` |  | read | Resolve canonical path (realpath) | `files.realpath` | `hoody files realpath /home/user/file.txt` |
 | `hoody files search` |  | read | Search directory | `files.search` | `hoody files search /home/user/src --q <q> --json` |
 | `hoody files stat` |  | read | Get file metadata (stat) | `files.stat` | `hoody files stat /home/user/file.txt` |
 | `hoody files touch` |  | write | Touch file (create or update mtime) | `files.touch` | `hoody files touch /home/user/file.txt --touch` |
-| `hoody files upload` |  | write | Upload file | `files.upload` | `hoody files upload /home/user/file.txt` |
+| `hoody files upload` |  | write | Upload file | `files.upload` | `hoody files upload /home/user/file.txt --input <input>` |
 | `hoody files version` |  | read | Get API version | `files.system.getApiVersion` | `hoody files version` |
 
 ## `hoody firewall` (alias: fw) — 8 commands

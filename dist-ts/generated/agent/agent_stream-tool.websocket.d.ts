@@ -73,6 +73,7 @@ export declare class AgentStreamToolWebSocket implements IAgentStreamToolWebSock
     private _reconnecting;
     private shouldReconnect;
     private _frameQueue;
+    private _dispatchAlive;
     private _socketGen;
     constructor(url: string, options?: IWebSocketConnectionOptions);
     /**

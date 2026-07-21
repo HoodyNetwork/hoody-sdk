@@ -1238,7 +1238,7 @@ export interface ApiAuthenticationLoginResponse {
             kid?: string;
             payload_b64?: string;
             signature_hex?: string;
-        } | null;
+        };
         client_ip?: string;
         recent_login_ips?: {
             ip?: string;
@@ -1324,6 +1324,11 @@ export interface ApiTfaVerifyResponse {
         token?: string;
         refreshToken?: string;
         auth_intent_token?: string;
+        identity_claim?: {
+            kid?: string;
+            payload_b64?: string;
+            signature_hex?: string;
+        };
         user?: Record<string, unknown>;
         server?: {
             id: string;
@@ -1375,6 +1380,9 @@ export interface ApiTfaVerifySetupResponse {
     data: {
         enabled: boolean;
         enabled_at: string;
+        token?: string;
+        refreshToken?: string;
+        sessions_revoked?: boolean;
     };
 }
 export interface ApiTfaGetStatusResponse {
@@ -1401,7 +1409,11 @@ export interface ApiTfaDisableRequest {
 export interface ApiTfaDisableResponse {
     statusCode: 200;
     message: string;
-    data: null;
+    data: {
+        token?: string;
+        refreshToken?: string;
+        sessions_revoked?: boolean;
+    };
 }
 export interface ApiTfaRegenerateBackupCodesRequest {
     /**
@@ -1765,6 +1777,35 @@ export interface ApiUsersUpdateResponse {
         onboarding?: Record<string, unknown>;
         created_at?: string;
         updated_at?: string;
+    };
+}
+export interface ApiIssueIdentityClaimRequest {
+    /**
+     * Consumer identifier this claim is bound to (e.g. your app hostname). Verifiers reject the claim unless they expect exactly this audience. Printable ASCII, no whitespace or double quotes.
+     * @minLength 1
+     * @maxLength 256
+     * @pattern ^[\x21\x23-\x7e]{1,256}$
+     */
+    audience: string;
+    /**
+     * Requested claim lifetime in seconds. Clamped to [60, min(server ceiling, remaining JWT lifetime)]. Default: server-configured (1h).
+     * @minimum 60
+     * @maximum 86400
+     */
+    expires_in?: number;
+}
+export interface ApiIssueIdentityClaimResponse {
+    statusCode: 200;
+    message: string;
+    data: {
+        identity_claim?: {
+            kid?: string;
+            payload_b64?: string;
+            signature_hex?: string;
+        };
+        expires_in?: number;
+        expires_at?: string;
+        audience?: string;
     };
 }
 export interface MarkOnboardingMilestoneRequest {
@@ -2239,7 +2280,7 @@ export interface ApiContainersCreateRequest {
     cache?: boolean;
     /** Force the creation of a new cached image from the container image. This option is only available to admins or the owner of the image. */
     cache_image?: boolean;
-    /** Create container as prespawn cache. Prespawn containers are excluded from default listings and quota counts. Creation is limited by server.prespawn_count. */
+    /** INTERNAL — not user-settable. Prespawn cache containers are provisioned only by the system pool producer. Passing `true` is rejected (403); an explicit `false` is accepted. */
     prespawn?: boolean;
     /** Bypass prespawn container claiming and create a fresh container directly. By default (false), the system will attempt to claim a matching prespawn container if available. */
     bypass_prespawn?: boolean;
@@ -2301,6 +2342,7 @@ export interface ApiContainersListResponse {
                     disk_gb?: null | number;
                     shared_compute?: boolean;
                 };
+                expires_at?: null | string;
             };
             ssh_hostname?: null | string;
             name?: string;
@@ -2481,6 +2523,7 @@ export interface ApiContainersGetResponse {
                 disk_gb?: null | number;
                 shared_compute?: boolean;
             };
+            expires_at?: null | string;
         };
         ssh_hostname?: null | string;
         name?: string;
@@ -2686,6 +2729,7 @@ export interface ApiContainersUpdateResponse {
                 disk_gb?: null | number;
                 shared_compute?: boolean;
             };
+            expires_at?: null | string;
         };
         ssh_hostname?: null | string;
         name?: string;
@@ -2800,6 +2844,7 @@ export interface ApiContainersCopyResponse {
                 disk_gb?: null | number;
                 shared_compute?: boolean;
             };
+            expires_at?: null | string;
         };
         ssh_hostname?: null | string;
         color?: string;
@@ -3980,7 +4025,7 @@ export interface ApiProxyPermissionsContainerReplaceRequest {
     default?: "allow" | "deny";
     /** Enable or disable the proxy. Defaults to true. */
     enable_proxy?: boolean;
-    /** Per-service proxy hooks. Keys are service names; values are first-match-wins arrays of { match, script, timeout? } rules. Max 8 per service, 32 per file total. Reject-listed services: logs, proxy, workspaces. */
+    /** Per-service proxy hooks. Keys are service names; values are first-match-wins arrays of { match, script, timeout? } rules. Max 8 per service, 32 per file total. Reject-listed services: logs, proxy, workspaces, cdp. */
     hooks?: Record<string, unknown>;
 }
 export interface ApiProxyPermissionsContainerReplaceResponse {
@@ -6405,6 +6450,11 @@ export interface OauthDeviceTokenResponse {
         expires_in?: number;
         refresh_expires_at?: string;
         refresh_expires_in?: number;
+        identity_claim?: {
+            kid?: string;
+            payload_b64?: string;
+            signature_hex?: string;
+        };
         user?: {
             id: string;
             username?: string;
@@ -6437,6 +6487,36 @@ export interface OauthDeviceTokenResponse {
         } | null;
     };
     message: string;
+}
+export interface OauthAuthorizeRequest {
+    /**
+     * @minLength 43
+     * @maxLength 128
+     * @pattern ^[A-Za-z0-9_-]+$
+     */
+    code_challenge: string;
+    /**
+     * @minLength 1
+     * @maxLength 2048
+     * @pattern ^https://
+     */
+    redirect_uri: string;
+}
+export interface OauthExchangeRequest {
+    /** @pattern ^[0-9a-f]{64}$ */
+    code: string;
+    /**
+     * @minLength 43
+     * @maxLength 128
+     * @pattern ^[A-Za-z0-9_\-.~]+$
+     */
+    code_verifier: string;
+    /**
+     * @minLength 1
+     * @maxLength 2048
+     * @pattern ^https://
+     */
+    redirect_uri: string;
 }
 export interface BrowserInstancesStartResponse {
     statusCode: number;
@@ -16959,6 +17039,20 @@ export interface AgentHealthCheckResponse {
     message: string;
     data: Record<string, unknown>;
 }
+export interface AgentBootstrapHoodyTokenRequest {
+    /** The raw Hoody platform token to install. Write-only; validated via the sidecar before install and never echoed. */
+    token: string;
+    /** The operator bootstrap capability (--http-bootstrap-token), required only when the daemon was started with one; a mismatch is answered 404. */
+    capability?: string;
+}
+/**
+ * {outcome:"renewed", connected, and the secret-free identity (username/email/alias)}.
+ */
+export interface AgentBootstrapHoodyTokenResponse {
+    statusCode: number;
+    message: string;
+    data: Record<string, unknown>;
+}
 export interface AgentListHooksRequest {
     /** Live session id (hooks are session-scoped; required by the daemon RPC). */
     session_id?: string;
@@ -17520,9 +17614,9 @@ export interface AgentCreateSessionRequest {
     cwd?: string;
     /** Config directory override. */
     config_dir?: string;
-    /** Initial model id. */
+    /** Model for this session. On a fresh create/fork it OVERRIDES the chat agent's pinned model for this session only (it is NOT written to the agent; use PATCH /sessions/{id}/model to change it and repin the agent globally). Omit it to use the agent's pinned model (or your default). Rejected (400) together with attach (a resumed session keeps its model) or backend:"acp" (the delegated agent selects its own). */
     model?: string;
-    /** Initial chat-agent name. */
+    /** Initial chat-agent name. Rejected (400) together with fork (a fork inherits its parent's chat agent) or attach (a resumed session keeps its agent). */
     agent?: string;
     /** Initial tool mode (frozen at start). */
     tool_mode?: string;
@@ -17798,16 +17892,20 @@ export interface AgentPostSessionMessageResponse {
     data: Record<string, unknown>;
 }
 export interface AgentSetSessionModelRequest {
-    /** Model id to switch to. */
-    model?: string;
+    /** Model spec to switch to (provider-prefixed, e.g. anthropic/claude-opus-4-8, or fusion/<slug>). Required — a blank value is rejected, never a silent no-op. */
+    model: string;
 }
 /**
- * Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).
+ * The applied model switch.
  */
 export interface AgentSetSessionModelResponse {
     statusCode: number;
     message: string;
-    data: Record<string, unknown>;
+    data: {
+        status?: string;
+        model?: string;
+        persisted?: boolean;
+    };
 }
 export interface AgentPromptStreamRequest {
     /** The user message text for this turn. */
@@ -19931,17 +20029,25 @@ export interface BrowserMetadata {
   - **Playwright**: `await playwright.chromium.connectOverCDP(url)`
   
   **Availability**: Only populated when browser is launched with `useRemoteDebuggingPort: true`.
-  In Hoody container deployments this URL is rewritten to the `http-{PORT}` proxy hostname pattern.
+  In Hoody container deployments this URL is rewritten onto the `cdp-{N}` proxy hostname
+  (paired 1:1 with the `browser-{N}` instance it debugs). The raw WebSocket URL is not
+  promised stable across browser restarts — prefer connecting with
+  `chromium.connectOverCDP("https://…-cdp-{N}/")`, which resolves the live WebSocket URL via
+  `/json/version` and cold-starts instance `N` on demand if it isn't already running.
   
   **Security Warning**: This URL provides full control over the browser instance.
   Only expose to trusted clients in secure environments. */
     webSocketDebuggerUrl?: string | null;
     /** Chrome DevTools HTTP discovery URL (`/json/version`) for this instance.
   Tools can resolve the WebSocket URL from this endpoint.
-  In Hoody container deployments this URL is rewritten to the `http-{PORT}` proxy hostname pattern. */
+  In Hoody container deployments this URL is rewritten onto the `cdp-{N}` proxy hostname
+  pattern (paired 1:1 with the `browser-{N}` instance) — the same on-demand relay used by
+  `connectOverCDP("https://…-cdp-{N}/")`. */
     devtoolsHttpUrl?: string | null;
     /** Public URL to access Chrome DevTools frontend in a browser.
-  Uses the `http-{PORT}` subdomain pattern routed by the Hoody reverse proxy.
+  Uses the `cdp-{N}` subdomain pattern routed by the Hoody reverse proxy, paired 1:1 with the
+  `browser-{N}` instance; on-demand — hitting this URL cold-starts instance `N` if it is not
+  already running.
   Open this URL to get a live DevTools inspector for the running browser. */
     devtoolsFrontendUrl?: string | null;
     /** List of loaded Chrome extension directory paths (if any) */

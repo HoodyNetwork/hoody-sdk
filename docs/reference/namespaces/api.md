@@ -1,6 +1,6 @@
-# `api` — 275 methods
+# `api` — 279 methods
 
-**Version:** 1.0.0-beta.1
+**Version:** 1.0.0-beta.2
 **Accessor:** `client.api`
 
 ```typescript
@@ -393,7 +393,25 @@ client.api.authTokens.updatePublicProfile(data: ApiAuthTokensUpdatePublicProfile
 
 ---
 
-## `client.api.authentication` (22 methods)
+## `client.api.authentication` (26 methods)
+
+### `api_issueIdentityClaim`
+
+**POST** `/api/v1/users/auth/identity-claim`
+
+Issue a fresh audience-bound identity claim
+
+```typescript
+client.api.authentication.api_issueIdentityClaim(data: ApiIssueIdentityClaimRequest): Promise<ApiIssueIdentityClaimResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ApiIssueIdentityClaimRequest` | Yes | body |  |
+
+**Returns:** `ApiIssueIdentityClaimResponse`
+
+---
 
 ### `forgotPassword`
 
@@ -458,6 +476,20 @@ client.api.authentication.getCurrentUserAlias(): Promise<GetCurrentUserAliasResp
 ```
 
 **Returns:** `GetCurrentUserAliasResponse`
+
+---
+
+### `getOAuthConfig`
+
+**GET** `/api/v1/auth/config`
+
+Get the public sign-in configuration
+
+```typescript
+client.api.authentication.getOAuthConfig(): Promise<ApiResponse<unknown>>
+```
+
+**Returns:** `ApiResponse&lt;unknown&gt;`
 
 ---
 
@@ -582,6 +614,24 @@ client.api.authentication.logout(): Promise<ApiAuthenticationLogoutResponse>
 
 ---
 
+### `oauthAuthorize`
+
+**POST** `/api/v1/auth/authorize`
+
+Begin a PKCE OAuth authorization
+
+```typescript
+client.api.authentication.oauthAuthorize(data: OauthAuthorizeRequest): Promise<ApiResponse<unknown>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `OauthAuthorizeRequest` | Yes | body |  |
+
+**Returns:** `ApiResponse&lt;unknown&gt;`
+
+---
+
 ### `oauthCancelIntent`
 
 **POST** `/api/v1/auth/intent/cancel`
@@ -666,6 +716,24 @@ client.api.authentication.oauthDeviceVerifyCode(data: OauthDeviceVerifyCodeReque
 | `data` | `OauthDeviceVerifyCodeRequest` | Yes | body |  |
 
 **Returns:** `OauthDeviceVerifyCodeResponse`
+
+---
+
+### `oauthExchange`
+
+**POST** `/api/v1/auth/exchange`
+
+Exchange a PKCE authorization code for tokens
+
+```typescript
+client.api.authentication.oauthExchange(data: OauthExchangeRequest): Promise<ApiResponse<unknown>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `OauthExchangeRequest` | Yes | body |  |
+
+**Returns:** `ApiResponse&lt;unknown&gt;`
 
 ---
 

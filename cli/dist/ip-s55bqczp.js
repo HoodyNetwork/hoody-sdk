@@ -1,0 +1,1 @@
+import{sa as q,xa as v}from"./index-t15t9zgn.js";import"./index-wy0t6427.js";function G(k,w){k.command("get").description("Get IP Information").action(async(x)=>{await new v(w()).execute({operationId:"getIpInfo",method:"get",path:"/api/v1/ip",namespace:"api",options:{...x},parameters:[]})}),q(k)}export{G as registerCommands};

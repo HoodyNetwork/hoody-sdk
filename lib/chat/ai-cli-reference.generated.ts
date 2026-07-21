@@ -1,4 +1,4 @@
-// SHA256: 7546e5ce8815e664f785454df0c55067ab7f40c452c8bf4803f680903c80b696
+// SHA256: 13239e331309c4cfe8b26f8251c201bfd30ef271eb6c81ef1eba9c8ba0b33f47
 /**
  * CLI reference for `hoody chat` retrieval.
  *
@@ -4906,7 +4906,14 @@ export const CLI_REFERENCE: CliReference = {
         {
           "path": "hoody files access ssh-upload",
           "summary": "Upload file via SSH/SFTP",
-          "flags": []
+          "flags": [
+            "--server",
+            "--user",
+            "--pass",
+            "--key",
+            "--passphrase",
+            "--input"
+          ]
         },
         {
           "path": "hoody files access webdav",
@@ -4923,7 +4930,8 @@ export const CLI_REFERENCE: CliReference = {
           "path": "hoody files append",
           "summary": "Append data to file",
           "flags": [
-            "--owner"
+            "--owner",
+            "--input"
           ]
         },
         {
@@ -6475,7 +6483,8 @@ export const CLI_REFERENCE: CliReference = {
           "flags": [
             "--backend",
             "--append",
-            "--owner"
+            "--owner",
+            "--input"
           ]
         },
         {
@@ -6506,7 +6515,9 @@ export const CLI_REFERENCE: CliReference = {
         {
           "path": "hoody files upload",
           "summary": "Upload file",
-          "flags": []
+          "flags": [
+            "--input"
+          ]
         },
         {
           "path": "hoody files version",

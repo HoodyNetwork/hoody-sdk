@@ -1,12 +1,12 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.1
-**Total methods:** 1065
+**Version:** 1.0.0-beta.2
+**Total methods:** 1070
 **Namespaces:** 19
 
 ---
 
-## `agent` (208 methods)
+## `agent` (209 methods)
 
 ### `client.agent`
 
@@ -64,6 +64,12 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `createHeadlessRun` | POST | `/api/v1/agent/headless/runs` | Create a headless one-shot run. |
+
+### `client.agent.hoody`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `bootstrapHoodyToken` | POST | `/api/v1/agent/hoody/auth/bootstrap` | Bootstrap the Hoody platform credential (install-if-absent). |
 
 ### `client.agent.hooks`
 
@@ -316,7 +322,7 @@
 | `resumeWorkflowRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `runSessionWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 
-## `api` (275 methods)
+## `api` (279 methods)
 
 ### `client.api.activity`
 
@@ -356,21 +362,25 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `api_issueIdentityClaim` | POST | `/api/v1/users/auth/identity-claim` | Issue a fresh audience-bound identity claim |
 | `forgotPassword` | POST | `/api/v1/auth/forgot-password` | Request password reset |
 | `getAvailableRegions` | GET | `/api/v1/auth/available-regions` | Get available server regions |
 | `getCurrentUser` | GET | `/api/v1/users/auth/me` | Get current user profile |
 | `getCurrentUserAlias` | GET | `/api/v1/users/me` | Get current user profile (alias of /users/auth/me) |
+| `getOAuthConfig` | GET | `/api/v1/auth/config` | Get the public sign-in configuration |
 | `githubOAuthCallback` | GET | `/api/v1/auth/github/callback` | GitHub OAuth callback |
 | `githubOAuthRedirect` | GET | `/api/v1/auth/github` | Redirect to GitHub OAuth |
 | `googleOAuthCallback` | GET | `/api/v1/auth/google/callback` | Google OAuth callback |
 | `googleOAuthRedirect` | GET | `/api/v1/auth/google` | Redirect to Google OAuth |
 | `login` | POST | `/api/v1/users/auth/login` | Login with username and password |
 | `logout` | POST | `/api/v1/users/auth/logout` | Logout |
+| `oauthAuthorize` | POST | `/api/v1/auth/authorize` | Begin a PKCE OAuth authorization |
 | `oauthCancelIntent` | POST | `/api/v1/auth/intent/cancel` | Cancel a pending OAuth AuthIntent or 2FA temp_token |
 | `oauthDeviceAuthorize` | GET | `/api/v1/auth/device/authorize` | Start the device-leg OAuth (cookie + ticket gated) |
 | `oauthDeviceCode` | POST | `/api/v1/auth/device/code` | Start an RFC 8628 device authorization flow |
 | `oauthDeviceToken` | POST | `/api/v1/auth/device/token` | Poll for device-flow tokens (RFC 8628 §3.5) |
 | `oauthDeviceVerifyCode` | POST | `/api/v1/auth/device/verify_code` | Confirm a device user_code (verification page) |
+| `oauthExchange` | POST | `/api/v1/auth/exchange` | Exchange a PKCE authorization code for tokens |
 | `oauthLaunchInitiate` | POST | `/api/v1/auth/launch/initiate` | Initiate OAuth popup-handoff launch |
 | `oauthLaunchStart` | GET | `/api/v1/auth/launch/start` | Start OAuth popup-handoff via single-use ticket |
 | `refreshToken` | POST | `/api/v1/users/auth/refresh` | Refresh access token |

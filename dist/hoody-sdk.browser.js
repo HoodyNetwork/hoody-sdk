@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.1
+ * Hoody SDK v1.0.0-beta.2
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -4229,6 +4229,54 @@ var HoodySDK = (() => {
       return this.http.post(requestUrl, requestData);
     }
     /**
+     * Issue a fresh audience-bound identity claim
+     *
+     * Mint a fresh, audience-bound identity claim for the authenticated caller without a re-login. First-party JWT sessions only — auth tokens, HTTP Basic, and impersonated sessions are rejected. The claim proves "Hoody authenticated this user" to the audience named in the request; third parties verify it offline against GET /api/v1/meta/public-key. Claim lifetime is clamped to [60s, min(server ceiling — default 24h, remaining JWT lifetime)], default 1 hour.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async api_issueIdentityClaim(data, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/users/auth/identity-claim`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.body = data;
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
      * Sign up with email and password
      *
      * Create a new account with email and password. A verification email will be sent. Account is not active until email is verified.
@@ -5116,6 +5164,146 @@ var HoodySDK = (() => {
         requestData.responseType = responseType;
       }
       return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Begin a PKCE OAuth authorization
+     *
+     * Registers a PKCE authorization request (code challenge + redirect URI) to begin the browser sign-in flow.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async oauthAuthorize(data, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/auth/authorize`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.body = data;
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Exchange a PKCE authorization code for tokens
+     *
+     * Completes the PKCE authorization-code flow by exchanging an authorization code and its code verifier for authentication tokens.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async oauthExchange(data, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/auth/exchange`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.body = data;
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Get the public sign-in configuration
+     *
+     * Returns the public sign-in configuration (such as which identity providers are enabled) used to drive the OAuth flow.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async getOAuthConfig(options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      let requestUrl = this.buildRealmUrl(`/api/v1/auth/config`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
     }
   };
 
@@ -17208,8 +17396,8 @@ var HoodySDK = (() => {
     **Third-party verification flow:**
     1. Fetch this endpoint once (cache for 24h+)
     2. Locate the key by `kid` from the `keys[]` array
-    3. For response signatures: parse `X-Hoody-Signature: t=<ts>,kid=<id>,path=<url>,sig=<hex>`
-     and verify sig against `t + "." + responseBody`
+    3. For response signatures: parse `X-Hoody-Signature: t=<ts>,kid=<id>,m=<method>,s=<status>,path=<url>,sig=<hex>`
+     and verify sig against the newline-joined tuple `${t}\n${method}\n${status}\n${path}\n${responseBody}`
     4. For identity/container claims: verify `claim.signature_hex` against `claim.payload_b64` bytes
     5. If `kid` in a signature/claim does not match any cached key, re-fetch this endpoint.
     
@@ -23243,6 +23431,16 @@ var HoodySDK = (() => {
     browser instance. The HTTP URL (`/json/version`) can be used to resolve the WebSocket
     endpoint automatically.
     
+    **Hoody CDP relay**: In container deployments these URLs are minted on the `cdp-{N}`
+    hostname (e.g. `https://{projectId}-{containerId}-cdp-{N}.{server}.containers.hoody.com`),
+    paired 1:1 with the `browser-{N}` instance that owns the debugging session. The relay is
+    reached HTTP-first: connect with `chromium.connectOverCDP("https://…-cdp-{N}/")`, which
+    fetches `/json/version` to resolve the live WebSocket endpoint before upgrading, and
+    cold-starts instance `N` on demand if it isn't already running. Only the read-only
+    discovery endpoints (`/json/version`, `/json/list`, `/json`) and DevTools WebSocket
+    sessions (`/devtools/browser/<id>`, `/devtools/page/<id>`) are relayed — mutation endpoints
+    (`/json/new`, `/json/close`, `/json/activate`) are not exposed.
+    
     **Availability**: These URLs are populated when the instance is launched with
     `useRemoteDebuggingPort=true` and `browser=chromium`. Otherwise it will be `null`.
        */
@@ -26197,6 +26395,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -26240,6 +26445,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -26258,14 +26466,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -26273,7 +26489,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -26282,7 +26502,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -26292,15 +26512,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -26381,7 +26615,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -26654,6 +26888,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -26697,6 +26938,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -26715,14 +26959,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -26730,7 +26982,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -26739,7 +26995,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -26749,15 +27005,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -26838,7 +27108,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -47778,42 +48048,78 @@ var HoodySDK = (() => {
      *
      * Upload file to remote SSH server
      */
-    async upload(path, data, _templateVars, requestOptions) {
+    async upload(path, data, options, _templateVars) {
+      const { server, user, pass, key, passphrase, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
       if (path === void 0 || path === null) {
         throw new ValidationError("path is required", "path");
       }
       if (path !== void 0 && path !== null) {
       }
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      if (server === void 0 || server === null) {
+        throw new ValidationError("server is required", "server");
+      }
+      if (server !== void 0 && server !== null) {
+      }
+      if (user === void 0 || user === null) {
+        throw new ValidationError("user is required", "user");
+      }
+      if (user !== void 0 && user !== null) {
+      }
+      if (pass !== void 0 && pass !== null) {
+      }
+      if (key !== void 0 && key !== null) {
+      }
+      if (passphrase !== void 0 && passphrase !== null) {
+      }
       let requestUrl = this.buildTemplateUrl(`/{path}?type=ssh`, _templateVars || {});
       requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
       const requestData = {};
       requestData.body = data;
-      if (requestOptions == null ? void 0 : requestOptions.signal) {
-        requestData.signal = requestOptions.signal;
+      requestData.query = {};
+      if (server !== void 0) {
+        requestData.query["server"] = server;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
-        requestData.timeoutMs = requestOptions.timeoutMs;
+      if (user !== void 0) {
+        requestData.query["user"] = user;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
-        requestData.retries = requestOptions.retries;
+      if (pass !== void 0) {
+        requestData.query["pass"] = pass;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
-        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      if (key !== void 0) {
+        requestData.query["key"] = key;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
-        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      if (passphrase !== void 0) {
+        requestData.query["passphrase"] = passphrase;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
-        requestData.middlewareContext = requestOptions.middlewareContext;
+      if (signal) {
+        requestData.signal = signal;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
-        requestData.authRetry = requestOptions.authRetry;
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
-        requestData.rawResponse = requestOptions.rawResponse;
+      if (retries !== void 0) {
+        requestData.retries = retries;
       }
-      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
-        requestData.responseType = requestOptions.responseType;
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
       }
       return this.http.put(requestUrl, requestData);
     }
@@ -47850,6 +48156,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -47893,6 +48206,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -47911,14 +48227,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -47926,7 +48250,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -47935,7 +48263,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -47945,15 +48273,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -48034,7 +48376,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -51952,6 +52294,321 @@ var HoodySDK = (() => {
     // Add custom properties here
   };
 
+  // generated/terminal/terminal-execution.service.generated.ts
+  var TerminalExecutionServiceBase = class {
+    constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
+      this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
+      __publicField(this, "http");
+      __publicField(this, "_kitNamespace");
+      __publicField(this, "urlTemplatePattern");
+      this._kitNamespace = namespace;
+      this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
+      this.urlTemplatePattern = urlTemplatePattern;
+    }
+    /**
+     * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
+     */
+    _wrapHttpClient(http, ns) {
+      return new Proxy(http, {
+        get: (target, prop) => {
+          const val = target[prop];
+          if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
+            return (...args) => {
+              const dataIndex = prop === "request" ? 2 : 1;
+              const data = args[dataIndex] ? { ...args[dataIndex] } : {};
+              data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
+              args[dataIndex] = data;
+              return val.apply(target, args);
+            };
+          }
+          return typeof val === "function" ? val.bind(target) : val;
+        }
+      });
+    }
+    /**
+     * Build URL with template variables or fallback to baseURL
+     *
+     * @param path - API endpoint path
+     * @param variables - Method-level template variables to override defaults
+     * @returns Full URL (template mode) or path only (baseURL mode)
+     */
+    buildTemplateUrl(path, variables) {
+      var _a;
+      const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-terminal-{serviceIndex}.{server}.containers.hoody.com";
+      const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
+      const hasVariables = Object.keys(allVariables).length > 0;
+      if (!hasVariables) {
+        return path;
+      }
+      let url2 = urlPattern;
+      for (const [key, value2] of Object.entries(allVariables)) {
+        if (value2 !== void 0) {
+          url2 = url2.replace(`{${key}}`, () => String(value2));
+        }
+      }
+      if (url2.includes("{") && url2.includes("}")) {
+        const processRef = globalThis.process;
+        if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
+          console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
+          console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
+        }
+        return path;
+      }
+      return `${url2}${path}`;
+    }
+    /**
+     * Read nested values from objects using dotted paths.
+     * Example: "data.items" or "data.pagination.total"
+     */
+    getPathValue(input, path) {
+      if (!path) return void 0;
+      const segments = path.split(".").filter(Boolean);
+      let current = input;
+      for (const segment of segments) {
+        if (current === void 0 || current === null) {
+          return void 0;
+        }
+        if (Array.isArray(current) && segment === "length") {
+          current = current.length;
+          continue;
+        }
+        if (typeof current !== "object") {
+          return void 0;
+        }
+        current = current[segment];
+      }
+      return current;
+    }
+    /**
+     * Execute command in terminal session
+     *
+     * Execute a command in the specified terminal session. Supports both local bash and remote SSH sessions. The terminal type is determined by URL parameters on first use. By default, if a DISPLAY is configured on the session, the endpoint waits for the Hoody Display to be ready before executing the command. This can be disabled with skip_display_wait=true. Use ephemeral=true for a guaranteed-unique isolated PTY session with no display/dbus and automatic cleanup — ideal for programmatic command execution (like child_process.exec). Returns immediately with a command_id that can be used to poll for results.
+     */
+    async execute(data, options, _templateVars) {
+      const { terminal_id, ephemeral, defer_pid, defer_start_time_ticks, defer_timeout_ms, defer_poll_ms, reset, cwd, cwd_auto_create, shell, user, cmd, env, skip_display_wait, display_wait_timeout, display, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, socks5_user, ssh_key, socks5_pass, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      if (terminal_id !== void 0 && terminal_id !== null) {
+      }
+      if (ephemeral !== void 0 && ephemeral !== null) {
+      }
+      if (defer_pid !== void 0 && defer_pid !== null) {
+        if (!Number.isFinite(defer_pid) || !Number.isInteger(defer_pid)) {
+          throw new ValidationError("defer_pid must be an integer", "defer_pid");
+        }
+      }
+      if (defer_start_time_ticks !== void 0 && defer_start_time_ticks !== null) {
+      }
+      if (defer_timeout_ms !== void 0 && defer_timeout_ms !== null) {
+        if (!Number.isFinite(defer_timeout_ms) || !Number.isInteger(defer_timeout_ms)) {
+          throw new ValidationError("defer_timeout_ms must be an integer", "defer_timeout_ms");
+        }
+      }
+      if (defer_poll_ms !== void 0 && defer_poll_ms !== null) {
+        if (!Number.isFinite(defer_poll_ms) || !Number.isInteger(defer_poll_ms)) {
+          throw new ValidationError("defer_poll_ms must be an integer", "defer_poll_ms");
+        }
+      }
+      if (reset !== void 0 && reset !== null) {
+      }
+      if (cwd !== void 0 && cwd !== null) {
+      }
+      if (cwd_auto_create !== void 0 && cwd_auto_create !== null) {
+      }
+      if (shell !== void 0 && shell !== null) {
+      }
+      if (user !== void 0 && user !== null) {
+      }
+      if (cmd !== void 0 && cmd !== null) {
+      }
+      if (env !== void 0 && env !== null) {
+      }
+      if (skip_display_wait !== void 0 && skip_display_wait !== null) {
+      }
+      if (display_wait_timeout !== void 0 && display_wait_timeout !== null) {
+        if (!Number.isFinite(display_wait_timeout) || !Number.isInteger(display_wait_timeout)) {
+          throw new ValidationError("display_wait_timeout must be an integer", "display_wait_timeout");
+        }
+      }
+      if (display !== void 0 && display !== null) {
+      }
+      if (ssh_host !== void 0 && ssh_host !== null) {
+      }
+      if (ssh_user !== void 0 && ssh_user !== null) {
+      }
+      if (ssh_port !== void 0 && ssh_port !== null) {
+      }
+      if (ssh_password !== void 0 && ssh_password !== null) {
+      }
+      if (socks5_host !== void 0 && socks5_host !== null) {
+      }
+      if (socks5_port !== void 0 && socks5_port !== null) {
+      }
+      if (socks5_user !== void 0 && socks5_user !== null) {
+      }
+      if (ssh_key !== void 0 && ssh_key !== null) {
+      }
+      if (socks5_pass !== void 0 && socks5_pass !== null) {
+      }
+      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/execute`, _templateVars || {});
+      const requestData = {};
+      requestData.body = data;
+      requestData.query = {};
+      if (terminal_id !== void 0) {
+        requestData.query["terminal_id"] = terminal_id;
+      }
+      if (ephemeral !== void 0) {
+        requestData.query["ephemeral"] = ephemeral;
+      }
+      if (defer_pid !== void 0) {
+        requestData.query["defer_pid"] = defer_pid;
+      }
+      if (defer_start_time_ticks !== void 0) {
+        requestData.query["defer_start_time_ticks"] = defer_start_time_ticks;
+      }
+      if (defer_timeout_ms !== void 0) {
+        requestData.query["defer_timeout_ms"] = defer_timeout_ms;
+      }
+      if (defer_poll_ms !== void 0) {
+        requestData.query["defer_poll_ms"] = defer_poll_ms;
+      }
+      if (reset !== void 0) {
+        requestData.query["reset"] = reset;
+      }
+      if (cwd !== void 0) {
+        requestData.query["cwd"] = cwd;
+      }
+      if (cwd_auto_create !== void 0) {
+        requestData.query["cwd_auto_create"] = cwd_auto_create;
+      }
+      if (shell !== void 0) {
+        requestData.query["shell"] = shell;
+      }
+      if (user !== void 0) {
+        requestData.query["user"] = user;
+      }
+      if (cmd !== void 0) {
+        requestData.query["cmd"] = cmd;
+      }
+      if (env !== void 0) {
+        requestData.query["env"] = env;
+      }
+      if (skip_display_wait !== void 0) {
+        requestData.query["skip_display_wait"] = skip_display_wait;
+      }
+      if (display_wait_timeout !== void 0) {
+        requestData.query["display_wait_timeout"] = display_wait_timeout;
+      }
+      if (display !== void 0) {
+        requestData.query["display"] = display;
+      }
+      if (ssh_host !== void 0) {
+        requestData.query["ssh_host"] = ssh_host;
+      }
+      if (ssh_user !== void 0) {
+        requestData.query["ssh_user"] = ssh_user;
+      }
+      if (ssh_port !== void 0) {
+        requestData.query["ssh_port"] = ssh_port;
+      }
+      if (ssh_password !== void 0) {
+        requestData.query["ssh_password"] = ssh_password;
+      }
+      if (socks5_host !== void 0) {
+        requestData.query["socks5_host"] = socks5_host;
+      }
+      if (socks5_port !== void 0) {
+        requestData.query["socks5_port"] = socks5_port;
+      }
+      if (socks5_user !== void 0) {
+        requestData.query["socks5_user"] = socks5_user;
+      }
+      if (ssh_key !== void 0) {
+        requestData.query["ssh_key"] = ssh_key;
+      }
+      if (socks5_pass !== void 0) {
+        requestData.query["socks5_pass"] = socks5_pass;
+      }
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Get command result
+     *
+     * Retrieve the current or final results of a command execution. Can be called while command is running or after completion.
+     */
+    async getResult(command_id, _templateVars, requestOptions) {
+      if (command_id === void 0 || command_id === null) {
+        throw new ValidationError("command_id is required", "command_id");
+      }
+      if (command_id !== void 0 && command_id !== null) {
+      }
+      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/result/{command_id}`, _templateVars || {});
+      requestUrl = requestUrl.replace("{command_id}", () => encodeURIComponent(String(command_id)));
+      const requestData = {};
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+  };
+
+  // generated/terminal/terminal-execution.service.ts
+  var TerminalExecutionService = class extends TerminalExecutionServiceBase {
+    // Add custom properties here
+  };
+
   // generated/terminal/terminal_connect-terminal-web-socket.websocket.ts
   var RAW_WEBSOCKET_OPEN4 = 1;
   var RAW_WEBSOCKET_CLOSED4 = 3;
@@ -51969,6 +52626,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -52018,6 +52682,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -52044,14 +52711,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -52059,7 +52734,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -52068,7 +52747,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -52078,15 +52757,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -52167,7 +52860,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -52542,165 +53235,6 @@ var HoodySDK = (() => {
         current = current[segment];
       }
       return current;
-    }
-    /**
-     * WebSocket terminal connection
-     *
-     * Establishes WebSocket connection for real-time bidirectional terminal I/O. Multiple clients can share the same terminal session using the same terminal_id. The protocol uses efficient binary framing where the first byte indicates message type (0-4 for commands, specific bytes for data). Supports session sharing, read-only mode, SSH connections, PID attachment, and comprehensive terminal features.
-     */
-    async connectWebSocket(options, _templateVars) {
-      const { terminal_id, readonly, cwd, cwd_auto_create, shell, user, cmd, env, display, pid, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-      if (terminal_id !== void 0 && terminal_id !== null) {
-      }
-      if (readonly !== void 0 && readonly !== null) {
-      }
-      if (cwd !== void 0 && cwd !== null) {
-      }
-      if (cwd_auto_create !== void 0 && cwd_auto_create !== null) {
-      }
-      if (shell !== void 0 && shell !== null) {
-      }
-      if (user !== void 0 && user !== null) {
-      }
-      if (cmd !== void 0 && cmd !== null) {
-      }
-      if (env !== void 0 && env !== null) {
-      }
-      if (display !== void 0 && display !== null) {
-      }
-      if (pid !== void 0 && pid !== null) {
-        if (!Number.isFinite(pid) || !Number.isInteger(pid)) {
-          throw new ValidationError("pid must be an integer", "pid");
-        }
-      }
-      if (ssh_host !== void 0 && ssh_host !== null) {
-      }
-      if (ssh_user !== void 0 && ssh_user !== null) {
-      }
-      if (ssh_port !== void 0 && ssh_port !== null) {
-      }
-      if (ssh_password !== void 0 && ssh_password !== null) {
-      }
-      if (socks5_host !== void 0 && socks5_host !== null) {
-      }
-      if (socks5_port !== void 0 && socks5_port !== null) {
-      }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/ws`, _templateVars || {});
-      const requestData = {};
-      requestData.query = {};
-      if (terminal_id !== void 0) {
-        requestData.query["terminal_id"] = terminal_id;
-      }
-      if (readonly !== void 0) {
-        requestData.query["readonly"] = readonly;
-      }
-      if (cwd !== void 0) {
-        requestData.query["cwd"] = cwd;
-      }
-      if (cwd_auto_create !== void 0) {
-        requestData.query["cwd_auto_create"] = cwd_auto_create;
-      }
-      if (shell !== void 0) {
-        requestData.query["shell"] = shell;
-      }
-      if (user !== void 0) {
-        requestData.query["user"] = user;
-      }
-      if (cmd !== void 0) {
-        requestData.query["cmd"] = cmd;
-      }
-      if (env !== void 0) {
-        requestData.query["env"] = env;
-      }
-      if (display !== void 0) {
-        requestData.query["display"] = display;
-      }
-      if (pid !== void 0) {
-        requestData.query["pid"] = pid;
-      }
-      if (ssh_host !== void 0) {
-        requestData.query["ssh_host"] = ssh_host;
-      }
-      if (ssh_user !== void 0) {
-        requestData.query["ssh_user"] = ssh_user;
-      }
-      if (ssh_port !== void 0) {
-        requestData.query["ssh_port"] = ssh_port;
-      }
-      if (ssh_password !== void 0) {
-        requestData.query["ssh_password"] = ssh_password;
-      }
-      if (socks5_host !== void 0) {
-        requestData.query["socks5_host"] = socks5_host;
-      }
-      if (socks5_port !== void 0) {
-        requestData.query["socks5_port"] = socks5_port;
-      }
-      if (signal) {
-        requestData.signal = signal;
-      }
-      if (timeoutMs !== void 0) {
-        requestData.timeoutMs = timeoutMs;
-      }
-      if (retries !== void 0) {
-        requestData.retries = retries;
-      }
-      if (retryDelayMs !== void 0) {
-        requestData.retryDelayMs = retryDelayMs;
-      }
-      if (retryOnStatuses !== void 0) {
-        requestData.retryOnStatuses = retryOnStatuses;
-      }
-      if (middlewareContext !== void 0) {
-        requestData.middlewareContext = middlewareContext;
-      }
-      if (authRetry !== void 0) {
-        requestData.authRetry = authRetry;
-      }
-      if (rawResponse !== void 0) {
-        requestData.rawResponse = rawResponse;
-      }
-      if (responseType !== void 0) {
-        requestData.responseType = responseType;
-      }
-      const baseUrl = this.http.getBaseURL();
-      const __isAbsolute = typeof requestUrl === "string" && /^https?:\/\//i.test(requestUrl);
-      const wsHost = (__isAbsolute ? requestUrl : baseUrl).replace(/^http/, "ws");
-      let __isExternalKit = false;
-      if (__isAbsolute) {
-        const __httpAny = this.http;
-        if (typeof __httpAny.isSameOriginAndPath === "function" && baseUrl) {
-          try {
-            __isExternalKit = !__httpAny.isSameOriginAndPath(requestUrl, baseUrl);
-          } catch {
-            __isExternalKit = true;
-          }
-        } else if (baseUrl) {
-          try {
-            const __reqOrigin = new URL(requestUrl).origin;
-            const __baseOrigin = new URL(baseUrl).origin;
-            __isExternalKit = __reqOrigin !== __baseOrigin;
-          } catch {
-            __isExternalKit = true;
-          }
-        } else {
-          __isExternalKit = true;
-        }
-      }
-      const socketIoPath = "/api/v1/terminal/ws".replace(/\/stream$/, "");
-      const wsOptions = { path: socketIoPath };
-      if (requestData.query && Object.keys(requestData.query).length > 0) {
-        wsOptions.query = { ...requestData.query };
-      }
-      const __httpCfg = this.http.config;
-      if (!__isExternalKit && __httpCfg && typeof __httpCfg.token === "string" && __httpCfg.token.length > 0) {
-        wsOptions.auth = { token: __httpCfg.token };
-      }
-      if (requestData.headers && Object.keys(requestData.headers).length > 0) {
-        wsOptions.headers = { ...requestData.headers };
-      }
-      const client = new TerminalConnectTerminalWebSocketWebSocket(wsHost, wsOptions);
-      return client;
     }
     /**
      * Create a terminal session
@@ -53223,130 +53757,16 @@ var HoodySDK = (() => {
         return items;
       })();
     }
-  };
-
-  // generated/terminal/terminal-sessions.service.ts
-  var TerminalSessionsService = class extends TerminalSessionsServiceBase {
-    // Add custom properties here
-  };
-
-  // generated/terminal/terminal-execution.service.generated.ts
-  var TerminalExecutionServiceBase = class {
-    constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
-      this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
-      __publicField(this, "http");
-      __publicField(this, "_kitNamespace");
-      __publicField(this, "urlTemplatePattern");
-      this._kitNamespace = namespace;
-      this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
-      this.urlTemplatePattern = urlTemplatePattern;
-    }
     /**
-     * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
-     */
-    _wrapHttpClient(http, ns) {
-      return new Proxy(http, {
-        get: (target, prop) => {
-          const val = target[prop];
-          if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
-            return (...args) => {
-              const dataIndex = prop === "request" ? 2 : 1;
-              const data = args[dataIndex] ? { ...args[dataIndex] } : {};
-              data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
-              args[dataIndex] = data;
-              return val.apply(target, args);
-            };
-          }
-          return typeof val === "function" ? val.bind(target) : val;
-        }
-      });
-    }
-    /**
-     * Build URL with template variables or fallback to baseURL
+     * WebSocket terminal connection
      *
-     * @param path - API endpoint path
-     * @param variables - Method-level template variables to override defaults
-     * @returns Full URL (template mode) or path only (baseURL mode)
+     * Establishes WebSocket connection for real-time bidirectional terminal I/O. Multiple clients can share the same terminal session using the same terminal_id. The protocol uses efficient binary framing where the first byte indicates message type (0-4 for commands, specific bytes for data). Supports session sharing, read-only mode, SSH connections, PID attachment, and comprehensive terminal features.
      */
-    buildTemplateUrl(path, variables) {
-      var _a;
-      const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-terminal-{serviceIndex}.{server}.containers.hoody.com";
-      const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
-      const hasVariables = Object.keys(allVariables).length > 0;
-      if (!hasVariables) {
-        return path;
-      }
-      let url2 = urlPattern;
-      for (const [key, value2] of Object.entries(allVariables)) {
-        if (value2 !== void 0) {
-          url2 = url2.replace(`{${key}}`, () => String(value2));
-        }
-      }
-      if (url2.includes("{") && url2.includes("}")) {
-        const processRef = globalThis.process;
-        if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
-          console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
-          console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
-        }
-        return path;
-      }
-      return `${url2}${path}`;
-    }
-    /**
-     * Read nested values from objects using dotted paths.
-     * Example: "data.items" or "data.pagination.total"
-     */
-    getPathValue(input, path) {
-      if (!path) return void 0;
-      const segments = path.split(".").filter(Boolean);
-      let current = input;
-      for (const segment of segments) {
-        if (current === void 0 || current === null) {
-          return void 0;
-        }
-        if (Array.isArray(current) && segment === "length") {
-          current = current.length;
-          continue;
-        }
-        if (typeof current !== "object") {
-          return void 0;
-        }
-        current = current[segment];
-      }
-      return current;
-    }
-    /**
-     * Execute command in terminal session
-     *
-     * Execute a command in the specified terminal session. Supports both local bash and remote SSH sessions. The terminal type is determined by URL parameters on first use. By default, if a DISPLAY is configured on the session, the endpoint waits for the Hoody Display to be ready before executing the command. This can be disabled with skip_display_wait=true. Use ephemeral=true for a guaranteed-unique isolated PTY session with no display/dbus and automatic cleanup — ideal for programmatic command execution (like child_process.exec). Returns immediately with a command_id that can be used to poll for results.
-     */
-    async execute(data, options, _templateVars) {
-      const { terminal_id, ephemeral, defer_pid, defer_start_time_ticks, defer_timeout_ms, defer_poll_ms, reset, cwd, cwd_auto_create, shell, user, cmd, env, skip_display_wait, display_wait_timeout, display, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, socks5_user, ssh_key, socks5_pass, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-      if (data === void 0 || data === null) {
-        throw new ValidationError("data is required", "data");
-      }
+    async connectWebSocket(options, _templateVars) {
+      const { terminal_id, readonly, cwd, cwd_auto_create, shell, user, cmd, env, display, pid, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
       if (terminal_id !== void 0 && terminal_id !== null) {
       }
-      if (ephemeral !== void 0 && ephemeral !== null) {
-      }
-      if (defer_pid !== void 0 && defer_pid !== null) {
-        if (!Number.isFinite(defer_pid) || !Number.isInteger(defer_pid)) {
-          throw new ValidationError("defer_pid must be an integer", "defer_pid");
-        }
-      }
-      if (defer_start_time_ticks !== void 0 && defer_start_time_ticks !== null) {
-      }
-      if (defer_timeout_ms !== void 0 && defer_timeout_ms !== null) {
-        if (!Number.isFinite(defer_timeout_ms) || !Number.isInteger(defer_timeout_ms)) {
-          throw new ValidationError("defer_timeout_ms must be an integer", "defer_timeout_ms");
-        }
-      }
-      if (defer_poll_ms !== void 0 && defer_poll_ms !== null) {
-        if (!Number.isFinite(defer_poll_ms) || !Number.isInteger(defer_poll_ms)) {
-          throw new ValidationError("defer_poll_ms must be an integer", "defer_poll_ms");
-        }
-      }
-      if (reset !== void 0 && reset !== null) {
+      if (readonly !== void 0 && readonly !== null) {
       }
       if (cwd !== void 0 && cwd !== null) {
       }
@@ -53360,14 +53780,12 @@ var HoodySDK = (() => {
       }
       if (env !== void 0 && env !== null) {
       }
-      if (skip_display_wait !== void 0 && skip_display_wait !== null) {
-      }
-      if (display_wait_timeout !== void 0 && display_wait_timeout !== null) {
-        if (!Number.isFinite(display_wait_timeout) || !Number.isInteger(display_wait_timeout)) {
-          throw new ValidationError("display_wait_timeout must be an integer", "display_wait_timeout");
-        }
-      }
       if (display !== void 0 && display !== null) {
+      }
+      if (pid !== void 0 && pid !== null) {
+        if (!Number.isFinite(pid) || !Number.isInteger(pid)) {
+          throw new ValidationError("pid must be an integer", "pid");
+        }
       }
       if (ssh_host !== void 0 && ssh_host !== null) {
       }
@@ -53381,36 +53799,14 @@ var HoodySDK = (() => {
       }
       if (socks5_port !== void 0 && socks5_port !== null) {
       }
-      if (socks5_user !== void 0 && socks5_user !== null) {
-      }
-      if (ssh_key !== void 0 && ssh_key !== null) {
-      }
-      if (socks5_pass !== void 0 && socks5_pass !== null) {
-      }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/execute`, _templateVars || {});
+      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/ws`, _templateVars || {});
       const requestData = {};
-      requestData.body = data;
       requestData.query = {};
       if (terminal_id !== void 0) {
         requestData.query["terminal_id"] = terminal_id;
       }
-      if (ephemeral !== void 0) {
-        requestData.query["ephemeral"] = ephemeral;
-      }
-      if (defer_pid !== void 0) {
-        requestData.query["defer_pid"] = defer_pid;
-      }
-      if (defer_start_time_ticks !== void 0) {
-        requestData.query["defer_start_time_ticks"] = defer_start_time_ticks;
-      }
-      if (defer_timeout_ms !== void 0) {
-        requestData.query["defer_timeout_ms"] = defer_timeout_ms;
-      }
-      if (defer_poll_ms !== void 0) {
-        requestData.query["defer_poll_ms"] = defer_poll_ms;
-      }
-      if (reset !== void 0) {
-        requestData.query["reset"] = reset;
+      if (readonly !== void 0) {
+        requestData.query["readonly"] = readonly;
       }
       if (cwd !== void 0) {
         requestData.query["cwd"] = cwd;
@@ -53430,14 +53826,11 @@ var HoodySDK = (() => {
       if (env !== void 0) {
         requestData.query["env"] = env;
       }
-      if (skip_display_wait !== void 0) {
-        requestData.query["skip_display_wait"] = skip_display_wait;
-      }
-      if (display_wait_timeout !== void 0) {
-        requestData.query["display_wait_timeout"] = display_wait_timeout;
-      }
       if (display !== void 0) {
         requestData.query["display"] = display;
+      }
+      if (pid !== void 0) {
+        requestData.query["pid"] = pid;
       }
       if (ssh_host !== void 0) {
         requestData.query["ssh_host"] = ssh_host;
@@ -53456,15 +53849,6 @@ var HoodySDK = (() => {
       }
       if (socks5_port !== void 0) {
         requestData.query["socks5_port"] = socks5_port;
-      }
-      if (socks5_user !== void 0) {
-        requestData.query["socks5_user"] = socks5_user;
-      }
-      if (ssh_key !== void 0) {
-        requestData.query["ssh_key"] = ssh_key;
-      }
-      if (socks5_pass !== void 0) {
-        requestData.query["socks5_pass"] = socks5_pass;
       }
       if (signal) {
         requestData.signal = signal;
@@ -53493,55 +53877,49 @@ var HoodySDK = (() => {
       if (responseType !== void 0) {
         requestData.responseType = responseType;
       }
-      return this.http.post(requestUrl, requestData);
-    }
-    /**
-     * Get command result
-     *
-     * Retrieve the current or final results of a command execution. Can be called while command is running or after completion.
-     */
-    async getResult(command_id, _templateVars, requestOptions) {
-      if (command_id === void 0 || command_id === null) {
-        throw new ValidationError("command_id is required", "command_id");
+      const baseUrl = this.http.getBaseURL();
+      const __isAbsolute = typeof requestUrl === "string" && /^https?:\/\//i.test(requestUrl);
+      const wsHost = (__isAbsolute ? requestUrl : baseUrl).replace(/^http/, "ws");
+      let __isExternalKit = false;
+      if (__isAbsolute) {
+        const __httpAny = this.http;
+        if (typeof __httpAny.isSameOriginAndPath === "function" && baseUrl) {
+          try {
+            __isExternalKit = !__httpAny.isSameOriginAndPath(requestUrl, baseUrl);
+          } catch {
+            __isExternalKit = true;
+          }
+        } else if (baseUrl) {
+          try {
+            const __reqOrigin = new URL(requestUrl).origin;
+            const __baseOrigin = new URL(baseUrl).origin;
+            __isExternalKit = __reqOrigin !== __baseOrigin;
+          } catch {
+            __isExternalKit = true;
+          }
+        } else {
+          __isExternalKit = true;
+        }
       }
-      if (command_id !== void 0 && command_id !== null) {
+      const socketIoPath = "/api/v1/terminal/ws".replace(/\/stream$/, "");
+      const wsOptions = { path: socketIoPath };
+      if (requestData.query && Object.keys(requestData.query).length > 0) {
+        wsOptions.query = { ...requestData.query };
       }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/result/{command_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{command_id}", () => encodeURIComponent(String(command_id)));
-      const requestData = {};
-      if (requestOptions == null ? void 0 : requestOptions.signal) {
-        requestData.signal = requestOptions.signal;
+      const __httpCfg = this.http.config;
+      if (!__isExternalKit && __httpCfg && typeof __httpCfg.token === "string" && __httpCfg.token.length > 0) {
+        wsOptions.auth = { token: __httpCfg.token };
       }
-      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
-        requestData.timeoutMs = requestOptions.timeoutMs;
+      if (requestData.headers && Object.keys(requestData.headers).length > 0) {
+        wsOptions.headers = { ...requestData.headers };
       }
-      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
-        requestData.retries = requestOptions.retries;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
-        requestData.retryDelayMs = requestOptions.retryDelayMs;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
-        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
-        requestData.middlewareContext = requestOptions.middlewareContext;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
-        requestData.authRetry = requestOptions.authRetry;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
-        requestData.rawResponse = requestOptions.rawResponse;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
-        requestData.responseType = requestOptions.responseType;
-      }
-      return this.http.get(requestUrl, requestData);
+      const client = new TerminalConnectTerminalWebSocketWebSocket(wsHost, wsOptions);
+      return client;
     }
   };
 
-  // generated/terminal/terminal-execution.service.ts
-  var TerminalExecutionService = class extends TerminalExecutionServiceBase {
+  // generated/terminal/terminal-sessions.service.ts
+  var TerminalSessionsService = class extends TerminalSessionsServiceBase {
     // Add custom properties here
   };
 
@@ -67684,6 +68062,7 @@ var HoodySDK = (() => {
     DiscoveryService: () => DiscoveryService,
     GithubService: () => GithubService,
     HeadlessService: () => HeadlessService,
+    HoodyService: () => HoodyService,
     HooksService: () => HooksService,
     JobsService: () => JobsService3,
     LogsService: () => LogsService3,
@@ -67997,7 +68376,7 @@ var HoodySDK = (() => {
     /**
      * Patch settings.
      *
-     * Applies a SHALLOW top-level merge into the home ~/.hoody/settings.json (a nil value deletes a key). Top-level only: sending {"features":{...}} REPLACES the whole features object. Process-wide config (global/no-realm): settings have no realm dimension, so a per-request realm header returns 400 realm_scope_unsupported. SECURITY: security-load-bearing keys (deny_list, deny_urls, features, allowed_directories, hooks, disableAllHooks, mcp_servers, tools) cannot be modified over HTTP and return 403 settings_key_protected — edit settings.json at the host to change a guardrail. Returns the resulting home object.
+     * Applies a SHALLOW top-level merge into the home ~/.hoody/settings.json (a nil value deletes a key). Top-level only: sending {"features":{...}} REPLACES the whole features object. Process-wide config (global/no-realm): settings have no realm dimension, so a per-request realm header returns 400 realm_scope_unsupported. SECURITY: security-load-bearing keys (deny_list, deny_urls, features, allowed_directories, hooks, disableAllHooks, mcp_servers, tools) cannot be modified over HTTP and return 403 settings_key_protected — edit settings.json at the host to change a guardrail. A non-null top-level "model" is rejected 400: nothing consumes it (pin a model on the chat agent via PATCH /agents/{name}/model, or switch a live session via PATCH /sessions/{id}/model); {"model":null} still deletes a previously-persisted value. Returns the resulting home object.
      */
     async patchSettings(data, options, _templateVars) {
       const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -68264,7 +68643,7 @@ var HoodySDK = (() => {
     /**
      * Create or update a fusion composite.
      *
-     * Creates or updates a model-fusion composite keyed by slug (fusion.upsert). The body is the daemon FusionSpec under "spec". Structural invariants (name/method/members, cycle guard, non-zero context window) are validated server-side.
+     * Creates or updates a model-fusion composite keyed by slug (fusion.upsert). The body is the daemon FusionSpec under "spec". The persisted key is derived from spec.name (lowercased, separators collapsed to '-'); the path {slug} must normalize to the same slug or the request is rejected 400 slug_mismatch — the path cannot rename what the body describes. Structural invariants (name/method/members, cycle guard, non-zero context window) are validated server-side.
      */
     async upsertFusion(slug, data, options, _templateVars) {
       const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -71029,6 +71408,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -71072,6 +71458,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -71090,14 +71479,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -71105,7 +71502,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -71114,7 +71515,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -71124,15 +71525,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -71213,7 +71628,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -71597,6 +72012,167 @@ var HoodySDK = (() => {
 
   // generated/agent/headless.service.ts
   var HeadlessService = class extends HeadlessServiceBase {
+    // Add custom properties here
+  };
+
+  // generated/agent/hoody.service.generated.ts
+  var HoodyServiceBase = class {
+    constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
+      this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
+      __publicField(this, "http");
+      __publicField(this, "_kitNamespace");
+      __publicField(this, "urlTemplatePattern");
+      this._kitNamespace = namespace;
+      this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
+      this.urlTemplatePattern = urlTemplatePattern;
+    }
+    /**
+     * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
+     */
+    _wrapHttpClient(http, ns) {
+      return new Proxy(http, {
+        get: (target, prop) => {
+          const val = target[prop];
+          if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
+            return (...args) => {
+              const dataIndex = prop === "request" ? 2 : 1;
+              const data = args[dataIndex] ? { ...args[dataIndex] } : {};
+              data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
+              args[dataIndex] = data;
+              return val.apply(target, args);
+            };
+          }
+          return typeof val === "function" ? val.bind(target) : val;
+        }
+      });
+    }
+    /**
+     * Build URL with template variables or fallback to baseURL
+     *
+     * @param path - API endpoint path
+     * @param variables - Method-level template variables to override defaults
+     * @returns Full URL (template mode) or path only (baseURL mode)
+     */
+    buildTemplateUrl(path, variables) {
+      var _a;
+      const urlPattern = this.urlTemplatePattern || "https://{host}/api/v1/agent";
+      const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
+      const hasVariables = Object.keys(allVariables).length > 0;
+      if (!hasVariables) {
+        return path;
+      }
+      let url2 = urlPattern;
+      for (const [key, value2] of Object.entries(allVariables)) {
+        if (value2 !== void 0) {
+          url2 = url2.replace(`{${key}}`, () => String(value2));
+        }
+      }
+      if (url2.includes("{") && url2.includes("}")) {
+        const processRef = globalThis.process;
+        if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
+          console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
+          console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
+        }
+        return path;
+      }
+      return `${url2}${path}`;
+    }
+    /**
+     * Read nested values from objects using dotted paths.
+     * Example: "data.items" or "data.pagination.total"
+     */
+    getPathValue(input, path) {
+      if (!path) return void 0;
+      const segments = path.split(".").filter(Boolean);
+      let current = input;
+      for (const segment of segments) {
+        if (current === void 0 || current === null) {
+          return void 0;
+        }
+        if (Array.isArray(current) && segment === "length") {
+          current = current.length;
+          continue;
+        }
+        if (typeof current !== "object") {
+          return void 0;
+        }
+        current = current[segment];
+      }
+      return current;
+    }
+    /**
+     * Bootstrap the Hoody platform credential (install-if-absent).
+     *
+     * Installs the Hoody platform credential from a raw token on a box that currently has none — the programmatic equivalent of an interactive login for a logged-out standalone box. Installs ONLY when no credential is active and no unowned local sessions or todos exist (otherwise 409). A hard-expired, non-refreshable stored token may be RENEWED by supplying a same-account token (200 renewed); any other active credential is refused 409 credential_present. OFF BY DEFAULT: the route returns 404 unless the daemon is started with --http-allow-bootstrap (env HOODY_HTTP_ALLOW_BOOTSTRAP). For safety it cannot be driven from a browser — any request carrying an Origin header is refused 404, and Content-Type must be application/json. When the daemon is started with an operator capability (--http-bootstrap-token), a matching capability must be supplied in the body (mismatch → 404). The token is write-only and is never returned; the reply carries the outcome, the resulting connection state, and the secret-free identity.
+     */
+    async bootstrapHoodyToken(data, options, _templateVars) {
+      const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      if (realm !== void 0 && realm !== null) {
+      }
+      if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+      }
+      if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+      }
+      if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+      }
+      if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+      }
+      let requestUrl = this.buildTemplateUrl(`/api/v1/agent/hoody/auth/bootstrap`, _templateVars || {});
+      const requestData = {};
+      requestData.body = data;
+      requestData.query = {};
+      if (realm !== void 0) {
+        requestData.query["realm"] = realm;
+      }
+      requestData.headers = requestData.headers || {};
+      if (XHoodyCwd !== void 0) {
+        requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+      }
+      if (XHoodyConfigDir !== void 0) {
+        requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+      }
+      if (XHoodyContainer !== void 0) {
+        requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+      }
+      if (XHoodyRealm !== void 0) {
+        requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+      }
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+  };
+
+  // generated/agent/hoody.service.ts
+  var HoodyService = class extends HoodyServiceBase {
     // Add custom properties here
   };
 
@@ -72628,6 +73204,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -72671,6 +73254,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -72689,14 +73275,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -72704,7 +73298,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -72713,7 +73311,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -72723,15 +73321,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -72812,7 +73424,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -76622,6 +77234,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -76665,6 +77284,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -76683,14 +77305,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -76698,7 +77328,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -76707,7 +77341,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -76717,15 +77351,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -76806,7 +77454,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -77012,6 +77660,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -77055,6 +77710,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -77073,14 +77731,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -77088,7 +77754,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -77097,7 +77767,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -77107,15 +77777,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -77196,7 +77880,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -78747,7 +79431,7 @@ var HoodySDK = (() => {
     /**
      * Switch the session model.
      *
-     * Live model switch (echoed as an event).
+     * SYNCHRONOUS live model switch: applies the model inline and answers what actually happened — {status:ok, model, persisted} on success (persisted=false when the frontmatter write failed: the live switch stands but reverts next session), 409 gate_parked/turn_in_flight while the session is busy, 404 for an unknown/closed session, 400 for a blank model, 409 delegated_session on external-agent sessions, 422 model_unavailable for a spec that cannot be constructed. NOTE: a successful switch persists into the chat agent's frontmatter — a GLOBAL repin for future sessions of that agent, not a session-scoped choice. Peers converge via the emitted init_state event.
      */
     async setSessionModel(id, data, options, _templateVars) {
       const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -78755,6 +79439,9 @@ var HoodySDK = (() => {
         throw new ValidationError("id is required", "id");
       }
       if (id !== void 0 && id !== null) {
+      }
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
       }
       if (realm !== void 0 && realm !== null) {
       }
@@ -80524,6 +81211,13 @@ var HoodySDK = (() => {
       // a Blob frame requires async arrayBuffer() decode and a later string/
       // ArrayBuffer frame arrives synchronously.
       __publicField(this, "_frameQueue", Promise.resolve());
+      // Dispatch token for the CURRENT socket. Invalidated on manual
+      // disconnect() and on the onclose settle-timeout, so a late frame
+      // (hung Blob decode) can never dispatch after `disconnect` was
+      // announced. Deliberately separate from _socketGen: bumping the
+      // generation in disconnect() would make the gen-guarded onclose
+      // suppress the manual-disconnect event itself.
+      __publicField(this, "_dispatchAlive", { alive: true });
       // Generation counter. Bumped synchronously in connect()/reconnect()/
       // disconnect() so queued tasks tagged with an old generation become
       // no-ops if the socket has been swapped out — prevents stale-Blob
@@ -80567,6 +81261,9 @@ var HoodySDK = (() => {
             this.ws = await this.createRawSocket();
             this._socketGen++;
             const installedGen = this._socketGen;
+            this._frameQueue = Promise.resolve();
+            const dispatchAlive = { alive: true };
+            this._dispatchAlive = dispatchAlive;
             if (this.ws) {
               try {
                 this.ws.binaryType = "arraybuffer";
@@ -80585,14 +81282,22 @@ var HoodySDK = (() => {
               const raw = event.data;
               if (typeof raw === "string") {
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleString(raw);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(raw);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
               if (raw instanceof ArrayBuffer) {
                 const buf = new Uint8Array(raw);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -80600,7 +81305,11 @@ var HoodySDK = (() => {
                 const v = raw;
                 const buf = new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
                 this._frameQueue = this._frameQueue.then(() => {
-                  if (this._socketGen === installedGen) this.handleBinary(buf);
+                  try {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) this.handleBinary(buf);
+                  } catch (err) {
+                    this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                  }
                 });
                 return;
               }
@@ -80609,7 +81318,7 @@ var HoodySDK = (() => {
                 this._frameQueue = this._frameQueue.then(async () => {
                   try {
                     const ab = await decode3;
-                    if (this._socketGen === installedGen) {
+                    if (this._socketGen === installedGen && dispatchAlive.alive) {
                       this.handleBinary(new Uint8Array(ab));
                     }
                   } catch (err) {
@@ -80619,15 +81328,29 @@ var HoodySDK = (() => {
                 return;
               }
               this._frameQueue = this._frameQueue.then(() => {
-                if (this._socketGen === installedGen) this.handleString(String(raw));
+                try {
+                  if (this._socketGen === installedGen && dispatchAlive.alive) this.handleString(String(raw));
+                } catch (err) {
+                  this.emitEvent("error", err instanceof Error ? err : new Error(String(err)));
+                }
               });
             };
             this.ws.onclose = (event) => {
-              this.emitEvent("disconnect", event.code, event.reason);
-              const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
-              if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                this.scheduleReconnect();
-              }
+              const settled = this._frameQueue.then(() => void 0, () => void 0);
+              const cap = new Promise((resolveCap) => {
+                var _a;
+                const t = setTimeout(resolveCap, 1e3);
+                (_a = t.unref) == null ? void 0 : _a.call(t);
+              });
+              void Promise.race([settled, cap]).then(() => {
+                dispatchAlive.alive = false;
+                if (this._socketGen !== installedGen) return;
+                this.emitEvent("disconnect", event.code, event.reason);
+                const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || event.code >= 4e3 && event.code < 5e3;
+                if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
+                  this.scheduleReconnect();
+                }
+              });
             };
             this.ws.onerror = () => {
               clearTimeout(timeoutId);
@@ -80708,7 +81431,7 @@ var HoodySDK = (() => {
     disconnect(reason) {
       this.shouldReconnect = false;
       this.clearReconnectTimer();
-      this._socketGen++;
+      this._dispatchAlive.alive = false;
       if (this.ws) {
         this.ws.close(1e3, reason || "Normal closure");
         this.ws = null;
@@ -87218,7 +87941,7 @@ var HoodySDK = (() => {
       __publicField(this, "app");
       __publicField(this, "proxyLogs");
       __publicField(this, "agent");
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga, _Ha, _Ia, _Ja, _Ka, _La, _Ma, _Na, _Oa, _Pa, _Qa, _Ra, _Sa, _Ta, _Ua, _Va, _Wa, _Xa, _Ya, _Za, __a, _$a, _ab, _bb, _cb, _db, _eb, _fb, _gb, _hb, _ib, _jb, _kb, _lb, _mb, _nb, _ob, _pb, _qb, _rb, _sb, _tb, _ub, _vb, _wb, _xb, _yb, _zb, _Ab, _Bb, _Cb, _Db, _Eb, _Fb, _Gb, _Hb, _Ib, _Jb, _Kb;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga, _Ha, _Ia, _Ja, _Ka, _La, _Ma, _Na, _Oa, _Pa, _Qa, _Ra, _Sa, _Ta, _Ua, _Va, _Wa, _Xa, _Ya, _Za, __a, _$a, _ab, _bb, _cb, _db, _eb, _fb, _gb, _hb, _ib, _jb, _kb, _lb, _mb, _nb, _ob, _pb, _qb, _rb, _sb, _tb, _ub, _vb, _wb, _xb, _yb, _zb, _Ab, _Bb, _Cb, _Db, _Eb, _Fb, _Gb, _Hb, _Ib, _Jb, _Kb, _Lb;
       this.credentials = config.credentials ? config.credentials : void 0;
       this.autoRefresh = config.autoRefresh !== false;
       this.urlTemplates = config.urlTemplates ? config.urlTemplates : void 0;
@@ -87390,8 +88113,8 @@ var HoodySDK = (() => {
       };
       this.terminal = Object.assign(new TerminalService(this.http, "terminal", (_xa = this.urlTemplates) == null ? void 0 : _xa["terminal"], this.getKitUrlTemplatePattern("terminal")), {
         health: new HealthService9(this.http, "terminal", (_ya = this.urlTemplates) == null ? void 0 : _ya["terminal"], this.getKitUrlTemplatePattern("terminal")),
-        sessions: new TerminalSessionsService(this.http, "terminal", (_za = this.urlTemplates) == null ? void 0 : _za["terminal"], this.getKitUrlTemplatePattern("terminal")),
-        execution: new TerminalExecutionService(this.http, "terminal", (_Aa = this.urlTemplates) == null ? void 0 : _Aa["terminal"], this.getKitUrlTemplatePattern("terminal")),
+        execution: new TerminalExecutionService(this.http, "terminal", (_za = this.urlTemplates) == null ? void 0 : _za["terminal"], this.getKitUrlTemplatePattern("terminal")),
+        sessions: new TerminalSessionsService(this.http, "terminal", (_Aa = this.urlTemplates) == null ? void 0 : _Aa["terminal"], this.getKitUrlTemplatePattern("terminal")),
         web: new WebInterfaceService(this.http, "terminal", (_Ba = this.urlTemplates) == null ? void 0 : _Ba["terminal"], this.getKitUrlTemplatePattern("terminal")),
         docs: new ApiDocumentationService(this.http, "terminal", (_Ca = this.urlTemplates) == null ? void 0 : _Ca["terminal"], this.getKitUrlTemplatePattern("terminal")),
         system: new SystemMonitoringService(this.http, "terminal", (_Da = this.urlTemplates) == null ? void 0 : _Da["terminal"], this.getKitUrlTemplatePattern("terminal")),
@@ -87456,19 +88179,20 @@ var HoodySDK = (() => {
         system: new SystemService5(this.http, "agent", (_vb = this.urlTemplates) == null ? void 0 : _vb["agent"], this.getKitUrlTemplatePattern("agent")),
         github: new GithubService(this.http, "agent", (_wb = this.urlTemplates) == null ? void 0 : _wb["agent"], this.getKitUrlTemplatePattern("agent")),
         headless: new HeadlessService(this.http, "agent", (_xb = this.urlTemplates) == null ? void 0 : _xb["agent"], this.getKitUrlTemplatePattern("agent")),
-        hooks: new HooksService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
-        jobs: new JobsService3(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
-        logs: new LogsService3(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
-        memory: new MemoryService(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
-        models: new ModelsService(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
-        sessions: new SessionsService2(this.http, "agent", (_Db = this.urlTemplates) == null ? void 0 : _Db["agent"], this.getKitUrlTemplatePattern("agent")),
-        loops: new LoopsService(this.http, "agent", (_Eb = this.urlTemplates) == null ? void 0 : _Eb["agent"], this.getKitUrlTemplatePattern("agent")),
-        tasks: new TasksService(this.http, "agent", (_Fb = this.urlTemplates) == null ? void 0 : _Fb["agent"], this.getKitUrlTemplatePattern("agent")),
-        tools: new ToolsService(this.http, "agent", (_Gb = this.urlTemplates) == null ? void 0 : _Gb["agent"], this.getKitUrlTemplatePattern("agent")),
-        workflows: new WorkflowsService(this.http, "agent", (_Hb = this.urlTemplates) == null ? void 0 : _Hb["agent"], this.getKitUrlTemplatePattern("agent")),
-        skills: new SkillsService(this.http, "agent", (_Ib = this.urlTemplates) == null ? void 0 : _Ib["agent"], this.getKitUrlTemplatePattern("agent")),
-        statistics: new StatisticsService(this.http, "agent", (_Jb = this.urlTemplates) == null ? void 0 : _Jb["agent"], this.getKitUrlTemplatePattern("agent")),
-        todos: new TodosService(this.http, "agent", (_Kb = this.urlTemplates) == null ? void 0 : _Kb["agent"], this.getKitUrlTemplatePattern("agent"))
+        hoody: new HoodyService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
+        hooks: new HooksService(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
+        jobs: new JobsService3(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
+        logs: new LogsService3(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
+        memory: new MemoryService(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
+        models: new ModelsService(this.http, "agent", (_Db = this.urlTemplates) == null ? void 0 : _Db["agent"], this.getKitUrlTemplatePattern("agent")),
+        sessions: new SessionsService2(this.http, "agent", (_Eb = this.urlTemplates) == null ? void 0 : _Eb["agent"], this.getKitUrlTemplatePattern("agent")),
+        loops: new LoopsService(this.http, "agent", (_Fb = this.urlTemplates) == null ? void 0 : _Fb["agent"], this.getKitUrlTemplatePattern("agent")),
+        tasks: new TasksService(this.http, "agent", (_Gb = this.urlTemplates) == null ? void 0 : _Gb["agent"], this.getKitUrlTemplatePattern("agent")),
+        tools: new ToolsService(this.http, "agent", (_Hb = this.urlTemplates) == null ? void 0 : _Hb["agent"], this.getKitUrlTemplatePattern("agent")),
+        workflows: new WorkflowsService(this.http, "agent", (_Ib = this.urlTemplates) == null ? void 0 : _Ib["agent"], this.getKitUrlTemplatePattern("agent")),
+        skills: new SkillsService(this.http, "agent", (_Jb = this.urlTemplates) == null ? void 0 : _Jb["agent"], this.getKitUrlTemplatePattern("agent")),
+        statistics: new StatisticsService(this.http, "agent", (_Kb = this.urlTemplates) == null ? void 0 : _Kb["agent"], this.getKitUrlTemplatePattern("agent")),
+        todos: new TodosService(this.http, "agent", (_Lb = this.urlTemplates) == null ? void 0 : _Lb["agent"], this.getKitUrlTemplatePattern("agent"))
       });
     }
     /**
@@ -87960,7 +88684,7 @@ var HoodySDK = (() => {
      * Generate URLs for all standard kits
      */
     getKitUrls(container, serviceIndexOrOptions = 1) {
-      const kits = ["terminal", "browser", "code", "curl", "cron", "daemon", "display", "desktop", "exec", "files", "notifications", "sqlite", "watch", "logs", "notes", "app", "pipe", "tunnel", "agent"];
+      const kits = ["terminal", "browser", "code", "curl", "cron", "daemon", "display", "desktop", "exec", "files", "notifications", "sqlite", "watch", "logs", "notes", "app", "pipe", "tunnel", "agent", "proxy"];
       const urls = {};
       for (const kit of kits) {
         urls[kit] = this.getKitUrl(kit, container, serviceIndexOrOptions);

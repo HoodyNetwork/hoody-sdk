@@ -189,8 +189,8 @@ export declare class HoodyClient {
     };
     readonly terminal: terminal.TerminalService & {
         health: terminal.HealthService;
-        sessions: terminal.TerminalSessionsService;
         execution: terminal.TerminalExecutionService;
+        sessions: terminal.TerminalSessionsService;
         web: terminal.WebInterfaceService;
         docs: terminal.ApiDocumentationService;
         system: terminal.SystemMonitoringService;
@@ -255,6 +255,7 @@ export declare class HoodyClient {
         system: agent.SystemService;
         github: agent.GithubService;
         headless: agent.HeadlessService;
+        hoody: agent.HoodyService;
         hooks: agent.HooksService;
         jobs: agent.JobsService;
         logs: agent.LogsService;

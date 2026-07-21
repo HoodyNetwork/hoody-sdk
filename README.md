@@ -34,7 +34,7 @@ TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers 
 | **Batteries included** | Create a container with the Kit (`hoody_kit: true`) and the full service layer is already answering at stable HTTPS URLs — shell, files, cloud browser, GUI desktop, databases, cron, tunnels, and a built-in AI agent. |
 | **Who it's for** | Cloud IDEs, AI-agent platforms, browser-automation pipelines, remote-desktop products, education — anything needing a real Linux environment on demand without running the infrastructure. |
 | **The economics** | Flat-rate bare metal underneath — a whole dedicated machine, marketplace-priced from ~$30/month, no per-container fee, no usage meter. Dev-to-prod for every project on one box. [How ↓](#bare-metal-underneath) |
-| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1065<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->825<!-- /ref:cli-commands --> CLI commands — one client, one URL grammar, one SDK that handles every auth mode for you. |
+| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1070<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->825<!-- /ref:cli-commands --> CLI commands — one client, one URL grammar, one SDK that handles every auth mode for you. |
 
 **Prefer the raw list to the tour?** The entire surface fits in three flat, clickable references — [CLI commands](./docs/reference/CLI-COMMANDS.md) · [SDK methods](./docs/reference/SDK-METHODS.md) · [HTTP endpoints](./docs/reference/HTTP-METHODS.md) (every endpoint ↔ SDK method ↔ CLI command) — often the fastest way to see what's here.
 
@@ -125,14 +125,14 @@ bun add hoody-sdk@beta
 Browser (IIFE global, exposes `window.HoodySDK`) — pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.1/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.2/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.1/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.2/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -353,7 +353,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.1/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.2/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = await HoodyClient.authenticate('https://api.hoody.com', {
@@ -496,7 +496,7 @@ World-reachable HTTPS for whatever's running on your laptop. No router config, n
 
 ### The built-in agent
 
-You don't have to bring an agent — every Hoody Kit container ships one. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->208<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the largest container-scoped namespace in the SDK.
+You don't have to bring an agent — every Hoody Kit container ships one. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->209<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the largest container-scoped namespace in the SDK.
 
 The agent is the one kit that needs more than the URL: it's **claim-gated**, so the
 first agent call after a bare `withContainer(container)` returns `401 CLAIM_REQUIRED`.
@@ -812,7 +812,7 @@ You don't have to wire any of this up — it's how the platform is built. Your j
 
 ## Namespaces
 
-19 namespaces, <!-- ref:sdk-methods -->1065<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) is reached without a container; everything else is reached through a container-scoped client (`box = await hoody.withContainer(c)`).
+19 namespaces, <!-- ref:sdk-methods -->1070<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) is reached without a container; everything else is reached through a container-scoped client (`box = await hoody.withContainer(c)`).
 
 <details>
 <summary>The full namespace map — scope, coverage, and a one-liner you'd actually call</summary>
@@ -837,7 +837,7 @@ You don't have to wire any of this up — it's how the platform is built. Your j
 | `notifications`   | Container | Desktop and mobile push notifications, real-time stream                                | `box.notifications.notify.trigger({ summary, body, display: '0' })`        |
 | `tunnel`          | Container | Reverse tunnels — expose HTTP / TCP / WebSocket services on the public internet ([recipe](#reverse-tunnel-localhost-to-a-public-url)) | `box.tunnel.listSessions()`                                                |
 | `proxyLogs`       | Container | Reverse-proxy access logs and stats                                                     | `box.proxyLogs.logs.list()`                                                |
-| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->208<!-- /ref:agent-sdk-methods --> methods) — sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.promptSync(id, { text })`                              |
+| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->209<!-- /ref:agent-sdk-methods --> methods) — sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.promptSync(id, { text })`                              |
 
 </details>
 

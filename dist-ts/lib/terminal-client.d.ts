@@ -104,11 +104,33 @@ export interface TerminalClientOptions extends DuplexOptions {
     pid?: string | number;
     /**
      * Base64-encoded command to auto-execute on spawn (optional). Maps to the
-     * terminal kit's `?cmd=` query param. The kit decodes it and runs it as the
-     * spawned process instead of (or before) an interactive shell. Used by
-     * `hoody agent` to launch the in-container TUI binary directly.
+     * terminal kit's `?cmd=` query param. NOTE the kit does NOT run this as the
+     * spawned process — it spawns the interactive shell and then TYPES the
+     * decoded command into it (initial_cmd), so when the command exits the
+     * session drops back to that shell and stays open.
      */
     cmd?: string;
+    /**
+     * Agent mode (optional). Maps to the terminal kit's `?agent=true` query
+     * param: the kit spawns the server-configured hoody-agent TUI binary AS the
+     * PTY process (no shell underneath) and ignores client-supplied
+     * shell/user/cmd/ssh/pid/desktop. When the TUI exits or crashes the PTY
+     * dies and the kit closes every attached WebSocket (1000 clean / 1006
+     * crash). Used by `hoody agent` so quitting the TUI returns to the LOCAL
+     * terminal instead of stranding the user in a remote shell.
+     */
+    agent?: boolean;
+    /**
+     * Agent-mode first-run marker (optional). Maps to the terminal kit's
+     * `?onboarding=true` query param — only meaningful together with
+     * `agent: true`: at spawn the kit appends `--onboarding` to the
+     * hoody-agent TUI command line. Today the TUI records it
+     * (cfg.OnboardingRequested) as the first-launch marker; the guided
+     * onboarding flow that consumes it ships in a later TUI release. Set by
+     * the `hoody` CLI right after signup. Ignored for non-agent sessions, and
+     * silently ignored by kits that predate the param.
+     */
+    onboarding?: boolean;
     /**
      * Show the kit login "welcome" banner (optional). Maps to the terminal kit's
      * `?welcome=` query param, read by the server's `extract_welcome` (absent =
@@ -143,8 +165,13 @@ export interface TerminalPreferences {
     theme?: string;
     fontFamily?: string;
 }
-/** Shell types supported by the terminal */
-export type ShellType = 'bash' | 'zsh' | 'fish' | 'sh' | 'ssh' | 'tmux';
+/** Shell types the kit commonly reports via SET_SHELL_TYPE. Open-ended on
+ *  purpose: the wire value is the basename of whatever the session runs —
+ *  agent-mode sessions report the agent binary (e.g. `hoody-agent`), and a
+ *  server-configured shell can be anything. The literal members are kept for
+ *  autocompletion; `(string & {})` admits every other server value without
+ *  an unsound cast. */
+export type ShellType = 'bash' | 'zsh' | 'fish' | 'sh' | 'ssh' | 'tmux' | (string & {});
 /** Terminal client connection state */
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 /**

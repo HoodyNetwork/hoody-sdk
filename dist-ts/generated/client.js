@@ -231,8 +231,8 @@ export class HoodyClient {
         };
         this.terminal = Object.assign(new terminal.TerminalService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')), {
             health: new terminal.HealthService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
-            sessions: new terminal.TerminalSessionsService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             execution: new terminal.TerminalExecutionService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
+            sessions: new terminal.TerminalSessionsService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             web: new terminal.WebInterfaceService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             docs: new terminal.ApiDocumentationService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             system: new terminal.SystemMonitoringService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
@@ -297,6 +297,7 @@ export class HoodyClient {
             system: new agent.SystemService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             github: new agent.GithubService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             headless: new agent.HeadlessService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
+            hoody: new agent.HoodyService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             hooks: new agent.HooksService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             jobs: new agent.JobsService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             logs: new agent.LogsService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
@@ -913,7 +914,7 @@ export class HoodyClient {
      * Generate URLs for all standard kits
      */
     getKitUrls(container, serviceIndexOrOptions = 1) {
-        const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'app', 'pipe', 'tunnel', 'agent'];
+        const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'app', 'pipe', 'tunnel', 'agent', 'proxy'];
         const urls = {};
         for (const kit of kits) {
             urls[kit] = this.getKitUrl(kit, container, serviceIndexOrOptions);

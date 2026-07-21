@@ -112,11 +112,33 @@ export interface TerminalClientOptions extends DuplexOptions {
     pid?: string | number;
     /**
      * Base64-encoded command to auto-execute on spawn (optional). Maps to the
-     * terminal kit's `?cmd=` query param. The kit decodes it and runs it as the
-     * spawned process instead of (or before) an interactive shell. Used by
-     * `hoody agent` to launch the in-container TUI binary directly.
+     * terminal kit's `?cmd=` query param. NOTE the kit does NOT run this as the
+     * spawned process — it spawns the interactive shell and then TYPES the
+     * decoded command into it (initial_cmd), so when the command exits the
+     * session drops back to that shell and stays open.
      */
     cmd?: string;
+    /**
+     * Agent mode (optional). Maps to the terminal kit's `?agent=true` query
+     * param: the kit spawns the server-configured hoody-agent TUI binary AS the
+     * PTY process (no shell underneath) and ignores client-supplied
+     * shell/user/cmd/ssh/pid/desktop. When the TUI exits or crashes the PTY
+     * dies and the kit closes every attached WebSocket (1000 clean / 1006
+     * crash). Used by `hoody agent` so quitting the TUI returns to the LOCAL
+     * terminal instead of stranding the user in a remote shell.
+     */
+    agent?: boolean;
+    /**
+     * Agent-mode first-run marker (optional). Maps to the terminal kit's
+     * `?onboarding=true` query param — only meaningful together with
+     * `agent: true`: at spawn the kit appends `--onboarding` to the
+     * hoody-agent TUI command line. Today the TUI records it
+     * (cfg.OnboardingRequested) as the first-launch marker; the guided
+     * onboarding flow that consumes it ships in a later TUI release. Set by
+     * the `hoody` CLI right after signup. Ignored for non-agent sessions, and
+     * silently ignored by kits that predate the param.
+     */
+    onboarding?: boolean;
     /**
      * Show the kit login "welcome" banner (optional). Maps to the terminal kit's
      * `?welcome=` query param, read by the server's `extract_welcome` (absent =
@@ -155,11 +177,36 @@ export interface TerminalPreferences {
     fontFamily?: string;
 }
 
-/** Shell types supported by the terminal */
-export type ShellType = 'bash' | 'zsh' | 'fish' | 'sh' | 'ssh' | 'tmux';
+/** Shell types the kit commonly reports via SET_SHELL_TYPE. Open-ended on
+ *  purpose: the wire value is the basename of whatever the session runs —
+ *  agent-mode sessions report the agent binary (e.g. `hoody-agent`), and a
+ *  server-configured shell can be anything. The literal members are kept for
+ *  autocompletion; `(string & {})` admits every other server value without
+ *  an unsound cast. */
+export type ShellType = 'bash' | 'zsh' | 'fish' | 'sh' | 'ssh' | 'tmux' | (string & {});
 
 /** Terminal client connection state */
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
+
+/**
+ * `agent` and `cmd` are mutually exclusive. Agent-capable kits neutralize
+ * `cmd=` on agent sessions server-side, but a pre-agent kit ignores the
+ * unknown `agent=` param and TYPES the decoded `cmd` into whatever spawned —
+ * on such kits the pair would inject the command as keystrokes. Throwing
+ * (instead of silently dropping `cmd`) surfaces the stale caller. Checked at
+ * construction AND at URL serialization so a mutated snapshot can't sneak a
+ * `cmd` in between. `agent` + `shell` stays legal — `shell=` is the
+ * deliberate compatibility bridge (agent-mode kits ignore it; pre-agent kits
+ * exec it directly as the session process).
+ */
+function assertAgentCmdExclusive(options: TerminalClientOptions): void {
+    if (options.agent && options.cmd) {
+        throw new TypeError(
+            'TerminalClient: options.agent and options.cmd are mutually exclusive — '
+            + 'on kits without agent mode the cmd bytes would be typed into the spawned process.',
+        );
+    }
+}
 
 /**
  * TerminalClient — Duplex stream for terminal I/O
@@ -231,7 +278,11 @@ export class TerminalClient extends Duplex {
             writableHighWaterMark: options.writableHighWaterMark ?? 64 * 1024,
         });
 
-        this._options = options;
+        // Defensive copy: the guard below (and URL serialization later) must
+        // judge OUR snapshot, not a caller-retained object that could gain a
+        // conflicting key between construction and (re)connect.
+        this._options = { ...options };
+        assertAgentCmdExclusive(this._options);
         this._url = url;
         this._cols = options.cols ?? 80;
         this._rows = options.rows ?? 24;
@@ -888,6 +939,7 @@ export class TerminalClient extends Duplex {
      * Build WebSocket URL with query parameters.
      */
     private buildUrlWithQueryParams(baseUrl: string, options: TerminalClientOptions): string {
+        assertAgentCmdExclusive(options); // second checkpoint — see the helper's doc
         const params = new URLSearchParams();
 
         if (options.readonly !== undefined) {
@@ -905,6 +957,8 @@ export class TerminalClient extends Duplex {
             params.append('pid', String(options.pid));
         }
         if (options.cmd) params.append('cmd', options.cmd);
+        if (options.agent) params.append('agent', 'true');
+        if (options.onboarding) params.append('onboarding', 'true');
         if (options.welcome !== undefined) {
             params.append('welcome', options.welcome ? 'true' : 'false');
         }
@@ -929,10 +983,72 @@ export class TerminalClient extends Duplex {
             }
         }
 
+        // The base URL may already carry query params (caller-built). The kit
+        // honors the FIRST occurrence of a duplicated key, so anything already
+        // in the base silently beats what gets appended here — which would
+        // let a base-URL `cmd=` defeat the agent/cmd exclusivity guard, or a
+        // base `agent=false` / `welcome=true` override the options. Validate
+        // the EFFECTIVE merged query and refuse ambiguity instead of losing.
+        // This MUST run before the empty-options early return below, so a base
+        // URL carrying both `agent` and `cmd` is caught even when `options`
+        // adds no params of its own.
+        const qIdx = baseUrl.indexOf('?');
+        const baseParams = qIdx >= 0 ? new URLSearchParams(baseUrl.slice(qIdx + 1)) : null;
+        if (baseParams) {
+            const truthy = (v: string | null) => v !== null && v !== 'false' && v !== '0';
+            const effAgent = options.agent === true || truthy(baseParams.get('agent'));
+            const effCmd = options.cmd || baseParams.get('cmd');
+            if (effAgent && effCmd) {
+                throw new TypeError(
+                    'TerminalClient: agent and cmd are mutually exclusive across the base URL and options — '
+                    + 'on kits without agent mode the cmd bytes would be typed into the spawned process.',
+                );
+            }
+            // A caller-built base URL may itself carry a singleton key twice with
+            // DIFFERING values (e.g. `?welcome=true&welcome=false`). The kit honors
+            // only the FIRST occurrence, so the rest are silently dropped — refuse
+            // the ambiguity instead of picking for the caller. `env` is the one key
+            // that is repeatable by design.
+            for (const key of new Set(baseParams.keys())) {
+                if (key === 'env') continue;
+                const distinct = [...new Set(baseParams.getAll(key))];
+                if (distinct.length > 1) {
+                    throw new TypeError(
+                        `TerminalClient: the base URL carries conflicting '${key}' values `
+                        + `(${distinct.join(', ')}); the kit honors the first occurrence — remove the duplicates.`,
+                    );
+                }
+            }
+            for (const [key, value] of params) {
+                if (key === 'env') continue; // repeatable by design
+                const existing = baseParams.get(key);
+                if (existing !== null && existing !== value) {
+                    throw new TypeError(
+                        `TerminalClient: query param '${key}' is '${existing}' on the base URL but '${value}' in options — `
+                        + 'remove one; the kit honors the first occurrence, so the base value would silently win.',
+                    );
+                }
+            }
+            // `agent` and `onboarding` are flag params appended ONLY when truthy —
+            // emitting `agent=false` would read as PRESENT/agent-on to agent-capable
+            // kits — so an explicit `{ agent:false }` / `{ onboarding:false }` never
+            // reaches the options loop above. Catch the case where the base URL forces
+            // the flag ON while the caller explicitly asked for it OFF; otherwise the
+            // base value silently wins and defeats the caller's intent.
+            for (const flag of ['agent', 'onboarding'] as const) {
+                if (options[flag] === false && truthy(baseParams.get(flag))) {
+                    throw new TypeError(
+                        `TerminalClient: '${flag}' is set on the base URL but false in options — `
+                        + 'remove one; the kit honors the first occurrence, so the base value would silently win.',
+                    );
+                }
+            }
+        }
+
         const queryString = params.toString();
         if (!queryString) return baseUrl;
 
-        const separator = baseUrl.includes('?') ? '&' : '?';
+        const separator = qIdx >= 0 ? '&' : '?';
         return `${baseUrl}${separator}${queryString}`;
     }
 }

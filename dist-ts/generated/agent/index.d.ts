@@ -10,6 +10,7 @@ export { DiscoveryService } from './discovery.service.js';
 export { SystemService } from './system.service.js';
 export { GithubService } from './github.service.js';
 export { HeadlessService } from './headless.service.js';
+export { HoodyService } from './hoody.service.js';
 export { HooksService } from './hooks.service.js';
 export { JobsService } from './jobs.service.js';
 export { LogsService } from './logs.service.js';
