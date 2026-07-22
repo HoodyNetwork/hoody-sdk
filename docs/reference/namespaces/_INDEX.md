@@ -1,28 +1,28 @@
 # Namespace Index
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 
-| Namespace | Methods | Services | Accessor |
-|-----------|---------|----------|----------|
-| [`agent`](agent.md) | 209 | 21 | `client.agent` |
-| [`api`](api.md) | 279 | 31 | `client.api` |
-| [`app`](app.md) | 35 | 8 | `client.app` |
-| [`browser`](browser.md) | 29 | 8 | `client.browser` |
-| [`code`](code.md) | 19 | 6 | `client.code` |
-| [`cron`](cron.md) | 15 | 4 | `client.cron` |
-| [`curl`](curl.md) | 31 | 8 | `client.curl` |
-| [`daemon`](daemon.md) | 23 | 5 | `client.daemon` |
-| [`display`](display.md) | 47 | 5 | `client.display` |
-| [`exec`](exec.md) | 69 | 18 | `client.exec` |
-| [`files`](files.md) | 127 | 16 | `client.files` |
-| [`notes`](notes.md) | 64 | 16 | `client.notes` |
-| [`notifications`](notifications.md) | 10 | 4 | `client.notifications` |
-| [`pipe`](pipe.md) | 7 | 4 | `client.pipe` |
-| [`proxyLogs`](proxyLogs.md) | 5 | 1 | `client.proxyLogs` |
-| [`sqlite`](sqlite.md) | 33 | 7 | `client.sqlite` |
-| [`terminal`](terminal.md) | 47 | 9 | `client.terminal` |
-| [`tunnel`](tunnel.md) | 7 | 2 | `client.tunnel` |
-| [`watch`](watch.md) | 14 | 4 | `client.watch` |
+| Namespace | Description | Methods | Services | Accessor |
+|-----------|-------------|---------|----------|----------|
+| [`agent`](agent.md) | In-container AI agent — sessions, prompts, workflows, skills, memory, and tools. | 209 | 21 | `client.agent` |
+| [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 279 | 31 | `client.api` |
+| [`app`](app.md) | Resolve and serve apps from multiple sources (Hoody Run). | 35 | 8 | `client.app` |
+| [`browser`](browser.md) | Drive a cloud headless browser — navigate, script, and screenshot. | 29 | 8 | `client.browser` |
+| [`code`](code.md) | Code intelligence and file-editing helpers. | 19 | 6 | `client.code` |
+| [`cron`](cron.md) | Schedule recurring jobs inside the container. | 15 | 4 | `client.cron` |
+| [`curl`](curl.md) | Make outbound HTTP requests from inside the container. | 31 | 8 | `client.curl` |
+| [`daemon`](daemon.md) | Run and manage long-lived background services. | 23 | 5 | `client.daemon` |
+| [`display`](display.md) | Launch and stream a GUI desktop — windows, input, and screenshots. | 47 | 5 | `client.display` |
+| [`exec`](exec.md) | Run commands and turn scripts into callable HTTP endpoints. | 69 | 18 | `client.exec` |
+| [`files`](files.md) | Read, write, stream, and mount the container filesystem. | 127 | 16 | `client.files` |
+| [`notes`](notes.md) | Store and retrieve structured notes. | 64 | 16 | `client.notes` |
+| [`notifications`](notifications.md) | Send and manage notifications and their delivery channels. | 10 | 4 | `client.notifications` |
+| [`pipe`](pipe.md) | Stream data between endpoints and processes. | 7 | 4 | `client.pipe` |
+| [`proxyLogs`](proxyLogs.md) | Reverse-proxy routing and centralized request logs. | 5 | 1 | `client.proxyLogs` |
+| [`sqlite`](sqlite.md) | A per-container SQLite database over HTTP. | 33 | 7 | `client.sqlite` |
+| [`terminal`](terminal.md) | Interactive shell / PTY sessions over HTTP and WebSocket. | 47 | 9 | `client.terminal` |
+| [`tunnel`](tunnel.md) | Expose a service on a public URL; bridge and share ports. | 7 | 2 | `client.tunnel` |
+| [`watch`](watch.md) | Watch files and resources for changes (streaming). | 14 | 4 | `client.watch` |
 
 ---
 

@@ -1,6 +1,6 @@
 # `files` — 127 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.files`
 
 ```typescript
@@ -26,7 +26,7 @@ client.files.archives.downloadAsZip(directory: string, options?: { zip: "" }): P
 | `directory` | `string` | Yes | path |  |
 | `zip` | `""` | Yes | query |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files downloads zip`
 
@@ -169,7 +169,7 @@ client.files.archives.viewFile(archive: string, options?: { preview: string }): 
 | `archive` | `string` | Yes | path | Path to archive file |
 | `preview` | `string` | Yes | query | Path of the file inside the archive to view (e.g. "src/" or "README.md") |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files archive view`
 
@@ -191,7 +191,7 @@ client.files.authentication.checkAuth(path: string): Promise<ApiResponse<unknown
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -209,7 +209,7 @@ client.files.authentication.logout(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -1552,7 +1552,7 @@ client.files.backends.update(id: string, data: FilesBackendsUpdateRequest): Prom
 
 ---
 
-## `client.files.directories` (1 methods)
+## `client.files.directories` (1 method)
 
 ### `create`
 
@@ -1568,7 +1568,7 @@ client.files.directories.create(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -1863,7 +1863,7 @@ client.files.getMetadata(path: string, options?: { history?: ""; at?: string; re
 | `after_id` | `number` | No | query | Cursor for ?history pagination. Returns entries with id &gt; after_id. |
 | `limit` | `number` | No | query | Max entries to return for ?history. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files metadata`
 
@@ -2036,7 +2036,7 @@ client.files.patch(path: string, data?: FilesPatchRequest, options?: { XUpdateRa
 | `data` | `FilesPatchRequest` | No | body |  |
 | `XUpdateRange` | `"append"` | No | header | Set to 'append' to append data to the end of the file. Perfect for logs and incremental writes. Example: curl -X PATCH -H 'X-Update-Range: append' --data-binary @data.txt http://server/file.log |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files patch`
 
@@ -2168,7 +2168,7 @@ client.files.touch(path: string, options?: { touch: "" }): Promise<ApiResponse<u
 | `path` | `string` | Yes | path | File path to touch |
 | `touch` | `""` | Yes | query | Flag to indicate touch operation |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files touch`
 
@@ -2189,13 +2189,13 @@ client.files.upload(path: string, data: object): Promise<ApiResponse<unknown>>
 | `path` | `string` | Yes | path | Destination file path |
 | `data` | `object` | Yes | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files upload`
 
 ---
 
-## `client.files.ftp` (1 methods)
+## `client.files.ftp` (1 method)
 
 ### `access`
 
@@ -2217,13 +2217,13 @@ client.files.ftp.access(path: string, options?: { type: "ftp"; server: string; u
 | `ftp_secure` | `boolean` | No | query | Use FTPS (FTP over TLS) |
 | `ftp_passive` | `boolean` | No | query | Use passive mode |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files access ftp`
 
 ---
 
-## `client.files.git` (1 methods)
+## `client.files.git` (1 method)
 
 ### `fetch`
 
@@ -2243,13 +2243,13 @@ client.files.git.fetch(path: string, options?: { type: "git"; url: string; ref?:
 | `ref` | `string` | No | query | Branch, tag, or commit (defaults to HEAD or extracted from URL) |
 | `pass` | `string` | No | query | Personal Access Token (base64 encoded) for private repos |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files fetch-from-git`
 
 ---
 
-## `client.files.health` (1 methods)
+## `client.files.health` (1 method)
 
 ### `check`
 
@@ -2267,7 +2267,7 @@ client.files.health.check(): Promise<BrowserHealthCheckResponse>
 
 ---
 
-## `client.files.images` (1 methods)
+## `client.files.images` (1 method)
 
 ### `process`
 
@@ -2294,7 +2294,7 @@ client.files.images.process(image: string, options?: { thumbnail: ""; format?: "
 | `grayscale` | `""` | No | query | Convert to grayscale/black-and-white |
 | `bg` | `string` | No | query | Background color for transparency (hex RGB, e.g., 'ffffff' for white) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files process-image`
 
@@ -2461,7 +2461,7 @@ client.files.mounts.update(id: string, data: FilesMountsUpdateRequest): Promise<
 
 ---
 
-## `client.files.s3` (1 methods)
+## `client.files.s3` (1 method)
 
 ### `access`
 
@@ -2484,7 +2484,7 @@ client.files.s3.access(path: string, options?: { type: "s3"; server: string; s3_
 | `pass` | `string` | No | query | AWS Secret Key (base64 encoded) |
 | `s3_endpoint` | `string` | No | query | Custom S3 endpoint for MinIO, etc. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files access s3`
 
@@ -2512,7 +2512,7 @@ client.files.ssh.access(path: string, options?: { type: "ssh"; server: string; u
 | `key` | `string` | No | query | Private key PEM (base64 encoded) |
 | `passphrase` | `string` | No | query | Key passphrase (base64 encoded) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files access ssh`
 
@@ -2538,13 +2538,13 @@ client.files.ssh.upload(path: string, data: object, options?: { server: string; 
 | `key` | `string` | No | query | Private key PEM (base64 encoded) |
 | `passphrase` | `string` | No | query | Key passphrase (base64 encoded) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files access ssh-upload`
 
 ---
 
-## `client.files.system` (1 methods)
+## `client.files.system` (1 method)
 
 ### `getApiVersion`
 
@@ -2583,7 +2583,7 @@ client.files.webdav.access(path: string, options?: { type: "webdav"; server: str
 | `pass` | `string` | No | query |  |
 | `webdav_path` | `string` | No | query | WebDAV endpoint path |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files access webdav`
 
@@ -2605,7 +2605,7 @@ client.files.webdav.copyResource(path: string, options?: { Destination: string; 
 | `Destination` | `string` | Yes | header | Destination URL for the copy |
 | `Depth` | `"0" \| "infinity"` | No | header | Copy depth: 0 (file only) or infinity (recursive for directories) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -2623,7 +2623,7 @@ client.files.webdav.getOptions(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody files options`
 
@@ -2645,7 +2645,7 @@ client.files.webdav.lockResource(path: string, data?: object, options?: { Depth?
 | `data` | `object` | No | body |  |
 | `Depth` | `"0" \| "infinity"` | No | header |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -2664,7 +2664,7 @@ client.files.webdav.moveResource(path: string, options?: { Destination: string }
 | `path` | `string` | Yes | path | Source file or directory path |
 | `Destination` | `string` | Yes | header | Destination URL for the move |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -2684,7 +2684,7 @@ client.files.webdav.propfindResource(path: string, data?: object, options?: { De
 | `data` | `object` | No | body |  |
 | `Depth` | `"0" \| "1" \| "infinity"` | No | header | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -2703,7 +2703,7 @@ client.files.webdav.proppatchResource(path: string, data?: object): Promise<ApiR
 | `path` | `string` | Yes | path |  |
 | `data` | `object` | No | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -2722,7 +2722,7 @@ client.files.webdav.unlockResource(path: string, options?: { LockToken: string }
 | `path` | `string` | Yes | path |  |
 | `LockToken` | `string` | Yes | header | Lock token to release |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 

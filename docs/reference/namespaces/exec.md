@@ -1,6 +1,6 @@
 # `exec` — 69 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.exec`
 
 ```typescript
@@ -9,7 +9,7 @@ import * as exec from 'hoody-sdk/exec';
 
 ---
 
-## `client.exec.cache` (1 methods)
+## `client.exec.cache` (1 method)
 
 ### `clear`
 
@@ -89,7 +89,7 @@ client.exec.dependencies.listBundled(): Promise<ExecDependenciesListBundledRespo
 
 ---
 
-## `client.exec.execution` (1 methods)
+## `client.exec.execution` (1 method)
 
 ### `execute`
 
@@ -105,11 +105,11 @@ client.exec.execution.execute(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Script path (supports Next.js-style routing) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
-## `client.exec.health` (1 methods)
+## `client.exec.health` (1 method)
 
 ### `check`
 
@@ -127,7 +127,7 @@ client.exec.health.check(): Promise<BrowserHealthCheckResponse>
 
 ---
 
-## `client.exec.ids` (1 methods)
+## `client.exec.ids` (1 method)
 
 ### `list`
 
@@ -246,7 +246,7 @@ client.exec.logs.stream(options?: { file: string; follow?: string }): Promise<Ap
 | `file` | `string` | Yes | query | File query parameter |
 | `follow` | `string` | No | query | Follow query parameter |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody exec logs stream`
 
@@ -413,7 +413,7 @@ Prometheus Export
 client.exec.monitor.prometheusExport(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody exec system prometheus`
 
@@ -1126,7 +1126,7 @@ Get OpenAPI Specification (YAML)
 client.exec.system.getOpenApiYaml(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -1160,7 +1160,7 @@ client.exec.system.restartServer(data?: ExecSystemRestartServerRequest): Promise
 |-----------|------|----------|----------|-------------|
 | `data` | `ExecSystemRestartServerRequest` | No | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody exec system restart`
 

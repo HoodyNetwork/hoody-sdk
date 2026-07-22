@@ -1,6 +1,6 @@
 # `curl` — 31 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.curl`
 
 ```typescript
@@ -85,7 +85,7 @@ client.curl.events.sseJobEvents(options?: { job_id?: string }): Promise<ApiRespo
 |-----------|------|----------|----------|-------------|
 | `job_id` | `string` | No | query | Optional job ID filter |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -136,7 +136,7 @@ client.curl.events.wsRequestChannel(options?: { max_concurrent?: number; max_con
 
 ---
 
-## `client.curl.health` (1 methods)
+## `client.curl.health` (1 method)
 
 ### `check`
 
@@ -170,7 +170,7 @@ client.curl.jobs.cancel(id: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique job identifier (UUID format) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl jobs cancel`
 
@@ -210,7 +210,7 @@ client.curl.jobs.getResult(id: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique job identifier (UUID format) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl jobs result`
 
@@ -273,13 +273,13 @@ client.curl.jobs.listIterator(options?: { page?: number; limit?: number }): Asyn
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody curl jobs list`
 
 ---
 
-## `client.curl.ops` (1 methods)
+## `client.curl.ops` (1 method)
 
 ### `metrics`
 
@@ -291,7 +291,7 @@ Prometheus metrics
 client.curl.ops.metrics(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl metrics`
 
@@ -313,7 +313,7 @@ client.curl.schedules.create(data: CurlSchedulesCreateRequest): Promise<ApiRespo
 |-----------|------|----------|----------|-------------|
 | `data` | `CurlSchedulesCreateRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl schedules create`
 
@@ -333,7 +333,7 @@ client.curl.schedules.delete(id: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique schedule identifier |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl schedules delete`
 
@@ -416,7 +416,7 @@ client.curl.schedules.listIterator(options?: { page?: number; limit?: number }):
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody curl schedules list`
 
@@ -437,7 +437,7 @@ client.curl.schedules.toggle(id: string, data: CurlSchedulesToggleRequest): Prom
 | `id` | `string` | Yes | path | Unique schedule identifier |
 | `data` | `CurlSchedulesToggleRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl schedules toggle`
 
@@ -459,7 +459,7 @@ client.curl.sessions.delete(id: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Session identifier to delete |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl sessions delete`
 
@@ -499,7 +499,7 @@ client.curl.sessions.getCookies(id: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Session identifier |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl sessions cookies`
 
@@ -562,7 +562,7 @@ client.curl.sessions.listIterator(options?: { page?: number; limit?: number }): 
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody curl sessions list`
 
@@ -584,7 +584,7 @@ client.curl.storage.deleteFile(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Relative path to file in storage |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl storage delete`
 
@@ -604,7 +604,7 @@ client.curl.storage.getFile(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Relative path to file in storage (supports nested paths) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody curl storage get`
 
@@ -667,7 +667,7 @@ client.curl.storage.listIterator(options?: { page?: number; limit?: number }): A
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody curl storage list`
 

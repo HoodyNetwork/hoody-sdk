@@ -1,6 +1,6 @@
 # `daemon` — 23 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.daemon`
 
 ```typescript
@@ -93,7 +93,7 @@ client.daemon.control.stop(id: number, data?: DaemonControlStopRequest): Promise
 
 ---
 
-## `client.daemon.health` (1 methods)
+## `client.daemon.health` (1 method)
 
 ### `check`
 
@@ -252,7 +252,7 @@ client.daemon.programs.listIterator(options?: { hoody_kit?: "true" | "false"; la
 | `include_status` | `"true" \| "false"` | No | query | Include runtime status for each program. When true, adds a "status" field to each program showing current running state, instances, and process details. |
 | `include_stats` | `"true" \| "false"` | No | query | Include resource stats (CPU, memory, process tree) for each running program. Implies include_status=true. Adds a "stats" field with pid, started_at, cpu_percent, memory_rss_bytes, process_count, and per-process breakdown. Only present for running programs. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody daemon programs list`
 
@@ -400,7 +400,7 @@ List all ephemeral programs (async iterator)
 client.daemon.quickStart.listIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody daemon ephemeral list`
 

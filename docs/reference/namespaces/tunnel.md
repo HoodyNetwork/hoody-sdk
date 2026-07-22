@@ -1,6 +1,6 @@
 # `tunnel` — 7 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.tunnel`
 
 ```typescript
@@ -9,7 +9,7 @@ import * as tunnel from 'hoody-sdk/tunnel';
 
 ---
 
-## `client.tunnel.health` (1 methods)
+## `client.tunnel.health` (1 method)
 
 ### `check`
 
@@ -39,7 +39,7 @@ Prometheus metrics
 client.tunnel.getMetrics(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody tunnel metrics`
 
@@ -124,7 +124,7 @@ Tunnel WebSocket control plane
 client.tunnel.tunnelConnect(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 

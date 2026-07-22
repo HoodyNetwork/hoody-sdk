@@ -1,6 +1,6 @@
 # `terminal` — 47 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.terminal`
 
 ```typescript
@@ -35,7 +35,7 @@ Get OpenAPI specification in YAML format
 client.terminal.docs.getYaml(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -106,7 +106,7 @@ client.terminal.execution.getResult(command_id: string): Promise<TerminalExecuti
 
 ---
 
-## `client.terminal.health` (1 methods)
+## `client.terminal.health` (1 method)
 
 ### `check`
 
@@ -145,7 +145,7 @@ client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; form
 | `fontsize` | `number` | No | query | Font size in pixels (default: 20) |
 | `save` | `boolean` | No | query | Save to storage directory (default: true) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody terminal sessions screenshot`
 
@@ -242,7 +242,7 @@ client.terminal.sessions.getRawOutput(options?: { terminal_id?: string; format?:
 | `format` | `"download" \| "text" \| "html"` | No | query | Output format: download, text, or html (defaults to "download" if not provided) |
 | `tail` | `number` | No | query | Return only the last N lines of output |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody terminal sessions raw-output`
 
@@ -344,7 +344,7 @@ client.terminal.sessions.listHistoryIterator(terminal_id: string): AsyncIterable
 |-----------|------|----------|----------|-------------|
 | `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody terminal sessions history`
 
@@ -365,7 +365,7 @@ client.terminal.sessions.listIterator(options?: { history_limit?: number; histor
 | `history_limit` | `number` | No | query | Max command_history entries to include per session (default: 50, max: 1000) |
 | `history_lines` | `number` | No | query | Alias of history_limit |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody terminal sessions list`
 
@@ -531,7 +531,7 @@ client.terminal.system.listPortsIterator(options?: { protocol?: string; user?: s
 | `http_only` | `boolean` | No | query | Only return HTTP services |
 | `hoody_only` | `boolean` | No | query | Only return Hoody Kit services |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody terminal system ports`
 
@@ -597,7 +597,7 @@ client.terminal.system.listProcessesIterator(options?: { sort?: "cpu" | "memory"
 | `limit` | `number` | No | query | Maximum number of processes to return (default: all) |
 | `filter` | `string` | No | query | Filter by process name (substring match, case-insensitive) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody terminal processes list`
 
@@ -992,7 +992,7 @@ client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(data: object, option
 
 ---
 
-## `client.terminal.web` (1 methods)
+## `client.terminal.web` (1 method)
 
 ### `get`
 
@@ -1046,7 +1046,7 @@ client.terminal.web.get(options?: { terminal_id?: string; cwd?: string; cwd_auto
 | `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key-based authentication (prefer over password-based auth) |
 | `panelHeight` | `string` | No | query | Initial panel height for top/bottom positioned panels (default: 300px) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody terminal sessions web`
 

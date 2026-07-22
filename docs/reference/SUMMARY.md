@@ -1,6 +1,6 @@
 # Hoody SDK — Reference Documentation
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **SDK Methods:** 1070
 **CLI Commands:** 825
 **Namespaces:** 19

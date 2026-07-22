@@ -1,6 +1,6 @@
 # `pipe` — 7 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.pipe`
 
 ```typescript
@@ -9,7 +9,7 @@ import * as pipe from 'hoody-sdk/pipe';
 
 ---
 
-## `client.pipe.health` (1 methods)
+## `client.pipe.health` (1 method)
 
 ### `check`
 
@@ -25,7 +25,7 @@ client.pipe.health.check(): Promise<PipeHealthCheckResponse>
 
 ---
 
-## `client.pipe.info` (1 methods)
+## `client.pipe.info` (1 method)
 
 ### `getHelp`
 
@@ -37,7 +37,7 @@ Get help text with curl examples
 client.pipe.info.getHelp(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -57,7 +57,7 @@ client.pipe.corsPreflight(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Any path — OPTIONS is handled identically for all paths |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -80,7 +80,7 @@ client.pipe.receive(path: string, options?: { n?: number; download?: "true" | "f
 | `video` | `"true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | No | query | Return an HTML page with an embedded MSE (MediaSource Extensions) video player instead of raw pipe data. The player page fetches the raw stream internally — no pipe receiver slot is consumed by the page itself. **Browser detection:** Only serves the HTML player when the client sends `Accept: text/html` (i.e. a browser). Non-browser clients (VLC, mpv, curl, ffplay) with `?video` fall through to normal pipe receiver behavior and get the raw stream — ensuring automatic compatibility with media players. **Auto-detection:** The player detects the container/codec from the stream's first bytes: - WebM (VP8/VP9/AV1 + Opus/Vorbis) - MP4/fMP4 (H.264/H.265/VP09/AV01 + AAC) - MPEG-TS **UI features:** - Click to unmute (autoplay requires muted) - Right-click to pause/resume - Status overlay: "Waiting for stream…", "Connected", "Stream ended" - Buffer trimming (&gt;30s behind currentTime removed) **Values:** `?video` (bare), `?video=true`, `?video=yes`, `?video=1` → show player. `?video=false`, `?video=no`, `?video=0` → normal pipe receiver. **Security:** CSP with nonces (`script-src`, `style-src`), `connect-src 'self'`, `media-src blob:`, `default-src 'none'`. Pipe path HTML-escaped in `data-path` attribute. |
 | `progress` | `"true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | No | query | Return real-time transfer progress as a Server-Sent Events (SSE) stream or HTML dashboard. Does NOT consume a pipe receiver slot — spectators are completely independent of the transfer. **Accept header routing:** - `Accept: text/event-stream` → SSE stream (EventSource, curl) - `Accept: text/html` → HTML dashboard page (browser) - `Accept: */*` or missing → SSE stream (default to data, not markup) **SSE event types:** - `state` — State transitions: idle → waiting → streaming → complete/failed - `progress` — During streaming (throttled 250ms): bytesTransferred, speed, ETA, receivers - `done` — Terminal event: final stats (bytesTransferred, duration, avgSpeed) **State machine:** `idle` (no pipe) → `waiting` (sender/receivers connecting) → `streaming` (data flowing) → `complete` or `failed` **DoS protections:** Max 50 spectators per path, 500 total groups, 30-min connection TTL, 30s post-transfer linger. **Values:** `?progress` (bare), `?progress=true`, `?progress=yes`, `?progress=1` → show progress. `?progress=false`, `?progress=no`, `?progress=0` → normal pipe receiver. **Security:** HTML dashboard uses CSP with nonces. Pipe path HTML-escaped. SSE includes `X-Accel-Buffering: no` for Nginx compatibility. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -100,7 +100,7 @@ client.pipe.send(path: string, data?: object, options?: { n?: number }): Promise
 | `data` | `object` | No | body |  |
 | `n` | `number` | No | query | Number of receivers to wait for before starting the transfer. All receivers get identical copies of the data (fan-out). Must be a positive integer, max 256. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -116,7 +116,7 @@ Index page (web UI)
 client.pipe.ui.getIndex(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -135,7 +135,7 @@ client.pipe.ui.getNoScript(options?: { path?: string; mode?: "file" | "text" }):
 | `path` | `string` | No | query | Pre-fill the pipe path. Only URL-safe characters allowed. |
 | `mode` | `"file" \| "text"` | No | query | Input mode: `file` for file picker, `text` for textarea |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 

@@ -1,6 +1,6 @@
 # `notes` — 64 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.notes`
 
 ```typescript
@@ -25,7 +25,7 @@ client.notes.avatars.download(avatarId: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `avatarId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -432,7 +432,7 @@ client.notes.databases.listIterator(notebookId: string, databaseId: string, opti
 | `page` | `number` | No | query |  |
 | `count` | `number` | No | query |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody notes db list`
 
@@ -545,7 +545,7 @@ client.notes.documents.exportBlockSvg(notebookId: string, nodeId: string, blockI
 | `bg` | `string` | No | query |  |
 | `scale` | `number` | No | query |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -636,7 +636,7 @@ client.notes.files.download(fileId: string, notebookId: string): Promise<ApiResp
 | `fileId` | `string` | Yes | path |  |
 | `notebookId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody notes file download`
 
@@ -702,7 +702,7 @@ client.notes.files.listIterator(notebookId: string, options?: { limit?: number; 
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody notes file list`
 
@@ -723,7 +723,7 @@ client.notes.files.tusAbortUpload(notebookId: string, fileId: string): Promise<A
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -742,7 +742,7 @@ client.notes.files.tusCheckUpload(notebookId: string, fileId: string): Promise<A
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -761,7 +761,7 @@ client.notes.files.tusCreateUpload(notebookId: string, fileId: string): Promise<
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -780,11 +780,11 @@ client.notes.files.tusUploadChunk(notebookId: string, fileId: string): Promise<A
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
-## `client.notes.health` (1 methods)
+## `client.notes.health` (1 method)
 
 ### `check`
 
@@ -800,7 +800,7 @@ client.notes.health.check(): Promise<NotesHealthCheckResponse>
 
 ---
 
-## `client.notes.identity` (1 methods)
+## `client.notes.identity` (1 method)
 
 ### `get`
 
@@ -812,7 +812,7 @@ Get current identity
 client.notes.identity.get(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody notes whoami`
 
@@ -860,7 +860,7 @@ client.notes.interactions.markSeen(notebookId: string, nodeId: string, data: Not
 
 ---
 
-## `client.notes.mutations` (1 methods)
+## `client.notes.mutations` (1 method)
 
 ### `sync`
 
@@ -877,7 +877,7 @@ client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest)
 | `notebookId` | `string` | Yes | path |  |
 | `data` | `NotesMutationsSyncRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -1233,7 +1233,7 @@ client.notes.sockets.open(socketId: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `socketId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 

@@ -1,6 +1,6 @@
 # `notifications` — 10 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.notifications`
 
 ```typescript
@@ -43,7 +43,7 @@ client.notifications.health.getMetrics(): Promise<BrowserHealthGetMetricsRespons
 
 ---
 
-## `client.notifications.icons` (1 methods)
+## `client.notifications.icons` (1 method)
 
 ### `get`
 
@@ -59,7 +59,7 @@ client.notifications.icons.get(iconId: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `iconId` | `string` | Yes | path | The unique identifier for the icon (e.g., "6_10_1749024932903.png") |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody notifications icon`
 
@@ -193,13 +193,13 @@ client.notifications.listIterator(display: string, options?: { limit?: number; s
 | `username` | `string` | No | query | Filter notifications by username |
 | `session` | `string` | No | query | Filter notifications by session ID |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody notifications list`
 
 ---
 
-## `client.notifications.notify` (1 methods)
+## `client.notifications.notify` (1 method)
 
 ### `trigger`
 

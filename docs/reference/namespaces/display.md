@@ -1,6 +1,6 @@
 # `display` — 47 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.display`
 
 ```typescript
@@ -85,7 +85,7 @@ client.display.accessClient(options?: { displayId?: number; decorations?: boolea
 | `debug_network` | `boolean` | No | query | Enable network debug logging |
 | `debug_file` | `boolean` | No | query | Enable file transfer debug logging |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody display access`
 
@@ -215,7 +215,7 @@ client.display.setClipboard(data: DisplaySetClipboardRequest, options?: { displa
 
 ---
 
-## `client.display.health` (1 methods)
+## `client.display.health` (1 method)
 
 ### `check`
 

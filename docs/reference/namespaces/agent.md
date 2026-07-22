@@ -1,6 +1,6 @@
 # `agent` — 209 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.agent`
 
 ```typescript
@@ -10,7 +10,7 @@ import { HoodyClient } from 'hoody-sdk';
 
 ---
 
-## `client.agent` (1 methods)
+## `client.agent` (1 method)
 
 ### `exportLogs`
 
@@ -54,7 +54,7 @@ client.agent.exportLogs(options?: { source?: string; min_level?: string; comp?: 
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -233,7 +233,7 @@ client.agent.agents.listAgentsIterator(options?: { page?: number; limit?: number
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent agents list`
 
@@ -495,7 +495,7 @@ client.agent.discovery.listContainersIterator(options?: { page?: number; limit?:
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent discovery list-containers`
 
@@ -573,7 +573,7 @@ client.agent.discovery.listRealmsIterator(options?: { page?: number; limit?: num
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent discovery list-realms`
 
@@ -827,7 +827,7 @@ client.agent.github.githubSync(data?: AgentGithubSyncRequest, options?: { realm?
 
 ---
 
-## `client.agent.headless` (1 methods)
+## `client.agent.headless` (1 method)
 
 ### `createHeadlessRun`
 
@@ -854,7 +854,7 @@ client.agent.headless.createHeadlessRun(data: AgentCreateHeadlessRunRequest, opt
 
 ---
 
-## `client.agent.hoody` (1 methods)
+## `client.agent.hoody` (1 method)
 
 ### `bootstrapHoodyToken`
 
@@ -1449,7 +1449,7 @@ client.agent.loops.listLoopsIterator(id: string, options?: { page?: number; limi
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent loops list`
 
@@ -1530,7 +1530,7 @@ client.agent.memory.consolidateMemory(data: AgentConsolidateMemoryRequest, optio
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody agent memory consolidate`
 
@@ -1751,7 +1751,7 @@ client.agent.memory.listMemoryItemsIterator(options?: { project?: string; kind?:
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent memory list-items`
 
@@ -1829,7 +1829,7 @@ client.agent.memory.listMemoryProjectsIterator(options?: { page?: number; limit?
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent memory list-projects`
 
@@ -2110,7 +2110,7 @@ client.agent.models.listModelsIterator(options?: { page?: number; limit?: number
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent models list`
 
@@ -2191,7 +2191,7 @@ client.agent.models.listProviderAccountsIterator(id: string, options?: { page?: 
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent models list-provider-accounts`
 
@@ -2269,7 +2269,7 @@ client.agent.models.listProvidersIterator(options?: { page?: number; limit?: num
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent models list-providers`
 
@@ -2813,7 +2813,7 @@ client.agent.sessions.listSessionsIterator(options?: { include_system?: boolean;
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent sessions list`
 
@@ -3337,7 +3337,7 @@ client.agent.settings.listFusionIterator(options?: { include_invalid?: boolean; 
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent settings list-fusion`
 
@@ -3671,7 +3671,7 @@ client.agent.skills.listSkillsIterator(options?: { page?: number; limit?: number
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent skills list`
 
@@ -3940,7 +3940,7 @@ API documentation UI.
 client.agent.system.docs(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody agent system docs`
 
@@ -3972,7 +3972,7 @@ Prometheus metrics.
 client.agent.system.metrics(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody agent system metrics`
 
@@ -4004,7 +4004,7 @@ OpenAPI spec (YAML).
 client.agent.system.openapiYAML(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody agent system openapi-yaml`
 
@@ -4398,7 +4398,7 @@ client.agent.todos.listTodosIterator(data?: AgentListTodosRequest, options?: { p
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent todos list`
 
@@ -4709,7 +4709,7 @@ client.agent.tools.listReadOnlyToolsIterator(options?: { page?: number; limit?: 
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent tools list-read-only`
 
@@ -4790,7 +4790,7 @@ client.agent.tools.listSessionMCPToolsIterator(id: string, options?: { page?: nu
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent tools list-session-mcp`
 
@@ -4871,7 +4871,7 @@ client.agent.tools.listSessionToolsIterator(id: string, options?: { page?: numbe
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent tools list-session`
 
@@ -4949,7 +4949,7 @@ client.agent.tools.listToolsIterator(options?: { page?: number; limit?: number; 
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent tools list`
 
@@ -5275,7 +5275,7 @@ client.agent.workflows.listWorkflowRunsIterator(options?: { page?: number; limit
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent workflows list-runs`
 
@@ -5353,7 +5353,7 @@ client.agent.workflows.listWorkflowsIterator(options?: { page?: number; limit?: 
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody agent workflows list`
 

@@ -1,6 +1,6 @@
 # `code` — 19 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.code`
 
 ```typescript
@@ -25,7 +25,7 @@ client.code.auth.getLoginPage(options?: { to?: string }): Promise<ApiResponse<un
 |-----------|------|----------|----------|-------------|
 | `to` | `string` | No | query | URL to redirect to after successful login |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code auth login`
 
@@ -46,7 +46,7 @@ client.code.auth.login(data: object, options?: { to?: string }): Promise<ApiResp
 | `data` | `object` | Yes | body |  |
 | `to` | `string` | No | query | URL to redirect to after successful login |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code auth submit`
 
@@ -62,7 +62,7 @@ Logout
 client.code.auth.logout(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code auth logout`
 
@@ -132,7 +132,7 @@ List installed extensions (async iterator)
 client.code.extensions.listIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody code extensions list`
 
@@ -189,7 +189,7 @@ client.code.proxy.resolve(port: number, path?: string): Promise<ApiResponse<unkn
 | `port` | `number` | Yes | path | Local port to proxy to |
 | `path` | `string` | No | path | Path to append to the proxied request |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code proxy-path`
 
@@ -210,7 +210,7 @@ client.code.proxy.resolveAbsolute(port: number, path?: string): Promise<ApiRespo
 | `port` | `number` | Yes | path | Local port to proxy to |
 | `path` | `string` | No | path | Path (preserved in forwarded request) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code proxy`
 
@@ -232,7 +232,7 @@ client.code.static.get(path: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Path to static file |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code assets static`
 
@@ -252,7 +252,7 @@ client.code.static.getInjectedScript(script: string): Promise<ApiResponse<unknow
 |-----------|------|----------|----------|-------------|
 | `script` | `string` | Yes | path | Script filename |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code assets injected-script`
 
@@ -268,7 +268,7 @@ Get OpenAPI specification
 client.code.static.getOpenAPI(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -282,7 +282,7 @@ Get robots.txt
 client.code.static.getRobots(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code assets robots`
 
@@ -298,7 +298,7 @@ Get security policy
 client.code.static.getSecurityPolicy(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code assets security-policy`
 
@@ -316,7 +316,7 @@ Get PWA manifest
 client.code.vscode.getManifest(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code assets manifest`
 
@@ -340,7 +340,7 @@ client.code.vscode.getVSCode(options?: { folder?: string; workspace?: string; ex
 | `ew` | `boolean` | No | query | "Empty Window" flag - indicates workspace was closed. When present, clears the last opened folder/workspace from settings. |
 | `locale` | `string` | No | query | Display language for VS Code UI. Format: IETF language tag (e.g., en, fr, de, ja, zh-CN) See: https://en.wikipedia.org/wiki/IETF_language_tag |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code vs`
 
@@ -356,7 +356,7 @@ Generate server web key
 client.code.vscode.mintKey(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody code auth mint-key`
 

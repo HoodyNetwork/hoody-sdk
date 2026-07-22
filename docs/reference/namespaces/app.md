@@ -1,6 +1,6 @@
 # `app` — 35 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.app`
 
 ```typescript
@@ -9,7 +9,7 @@ import * as app from 'hoody-sdk/app';
 
 ---
 
-## `client.app.configuration` (1 methods)
+## `client.app.configuration` (1 method)
 
 ### `get`
 
@@ -51,7 +51,7 @@ OpenAPI specification (YAML)
 client.app.docs.getYaml(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -337,11 +337,11 @@ client.app.execution.searchCandidatesPagedIterator(data: AppExecutionSearchCandi
 |-----------|------|----------|----------|-------------|
 | `data` | `AppExecutionSearchCandidatesPagedRequest` | Yes | body |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 ---
 
-## `client.app.health` (1 methods)
+## `client.app.health` (1 method)
 
 ### `check`
 
@@ -431,7 +431,7 @@ client.app.profiles.delete(profile: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `profile` | `string` | Yes | path | Profile name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -520,7 +520,7 @@ client.app.recipes.delete(name: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | Recipe name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -647,7 +647,7 @@ client.app.sources.delete(source_id: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `source_id` | `string` | Yes | path | Source identifier |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 

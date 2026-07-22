@@ -1,6 +1,6 @@
 # `watch` — 14 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.watch`
 
 ```typescript
@@ -9,7 +9,7 @@ import * as watch from 'hoody-sdk/watch';
 
 ---
 
-## `client.watch.health` (1 methods)
+## `client.watch.health` (1 method)
 
 ### `check`
 
@@ -95,7 +95,7 @@ client.watch.streams.listEventsIterator(id: string, options?: { since_id?: numbe
 | `page` | `number \| null` | No | query | Page number (1-based). |
 | `limit` | `number \| null` | No | query | Items per page (1-200). |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody watch events list`
 
@@ -117,7 +117,7 @@ client.watch.streams.streamSse(id: string, options?: { since_id?: number | null;
 | `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
 | `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody watch events stream`
 
@@ -139,7 +139,7 @@ client.watch.streams.streamWs(id: string, options?: { since_id?: number | null; 
 | `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
 | `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -155,7 +155,7 @@ Get Open Api Json
 client.watch.system.getOpenApiJson(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -169,7 +169,7 @@ Get Open Api Yaml
 client.watch.system.getOpenApiYaml(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -292,7 +292,7 @@ client.watch.watchers.listIterator(options?: { page?: number | null; limit?: num
 | `page` | `number \| null` | No | query | Page number (1-based). |
 | `limit` | `number \| null` | No | query | Items per page (1-200). |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody watch list`
 

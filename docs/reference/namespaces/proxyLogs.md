@@ -1,6 +1,6 @@
 # `proxyLogs` — 5 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.proxyLogs`
 
 ```typescript
@@ -120,7 +120,7 @@ client.proxyLogs.logs.listIterator(options?: { limit?: number; offset?: number; 
 | `method` | `string` | No | query |  |
 | `source` | `"backend" \| "edge"` | No | query |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody proxy logs list`
 
@@ -144,7 +144,7 @@ client.proxyLogs.logs.streamLogs(options?: { projectId?: string; containerId?: s
 | `level` | `"debug" \| "info" \| "warn" \| "error"` | No | query |  |
 | `LastEventID` | `string` | No | header | — numeric ringSeq of the last event received. Server skips entries ≤ this value from the ring buffer on reconnect. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody proxy logs stream`
 

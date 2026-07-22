@@ -1,6 +1,6 @@
 # `api` — 279 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.api`
 
 ```typescript
@@ -105,13 +105,13 @@ client.api.activity.listIterator(options?: { page?: number; limit?: number; star
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | No | query | Filter by HTTP method |
 | `realm_id` | `string` | No | query | Filter by realm ID |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody activity logs`
 
 ---
 
-## `client.api.ai` (1 methods)
+## `client.api.ai` (1 method)
 
 ### `listModels`
 
@@ -311,7 +311,7 @@ List permission templates
 client.api.authTokens.listAuthTokenPermissionTemplates(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -325,7 +325,7 @@ List auth tokens (async iterator)
 client.api.authTokens.listIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody auth list`
 
@@ -489,7 +489,7 @@ Get the public sign-in configuration
 client.api.authentication.getOAuthConfig(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -508,7 +508,7 @@ client.api.authentication.githubOAuthCallback(options?: { code: string; state: s
 | `code` | `string` | Yes | query |  |
 | `state` | `string` | Yes | query |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody auth oauth github callback`
 
@@ -530,7 +530,7 @@ client.api.authentication.githubOAuthRedirect(options?: { code_challenge: string
 | `intent` | `"login" \| "star_check"` | No | query | OAuth intent: login (default) or star_check (check for star credit) |
 | `redirect_uri` | `string` | No | query | Frontend URL to redirect to after OAuth completes (must be on allowed domain) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody auth oauth github redirect`
 
@@ -551,7 +551,7 @@ client.api.authentication.googleOAuthCallback(options?: { code: string; state: s
 | `code` | `string` | Yes | query |  |
 | `state` | `string` | Yes | query |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody auth oauth google callback`
 
@@ -572,7 +572,7 @@ client.api.authentication.googleOAuthRedirect(options?: { code_challenge: string
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
 | `redirect_uri` | `string` | No | query | Frontend URL to redirect to after OAuth completes |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody auth oauth google redirect`
 
@@ -628,7 +628,7 @@ client.api.authentication.oauthAuthorize(data: OauthAuthorizeRequest): Promise<A
 |-----------|------|----------|----------|-------------|
 | `data` | `OauthAuthorizeRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -642,7 +642,7 @@ Cancel a pending OAuth AuthIntent or 2FA temp_token
 client.api.authentication.oauthCancelIntent(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -661,7 +661,7 @@ client.api.authentication.oauthDeviceAuthorize(options?: { ticket: string; provi
 | `ticket` | `string` | Yes | query |  |
 | `provider` | `"github" \| "google"` | Yes | query |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -733,7 +733,7 @@ client.api.authentication.oauthExchange(data: OauthExchangeRequest): Promise<Api
 |-----------|------|----------|----------|-------------|
 | `data` | `OauthExchangeRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -769,7 +769,7 @@ client.api.authentication.oauthLaunchStart(options?: { ticket: string }): Promis
 |-----------|------|----------|----------|-------------|
 | `ticket` | `string` | Yes | query | One-shot ticket from /launch/initiate response |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -1227,7 +1227,7 @@ client.api.containers.listByProjectIterator(id: string, options?: { page?: numbe
 | `include_prespawn` | `"true" \| "false"` | No | query | Include prespawn containers in the listing. By default, prespawn containers are excluded. |
 | `include_deleting` | `"true" \| "false"` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody containers list`
 
@@ -1257,7 +1257,7 @@ client.api.containers.listIterator(options?: { page?: number; limit?: number; so
 | `include_expired` | `"true" \| "false"` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
 | `include_deleting` | `"true" \| "false"` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody containers list`
 
@@ -1317,7 +1317,7 @@ client.api.containers.listSnapshotsIterator(id: string): AsyncIterableIterator<u
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to retrieve snapshots for |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody snapshots list`
 
@@ -1786,7 +1786,7 @@ client.api.events.listIterator(options?: { limit?: number; offset?: number; sort
 | `end_date` | `string` | No | query | Filter events before this timestamp |
 | `realm_id` | `string` | No | query | Filter by realm ID |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody events list`
 
@@ -1890,7 +1890,7 @@ client.api.firewall.listIterator(id: string): AsyncIterableIterator<unknown>
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody firewall list`
 
@@ -2125,7 +2125,7 @@ client.api.images.listIterator(options?: { page?: number; limit?: number; sort_b
 | `sort_by` | `"created_at"` | No | query | Field to sort user images by - currently only supports creation date |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody images mine`
 
@@ -2215,7 +2215,7 @@ client.api.images.listPublicIterator(options?: { os?: string; architecture?: str
 | `sort_by` | `"alias" \| "added_date" \| "price" \| "rating"` | No | query | Field to sort images by - name, date added, price, or average rating |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody images list`
 
@@ -2338,7 +2338,7 @@ Get all notifications for the authenticated user (async iterator)
 client.api.notifications.listIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody inbox list`
 
@@ -2386,7 +2386,7 @@ Get all public notifications (async iterator)
 client.api.notifications.listPublicIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody inbox list-public`
 
@@ -2656,7 +2656,7 @@ List user pools (async iterator)
 client.api.pools.listIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody pools list`
 
@@ -2854,7 +2854,7 @@ client.api.projects.listIterator(options?: { page?: number; limit?: number; sort
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
 | `realm_id` | `string` | No | query | Filter by realm ID. Only returns projects that belong to this realm. Alternative to using realm subdomain in URL. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody projects list`
 
@@ -2926,7 +2926,7 @@ client.api.projects.listPermissionsIterator(id: string, options?: { page?: numbe
 | `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody projects permissions list`
 
@@ -3124,7 +3124,7 @@ client.api.proxyAliases.listIterator(options?: { project_id?: string; container_
 | `enabled` | `"true" \| "false"` | No | query | Filter by enabled status |
 | `expired` | `"true" \| "false"` | No | query | Filter by expiration: "true" = only expired, "false" = only non-expired |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody proxy list`
 
@@ -4040,7 +4040,7 @@ client.api.proxyPermissionsProject.updateState(id: string, data: ApiProxyPermiss
 
 ---
 
-## `client.api.realms` (1 methods)
+## `client.api.realms` (1 method)
 
 ### `list`
 
@@ -4147,7 +4147,7 @@ List user rentals (async iterator)
 client.api.rentals.listIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody servers list-rentals`
 
@@ -4236,7 +4236,7 @@ client.api.serverCommands.listIterator(serverId: string, options?: { category?: 
 | `category` | `string` | No | query | Filter by command category |
 | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody servers commands`
 
@@ -4343,7 +4343,7 @@ client.api.serverRental.browseIterator(options?: { country?: string; region?: st
 | `category` | `"compute" \| "memory" \| "storage" \| "general" \| "gpu"` | No | query | Filter by server category |
 | `featured_only` | `boolean` | No | query | Show only featured servers |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody servers marketplace`
 
@@ -4411,7 +4411,7 @@ List user servers (alias for /rentals) (async iterator)
 client.api.serverRental.listIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody servers list`
 
@@ -4608,7 +4608,7 @@ client.api.storageShares.listGlobalIterator(options?: { realm_id?: string }): As
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody storage list-all`
 
@@ -4688,7 +4688,7 @@ client.api.storageShares.listIncomingGlobalIterator(options?: { realm_id?: strin
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody storage incoming list-all`
 
@@ -4714,7 +4714,7 @@ client.api.storageShares.listIterator(id: string, options?: { target_type?: "con
 | `include_expired` | `"true" \| "false"` | No | query | Include expired shares (default: false) |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody storage list`
 
@@ -5017,7 +5017,7 @@ client.api.users.update(id: string, data: ApiUsersUpdateRequest): Promise<ApiUse
 
 ---
 
-## `client.api.utilities` (1 methods)
+## `client.api.utilities` (1 method)
 
 ### `getIpInfo`
 
@@ -5173,7 +5173,7 @@ client.api.vault.listIterator(options?: { realm_id?: string }): AsyncIterableIte
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody vault list`
 
@@ -5509,7 +5509,7 @@ client.api.wallet.getTransaction(id: string): Promise<ApiResponse<unknown>>
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody wallet transactions get`
 
@@ -5578,7 +5578,7 @@ client.api.wallet.listAiFeeHistoryIterator(options?: { page?: number; limit?: nu
 | `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody wallet transactions fees`
 
@@ -5663,7 +5663,7 @@ client.api.wallet.listInvoicesIterator(options?: { limit?: number; sort_by?: str
 | `sort_by` | `string` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody wallet invoices list`
 
@@ -5711,7 +5711,7 @@ Get all payment methods (async iterator)
 client.api.wallet.listPaymentMethodsIterator(): AsyncIterableIterator<unknown>
 ```
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody wallet payment-methods list`
 
@@ -5752,7 +5752,7 @@ client.api.wallet.listTransactions(options?: { limit?: number; sort_by?: "id" | 
 | `sort_by` | `"id" \| "transaction_type" \| "status" \| "amount" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody wallet transactions list`
 
@@ -5796,7 +5796,7 @@ client.api.wallet.listTransactionsIterator(options?: { limit?: number; sort_by?:
 | `sort_by` | `"id" \| "transaction_type" \| "status" \| "amount" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody wallet transactions list`
 

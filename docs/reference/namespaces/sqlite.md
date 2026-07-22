@@ -1,6 +1,6 @@
 # `sqlite` — 33 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.sqlite`
 
 ```typescript
@@ -27,7 +27,7 @@ client.sqlite.database.create(options?: { path: string; init_kv?: boolean; kv_ta
 | `init_kv` | `boolean` | No | query | Initialize KV store tables |
 | `kv_table` | `string` | No | query | Custom KV table name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody db create`
 
@@ -49,7 +49,7 @@ client.sqlite.database.executeTransaction(data: SqliteDatabaseExecuteTransaction
 | `db` | `string` | Yes | query | Database path (absolute path, bare name, or./name shorthand resolved to /hoody/databases/*.db) |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody db exec-transaction`
 
@@ -67,7 +67,7 @@ Get OpenAPI specification (JSON redirect)
 client.sqlite.docs.getJson(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -81,7 +81,7 @@ Get OpenAPI specification (YAML)
 client.sqlite.docs.getYaml(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -97,7 +97,7 @@ Health check
 client.sqlite.health.getHealth(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -111,7 +111,7 @@ Cache health snapshot
 client.sqlite.health.getHealthCache(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -131,7 +131,7 @@ client.sqlite.history.clear(options?: { db: string }): Promise<ApiResponse<unkno
 |-----------|------|----------|----------|-------------|
 | `db` | `string` | Yes | query | Database file path |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody db history clear`
 
@@ -152,7 +152,7 @@ client.sqlite.history.deleteEntry(index: number, options?: { db: string }): Prom
 | `index` | `number` | Yes | path | History entry ID |
 | `db` | `string` | Yes | query | Database file path |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody db history delete`
 
@@ -172,7 +172,7 @@ client.sqlite.history.getStats(options?: { db: string }): Promise<ApiResponse<un
 |-----------|------|----------|----------|-------------|
 | `db` | `string` | Yes | query | Database file path |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody db history stats`
 
@@ -193,7 +193,7 @@ client.sqlite.history.list(options?: { db: string; limit?: number }): Promise<Ap
 | `db` | `string` | Yes | query | Database file path |
 | `limit` | `number` | No | query | Maximum number of entries to return |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody db history list`
 
@@ -217,7 +217,7 @@ client.sqlite.kvStore.batchDelete(data: SqliteKvStoreBatchDeleteRequest, options
 | `db` | `string` | Yes | query | Database file path |
 | `table` | `string` | No | query | Custom table name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv batch delete`
 
@@ -239,7 +239,7 @@ client.sqlite.kvStore.batchGet(data: SqliteKvStoreBatchGetRequest, options?: { d
 | `db` | `string` | Yes | query | Database file path |
 | `table` | `string` | No | query | Custom table name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv batch get`
 
@@ -261,7 +261,7 @@ client.sqlite.kvStore.batchSet(data: SqliteKvStoreBatchSetRequest, options?: { d
 | `db` | `string` | Yes | query | Database file path |
 | `table` | `string` | No | query | Custom table name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv batch set`
 
@@ -285,7 +285,7 @@ client.sqlite.kvStore.compareSnapshots(options?: { db: string; from: number; to:
 | `table` | `string` | No | query | Custom table name |
 | `keys` | `string` | No | query | Comma-separated list of keys to compare (optional) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv snapshots compare-table`
 
@@ -310,7 +310,7 @@ client.sqlite.kvStore.decr(key: string, options?: { db: string; table?: string; 
 | `path` | `string` | No | query | JSON path to nested numeric value |
 | `history` | `boolean` | No | query | Enable history tracking |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv decr`
 
@@ -333,7 +333,7 @@ client.sqlite.kvStore.delete(key: string, options?: { db: string; table?: string
 | `table` | `string` | No | query | Custom table name |
 | `history` | `boolean` | No | query | Enable history tracking |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv delete`
 
@@ -355,7 +355,7 @@ client.sqlite.kvStore.exists(key: string, options?: { db: string; table?: string
 | `db` | `string` | Yes | query | Database file path or directory |
 | `table` | `string` | No | query | Custom table name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv exists`
 
@@ -380,7 +380,7 @@ client.sqlite.kvStore.get(key: string, options?: { db: string; table?: string; p
 | `at_timestamp` | `number` | No | query | Unix timestamp for time-travel query (selects handleKVAtTimestamp) |
 | `rebuild` | `boolean` | No | query | Rebuild cache (directory mode only) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv get`
 
@@ -403,7 +403,7 @@ client.sqlite.kvStore.getHistory(key: string, options?: { db: string; table?: st
 | `table` | `string` | No | query | Custom table name |
 | `limit` | `number` | No | query | Maximum number of operations to return (0 → default 50, clamped to maximum 1000) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv history`
 
@@ -426,7 +426,7 @@ client.sqlite.kvStore.getSnapshot(key: string, options?: { db: string; op_number
 | `op_number` | `number` | Yes | query | Operation number to reconstruct from |
 | `table` | `string` | No | query | Custom table name |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv snapshots get-key`
 
@@ -450,7 +450,7 @@ client.sqlite.kvStore.getTableSnapshot(options?: { db: string; timestamp: number
 | `limit` | `number` | No | query | Maximum number of keys to return |
 | `prefix` | `string` | No | query | Filter keys by prefix |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv snapshots get-table`
 
@@ -475,7 +475,7 @@ client.sqlite.kvStore.incr(key: string, options?: { db: string; table?: string; 
 | `path` | `string` | No | query | JSON path to nested numeric value |
 | `history` | `boolean` | No | query | Enable history tracking |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv incr`
 
@@ -500,7 +500,7 @@ client.sqlite.kvStore.list(options?: { db: string; table?: string; prefix?: stri
 | `offset` | `number` | No | query | Skip N results for pagination (regular LIST only; ignored when at_timestamp is set) |
 | `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST (selects handleKVListAtTimestamp; returns a different envelope and ignores offset) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv list`
 
@@ -550,7 +550,7 @@ client.sqlite.kvStore.listIterator(options?: { db: string; table?: string; prefi
 | `offset` | `number` | No | query | Skip N results for pagination (regular LIST only; ignored when at_timestamp is set) |
 | `at_timestamp` | `number` | No | query | Unix timestamp for time-travel LIST (selects handleKVListAtTimestamp; returns a different envelope and ignores offset) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody kv list`
 
@@ -574,7 +574,7 @@ client.sqlite.kvStore.pop(key: string, options?: { db: string; table?: string; p
 | `path` | `string` | No | query | JSON path to nested array |
 | `history` | `boolean` | No | query | Enable history tracking |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv arrays pop`
 
@@ -599,7 +599,7 @@ client.sqlite.kvStore.push(key: string, data: SqliteKvStorePushRequest, options?
 | `path` | `string` | No | query | JSON path to nested array |
 | `history` | `boolean` | No | query | Enable history tracking |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv arrays push`
 
@@ -625,7 +625,7 @@ client.sqlite.kvStore.removeElement(key: string, data: SqliteKvStoreRemoveElemen
 | `index` | `number` | No | query | Array index to remove |
 | `history` | `boolean` | No | query | Enable history tracking |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv arrays delete`
 
@@ -648,7 +648,7 @@ client.sqlite.kvStore.rollback(key: string, options?: { db: string; table?: stri
 | `table` | `string` | No | query | Custom table name |
 | `steps` | `number` | No | query | Number of operations to rollback |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv rollback`
 
@@ -673,7 +673,7 @@ client.sqlite.kvStore.rollbackTable(data: SqliteKvStoreRollbackTableRequest, opt
 | `dry_run` | `boolean` | No | query | Preview changes without applying |
 | `confirm` | `string` | No | query | Must be 'yes' to execute actual rollback |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv rollback-table`
 
@@ -701,13 +701,13 @@ client.sqlite.kvStore.set(key: string, data: SqliteKvStoreSetRequest, options?: 
 | `history` | `boolean` | No | query | Enable history tracking |
 | `create_db_if_missing` | `boolean` | No | query | Create database file if it is missing |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody kv set`
 
 ---
 
-## `client.sqlite.query` (1 methods)
+## `client.sqlite.query` (1 method)
 
 ### `executeShareable`
 
@@ -724,13 +724,13 @@ client.sqlite.query.executeShareable(options?: { db: string; sql: string }): Pro
 | `db` | `string` | Yes | query | Database file path |
 | `sql` | `string` | Yes | query | Base64-encoded SQL query |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody db exec-shareable`
 
 ---
 
-## `client.sqlite.sql` (1 methods)
+## `client.sqlite.sql` (1 method)
 
 ### `runMaintenance`
 
@@ -748,7 +748,7 @@ client.sqlite.sql.runMaintenance(data: RunMaintenanceRequest, options?: { db: st
 | `db` | `string` | Yes | query | Database path (absolute path, bare name, or./name shorthand resolved to /hoody/databases/*.db) |
 | `timeout` | `number` | No | query | Request deadline in seconds (clamped to [1, 300]) |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 

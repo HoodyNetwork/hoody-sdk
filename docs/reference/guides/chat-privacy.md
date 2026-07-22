@@ -1,8 +1,30 @@
-# `hoody chat` — Privacy Model
+# `hoody chat` — what it is, and its privacy model
 
-This document is the load-bearing reference for exactly what `hoody chat`
-does and does not write to disk, what leaves your machine, and how to
-disable each path.
+`hoody chat` is an AI chat in your terminal. It does two distinct things:
+
+1. **A general AI chat** — bring your own LLM provider (OpenAI, Anthropic/Claude,
+   a local model, …) and chat from the command line. This traffic goes **only**
+   to the provider *you* configure; Hoody never sees it.
+2. **Free answers about Hoody** — type `@hoody.com` (or let the assistant use its
+   built-in docs tool) and Hoody's own docs service answers your question about
+   the platform, at no cost.
+
+**Privacy in one line:** by default `hoody chat` writes **nothing** to your disk,
+and the free "ask Hoody" service sends only your question text — no account,
+container, or auth identifiers.
+
+## The free "ask Hoody" service (server side)
+
+When you use the free Hoody Q&A (`@hoody.com`, or the docs tool), your question
+is sent to Hoody's docs service (`chatbot.hoody.com`) so it can answer you. Hoody
+processes it only to produce that answer and does **not** retain long prompts.
+Because the service is free, it **caps prompt length** and applies **rate limits**
+so it stays available to everyone — treat it as "ask a question about Hoody," not
+a place to paste long documents or anything sensitive.
+
+Everything below is the load-bearing reference for exactly what `hoody chat` does
+and does not write to **your** disk, what leaves your machine, and how to disable
+each path.
 
 ## Defaults: nothing persists
 

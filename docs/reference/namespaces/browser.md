@@ -1,6 +1,6 @@
 # `browser` — 29 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.browser`
 
 ```typescript
@@ -185,7 +185,7 @@ Get OpenAPI specification (YAML)
 client.browser.health.getOpenApiYaml(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -651,7 +651,7 @@ client.browser.page.exportPdf(options?: { browser_id: string; tabId?: number; st
 | `printBackground` | `boolean` | No | query | Include background graphics |
 | `margin` | `string` | No | query | Uniform margin (e.g. '1cm', '0.5in') |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody browser pdf`
 
@@ -673,7 +673,7 @@ client.browser.page.getHtml(options?: { browser_id: string; tabId?: number; star
 | `tabId` | `number` | No | query | The ID of the tab to interact with |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody browser html`
 
@@ -695,7 +695,7 @@ client.browser.page.getText(options?: { browser_id: string; tabId?: number; star
 | `tabId` | `number` | No | query | The ID of the tab to interact with |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 **CLI:** `hoody browser text`
 

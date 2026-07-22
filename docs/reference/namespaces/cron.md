@@ -1,6 +1,6 @@
 # `cron` — 15 methods
 
-**Version:** 1.0.0-beta.2
+**Version:** 1.0.0-beta.3
 **Accessor:** `client.cron`
 
 ```typescript
@@ -88,7 +88,7 @@ client.cron.crontab.listGlobalIterator(options?: { page?: number; limit?: number
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody cron crontabs list`
 
@@ -240,7 +240,7 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
 
-**Returns:** `AsyncIterableIterator&lt;unknown&gt;`
+**Returns:** `AsyncIterableIterator<unknown>`
 
 **CLI:** `hoody cron entries list`
 
@@ -268,7 +268,7 @@ client.cron.entries.update(user: string, id: string, data: CronEntriesUpdateRequ
 
 ---
 
-## `client.cron.health` (1 methods)
+## `client.cron.health` (1 method)
 
 ### `check`
 
@@ -298,7 +298,7 @@ Get Open Api Json
 client.cron.system.getOpenApiJson(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
@@ -312,7 +312,7 @@ Get Open Api Yaml
 client.cron.system.getOpenApiYaml(): Promise<ApiResponse<unknown>>
 ```
 
-**Returns:** `ApiResponse&lt;unknown&gt;`
+**Returns:** `ApiResponse<unknown>`
 
 ---
 
