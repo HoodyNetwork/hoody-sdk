@@ -1836,6 +1836,7 @@ export interface RetrySetupResponse {
         server?: Record<string, unknown> | null;
         project?: Record<string, unknown> | null;
         container?: Record<string, unknown> | null;
+        blocked_reason?: null | "admin_recovery_required";
     };
     message: string;
 }
@@ -3044,12 +3045,6 @@ export interface ApiContainersGetNetworkConfigResponse {
         remote_status?: {
             is_running?: boolean;
             last_check?: string;
-            bridge_details?: {
-                bridge_name?: string;
-                bridge_ip?: string;
-                gost_listener_ip?: string;
-                port?: number;
-            };
         };
     };
 }
@@ -3086,12 +3081,6 @@ export interface ApiContainersUpdateNetworkConfigResponse {
         dns_servers?: string[];
         status?: "configured" | "running" | "stopped" | "error";
         configured_at?: string;
-        bridge_details?: {
-            bridge_name?: string;
-            bridge_ip?: string;
-            gost_listener_ip?: string;
-            port?: number;
-        };
     };
 }
 export interface ApiContainersRemoveNetworkConfigResponse {
@@ -3107,12 +3096,6 @@ export interface ApiContainersStartNetworkResponse {
         status?: "configured" | "running" | "stopped" | "error";
         is_running?: boolean;
         last_check?: string;
-        bridge_details?: {
-            bridge_name?: string;
-            bridge_ip?: string;
-            gost_listener_ip?: string;
-            port?: number;
-        };
     };
 }
 export interface ApiContainersStopNetworkResponse {
@@ -3123,12 +3106,6 @@ export interface ApiContainersStopNetworkResponse {
         status?: "configured" | "running" | "stopped" | "error";
         is_running?: boolean;
         last_check?: string;
-        bridge_details?: {
-            bridge_name?: string;
-            bridge_ip?: string;
-            gost_listener_ip?: string;
-            port?: number;
-        };
     };
 }
 export interface ApiContainersListSnapshotsResponse {
@@ -5854,6 +5831,10 @@ export interface ApiRentalsListResponse {
         pool_id?: null | string;
         is_free_tier?: boolean;
         server?: null | {
+            container_capacity?: {
+                used: number;
+                max: number;
+            };
             id?: string;
             name?: string;
             country?: string;
@@ -5916,6 +5897,10 @@ export interface ApiRentalsGetResponse {
         pool_id?: null | string;
         is_free_tier?: boolean;
         server?: null | {
+            container_capacity?: {
+                used: number;
+                max: number;
+            };
             id?: string;
             name?: string;
             country?: string;
@@ -6008,6 +5993,10 @@ export interface ApiServerRentalListResponse {
         pool_id?: null | string;
         is_free_tier?: boolean;
         server?: null | {
+            container_capacity?: {
+                used: number;
+                max: number;
+            };
             id?: string;
             name?: string;
             country?: string;
@@ -6070,6 +6059,10 @@ export interface ApiServerRentalGetResponse {
         pool_id?: null | string;
         is_free_tier?: boolean;
         server?: null | {
+            container_capacity?: {
+                used: number;
+                max: number;
+            };
             id?: string;
             name?: string;
             country?: string;
@@ -6119,6 +6112,132 @@ export interface ApiServerRentalGetResponse {
             amount?: number;
             currency?: string;
             created_at?: string;
+        };
+    };
+}
+export interface GetRentalRuntimeResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        scope: "server";
+        ts: string;
+        cache_age_ms: number;
+        stale: boolean;
+        uptime_s?: number | null;
+        cores?: number | null;
+        load?: {
+            "1"?: number | null;
+            "5"?: number | null;
+            "15"?: number | null;
+        };
+        cpu?: {
+            busy_pct?: number | null;
+        };
+        mem?: {
+            used_bytes?: number | null;
+            total_bytes?: number | null;
+            pct?: number | null;
+        };
+        swap?: {
+            used_bytes?: number | null;
+            total_bytes?: number | null;
+        };
+        storage?: {
+            used_bytes?: number | null;
+            total_bytes?: number | null;
+            pct?: number | null;
+        };
+    } | {
+        scope: "subserver";
+        ts: string;
+        cache_age_ms: number;
+        stale: boolean;
+        health: "ok" | "unverified";
+        cpu?: {
+            usage_cores?: number | null;
+            usage_pct?: number | null;
+            limit_cores?: number | null;
+        };
+        mem?: {
+            used_bytes?: number | null;
+            limit_bytes?: number | null;
+            pct?: number | null;
+        };
+        disk?: {
+            used_bytes?: number | null;
+            limit_bytes?: number | null;
+            pct?: number | null;
+        };
+        pids?: {
+            current?: number | null;
+            max?: number | null;
+        };
+        io?: {
+            read_bytes?: number | null;
+            write_bytes?: number | null;
+        };
+    };
+}
+export interface GetServerRuntimeResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        scope: "server";
+        ts: string;
+        cache_age_ms: number;
+        stale: boolean;
+        uptime_s?: number | null;
+        cores?: number | null;
+        load?: {
+            "1"?: number | null;
+            "5"?: number | null;
+            "15"?: number | null;
+        };
+        cpu?: {
+            busy_pct?: number | null;
+        };
+        mem?: {
+            used_bytes?: number | null;
+            total_bytes?: number | null;
+            pct?: number | null;
+        };
+        swap?: {
+            used_bytes?: number | null;
+            total_bytes?: number | null;
+        };
+        storage?: {
+            used_bytes?: number | null;
+            total_bytes?: number | null;
+            pct?: number | null;
+        };
+    } | {
+        scope: "subserver";
+        ts: string;
+        cache_age_ms: number;
+        stale: boolean;
+        health: "ok" | "unverified";
+        cpu?: {
+            usage_cores?: number | null;
+            usage_pct?: number | null;
+            limit_cores?: number | null;
+        };
+        mem?: {
+            used_bytes?: number | null;
+            limit_bytes?: number | null;
+            pct?: number | null;
+        };
+        disk?: {
+            used_bytes?: number | null;
+            limit_bytes?: number | null;
+            pct?: number | null;
+        };
+        pids?: {
+            current?: number | null;
+            max?: number | null;
+        };
+        io?: {
+            read_bytes?: number | null;
+            write_bytes?: number | null;
         };
     };
 }
@@ -7145,7 +7264,7 @@ export interface DaemonControlStartRequest {
      * @maximum 300
      */
     timeout?: number;
-    /** Only start if not already running (idempotent mode). If true, checks if instance is running first. Returns already_running field in response. Use this for Hoody Proxy automation. */
+    /** Only start if not already running (idempotent mode). If true, checks if instance is running first. Returns already_running field in response. Use this for the edge proxy automation. */
     if_not_running?: boolean;
 }
 export interface DaemonControlStartResponse {
@@ -13448,11 +13567,10 @@ export interface FilesBackendsConnectSftpRequest {
     key_file_pass?: string;
     /** Raw PEM-encoded private key.
   
-  Note that this should be on a single line with line endings replaced with '\n', eg
+  Note that this should be on a single line, with every line ending (the BEGIN/END
+  header lines included) replaced by the two characters '\n'.
   
-   key_pem = -----BEGIN RSA PRIVATE KEY-----\n<your PEM-encoded private key>\n-----END RSA PRIVATE KEY-----
-  
-  This will generate the single line correctly:
+  This command generates the single line correctly:
   
    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
   
@@ -16381,6 +16499,7 @@ export interface AppExecutionPreflightResponse {
         recommended_mode: RecommendedMode;
         terminal_request_preview?: TerminalRequestPreview;
         redirect_target?: string;
+        handoff?: RunHandoff;
         missing_requirements: MissingRequirement[];
         warnings: WarningEntry[];
         effective_policy: EffectivePolicy;
@@ -16411,6 +16530,8 @@ export interface AppRunAppGetResponse {
     terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
+    handoff?: RunHandoff;
+    warnings?: WarningEntry[];
     statusCode: number;
     message: string;
     data: unknown;
@@ -16433,6 +16554,8 @@ export interface AppRunAppPostResponse {
     terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
+    handoff?: RunHandoff;
+    warnings?: WarningEntry[];
     statusCode: number;
     message: string;
     data: unknown;
@@ -16454,6 +16577,8 @@ export interface AppExecutionRunPathBasedResponse {
     terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
+    handoff?: RunHandoff;
+    warnings?: WarningEntry[];
     statusCode: number;
     message: string;
     data: unknown;
@@ -16475,6 +16600,8 @@ export interface AppExecutionRunTerminalAnchoredResponse {
     terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
+    handoff?: RunHandoff;
+    warnings?: WarningEntry[];
     statusCode: number;
     message: string;
     data: unknown;
@@ -16675,6 +16802,8 @@ export interface AppRecipesRunResponse {
     terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
+    handoff?: RunHandoff;
+    warnings?: WarningEntry[];
     statusCode: number;
     message: string;
     data: unknown;
@@ -19726,7 +19855,7 @@ export interface def_16 {
     };
 }
 /**
- * Standardized health response (9-field contract shared across all hoody-kit services).
+ * Standardized health response (9-field contract shared across all kit services).
  */
 export interface HealthCheck {
     /** Literal 'ok' when the service is healthy. */
@@ -20320,7 +20449,7 @@ export interface ProgramInput {
     };
     /** Parameter name for passing port (e.g., "--port", "-p") */
     port_param?: string;
-    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by Hoody Proxy via ensure-started endpoint. Cannot be combined with boot:true. */
+    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by the edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
     lazy_load?: boolean;
     /** X11 DISPLAY number for GUI programs. Accepts both "1" and ":1" formats (auto-prepends ":" if missing). Sets the DISPLAY environment variable for the program. */
     display?: string | null;
@@ -21466,6 +21595,7 @@ export interface PreflightResponse {
         recommended_mode: RecommendedMode;
         terminal_request_preview?: TerminalRequestPreview;
         redirect_target?: string;
+        handoff?: RunHandoff;
         missing_requirements: MissingRequirement[];
         warnings: WarningEntry[];
         effective_policy: EffectivePolicy;
@@ -21922,7 +22052,7 @@ export interface Program {
     };
     /** Parameter name to pass port to command (used with port_range) */
     port_param?: string;
-    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by Hoody Proxy via ensure-started endpoint. Cannot be combined with boot:true. */
+    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by the edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
     lazy_load?: boolean;
     /** X11 DISPLAY number for GUI programs. Accepts both "1" and ":1" formats (auto-prepends ":" if missing). Sets the DISPLAY environment variable for the program. */
     display?: string | null;
@@ -22311,10 +22441,6 @@ export interface MissingRequirement {
     message: string;
     resolution?: string;
 }
-export interface WarningEntry {
-    code: string;
-    message: string;
-}
 export interface EffectivePolicy {
     require_verified: boolean;
     require_integrity: boolean;
@@ -22671,6 +22797,8 @@ export interface RunResponse {
     terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
+    handoff?: RunHandoff;
+    warnings?: WarningEntry[];
     statusCode: number;
     message: string;
     data: unknown;
@@ -22862,8 +22990,29 @@ export interface TerminalExecuteResponse {
     data: {
         status: number;
         ok: boolean;
-        json: Record<string, unknown>;
+        body_text?: string;
+        json: Record<string, unknown> | null;
     };
+}
+/**
+ * Where the selected app appears (scheduled) or will appear (preview).
+ */
+export interface RunHandoff {
+    state: HandoffState;
+    terminal_id: number;
+    display: string;
+    /** Live display page URL (present only when state=scheduled) */
+    display_url?: string;
+    /** Live terminal viewer URL (present only when state=scheduled) */
+    terminal_url?: string;
+    /** Predicted display page URL (present only when state=preview) */
+    predicted_display_url?: string;
+    /** Predicted terminal viewer URL (present only when state=preview) */
+    predicted_terminal_url?: string;
+}
+export interface WarningEntry {
+    code: string;
+    message: string;
 }
 /**
  * Target app runtime OS (not the host OS). Determines which candidates are eligible.
@@ -22940,6 +23089,13 @@ export interface CandidateProvenance {
     verification?: VerificationEvidence;
     provider_notes?: string[];
 }
+/**
+ * Liveness of the display/terminal handoff:
+- preview: nothing executed; predicted_* URLs show where the app WILL appear
+- scheduled: delegated execution succeeded; live display_url/terminal_url
+- failed: delegation was attempted and failed; no URL is asserted
+ */
+export type HandoffState = "preview" | "scheduled" | "failed";
 /**
  * Structured execution plan mode.
  */

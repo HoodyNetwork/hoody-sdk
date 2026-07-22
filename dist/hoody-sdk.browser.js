@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.2
+ * Hoody SDK v1.0.0-beta.3
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -21196,6 +21196,112 @@ var HoodySDK = (() => {
       }
       return this.http.get(requestUrl, requestData);
     }
+    /**
+     * Get live runtime info for a rented server or subserver
+     *
+     * Live cpu/mem/disk usage for a rented physical server (whole-box exclusive) or a subserver slice. Served from a short-TTL cache so it can be polled frequently. First-party JWT only. Physical scope requires the server to have no subservers; a shared/system host returns 409. Subserver scope may be disabled on this deployment.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async getRentalRuntime(id, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (id === void 0 || id === null) {
+        throw new ValidationError("id is required", "id");
+      }
+      if (id !== void 0 && id !== null) {
+        if (typeof id === "string" && !new RegExp("^[0-9a-f]{24}$").test(id)) {
+          throw new ValidationError("id must match pattern: ^[0-9a-f]{24}$", "id");
+        }
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/rentals/{id}/runtime`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      const requestData = {};
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+     * Get live runtime info (alias for /rentals/:id/runtime)
+     *
+     * Alias for GET /rentals/:id/runtime.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async getServerRuntime(id, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (id === void 0 || id === null) {
+        throw new ValidationError("id is required", "id");
+      }
+      if (id !== void 0 && id !== null) {
+        if (typeof id === "string" && !new RegExp("^[0-9a-f]{24}$").test(id)) {
+          throw new ValidationError("id must match pattern: ^[0-9a-f]{24}$", "id");
+        }
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/servers/{id}/runtime`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      const requestData = {};
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
   };
 
   // generated/api/server-rental.service.ts
@@ -30762,7 +30868,7 @@ var HoodySDK = (() => {
     /**
      * Start a program or port instance
      *
-     * Starts the program immediately via supervisorctl. For port-range programs, the "port" parameter is required to specify which instance to start. Optional "wait" parameter blocks until program reaches RUNNING state. Optional "if_not_running" parameter makes the operation idempotent (safe to call multiple times). Use if_not_running for Hoody Proxy automation. Program must be enabled.
+     * Starts the program immediately via supervisorctl. For port-range programs, the "port" parameter is required to specify which instance to start. Optional "wait" parameter blocks until program reaches RUNNING state. Optional "if_not_running" parameter makes the operation idempotent (safe to call multiple times). Use if_not_running for the edge proxy automation. Program must be enabled.
      */
     async start(id, data, _templateVars, requestOptions) {
       if (id === void 0 || id === null) {
@@ -83662,7 +83768,7 @@ var HoodySDK = (() => {
     /**
      * Resume a failed or cancelled workflow run.
      *
-     * Resumes a terminal (failed/cancelled) run in a live session (workflows.resume, Phase 12): committed steps replay from the run's recorded journal and execution continues live from the first incomplete step. Body: {"session_id"}. The resuming session must match the run's realm, owner, working directory, and container binding; refusals return an actionable message.
+     * Resumes a terminal (failed/cancelled) run in a live session (workflows.resume): committed steps replay from the run's recorded journal and execution continues live from the first incomplete step. Body: {"session_id"}. The resuming session must match the run's realm, owner, working directory, and container binding; refusals return an actionable message.
      */
     async resumeWorkflowRun(run_id, data, options, _templateVars) {
       const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
