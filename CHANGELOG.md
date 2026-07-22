@@ -4,6 +4,17 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.3] — 2026-07-21
+
+### Changed
+
+- **Documentation overhaul.** A rewritten `AGENTS.md` build guide (now shipped in the package), a clearer README with a hands-on examples tour (spawn and drive a cloud browser, mount cloud storage and local drives both ways, drive the built-in agent, and serve any port over HTTPS), per-namespace descriptions in the [namespace index](./docs/reference/namespaces/_INDEX.md), and a plain-English `hoody chat` privacy guide.
+- Licensing and ecosystem notes added to `LICENSE`.
+
+### Fixed
+
+- Reference documentation now renders generic type parameters correctly (e.g. `ApiResponse<unknown>`).
+
 ## [1.0.0-beta.2] — 2026-07-21
 
 ### Added
