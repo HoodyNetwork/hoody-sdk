@@ -1,3 +1,37 @@
+================================================================================
+  Hoody SDK — Licensing & the Hoody ecosystem
+================================================================================
+
+This package — the Hoody SDK (`hoody-sdk`) and the bundled `hoody` CLI — is
+licensed under the Apache License, Version 2.0. Its full text follows below.
+
+How the pieces are licensed:
+
+  * hoody-sdk (this package) .......... Apache-2.0 (this file).
+  * hoody-agent (the in-container AI
+    agent that runs inside a Hoody
+    container) ........................ GNU GPL v3, plus an additional grant
+                                        letting Hoody.com run it as part of the
+                                        hosted platform.
+  * The wider "Hoody ecosystem" ....... Proprietary / not open source today —
+                                        the server-side platform that powers
+                                        Hoody Computers, being opened progressively.
+
+About this SDK
+--------------
+This SDK is a typed client for the Hoody platform — "Hoody Computers", the
+on-demand Linux containers that Hoody runs and exposes as HTTP APIs (terminal,
+files, browser, GUI display, an AI agent, databases, cron, tunnels, and more).
+
+It is meant to be used WITH Hoody, not as a standalone library: it makes calls
+to Hoody's servers, so without a Hoody account and containers to talk to there
+is nothing for it to drive. Learn more, or spin up a machine, at https://hoody.com.
+
+The Apache-2.0 terms that govern your use of THIS package begin here.
+
+================================================================================
+
+
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/

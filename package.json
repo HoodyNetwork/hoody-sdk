@@ -1,6 +1,6 @@
 {
   "name": "hoody-sdk",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "Official Hoody Platform SDK - unified access to all Hoody APIs",
   "license": "Apache-2.0",
   "author": "Hoody Platform",
@@ -131,14 +131,17 @@
       "default": "./dist-ts/lib/update-check/index.js"
     },
     "./openapi.json": "./generated/openapi.public.json",
+    "./openapi.yaml": "./generated/openapi.public.yaml",
     "./package.json": "./package.json"
   },
   "files": [
     "generated",
     "!generated/docs",
     "!generated/*.json",
-    "!generated/openapi.yaml",
+    "!generated/**/*.yaml",
+    "!generated/**/*.yml",
     "generated/openapi.public.json",
+    "generated/openapi.public.yaml",
     "lib",
     "!lib/chat/system-prompt.txt",
     "dist",
@@ -160,7 +163,8 @@
     "!**/*.swp",
     "!**/.DS_Store",
     "!**/*.phase*-backup",
-    "!**/.gitignore"
+    "!**/.gitignore",
+    "AGENTS.md"
   ],
   "repository": {
     "type": "git",
