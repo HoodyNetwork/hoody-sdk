@@ -1,0 +1,1 @@
+import{m as a,n as b,o as c,p as d,q as e}from"./index-kehn617h.js";import"./index-ez9f88t0.js";import"./index-tm9rkke9.js";import"./index-q3adgcxs.js";export{c as readAcceptFile,e as confirmAcceptance,d as checkAcceptance,b as acceptFilePath,a as BUILTIN_ACCEPTED_ORIGINS};
