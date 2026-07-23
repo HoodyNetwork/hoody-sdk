@@ -1,4 +1,4 @@
-// SHA256: f10a41b269f14873dcccbb257e85ca4c3003ac4f44cb6ec47432513747ffd00a
+// SHA256: 13239e331309c4cfe8b26f8251c201bfd30ef271eb6c81ef1eba9c8ba0b33f47
 /**
  * CLI reference for `hoody chat` retrieval.
  *
@@ -2124,7 +2124,7 @@ export const CLI_REFERENCE: CliReference = {
             "--permissions-containers-actions-exec",
             "--permissions-containers-actions-logs",
             "--permissions-containers-features-ai",
-            "--permissions-containers-features-kit",
+            "--permissions-containers-features-hoody-kit",
             "--permissions-containers-features-snapshots",
             "--permissions-containers-features-networking",
             "--permissions-projects-create",
@@ -2345,7 +2345,7 @@ export const CLI_REFERENCE: CliReference = {
             "--permissions-containers-actions-exec",
             "--permissions-containers-actions-logs",
             "--permissions-containers-features-ai",
-            "--permissions-containers-features-kit",
+            "--permissions-containers-features-hoody-kit",
             "--permissions-containers-features-snapshots",
             "--permissions-containers-features-networking",
             "--permissions-projects-create",
@@ -2833,7 +2833,7 @@ export const CLI_REFERENCE: CliReference = {
             "--environment-vars",
             "--ssh-public-key",
             "--comment",
-            "--kit",
+            "--hoody-kit",
             "--dev-kit",
             "--autostart",
             "--ramdisk",
@@ -3551,7 +3551,7 @@ export const CLI_REFERENCE: CliReference = {
             "--log-max-bytes",
             "--log-backups",
             "--environment",
-            "--kit",
+            "--hoody-kit",
             "--port-range-start",
             "--port-range-end",
             "--port-param",
@@ -3599,7 +3599,7 @@ export const CLI_REFERENCE: CliReference = {
             "--log-max-bytes",
             "--log-backups",
             "--environment",
-            "--kit",
+            "--hoody-kit",
             "--port-range-start",
             "--port-range-end",
             "--port-param",
