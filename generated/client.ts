@@ -213,11 +213,12 @@ export class HoodyClient {
 
   public readonly terminal: terminal.TerminalService & {
     health: terminal.HealthService;
-    execution: terminal.TerminalExecutionService;
     sessions: terminal.TerminalSessionsService;
+    execution: terminal.TerminalExecutionService;
     web: terminal.WebInterfaceService;
     docs: terminal.ApiDocumentationService;
     system: terminal.SystemMonitoringService;
+    terminalState: terminal.TerminalStateService;
     terminalAutomation: terminal.TerminalAutomationService;
     terminalDragAndDrop: terminal.TerminalDragAndDropService;
   };
@@ -494,11 +495,12 @@ export class HoodyClient {
 
     this.terminal = Object.assign(new terminal.TerminalService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')), {
       health: new terminal.HealthService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
-      execution: new terminal.TerminalExecutionService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       sessions: new terminal.TerminalSessionsService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
+      execution: new terminal.TerminalExecutionService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       web: new terminal.WebInterfaceService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       docs: new terminal.ApiDocumentationService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       system: new terminal.SystemMonitoringService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
+      terminalState: new terminal.TerminalStateService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       terminalAutomation: new terminal.TerminalAutomationService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       terminalDragAndDrop: new terminal.TerminalDragAndDropService(this.http, 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
     });
