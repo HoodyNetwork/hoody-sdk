@@ -231,11 +231,12 @@ export class HoodyClient {
         };
         this.terminal = Object.assign(new terminal.TerminalService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')), {
             health: new terminal.HealthService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
-            execution: new terminal.TerminalExecutionService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             sessions: new terminal.TerminalSessionsService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
+            execution: new terminal.TerminalExecutionService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             web: new terminal.WebInterfaceService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             docs: new terminal.ApiDocumentationService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             system: new terminal.SystemMonitoringService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
+            terminalState: new terminal.TerminalStateService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             terminalAutomation: new terminal.TerminalAutomationService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             terminalDragAndDrop: new terminal.TerminalDragAndDropService(this.http, 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
         });

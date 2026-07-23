@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.3
+ * Hoody SDK v1.0.0-beta.4
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -19528,6 +19528,94 @@ var HoodySDK = (() => {
       }
       return this.http.post(requestUrl, requestData);
     }
+    /**
+     * Get GitHub connection bonus status
+     *
+     * Status of the one-time GitHub connection bonus for the authenticated user. Reads local state only — never contacts GitHub. When the offer is disabled the response carries only { enabled: false } (plus the caller's own historical claim, if any).
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async getGithubBonus(options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      let requestUrl = this.buildRealmUrl(`/api/v1/wallet/github-bonus`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+     * Claim the GitHub connection bonus
+     *
+     * Grants the one-time GitHub connection bonus to the authenticated user when eligible. Idempotent: a second call returns already_claimed and credits nothing. Always 200 — the outcome is in data.result.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async claimGithubBonus(options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      let requestUrl = this.buildRealmUrl(`/api/v1/wallet/github-bonus/claim`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
   };
 
   // generated/api/wallet.service.ts
@@ -30868,7 +30956,7 @@ var HoodySDK = (() => {
     /**
      * Start a program or port instance
      *
-     * Starts the program immediately via supervisorctl. For port-range programs, the "port" parameter is required to specify which instance to start. Optional "wait" parameter blocks until program reaches RUNNING state. Optional "if_not_running" parameter makes the operation idempotent (safe to call multiple times). Use if_not_running for the edge proxy automation. Program must be enabled.
+     * Starts the program immediately via supervisorctl. For port-range programs, the "port" parameter is required to specify which instance to start. Optional "wait" parameter blocks until program reaches RUNNING state. Optional "if_not_running" parameter makes the operation idempotent (safe to call multiple times). Use if_not_running for edge proxy automation. Program must be enabled.
      */
     async start(id, data, _templateVars, requestOptions) {
       if (id === void 0 || id === null) {
@@ -52268,6 +52356,7 @@ var HoodySDK = (() => {
     TerminalExecutionService: () => TerminalExecutionService,
     TerminalService: () => TerminalService,
     TerminalSessionsService: () => TerminalSessionsService,
+    TerminalStateService: () => TerminalStateService,
     WebInterfaceService: () => WebInterfaceService
   });
 
@@ -52397,321 +52486,6 @@ var HoodySDK = (() => {
 
   // generated/terminal/health.service.ts
   var HealthService9 = class extends HealthServiceBase9 {
-    // Add custom properties here
-  };
-
-  // generated/terminal/terminal-execution.service.generated.ts
-  var TerminalExecutionServiceBase = class {
-    constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
-      this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
-      __publicField(this, "http");
-      __publicField(this, "_kitNamespace");
-      __publicField(this, "urlTemplatePattern");
-      this._kitNamespace = namespace;
-      this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
-      this.urlTemplatePattern = urlTemplatePattern;
-    }
-    /**
-     * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
-     */
-    _wrapHttpClient(http, ns) {
-      return new Proxy(http, {
-        get: (target, prop) => {
-          const val = target[prop];
-          if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
-            return (...args) => {
-              const dataIndex = prop === "request" ? 2 : 1;
-              const data = args[dataIndex] ? { ...args[dataIndex] } : {};
-              data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
-              args[dataIndex] = data;
-              return val.apply(target, args);
-            };
-          }
-          return typeof val === "function" ? val.bind(target) : val;
-        }
-      });
-    }
-    /**
-     * Build URL with template variables or fallback to baseURL
-     *
-     * @param path - API endpoint path
-     * @param variables - Method-level template variables to override defaults
-     * @returns Full URL (template mode) or path only (baseURL mode)
-     */
-    buildTemplateUrl(path, variables) {
-      var _a;
-      const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-terminal-{serviceIndex}.{server}.containers.hoody.com";
-      const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
-      const hasVariables = Object.keys(allVariables).length > 0;
-      if (!hasVariables) {
-        return path;
-      }
-      let url2 = urlPattern;
-      for (const [key, value2] of Object.entries(allVariables)) {
-        if (value2 !== void 0) {
-          url2 = url2.replace(`{${key}}`, () => String(value2));
-        }
-      }
-      if (url2.includes("{") && url2.includes("}")) {
-        const processRef = globalThis.process;
-        if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
-          console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
-          console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
-        }
-        return path;
-      }
-      return `${url2}${path}`;
-    }
-    /**
-     * Read nested values from objects using dotted paths.
-     * Example: "data.items" or "data.pagination.total"
-     */
-    getPathValue(input, path) {
-      if (!path) return void 0;
-      const segments = path.split(".").filter(Boolean);
-      let current = input;
-      for (const segment of segments) {
-        if (current === void 0 || current === null) {
-          return void 0;
-        }
-        if (Array.isArray(current) && segment === "length") {
-          current = current.length;
-          continue;
-        }
-        if (typeof current !== "object") {
-          return void 0;
-        }
-        current = current[segment];
-      }
-      return current;
-    }
-    /**
-     * Execute command in terminal session
-     *
-     * Execute a command in the specified terminal session. Supports both local bash and remote SSH sessions. The terminal type is determined by URL parameters on first use. By default, if a DISPLAY is configured on the session, the endpoint waits for the Hoody Display to be ready before executing the command. This can be disabled with skip_display_wait=true. Use ephemeral=true for a guaranteed-unique isolated PTY session with no display/dbus and automatic cleanup — ideal for programmatic command execution (like child_process.exec). Returns immediately with a command_id that can be used to poll for results.
-     */
-    async execute(data, options, _templateVars) {
-      const { terminal_id, ephemeral, defer_pid, defer_start_time_ticks, defer_timeout_ms, defer_poll_ms, reset, cwd, cwd_auto_create, shell, user, cmd, env, skip_display_wait, display_wait_timeout, display, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, socks5_user, ssh_key, socks5_pass, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-      if (data === void 0 || data === null) {
-        throw new ValidationError("data is required", "data");
-      }
-      if (terminal_id !== void 0 && terminal_id !== null) {
-      }
-      if (ephemeral !== void 0 && ephemeral !== null) {
-      }
-      if (defer_pid !== void 0 && defer_pid !== null) {
-        if (!Number.isFinite(defer_pid) || !Number.isInteger(defer_pid)) {
-          throw new ValidationError("defer_pid must be an integer", "defer_pid");
-        }
-      }
-      if (defer_start_time_ticks !== void 0 && defer_start_time_ticks !== null) {
-      }
-      if (defer_timeout_ms !== void 0 && defer_timeout_ms !== null) {
-        if (!Number.isFinite(defer_timeout_ms) || !Number.isInteger(defer_timeout_ms)) {
-          throw new ValidationError("defer_timeout_ms must be an integer", "defer_timeout_ms");
-        }
-      }
-      if (defer_poll_ms !== void 0 && defer_poll_ms !== null) {
-        if (!Number.isFinite(defer_poll_ms) || !Number.isInteger(defer_poll_ms)) {
-          throw new ValidationError("defer_poll_ms must be an integer", "defer_poll_ms");
-        }
-      }
-      if (reset !== void 0 && reset !== null) {
-      }
-      if (cwd !== void 0 && cwd !== null) {
-      }
-      if (cwd_auto_create !== void 0 && cwd_auto_create !== null) {
-      }
-      if (shell !== void 0 && shell !== null) {
-      }
-      if (user !== void 0 && user !== null) {
-      }
-      if (cmd !== void 0 && cmd !== null) {
-      }
-      if (env !== void 0 && env !== null) {
-      }
-      if (skip_display_wait !== void 0 && skip_display_wait !== null) {
-      }
-      if (display_wait_timeout !== void 0 && display_wait_timeout !== null) {
-        if (!Number.isFinite(display_wait_timeout) || !Number.isInteger(display_wait_timeout)) {
-          throw new ValidationError("display_wait_timeout must be an integer", "display_wait_timeout");
-        }
-      }
-      if (display !== void 0 && display !== null) {
-      }
-      if (ssh_host !== void 0 && ssh_host !== null) {
-      }
-      if (ssh_user !== void 0 && ssh_user !== null) {
-      }
-      if (ssh_port !== void 0 && ssh_port !== null) {
-      }
-      if (ssh_password !== void 0 && ssh_password !== null) {
-      }
-      if (socks5_host !== void 0 && socks5_host !== null) {
-      }
-      if (socks5_port !== void 0 && socks5_port !== null) {
-      }
-      if (socks5_user !== void 0 && socks5_user !== null) {
-      }
-      if (ssh_key !== void 0 && ssh_key !== null) {
-      }
-      if (socks5_pass !== void 0 && socks5_pass !== null) {
-      }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/execute`, _templateVars || {});
-      const requestData = {};
-      requestData.body = data;
-      requestData.query = {};
-      if (terminal_id !== void 0) {
-        requestData.query["terminal_id"] = terminal_id;
-      }
-      if (ephemeral !== void 0) {
-        requestData.query["ephemeral"] = ephemeral;
-      }
-      if (defer_pid !== void 0) {
-        requestData.query["defer_pid"] = defer_pid;
-      }
-      if (defer_start_time_ticks !== void 0) {
-        requestData.query["defer_start_time_ticks"] = defer_start_time_ticks;
-      }
-      if (defer_timeout_ms !== void 0) {
-        requestData.query["defer_timeout_ms"] = defer_timeout_ms;
-      }
-      if (defer_poll_ms !== void 0) {
-        requestData.query["defer_poll_ms"] = defer_poll_ms;
-      }
-      if (reset !== void 0) {
-        requestData.query["reset"] = reset;
-      }
-      if (cwd !== void 0) {
-        requestData.query["cwd"] = cwd;
-      }
-      if (cwd_auto_create !== void 0) {
-        requestData.query["cwd_auto_create"] = cwd_auto_create;
-      }
-      if (shell !== void 0) {
-        requestData.query["shell"] = shell;
-      }
-      if (user !== void 0) {
-        requestData.query["user"] = user;
-      }
-      if (cmd !== void 0) {
-        requestData.query["cmd"] = cmd;
-      }
-      if (env !== void 0) {
-        requestData.query["env"] = env;
-      }
-      if (skip_display_wait !== void 0) {
-        requestData.query["skip_display_wait"] = skip_display_wait;
-      }
-      if (display_wait_timeout !== void 0) {
-        requestData.query["display_wait_timeout"] = display_wait_timeout;
-      }
-      if (display !== void 0) {
-        requestData.query["display"] = display;
-      }
-      if (ssh_host !== void 0) {
-        requestData.query["ssh_host"] = ssh_host;
-      }
-      if (ssh_user !== void 0) {
-        requestData.query["ssh_user"] = ssh_user;
-      }
-      if (ssh_port !== void 0) {
-        requestData.query["ssh_port"] = ssh_port;
-      }
-      if (ssh_password !== void 0) {
-        requestData.query["ssh_password"] = ssh_password;
-      }
-      if (socks5_host !== void 0) {
-        requestData.query["socks5_host"] = socks5_host;
-      }
-      if (socks5_port !== void 0) {
-        requestData.query["socks5_port"] = socks5_port;
-      }
-      if (socks5_user !== void 0) {
-        requestData.query["socks5_user"] = socks5_user;
-      }
-      if (ssh_key !== void 0) {
-        requestData.query["ssh_key"] = ssh_key;
-      }
-      if (socks5_pass !== void 0) {
-        requestData.query["socks5_pass"] = socks5_pass;
-      }
-      if (signal) {
-        requestData.signal = signal;
-      }
-      if (timeoutMs !== void 0) {
-        requestData.timeoutMs = timeoutMs;
-      }
-      if (retries !== void 0) {
-        requestData.retries = retries;
-      }
-      if (retryDelayMs !== void 0) {
-        requestData.retryDelayMs = retryDelayMs;
-      }
-      if (retryOnStatuses !== void 0) {
-        requestData.retryOnStatuses = retryOnStatuses;
-      }
-      if (middlewareContext !== void 0) {
-        requestData.middlewareContext = middlewareContext;
-      }
-      if (authRetry !== void 0) {
-        requestData.authRetry = authRetry;
-      }
-      if (rawResponse !== void 0) {
-        requestData.rawResponse = rawResponse;
-      }
-      if (responseType !== void 0) {
-        requestData.responseType = responseType;
-      }
-      return this.http.post(requestUrl, requestData);
-    }
-    /**
-     * Get command result
-     *
-     * Retrieve the current or final results of a command execution. Can be called while command is running or after completion.
-     */
-    async getResult(command_id, _templateVars, requestOptions) {
-      if (command_id === void 0 || command_id === null) {
-        throw new ValidationError("command_id is required", "command_id");
-      }
-      if (command_id !== void 0 && command_id !== null) {
-      }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/result/{command_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{command_id}", () => encodeURIComponent(String(command_id)));
-      const requestData = {};
-      if (requestOptions == null ? void 0 : requestOptions.signal) {
-        requestData.signal = requestOptions.signal;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
-        requestData.timeoutMs = requestOptions.timeoutMs;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
-        requestData.retries = requestOptions.retries;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
-        requestData.retryDelayMs = requestOptions.retryDelayMs;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
-        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
-        requestData.middlewareContext = requestOptions.middlewareContext;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
-        requestData.authRetry = requestOptions.authRetry;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
-        requestData.rawResponse = requestOptions.rawResponse;
-      }
-      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
-        requestData.responseType = requestOptions.responseType;
-      }
-      return this.http.get(requestUrl, requestData);
-    }
-  };
-
-  // generated/terminal/terminal-execution.service.ts
-  var TerminalExecutionService = class extends TerminalExecutionServiceBase {
     // Add custom properties here
   };
 
@@ -53343,6 +53117,165 @@ var HoodySDK = (() => {
       return current;
     }
     /**
+     * WebSocket terminal connection
+     *
+     * Establishes WebSocket connection for real-time bidirectional terminal I/O. Multiple clients can share the same terminal session using the same terminal_id. The protocol uses efficient binary framing where the first byte indicates message type (0-4 for commands, specific bytes for data). Supports session sharing, read-only mode, SSH connections, PID attachment, and comprehensive terminal features.
+     */
+    async connectWebSocket(options, _templateVars) {
+      const { terminal_id, readonly, cwd, cwd_auto_create, shell, user, cmd, env, display, pid, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (terminal_id !== void 0 && terminal_id !== null) {
+      }
+      if (readonly !== void 0 && readonly !== null) {
+      }
+      if (cwd !== void 0 && cwd !== null) {
+      }
+      if (cwd_auto_create !== void 0 && cwd_auto_create !== null) {
+      }
+      if (shell !== void 0 && shell !== null) {
+      }
+      if (user !== void 0 && user !== null) {
+      }
+      if (cmd !== void 0 && cmd !== null) {
+      }
+      if (env !== void 0 && env !== null) {
+      }
+      if (display !== void 0 && display !== null) {
+      }
+      if (pid !== void 0 && pid !== null) {
+        if (!Number.isFinite(pid) || !Number.isInteger(pid)) {
+          throw new ValidationError("pid must be an integer", "pid");
+        }
+      }
+      if (ssh_host !== void 0 && ssh_host !== null) {
+      }
+      if (ssh_user !== void 0 && ssh_user !== null) {
+      }
+      if (ssh_port !== void 0 && ssh_port !== null) {
+      }
+      if (ssh_password !== void 0 && ssh_password !== null) {
+      }
+      if (socks5_host !== void 0 && socks5_host !== null) {
+      }
+      if (socks5_port !== void 0 && socks5_port !== null) {
+      }
+      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/ws`, _templateVars || {});
+      const requestData = {};
+      requestData.query = {};
+      if (terminal_id !== void 0) {
+        requestData.query["terminal_id"] = terminal_id;
+      }
+      if (readonly !== void 0) {
+        requestData.query["readonly"] = readonly;
+      }
+      if (cwd !== void 0) {
+        requestData.query["cwd"] = cwd;
+      }
+      if (cwd_auto_create !== void 0) {
+        requestData.query["cwd_auto_create"] = cwd_auto_create;
+      }
+      if (shell !== void 0) {
+        requestData.query["shell"] = shell;
+      }
+      if (user !== void 0) {
+        requestData.query["user"] = user;
+      }
+      if (cmd !== void 0) {
+        requestData.query["cmd"] = cmd;
+      }
+      if (env !== void 0) {
+        requestData.query["env"] = env;
+      }
+      if (display !== void 0) {
+        requestData.query["display"] = display;
+      }
+      if (pid !== void 0) {
+        requestData.query["pid"] = pid;
+      }
+      if (ssh_host !== void 0) {
+        requestData.query["ssh_host"] = ssh_host;
+      }
+      if (ssh_user !== void 0) {
+        requestData.query["ssh_user"] = ssh_user;
+      }
+      if (ssh_port !== void 0) {
+        requestData.query["ssh_port"] = ssh_port;
+      }
+      if (ssh_password !== void 0) {
+        requestData.query["ssh_password"] = ssh_password;
+      }
+      if (socks5_host !== void 0) {
+        requestData.query["socks5_host"] = socks5_host;
+      }
+      if (socks5_port !== void 0) {
+        requestData.query["socks5_port"] = socks5_port;
+      }
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      const baseUrl = this.http.getBaseURL();
+      const __isAbsolute = typeof requestUrl === "string" && /^https?:\/\//i.test(requestUrl);
+      const wsHost = (__isAbsolute ? requestUrl : baseUrl).replace(/^http/, "ws");
+      let __isExternalKit = false;
+      if (__isAbsolute) {
+        const __httpAny = this.http;
+        if (typeof __httpAny.isSameOriginAndPath === "function" && baseUrl) {
+          try {
+            __isExternalKit = !__httpAny.isSameOriginAndPath(requestUrl, baseUrl);
+          } catch {
+            __isExternalKit = true;
+          }
+        } else if (baseUrl) {
+          try {
+            const __reqOrigin = new URL(requestUrl).origin;
+            const __baseOrigin = new URL(baseUrl).origin;
+            __isExternalKit = __reqOrigin !== __baseOrigin;
+          } catch {
+            __isExternalKit = true;
+          }
+        } else {
+          __isExternalKit = true;
+        }
+      }
+      const socketIoPath = "/api/v1/terminal/ws".replace(/\/stream$/, "");
+      const wsOptions = { path: socketIoPath };
+      if (requestData.query && Object.keys(requestData.query).length > 0) {
+        wsOptions.query = { ...requestData.query };
+      }
+      const __httpCfg = this.http.config;
+      if (!__isExternalKit && __httpCfg && typeof __httpCfg.token === "string" && __httpCfg.token.length > 0) {
+        wsOptions.auth = { token: __httpCfg.token };
+      }
+      if (requestData.headers && Object.keys(requestData.headers).length > 0) {
+        wsOptions.headers = { ...requestData.headers };
+      }
+      const client = new TerminalConnectTerminalWebSocketWebSocket(wsHost, wsOptions);
+      return client;
+    }
+    /**
      * Create a terminal session
      *
      * Create a new terminal session or return success if it already exists. By default, when a Hoody Display is configured, the endpoint blocks until the display TCP port (4000 + display_number) is accepting connections. This ensures the caller can immediately use the display after the response.
@@ -53863,16 +53796,130 @@ var HoodySDK = (() => {
         return items;
       })();
     }
+  };
+
+  // generated/terminal/terminal-sessions.service.ts
+  var TerminalSessionsService = class extends TerminalSessionsServiceBase {
+    // Add custom properties here
+  };
+
+  // generated/terminal/terminal-execution.service.generated.ts
+  var TerminalExecutionServiceBase = class {
+    constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
+      this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
+      __publicField(this, "http");
+      __publicField(this, "_kitNamespace");
+      __publicField(this, "urlTemplatePattern");
+      this._kitNamespace = namespace;
+      this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
+      this.urlTemplatePattern = urlTemplatePattern;
+    }
     /**
-     * WebSocket terminal connection
-     *
-     * Establishes WebSocket connection for real-time bidirectional terminal I/O. Multiple clients can share the same terminal session using the same terminal_id. The protocol uses efficient binary framing where the first byte indicates message type (0-4 for commands, specific bytes for data). Supports session sharing, read-only mode, SSH connections, PID attachment, and comprehensive terminal features.
+     * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
      */
-    async connectWebSocket(options, _templateVars) {
-      const { terminal_id, readonly, cwd, cwd_auto_create, shell, user, cmd, env, display, pid, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    _wrapHttpClient(http, ns) {
+      return new Proxy(http, {
+        get: (target, prop) => {
+          const val = target[prop];
+          if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
+            return (...args) => {
+              const dataIndex = prop === "request" ? 2 : 1;
+              const data = args[dataIndex] ? { ...args[dataIndex] } : {};
+              data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
+              args[dataIndex] = data;
+              return val.apply(target, args);
+            };
+          }
+          return typeof val === "function" ? val.bind(target) : val;
+        }
+      });
+    }
+    /**
+     * Build URL with template variables or fallback to baseURL
+     *
+     * @param path - API endpoint path
+     * @param variables - Method-level template variables to override defaults
+     * @returns Full URL (template mode) or path only (baseURL mode)
+     */
+    buildTemplateUrl(path, variables) {
+      var _a;
+      const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-terminal-{serviceIndex}.{server}.containers.hoody.com";
+      const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
+      const hasVariables = Object.keys(allVariables).length > 0;
+      if (!hasVariables) {
+        return path;
+      }
+      let url2 = urlPattern;
+      for (const [key, value2] of Object.entries(allVariables)) {
+        if (value2 !== void 0) {
+          url2 = url2.replace(`{${key}}`, () => String(value2));
+        }
+      }
+      if (url2.includes("{") && url2.includes("}")) {
+        const processRef = globalThis.process;
+        if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
+          console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
+          console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
+        }
+        return path;
+      }
+      return `${url2}${path}`;
+    }
+    /**
+     * Read nested values from objects using dotted paths.
+     * Example: "data.items" or "data.pagination.total"
+     */
+    getPathValue(input, path) {
+      if (!path) return void 0;
+      const segments = path.split(".").filter(Boolean);
+      let current = input;
+      for (const segment of segments) {
+        if (current === void 0 || current === null) {
+          return void 0;
+        }
+        if (Array.isArray(current) && segment === "length") {
+          current = current.length;
+          continue;
+        }
+        if (typeof current !== "object") {
+          return void 0;
+        }
+        current = current[segment];
+      }
+      return current;
+    }
+    /**
+     * Execute command in terminal session
+     *
+     * Execute a command in the specified terminal session. Supports both local bash and remote SSH sessions. The terminal type is determined by URL parameters on first use. By default, if a DISPLAY is configured on the session, the endpoint waits for the Hoody Display to be ready before executing the command. This can be disabled with skip_display_wait=true. Use ephemeral=true for a guaranteed-unique isolated PTY session with no display/dbus and automatic cleanup — ideal for programmatic command execution (like child_process.exec). Returns immediately with a command_id that can be used to poll for results.
+     */
+    async execute(data, options, _templateVars) {
+      const { terminal_id, ephemeral, defer_pid, defer_start_time_ticks, defer_timeout_ms, defer_poll_ms, reset, cwd, cwd_auto_create, shell, user, cmd, env, skip_display_wait, display_wait_timeout, display, ssh_host, ssh_user, ssh_port, ssh_password, socks5_host, socks5_port, socks5_user, ssh_key, socks5_pass, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
       if (terminal_id !== void 0 && terminal_id !== null) {
       }
-      if (readonly !== void 0 && readonly !== null) {
+      if (ephemeral !== void 0 && ephemeral !== null) {
+      }
+      if (defer_pid !== void 0 && defer_pid !== null) {
+        if (!Number.isFinite(defer_pid) || !Number.isInteger(defer_pid)) {
+          throw new ValidationError("defer_pid must be an integer", "defer_pid");
+        }
+      }
+      if (defer_start_time_ticks !== void 0 && defer_start_time_ticks !== null) {
+      }
+      if (defer_timeout_ms !== void 0 && defer_timeout_ms !== null) {
+        if (!Number.isFinite(defer_timeout_ms) || !Number.isInteger(defer_timeout_ms)) {
+          throw new ValidationError("defer_timeout_ms must be an integer", "defer_timeout_ms");
+        }
+      }
+      if (defer_poll_ms !== void 0 && defer_poll_ms !== null) {
+        if (!Number.isFinite(defer_poll_ms) || !Number.isInteger(defer_poll_ms)) {
+          throw new ValidationError("defer_poll_ms must be an integer", "defer_poll_ms");
+        }
+      }
+      if (reset !== void 0 && reset !== null) {
       }
       if (cwd !== void 0 && cwd !== null) {
       }
@@ -53886,12 +53933,14 @@ var HoodySDK = (() => {
       }
       if (env !== void 0 && env !== null) {
       }
-      if (display !== void 0 && display !== null) {
+      if (skip_display_wait !== void 0 && skip_display_wait !== null) {
       }
-      if (pid !== void 0 && pid !== null) {
-        if (!Number.isFinite(pid) || !Number.isInteger(pid)) {
-          throw new ValidationError("pid must be an integer", "pid");
+      if (display_wait_timeout !== void 0 && display_wait_timeout !== null) {
+        if (!Number.isFinite(display_wait_timeout) || !Number.isInteger(display_wait_timeout)) {
+          throw new ValidationError("display_wait_timeout must be an integer", "display_wait_timeout");
         }
+      }
+      if (display !== void 0 && display !== null) {
       }
       if (ssh_host !== void 0 && ssh_host !== null) {
       }
@@ -53905,14 +53954,36 @@ var HoodySDK = (() => {
       }
       if (socks5_port !== void 0 && socks5_port !== null) {
       }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/ws`, _templateVars || {});
+      if (socks5_user !== void 0 && socks5_user !== null) {
+      }
+      if (ssh_key !== void 0 && ssh_key !== null) {
+      }
+      if (socks5_pass !== void 0 && socks5_pass !== null) {
+      }
+      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/execute`, _templateVars || {});
       const requestData = {};
+      requestData.body = data;
       requestData.query = {};
       if (terminal_id !== void 0) {
         requestData.query["terminal_id"] = terminal_id;
       }
-      if (readonly !== void 0) {
-        requestData.query["readonly"] = readonly;
+      if (ephemeral !== void 0) {
+        requestData.query["ephemeral"] = ephemeral;
+      }
+      if (defer_pid !== void 0) {
+        requestData.query["defer_pid"] = defer_pid;
+      }
+      if (defer_start_time_ticks !== void 0) {
+        requestData.query["defer_start_time_ticks"] = defer_start_time_ticks;
+      }
+      if (defer_timeout_ms !== void 0) {
+        requestData.query["defer_timeout_ms"] = defer_timeout_ms;
+      }
+      if (defer_poll_ms !== void 0) {
+        requestData.query["defer_poll_ms"] = defer_poll_ms;
+      }
+      if (reset !== void 0) {
+        requestData.query["reset"] = reset;
       }
       if (cwd !== void 0) {
         requestData.query["cwd"] = cwd;
@@ -53932,11 +54003,14 @@ var HoodySDK = (() => {
       if (env !== void 0) {
         requestData.query["env"] = env;
       }
+      if (skip_display_wait !== void 0) {
+        requestData.query["skip_display_wait"] = skip_display_wait;
+      }
+      if (display_wait_timeout !== void 0) {
+        requestData.query["display_wait_timeout"] = display_wait_timeout;
+      }
       if (display !== void 0) {
         requestData.query["display"] = display;
-      }
-      if (pid !== void 0) {
-        requestData.query["pid"] = pid;
       }
       if (ssh_host !== void 0) {
         requestData.query["ssh_host"] = ssh_host;
@@ -53955,6 +54029,15 @@ var HoodySDK = (() => {
       }
       if (socks5_port !== void 0) {
         requestData.query["socks5_port"] = socks5_port;
+      }
+      if (socks5_user !== void 0) {
+        requestData.query["socks5_user"] = socks5_user;
+      }
+      if (ssh_key !== void 0) {
+        requestData.query["ssh_key"] = ssh_key;
+      }
+      if (socks5_pass !== void 0) {
+        requestData.query["socks5_pass"] = socks5_pass;
       }
       if (signal) {
         requestData.signal = signal;
@@ -53983,49 +54066,55 @@ var HoodySDK = (() => {
       if (responseType !== void 0) {
         requestData.responseType = responseType;
       }
-      const baseUrl = this.http.getBaseURL();
-      const __isAbsolute = typeof requestUrl === "string" && /^https?:\/\//i.test(requestUrl);
-      const wsHost = (__isAbsolute ? requestUrl : baseUrl).replace(/^http/, "ws");
-      let __isExternalKit = false;
-      if (__isAbsolute) {
-        const __httpAny = this.http;
-        if (typeof __httpAny.isSameOriginAndPath === "function" && baseUrl) {
-          try {
-            __isExternalKit = !__httpAny.isSameOriginAndPath(requestUrl, baseUrl);
-          } catch {
-            __isExternalKit = true;
-          }
-        } else if (baseUrl) {
-          try {
-            const __reqOrigin = new URL(requestUrl).origin;
-            const __baseOrigin = new URL(baseUrl).origin;
-            __isExternalKit = __reqOrigin !== __baseOrigin;
-          } catch {
-            __isExternalKit = true;
-          }
-        } else {
-          __isExternalKit = true;
-        }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Get command result
+     *
+     * Retrieve the current or final results of a command execution. Can be called while command is running or after completion.
+     */
+    async getResult(command_id, _templateVars, requestOptions) {
+      if (command_id === void 0 || command_id === null) {
+        throw new ValidationError("command_id is required", "command_id");
       }
-      const socketIoPath = "/api/v1/terminal/ws".replace(/\/stream$/, "");
-      const wsOptions = { path: socketIoPath };
-      if (requestData.query && Object.keys(requestData.query).length > 0) {
-        wsOptions.query = { ...requestData.query };
+      if (command_id !== void 0 && command_id !== null) {
       }
-      const __httpCfg = this.http.config;
-      if (!__isExternalKit && __httpCfg && typeof __httpCfg.token === "string" && __httpCfg.token.length > 0) {
-        wsOptions.auth = { token: __httpCfg.token };
+      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/result/{command_id}`, _templateVars || {});
+      requestUrl = requestUrl.replace("{command_id}", () => encodeURIComponent(String(command_id)));
+      const requestData = {};
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
       }
-      if (requestData.headers && Object.keys(requestData.headers).length > 0) {
-        wsOptions.headers = { ...requestData.headers };
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
       }
-      const client = new TerminalConnectTerminalWebSocketWebSocket(wsHost, wsOptions);
-      return client;
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.get(requestUrl, requestData);
     }
   };
 
-  // generated/terminal/terminal-sessions.service.ts
-  var TerminalSessionsService = class extends TerminalSessionsServiceBase {
+  // generated/terminal/terminal-execution.service.ts
+  var TerminalExecutionService = class extends TerminalExecutionServiceBase {
     // Add custom properties here
   };
 
@@ -55535,6 +55624,136 @@ var HoodySDK = (() => {
 
   // generated/terminal/terminal.service.ts
   var TerminalService = class extends TerminalServiceBase {
+    // Add custom properties here
+  };
+
+  // generated/terminal/terminal-state.service.generated.ts
+  var TerminalStateServiceBase = class {
+    constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
+      this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
+      __publicField(this, "http");
+      __publicField(this, "_kitNamespace");
+      __publicField(this, "urlTemplatePattern");
+      this._kitNamespace = namespace;
+      this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
+      this.urlTemplatePattern = urlTemplatePattern;
+    }
+    /**
+     * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
+     */
+    _wrapHttpClient(http, ns) {
+      return new Proxy(http, {
+        get: (target, prop) => {
+          const val = target[prop];
+          if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
+            return (...args) => {
+              const dataIndex = prop === "request" ? 2 : 1;
+              const data = args[dataIndex] ? { ...args[dataIndex] } : {};
+              data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
+              args[dataIndex] = data;
+              return val.apply(target, args);
+            };
+          }
+          return typeof val === "function" ? val.bind(target) : val;
+        }
+      });
+    }
+    /**
+     * Build URL with template variables or fallback to baseURL
+     *
+     * @param path - API endpoint path
+     * @param variables - Method-level template variables to override defaults
+     * @returns Full URL (template mode) or path only (baseURL mode)
+     */
+    buildTemplateUrl(path, variables) {
+      var _a;
+      const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-terminal-{serviceIndex}.{server}.containers.hoody.com";
+      const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
+      const hasVariables = Object.keys(allVariables).length > 0;
+      if (!hasVariables) {
+        return path;
+      }
+      let url2 = urlPattern;
+      for (const [key, value2] of Object.entries(allVariables)) {
+        if (value2 !== void 0) {
+          url2 = url2.replace(`{${key}}`, () => String(value2));
+        }
+      }
+      if (url2.includes("{") && url2.includes("}")) {
+        const processRef = globalThis.process;
+        if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
+          console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
+          console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
+        }
+        return path;
+      }
+      return `${url2}${path}`;
+    }
+    /**
+     * Read nested values from objects using dotted paths.
+     * Example: "data.items" or "data.pagination.total"
+     */
+    getPathValue(input, path) {
+      if (!path) return void 0;
+      const segments = path.split(".").filter(Boolean);
+      let current = input;
+      for (const segment of segments) {
+        if (current === void 0 || current === null) {
+          return void 0;
+        }
+        if (Array.isArray(current) && segment === "length") {
+          current = current.length;
+          continue;
+        }
+        if (typeof current !== "object") {
+          return void 0;
+        }
+        current = current[segment];
+      }
+      return current;
+    }
+    /**
+     * Client render/connection diagnostics beacon
+     *
+     * Client render/connection diagnostics beacon
+     */
+    async postTerminalState(data, _templateVars, requestOptions) {
+      let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/state`, _templateVars || {});
+      const requestData = {};
+      requestData.body = data;
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+  };
+
+  // generated/terminal/terminal-state.service.ts
+  var TerminalStateService = class extends TerminalStateServiceBase {
     // Add custom properties here
   };
 
@@ -88047,7 +88266,7 @@ var HoodySDK = (() => {
       __publicField(this, "app");
       __publicField(this, "proxyLogs");
       __publicField(this, "agent");
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga, _Ha, _Ia, _Ja, _Ka, _La, _Ma, _Na, _Oa, _Pa, _Qa, _Ra, _Sa, _Ta, _Ua, _Va, _Wa, _Xa, _Ya, _Za, __a, _$a, _ab, _bb, _cb, _db, _eb, _fb, _gb, _hb, _ib, _jb, _kb, _lb, _mb, _nb, _ob, _pb, _qb, _rb, _sb, _tb, _ub, _vb, _wb, _xb, _yb, _zb, _Ab, _Bb, _Cb, _Db, _Eb, _Fb, _Gb, _Hb, _Ib, _Jb, _Kb, _Lb;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga, _Ha, _Ia, _Ja, _Ka, _La, _Ma, _Na, _Oa, _Pa, _Qa, _Ra, _Sa, _Ta, _Ua, _Va, _Wa, _Xa, _Ya, _Za, __a, _$a, _ab, _bb, _cb, _db, _eb, _fb, _gb, _hb, _ib, _jb, _kb, _lb, _mb, _nb, _ob, _pb, _qb, _rb, _sb, _tb, _ub, _vb, _wb, _xb, _yb, _zb, _Ab, _Bb, _Cb, _Db, _Eb, _Fb, _Gb, _Hb, _Ib, _Jb, _Kb, _Lb, _Mb;
       this.credentials = config.credentials ? config.credentials : void 0;
       this.autoRefresh = config.autoRefresh !== false;
       this.urlTemplates = config.urlTemplates ? config.urlTemplates : void 0;
@@ -88219,86 +88438,87 @@ var HoodySDK = (() => {
       };
       this.terminal = Object.assign(new TerminalService(this.http, "terminal", (_xa = this.urlTemplates) == null ? void 0 : _xa["terminal"], this.getKitUrlTemplatePattern("terminal")), {
         health: new HealthService9(this.http, "terminal", (_ya = this.urlTemplates) == null ? void 0 : _ya["terminal"], this.getKitUrlTemplatePattern("terminal")),
-        execution: new TerminalExecutionService(this.http, "terminal", (_za = this.urlTemplates) == null ? void 0 : _za["terminal"], this.getKitUrlTemplatePattern("terminal")),
-        sessions: new TerminalSessionsService(this.http, "terminal", (_Aa = this.urlTemplates) == null ? void 0 : _Aa["terminal"], this.getKitUrlTemplatePattern("terminal")),
+        sessions: new TerminalSessionsService(this.http, "terminal", (_za = this.urlTemplates) == null ? void 0 : _za["terminal"], this.getKitUrlTemplatePattern("terminal")),
+        execution: new TerminalExecutionService(this.http, "terminal", (_Aa = this.urlTemplates) == null ? void 0 : _Aa["terminal"], this.getKitUrlTemplatePattern("terminal")),
         web: new WebInterfaceService(this.http, "terminal", (_Ba = this.urlTemplates) == null ? void 0 : _Ba["terminal"], this.getKitUrlTemplatePattern("terminal")),
         docs: new ApiDocumentationService(this.http, "terminal", (_Ca = this.urlTemplates) == null ? void 0 : _Ca["terminal"], this.getKitUrlTemplatePattern("terminal")),
         system: new SystemMonitoringService(this.http, "terminal", (_Da = this.urlTemplates) == null ? void 0 : _Da["terminal"], this.getKitUrlTemplatePattern("terminal")),
-        terminalAutomation: new TerminalAutomationService(this.http, "terminal", (_Ea = this.urlTemplates) == null ? void 0 : _Ea["terminal"], this.getKitUrlTemplatePattern("terminal")),
-        terminalDragAndDrop: new TerminalDragAndDropService(this.http, "terminal", (_Fa = this.urlTemplates) == null ? void 0 : _Fa["terminal"], this.getKitUrlTemplatePattern("terminal"))
+        terminalState: new TerminalStateService(this.http, "terminal", (_Ea = this.urlTemplates) == null ? void 0 : _Ea["terminal"], this.getKitUrlTemplatePattern("terminal")),
+        terminalAutomation: new TerminalAutomationService(this.http, "terminal", (_Fa = this.urlTemplates) == null ? void 0 : _Fa["terminal"], this.getKitUrlTemplatePattern("terminal")),
+        terminalDragAndDrop: new TerminalDragAndDropService(this.http, "terminal", (_Ga = this.urlTemplates) == null ? void 0 : _Ga["terminal"], this.getKitUrlTemplatePattern("terminal"))
       });
       this.watch = {
-        health: new HealthService10(this.http, "watch", (_Ga = this.urlTemplates) == null ? void 0 : _Ga["watch"], this.getKitUrlTemplatePattern("watch")),
-        system: new SystemService3(this.http, "watch", (_Ha = this.urlTemplates) == null ? void 0 : _Ha["watch"], this.getKitUrlTemplatePattern("watch")),
-        watchers: new WatchersService(this.http, "watch", (_Ia = this.urlTemplates) == null ? void 0 : _Ia["watch"], this.getKitUrlTemplatePattern("watch")),
-        streams: new StreamsService(this.http, "watch", (_Ja = this.urlTemplates) == null ? void 0 : _Ja["watch"], this.getKitUrlTemplatePattern("watch"))
+        health: new HealthService10(this.http, "watch", (_Ha = this.urlTemplates) == null ? void 0 : _Ha["watch"], this.getKitUrlTemplatePattern("watch")),
+        system: new SystemService3(this.http, "watch", (_Ia = this.urlTemplates) == null ? void 0 : _Ia["watch"], this.getKitUrlTemplatePattern("watch")),
+        watchers: new WatchersService(this.http, "watch", (_Ja = this.urlTemplates) == null ? void 0 : _Ja["watch"], this.getKitUrlTemplatePattern("watch")),
+        streams: new StreamsService(this.http, "watch", (_Ka = this.urlTemplates) == null ? void 0 : _Ka["watch"], this.getKitUrlTemplatePattern("watch"))
       };
       this.cron = {
-        crontab: new CrontabService(this.http, "cron", (_Ka = this.urlTemplates) == null ? void 0 : _Ka["cron"], this.getKitUrlTemplatePattern("cron")),
-        health: new HealthService11(this.http, "cron", (_La = this.urlTemplates) == null ? void 0 : _La["cron"], this.getKitUrlTemplatePattern("cron")),
-        system: new SystemService4(this.http, "cron", (_Ma = this.urlTemplates) == null ? void 0 : _Ma["cron"], this.getKitUrlTemplatePattern("cron")),
-        entries: new EntriesService(this.http, "cron", (_Na = this.urlTemplates) == null ? void 0 : _Na["cron"], this.getKitUrlTemplatePattern("cron"))
+        crontab: new CrontabService(this.http, "cron", (_La = this.urlTemplates) == null ? void 0 : _La["cron"], this.getKitUrlTemplatePattern("cron")),
+        health: new HealthService11(this.http, "cron", (_Ma = this.urlTemplates) == null ? void 0 : _Ma["cron"], this.getKitUrlTemplatePattern("cron")),
+        system: new SystemService4(this.http, "cron", (_Na = this.urlTemplates) == null ? void 0 : _Na["cron"], this.getKitUrlTemplatePattern("cron")),
+        entries: new EntriesService(this.http, "cron", (_Oa = this.urlTemplates) == null ? void 0 : _Oa["cron"], this.getKitUrlTemplatePattern("cron"))
       };
-      this.pipe = Object.assign(new PipeService(this.http, "pipe", (_Oa = this.urlTemplates) == null ? void 0 : _Oa["pipe"], this.getKitUrlTemplatePattern("pipe")), {
-        ui: new UiService(this.http, "pipe", (_Pa = this.urlTemplates) == null ? void 0 : _Pa["pipe"], this.getKitUrlTemplatePattern("pipe")),
-        info: new InfoService(this.http, "pipe", (_Qa = this.urlTemplates) == null ? void 0 : _Qa["pipe"], this.getKitUrlTemplatePattern("pipe")),
-        health: new HealthService12(this.http, "pipe", (_Ra = this.urlTemplates) == null ? void 0 : _Ra["pipe"], this.getKitUrlTemplatePattern("pipe"))
+      this.pipe = Object.assign(new PipeService(this.http, "pipe", (_Pa = this.urlTemplates) == null ? void 0 : _Pa["pipe"], this.getKitUrlTemplatePattern("pipe")), {
+        ui: new UiService(this.http, "pipe", (_Qa = this.urlTemplates) == null ? void 0 : _Qa["pipe"], this.getKitUrlTemplatePattern("pipe")),
+        info: new InfoService(this.http, "pipe", (_Ra = this.urlTemplates) == null ? void 0 : _Ra["pipe"], this.getKitUrlTemplatePattern("pipe")),
+        health: new HealthService12(this.http, "pipe", (_Sa = this.urlTemplates) == null ? void 0 : _Sa["pipe"], this.getKitUrlTemplatePattern("pipe"))
       });
       this.notes = {
-        health: new HealthService13(this.http, "notes", (_Sa = this.urlTemplates) == null ? void 0 : _Sa["notes"], this.getKitUrlTemplatePattern("notes")),
-        identity: new IdentityService(this.http, "notes", (_Ta = this.urlTemplates) == null ? void 0 : _Ta["notes"], this.getKitUrlTemplatePattern("notes")),
-        sockets: new SocketsService(this.http, "notes", (_Ua = this.urlTemplates) == null ? void 0 : _Ua["notes"], this.getKitUrlTemplatePattern("notes")),
-        avatars: new AvatarsService(this.http, "notes", (_Va = this.urlTemplates) == null ? void 0 : _Va["notes"], this.getKitUrlTemplatePattern("notes")),
-        notebooks: new NotebooksService(this.http, "notes", (_Wa = this.urlTemplates) == null ? void 0 : _Wa["notes"], this.getKitUrlTemplatePattern("notes")),
-        files: new FilesService2(this.http, "notes", (_Xa = this.urlTemplates) == null ? void 0 : _Xa["notes"], this.getKitUrlTemplatePattern("notes")),
-        nodes: new NodesService(this.http, "notes", (_Ya = this.urlTemplates) == null ? void 0 : _Ya["notes"], this.getKitUrlTemplatePattern("notes")),
-        documents: new DocumentsService(this.http, "notes", (_Za = this.urlTemplates) == null ? void 0 : _Za["notes"], this.getKitUrlTemplatePattern("notes")),
-        collaborators: new CollaboratorsService(this.http, "notes", (__a = this.urlTemplates) == null ? void 0 : __a["notes"], this.getKitUrlTemplatePattern("notes")),
-        reactions: new ReactionsService(this.http, "notes", (_$a = this.urlTemplates) == null ? void 0 : _$a["notes"], this.getKitUrlTemplatePattern("notes")),
-        interactions: new InteractionsService(this.http, "notes", (_ab = this.urlTemplates) == null ? void 0 : _ab["notes"], this.getKitUrlTemplatePattern("notes")),
-        comments: new CommentsService(this.http, "notes", (_bb = this.urlTemplates) == null ? void 0 : _bb["notes"], this.getKitUrlTemplatePattern("notes")),
-        versions: new VersionsService(this.http, "notes", (_cb = this.urlTemplates) == null ? void 0 : _cb["notes"], this.getKitUrlTemplatePattern("notes")),
-        databases: new DatabasesService(this.http, "notes", (_db = this.urlTemplates) == null ? void 0 : _db["notes"], this.getKitUrlTemplatePattern("notes")),
-        users: new UsersService2(this.http, "notes", (_eb = this.urlTemplates) == null ? void 0 : _eb["notes"], this.getKitUrlTemplatePattern("notes")),
-        mutations: new MutationsService(this.http, "notes", (_fb = this.urlTemplates) == null ? void 0 : _fb["notes"], this.getKitUrlTemplatePattern("notes"))
+        health: new HealthService13(this.http, "notes", (_Ta = this.urlTemplates) == null ? void 0 : _Ta["notes"], this.getKitUrlTemplatePattern("notes")),
+        identity: new IdentityService(this.http, "notes", (_Ua = this.urlTemplates) == null ? void 0 : _Ua["notes"], this.getKitUrlTemplatePattern("notes")),
+        sockets: new SocketsService(this.http, "notes", (_Va = this.urlTemplates) == null ? void 0 : _Va["notes"], this.getKitUrlTemplatePattern("notes")),
+        avatars: new AvatarsService(this.http, "notes", (_Wa = this.urlTemplates) == null ? void 0 : _Wa["notes"], this.getKitUrlTemplatePattern("notes")),
+        notebooks: new NotebooksService(this.http, "notes", (_Xa = this.urlTemplates) == null ? void 0 : _Xa["notes"], this.getKitUrlTemplatePattern("notes")),
+        files: new FilesService2(this.http, "notes", (_Ya = this.urlTemplates) == null ? void 0 : _Ya["notes"], this.getKitUrlTemplatePattern("notes")),
+        nodes: new NodesService(this.http, "notes", (_Za = this.urlTemplates) == null ? void 0 : _Za["notes"], this.getKitUrlTemplatePattern("notes")),
+        documents: new DocumentsService(this.http, "notes", (__a = this.urlTemplates) == null ? void 0 : __a["notes"], this.getKitUrlTemplatePattern("notes")),
+        collaborators: new CollaboratorsService(this.http, "notes", (_$a = this.urlTemplates) == null ? void 0 : _$a["notes"], this.getKitUrlTemplatePattern("notes")),
+        reactions: new ReactionsService(this.http, "notes", (_ab = this.urlTemplates) == null ? void 0 : _ab["notes"], this.getKitUrlTemplatePattern("notes")),
+        interactions: new InteractionsService(this.http, "notes", (_bb = this.urlTemplates) == null ? void 0 : _bb["notes"], this.getKitUrlTemplatePattern("notes")),
+        comments: new CommentsService(this.http, "notes", (_cb = this.urlTemplates) == null ? void 0 : _cb["notes"], this.getKitUrlTemplatePattern("notes")),
+        versions: new VersionsService(this.http, "notes", (_db = this.urlTemplates) == null ? void 0 : _db["notes"], this.getKitUrlTemplatePattern("notes")),
+        databases: new DatabasesService(this.http, "notes", (_eb = this.urlTemplates) == null ? void 0 : _eb["notes"], this.getKitUrlTemplatePattern("notes")),
+        users: new UsersService2(this.http, "notes", (_fb = this.urlTemplates) == null ? void 0 : _fb["notes"], this.getKitUrlTemplatePattern("notes")),
+        mutations: new MutationsService(this.http, "notes", (_gb = this.urlTemplates) == null ? void 0 : _gb["notes"], this.getKitUrlTemplatePattern("notes"))
       };
-      this.tunnel = Object.assign(new TunnelService(this.http, "tunnel", (_gb = this.urlTemplates) == null ? void 0 : _gb["tunnel"], this.getKitUrlTemplatePattern("tunnel")), {
-        health: new HealthService14(this.http, "tunnel", (_hb = this.urlTemplates) == null ? void 0 : _hb["tunnel"], this.getKitUrlTemplatePattern("tunnel"))
+      this.tunnel = Object.assign(new TunnelService(this.http, "tunnel", (_hb = this.urlTemplates) == null ? void 0 : _hb["tunnel"], this.getKitUrlTemplatePattern("tunnel")), {
+        health: new HealthService14(this.http, "tunnel", (_ib = this.urlTemplates) == null ? void 0 : _ib["tunnel"], this.getKitUrlTemplatePattern("tunnel"))
       });
       this.app = {
-        health: new HealthService15(this.http, "app", (_ib = this.urlTemplates) == null ? void 0 : _ib["app"], this.getKitUrlTemplatePattern("app")),
-        docs: new ApiDocumentationService2(this.http, "app", (_jb = this.urlTemplates) == null ? void 0 : _jb["app"], this.getKitUrlTemplatePattern("app")),
-        execution: new AppExecutionService(this.http, "app", (_kb = this.urlTemplates) == null ? void 0 : _kb["app"], this.getKitUrlTemplatePattern("app")),
-        jobs: new JobsService2(this.http, "app", (_lb = this.urlTemplates) == null ? void 0 : _lb["app"], this.getKitUrlTemplatePattern("app")),
-        sources: new SourcesService(this.http, "app", (_mb = this.urlTemplates) == null ? void 0 : _mb["app"], this.getKitUrlTemplatePattern("app")),
-        configuration: new ConfigurationService(this.http, "app", (_nb = this.urlTemplates) == null ? void 0 : _nb["app"], this.getKitUrlTemplatePattern("app")),
-        profiles: new ProfilesService(this.http, "app", (_ob = this.urlTemplates) == null ? void 0 : _ob["app"], this.getKitUrlTemplatePattern("app")),
-        recipes: new RecipesService(this.http, "app", (_pb = this.urlTemplates) == null ? void 0 : _pb["app"], this.getKitUrlTemplatePattern("app"))
+        health: new HealthService15(this.http, "app", (_jb = this.urlTemplates) == null ? void 0 : _jb["app"], this.getKitUrlTemplatePattern("app")),
+        docs: new ApiDocumentationService2(this.http, "app", (_kb = this.urlTemplates) == null ? void 0 : _kb["app"], this.getKitUrlTemplatePattern("app")),
+        execution: new AppExecutionService(this.http, "app", (_lb = this.urlTemplates) == null ? void 0 : _lb["app"], this.getKitUrlTemplatePattern("app")),
+        jobs: new JobsService2(this.http, "app", (_mb = this.urlTemplates) == null ? void 0 : _mb["app"], this.getKitUrlTemplatePattern("app")),
+        sources: new SourcesService(this.http, "app", (_nb = this.urlTemplates) == null ? void 0 : _nb["app"], this.getKitUrlTemplatePattern("app")),
+        configuration: new ConfigurationService(this.http, "app", (_ob = this.urlTemplates) == null ? void 0 : _ob["app"], this.getKitUrlTemplatePattern("app")),
+        profiles: new ProfilesService(this.http, "app", (_pb = this.urlTemplates) == null ? void 0 : _pb["app"], this.getKitUrlTemplatePattern("app")),
+        recipes: new RecipesService(this.http, "app", (_qb = this.urlTemplates) == null ? void 0 : _qb["app"], this.getKitUrlTemplatePattern("app"))
       };
       this.proxyLogs = {
-        logs: new LogsService2(this.http, "proxyLogs", (_qb = this.urlTemplates) == null ? void 0 : _qb["proxyLogs"], this.getKitUrlTemplatePattern("proxyLogs"))
+        logs: new LogsService2(this.http, "proxyLogs", (_rb = this.urlTemplates) == null ? void 0 : _rb["proxyLogs"], this.getKitUrlTemplatePattern("proxyLogs"))
       };
-      this.agent = Object.assign(new AgentService(this.http, "agent", (_rb = this.urlTemplates) == null ? void 0 : _rb["agent"], this.getKitUrlTemplatePattern("agent")), {
-        settings: new SettingsService(this.http, "agent", (_sb = this.urlTemplates) == null ? void 0 : _sb["agent"], this.getKitUrlTemplatePattern("agent")),
-        agents: new AgentsService(this.http, "agent", (_tb = this.urlTemplates) == null ? void 0 : _tb["agent"], this.getKitUrlTemplatePattern("agent")),
-        discovery: new DiscoveryService(this.http, "agent", (_ub = this.urlTemplates) == null ? void 0 : _ub["agent"], this.getKitUrlTemplatePattern("agent")),
-        system: new SystemService5(this.http, "agent", (_vb = this.urlTemplates) == null ? void 0 : _vb["agent"], this.getKitUrlTemplatePattern("agent")),
-        github: new GithubService(this.http, "agent", (_wb = this.urlTemplates) == null ? void 0 : _wb["agent"], this.getKitUrlTemplatePattern("agent")),
-        headless: new HeadlessService(this.http, "agent", (_xb = this.urlTemplates) == null ? void 0 : _xb["agent"], this.getKitUrlTemplatePattern("agent")),
-        hoody: new HoodyService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
-        hooks: new HooksService(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
-        jobs: new JobsService3(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
-        logs: new LogsService3(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
-        memory: new MemoryService(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
-        models: new ModelsService(this.http, "agent", (_Db = this.urlTemplates) == null ? void 0 : _Db["agent"], this.getKitUrlTemplatePattern("agent")),
-        sessions: new SessionsService2(this.http, "agent", (_Eb = this.urlTemplates) == null ? void 0 : _Eb["agent"], this.getKitUrlTemplatePattern("agent")),
-        loops: new LoopsService(this.http, "agent", (_Fb = this.urlTemplates) == null ? void 0 : _Fb["agent"], this.getKitUrlTemplatePattern("agent")),
-        tasks: new TasksService(this.http, "agent", (_Gb = this.urlTemplates) == null ? void 0 : _Gb["agent"], this.getKitUrlTemplatePattern("agent")),
-        tools: new ToolsService(this.http, "agent", (_Hb = this.urlTemplates) == null ? void 0 : _Hb["agent"], this.getKitUrlTemplatePattern("agent")),
-        workflows: new WorkflowsService(this.http, "agent", (_Ib = this.urlTemplates) == null ? void 0 : _Ib["agent"], this.getKitUrlTemplatePattern("agent")),
-        skills: new SkillsService(this.http, "agent", (_Jb = this.urlTemplates) == null ? void 0 : _Jb["agent"], this.getKitUrlTemplatePattern("agent")),
-        statistics: new StatisticsService(this.http, "agent", (_Kb = this.urlTemplates) == null ? void 0 : _Kb["agent"], this.getKitUrlTemplatePattern("agent")),
-        todos: new TodosService(this.http, "agent", (_Lb = this.urlTemplates) == null ? void 0 : _Lb["agent"], this.getKitUrlTemplatePattern("agent"))
+      this.agent = Object.assign(new AgentService(this.http, "agent", (_sb = this.urlTemplates) == null ? void 0 : _sb["agent"], this.getKitUrlTemplatePattern("agent")), {
+        settings: new SettingsService(this.http, "agent", (_tb = this.urlTemplates) == null ? void 0 : _tb["agent"], this.getKitUrlTemplatePattern("agent")),
+        agents: new AgentsService(this.http, "agent", (_ub = this.urlTemplates) == null ? void 0 : _ub["agent"], this.getKitUrlTemplatePattern("agent")),
+        discovery: new DiscoveryService(this.http, "agent", (_vb = this.urlTemplates) == null ? void 0 : _vb["agent"], this.getKitUrlTemplatePattern("agent")),
+        system: new SystemService5(this.http, "agent", (_wb = this.urlTemplates) == null ? void 0 : _wb["agent"], this.getKitUrlTemplatePattern("agent")),
+        github: new GithubService(this.http, "agent", (_xb = this.urlTemplates) == null ? void 0 : _xb["agent"], this.getKitUrlTemplatePattern("agent")),
+        headless: new HeadlessService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
+        hoody: new HoodyService(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
+        hooks: new HooksService(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
+        jobs: new JobsService3(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
+        logs: new LogsService3(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
+        memory: new MemoryService(this.http, "agent", (_Db = this.urlTemplates) == null ? void 0 : _Db["agent"], this.getKitUrlTemplatePattern("agent")),
+        models: new ModelsService(this.http, "agent", (_Eb = this.urlTemplates) == null ? void 0 : _Eb["agent"], this.getKitUrlTemplatePattern("agent")),
+        sessions: new SessionsService2(this.http, "agent", (_Fb = this.urlTemplates) == null ? void 0 : _Fb["agent"], this.getKitUrlTemplatePattern("agent")),
+        loops: new LoopsService(this.http, "agent", (_Gb = this.urlTemplates) == null ? void 0 : _Gb["agent"], this.getKitUrlTemplatePattern("agent")),
+        tasks: new TasksService(this.http, "agent", (_Hb = this.urlTemplates) == null ? void 0 : _Hb["agent"], this.getKitUrlTemplatePattern("agent")),
+        tools: new ToolsService(this.http, "agent", (_Ib = this.urlTemplates) == null ? void 0 : _Ib["agent"], this.getKitUrlTemplatePattern("agent")),
+        workflows: new WorkflowsService(this.http, "agent", (_Jb = this.urlTemplates) == null ? void 0 : _Jb["agent"], this.getKitUrlTemplatePattern("agent")),
+        skills: new SkillsService(this.http, "agent", (_Kb = this.urlTemplates) == null ? void 0 : _Kb["agent"], this.getKitUrlTemplatePattern("agent")),
+        statistics: new StatisticsService(this.http, "agent", (_Lb = this.urlTemplates) == null ? void 0 : _Lb["agent"], this.getKitUrlTemplatePattern("agent")),
+        todos: new TodosService(this.http, "agent", (_Mb = this.urlTemplates) == null ? void 0 : _Mb["agent"], this.getKitUrlTemplatePattern("agent"))
       });
     }
     /**

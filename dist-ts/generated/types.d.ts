@@ -3034,6 +3034,7 @@ export interface ApiContainersGetNetworkConfigResponse {
         configured?: boolean;
         type?: "socks5" | "http" | "https" | "block";
         proxy?: string;
+        credentials_configured?: boolean;
         country?: string;
         city?: string;
         region?: string;
@@ -3051,7 +3052,7 @@ export interface ApiContainersGetNetworkConfigResponse {
 export interface ApiContainersUpdateNetworkConfigRequest {
     /** Network configuration type - proxy type or block for traffic blocking */
     type: "socks5" | "http" | "https" | "block";
-    /** Proxy server URL (required for non-block types, e.g., "socks5://proxy.example.com:1080") */
+    /** Proxy server URL (required for non-block types), e.g. "socks5://proxy.example.com:1080". Credentials may be embedded as userinfo ("socks5://host:port") to set/replace them; omitting userinfo on an UNCHANGED endpoint preserves the stored credentials (write-only secret). The response never echoes userinfo back — see `credentials_configured`. */
     proxy?: string;
     /** Optional country for geographical proxy selection */
     country?: string;
@@ -3074,6 +3075,7 @@ export interface ApiContainersUpdateNetworkConfigResponse {
         container_id?: string;
         type?: "socks5" | "http" | "https" | "block";
         proxy?: string;
+        credentials_configured?: boolean;
         country?: string;
         city?: string;
         region?: string;
@@ -6637,6 +6639,38 @@ export interface OauthExchangeRequest {
      */
     redirect_uri: string;
 }
+export interface GetGithubBonusResponse {
+    statusCode: 200;
+    message: string;
+    data: {
+        enabled?: boolean;
+        repo?: string;
+        amount_usd?: string;
+        github_linked?: boolean;
+        github_username?: string | null;
+        claimed?: boolean;
+        identity_claimed_elsewhere?: boolean;
+        claim?: {
+            amount_usd?: string;
+            at?: string | null;
+            transaction_id?: string;
+        } | null;
+    };
+}
+export interface ClaimGithubBonusResponse {
+    statusCode: 200;
+    message: string;
+    data: {
+        result?: "granted" | "already_claimed" | "identity_claimed_elsewhere" | "not_linked" | "offer_ended" | "retry" | "error";
+        amount_usd?: string;
+        transaction_id?: string;
+        claim?: {
+            amount_usd?: string;
+            at?: string | null;
+            transaction_id?: string;
+        } | null;
+    };
+}
 export interface BrowserInstancesStartResponse {
     statusCode: number;
     message: string;
@@ -7264,7 +7298,7 @@ export interface DaemonControlStartRequest {
      * @maximum 300
      */
     timeout?: number;
-    /** Only start if not already running (idempotent mode). If true, checks if instance is running first. Returns already_running field in response. Use this for the edge proxy automation. */
+    /** Only start if not already running (idempotent mode). If true, checks if instance is running first. Returns already_running field in response. Use this for edge proxy automation. */
     if_not_running?: boolean;
 }
 export interface DaemonControlStartResponse {
@@ -15162,6 +15196,19 @@ export interface TerminalSystemGetDaemonConfigResponse {
     message: string;
     data: Record<string, unknown>;
 }
+export interface PostTerminalStateRequest {
+    /** Frontend build identifier */
+    build_id?: string;
+    /** Effective renderer (webgl|dom) */
+    renderer?: string;
+    /** What triggered this beacon */
+    reason?: string;
+}
+export interface PostTerminalStateResponse {
+    statusCode: number;
+    message: string;
+    data: Record<string, unknown>;
+}
 export interface GetTerminalSnapshotResponse {
     statusCode: number;
     message: string;
@@ -20449,7 +20496,7 @@ export interface ProgramInput {
     };
     /** Parameter name for passing port (e.g., "--port", "-p") */
     port_param?: string;
-    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by the edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
+    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
     lazy_load?: boolean;
     /** X11 DISPLAY number for GUI programs. Accepts both "1" and ":1" formats (auto-prepends ":" if missing). Sets the DISPLAY environment variable for the program. */
     display?: string | null;
@@ -22052,7 +22099,7 @@ export interface Program {
     };
     /** Parameter name to pass port to command (used with port_range) */
     port_param?: string;
-    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by the edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
+    /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
     lazy_load?: boolean;
     /** X11 DISPLAY number for GUI programs. Accepts both "1" and ":1" formats (auto-prepends ":" if missing). Sets the DISPLAY environment variable for the program. */
     display?: string | null;

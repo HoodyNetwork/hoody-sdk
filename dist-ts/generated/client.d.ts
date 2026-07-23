@@ -189,11 +189,12 @@ export declare class HoodyClient {
     };
     readonly terminal: terminal.TerminalService & {
         health: terminal.HealthService;
-        execution: terminal.TerminalExecutionService;
         sessions: terminal.TerminalSessionsService;
+        execution: terminal.TerminalExecutionService;
         web: terminal.WebInterfaceService;
         docs: terminal.ApiDocumentationService;
         system: terminal.SystemMonitoringService;
+        terminalState: terminal.TerminalStateService;
         terminalAutomation: terminal.TerminalAutomationService;
         terminalDragAndDrop: terminal.TerminalDragAndDropService;
     };

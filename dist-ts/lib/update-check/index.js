@@ -4,7 +4,7 @@
  * ┌────────────────────────────────────────────────────────────────────────┐
  * │ Trust chain (multi-domain)                                              │
  * │                                                                         │
- * │   build-time: package.json.version + admin trustedDomains JSON         │
+ * │   build-time: package.json.version + trusted-domains JSON pins         │
  * │                → bake-domains.ts → generated/domains.ts                │
  * │                → bun build --compile                                   │
  * │                                                                        │
@@ -41,6 +41,7 @@ export * from './fetcher.js';
 export * from './cache.js';
 export * from './banner.js';
 export * from './platform.js';
+export * from './version-oracle.js';
 export * from './domain.js';
 export { compareVersions, isValidSemver } from './semver-compare.js';
 /** Default User-Agent for CDN traffic distinction. */
