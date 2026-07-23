@@ -3,11 +3,13 @@
  * exponential backoff, and narrow retry classification.
  *
  * Exports:
- *   - `fetchWithRetry`: foreground / `hoody update` — 3 attempts, 1s+3s backoff
+ *   - `fetchWithRetry`: foreground / `hoody update` — up to 3 attempts, 1s/3s
+ *     backoff with full jitter, bounded by a total wall-clock budget
  *   - `fetchOnce`: background refresh — single shot, 30s budget, no retry
  *
- * Both honor `Retry-After` on HTTP 429, clamped to [1, 60] s.
- * Neither retries on: DNS NXDOMAIN, HTTP 401/403/404, 2xx with malformed body.
+ * A server `Retry-After` (408/429/503) is honored EXACTLY (clamped to [1,60]s), not
+ * jittered. Neither retries on: DNS NXDOMAIN, HTTP 401/403/404, an exhausted
+ * rate-limit quota, or 2xx with a malformed body.
  */
 
 /** Retry-After header floor (seconds). */
@@ -16,6 +18,14 @@ export const RETRY_AFTER_MIN_SECONDS = 1;
 export const RETRY_AFTER_MAX_SECONDS = 60;
 /** Per-attempt hard timeout for `fetchWithRetry`. */
 export const FOREGROUND_ATTEMPT_TIMEOUT_MS = 10_000;
+/**
+ * Total wall-clock budget for `fetchWithRetry`, across ALL attempts and their
+ * backoff sleeps. Without this, three attempts that each sleep on a
+ * `Retry-After: 60` could stall `hoody update` for ~2 minutes — the opposite of
+ * "friendly". Once the budget is spent, the loop stops and throws the last
+ * error instead of starting another attempt.
+ */
+export const FOREGROUND_TOTAL_BUDGET_MS = 20_000;
 /** Single-shot timeout for `fetchOnce`. */
 export const BACKGROUND_TOTAL_TIMEOUT_MS = 30_000;
 
@@ -40,11 +50,23 @@ export class FetchError extends Error {
   readonly url: string;
   /** Retry-After value clamped to [1, 60] seconds, when the server sent one. */
   readonly retryAfterSeconds?: number | undefined;
+  /**
+   * `x-ratelimit-remaining`, when present. GitHub's unauthenticated API allows
+   * 60 requests/hour PER IP, and signals exhaustion with `403` + `remaining: 0`
+   * — not `429`. Without surfacing this the caller cannot tell an exhausted
+   * quota (wait until reset; retrying makes it worse) from a real
+   * authorization failure.
+   */
+  readonly rateLimitRemaining?: number | undefined;
+  /** `x-ratelimit-reset` as a UNIX epoch in SECONDS, when present. */
+  readonly rateLimitResetEpochSec?: number | undefined;
 
   constructor(msg: string, kind: FetchError['kind'], url: string, opts?: {
     status?: number | undefined;
     errno?: string | undefined;
     retryAfterSeconds?: number | undefined;
+    rateLimitRemaining?: number | undefined;
+    rateLimitResetEpochSec?: number | undefined;
   }) {
     super(msg);
     this.name = 'FetchError';
@@ -53,6 +75,19 @@ export class FetchError extends Error {
     this.status = opts?.status;
     this.errno = opts?.errno;
     this.retryAfterSeconds = opts?.retryAfterSeconds;
+    this.rateLimitRemaining = opts?.rateLimitRemaining;
+    this.rateLimitResetEpochSec = opts?.rateLimitResetEpochSec;
+  }
+
+  /**
+   * True when this failure is an exhausted rate-limit quota rather than a
+   * transient error. Such a failure must NOT be retried against the same
+   * source — the caller should fall through to the next one.
+   */
+  get isRateLimited(): boolean {
+    return this.kind === 'http'
+      && (this.status === 403 || this.status === 429)
+      && this.rateLimitRemaining === 0;
   }
 }
 
@@ -60,6 +95,10 @@ export interface FetchedResource {
   url: string;
   body: Uint8Array;
   contentType: string | null;
+  /** Response status. Always 2xx unless `followRedirect: 'manual'`. */
+  status: number;
+  /** `Location`, present only on a 3xx returned via `followRedirect: 'manual'`. */
+  location: string | null;
 }
 
 type FetchFn = typeof fetch;
@@ -71,6 +110,26 @@ export interface FetcherOptions {
   userAgent?: string | undefined;
   /** AbortSignal the caller can supply (e.g. process-wide cancellation). */
   signal?: AbortSignal | undefined;
+  /**
+   * Redirect policy. Defaults to `'error'` — the correct behaviour for every
+   * trust-chain fetch, where following a redirect would let a network attacker
+   * relocate the request.
+   *
+   * `'manual'` is opt-in for the ONE case that needs it: reading the tag out of
+   * `github.com/<o>/<r>/releases/latest`, whose entire mechanism is a 302
+   * `Location`. With `'error'` the fetch throws before the header is readable,
+   * so this cannot be done by inspecting the error. The caller MUST validate
+   * the returned `location` before using it.
+   *
+   * Never change the default. This module is on the update trust chain.
+   */
+  followRedirect?: 'error' | 'manual' | undefined;
+  /** Injected for deterministic jitter in tests. Default: Math.random. */
+  random?: (() => number) | undefined;
+  /** Absolute deadline (epoch ms) shared across a retry loop AND, when the
+   *  oracle sets it, across ALL its sources — so total wall-clock stays bounded
+   *  by one budget instead of one-per-source. Default: this call's own budget. */
+  deadlineMs?: number | undefined;
 }
 
 /**
@@ -108,19 +167,50 @@ export async function fetchOnce(
   }
   const timer = setTimeout(() => abortCtrl.abort(), timeoutMs);
   try {
+    const redirectMode = opts.followRedirect ?? 'error';
     const response = await fetchImpl(url, {
       method: 'GET',
       ...(opts.userAgent ? { headers: { 'user-agent': opts.userAgent } } : {}),
       signal: abortCtrl.signal,
-      redirect: 'error',       // never follow redirects on trust-chain fetches
+      // Default 'error': never follow redirects on trust-chain fetches. The
+      // sole opt-in is the GitHub-latest oracle (see FetcherOptions).
+      redirect: redirectMode,
     });
+
+    // In 'manual' mode a 3xx is a SUCCESS to be inspected, not an error — the
+    // whole point is to read `Location`. Return it without draining a body
+    // (redirect responses have none worth reading) so the caller can validate
+    // the target itself.
+    if (redirectMode === 'manual' && response.status >= 300 && response.status < 400) {
+      return {
+        url,
+        body: new Uint8Array(0),
+        contentType: response.headers.get('content-type'),
+        status: response.status,
+        location: response.headers.get('location'),
+      };
+    }
+
     if (!response.ok) {
       const retryAfter = parseRetryAfter(response.headers.get('retry-after')) ?? undefined;
+      const remainingHdr = response.headers.get('x-ratelimit-remaining');
+      const resetHdr = response.headers.get('x-ratelimit-reset');
+      const remaining = remainingHdr !== null && /^\d+$/.test(remainingHdr.trim())
+        ? parseInt(remainingHdr.trim(), 10)
+        : undefined;
+      const resetEpoch = resetHdr !== null && /^\d+$/.test(resetHdr.trim())
+        ? parseInt(resetHdr.trim(), 10)
+        : undefined;
       throw new FetchError(
         `HTTP ${response.status} for ${url}`,
         'http',
         url,
-        { status: response.status, retryAfterSeconds: retryAfter },
+        {
+          status: response.status,
+          retryAfterSeconds: retryAfter,
+          rateLimitRemaining: remaining,
+          rateLimitResetEpochSec: resetEpoch,
+        },
       );
     }
     // Reject oversized responses before allocating. Content-Length header is
@@ -137,6 +227,8 @@ export async function fetchOnce(
       url,
       body,
       contentType: response.headers.get('content-type'),
+      status: response.status,
+      location: null,
     };
   } catch (e) {
     if (e instanceof FetchError) throw e;
@@ -179,6 +271,10 @@ export function isRetryable(err: FetchError): boolean {
   }
   // HTTP
   if (err.status === undefined) return false;
+  // An exhausted rate-limit quota is NOT transient — retrying against the same
+  // host burns more quota and, on GitHub's secondary limits, extends the block.
+  // The caller falls through to the next source instead (see the oracle chain).
+  if (err.isRateLimited) return false;
   if (err.status === 408 || err.status === 429) return true;
   if (err.status >= 500 && err.status < 600) return true;
   return false;
@@ -235,6 +331,7 @@ export async function fetchWithRetry(
   url: string,
   opts: FetcherOptions = {},
   attempts = 3,
+  nowFn: () => number = Date.now,
 ): Promise<FetchedResource> {
   // If the caller's AbortSignal is already aborted, don't enter the retry
   // loop at all — fail fast with a non-retryable classification.
@@ -245,25 +342,48 @@ export async function fetchWithRetry(
       url,
     );
   }
+  // Absolute deadline. When the caller supplies `opts.deadlineMs` (the oracle
+  // shares ONE across all its sources), honor it so three sources can't each
+  // spend a fresh budget; otherwise fall back to this call's own budget.
+  const deadline = opts.deadlineMs ?? nowFn() + FOREGROUND_TOTAL_BUDGET_MS;
   let lastErr: FetchError | null = null;
   for (let attempt = 0; attempt < attempts; attempt++) {
+    // Check the deadline BEFORE every attempt, and cap this attempt's timeout to
+    // the time actually left — a fresh 10s per attempt could otherwise overrun
+    // the total budget on its own.
+    const budgetLeft = deadline - nowFn();
+    if (budgetLeft <= 0) break;
+    const attemptTimeout = Math.min(FOREGROUND_ATTEMPT_TIMEOUT_MS, budgetLeft);
     try {
-      return await fetchOnce(url, FOREGROUND_ATTEMPT_TIMEOUT_MS, opts);
+      return await fetchOnce(url, attemptTimeout, opts);
     } catch (e) {
       const err = e as FetchError;
       lastErr = err;
       if (!isRetryable(err) || attempt === attempts - 1) break;
 
-      // Exponential backoff: 1s then 3s. Honor Retry-After on BOTH 408 and
-      // 429 responses per RFC 9110 (§15.5.9 408 Request Timeout and
-      // §15.5.29 429 Too Many Requests — both accept Retry-After). Value
-      // already clamped to [1, 60] s during header parse.
-      let delaySec = attempt === 0 ? 1 : 3;
-      if ((err.status === 429 || err.status === 408)
-          && typeof err.retryAfterSeconds === 'number') {
-        delaySec = err.retryAfterSeconds;
+      // A server-provided `Retry-After` is an explicit instruction — honor it
+      // EXACTLY (clamped to [1,60]s at parse), on ANY retryable status that
+      // carries one (408, 429, and 503). Jittering it would mean retrying
+      // before the server said we may.
+      let delayMs: number;
+      if (typeof err.retryAfterSeconds === 'number') {
+        delayMs = err.retryAfterSeconds * 1000;
+      } else {
+        // Default backoff (1s then 3s) gets FULL jitter — a random point in
+        // [0, delay] (AWS "Exponential Backoff and Jitter"). Two clients that
+        // hit a 5xx at the same instant otherwise retry in lock-step and
+        // re-collide; jitter spreads them. Randomness is injected via
+        // `opts.random` for deterministic tests; defaults to Math.random.
+        const baseSec = attempt === 0 ? 1 : 3;
+        delayMs = (opts.random ?? Math.random)() * baseSec * 1000;
       }
-      await sleep(delaySec * 1000);
+
+      // Never start a sleep that would run past the deadline. If the required
+      // wait doesn't fit (e.g. Retry-After: 60 with 20s left), stop now and
+      // surface the last error rather than stalling.
+      const remaining = deadline - nowFn();
+      if (remaining <= 0 || delayMs >= remaining) break;
+      await sleep(delayMs);
     }
   }
   throw lastErr!;
