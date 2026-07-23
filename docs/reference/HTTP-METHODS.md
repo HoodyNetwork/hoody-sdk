@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
 **Version:** 1.0.0-beta.3
-**Total endpoints:** 936
+**Total endpoints:** 941
 **Namespaces:** 19
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -194,7 +194,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `api` — 225 endpoints
+## `api` — 229 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -361,9 +361,11 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/rentals` | `api.rentals.list` | — | List user rentals |
 | GET | `/api/v1/rentals/{id}` | `api.rentals.get` | — | Get rental details |
 | POST | `/api/v1/rentals/{id}/extend` | `api.rentals.extend` | `hoody servers extend` | Extend rental |
+| GET | `/api/v1/rentals/{id}/runtime` | `api.serverRental.getRentalRuntime` | — | Get live runtime info for a rented server or subserver |
 | GET | `/api/v1/servers` | `api.serverRental.list` | `hoody servers list` | List user servers (alias for /rentals) |
 | GET | `/api/v1/servers/{id}` | `api.serverRental.get` | `hoody servers get` | Get server details (alias for /rentals/:id) |
 | POST | `/api/v1/servers/{id}/rent` | `api.serverRental.rent` | `hoody servers rent` | Rent server |
+| GET | `/api/v1/servers/{id}/runtime` | `api.serverRental.getServerRuntime` | — | Get live runtime info (alias for /rentals/:id/runtime) |
 | GET | `/api/v1/servers/{serverId}/available-commands` | `api.serverCommands.list` | `hoody servers commands` | Get available commands |
 | POST | `/api/v1/servers/{serverId}/execute-command` | `api.serverCommands.execute` | `hoody servers exec` | Execute server command |
 | GET | `/api/v1/servers/available` | `api.serverRental.browse` | `hoody servers marketplace` | Browse rental marketplace |
@@ -403,6 +405,8 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/wallet/balances` | `api.wallet.getAggregateBalances` | `hoody wallet balance get` | Get aggregate balances (general + AI) |
 | GET | `/api/v1/wallet/balances/ai` | `api.wallet.getAiBalance` | `hoody wallet balance ai` | Get AI balance (limit, usage, remaining) |
 | GET | `/api/v1/wallet/balances/general` | `api.wallet.getGeneralBalance` | `hoody wallet balance general` | Get general balance only |
+| GET | `/api/v1/wallet/github-bonus` | `api.wallet.getGithubBonus` | — | Get GitHub connection bonus status |
+| POST | `/api/v1/wallet/github-bonus/claim` | `api.wallet.claimGithubBonus` | — | Claim the GitHub connection bonus |
 | GET | `/api/v1/wallet/invoices/` | `api.wallet.listInvoices` | `hoody wallet invoices list` | Get all invoices |
 | GET | `/api/v1/wallet/invoices/{id}` | `api.wallet.getInvoice` | `hoody wallet invoices get` | Get invoice by ID |
 | GET | `/api/v1/wallet/invoices/{id}/pdf` | `api.wallet.downloadInvoicePdf` | `hoody wallet invoices download` | Download invoice PDF |
@@ -1008,7 +1012,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `terminal` — 39 endpoints
+## `terminal` — 40 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -1047,6 +1051,7 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/terminal/screenshot` | `terminal.sessions.captureScreenshot` | `hoody terminal sessions screenshot` | Capture terminal screenshot |
 | GET | `/api/v1/terminal/sessions` | `terminal.sessions.list` | `hoody terminal sessions list` | List all terminal sessions |
 | GET | `/api/v1/terminal/snapshot` | `terminal.terminalAutomation.getTerminalSnapshot` | `hoody terminal sessions snapshot` | Get rendered terminal snapshot |
+| POST | `/api/v1/terminal/state` | `terminal.terminalState.postTerminalState` | — | Client render/connection diagnostics beacon |
 | POST | `/api/v1/terminal/upload` | `terminal.terminalDragAndDrop.uploadTerminalDropSlice` | — | Upload a raw file slice into a drop |
 | POST | `/api/v1/terminal/wait` | `terminal.terminalAutomation.waitForTerminal` | `hoody terminal sessions wait` | Wait for terminal condition |
 | POST | `/api/v1/terminal/write` | `terminal.write` | `hoody terminal sessions write` | Write input to terminal |

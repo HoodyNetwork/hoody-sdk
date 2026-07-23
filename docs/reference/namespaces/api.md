@@ -1,4 +1,4 @@
-# `api` — 279 methods
+# `api` — 283 methods
 
 **Version:** 1.0.0-beta.3
 **Accessor:** `client.api`
@@ -527,7 +527,7 @@ client.api.authentication.githubOAuthRedirect(options?: { code_challenge: string
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
-| `intent` | `"login" \| "star_check"` | No | query | OAuth intent: login (default) or star_check (check for star credit) |
+| `intent` | `"login" \| "star_check"` | No | query | OAuth intent: login (default). "star_check" is accepted but ignored (retired). |
 | `redirect_uri` | `string` | No | query | Frontend URL to redirect to after OAuth completes (must be on allowed domain) |
 
 **Returns:** `ApiResponse<unknown>`
@@ -4242,7 +4242,7 @@ client.api.serverCommands.listIterator(serverId: string, options?: { category?: 
 
 ---
 
-## `client.api.serverRental` (8 methods)
+## `client.api.serverRental` (10 methods)
 
 ### `browse`
 
@@ -4366,6 +4366,42 @@ client.api.serverRental.get(id: string): Promise<ApiServerRentalGetResponse>
 **Returns:** `ApiServerRentalGetResponse`
 
 **CLI:** `hoody servers get`
+
+---
+
+### `getRentalRuntime`
+
+**GET** `/api/v1/rentals/{id}/runtime`
+
+Get live runtime info for a rented server or subserver
+
+```typescript
+client.api.serverRental.getRentalRuntime(id: string): Promise<GetRentalRuntimeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `GetRentalRuntimeResponse`
+
+---
+
+### `getServerRuntime`
+
+**GET** `/api/v1/servers/{id}/runtime`
+
+Get live runtime info (alias for /rentals/:id/runtime)
+
+```typescript
+client.api.serverRental.getServerRuntime(id: string): Promise<GetServerRuntimeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `GetServerRuntimeResponse`
 
 ---
 
@@ -5239,7 +5275,7 @@ client.api.waitlist.waitlistJoin(data: WaitlistJoinRequest): Promise<WaitlistJoi
 
 ---
 
-## `client.api.wallet` (32 methods)
+## `client.api.wallet` (34 methods)
 
 ### `addPaymentMethod`
 
@@ -5258,6 +5294,20 @@ client.api.wallet.addPaymentMethod(data: ApiWalletAddPaymentMethodRequest): Prom
 **Returns:** `ApiWalletAddPaymentMethodResponse`
 
 **CLI:** `hoody wallet payment-methods create`
+
+---
+
+### `claimGithubBonus`
+
+**POST** `/api/v1/wallet/github-bonus/claim`
+
+Claim the GitHub connection bonus
+
+```typescript
+client.api.wallet.claimGithubBonus(): Promise<ClaimGithubBonusResponse>
+```
+
+**Returns:** `ClaimGithubBonusResponse`
 
 ---
 
@@ -5420,6 +5470,20 @@ client.api.wallet.getGeneralBalance(): Promise<ApiWalletGetGeneralBalanceRespons
 **Returns:** `ApiWalletGetGeneralBalanceResponse`
 
 **CLI:** `hoody wallet balance general`
+
+---
+
+### `getGithubBonus`
+
+**GET** `/api/v1/wallet/github-bonus`
+
+Get GitHub connection bonus status
+
+```typescript
+client.api.wallet.getGithubBonus(): Promise<GetGithubBonusResponse>
+```
+
+**Returns:** `GetGithubBonusResponse`
 
 ---
 

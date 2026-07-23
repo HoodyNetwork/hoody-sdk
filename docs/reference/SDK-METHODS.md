@@ -1,7 +1,7 @@
 # Hoody SDK — Complete Method Reference
 
 **Version:** 1.0.0-beta.3
-**Total methods:** 1070
+**Total methods:** 1075
 **Namespaces:** 19
 
 ---
@@ -322,7 +322,7 @@
 | `resumeWorkflowRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `runSessionWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 
-## `api` (279 methods)
+## `api` (283 methods)
 
 ### `client.api.activity`
 
@@ -647,6 +647,8 @@
 | `browseAll` | GET | `/api/v1/servers/available` | Browse rental marketplace (collect all pages) |
 | `browseIterator` | GET | `/api/v1/servers/available` | Browse rental marketplace (async iterator) |
 | `get` | GET | `/api/v1/servers/{id}` | Get server details (alias for /rentals/:id) |
+| `getRentalRuntime` | GET | `/api/v1/rentals/{id}/runtime` | Get live runtime info for a rented server or subserver |
+| `getServerRuntime` | GET | `/api/v1/servers/{id}/runtime` | Get live runtime info (alias for /rentals/:id/runtime) |
 | `list` | GET | `/api/v1/servers` | List user servers (alias for /rentals) |
 | `listAll` | GET | `/api/v1/servers` | List user servers (alias for /rentals) (collect all pages) |
 | `listIterator` | GET | `/api/v1/servers` | List user servers (alias for /rentals) (async iterator) |
@@ -726,6 +728,7 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `addPaymentMethod` | POST | `/api/v1/wallet/payment-methods/` | Add a new payment method |
+| `claimGithubBonus` | POST | `/api/v1/wallet/github-bonus/claim` | Claim the GitHub connection bonus |
 | `createCryptoInvoice` | POST | `/api/v1/wallet/payments/crypto/invoice` | Start a crypto payment (hosted invoice) |
 | `createStripeCheckout` | POST | `/api/v1/wallet/payments/stripe/checkout` | Start a card payment (Stripe Checkout) |
 | `deletePaymentMethod` | DELETE | `/api/v1/wallet/payment-methods/{id}` | Delete a payment method |
@@ -735,6 +738,7 @@
 | `getAiBalance` | GET | `/api/v1/wallet/balances/ai` | Get AI balance (limit, usage, remaining) |
 | `getCryptoPaymentIntent` | GET | `/api/v1/wallet/payments/crypto/intents/{id}` | Get a crypto payment intent |
 | `getGeneralBalance` | GET | `/api/v1/wallet/balances/general` | Get general balance only |
+| `getGithubBonus` | GET | `/api/v1/wallet/github-bonus` | Get GitHub connection bonus status |
 | `getInvoice` | GET | `/api/v1/wallet/invoices/{id}` | Get invoice by ID |
 | `getPaymentAvailability` | GET | `/api/v1/wallet/payment-availability` | Get top-up payment availability (providers, bounds, AI transfer fee) |
 | `getPaymentMethod` | GET | `/api/v1/wallet/payment-methods/{id}` | Get payment method by ID |
@@ -1850,7 +1854,7 @@
 |--------|------|------|---------|
 | `runMaintenance` | POST | `/api/v1/sqlite/maintenance` | Run a database maintenance operation |
 
-## `terminal` (47 methods)
+## `terminal` (48 methods)
 
 ### `client.terminal.docs`
 
@@ -1937,6 +1941,12 @@
 | `commitTerminalDrop` | POST | `/api/v1/terminal/drop-commit` | Finalize a drop and inject the OSC frame |
 | `oneShotTerminalDrop` | POST | `/api/v1/terminal/drop` | One-shot drop (begin + stage + commit) |
 | `uploadTerminalDropSlice` | POST | `/api/v1/terminal/upload` | Upload a raw file slice into a drop |
+
+### `client.terminal.terminalState`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `postTerminalState` | POST | `/api/v1/terminal/state` | Client render/connection diagnostics beacon |
 
 ### `client.terminal.web`
 

@@ -1,4 +1,4 @@
-# `terminal` — 47 methods
+# `terminal` — 48 methods
 
 **Version:** 1.0.0-beta.3
 **Accessor:** `client.terminal`
@@ -989,6 +989,26 @@ client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(data: object, option
 | `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535) |
 
 **Returns:** `UploadTerminalDropSliceResponse`
+
+---
+
+## `client.terminal.terminalState` (1 method)
+
+### `postTerminalState`
+
+**POST** `/api/v1/terminal/state`
+
+Client render/connection diagnostics beacon
+
+```typescript
+client.terminal.terminalState.postTerminalState(data?: PostTerminalStateRequest): Promise<PostTerminalStateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `PostTerminalStateRequest` | No | body |  |
+
+**Returns:** `PostTerminalStateResponse`
 
 ---
 

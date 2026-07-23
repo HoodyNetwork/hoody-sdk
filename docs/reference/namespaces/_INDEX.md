@@ -5,7 +5,7 @@
 | Namespace | Description | Methods | Services | Accessor |
 |-----------|-------------|---------|----------|----------|
 | [`agent`](agent.md) | In-container AI agent — sessions, prompts, workflows, skills, memory, and tools. | 209 | 21 | `client.agent` |
-| [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 279 | 31 | `client.api` |
+| [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 283 | 31 | `client.api` |
 | [`app`](app.md) | Resolve and serve apps from multiple sources (Hoody Run). | 35 | 8 | `client.app` |
 | [`browser`](browser.md) | Drive a cloud headless browser — navigate, script, and screenshot. | 29 | 8 | `client.browser` |
 | [`code`](code.md) | Code intelligence and file-editing helpers. | 19 | 6 | `client.code` |
@@ -20,7 +20,7 @@
 | [`pipe`](pipe.md) | Stream data between endpoints and processes. | 7 | 4 | `client.pipe` |
 | [`proxyLogs`](proxyLogs.md) | Reverse-proxy routing and centralized request logs. | 5 | 1 | `client.proxyLogs` |
 | [`sqlite`](sqlite.md) | A per-container SQLite database over HTTP. | 33 | 7 | `client.sqlite` |
-| [`terminal`](terminal.md) | Interactive shell / PTY sessions over HTTP and WebSocket. | 47 | 9 | `client.terminal` |
+| [`terminal`](terminal.md) | Interactive shell / PTY sessions over HTTP and WebSocket. | 48 | 10 | `client.terminal` |
 | [`tunnel`](tunnel.md) | Expose a service on a public URL; bridge and share ports. | 7 | 2 | `client.tunnel` |
 | [`watch`](watch.md) | Watch files and resources for changes (streaming). | 14 | 4 | `client.watch` |
 

@@ -1,7 +1,7 @@
 # Hoody SDK — Reference Documentation
 
 **Version:** 1.0.0-beta.3
-**SDK Methods:** 1070
+**SDK Methods:** 1075
 **CLI Commands:** 825
 **Namespaces:** 19
 
@@ -9,7 +9,7 @@
 
 ## Quick Links
 
-- [SDK Method Reference](SDK-METHODS.md) — flat list of all 1070 methods
+- [SDK Method Reference](SDK-METHODS.md) — flat list of all 1075 methods
 - [CLI Command Reference](CLI-COMMANDS.md) — flat list of 825 commands (plus the hand-written `hoody pipe` streaming group)
 - [HTTP Endpoint Reference](HTTP-METHODS.md) — every HTTP method + path, with its SDK method and CLI command
 - [Namespace Index](namespaces/_INDEX.md) — deep dives per namespace
@@ -21,7 +21,7 @@
 | Namespace | SDK Methods | CLI Commands | Services | Deep Dive |
 |-----------|-------------|--------------|----------|-----------|
 | `agent` | 209 | 167 | 21 | [agent.md](namespaces/agent.md) |
-| `api` | 279 | 200 | 31 | [api.md](namespaces/api.md) |
+| `api` | 283 | 200 | 31 | [api.md](namespaces/api.md) |
 | `app` | 35 | 0 | 8 | [app.md](namespaces/app.md) |
 | `browser` | 29 | 25 | 8 | [browser.md](namespaces/browser.md) |
 | `code` | 19 | 16 | 6 | [code.md](namespaces/code.md) |
@@ -36,7 +36,7 @@
 | `pipe` | 7 | 0 | 4 | [pipe.md](namespaces/pipe.md) |
 | `proxyLogs` | 5 | 3 | 1 | [proxyLogs.md](namespaces/proxyLogs.md) |
 | `sqlite` | 33 | 26 | 7 | [sqlite.md](namespaces/sqlite.md) |
-| `terminal` | 47 | 30 | 9 | [terminal.md](namespaces/terminal.md) |
+| `terminal` | 48 | 30 | 10 | [terminal.md](namespaces/terminal.md) |
 | `tunnel` | 7 | 6 | 2 | [tunnel.md](namespaces/tunnel.md) |
 | `watch` | 14 | 7 | 4 | [watch.md](namespaces/watch.md) |
 
@@ -55,7 +55,7 @@ Parity across the published surface, counted over OpenAPI **operations**:
 | Metric | Count |
 |--------|-------|
 | Matched (SDK method + CLI command) | 788 |
-| SDK-only (no CLI command) | 148 |
+| SDK-only (no CLI command) | 153 |
 | CLI-only (no SDK method) | 12 |
 
 SDK-only operations are mostly spec/health, WebDAV, and other transport-level
@@ -65,7 +65,7 @@ configuration commands (`hoody proxy logs export`, `… db vacuum`,
 `… config get`, …) — that don't map to a single published request.
 
 > These figures count OpenAPI **operations**, so they intentionally do not
-> reconcile with the headline totals above: the 1070 SDK methods expand
+> reconcile with the headline totals above: the 1075 SDK methods expand
 > pagination helpers — `list`/`listAll`/`listIterator` — over fewer underlying
 > operations, and the 825 rendered CLI commands merge auth-type variants.
 > Top-level CLI utilities such as `login` and `config` are not counted here —
