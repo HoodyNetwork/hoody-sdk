@@ -1,6 +1,6 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.5
+**Version:** 1.0.0-beta.6
 **Total endpoints:** 943
 **Namespaces:** 19
 

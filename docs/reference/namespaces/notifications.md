@@ -1,6 +1,6 @@
 # `notifications` — 10 methods
 
-**Version:** 1.0.0-beta.5
+**Version:** 1.0.0-beta.6
 **Accessor:** `client.notifications`
 
 ```typescript
