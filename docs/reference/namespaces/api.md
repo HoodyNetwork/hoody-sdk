@@ -1,6 +1,6 @@
-# `api` — 283 methods
+# `api` — 285 methods
 
-**Version:** 1.0.0-beta.3
+**Version:** 1.0.0-beta.5
 **Accessor:** `client.api`
 
 ```typescript
@@ -393,7 +393,7 @@ client.api.authTokens.updatePublicProfile(data: ApiAuthTokensUpdatePublicProfile
 
 ---
 
-## `client.api.authentication` (26 methods)
+## `client.api.authentication` (28 methods)
 
 ### `api_issueIdentityClaim`
 
@@ -669,7 +669,7 @@ client.api.authentication.oauthDeviceAuthorize(options?: { ticket: string; provi
 
 **POST** `/api/v1/auth/device/code`
 
-Start an RFC 8628 device authorization flow
+Start a device authorization flow (RFC-8628-inspired)
 
 ```typescript
 client.api.authentication.oauthDeviceCode(data: OauthDeviceCodeRequest): Promise<OauthDeviceCodeResponse>
@@ -683,11 +683,47 @@ client.api.authentication.oauthDeviceCode(data: OauthDeviceCodeRequest): Promise
 
 ---
 
+### `oauthDeviceDeny`
+
+**POST** `/api/v1/auth/device/deny`
+
+Refuse the device ('Don't authorize')
+
+```typescript
+client.api.authentication.oauthDeviceDeny(data: OauthDeviceDenyRequest): Promise<OauthDeviceDenyResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `OauthDeviceDenyRequest` | Yes | body |  |
+
+**Returns:** `OauthDeviceDenyResponse`
+
+---
+
+### `oauthDeviceLogin`
+
+**POST** `/api/v1/auth/device/login`
+
+Password sign-in for the device authorize step (cookie + ticket gated)
+
+```typescript
+client.api.authentication.oauthDeviceLogin(data: OauthDeviceLoginRequest): Promise<OauthDeviceLoginResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `OauthDeviceLoginRequest` | Yes | body |  |
+
+**Returns:** `OauthDeviceLoginResponse`
+
+---
+
 ### `oauthDeviceToken`
 
 **POST** `/api/v1/auth/device/token`
 
-Poll for device-flow tokens (RFC 8628 §3.5)
+Poll for device-flow tokens (RFC-8628-inspired)
 
 ```typescript
 client.api.authentication.oauthDeviceToken(data: OauthDeviceTokenRequest): Promise<OauthDeviceTokenResponse>

@@ -1,6 +1,6 @@
 # `terminal` — 48 methods
 
-**Version:** 1.0.0-beta.3
+**Version:** 1.0.0-beta.5
 **Accessor:** `client.terminal`
 
 ```typescript

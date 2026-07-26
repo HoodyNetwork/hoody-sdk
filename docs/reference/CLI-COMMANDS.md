@@ -1,6 +1,6 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.3
+**Version:** 1.0.0-beta.5
 **Total commands:** 825
 **Command groups:** 37
 **Top-level utility commands:** 24

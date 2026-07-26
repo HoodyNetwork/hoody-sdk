@@ -1,7 +1,7 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.3
-**Total methods:** 1075
+**Version:** 1.0.0-beta.5
+**Total methods:** 1077
 **Namespaces:** 19
 
 ---
@@ -322,7 +322,7 @@
 | `resumeWorkflowRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `runSessionWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 
-## `api` (283 methods)
+## `api` (285 methods)
 
 ### `client.api.activity`
 
@@ -377,8 +377,10 @@
 | `oauthAuthorize` | POST | `/api/v1/auth/authorize` | Begin a PKCE OAuth authorization |
 | `oauthCancelIntent` | POST | `/api/v1/auth/intent/cancel` | Cancel a pending OAuth AuthIntent or 2FA temp_token |
 | `oauthDeviceAuthorize` | GET | `/api/v1/auth/device/authorize` | Start the device-leg OAuth (cookie + ticket gated) |
-| `oauthDeviceCode` | POST | `/api/v1/auth/device/code` | Start an RFC 8628 device authorization flow |
-| `oauthDeviceToken` | POST | `/api/v1/auth/device/token` | Poll for device-flow tokens (RFC 8628 §3.5) |
+| `oauthDeviceCode` | POST | `/api/v1/auth/device/code` | Start a device authorization flow (RFC-8628-inspired) |
+| `oauthDeviceDeny` | POST | `/api/v1/auth/device/deny` | Refuse the device ('Don't authorize') |
+| `oauthDeviceLogin` | POST | `/api/v1/auth/device/login` | Password sign-in for the device authorize step (cookie + ticket gated) |
+| `oauthDeviceToken` | POST | `/api/v1/auth/device/token` | Poll for device-flow tokens (RFC-8628-inspired) |
 | `oauthDeviceVerifyCode` | POST | `/api/v1/auth/device/verify_code` | Confirm a device user_code (verification page) |
 | `oauthExchange` | POST | `/api/v1/auth/exchange` | Exchange a PKCE authorization code for tokens |
 | `oauthLaunchInitiate` | POST | `/api/v1/auth/launch/initiate` | Initiate OAuth popup-handoff launch |

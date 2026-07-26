@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.3
-**Total endpoints:** 941
+**Version:** 1.0.0-beta.5
+**Total endpoints:** 943
 **Namespaces:** 19
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -194,7 +194,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `api` — 229 endpoints
+## `api` — 231 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -203,8 +203,10 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/auth/available-regions` | `api.authentication.getAvailableRegions` | `hoody auth regions` | Get available server regions |
 | GET | `/api/v1/auth/config` | `api.authentication.getOAuthConfig` | — | Get the public sign-in configuration |
 | GET | `/api/v1/auth/device/authorize` | `api.authentication.oauthDeviceAuthorize` | — | Start the device-leg OAuth (cookie + ticket gated) |
-| POST | `/api/v1/auth/device/code` | `api.authentication.oauthDeviceCode` | — | Start an RFC 8628 device authorization flow |
-| POST | `/api/v1/auth/device/token` | `api.authentication.oauthDeviceToken` | — | Poll for device-flow tokens (RFC 8628 §3.5) |
+| POST | `/api/v1/auth/device/code` | `api.authentication.oauthDeviceCode` | — | Start a device authorization flow (RFC-8628-inspired) |
+| POST | `/api/v1/auth/device/deny` | `api.authentication.oauthDeviceDeny` | — | Refuse the device ('Don't authorize') |
+| POST | `/api/v1/auth/device/login` | `api.authentication.oauthDeviceLogin` | — | Password sign-in for the device authorize step (cookie + ticket gated) |
+| POST | `/api/v1/auth/device/token` | `api.authentication.oauthDeviceToken` | — | Poll for device-flow tokens (RFC-8628-inspired) |
 | POST | `/api/v1/auth/device/verify_code` | `api.authentication.oauthDeviceVerifyCode` | — | Confirm a device user_code (verification page) |
 | POST | `/api/v1/auth/exchange` | `api.authentication.oauthExchange` | — | Exchange a PKCE authorization code for tokens |
 | POST | `/api/v1/auth/forgot-password` | `api.authentication.forgotPassword` | `hoody auth password forgot` | Request password reset |
