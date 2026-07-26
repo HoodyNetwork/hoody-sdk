@@ -1321,6 +1321,7 @@ export interface ApiTfaVerifyResponse {
     statusCode: 200;
     message: string;
     data: {
+        status?: "approved";
         token?: string;
         refreshToken?: string;
         auth_intent_token?: string;
@@ -6550,6 +6551,54 @@ export interface OauthDeviceVerifyCodeRequest {
 export interface OauthDeviceVerifyCodeResponse {
     statusCode: number;
     data: Record<string, unknown>;
+    message: string;
+}
+export interface OauthDeviceLoginRequest {
+    /**
+     * device_verify_ticket from /device/verify_code
+     * @pattern ^[0-9a-f]{64}$
+     */
+    ticket: string;
+    /**
+     * Username (alternative to email)
+     * @minLength 3
+     * @maxLength 50
+     * @pattern ^[a-zA-Z0-9_-]+$
+     */
+    username?: string;
+    /**
+     * Email address (alternative to username)
+     * @maxLength 255
+     */
+    email?: string;
+    /**
+     * Account password
+     * @minLength 8
+     * @maxLength 128
+     */
+    password: string;
+}
+export interface OauthDeviceLoginResponse {
+    statusCode: number;
+    data: {
+        status?: "approved";
+        requires_2fa?: boolean;
+        temp_token?: string;
+    };
+    message: string;
+}
+export interface OauthDeviceDenyRequest {
+    /**
+     * device_verify_ticket from /device/verify_code
+     * @pattern ^[0-9a-f]{64}$
+     */
+    ticket: string;
+}
+export interface OauthDeviceDenyResponse {
+    statusCode: number;
+    data: {
+        status?: "denied";
+    };
     message: string;
 }
 export interface OauthDeviceTokenRequest {

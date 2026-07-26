@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.4
+ * Hoody SDK v1.0.0-beta.5
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -4955,9 +4955,9 @@ var HoodySDK = (() => {
       return this.http.post(requestUrl, requestData);
     }
     /**
-     * Start an RFC 8628 device authorization flow
+     * Start a device authorization flow (RFC-8628-inspired)
      *
-     * Issues a device_code (polled by the TUI) and a short hand-typeable user_code (shown to the human). Public, no auth.
+     * Issues a device_code (polled by the CLI) and a short hand-typeable user_code (shown to the human). Public, no auth. RFC-8628-inspired but deliberately not a standards-compliant device grant: no client_id/grant_type, lifecycle errors are nested under data, and the poll interval is a fixed 5s after slow_down.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async oauthDeviceCode(data, options) {
@@ -5053,7 +5053,7 @@ var HoodySDK = (() => {
     /**
      * Start the device-leg OAuth (cookie + ticket gated)
      *
-     * GET endpoint the verification page navigates to. Consumes the device_verify_ticket + __Host-device_verify cookie atomically, then redirects to the provider with a server-injected device_binding. Sets Referrer-Policy: no-referrer.
+     * GET endpoint the verification page navigates to. Verifies the provider is fully configured (302 back to the device page with ?error=provider_unavailable, ticket intact, when not), then consumes the device_verify_ticket + __Host-device_verify cookie atomically and redirects to the provider with a server-injected device_binding + attempt nonce. Sets Referrer-Policy: no-referrer.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async oauthDeviceAuthorize(options) {
@@ -5118,9 +5118,105 @@ var HoodySDK = (() => {
       return this.http.get(requestUrl, requestData);
     }
     /**
-     * Poll for device-flow tokens (RFC 8628 §3.5)
+     * Password sign-in for the device authorize step (cookie + ticket gated)
      *
-     * TUI/sidecar poll. 400 + {data:{error}} for lifecycle states (authorization_pending|slow_down|access_denied|expired_token), 200 + token-set on approval (single-use), 429 on the outer flood guard. Public, no auth.
+     * Page-only helper. Verifies email/username + password with FULL login parity (shared per-account throttle, timing-normalized bcrypt) behind the device_verify_ticket + __Host-device_verify cookie gate. NEVER returns session tokens: no-2FA → {status:"approved"} (tokens mint only at /device/token); 2FA → {requires_2fa,temp_token} (device-bound partial, no code_challenge). Credential failures do NOT consume the ticket. Feature-flag off → 404; schema-invalid body → 422.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async oauthDeviceLogin(data, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/auth/device/login`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.body = data;
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Refuse the device (&#x27;Don&#x27;t authorize&#x27;)
+     *
+     * Page-only helper of the RFC-8628-inspired device flow (mirrors the RFC recommendation that the user can deny). Cookie + ticket gated, no credentials required — possession of the live ticket+cookie is the refusing authority. Flips the pending row to denied; the terminal poll then reports access_denied. status=pending-conditional: an approved row can never be un-approved.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async oauthDeviceDeny(data, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/auth/device/deny`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.body = data;
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Poll for device-flow tokens (RFC-8628-inspired)
+     *
+     * Polled by the CLI while the user completes the browser step. 400 + {data:{error}} for lifecycle states (authorization_pending|slow_down|access_denied|expired_token), 200 + token-set on approval (single-use; also requires the approving user's session generation to still be current — a password reset / logout-all after approval yields expired_token), 429 on the outer flood guard. Public, no auth. Lifecycle errors are nested under data, unlike RFC 8628 §3.5.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async oauthDeviceToken(data, options) {
@@ -83987,7 +84083,7 @@ var HoodySDK = (() => {
     /**
      * Resume a failed or cancelled workflow run.
      *
-     * Resumes a terminal (failed/cancelled) run in a live session (workflows.resume): committed steps replay from the run's recorded journal and execution continues live from the first incomplete step. Body: {"session_id"}. The resuming session must match the run's realm, owner, working directory, and container binding; refusals return an actionable message.
+     * Resumes a terminal (failed/cancelled) run in a live session (workflows.resume, Phase 12): committed steps replay from the run's recorded journal and execution continues live from the first incomplete step. Body: {"session_id"}. The resuming session must match the run's realm, owner, working directory, and container binding; refusals return an actionable message.
      */
     async resumeWorkflowRun(run_id, data, options, _templateVars) {
       const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
