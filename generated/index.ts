@@ -73,7 +73,7 @@ export * as agent from './agent/index.js';
 
 // Export shared runtime/types
 export * from './types.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, type ApiErrorRequestContext, type ApiErrorResponseDetails } from './errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, type ApiErrorRequestContext, type ApiErrorResponseDetails, type RetryableApiError, type RetryableStatus } from './errors.js';
 export { HttpClient } from './http-client.js';
 export type {
   IHttpClientConfig,
