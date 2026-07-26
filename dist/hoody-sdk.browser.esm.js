@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.5
+ * Hoody SDK v1.0.0-beta.6
  * Browser Build (ESM) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  * @license Apache-2.0
@@ -2353,9 +2353,10 @@ function isApiError(error) {
   const candidate = error;
   return candidate.name === "ApiError" && typeof candidate.status === "number" && typeof candidate.message === "string";
 }
+var RETRYABLE_STATUSES = [408, 425, 429, 500, 502, 503, 504];
 function isRetryableApiError(error) {
   if (!isApiError(error)) return false;
-  return [408, 425, 429, 500, 502, 503, 504].includes(error.status);
+  return RETRYABLE_STATUSES.includes(error.status);
 }
 var ValidationError = class extends Error {
   constructor(message, field) {

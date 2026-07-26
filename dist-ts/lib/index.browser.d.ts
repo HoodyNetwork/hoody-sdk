@@ -24,7 +24,7 @@ export { EventsClient } from './events-client.js';
 export { EventsManager } from './events-manager.js';
 export type { HoodyClientConfig } from '../generated/client.js';
 export { ApiError, isApiError, isRetryableApiError, ValidationError, } from '../generated/errors.js';
-export type { ApiErrorRequestContext, ApiErrorResponseDetails, } from '../generated/errors.js';
+export type { ApiErrorRequestContext, ApiErrorResponseDetails, RetryableApiError, RetryableStatus, } from '../generated/errors.js';
 export type { IHttpClientConfig, IRequestData, IHttpClientMiddleware, IHttpClientMiddlewareRequestContext, IHttpClientMiddlewareResponseContext, IHttpClientMiddlewareErrorContext, } from '../generated/http-client.js';
 export { getKitCatalogEntries, } from './kit-catalog.js';
 export type { KitCatalogEntry, KitCatalogKind, KitCatalogOptions, } from './kit-catalog.js';

@@ -70,7 +70,7 @@ export * as app from './app/index.js';
 export * as proxyLogs from './proxyLogs/index.js';
 export * as agent from './agent/index.js';
 export * from './types.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, type ApiErrorRequestContext, type ApiErrorResponseDetails } from './errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, type ApiErrorRequestContext, type ApiErrorResponseDetails, type RetryableApiError, type RetryableStatus } from './errors.js';
 export { HttpClient } from './http-client.js';
 export type { IHttpClientConfig, IRequestData, IHttpClientMiddleware, IHttpClientMiddlewareRequestContext, IHttpClientMiddlewareResponseContext, IHttpClientMiddlewareErrorContext, } from './http-client.js';
 export { HoodyClient } from './client.js';
