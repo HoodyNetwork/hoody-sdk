@@ -1,0 +1,1 @@
+import{Ia as q,Na as v}from"./index-0qdcw5fv.js";import"./index-859fjz74.js";function G(k,w){k.command("get").description("Get Hoody API Signing Public Key").action(async(x)=>{await new v(w()).execute({operationId:"getPublicKey",method:"get",path:"/api/v1/meta/public-key",namespace:"api",options:{...x},parameters:[]})}),q(k)}export{G as registerCommands};
