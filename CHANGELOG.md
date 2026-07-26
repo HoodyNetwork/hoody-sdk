@@ -4,6 +4,27 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.5] — 2026-07-26
+
+### Added
+
+- **Device sign-in methods** — `oauthDeviceLogin` and `oauthDeviceDeny` round out the device authorization flow that backs "Continue in browser" sign-in. The confirmation page can now approve the waiting terminal with an email and password, or refuse it outright, so you can build your own confirmation screen instead of only the hosted one. The SDK is now 1077 typed methods, up from 1075.
+- **`--no-allow-no-realm` and `--no-event-access`** on `hoody auth tokens create`. Both settings are on by default and the CLI previously had no way to turn either one off.
+- **Clickable menus.** A left-click now picks a row in any `hoody` menu — the scroll wheel already moved the highlight — and the "Generate a strong password" button is a real click target. Terminals that don't report clicks behave exactly as before; the keyboard path is unchanged.
+
+### Fixed
+
+- **A mistyped password no longer ends `hoody signup`.** Resuming a pending signup used to drop you back to the shell with an account you could not finish creating. You now get another try, and pressing `r` sends a fresh verification link straight from that screen. An account that cannot succeed by retyping — locked out, or disabled — still stops immediately rather than asking three times.
+- **Verification resends report what actually happened.** A resend that hits the hourly limit now says so, with the wait when one is supplied, instead of reporting that a link was on its way. The confirmation elsewhere reads "request accepted" rather than "sent", which is all the service will confirm.
+- **`--version <value>` is no longer mistaken for a version request.** On the commands that take a `--version` value, a failure now reaches the built-in fixer normally; `help` used as a verb is recognized alongside `--help`.
+- **A smaller `hoody` bundle.** The published CLI carried a copy of the repository's build-time metadata that nothing referenced at runtime — it only ever needed the version string. The bundle is about 8 KB lighter and now contains runtime code only.
+- **Installers.** `install.sh` checks for `awk` up front, rejects version strings carrying whitespace or control characters, and parses checksum manifests unambiguously. `install.ps1` restores the caller's TLS setting on every exit path, and a failed upgrade now states whether the previous `hoody.exe` was put back — and where to find it if it was not.
+
+### Changed
+
+- Device-flow endpoint descriptions now spell out how the flow differs from RFC 8628 rather than referring to a note that was not part of the published docs.
+- Reference documentation regenerated for this release.
+
 ## [1.0.0-beta.4] — 2026-07-23
 
 ### Changed
