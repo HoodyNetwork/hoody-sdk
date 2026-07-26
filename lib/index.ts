@@ -107,6 +107,8 @@ export {
 export type {
   ApiErrorRequestContext,
   ApiErrorResponseDetails,
+  RetryableApiError,
+  RetryableStatus,
 } from '../generated/errors.js';
 export type { HoodyClientConfig } from '../generated/client.js';
 export type {

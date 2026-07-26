@@ -43,6 +43,8 @@ export {
 export type {
   ApiErrorRequestContext,
   ApiErrorResponseDetails,
+  RetryableApiError,
+  RetryableStatus,
 } from '../generated/errors.js';
 export type {
   IHttpClientConfig,
