@@ -4,6 +4,24 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.6] — 2026-07-26
+
+### Fixed
+
+- **`isRetryableApiError` no longer breaks type narrowing.** The guard claimed to prove `ApiError`, so TypeScript read the negative branch as impossible and this ordinary check would not compile:
+
+  ```ts
+  if (isApiError(err) && !isRetryableApiError(err)) {
+    console.log(err.status); // 'status' does not exist on type 'never'
+  }
+  ```
+
+  It now narrows to `RetryableApiError`, so both branches type correctly — including when the value is a union such as `ApiError | null`.
+
+### Added
+
+- **`RetryableApiError` and `RetryableStatus` types**, exported from both the package root and the browser entry, so you can name what `isRetryableApiError` proves: an `ApiError` whose `status` is one of the retryable codes.
+
 ## [1.0.0-beta.5] — 2026-07-26
 
 ### Added
