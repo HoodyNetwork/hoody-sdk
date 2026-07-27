@@ -36,7 +36,11 @@ export interface SshTerminalOptions {
   shell?: string;
   cols?: number;
   rows?: number;
-  /** Terminal service instance index (default: 0) */
+  /**
+   * Terminal host index. Defaults to `terminal_id` when it is a positive
+   * integer (the proxy derives `terminal_id` from this index), else 0 — the
+   * sentinel that pairs with `ephemeral` for an auto-generated session.
+   */
   serviceIndex?: number;
 }
 
@@ -201,9 +205,34 @@ function getTerminalBaseUrl(client: any, serviceIndex = 0): string {
   return `https://${t.projectId}-${t.containerId}-terminal-${serviceIndex}.${t.server}.${domain}`;
 }
 
+/**
+ * Host index for a terminal request. The containers proxy injects
+ * `terminal_id` from the SNI index and force-overwrites any client-sent
+ * value, so an explicit terminal id only takes effect when it IS the index —
+ * `terminal-7` *is* `terminal_id=7`. With no id the index is 0, the kit's
+ * "no terminal id" sentinel these helpers pair with `ephemeral: true` to get
+ * an auto-generated session (40000-65535).
+ */
+function terminalServiceIndex(explicit: number | undefined, terminalId?: string): number {
+  if (explicit !== undefined) return explicit;
+  const n = Number(terminalId);
+  return terminalId !== undefined && Number.isInteger(n) && n > 0 ? n : 0;
+}
+
+/**
+ * Connect URL for a session that was just created. The terminal id belongs in
+ * the HOST (`…-terminal-<id>.…`), not the query: the containers proxy injects
+ * `terminal_id` from the SNI index and force-overwrites whatever the client
+ * sent, so an appended `?terminal_id=` never reached the kit — the URL
+ * resolved to `terminal-<serviceIndex>` instead (index 0 = the kit's "no
+ * terminal id" sentinel, which spawns a fresh ephemeral session rather than
+ * attaching to the one just created). `serviceIndex` remains the fallback for
+ * a non-numeric id.
+ */
 function buildTerminalUrl(client: any, terminalId: string, serviceIndex = 0): string {
-  const base = getTerminalBaseUrl(client, serviceIndex);
-  return `${base}?terminal_id=${encodeURIComponent(terminalId)}`;
+  const n = Number(terminalId);
+  const index = Number.isInteger(n) && n > 0 ? n : serviceIndex;
+  return getTerminalBaseUrl(client, index);
 }
 
 function encodeKey(key?: string): string | undefined {
@@ -232,7 +261,7 @@ async function createSshTerminalImpl(
 ): Promise<TerminalCreateResult> {
   assertContainerScoped(this);
   const api = getTerminalApi(this);
-  const si = options.serviceIndex ?? 0;
+  const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
 
   const response = await api.sessions.createTerminal(
     {
@@ -271,7 +300,7 @@ async function createLocalTerminalImpl(
   assertContainerScoped(this);
   const api = getTerminalApi(this);
   const o = options || {};
-  const si = o.serviceIndex ?? 0;
+  const si = terminalServiceIndex(o.serviceIndex, o.terminal_id);
 
   const response = await api.sessions.createTerminal(
     {
@@ -302,7 +331,7 @@ async function createDesktopTerminalImpl(
 ): Promise<TerminalCreateResult> {
   assertContainerScoped(this);
   const api = getTerminalApi(this);
-  const si = options.serviceIndex ?? 0;
+  const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
 
   const response = await api.sessions.createTerminal(
     {
@@ -337,7 +366,7 @@ async function executeSshCommandImpl(
 ): Promise<SshExecResult> {
   assertContainerScoped(this);
   const api = getTerminalApi(this);
-  const si = options.serviceIndex ?? 0;
+  const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
 
   if (!api.execution) {
     throw new Error('Terminal execution service not available');
