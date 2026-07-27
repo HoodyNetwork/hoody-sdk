@@ -1,6 +1,6 @@
 # `files` — 127 methods
 
-**Version:** 1.0.0-beta.7
+**Version:** 1.0.0-beta.8
 **Accessor:** `client.files`
 
 ```typescript
@@ -2124,7 +2124,7 @@ client.files.search(directory: string, options?: { q: string; json?: "" }): Prom
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `directory` | `string` | Yes | path |  |
-| `q` | `string` | Yes | query | Search query (case-insensitive filename match) |
+| `q` | `string` | Yes | query | Search query (case-insensitive filename match). Maximum 512 BYTES of UTF-8 after form/percent decoding, measured both before and after Unicode lowercasing — lowercasing can change a string's byte length in either direction. Longer queries are rejected with 400; they are not truncated. Note this is a byte limit, not a character limit, so it is deliberately not expressed as `maxLength`. |
 | `json` | `""` | No | query | Return JSON format instead of HTML |
 
 **Returns:** `FilesSearchResponse`

@@ -1,6 +1,6 @@
 # `app` — 35 methods
 
-**Version:** 1.0.0-beta.7
+**Version:** 1.0.0-beta.8
 **Accessor:** `client.app`
 
 ```typescript

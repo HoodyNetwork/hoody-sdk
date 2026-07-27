@@ -1,6 +1,6 @@
 # `api` — 285 methods
 
-**Version:** 1.0.0-beta.7
+**Version:** 1.0.0-beta.8
 **Accessor:** `client.api`
 
 ```typescript
@@ -521,7 +521,7 @@ client.api.authentication.githubOAuthCallback(options?: { code: string; state: s
 Redirect to GitHub OAuth
 
 ```typescript
-client.api.authentication.githubOAuthRedirect(options?: { code_challenge: string; intent?: "login" | "star_check"; redirect_uri?: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.githubOAuthRedirect(options?: { code_challenge: string; intent?: "login" | "star_check"; redirect_uri?: string; invite_code?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -529,6 +529,7 @@ client.api.authentication.githubOAuthRedirect(options?: { code_challenge: string
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
 | `intent` | `"login" \| "star_check"` | No | query | OAuth intent: login (default). "star_check" is accepted but ignored (retired). |
 | `redirect_uri` | `string` | No | query | Frontend URL to redirect to after OAuth completes (must be on allowed domain) |
+| `invite_code` | `string` | No | query | Optional invite code ("coupon") captured from the signup link. Normalized and hashed at redirect time — only the hash travels in the OAuth state, never the raw code. Memorized hash-only on a NEW account and applied automatically; not validated here. |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -564,13 +565,14 @@ client.api.authentication.googleOAuthCallback(options?: { code: string; state: s
 Redirect to Google OAuth
 
 ```typescript
-client.api.authentication.googleOAuthRedirect(options?: { code_challenge: string; redirect_uri?: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.googleOAuthRedirect(options?: { code_challenge: string; redirect_uri?: string; invite_code?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
 | `redirect_uri` | `string` | No | query | Frontend URL to redirect to after OAuth completes |
+| `invite_code` | `string` | No | query | Optional invite code ("coupon") captured from the signup link. Normalized and hashed at redirect time — only the hash travels in the OAuth state, never the raw code. Memorized hash-only on a NEW account and applied automatically; not validated here. |
 
 **Returns:** `ApiResponse<unknown>`
 

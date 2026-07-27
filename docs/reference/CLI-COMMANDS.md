@@ -1,6 +1,6 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.7
+**Version:** 1.0.0-beta.8
 **Total commands:** 825
 **Command groups:** 37
 **Top-level utility commands:** 24
@@ -257,9 +257,9 @@ Authentication, tokens, and 2FA
 | `hoody auth login` |  | action | Login with username and password | `api.authentication.login` | `hoody auth login --username alice --email user@example.com --password <password> --response-mode intent --code-challenge <code> --print-token` |
 | `hoody auth logout` |  | action | Logout | `api.authentication.logout` | `hoody auth logout` |
 | `hoody auth oauth github callback` |  | read | GitHub OAuth callback | `api.authentication.githubOAuthCallback` | `hoody auth oauth github callback --code <code> --state active` |
-| `hoody auth oauth github redirect` |  | read | Redirect to GitHub OAuth | `api.authentication.githubOAuthRedirect` | `hoody auth oauth github redirect --intent login --redirect-uri <redirect_uri> --code-challenge <code>` |
+| `hoody auth oauth github redirect` |  | read | Redirect to GitHub OAuth | `api.authentication.githubOAuthRedirect` | `hoody auth oauth github redirect --intent login --redirect-uri <redirect_uri> --code-challenge <code> --invite-code <invite_code>` |
 | `hoody auth oauth google callback` |  | read | Google OAuth callback | `api.authentication.googleOAuthCallback` | `hoody auth oauth google callback --code <code> --state active` |
-| `hoody auth oauth google redirect` |  | read | Redirect to Google OAuth | `api.authentication.googleOAuthRedirect` | `hoody auth oauth google redirect --redirect-uri <redirect_uri> --code-challenge <code>` |
+| `hoody auth oauth google redirect` |  | read | Redirect to Google OAuth | `api.authentication.googleOAuthRedirect` | `hoody auth oauth google redirect --redirect-uri <redirect_uri> --code-challenge <code> --invite-code <invite_code>` |
 | `hoody auth password forgot` |  | write | Request password reset | `api.authentication.forgotPassword` | `hoody auth password forgot --email user@example.com` |
 | `hoody auth password reset` |  | write | Reset password | `api.authentication.resetPassword` | `hoody auth password reset --token <token> --password <password>` |
 | `hoody auth profile by-public-key` |  | read | Get auth token public profile by public key | `api.authTokens.getPublicProfile` | `hoody auth profile by-public-key pk_abc123` |
@@ -365,7 +365,7 @@ Container lifecycle, stats, and proxy permissions. Proxy subcommands (`hoody con
 | `hoody containers stats` |  | read | Get container resource statistics | `api.containers.getStats` | `hoody containers stats abc-123` |
 | `hoody containers status-logs` |  | read | Get status logs for a container | `api.containers.getStatusLogs` | `hoody containers status-logs abc-123 --page 1 --limit 10 --sort-by transition_time --sort-order asc` |
 | `hoody containers sync` |  | action | Sync a copied container with its source | `api.containers.sync` | `hoody containers sync abc-123` |
-| `hoody containers update` | edit | write | Update a container | `api.containers.update` | `hoody containers update abc-123 --name my-resource --color "#ff0000" --ai --autostart --ramdisk --environment-vars <key=value> --ssh-public-key <ssh_public_key> --comment "Hello" --realm-ids "realm-1"` |
+| `hoody containers update` | edit | write | Update a container | `api.containers.update` | `hoody containers update abc-123 --name my-resource --color "#ff0000" --ai --autostart --ramdisk-scope container --ramdisk --environment-vars <key=value> --ssh-public-key <ssh_public_key> --comment "Hello" --realm-ids "realm-1"` |
 
 ## `hoody cron` (alias: crontab) — 9 commands
 
