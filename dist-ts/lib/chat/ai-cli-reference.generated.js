@@ -1,4 +1,4 @@
-// SHA256: 13239e331309c4cfe8b26f8251c201bfd30ef271eb6c81ef1eba9c8ba0b33f47
+// SHA256: 4d33899b988f2f38e0a592f9570504f09df620487e042cedbba21e3ffe51f2e8
 /**
  * CLI reference for `hoody chat` retrieval.
  *
@@ -2218,7 +2218,8 @@ export const CLI_REFERENCE = {
                     "flags": [
                         "--intent",
                         "--redirect-uri",
-                        "--code-challenge"
+                        "--code-challenge",
+                        "--invite-code"
                     ]
                 },
                 {
@@ -2234,7 +2235,8 @@ export const CLI_REFERENCE = {
                     "summary": "Redirect to Google OAuth",
                     "flags": [
                         "--redirect-uri",
-                        "--code-challenge"
+                        "--code-challenge",
+                        "--invite-code"
                     ]
                 },
                 {
@@ -3132,6 +3134,7 @@ export const CLI_REFERENCE = {
                         "--color",
                         "--ai",
                         "--autostart",
+                        "--ramdisk-scope",
                         "--ramdisk",
                         "--environment-vars",
                         "--ssh-public-key",

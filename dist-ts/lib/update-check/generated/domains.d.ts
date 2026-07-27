@@ -10,9 +10,9 @@ export declare const HOODY_PINNED_DOMAINS: Record<string, {
     previous?: string;
 }>;
 /** Binary version, baked from package.json at build time. */
-export declare const HOODY_VERSION = "1.0.0-beta.7";
+export declare const HOODY_VERSION = "1.0.0-beta.8";
 /** Version floor. checkForUpdate refuses any channel.json
  *  whose `latest` is strictly less than this value, even when the
  *  signature verifies via `previous`. Stops a compromised previous-key
  *  from signing a downgrade. */
-export declare const HOODY_VERSION_FLOOR = "1.0.0-beta.7";
+export declare const HOODY_VERSION_FLOOR = "1.0.0-beta.8";

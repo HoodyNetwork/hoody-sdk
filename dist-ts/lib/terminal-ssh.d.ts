@@ -34,7 +34,11 @@ export interface SshTerminalOptions {
     shell?: string;
     cols?: number;
     rows?: number;
-    /** Terminal service instance index (default: 0) */
+    /**
+     * Terminal host index. Defaults to `terminal_id` when it is a positive
+     * integer (the proxy derives `terminal_id` from this index), else 0 — the
+     * sentinel that pairs with `ephemeral` for an auto-generated session.
+     */
     serviceIndex?: number;
 }
 export interface LocalTerminalOptions {

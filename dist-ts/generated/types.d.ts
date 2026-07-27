@@ -2354,6 +2354,7 @@ export interface ApiContainersListResponse {
             hoody_kit?: boolean;
             dev_kit?: boolean;
             autostart?: boolean;
+            ramdisk_scope?: "container" | "project";
             ramdisk?: boolean;
             prespawn?: boolean;
             is_default?: boolean;
@@ -2535,6 +2536,7 @@ export interface ApiContainersGetResponse {
         hoody_kit?: boolean;
         dev_kit?: boolean;
         autostart?: boolean;
+        ramdisk_scope?: "container" | "project";
         ramdisk?: boolean;
         prespawn?: boolean;
         is_default?: boolean;
@@ -2696,7 +2698,9 @@ export interface ApiContainersUpdateRequest {
     ai?: boolean;
     /** Whether the container starts automatically on host boot. If omitted, the current value is preserved. */
     autostart?: boolean;
-    /** Whether to mount a ramdisk at /ramdisk in the container. If omitted, the current value is preserved. Persistent across container reboots, not host reboots. Can store up to 50% of total host memory. Ideal for security or safeguarding against server seizure, and provides extremely fast read performance at no cost. */
+    /** Sharing scope for /ramdisk. `container` (default) mounts only private storage. `project` additionally mounts /ramdisk/project, shared with your other containers in this project ON THE SAME SERVER (a RAM disk cannot span servers). Refused when the project has other members, because project access is granted without regard to permission level. */
+    ramdisk_scope?: "container" | "project";
+    /** Whether to mount a ramdisk at /ramdisk. If omitted, the current value is preserved. Backed by a shared per-server memory pool (512 MiB by default, never more than 50% of the server memory) shared with your other containers on that server. Data survives container restarts but is LOST on a host reboot — which is why it suits secrets and scratch data that must not persist to disk. It is RAM, so it counts against memory rather than disk. */
     ramdisk?: boolean;
     /** Environment variables to set in the container as key-value pairs */
     environment_vars?: Record<string, unknown>;
@@ -2741,6 +2745,7 @@ export interface ApiContainersUpdateResponse {
         hoody_kit?: boolean;
         dev_kit?: boolean;
         autostart?: boolean;
+        ramdisk_scope?: "container" | "project";
         ramdisk?: boolean;
         prespawn?: boolean;
         is_default?: boolean;
@@ -2855,6 +2860,7 @@ export interface ApiContainersCopyResponse {
         hoody_kit?: boolean;
         dev_kit?: boolean;
         autostart?: boolean;
+        ramdisk_scope?: "container" | "project";
         ramdisk?: boolean;
         prespawn?: boolean;
         is_default?: boolean;
@@ -3596,6 +3602,16 @@ export interface ApiContainersGetStatsResponse {
             swap_usage_peak?: number;
             usage_peak?: number;
         };
+        ramdisk?: {
+            scope: "container" | "project";
+            shared_pool_maximum: null | number;
+            capacity_reserved: boolean;
+            usage: null | {
+                private?: null | number;
+                secrets?: null | number;
+                project?: null | number;
+            };
+        };
         disk: {
             root?: {
                 total?: number;
@@ -3652,6 +3668,16 @@ export interface ApiProjectsGetStatsResponse {
                 swap_usage?: number;
                 swap_usage_peak?: number;
                 usage_peak?: number;
+            };
+            ramdisk?: {
+                scope: "container" | "project";
+                shared_pool_maximum: null | number;
+                capacity_reserved: boolean;
+                usage: null | {
+                    private?: null | number;
+                    secrets?: null | number;
+                    project?: null | number;
+                };
             };
             disk?: {
                 root?: {
@@ -13650,10 +13676,11 @@ export interface FilesBackendsConnectSftpRequest {
     key_file_pass?: string;
     /** Raw PEM-encoded private key.
   
-  Note that this should be on a single line, with every line ending (the BEGIN/END
-  header lines included) replaced by the two characters '\n'.
+  Note that this should be on a single line with line endings replaced with '\n', eg
   
-  This command generates the single line correctly:
+   key_pem = -----BEGIN RSA PRIVATE KEY-----\n<your PEM-encoded private key>\n-----END RSA PRIVATE KEY-----
+  
+  This will generate the single line correctly:
   
    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
   

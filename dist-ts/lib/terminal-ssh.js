@@ -39,9 +39,34 @@ function getTerminalBaseUrl(client, serviceIndex = 0) {
         : 'containers.hoody.com';
     return `https://${t.projectId}-${t.containerId}-terminal-${serviceIndex}.${t.server}.${domain}`;
 }
+/**
+ * Host index for a terminal request. The containers proxy injects
+ * `terminal_id` from the SNI index and force-overwrites any client-sent
+ * value, so an explicit terminal id only takes effect when it IS the index —
+ * `terminal-7` *is* `terminal_id=7`. With no id the index is 0, the kit's
+ * "no terminal id" sentinel these helpers pair with `ephemeral: true` to get
+ * an auto-generated session (40000-65535).
+ */
+function terminalServiceIndex(explicit, terminalId) {
+    if (explicit !== undefined)
+        return explicit;
+    const n = Number(terminalId);
+    return terminalId !== undefined && Number.isInteger(n) && n > 0 ? n : 0;
+}
+/**
+ * Connect URL for a session that was just created. The terminal id belongs in
+ * the HOST (`…-terminal-<id>.…`), not the query: the containers proxy injects
+ * `terminal_id` from the SNI index and force-overwrites whatever the client
+ * sent, so an appended `?terminal_id=` never reached the kit — the URL
+ * resolved to `terminal-<serviceIndex>` instead (index 0 = the kit's "no
+ * terminal id" sentinel, which spawns a fresh ephemeral session rather than
+ * attaching to the one just created). `serviceIndex` remains the fallback for
+ * a non-numeric id.
+ */
 function buildTerminalUrl(client, terminalId, serviceIndex = 0) {
-    const base = getTerminalBaseUrl(client, serviceIndex);
-    return `${base}?terminal_id=${encodeURIComponent(terminalId)}`;
+    const n = Number(terminalId);
+    const index = Number.isInteger(n) && n > 0 ? n : serviceIndex;
+    return getTerminalBaseUrl(client, index);
 }
 function encodeKey(key) {
     if (!key)
@@ -64,7 +89,7 @@ function getTerminalApi(client) {
 async function createSshTerminalImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
-    const si = options.serviceIndex ?? 0;
+    const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     const response = await api.sessions.createTerminal({
         ssh_host: options.host,
         ssh_user: options.user,
@@ -94,7 +119,7 @@ async function createLocalTerminalImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
     const o = options || {};
-    const si = o.serviceIndex ?? 0;
+    const si = terminalServiceIndex(o.serviceIndex, o.terminal_id);
     const response = await api.sessions.createTerminal({
         terminal_id: o.terminal_id,
         ephemeral: o.terminal_id ? (o.ephemeral ?? false) : (o.ephemeral ?? true),
@@ -116,7 +141,7 @@ async function createLocalTerminalImpl(options) {
 async function createDesktopTerminalImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
-    const si = options.serviceIndex ?? 0;
+    const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     const response = await api.sessions.createTerminal({
         terminal_id: options.terminal_id,
         desktop: true,
@@ -142,7 +167,7 @@ async function createDesktopTerminalImpl(options) {
 async function executeSshCommandImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
-    const si = options.serviceIndex ?? 0;
+    const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     if (!api.execution) {
         throw new Error('Terminal execution service not available');
     }

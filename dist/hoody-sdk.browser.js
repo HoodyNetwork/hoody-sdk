@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.7
+ * Hoody SDK v1.0.0-beta.8
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -4568,7 +4568,7 @@ var HoodySDK = (() => {
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async githubOAuthRedirect(options) {
-      const { code_challenge, intent, redirect_uri, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      const { code_challenge, intent, redirect_uri, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
       if (code_challenge === void 0 || code_challenge === null) {
         throw new ValidationError("code_challenge is required", "code_challenge");
       }
@@ -4580,6 +4580,11 @@ var HoodySDK = (() => {
         }
       }
       if (redirect_uri !== void 0 && redirect_uri !== null) {
+      }
+      if (invite_code !== void 0 && invite_code !== null) {
+        if (typeof invite_code === "string" && invite_code.length > 128) {
+          throw new ValidationError("invite_code must be at most 128 characters", "invite_code");
+        }
       }
       let requestUrl = this.buildRealmUrl(`/api/v1/auth/github`, _realm, {
         optional: true,
@@ -4597,6 +4602,9 @@ var HoodySDK = (() => {
       }
       if (redirect_uri !== void 0) {
         requestData.query["redirect_uri"] = redirect_uri;
+      }
+      if (invite_code !== void 0) {
+        requestData.query["invite_code"] = invite_code;
       }
       if (signal) {
         requestData.signal = signal;
@@ -4695,13 +4703,18 @@ var HoodySDK = (() => {
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async googleOAuthRedirect(options) {
-      const { code_challenge, redirect_uri, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      const { code_challenge, redirect_uri, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
       if (code_challenge === void 0 || code_challenge === null) {
         throw new ValidationError("code_challenge is required", "code_challenge");
       }
       if (code_challenge !== void 0 && code_challenge !== null) {
       }
       if (redirect_uri !== void 0 && redirect_uri !== null) {
+      }
+      if (invite_code !== void 0 && invite_code !== null) {
+        if (typeof invite_code === "string" && invite_code.length > 128) {
+          throw new ValidationError("invite_code must be at most 128 characters", "invite_code");
+        }
       }
       let requestUrl = this.buildRealmUrl(`/api/v1/auth/google`, _realm, {
         optional: true,
@@ -4716,6 +4729,9 @@ var HoodySDK = (() => {
       }
       if (redirect_uri !== void 0) {
         requestData.query["redirect_uri"] = redirect_uri;
+      }
+      if (invite_code !== void 0) {
+        requestData.query["invite_code"] = invite_code;
       }
       if (signal) {
         requestData.signal = signal;
@@ -90003,9 +90019,15 @@ var HoodySDK = (() => {
     const domain = typeof client.resolveContainersDomain === "function" ? client.resolveContainersDomain() : "containers.hoody.com";
     return `https://${t.projectId}-${t.containerId}-terminal-${serviceIndex}.${t.server}.${domain}`;
   }
+  function terminalServiceIndex(explicit, terminalId) {
+    if (explicit !== void 0) return explicit;
+    const n = Number(terminalId);
+    return terminalId !== void 0 && Number.isInteger(n) && n > 0 ? n : 0;
+  }
   function buildTerminalUrl(client, terminalId, serviceIndex = 0) {
-    const base = getTerminalBaseUrl(client, serviceIndex);
-    return `${base}?terminal_id=${encodeURIComponent(terminalId)}`;
+    const n = Number(terminalId);
+    const index = Number.isInteger(n) && n > 0 ? n : serviceIndex;
+    return getTerminalBaseUrl(client, index);
   }
   function encodeKey(key) {
     if (!key) return void 0;
@@ -90026,7 +90048,7 @@ var HoodySDK = (() => {
     var _a, _b, _c, _d;
     assertContainerScoped(this);
     const api = getTerminalApi(this);
-    const si = options.serviceIndex ?? 0;
+    const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     const response = await api.sessions.createTerminal(
       {
         ssh_host: options.host,
@@ -90059,7 +90081,7 @@ var HoodySDK = (() => {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
     const o = options || {};
-    const si = o.serviceIndex ?? 0;
+    const si = terminalServiceIndex(o.serviceIndex, o.terminal_id);
     const response = await api.sessions.createTerminal(
       {
         terminal_id: o.terminal_id,
@@ -90084,7 +90106,7 @@ var HoodySDK = (() => {
   async function createDesktopTerminalImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
-    const si = options.serviceIndex ?? 0;
+    const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     const response = await api.sessions.createTerminal(
       {
         terminal_id: options.terminal_id,
@@ -90114,7 +90136,7 @@ var HoodySDK = (() => {
     var _a, _b, _c, _d;
     assertContainerScoped(this);
     const api = getTerminalApi(this);
-    const si = options.serviceIndex ?? 0;
+    const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
     if (!api.execution) {
       throw new Error("Terminal execution service not available");
     }
