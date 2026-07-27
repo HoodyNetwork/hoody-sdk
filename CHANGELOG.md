@@ -4,6 +4,12 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.7] — 2026-07-27
+
+### Fixed
+
+- **The incoming-shares example described a response the API never returns.** The receiver's view of a storage share leaves out the sharer's `alias`, `label`, `description` and `expiry_notified`, and the endpoint documents that — but its example response still listed all four. Anyone writing against that example was expecting four fields that never arrive. The example now matches the real payload, and the omitted field is described as the expiry-notification flag it actually is.
+
 ## [1.0.0-beta.6] — 2026-07-26
 
 ### Fixed
