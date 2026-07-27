@@ -4,6 +4,26 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.8] — 2026-07-27
+
+### Added
+
+- **`ramdisk_scope` on container create and update.** `container` (the default) keeps `/ramdisk` private to that container; `project` additionally mounts `/ramdisk/project`, shared with your other containers in the same project **on the same server** — a RAM disk is memory on one machine, so it cannot span servers. It is refused when the project has other members.
+- **Ramdisk figures in container stats.** A new `ramdisk` block reports the sharing scope, the shared pool ceiling, whether any of that ceiling is held for you (`capacity_reserved`, always `false` — the pool is first-come, first-served, so it is not a denominator for a usage bar), and measured bytes per scope. The container **list** endpoint never measures, so its `usage` is `null` — that means "not measured", not "empty".
+- **`invite_code` on GitHub and Google sign-in.** Both provider redirects now accept the invite code from a signup link, so a coupon captured by your own signup page survives the round trip to the provider and applies to the new account. Only a hash of the code travels in the OAuth state.
+
+### Fixed
+
+- **`hoody exec` wrote where the SDK does not read.** Commands in namespaces that take no explicit instance id resolved to service index `0`, while the SDK uses `1`. For `exec` that index *is* the namespace, so a script written through the CLI landed under `default/0/` and was invisible to the matching SDK call. Every namespace now defaults to `1`; an explicit `--…-id` still wins.
+- **`hoody shell -- <command>` ran inside your interactive terminal.** One-shot commands now get a session of their own instead of executing in terminal 1 and inheriting its state.
+- **`--terminal-id` was silently ignored.** The id was sent as a query parameter that the container gateway overwrites, so every session landed on terminal 1 regardless. It now travels where it takes effect: `--terminal-id 3` attaches to terminal 3. The same fix applies to the SDK's terminal helpers — SSH, local, desktop, and remote command execution — where a `terminal_id` option was dropped the same way, and to the connect URL returned after creating a session, which pointed at a fresh ephemeral terminal instead of the session just created.
+- **Agent event streams resolved a different address than every other agent command** — index `0` instead of the singleton the rest of the CLI uses.
+
+### Changed
+
+- **`ramdisk` is now described accurately.** It read as a private allocation of up to half the host's memory that persisted across container reboots. In fact `/ramdisk` draws on a shared per-server pool — 512 MiB by default, never more than half the server's memory, shared with your other containers on that server — and its contents are **lost on a host reboot**, which is what makes it suitable for secrets and scratch data that must not reach disk. It counts against memory, not disk.
+- Reference documentation regenerated for this release.
+
 ## [1.0.0-beta.7] — 2026-07-27
 
 ### Fixed
