@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.6
+ * Hoody SDK v1.0.0-beta.7
  * Browser Build (ESM) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  * @license Apache-2.0

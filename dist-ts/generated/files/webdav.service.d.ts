@@ -6,7 +6,7 @@
  * This file extends the generated base class and is yours to customize.
  * Add your own methods, override base methods, or add custom logic here.
  *
- * Generated at: 2026-07-26T23:30:42.000Z
+ * Generated at: 2026-07-27T00:46:41.000Z
  */
 import { WebdavServiceBase } from './webdav.service.generated.js';
 export declare class WebdavService extends WebdavServiceBase {
