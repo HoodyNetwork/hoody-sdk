@@ -1,6 +1,6 @@
 # Namespace Index
 
-**Version:** 1.0.0-beta.6
+**Version:** 1.0.0-beta.7
 
 | Namespace | Description | Methods | Services | Accessor |
 |-----------|-------------|---------|----------|----------|

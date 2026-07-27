@@ -1,6 +1,6 @@
 # `proxyLogs` — 5 methods
 
-**Version:** 1.0.0-beta.6
+**Version:** 1.0.0-beta.7
 **Accessor:** `client.proxyLogs`
 
 ```typescript

@@ -1,6 +1,6 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.6
+**Version:** 1.0.0-beta.7
 **Total methods:** 1077
 **Namespaces:** 19
 
