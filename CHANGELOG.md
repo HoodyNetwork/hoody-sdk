@@ -4,6 +4,34 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.9] — 2026-07-30
+
+### Added
+
+- **Order machines that aren't in stock.** Four new methods cover the whole flow: `listServerOffers` lists what can be built to order — hardware, location, price per rental length, one-time setup fee and remaining stock — and `reserveServerOffer` places the order. `listMyReservations` and `getMyReservation` follow it from `pending` to `fulfilled`, or `refunded` if the order was reversed before a machine was delivered. An offer is told apart from an in-stock machine by `delivery_hours`: anything available now reports `0`, an offer reports `1`–`720`.
+
+  Reserving **charges immediately**, so the request is built to survive a retry. `idempotency_key` is required, and replaying one returns the original reservation instead of buying a second machine; `max_charge_cents` caps the total debit and is required whenever a setup fee applies. Each way the call can refuse has its own code — the offer was withdrawn, it sold out, the key was reused for different terms, the setup fee was not confirmed, or the total exceeded your ceiling — so a client can tell "nothing was charged" from "something went wrong".
+
+- **Snapshot counts and caps.** Listing a container's snapshots now also reports `snapshot_count` and `max_snapshots`, so you can show how much room is left rather than discovering the cap by hitting it. Creating one past the cap fails with `CONTAINER_SNAPSHOT_LIMIT`, which carries the container, the current count and the limit.
+
+### Changed
+
+- **Renting a server can now carry a one-time setup fee, and the rent call documents how that fails.** `serverRental.rent` accepts `max_charge_cents`, a ceiling on the *total* debit — rent plus the one-time fee. It is **required whenever the server has a non-zero `setup_fee_cents`**, so a client that rents such a server without it is refused with `SETUP_FEE_CONFIRMATION_REQUIRED` rather than being charged a total it never confirmed. It is a ceiling, not an exact match, so a price *drop* still succeeds; if the live total is higher you get `CHARGE_EXCEEDS_MAX` and nothing is charged. Read the figure to confirm from `pricing.price_tiers[rental_days].total_first_payment`.
+
+  The endpoint previously documented only its success response. It now documents the ways it can fail — `INSUFFICIENT_BALANCE` (with the shortfall broken down), `INVALID_DURATION`, `NO_PRICING`, `SERVER_UNAVAILABLE`, `SETUP_FEE_CONFIRMATION_REQUIRED`, `CHARGE_EXCEEDS_MAX` and `PRICING_INVALID` — so these are generated into the client instead of arriving as an untyped error. The available-servers listing gained `pricing.setup_fee`, `pricing.setup_fee_cents` and `price_tiers.*.total_first_payment`, and reports `delivery_hours` — `0` for anything in stock. Servers and rentals now report `setup_fee_cents` and `total_paid_cents`, so what was actually paid is visible after the fact.
+
+- **Listing invoices can be paged, sorted and filtered.** `listUserInvoices` gained `page` and `filter` alongside the existing `limit`, `sort_by` and `sort_order`. `filter` takes a JSON object string over the sortable fields — `{"status":"paid"}` or `{"amount":{"gte":10}}` — with `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `like` and `in`; an unknown field or operator is rejected with `400` rather than silently ignored. `limit` is now documented as capped at 100 (default 20), and `sort_by` lists the fields it accepts, falling back to `created_at` for anything else.
+
+- **Creating a snapshot documents the rest of its failure surface.** Alongside the cap, the call can now report that another snapshot operation is already running for the container, that the container is still being claimed (both `409`), or that its snapshot list could not be read so the limit could not be checked (`503`, also on the alias endpoints). Each refuses without creating anything.
+
+- **`redirect_uri` is now required when starting GitHub or Google sign-in.** Both documented it as optional. Google's description now also states it must be on an allowed domain, which GitHub's already did.
+- **PKCE `code_challenge` is pinned to its real shape.** `authorize`, `device/code` and `launch/initiate` all documented 43–128 characters, but a base64url-encoded SHA-256 digest is always exactly 43. The schema now says so, rejecting a malformed challenge before it leaves the client.
+- **Snapshot `expiry` is a whole number of days, from 1 to 3650.** It was an unbounded number, so `0.5`, `-3` and absurdly distant dates all looked acceptable. Values outside the range are now rejected before the snapshot is created.
+
+### Fixed
+
+- **The GitHub and Google callbacks now describe a declined sign-in.** When someone cancels at the provider, the callback receives `error`, `error_description` and `error_uri` and no `code`. Both were documented as though `code` always arrived, so a generated client treated an ordinary cancellation as a malformed response.
+
 ## [1.0.0-beta.8] — 2026-07-27
 
 ### Added
@@ -106,7 +134,7 @@ Initial public release of the Hoody SDK (`hoody-sdk`) and the bundled `hoody` CL
 ### Added
 
 - Typed TypeScript client for the public Hoody API and the container **Kit** service layer — terminal, files, browser, display, code, agent, sqlite, cron, daemon, watch, notes, tunnels, and more. See the [README](./README.md) and the full [`docs/reference/`](./docs/reference/).
-- The `hoody` CLI, shipped in the same package — run with zero install via `npx https://hoody.com`, or install globally with `npm install -g hoody-sdk`.
+- The `hoody` CLI, shipped in the same package — run with zero install via `npx hoody-sdk`, or install globally with `npm install -g hoody-sdk`.
 - Node.js ≥ 22.19.0 and Bun support; browser IIFE global (`window.HoodySDK`) and ESM bundles.
 
 > Future releases are documented here automatically, generated from the public API surface between published versions.
