@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.8
+ * Hoody SDK v1.0.0-beta.9
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -4568,7 +4568,15 @@ var HoodySDK = (() => {
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async githubOAuthRedirect(options) {
-      const { code_challenge, intent, redirect_uri, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      const { redirect_uri, code_challenge, intent, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (redirect_uri === void 0 || redirect_uri === null) {
+        throw new ValidationError("redirect_uri is required", "redirect_uri");
+      }
+      if (redirect_uri !== void 0 && redirect_uri !== null) {
+        if (typeof redirect_uri === "string" && redirect_uri.length < 1) {
+          throw new ValidationError("redirect_uri must be at least 1 characters", "redirect_uri");
+        }
+      }
       if (code_challenge === void 0 || code_challenge === null) {
         throw new ValidationError("code_challenge is required", "code_challenge");
       }
@@ -4578,8 +4586,6 @@ var HoodySDK = (() => {
         if (!["login", "star_check"].includes(intent)) {
           throw new ValidationError("intent must be one of: login, star_check", "intent");
         }
-      }
-      if (redirect_uri !== void 0 && redirect_uri !== null) {
       }
       if (invite_code !== void 0 && invite_code !== null) {
         if (typeof invite_code === "string" && invite_code.length > 128) {
@@ -4594,14 +4600,14 @@ var HoodySDK = (() => {
       });
       const requestData = {};
       requestData.query = {};
+      if (redirect_uri !== void 0) {
+        requestData.query["redirect_uri"] = redirect_uri;
+      }
       if (code_challenge !== void 0) {
         requestData.query["code_challenge"] = code_challenge;
       }
       if (intent !== void 0) {
         requestData.query["intent"] = intent;
-      }
-      if (redirect_uri !== void 0) {
-        requestData.query["redirect_uri"] = redirect_uri;
       }
       if (invite_code !== void 0) {
         requestData.query["invite_code"] = invite_code;
@@ -4642,16 +4648,19 @@ var HoodySDK = (() => {
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async githubOAuthCallback(options) {
-      const { code, state, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-      if (code === void 0 || code === null) {
-        throw new ValidationError("code is required", "code");
-      }
-      if (code !== void 0 && code !== null) {
-      }
+      const { state, code, error, error_description, error_uri, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
       if (state === void 0 || state === null) {
         throw new ValidationError("state is required", "state");
       }
       if (state !== void 0 && state !== null) {
+      }
+      if (code !== void 0 && code !== null) {
+      }
+      if (error !== void 0 && error !== null) {
+      }
+      if (error_description !== void 0 && error_description !== null) {
+      }
+      if (error_uri !== void 0 && error_uri !== null) {
       }
       let requestUrl = this.buildRealmUrl(`/api/v1/auth/github/callback`, _realm, {
         optional: true,
@@ -4661,11 +4670,20 @@ var HoodySDK = (() => {
       });
       const requestData = {};
       requestData.query = {};
+      if (state !== void 0) {
+        requestData.query["state"] = state;
+      }
       if (code !== void 0) {
         requestData.query["code"] = code;
       }
-      if (state !== void 0) {
-        requestData.query["state"] = state;
+      if (error !== void 0) {
+        requestData.query["error"] = error;
+      }
+      if (error_description !== void 0) {
+        requestData.query["error_description"] = error_description;
+      }
+      if (error_uri !== void 0) {
+        requestData.query["error_uri"] = error_uri;
       }
       if (signal) {
         requestData.signal = signal;
@@ -4703,13 +4721,19 @@ var HoodySDK = (() => {
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async googleOAuthRedirect(options) {
-      const { code_challenge, redirect_uri, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      const { redirect_uri, code_challenge, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (redirect_uri === void 0 || redirect_uri === null) {
+        throw new ValidationError("redirect_uri is required", "redirect_uri");
+      }
+      if (redirect_uri !== void 0 && redirect_uri !== null) {
+        if (typeof redirect_uri === "string" && redirect_uri.length < 1) {
+          throw new ValidationError("redirect_uri must be at least 1 characters", "redirect_uri");
+        }
+      }
       if (code_challenge === void 0 || code_challenge === null) {
         throw new ValidationError("code_challenge is required", "code_challenge");
       }
       if (code_challenge !== void 0 && code_challenge !== null) {
-      }
-      if (redirect_uri !== void 0 && redirect_uri !== null) {
       }
       if (invite_code !== void 0 && invite_code !== null) {
         if (typeof invite_code === "string" && invite_code.length > 128) {
@@ -4724,11 +4748,11 @@ var HoodySDK = (() => {
       });
       const requestData = {};
       requestData.query = {};
-      if (code_challenge !== void 0) {
-        requestData.query["code_challenge"] = code_challenge;
-      }
       if (redirect_uri !== void 0) {
         requestData.query["redirect_uri"] = redirect_uri;
+      }
+      if (code_challenge !== void 0) {
+        requestData.query["code_challenge"] = code_challenge;
       }
       if (invite_code !== void 0) {
         requestData.query["invite_code"] = invite_code;
@@ -4769,16 +4793,19 @@ var HoodySDK = (() => {
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async googleOAuthCallback(options) {
-      const { code, state, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-      if (code === void 0 || code === null) {
-        throw new ValidationError("code is required", "code");
-      }
-      if (code !== void 0 && code !== null) {
-      }
+      const { state, code, error, error_description, error_uri, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
       if (state === void 0 || state === null) {
         throw new ValidationError("state is required", "state");
       }
       if (state !== void 0 && state !== null) {
+      }
+      if (code !== void 0 && code !== null) {
+      }
+      if (error !== void 0 && error !== null) {
+      }
+      if (error_description !== void 0 && error_description !== null) {
+      }
+      if (error_uri !== void 0 && error_uri !== null) {
       }
       let requestUrl = this.buildRealmUrl(`/api/v1/auth/google/callback`, _realm, {
         optional: true,
@@ -4788,11 +4815,20 @@ var HoodySDK = (() => {
       });
       const requestData = {};
       requestData.query = {};
+      if (state !== void 0) {
+        requestData.query["state"] = state;
+      }
       if (code !== void 0) {
         requestData.query["code"] = code;
       }
-      if (state !== void 0) {
-        requestData.query["state"] = state;
+      if (error !== void 0) {
+        requestData.query["error"] = error;
+      }
+      if (error_description !== void 0) {
+        requestData.query["error_description"] = error_description;
+      }
+      if (error_uri !== void 0) {
+        requestData.query["error_uri"] = error_uri;
       }
       if (signal) {
         requestData.signal = signal;
@@ -19311,10 +19347,24 @@ var HoodySDK = (() => {
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async listInvoices(options) {
-      const { limit, sort_by, sort_order, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      const { page, limit, sort_by, sort_order, filter, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (page !== void 0 && page !== null) {
+        if (!Number.isFinite(page) || !Number.isInteger(page)) {
+          throw new ValidationError("page must be an integer", "page");
+        }
+        if (page < 1) {
+          throw new ValidationError("page must be >= 1", "page");
+        }
+      }
       if (limit !== void 0 && limit !== null) {
-        if (!Number.isFinite(limit)) {
-          throw new ValidationError("limit must be a finite number", "limit");
+        if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
+          throw new ValidationError("limit must be an integer", "limit");
+        }
+        if (limit < 1) {
+          throw new ValidationError("limit must be >= 1", "limit");
+        }
+        if (limit > 100) {
+          throw new ValidationError("limit must be <= 100", "limit");
         }
       }
       if (sort_by !== void 0 && sort_by !== null) {
@@ -19324,6 +19374,8 @@ var HoodySDK = (() => {
           throw new ValidationError("sort_order must be one of: asc, desc", "sort_order");
         }
       }
+      if (filter !== void 0 && filter !== null) {
+      }
       let requestUrl = this.buildRealmUrl(`/api/v1/wallet/invoices/`, _realm, {
         optional: true,
         baseDomain: "api.hoody.com",
@@ -19332,6 +19384,9 @@ var HoodySDK = (() => {
       });
       const requestData = {};
       requestData.query = {};
+      if (page !== void 0) {
+        requestData.query["page"] = page;
+      }
       if (limit !== void 0) {
         requestData.query["limit"] = limit;
       }
@@ -19340,6 +19395,9 @@ var HoodySDK = (() => {
       }
       if (sort_order !== void 0) {
         requestData.query["sort_order"] = sort_order;
+      }
+      if (filter !== void 0) {
+        requestData.query["filter"] = filter;
       }
       if (signal) {
         requestData.signal = signal;
@@ -21134,7 +21192,7 @@ var HoodySDK = (() => {
     /**
      * Rent server
      *
-     * Rent an available server for a specified duration
+     * Rent an available server for a specified duration. Some servers carry a ONE-TIME setup fee charged only on this first payment (never on extension); when they do, the request must confirm the total via max_charge_cents.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async rent(id, data, options) {
@@ -21467,6 +21525,221 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildRealmUrl(`/api/v1/servers/{id}/runtime`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      const requestData = {};
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+     * Browse machines available to order
+     *
+     * Machines that are not in stock but can be ordered with a delivery lead time. Distinguished from /servers/available by delivery_hours: in-stock servers report 0, an offer reports 1..720.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async listServerOffers(options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      let requestUrl = this.buildRealmUrl(`/api/v1/offers`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+     * Reserve an offer (charges immediately)
+     *
+     * Reserve an offer (charges immediately)
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async reserveServerOffer(id, data, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (id === void 0 || id === null) {
+        throw new ValidationError("id is required", "id");
+      }
+      if (id !== void 0 && id !== null) {
+      }
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/offers/{id}/reserve`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      const requestData = {};
+      requestData.body = data;
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Your reservations
+     *
+     * Your reservations
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async listMyReservations(options) {
+      const { limit, offset, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (limit !== void 0 && limit !== null) {
+        if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
+          throw new ValidationError("limit must be an integer", "limit");
+        }
+        if (limit < 1) {
+          throw new ValidationError("limit must be >= 1", "limit");
+        }
+        if (limit > 200) {
+          throw new ValidationError("limit must be <= 200", "limit");
+        }
+      }
+      if (offset !== void 0 && offset !== null) {
+        if (!Number.isFinite(offset) || !Number.isInteger(offset)) {
+          throw new ValidationError("offset must be an integer", "offset");
+        }
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/reservations`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.query = {};
+      if (limit !== void 0) {
+        requestData.query["limit"] = limit;
+      }
+      if (offset !== void 0) {
+        requestData.query["offset"] = offset;
+      }
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+     * One of your reservations
+     *
+     * One of your reservations
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async getMyReservation(id, options) {
+      const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (id === void 0 || id === null) {
+        throw new ValidationError("id is required", "id");
+      }
+      if (id !== void 0 && id !== null) {
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/reservations/{id}`, _realm, {
         optional: true,
         baseDomain: "api.hoody.com",
         subdomainPattern: "{realm}.api.hoody.com",

@@ -1,4 +1,4 @@
-// SHA256: 4d33899b988f2f38e0a592f9570504f09df620487e042cedbba21e3ffe51f2e8
+// SHA256: 9cfe59f2ff9098939565b7a0848c28ba8da804396594342e7f2e969c1a8ee3ad
 /**
  * CLI reference for `hoody chat` retrieval.
  *
@@ -2209,7 +2209,10 @@ export const CLI_REFERENCE = {
                     "summary": "GitHub OAuth callback",
                     "flags": [
                         "--code",
-                        "--state"
+                        "--state",
+                        "--error",
+                        "--error-description",
+                        "--error-uri"
                     ]
                 },
                 {
@@ -2227,7 +2230,10 @@ export const CLI_REFERENCE = {
                     "summary": "Google OAuth callback",
                     "flags": [
                         "--code",
-                        "--state"
+                        "--state",
+                        "--error",
+                        "--error-description",
+                        "--error-uri"
                     ]
                 },
                 {
@@ -7985,7 +7991,8 @@ export const CLI_REFERENCE = {
                     "summary": "Rent server",
                     "flags": [
                         "--pool-id",
-                        "--rental-days"
+                        "--rental-days",
+                        "--max-charge-cents"
                     ]
                 }
             ]

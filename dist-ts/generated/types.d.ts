@@ -3123,6 +3123,8 @@ export interface ApiContainersListSnapshotsResponse {
     data: {
         container_id?: string;
         project_id?: string;
+        snapshot_count?: number;
+        max_snapshots?: null | number;
         snapshots?: ({
             name?: string;
             alias?: null | string;
@@ -3140,7 +3142,11 @@ export interface ApiContainersCreateSnapshotRequest {
      * @maxLength 100
      */
     alias?: string;
-    /** Expiry in days */
+    /**
+     * Expiry in days (1–3650). Values outside this range are rejected before the snapshot is created.
+     * @minimum 1
+     * @maximum 3650
+     */
     expiry?: number;
 }
 export interface ApiContainersCreateSnapshotResponse {
@@ -4543,7 +4549,7 @@ export interface ApiProxyAliasesCreateRequest {
      * @pattern ^[0-9a-f]{24}$
      */
     container_id: string;
-    /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across your account. */
+    /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across your account. Reserved and rejected with 422: the exact label "containers" (it collides with the proxy base domain), and anything starting with "proxy-"/"workspaces-" or equal to "proxy"/"workspaces". Prefixed forms such as "containers-my-app" are allowed. */
     alias?: string | null | false;
     /** Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). To point an alias at an HTTP server you run yourself inside the container (a process started via the daemon, a dev server, anything listening on a TCP port) use program "http" — or "https" for a TLS backend — and give the port via the "port" field (e.g. program "http" + port 3000 forwards to http://<container>:3000). The combined "http-3000" form and the legacy "index"-as-port form also work; when more than one is supplied the order of authority is port > the port embedded in "http-<port>" > index, so a leftover/default index can never override a real port. Must be a name or alias from container-programs.json. */
     program: string;
@@ -4623,7 +4629,7 @@ export interface ApiProxyAliasesGetResponse {
 }
 export interface ApiProxyAliasesUpdateRequest {
     /**
-     * New alias name. Must be unique across your account.
+     * New alias name. Must be unique across your account. Reserved and rejected with 422: the exact label "containers" (it collides with the proxy base domain), and anything starting with "proxy-"/"workspaces-" or equal to "proxy"/"workspaces". Prefixed forms such as "containers-my-app" are allowed.
      * @minLength 3
      * @maxLength 61
      * @pattern ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
@@ -5527,7 +5533,7 @@ export interface ApiWalletListInvoicesResponse {
     statusCode: number;
     message: string;
     data: {
-        invoices?: {
+        invoices?: ({
             id: string;
             user_id?: string;
             transaction_id?: string;
@@ -5537,7 +5543,7 @@ export interface ApiWalletListInvoicesResponse {
             currency?: string;
             issue_date?: string;
             due_date?: string;
-            paid_date?: string;
+            paid_date?: null | string;
             created_at?: string;
             updated_at?: string;
             transaction?: {
@@ -5548,7 +5554,7 @@ export interface ApiWalletListInvoicesResponse {
                 currency?: string;
                 created_at?: string;
             };
-        }[];
+        })[];
         pagination?: {
             total?: number;
             page?: number;
@@ -5569,11 +5575,26 @@ export interface ApiWalletGetInvoiceResponse {
         status?: string;
         amount?: number;
         currency?: string;
-        billing_details?: Record<string, unknown>;
-        items?: unknown[];
+        billing_details?: null | {
+            payment_method?: string;
+            payment_method_type?: string;
+            credit_type?: string;
+            fee_bps?: number;
+            gross_amount?: number;
+            net_amount?: number;
+            fee_amount?: number;
+            pay_currency?: string;
+            amount_paid?: number;
+            superseded_by?: string;
+        };
+        items?: null | {
+            type?: string;
+            description?: string;
+            amount?: number;
+        }[];
         issue_date?: string;
         due_date?: string;
-        paid_date?: string;
+        paid_date?: null | string;
         created_at?: string;
         updated_at?: string;
         transaction?: {
@@ -5775,8 +5796,11 @@ export interface ApiServerRentalBrowseResponse {
         featured?: boolean;
         popularity_rank?: null | number;
         setup_time_minutes?: null | number;
+        delivery_hours?: number;
         pricing?: {
             prices?: Record<string, unknown>;
+            setup_fee?: string;
+            setup_fee_cents?: number;
             price_tiers?: Record<string, unknown>;
         };
         specs?: {
@@ -5824,6 +5848,11 @@ export interface ApiServerRentalRentRequest {
      * @minimum 1
      */
     rental_days: number;
+    /**
+     * Ceiling on the TOTAL debit (rental price + one-time setup fee), in integer cents. REQUIRED whenever the server has a non-zero setup_fee_cents — omitting it returns 409 SETUP_FEE_CONFIRMATION_REQUIRED. Optional for fee-less servers. If the live total exceeds this ceiling the request is rejected with 409 CHARGE_EXCEEDS_MAX and nothing is charged; re-read the server and confirm the new total. A ceiling (not an exact match) so a price DROP still succeeds. Read it from pricing.price_tiers[rental_days].total_first_payment.
+     * @minimum 0
+     */
+    max_charge_cents?: number;
 }
 export interface ApiServerRentalRentResponse {
     statusCode: number;
@@ -5837,6 +5866,8 @@ export interface ApiServerRentalRentResponse {
             hold_days?: number;
             actual_usage_days?: number;
             status?: string;
+            setup_fee_cents?: number;
+            total_paid_cents?: number;
         };
         transaction?: {
             id: string;
@@ -5855,6 +5886,8 @@ export interface ApiRentalsListResponse {
         rental_end?: string;
         status?: string;
         amount?: string;
+        setup_fee_cents?: number;
+        total_paid_cents?: number;
         remaining_days?: number;
         server_id?: null | string;
         pool_id?: null | string;
@@ -5920,6 +5953,8 @@ export interface ApiRentalsGetResponse {
         hold_days?: number;
         status?: string;
         amount?: string;
+        setup_fee_cents?: number;
+        total_paid_cents?: number;
         remaining_days?: number;
         usage_days?: number;
         server_id?: null | string;
@@ -5999,6 +6034,8 @@ export interface ApiRentalsExtendResponse {
             rental_end?: string;
             status?: string;
             amount?: string;
+            setup_fee_cents?: number;
+            total_paid_cents?: number;
             remaining_days?: number;
         };
         transaction?: {
@@ -6017,6 +6054,8 @@ export interface ApiServerRentalListResponse {
         rental_end?: string;
         status?: string;
         amount?: string;
+        setup_fee_cents?: number;
+        total_paid_cents?: number;
         remaining_days?: number;
         server_id?: null | string;
         pool_id?: null | string;
@@ -6082,6 +6121,8 @@ export interface ApiServerRentalGetResponse {
         hold_days?: number;
         status?: string;
         amount?: string;
+        setup_fee_cents?: number;
+        total_paid_cents?: number;
         remaining_days?: number;
         usage_days?: number;
         server_id?: null | string;
@@ -6522,10 +6563,10 @@ export interface WaitlistEnrichResponse {
 export interface OauthLaunchInitiateRequest {
     provider: "github" | "google";
     /**
-     * PKCE code_challenge (base64url SHA-256 of code_verifier, 43–128 chars)
+     * PKCE code_challenge (base64url SHA-256 of code_verifier, exactly 43 chars)
      * @minLength 43
-     * @maxLength 128
-     * @pattern ^[A-Za-z0-9_-]+$
+     * @maxLength 43
+     * @pattern ^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$
      */
     code_challenge: string;
     /**
@@ -6550,8 +6591,8 @@ export interface OauthDeviceCodeRequest {
     /**
      * Optional PKCE on the device flow itself; if present the poll REQUIRES the verifier
      * @minLength 43
-     * @maxLength 128
-     * @pattern ^[A-Za-z0-9_-]+$
+     * @maxLength 43
+     * @pattern ^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$
      */
     code_challenge?: string;
 }
@@ -6687,8 +6728,8 @@ export interface OauthDeviceTokenResponse {
 export interface OauthAuthorizeRequest {
     /**
      * @minLength 43
-     * @maxLength 128
-     * @pattern ^[A-Za-z0-9_-]+$
+     * @maxLength 43
+     * @pattern ^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$
      */
     code_challenge: string;
     /**
@@ -6744,6 +6785,115 @@ export interface ClaimGithubBonusResponse {
             at?: string | null;
             transaction_id?: string;
         } | null;
+    };
+}
+export interface ListServerOffersResponse {
+    statusCode: number;
+    message: string;
+    data: ({
+        id: string;
+        name?: string;
+        country?: string;
+        region?: null | string;
+        city?: null | string;
+        datacenter?: null | string;
+        cpu_model?: null | string;
+        cpu_cores?: null | number;
+        cpu_threads?: null | number;
+        ram_gb?: null | number;
+        disks?: null | Record<string, unknown>[];
+        bandwidth_mbps?: null | number;
+        traffic_tb?: null | number;
+        traffic_unlimited?: boolean;
+        ipv4_count?: number;
+        pricing_rules?: Record<string, unknown>;
+        hold_rules?: Record<string, unknown>;
+        setup_fee_cents?: number;
+        delivery_hours?: number;
+        setup_time_minutes?: number;
+        stock?: null | number;
+    })[];
+}
+export interface ReserveServerOfferRequest {
+    /** Must be one of the offer's pricing_rules keys. */
+    days: number;
+    /** Ceiling on the TOTAL debit (rent + one-time setup fee). Required whenever a setup fee applies. */
+    max_charge_cents?: number;
+    /**
+     * Caller-generated. Replaying it returns the original reservation, unpaid twice.
+     * @minLength 1
+     */
+    idempotency_key: string;
+    /** Must be a pool you own. Defaults to your default pool. */
+    pool_id?: string;
+}
+export interface ReserveServerOfferResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        reservation?: {
+            id: string;
+            offer_id?: string;
+            days?: number;
+            state?: "pending" | "fulfilled" | "refunded";
+            ready_by?: string;
+            delivery_hours_quoted?: number;
+            setup_time_minutes_quoted?: number;
+            hold_days_quoted?: number;
+            server_id?: null | string;
+            rental_id?: null | string;
+            created_at?: string;
+            rental_cents?: number;
+            setup_fee_cents?: number;
+            total_paid_cents?: number;
+            offer_snapshot?: Record<string, unknown>;
+        };
+        replayed?: boolean;
+    };
+}
+export interface ListMyReservationsResponse {
+    statusCode: number;
+    message: string;
+    data: ({
+        id: string;
+        offer_id?: string;
+        days?: number;
+        state?: "pending" | "fulfilled" | "refunded";
+        ready_by?: string;
+        delivery_hours_quoted?: number;
+        setup_time_minutes_quoted?: number;
+        hold_days_quoted?: number;
+        server_id?: null | string;
+        rental_id?: null | string;
+        created_at?: string;
+        rental_cents?: number;
+        setup_fee_cents?: number;
+        total_paid_cents?: number;
+        offer_snapshot?: Record<string, unknown>;
+    })[];
+    total?: number;
+    limit?: number;
+    offset?: number;
+}
+export interface GetMyReservationResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        id: string;
+        offer_id?: string;
+        days?: number;
+        state?: "pending" | "fulfilled" | "refunded";
+        ready_by?: string;
+        delivery_hours_quoted?: number;
+        setup_time_minutes_quoted?: number;
+        hold_days_quoted?: number;
+        server_id?: null | string;
+        rental_id?: null | string;
+        created_at?: string;
+        rental_cents?: number;
+        setup_fee_cents?: number;
+        total_paid_cents?: number;
+        offer_snapshot?: Record<string, unknown>;
     };
 }
 export interface BrowserInstancesStartResponse {
