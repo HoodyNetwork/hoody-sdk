@@ -1,7 +1,7 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.8
-**Total methods:** 1077
+**Version:** 1.0.0-beta.9
+**Total methods:** 1081
 **Namespaces:** 19
 
 ---
@@ -322,7 +322,7 @@
 | `resumeWorkflowRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `runSessionWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 
-## `api` (285 methods)
+## `api` (289 methods)
 
 ### `client.api.activity`
 
@@ -649,12 +649,16 @@
 | `browseAll` | GET | `/api/v1/servers/available` | Browse rental marketplace (collect all pages) |
 | `browseIterator` | GET | `/api/v1/servers/available` | Browse rental marketplace (async iterator) |
 | `get` | GET | `/api/v1/servers/{id}` | Get server details (alias for /rentals/:id) |
+| `getMyReservation` | GET | `/api/v1/reservations/{id}` | One of your reservations |
 | `getRentalRuntime` | GET | `/api/v1/rentals/{id}/runtime` | Get live runtime info for a rented server or subserver |
 | `getServerRuntime` | GET | `/api/v1/servers/{id}/runtime` | Get live runtime info (alias for /rentals/:id/runtime) |
 | `list` | GET | `/api/v1/servers` | List user servers (alias for /rentals) |
 | `listAll` | GET | `/api/v1/servers` | List user servers (alias for /rentals) (collect all pages) |
 | `listIterator` | GET | `/api/v1/servers` | List user servers (alias for /rentals) (async iterator) |
+| `listMyReservations` | GET | `/api/v1/reservations` | Your reservations |
+| `listServerOffers` | GET | `/api/v1/offers` | Browse machines available to order |
 | `rent` | POST | `/api/v1/servers/{id}/rent` | Rent server |
+| `reserveServerOffer` | POST | `/api/v1/offers/{id}/reserve` | Reserve an offer (charges immediately) |
 
 ### `client.api.storageShares`
 

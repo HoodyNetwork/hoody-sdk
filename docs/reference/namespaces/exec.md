@@ -1,6 +1,6 @@
 # `exec` — 69 methods
 
-**Version:** 1.0.0-beta.8
+**Version:** 1.0.0-beta.9
 **Accessor:** `client.exec`
 
 ```typescript

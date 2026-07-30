@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.8
-**Total endpoints:** 943
+**Version:** 1.0.0-beta.9
+**Total endpoints:** 947
 **Namespaces:** 19
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -194,7 +194,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `api` — 231 endpoints
+## `api` — 235 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -317,6 +317,8 @@ Grouped by SDK namespace, sorted by path.
 | PUT | `/api/v1/notifications/{id}/read` | `api.notifications.markRead` | `hoody inbox mark` | Mark a notification as read |
 | GET | `/api/v1/notifications/public` | `api.notifications.listPublic` | `hoody inbox list-public` | Get all public notifications |
 | PUT | `/api/v1/notifications/read-all` | `api.notifications.markAllRead` | `hoody inbox mark-all` | Mark all notifications as read |
+| GET | `/api/v1/offers` | `api.serverRental.listServerOffers` | — | Browse machines available to order |
+| POST | `/api/v1/offers/{id}/reserve` | `api.serverRental.reserveServerOffer` | — | Reserve an offer (charges immediately) |
 | GET | `/api/v1/pools` | `api.pools.list` | `hoody pools list` | List user pools |
 | POST | `/api/v1/pools` | `api.pools.create` | `hoody pools create` | Create pool |
 | DELETE | `/api/v1/pools/{id}` | `api.pools.delete` | `hoody pools delete` | Delete pool |
@@ -364,6 +366,8 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/rentals/{id}` | `api.rentals.get` | — | Get rental details |
 | POST | `/api/v1/rentals/{id}/extend` | `api.rentals.extend` | `hoody servers extend` | Extend rental |
 | GET | `/api/v1/rentals/{id}/runtime` | `api.serverRental.getRentalRuntime` | — | Get live runtime info for a rented server or subserver |
+| GET | `/api/v1/reservations` | `api.serverRental.listMyReservations` | — | Your reservations |
+| GET | `/api/v1/reservations/{id}` | `api.serverRental.getMyReservation` | — | One of your reservations |
 | GET | `/api/v1/servers` | `api.serverRental.list` | `hoody servers list` | List user servers (alias for /rentals) |
 | GET | `/api/v1/servers/{id}` | `api.serverRental.get` | `hoody servers get` | Get server details (alias for /rentals/:id) |
 | POST | `/api/v1/servers/{id}/rent` | `api.serverRental.rent` | `hoody servers rent` | Rent server |

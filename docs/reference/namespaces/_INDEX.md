@@ -1,11 +1,11 @@
 # Namespace Index
 
-**Version:** 1.0.0-beta.8
+**Version:** 1.0.0-beta.9
 
 | Namespace | Description | Methods | Services | Accessor |
 |-----------|-------------|---------|----------|----------|
 | [`agent`](agent.md) | In-container AI agent — sessions, prompts, workflows, skills, memory, and tools. | 209 | 21 | `client.agent` |
-| [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 285 | 31 | `client.api` |
+| [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 289 | 31 | `client.api` |
 | [`app`](app.md) | Resolve and serve apps from multiple sources (Hoody Run). | 35 | 8 | `client.app` |
 | [`browser`](browser.md) | Drive a cloud headless browser — navigate, script, and screenshot. | 29 | 8 | `client.browser` |
 | [`code`](code.md) | Code intelligence and file-editing helpers. | 19 | 6 | `client.code` |

@@ -1,6 +1,6 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.8
+**Version:** 1.0.0-beta.9
 **Total commands:** 825
 **Command groups:** 37
 **Top-level utility commands:** 24
@@ -256,9 +256,9 @@ Authentication, tokens, and 2FA
 | `hoody auth list` | ls | read | List auth tokens | `api.authTokens.listIterator` | `hoody auth list` |
 | `hoody auth login` |  | action | Login with username and password | `api.authentication.login` | `hoody auth login --username alice --email user@example.com --password <password> --response-mode intent --code-challenge <code> --print-token` |
 | `hoody auth logout` |  | action | Logout | `api.authentication.logout` | `hoody auth logout` |
-| `hoody auth oauth github callback` |  | read | GitHub OAuth callback | `api.authentication.githubOAuthCallback` | `hoody auth oauth github callback --code <code> --state active` |
+| `hoody auth oauth github callback` |  | read | GitHub OAuth callback | `api.authentication.githubOAuthCallback` | `hoody auth oauth github callback --code <code> --state active --error <error> --error-description <error_description> --error-uri <error_uri>` |
 | `hoody auth oauth github redirect` |  | read | Redirect to GitHub OAuth | `api.authentication.githubOAuthRedirect` | `hoody auth oauth github redirect --intent login --redirect-uri <redirect_uri> --code-challenge <code> --invite-code <invite_code>` |
-| `hoody auth oauth google callback` |  | read | Google OAuth callback | `api.authentication.googleOAuthCallback` | `hoody auth oauth google callback --code <code> --state active` |
+| `hoody auth oauth google callback` |  | read | Google OAuth callback | `api.authentication.googleOAuthCallback` | `hoody auth oauth google callback --code <code> --state active --error <error> --error-description <error_description> --error-uri <error_uri>` |
 | `hoody auth oauth google redirect` |  | read | Redirect to Google OAuth | `api.authentication.googleOAuthRedirect` | `hoody auth oauth google redirect --redirect-uri <redirect_uri> --code-challenge <code> --invite-code <invite_code>` |
 | `hoody auth password forgot` |  | write | Request password reset | `api.authentication.forgotPassword` | `hoody auth password forgot --email user@example.com` |
 | `hoody auth password reset` |  | write | Reset password | `api.authentication.resetPassword` | `hoody auth password reset --token <token> --password <password>` |
@@ -962,7 +962,7 @@ Server rental marketplace, rentals, and remote commands
 | `hoody servers get` | show, describe | read | Get server details (alias for /rentals/:id) | `api.serverRental.get` | `hoody servers get abc-123` |
 | `hoody servers list` | ls | read | List user servers (alias for /rentals) | `api.serverRental.listIterator` | `hoody servers list` |
 | `hoody servers marketplace` | browse | read | Browse rental marketplace | `api.serverRental.browseIterator` | `hoody servers marketplace --country <country> --region eu-west-1 --max-price-per-day 10 --available-durations <available_durations> --min-cpu-cores 10 --min-cpu-score 10 --cpu-score-type passmark --min-ram-gb 10 --ram-types DDR3 --min-total-storage-gb 10 --disk-types HDD --min-bandwidth-mbps 10 --min-traffic-tb 10 --unlimited-traffic-only --category compute --featured-only` |
-| `hoody servers rent` |  | write | Rent server | `api.serverRental.rent` | `hoody servers rent abc-123 --pool-id abc-123 --rental-days 10` |
+| `hoody servers rent` |  | write | Rent server | `api.serverRental.rent` | `hoody servers rent abc-123 --pool-id abc-123 --rental-days 10 --max-charge-cents 10` |
 
 ## `hoody snapshots` (aliases: snapshot, snap) — 5 commands
 

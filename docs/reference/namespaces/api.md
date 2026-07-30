@@ -1,6 +1,6 @@
-# `api` — 285 methods
+# `api` — 289 methods
 
-**Version:** 1.0.0-beta.8
+**Version:** 1.0.0-beta.9
 **Accessor:** `client.api`
 
 ```typescript
@@ -500,13 +500,16 @@ client.api.authentication.getOAuthConfig(): Promise<ApiResponse<unknown>>
 GitHub OAuth callback
 
 ```typescript
-client.api.authentication.githubOAuthCallback(options?: { code: string; state: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.githubOAuthCallback(options?: { state: string; code?: string; error?: string; error_description?: string; error_uri?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `code` | `string` | Yes | query |  |
 | `state` | `string` | Yes | query |  |
+| `code` | `string` | No | query |  |
+| `error` | `string` | No | query | Provider-side failure code (e.g. access_denied). Present instead of `code` when the user declines. |
+| `error_description` | `string` | No | query |  |
+| `error_uri` | `string` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -521,14 +524,14 @@ client.api.authentication.githubOAuthCallback(options?: { code: string; state: s
 Redirect to GitHub OAuth
 
 ```typescript
-client.api.authentication.githubOAuthRedirect(options?: { code_challenge: string; intent?: "login" | "star_check"; redirect_uri?: string; invite_code?: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.githubOAuthRedirect(options?: { redirect_uri: string; code_challenge: string; intent?: "login" | "star_check"; invite_code?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `redirect_uri` | `string` | Yes | query | Frontend URL to redirect to after OAuth completes (must be on an allowed domain) |
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
 | `intent` | `"login" \| "star_check"` | No | query | OAuth intent: login (default). "star_check" is accepted but ignored (retired). |
-| `redirect_uri` | `string` | No | query | Frontend URL to redirect to after OAuth completes (must be on allowed domain) |
 | `invite_code` | `string` | No | query | Optional invite code ("coupon") captured from the signup link. Normalized and hashed at redirect time — only the hash travels in the OAuth state, never the raw code. Memorized hash-only on a NEW account and applied automatically; not validated here. |
 
 **Returns:** `ApiResponse<unknown>`
@@ -544,13 +547,16 @@ client.api.authentication.githubOAuthRedirect(options?: { code_challenge: string
 Google OAuth callback
 
 ```typescript
-client.api.authentication.googleOAuthCallback(options?: { code: string; state: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.googleOAuthCallback(options?: { state: string; code?: string; error?: string; error_description?: string; error_uri?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `code` | `string` | Yes | query |  |
 | `state` | `string` | Yes | query |  |
+| `code` | `string` | No | query |  |
+| `error` | `string` | No | query | Provider-side failure code (e.g. access_denied). Present instead of `code` when the user declines. |
+| `error_description` | `string` | No | query |  |
+| `error_uri` | `string` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -565,13 +571,13 @@ client.api.authentication.googleOAuthCallback(options?: { code: string; state: s
 Redirect to Google OAuth
 
 ```typescript
-client.api.authentication.googleOAuthRedirect(options?: { code_challenge: string; redirect_uri?: string; invite_code?: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.googleOAuthRedirect(options?: { redirect_uri: string; code_challenge: string; invite_code?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `redirect_uri` | `string` | Yes | query | Frontend URL to redirect to after OAuth completes (must be on an allowed domain) |
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
-| `redirect_uri` | `string` | No | query | Frontend URL to redirect to after OAuth completes |
 | `invite_code` | `string` | No | query | Optional invite code ("coupon") captured from the signup link. Normalized and hashed at redirect time — only the hash travels in the OAuth state, never the raw code. Memorized hash-only on a NEW account and applied automatically; not validated here. |
 
 **Returns:** `ApiResponse<unknown>`
@@ -4280,7 +4286,7 @@ client.api.serverCommands.listIterator(serverId: string, options?: { category?: 
 
 ---
 
-## `client.api.serverRental` (10 methods)
+## `client.api.serverRental` (14 methods)
 
 ### `browse`
 
@@ -4407,6 +4413,24 @@ client.api.serverRental.get(id: string): Promise<ApiServerRentalGetResponse>
 
 ---
 
+### `getMyReservation`
+
+**GET** `/api/v1/reservations/{id}`
+
+One of your reservations
+
+```typescript
+client.api.serverRental.getMyReservation(id: string): Promise<GetMyReservationResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+
+**Returns:** `GetMyReservationResponse`
+
+---
+
 ### `getRentalRuntime`
 
 **GET** `/api/v1/rentals/{id}/runtime`
@@ -4491,6 +4515,39 @@ client.api.serverRental.listIterator(): AsyncIterableIterator<unknown>
 
 ---
 
+### `listMyReservations`
+
+**GET** `/api/v1/reservations`
+
+Your reservations
+
+```typescript
+client.api.serverRental.listMyReservations(options?: { limit?: number; offset?: number }): Promise<ListMyReservationsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+
+**Returns:** `ListMyReservationsResponse`
+
+---
+
+### `listServerOffers`
+
+**GET** `/api/v1/offers`
+
+Browse machines available to order
+
+```typescript
+client.api.serverRental.listServerOffers(): Promise<ListServerOffersResponse>
+```
+
+**Returns:** `ListServerOffersResponse`
+
+---
+
 ### `rent`
 
 **POST** `/api/v1/servers/{id}/rent`
@@ -4509,6 +4566,25 @@ client.api.serverRental.rent(id: string, data: ApiServerRentalRentRequest): Prom
 **Returns:** `ApiServerRentalRentResponse`
 
 **CLI:** `hoody servers rent`
+
+---
+
+### `reserveServerOffer`
+
+**POST** `/api/v1/offers/{id}/reserve`
+
+Reserve an offer (charges immediately)
+
+```typescript
+client.api.serverRental.reserveServerOffer(id: string, data: ReserveServerOfferRequest): Promise<ReserveServerOfferResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path |  |
+| `data` | `ReserveServerOfferRequest` | Yes | body |  |
+
+**Returns:** `ReserveServerOfferResponse`
 
 ---
 
@@ -5712,14 +5788,16 @@ client.api.wallet.listCryptoPaymentIntents(options?: { limit?: number; offset?: 
 Get all invoices
 
 ```typescript
-client.api.wallet.listInvoices(options?: { limit?: number; sort_by?: string; sort_order?: "asc" | "desc" }): Promise<ApiWalletListInvoicesResponse>
+client.api.wallet.listInvoices(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<ApiWalletListInvoicesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `limit` | `number` | No | query |  |
-| `sort_by` | `string` | No | query |  |
+| `page` | `number` | No | query | Page number for pagination - starts from 1 |
+| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
+| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
+| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
 
 **Returns:** `ApiWalletListInvoicesResponse`
 
@@ -5734,14 +5812,16 @@ client.api.wallet.listInvoices(options?: { limit?: number; sort_by?: string; sor
 Get all invoices (collect all pages)
 
 ```typescript
-client.api.wallet.listInvoicesAll(options?: { limit?: number; sort_by?: string; sort_order?: "asc" | "desc" }): Promise<unknown[]>
+client.api.wallet.listInvoicesAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `limit` | `number` | No | query |  |
-| `sort_by` | `string` | No | query |  |
+| `page` | `number` | No | query | Page number for pagination - starts from 1 |
+| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
+| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
+| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
 
 **Returns:** `unknown[]`
 
@@ -5756,14 +5836,16 @@ client.api.wallet.listInvoicesAll(options?: { limit?: number; sort_by?: string; 
 Get all invoices (async iterator)
 
 ```typescript
-client.api.wallet.listInvoicesIterator(options?: { limit?: number; sort_by?: string; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
+client.api.wallet.listInvoicesIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `limit` | `number` | No | query |  |
-| `sort_by` | `string` | No | query |  |
+| `page` | `number` | No | query | Page number for pagination - starts from 1 |
+| `limit` | `number` | No | query | Number of invoices to return per page - maximum 100 |
+| `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
+| `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
