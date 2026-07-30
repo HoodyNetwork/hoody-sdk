@@ -491,14 +491,50 @@ async function captureBrowser(client: any, format: ScreenshotFormat, options?: B
   return Buffer.from(base64String, 'base64');
 }
 
+/**
+ * Resolve the URL template vars that put `terminal_id` where it is actually
+ * read: the HOST segment (`…-terminal-<id>.…`).
+ *
+ * The containers proxy forces `?terminal_id=` from the SNI host index and
+ * overwrites whatever the client sent, so a capture that only passes the id as
+ * a query param silently screenshots terminal 1 (the default template index).
+ * Two ids cannot ride the host: a non-canonical one ("007", which the proxy
+ * parseInts to a different, strcmp-keyed session) and one whose host label
+ * would exceed the 63-byte DNS limit — both are refused rather than pointed at
+ * the wrong pty.
+ */
+function terminalCaptureTemplateVars(client: any, terminalId: string): { serviceIndex: number } {
+  if (String(Number(terminalId)) !== terminalId) {
+    throw new ScreenshotSaveError(
+      'CAPTURE_FAILED',
+      `terminal_id ${terminalId} is not addressable: the host index normalizes it to ${Number(terminalId)}`,
+      { source: 'terminal' },
+    );
+  }
+  const t = client?.urlTemplates?.['terminal'];
+  const label = `${t?.projectId ?? ''}-${t?.containerId ?? ''}-terminal-${terminalId}`;
+  if (t?.projectId && t?.containerId && label.length > 63) {
+    throw new ScreenshotSaveError(
+      'CAPTURE_FAILED',
+      `terminal_id ${terminalId} is unreachable: host label is ${label.length} bytes (DNS limit 63)`,
+      { source: 'terminal' },
+    );
+  }
+  return { serviceIndex: Number(terminalId) };
+}
+
 async function captureTerminal(client: any, format: ScreenshotFormat, options?: TerminalScreenshotCaptureOptions): Promise<Buffer> {
+  const templateVars =
+    options?.terminal_id !== undefined && options.terminal_id !== ''
+      ? terminalCaptureTemplateVars(client, String(options.terminal_id))
+      : undefined;
   const response = await client.terminal.sessions.captureScreenshot({
     ...options,
     // Wrapper-controlled fields always win (prevent caller override)
     save: false,
     format: format === 'jpeg' ? 'jpeg' : 'png',
     responseType: 'arrayBuffer' as const,
-  });
+  }, templateVars);
 
   // Terminal may return binary data directly or wrapped in an envelope
   let buffer: Buffer;
