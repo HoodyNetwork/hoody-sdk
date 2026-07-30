@@ -124,15 +124,15 @@ Container lifecycle lives under `hoody.api.containers.*`: `manage(id, 'start' | 
 The `hoody` CLI ships inside `hoody-sdk`. Choose any invocation form:
 
 ```bash
-npx https://hoody.com login
-npx https://hoody.com ps
+npx hoody-sdk login
+npx hoody-sdk ps
 npm install -g hoody-sdk
 hoody login
 hoody ps
 ssh hoody.com # memory-only sandbox; no installation
 ```
 
-The package URL also works with bunx, pnpm dlx, and Deno. Generated commands follow:
+The same package also works with bunx and pnpm dlx. Generated commands follow:
 
 ```text
 hoody <group> <command> [args] [flags]

@@ -34,7 +34,7 @@ TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers 
 | **Batteries included** | Create a container with the Kit (`hoody_kit: true`) and the full service layer is available at stable HTTPS URLs: shell, files, cloud browser, GUI desktop, databases, cron, tunnels, and a built-in AI agent, each starting on demand with the first call. |
 | **Who it's for** | Cloud IDEs, AI-agent platforms, browser-automation pipelines, remote-desktop products, and education: anything that needs a real Linux environment on demand without running the infrastructure. |
 | **The economics** | Flat-rate bare metal: a dedicated machine, marketplace-priced from ~$30/month, with no per-container fee or usage meter. Run dev through prod for every project on one box. [How ↓](#bare-metal-underneath) |
-| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1077<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->825<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
+| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1081<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->825<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
 
 **Prefer references?** Nearly the whole surface fits in three lists: [CLI commands](./docs/reference/CLI-COMMANDS.md) · [SDK methods](./docs/reference/SDK-METHODS.md) · [HTTP endpoints](./docs/reference/HTTP-METHODS.md). The HTTP list maps every endpoint to its SDK method and to a CLI command wherever one exists.
 
@@ -184,14 +184,14 @@ bun add hoody-sdk@beta
 Browser (IIFE global, exposes `window.HoodySDK`) — pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.8/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.9/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.8/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.9/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -427,7 +427,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.8/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.9/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
@@ -936,7 +936,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 
 ## Namespaces
 
-19 namespaces, <!-- ref:sdk-methods -->1077<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
+19 namespaces, <!-- ref:sdk-methods -->1081<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
 
 <details>
 <summary>The full namespace map — scope, coverage, and a one-liner you'd actually call</summary>
@@ -1081,7 +1081,7 @@ A few security and retry defaults worth knowing:
 
 ## Every front door
 
-The SDK is one of several access paths. Terminal, browser, AI chat, and CI all reach the same control plane and per-user containers. One auth token works across them, and the CLI over `ssh` is the same `hoody` binary run by `npx https://hoody.com` and shipped in this package.
+The SDK is one of several access paths. Terminal, browser, AI chat, and CI all reach the same control plane and per-user containers. One auth token works across them, and the CLI over `ssh` is the same `hoody` binary run by `npx hoody-sdk` and shipped in this package.
 
 <details>
 <summary>Every front door — SSH (three ways), npx, static binary, npm, WebOS, and any AI chat</summary>
@@ -1091,9 +1091,9 @@ The SDK is one of several access paths. Terminal, browser, AI chat, and CI all r
 | **`ssh hoody.com`**                                   | Drops you straight into the Hoody CLI in a memory-only sandboxed shell. No install. Sign in interactively, or paste a token at the prompt. | Reaching your account from any laptop, jump box, or remote host with `ssh`. |
 | **`ssh hoody_<token>@hoody.com`**                     | Same as above, but the SSH username carries your auth token — the sandbox auto-authenticates the moment the connection lands. Use a narrow, short-expiry token: the username is visible in shell history and host logs. | Scripts, cron, one-liners, CI pipelines — no interactive step. |
 | **`ssh.hoody.com`** *(WebSSH)*                        | The same SSH shell, in your browser — a full terminal with nothing to install. Sign in and you're at a prompt on any device. | A shell from a locked-down laptop, a phone, or any machine without an `ssh` client. |
-| **`npx https://hoody.com`** *(or `bunx`, `pnpm dlx`, `yarn dlx`, `deno run`)* | Run the latest `hoody` CLI without installing anything globally.                          | Quick checks from a workstation that already has Node.js, Bun, or Deno. |
-| **`curl https://hoody.com/hoody-cli`**                | Download a single static binary for your platform — no runtime needed.                    | Air-gapped boxes, container build steps, locked-down CI.             |
-| **`npm i hoody-sdk`** *(URL mirror: `npm i https://sdk.hoody.com`)* | Install this very SDK from the npm registry — pin a version in production; the URL mirror always tracks latest. | TypeScript / JavaScript projects of any shape.                      |
+| **`npx hoody-sdk`** *(or `bunx`, `pnpm dlx`)* | Run the latest `hoody` CLI without installing anything globally. | Quick checks from a workstation that already has Node.js or Bun. |
+| **`curl -fsSL https://install.hoody.com \| sh`** *(Windows: `iwr https://install.hoody.com/install.ps1 -UseB \| iex`)* | Download a single native binary for your platform — no Node.js runtime needed. | Air-gapped boxes, container build steps, locked-down CI. |
+| **`npm i hoody-sdk`** | Install this very SDK from the npm registry — pin a version in production. Install guide: `sdk.hoody.com`. | TypeScript / JavaScript projects of any shape. |
 | **`os.hoody.com`**                                    | A full Hoody WebOS in any browser. The UI itself is served by *your own* container — `os.hoody.com` only signs you in and forwards you there. The OS *is* your container. | Users on phones, tablets, Chromebooks, ChromeOS-Flex laptops; anyone without a terminal. |
 | **`@hoody.com`**                                      | Paste `@hoody.com` into ChatGPT, Claude, Gemini, Codex, Cline, Roo Code, or any web-fetching agent. The agent fetches a Skill — a structured HTTP map of every Hoody capability — and drives your account with a token you give it, no SDK, MCP server, or plugin in between. | Letting any web-fetching AI assistant operate Hoody from a paste plus a scoped token. |
 
@@ -1101,16 +1101,16 @@ The SDK is one of several access paths. Terminal, browser, AI chat, and CI all r
 
 ## CLI
 
-The CLI is the `hoody` command shipped in `hoody-sdk`. Run it from the URL without a global install or project dependency:
+The CLI is the `hoody` command shipped in `hoody-sdk`. Run it without a global install or project dependency:
 
 ```bash
-npx https://hoody.com login       # interactive sign-in (or OAuth) — also bunx / pnpm dlx / deno run
-npx https://hoody.com ps          # list containers (grab a container id)
-npx https://hoody.com -c <containerId> terminal sessions exec --ephemeral --command "uname -a"
-npx https://hoody.com -c <containerId> files get /etc/hostname
+npx hoody-sdk login  # interactive sign-in (or OAuth) — also bunx / pnpm dlx
+npx hoody-sdk ps     # list containers (grab a container id)
+npx hoody-sdk -c <containerId> terminal sessions exec --ephemeral --command "uname -a"
+npx hoody-sdk -c <containerId> files get /etc/hostname
 ```
 
-After a global install, run each `hoody <args>` example below without the `npx https://hoody.com` prefix.
+After a global install, run each `hoody <args>` example below without the `npx hoody-sdk` prefix.
 
 **Signing in.** `hoody login` is the interactive front door:
 
@@ -1132,7 +1132,7 @@ hoody login
 hoody ps
 ```
 
-> The command is `hoody`; `npx https://hoody.com` runs the same CLI without adding a project dependency.
+> The command is `hoody`; `npx hoody-sdk` runs the same CLI without adding a project dependency.
 
 **Running from a clone.** The GitHub mirror ships the **prebuilt** CLI and SDK (`cli/dist`, `dist-ts`, browser bundles), not the build toolchain or CLI TypeScript source. The `hoody` command runs directly from the checkout with no build step.
 
