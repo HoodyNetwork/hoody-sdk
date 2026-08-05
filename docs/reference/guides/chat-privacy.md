@@ -1,26 +1,31 @@
 # `hoody chat` — what it is, and its privacy model
 
-`hoody chat` is an AI chat in your terminal. It does two distinct things:
-
-1. **A general AI chat** — bring your own LLM provider (OpenAI, Anthropic/Claude,
-   a local model, …) and chat from the command line. This traffic goes **only**
-   to the provider *you* configure; Hoody never sees it.
-2. **Free answers about Hoody** — type `@hoody.com` (or let the assistant use its
-   built-in docs tool) and Hoody's own docs service answers your question about
-   the platform, at no cost.
+`hoody chat` asks Hoody's documentation assistant about Hoody, from your
+terminal. It is free and needs no API key: every question is answered by Hoody's
+own service, and there is no AI provider for you to choose or configure. (Hoody
+in turn runs that service on model providers — see below.)
 
 **Privacy in one line:** by default `hoody chat` writes **nothing** to your disk,
-and the free "ask Hoody" service sends only your question text — no account,
-container, or auth identifiers.
+and what leaves your machine is your question plus the recent turns of the
+current conversation — no account, container, or auth identifiers.
+
+> **Where your text goes.** There is no provider for *you* to configure and no
+> API key: `hoody chat` talks to exactly one endpoint, Hoody's assistant. Hoody
+> is not the last stop, though — to answer you it forwards your text to the
+> model providers it runs on (today: MiniMax for the answer, and OpenRouter to
+> embed the question for retrieval). So the accurate statement is "one endpoint,
+> Hoody's, which uses sub-processors" — not "nowhere else". Treat it as you
+> would any hosted assistant: fine for questions about Hoody, not a place for
+> secrets. To keep your text off that path entirely, point `HOODY_CHAT_URL` at
+> your own instance of the service.
 
 ## The free "ask Hoody" service (server side)
 
-When you use the free Hoody Q&A (`@hoody.com`, or the docs tool), your question
-is sent to Hoody's docs service (`chatbot.hoody.com`) so it can answer you. Hoody
-processes it only to produce that answer and does **not** retain long prompts.
-Because the service is free, it **caps prompt length** and applies **rate limits**
-so it stays available to everyone — treat it as "ask a question about Hoody," not
-a place to paste long documents or anything sensitive.
+Your question is sent to Hoody's assistant (`chatbot.hoody.com`) so it can answer
+you. Hoody processes it only to produce that answer and does **not** retain long
+prompts. Because the service is free, it **caps prompt length** and applies
+**rate limits** so it stays available to everyone — treat it as "ask a question
+about Hoody," not a place to paste long documents or anything sensitive.
 
 Everything below is the load-bearing reference for exactly what `hoody chat` does
 and does not write to **your** disk, what leaves your machine, and how to disable
@@ -33,7 +38,7 @@ By default, `hoody chat` is **ephemeral**:
 | Path | Default | Enable with |
 |---|---|---|
 | Session transcripts (JSONL) | off (in-memory only) | `--persist` (REPL-only) |
-| Endpoint-acceptance file | written **only** when you accept a non-allowlisted origin | `--accept-endpoint` flag, `HOODY_CHAT_ACCEPT_ENDPOINT` env, or a TTY prompt shown at session start for the LLM provider URL (docs-tool overrides require flag/env) |
+| Endpoint-acceptance file | written **only** when you accept a non-allowlisted origin | `--accept-endpoint` flag, `HOODY_CHAT_ACCEPT_ENDPOINT` env, or the confirmation prompt shown on an interactive **one-shot** run (the REPL does not prompt mid-turn — use the flag or env there) |
 | First-run banner marker | zero-byte file after first interactive run | automatic |
 
 A user who runs `hoody chat "some question"` and never sets `--persist`
@@ -57,10 +62,16 @@ transcripts only.
 
 `--private` and `HOODY_CHAT_PRIVATE=1` prevent any file under
 `~/.hoody/chats/` from being **created, modified, OR read** by this process
-from startup — refusing reads too keeps it from being half-private. `/private`
-only disables subsequent reads/writes after it is toggled mid-REPL; anything
-already done before the toggle (e.g. the `.seen-privacy-banner` marker) may
-already have hit disk, so the three knobs are not exactly equivalent.
+from startup — refusing reads too keeps it from being half-private. That
+includes the `hoody chat sessions` subcommands, which refuse and exit 1 rather
+than read the store.
+
+`/private` can only turn privacy **on**. It cannot downgrade a process that was
+started with `--private` or `HOODY_CHAT_PRIVATE=1` — otherwise the flag's
+promise would last only until someone typed a slash command. Turning it on
+mid-REPL disables subsequent reads and writes, but anything already done before
+the toggle (e.g. the `.seen-privacy-banner` marker) has already hit disk, so the
+knobs are not exactly equivalent.
 
 `--private` + `--persist` exits with code `1` and a diagnostic — we fail
 loudly rather than silently picking one. (REPL-mode only; `--persist` has
@@ -70,15 +81,26 @@ no effect on one-shot invocations regardless of `--private`.)
 
 | Destination | When | What |
 |---|---|---|
-| Provider LLM endpoint | Every chat turn | System prompt + user message + message history |
-| `chatbot.hoody.com/api/chat` | On `@hoody.com` trigger OR when the LLM calls `hoody_docs_search` | For `@hoody.com`, the stripped user query text verbatim; for model tool calls, the model-provided query (which may be paraphrased) |
+| `chatbot.hoody.com/api/chat` | Every chat turn | Your question verbatim, plus the recent turns of the current conversation (capped by `HOODY_CHAT_MAX_HISTORY`, default 10 exchanges, and by the service's own 20-turn cap) |
 
-The docs-chatbot service is separate from the LLM provider. A compromised or
-jailbroken LLM can't redirect the docs tool — the tool's target URL is gated
-by the endpoint-acceptance system.
+That is the only destination **this client** contacts: one endpoint, no second
+connection, no telemetry call. What the service does on your behalf is a
+separate question — it forwards your text to its model providers (MiniMax to
+generate the answer, OpenRouter to embed the question) and records the query in
+its own telemetry. Those are Hoody's sub-processors, not destinations you can
+see or configure from the CLI.
 
-`hoody_docs_search` sends **no auth header** and no container / account
-identifiers. Just the query text.
+The request carries **no auth header** and no container / account identifiers —
+just the conversation text. The target URL is gated by the endpoint-acceptance
+system, so it cannot be redirected by anything in the answer.
+
+**History is opt-outable.** `HOODY_CHAT_MAX_HISTORY=0` sends each question
+standalone, with no prior turns attached. Follow-ups ("what about that one?")
+stop resolving, which is the trade.
+
+Rendered citations are **not** part of what gets sent: the links you see are
+derived locally from the sources the service reports, and are never replayed
+back as conversation history.
 
 ## Redaction
 
@@ -125,18 +147,16 @@ you need stronger DLP, route chat output through an external scanner.
 ## Endpoint acceptance
 
 Any non-built-in, non-local `http(s)` origin requires one-time acceptance
-before credentials or query text flows to it. Note: the gate also accepts
-`http://` origins — do **not** accept a non-local `http://` provider/docs
-endpoint, since credentials or query text would then be sent over plaintext.
-Acceptance prevents a stray
-`OPENAI_API_KEY=sk-…` + `OPENAI_BASE_URL=https://attacker.example.com/v1`
-combo from silently leaking your key to an unintended host.
+before your question flows to it. Note: the gate also accepts `http://`
+origins — do **not** accept a non-local `http://` endpoint, since your question
+and conversation history would then be sent over plaintext.
+
+The gate also refuses to follow redirects: an accepted origin cannot bounce the
+request onward to a host you never approved.
 
 ### Built-in allowlist (no prompt)
 
 - `https://chatbot.hoody.com`
-- `https://ai.hoody.com`
-- `https://api.minimax.io`
 - `localhost`, `127.0.0.1`, `::1`, RFC1918 private IPs (10/8, 172.16/12,
   192.168/16) — local endpoints don't prompt and allow keyless auth
 
@@ -209,22 +229,12 @@ automation); interactive users might fat-finger `y` while typing freely,
 so the REPL asks for a full typed-out confirmation. Both surfaces call
 into the same underlying `wipeAllSessions` / `deleteSession` primitives.
 
-## `hoody_docs_search` tool
+## No tools, no local model
 
-Exactly one tool, read-only, disableable:
-
-- `HOODY_CHAT_DOCS_TOOL=0` (env) — disables at startup
-- `--no-tools` (flag) — disables for one invocation
-- `/tool off` (REPL) — disables for the rest of the REPL
-
-When disabled, the outbound request payload has **no `tools` key at all**
-(not `tools: []`) — some providers 400 on empty arrays.
-
-When the user types `@hoody.com`, the client pre-fetches the docs answer
-and injects it as untrusted reference data in the user message. When the
-tool is disabled, `@hoody.com` is not pre-fetched at all — the current
-implementation does no trigger detection and emits no stderr notice in that
-case.
+`hoody chat` runs no tool loop and no local model. It sends text and renders
+text. It cannot read your files, execute commands, fetch arbitrary URLs, or
+reach the Hoody API on your behalf — not as a policy, but because no such code
+path exists in the client. For any of that, use `hoody agent`.
 
 ## Quick privacy recipes
 
@@ -235,14 +245,12 @@ export HOODY_CHAT_PRIVATE=1
 # "Nuke my existing sessions"
 hoody chat sessions delete --all -y
 
-# "Disable docs search (I don't want any query text leaving my machine
-# except to the LLM endpoint I configured)"
-export HOODY_CHAT_DOCS_TOOL=0
+# "Send each question standalone, with no conversation history"
+export HOODY_CHAT_MAX_HISTORY=0
 
-# "Use a fully local LLM (no cloud at all)"
-export HOODY_CHAT_URL=http://localhost:11434/v1
-export HOODY_CHAT_MODEL=llama3
-# (no HOODY_CHAT_KEY needed — local origins allow keyless auth)
+# "Point at my own instance of the service instead of Hoody's"
+export HOODY_CHAT_URL=http://localhost:8787/api/chat
+# (local origins are pre-accepted — no --accept-endpoint needed)
 
 # "Reset endpoint acceptances"
 rm ~/.hoody/chats/chat-accept.json
@@ -261,10 +269,12 @@ rm -rf ~/.hoody/chats/
   always shown on shell fences; the `⚠ DESTRUCTIVE SUGGESTION` header fires
   on a closed pattern set. Obfuscated or novel destructive commands may
   slip through. Users must still review before pasting.
-- **Prompt-injection immunity.** Untrusted-data tags (`<hoody-docs-result
-  untrusted="true">`, `<user-context untrusted="true">`) plus in-prompt
-  negative examples reduce but do not eliminate prompt-injection risk.
-  Strong LLMs respect them; weaker ones may not.
+- **Answer trustworthiness.** The answer is produced by the service from
+  documentation content. Terminal control sequences are stripped from the
+  answer and from error text, and citation links are built only from the
+  service's vetted site-relative path (its absolute `url` field is ignored
+  precisely because it is not vetted), so a citation cannot point off-site. The
+  prose itself is still model output — verify commands before running them.
 - **Tamper-resistance of the acceptance file.** An attacker with FS write
   access to `~/.hoody/chats/` can add entries. The threat model assumes
   that if an attacker has local FS write, they can already exfiltrate your

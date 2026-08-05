@@ -1,6 +1,6 @@
 # `daemon` — 23 methods
 
-**Version:** 1.0.0-beta.9
+**Version:** 1.0.0-beta.10
 **Accessor:** `client.daemon`
 
 ```typescript

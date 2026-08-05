@@ -1,6 +1,6 @@
 # `notifications` — 10 methods
 
-**Version:** 1.0.0-beta.9
+**Version:** 1.0.0-beta.10
 **Accessor:** `client.notifications`
 
 ```typescript
@@ -99,7 +99,7 @@ client.notifications.connectStream(options?: { displays: string }): Promise<Noti
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `displays` | `string` | Yes | query | Comma-separated display IDs to subscribe to (e.g., "0,:1,2"), or "all" to receive notifications from every display. |
+| `displays` | `string` | Yes | query | Comma-separated display IDs to subscribe to (e.g., "1,:2,3"), or "all" to receive notifications from every display. |
 
 **Returns:** `NotificationsConnectNotificationStreamWebSocket`
 

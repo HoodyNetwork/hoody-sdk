@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.9
-**Total endpoints:** 947
+**Version:** 1.0.0-beta.10
+**Total endpoints:** 961
 **Namespaces:** 19
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -16,11 +16,13 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `agent` — 171 endpoints
+## `agent` — 184 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
 | GET | `/api/v1/agent/acp/agents` | `agent.settings.getACPStatus` | `hoody agent settings get-acp-status` | Get BYOA ACP backend status. |
+| PUT | `/api/v1/agent/acp/agents/{agent}/enabled` | `agent.settings.setACPEnabled` | — | Enable or disable a BYOA ACP backend. |
+| PUT | `/api/v1/agent/acp/agents/{agent}/model` | `agent.settings.setACPAgentModel` | — | Set a BYOA backend's default model and effort. |
 | PUT | `/api/v1/agent/acp/agents/{agent}/secrets/{key}` | `agent.settings.setACPSecret` | `hoody agent settings set-acp-secret` | Store an ACP per-agent secret value. |
 | GET | `/api/v1/agent/agents` | `agent.agents.listAgents` | `hoody agent agents list` | List chat-agent definitions. |
 | POST | `/api/v1/agent/agents` | `agent.agents.createAgent` | `hoody agent agents create` | Create a chat-agent definition. |
@@ -36,8 +38,10 @@ Grouped by SDK namespace, sorted by path.
 | PATCH | `/api/v1/agent/agents/{name}/turns` | `agent.agents.setAgentTurns` | `hoody agent agents set-turns` | Set an agent's max-turns. |
 | GET | `/api/v1/agent/containers` | `agent.discovery.listContainers` | `hoody agent discovery list-containers` | List containers in a realm (for binding). |
 | GET | `/api/v1/agent/docs` | `agent.system.docs` | `hoody agent system docs` | API documentation UI. |
+| POST | `/api/v1/agent/github/auth/active` | `agent.github.githubSetActiveAccount` | — | Switch the active GitHub account. |
 | POST | `/api/v1/agent/github/auth/login` | `agent.github.githubLogin` | `hoody agent github login` | Start a GitHub device-flow login (or add a PAT). |
 | POST | `/api/v1/agent/github/auth/login/poll` | `agent.github.githubLoginPoll` | `hoody agent github login-poll` | Poll a GitHub device-flow login to completion. |
+| POST | `/api/v1/agent/github/auth/logout` | `agent.github.githubLogout` | — | Remove a linked GitHub account. |
 | GET | `/api/v1/agent/github/auth/status` | `agent.github.githubAuthStatus` | `hoody agent github auth-status` | GitHub auth status. |
 | GET | `/api/v1/agent/github/branches` | `agent.github.githubBranches` | `hoody agent github branches` | List GitHub branches. |
 | POST | `/api/v1/agent/github/clone` | `agent.github.githubClone` | `hoody agent github clone` | Clone a GitHub repository. |
@@ -67,6 +71,15 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/agent/logs/sources` | `agent.logs.logsSources` | `hoody agent logs logs-sources` | Log sources. |
 | GET | `/api/v1/agent/logs/stats` | `agent.logs.logsStats` | `hoody agent logs logs-stats` | Log statistics. |
 | GET | `/api/v1/agent/logs/stream` | `agent.logs.streamLogs` | — | Stream the log tail (SSE). |
+| POST | `/api/v1/agent/mcp/import` | `agent.mcp.importMCPServers` | `hoody agent mcp import` | Import MCP servers from another tool's config. |
+| POST | `/api/v1/agent/mcp/parse` | `agent.mcp.parseMCPImport` | `hoody agent mcp parse` | Preview an MCP config import. |
+| POST | `/api/v1/agent/mcp/probe` | `agent.mcp.probeMCPServer` | `hoody agent mcp probe` | Probe an MCP server without saving it. |
+| POST | `/api/v1/agent/mcp/reconnect` | `agent.mcp.reconnectMCP` | `hoody agent mcp reconnect` | Reload MCP config and reconnect. |
+| DELETE | `/api/v1/agent/mcp/servers` | `agent.mcp.deleteMCPServer` | `hoody agent mcp delete` | Delete an MCP server. |
+| GET | `/api/v1/agent/mcp/servers` | `agent.mcp.listMCPServers` | `hoody agent mcp list` | List configured MCP servers. |
+| PUT | `/api/v1/agent/mcp/servers` | `agent.mcp.upsertMCPServer` | `hoody agent mcp upsert` | Create or update an MCP server. |
+| POST | `/api/v1/agent/mcp/servers/enable` | `agent.mcp.setMCPServerEnabled` | `hoody agent mcp set-enabled` | Enable or disable an MCP server. |
+| POST | `/api/v1/agent/mcp/write-intents` | `agent.mcp.beginMCPWrite` | `hoody agent mcp begin-write` | Begin an MCP config write. |
 | POST | `/api/v1/agent/memory/consolidate` | `agent.memory.consolidateMemory` | `hoody agent memory consolidate` | Trigger a memory consolidation pass (human-only). |
 | PUT | `/api/v1/agent/memory/enabled` | `agent.memory.setMemoryEnabled` | `hoody agent memory set-enabled` | Toggle memory capture. |
 | POST | `/api/v1/agent/memory/flush` | `agent.memory.flushMemory` | `hoody agent memory flush` | Flush the memory store. |
@@ -194,7 +207,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `api` — 235 endpoints
+## `api` — 236 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -252,6 +265,7 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/api/v1/containers/{id}/firewall/ingress` | `api.firewall.addIngressRule` | `hoody firewall ingress create` | Add Ingress Rule |
 | POST | `/api/v1/containers/{id}/firewall/reset` | `api.firewall.reset` | `hoody firewall reset` | Reset container firewall |
 | GET | `/api/v1/containers/{id}/firewall/rules` | `api.firewall.list` | `hoody firewall list` | List container firewall rules |
+| PUT | `/api/v1/containers/{id}/kvm` | `api.containers.setContainerKvm` | `hoody containers kvm` | Enable or disable /dev/kvm (run VMs in the container) |
 | DELETE | `/api/v1/containers/{id}/network` | `api.containers.removeNetworkConfig` | `hoody network delete` | Remove container network configuration |
 | GET | `/api/v1/containers/{id}/network` | `api.containers.getNetworkConfig` | `hoody network get` | Get container network configuration |
 | PUT | `/api/v1/containers/{id}/network` | `api.containers.updateNetworkConfig` | `hoody network update` | Update container network configuration |
@@ -433,46 +447,6 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/wallet/transactions` | `api.wallet.listTransactions` | `hoody wallet transactions list` | List transactions |
 | GET | `/api/v1/wallet/transactions/{id}` | `api.wallet.getTransaction` | `hoody wallet transactions get` | Get transaction by ID |
 | POST | `/api/v1/wallet/transfers` | `api.wallet.transferToAi` | `hoody wallet transfer` | Transfer from general balance to AI credits |
-
----
-
-## `app` — 33 endpoints
-
-| HTTP | Path | SDK Method | CLI Command | Summary |
-|------|------|------------|-------------|---------|
-| POST | `/api/v1/run/batch` | `app.execution.runBatch` | — | Execute a batch of search or run requests |
-| GET | `/api/v1/run/config` | `app.configuration.get` | — | Get full runtime configuration |
-| GET | `/api/v1/run/go/{rest}` | `app.execution.runPathBased` | — | Path-based resolve (positional or key-value) |
-| GET | `/api/v1/run/health` | `app.health.check` | — | Service health check |
-| GET | `/api/v1/run/jobs/{job_id}` | `app.jobs.getStatus` | — | Get job status |
-| GET | `/api/v1/run/openapi.json` | `app.docs.getJson` | — | OpenAPI specification (JSON) |
-| GET | `/api/v1/run/openapi.yaml` | `app.docs.getYaml` | — | OpenAPI specification (YAML) |
-| POST | `/api/v1/run/preflight` | `app.execution.preflight` | — | Preflight a run request |
-| GET | `/api/v1/run/profiles` | `app.profiles.list` | — | List all profiles |
-| POST | `/api/v1/run/profiles` | `app.profiles.create` | — | Create a new profile |
-| DELETE | `/api/v1/run/profiles/{profile}` | `app.profiles.delete` | — | Delete a profile |
-| PATCH | `/api/v1/run/profiles/{profile}` | `app.profiles.update` | — | Update a profile |
-| POST | `/api/v1/run/profiles/{profile}/select` | `app.profiles.select` | — | Select the active profile |
-| GET | `/api/v1/run/recipes` | `app.recipes.list` | — | List saved launch recipes |
-| POST | `/api/v1/run/recipes` | `app.recipes.create` | — | Create a saved recipe |
-| DELETE | `/api/v1/run/recipes/{name}` | `app.recipes.delete` | — | Delete a saved recipe |
-| GET | `/api/v1/run/recipes/{name}` | `app.recipes.get` | — | Get a saved recipe |
-| PATCH | `/api/v1/run/recipes/{name}` | `app.recipes.update` | — | Update a saved recipe |
-| POST | `/api/v1/run/recipes/{name}/run` | `app.recipes.run` | — | Run using a saved recipe |
-| POST | `/api/v1/run/recipes/{name}/search` | `app.recipes.search` | — | Search using a saved recipe |
-| GET | `/api/v1/run/run` | `app.execution.runAppGet` | — | Resolve an application and return exact shell command |
-| POST | `/api/v1/run/run` | `app.execution.runAppPost` | — | Resolve an application via JSON body |
-| GET | `/api/v1/run/search` | `app.execution.searchCandidates` | — | Search for app candidates |
-| POST | `/api/v1/run/search/jobs` | `app.jobs.createSearch` | — | Start an async search job |
-| POST | `/api/v1/run/search/paged` | `app.execution.searchCandidatesPaged` | — | Search for app candidates with cursor pagination |
-| GET | `/api/v1/run/sources` | `app.sources.list` | — | List all package sources |
-| POST | `/api/v1/run/sources` | `app.sources.create` | — | Create a new package source |
-| DELETE | `/api/v1/run/sources/{source_id}` | `app.sources.delete` | — | Delete a package source |
-| PATCH | `/api/v1/run/sources/{source_id}` | `app.sources.update` | — | Update a package source |
-| GET | `/api/v1/run/sources/{source_id}/diagnostics` | `app.sources.getDiagnostics` | — | Get runtime diagnostics for a source |
-| POST | `/api/v1/run/sources/{source_id}/sync` | `app.sources.sync` | — | Sync a single source |
-| POST | `/api/v1/run/sources/sync` | `app.sources.syncAll` | — | Sync all sources |
-| GET | `/api/v1/run/t/{terminal_id}/go/{rest}` | `app.execution.runTerminalAnchored` | — | Terminal-anchored path-based resolve |
 
 ---
 
@@ -977,6 +951,46 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/_logs` | `proxyLogs.logs.list` | `hoody proxy logs list` | Query centralized logs |
 | GET | `/_logs/stats` | `proxyLogs.logs.getStats` | `hoody proxy logs stats` | Get log statistics |
 | GET | `/_logs/stream` | `proxyLogs.logs.streamLogs` | `hoody proxy logs stream` | Live-tail logs over Server-Sent Events (v8 SSE contract) |
+
+---
+
+## `run` — 33 endpoints
+
+| HTTP | Path | SDK Method | CLI Command | Summary |
+|------|------|------------|-------------|---------|
+| POST | `/api/v1/run/batch` | `run.runBatch` | — | Execute a batch of search or run requests |
+| GET | `/api/v1/run/config` | `run.configuration.getConfig` | — | Get full runtime configuration |
+| GET | `/api/v1/run/go/{rest}` | `run.runPathBased` | — | Path-based resolve (positional or key-value) |
+| GET | `/api/v1/run/health` | `run.healthCheck` | — | Service health check |
+| GET | `/api/v1/run/jobs/{job_id}` | `run.jobs.getJobStatus` | — | Get job status |
+| GET | `/api/v1/run/openapi.json` | `run.documentation.getOpenApiJson` | — | OpenAPI specification (JSON) |
+| GET | `/api/v1/run/openapi.yaml` | `run.documentation.getOpenApiYaml` | — | OpenAPI specification (YAML) |
+| POST | `/api/v1/run/preflight` | `run.preflightRun` | — | Preflight a run request |
+| GET | `/api/v1/run/profiles` | `run.profiles.listProfiles` | — | List all profiles |
+| POST | `/api/v1/run/profiles` | `run.profiles.createProfile` | — | Create a new profile |
+| DELETE | `/api/v1/run/profiles/{profile}` | `run.profiles.deleteProfile` | — | Delete a profile |
+| PATCH | `/api/v1/run/profiles/{profile}` | `run.profiles.updateProfile` | — | Update a profile |
+| POST | `/api/v1/run/profiles/{profile}/select` | `run.profiles.selectProfile` | — | Select the active profile |
+| GET | `/api/v1/run/recipes` | `run.recipes.listRecipes` | — | List saved launch recipes |
+| POST | `/api/v1/run/recipes` | `run.recipes.createRecipe` | — | Create a saved recipe |
+| DELETE | `/api/v1/run/recipes/{name}` | `run.recipes.deleteRecipe` | — | Delete a saved recipe |
+| GET | `/api/v1/run/recipes/{name}` | `run.recipes.getRecipe` | — | Get a saved recipe |
+| PATCH | `/api/v1/run/recipes/{name}` | `run.recipes.updateRecipe` | — | Update a saved recipe |
+| POST | `/api/v1/run/recipes/{name}/run` | `run.recipes.runRecipe` | — | Run using a saved recipe |
+| POST | `/api/v1/run/recipes/{name}/search` | `run.recipes.searchRecipe` | — | Search using a saved recipe |
+| GET | `/api/v1/run/resolve` | `run.resolveGet` | — | Resolve an application and return exact shell command |
+| POST | `/api/v1/run/resolve` | `run.resolve` | — | Resolve an application via JSON body |
+| GET | `/api/v1/run/search` | `run.searchCandidates` | — | Search for app candidates |
+| POST | `/api/v1/run/search/jobs` | `run.jobs.createSearchJob` | — | Start an async search job |
+| POST | `/api/v1/run/search/paged` | `run.searchCandidatesPaged` | — | Search for app candidates with cursor pagination |
+| GET | `/api/v1/run/sources` | `run.sources.listSources` | — | List all package sources |
+| POST | `/api/v1/run/sources` | `run.sources.createSource` | — | Create a new package source |
+| DELETE | `/api/v1/run/sources/{source_id}` | `run.sources.deleteSource` | — | Delete a package source |
+| PATCH | `/api/v1/run/sources/{source_id}` | `run.sources.updateSource` | — | Update a package source |
+| GET | `/api/v1/run/sources/{source_id}/diagnostics` | `run.sources.getSourceDiagnostics` | — | Get runtime diagnostics for a source |
+| POST | `/api/v1/run/sources/{source_id}/sync` | `run.sources.syncSource` | — | Sync a single source |
+| POST | `/api/v1/run/sources/sync` | `run.sources.syncAllSources` | — | Sync all sources |
+| GET | `/api/v1/run/t/{terminal_id}/go/{rest}` | `run.runTerminalAnchored` | — | Terminal-anchored path-based resolve |
 
 ---
 

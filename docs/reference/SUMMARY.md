@@ -1,16 +1,16 @@
 # Hoody SDK — Reference Documentation
 
-**Version:** 1.0.0-beta.9
-**SDK Methods:** 1081
-**CLI Commands:** 825
+**Version:** 1.0.0-beta.10
+**SDK Methods:** 1095
+**CLI Commands:** 835
 **Namespaces:** 19
 
 ---
 
 ## Quick Links
 
-- [SDK Method Reference](SDK-METHODS.md) — flat list of all 1081 methods
-- [CLI Command Reference](CLI-COMMANDS.md) — flat list of 825 commands (plus the hand-written `hoody pipe` streaming group)
+- [SDK Method Reference](SDK-METHODS.md) — flat list of all 1095 methods
+- [CLI Command Reference](CLI-COMMANDS.md) — flat list of 835 commands (plus the hand-written `hoody pipe` streaming group)
 - [HTTP Endpoint Reference](HTTP-METHODS.md) — every HTTP method + path, with its SDK method and CLI command
 - [Namespace Index](namespaces/_INDEX.md) — deep dives per namespace
 
@@ -20,9 +20,8 @@
 
 | Namespace | SDK Methods | CLI Commands | Services | Deep Dive |
 |-----------|-------------|--------------|----------|-----------|
-| `agent` | 209 | 167 | 21 | [agent.md](namespaces/agent.md) |
-| `api` | 289 | 200 | 31 | [api.md](namespaces/api.md) |
-| `app` | 35 | 0 | 8 | [app.md](namespaces/app.md) |
+| `agent` | 222 | 176 | 22 | [agent.md](namespaces/agent.md) |
+| `api` | 290 | 201 | 31 | [api.md](namespaces/api.md) |
 | `browser` | 29 | 25 | 8 | [browser.md](namespaces/browser.md) |
 | `code` | 19 | 16 | 6 | [code.md](namespaces/code.md) |
 | `cron` | 15 | 9 | 4 | [cron.md](namespaces/cron.md) |
@@ -35,13 +34,14 @@
 | `notifications` | 10 | 8 | 4 | [notifications.md](namespaces/notifications.md) |
 | `pipe` | 7 | 0 | 4 | [pipe.md](namespaces/pipe.md) |
 | `proxyLogs` | 5 | 3 | 1 | [proxyLogs.md](namespaces/proxyLogs.md) |
+| `run` | 35 | 0 | 7 | [run.md](namespaces/run.md) |
 | `sqlite` | 33 | 26 | 7 | [sqlite.md](namespaces/sqlite.md) |
 | `terminal` | 48 | 30 | 10 | [terminal.md](namespaces/terminal.md) |
 | `tunnel` | 7 | 6 | 2 | [tunnel.md](namespaces/tunnel.md) |
 | `watch` | 14 | 7 | 4 | [watch.md](namespaces/watch.md) |
 
 > The **CLI Commands** column counts only commands aligned to an SDK namespace.
-> It is a subset of the **825** headline total, which also includes
+> It is a subset of the **835** headline total, which also includes
 > non-namespace command groups (containers, projects, …) and top-level
 > utilities (`login`, `chat`, `open`, …). See
 > [CLI-COMMANDS.md](CLI-COMMANDS.md) for the complete flat list.
@@ -54,8 +54,8 @@ Parity across the published surface, counted over OpenAPI **operations**:
 
 | Metric | Count |
 |--------|-------|
-| Matched (SDK method + CLI command) | 788 |
-| SDK-only (no CLI command) | 159 |
+| Matched (SDK method + CLI command) | 798 |
+| SDK-only (no CLI command) | 163 |
 | CLI-only (no SDK method) | 12 |
 
 SDK-only operations are mostly spec/health, WebDAV, and other transport-level
@@ -65,9 +65,9 @@ configuration commands (`hoody proxy logs export`, `… db vacuum`,
 `… config get`, …) — that don't map to a single published request.
 
 > These figures count OpenAPI **operations**, so they intentionally do not
-> reconcile with the headline totals above: the 1081 SDK methods expand
+> reconcile with the headline totals above: the 1095 SDK methods expand
 > pagination helpers — `list`/`listAll`/`listIterator` — over fewer underlying
-> operations, and the 825 rendered CLI commands merge auth-type variants.
+> operations, and the 835 rendered CLI commands merge auth-type variants.
 > Top-level CLI utilities such as `login` and `config` are not counted here —
 > they are not OpenAPI operations. The full endpoint-by-endpoint mapping is in
 > [HTTP-METHODS.md](HTTP-METHODS.md).

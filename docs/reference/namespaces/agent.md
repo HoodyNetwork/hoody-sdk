@@ -1,6 +1,6 @@
-# `agent` — 209 methods
+# `agent` — 222 methods
 
-**Version:** 1.0.0-beta.9
+**Version:** 1.0.0-beta.10
 **Accessor:** `client.agent`
 
 ```typescript
@@ -579,7 +579,7 @@ client.agent.discovery.listRealmsIterator(options?: { page?: number; limit?: num
 
 ---
 
-## `client.agent.github` (10 methods)
+## `client.agent.github` (12 methods)
 
 ### `githubAuthStatus`
 
@@ -729,6 +729,29 @@ client.agent.github.githubLoginPoll(data: AgentGithubLoginPollRequest, options?:
 
 ---
 
+### `githubLogout`
+
+**POST** `/api/v1/agent/github/auth/logout`
+
+Remove a linked GitHub account.
+
+```typescript
+client.agent.github.githubLogout(data: AgentGithubLogoutRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentGithubLogoutResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentGithubLogoutRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentGithubLogoutResponse`
+
+---
+
 ### `githubPullRequest`
 
 **POST** `/api/v1/agent/github/pr`
@@ -775,6 +798,29 @@ client.agent.github.githubRepos(options?: { realm?: string; XHoodyCwd?: string; 
 **Returns:** `AgentGithubReposResponse`
 
 **CLI:** `hoody agent github repos`
+
+---
+
+### `githubSetActiveAccount`
+
+**POST** `/api/v1/agent/github/auth/active`
+
+Switch the active GitHub account.
+
+```typescript
+client.agent.github.githubSetActiveAccount(data: AgentGithubSetActiveAccountRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentGithubSetActiveAccountResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentGithubSetActiveAccountRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentGithubSetActiveAccountResponse`
 
 ---
 
@@ -1506,6 +1552,232 @@ client.agent.loops.updateLoop(id: string, loopId: string, data?: AgentUpdateLoop
 **Returns:** `AgentUpdateLoopResponse`
 
 **CLI:** `hoody agent loops update`
+
+---
+
+## `client.agent.mcp` (9 methods)
+
+### `beginMCPWrite`
+
+**POST** `/api/v1/agent/mcp/write-intents`
+
+Begin an MCP config write.
+
+```typescript
+client.agent.mcp.beginMCPWrite(data: AgentBeginMCPWriteRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentBeginMCPWriteResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentBeginMCPWriteRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentBeginMCPWriteResponse`
+
+**CLI:** `hoody agent mcp begin-write`
+
+---
+
+### `deleteMCPServer`
+
+**DELETE** `/api/v1/agent/mcp/servers`
+
+Delete an MCP server.
+
+```typescript
+client.agent.mcp.deleteMCPServer(data: AgentDeleteMCPServerRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentDeleteMCPServerResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentDeleteMCPServerRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentDeleteMCPServerResponse`
+
+**CLI:** `hoody agent mcp delete`
+
+---
+
+### `importMCPServers`
+
+**POST** `/api/v1/agent/mcp/import`
+
+Import MCP servers from another tool's config.
+
+```typescript
+client.agent.mcp.importMCPServers(data: AgentImportMCPServersRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentImportMCPServersResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentImportMCPServersRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentImportMCPServersResponse`
+
+**CLI:** `hoody agent mcp import`
+
+---
+
+### `listMCPServers`
+
+**GET** `/api/v1/agent/mcp/servers`
+
+List configured MCP servers.
+
+```typescript
+client.agent.mcp.listMCPServers(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentListMCPServersResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentListMCPServersResponse`
+
+**CLI:** `hoody agent mcp list`
+
+---
+
+### `parseMCPImport`
+
+**POST** `/api/v1/agent/mcp/parse`
+
+Preview an MCP config import.
+
+```typescript
+client.agent.mcp.parseMCPImport(data: AgentParseMCPImportRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentParseMCPImportResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentParseMCPImportRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentParseMCPImportResponse`
+
+**CLI:** `hoody agent mcp parse`
+
+---
+
+### `probeMCPServer`
+
+**POST** `/api/v1/agent/mcp/probe`
+
+Probe an MCP server without saving it.
+
+```typescript
+client.agent.mcp.probeMCPServer(data: AgentProbeMCPServerRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<ApiResponse<unknown>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentProbeMCPServerRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `ApiResponse<unknown>`
+
+**CLI:** `hoody agent mcp probe`
+
+---
+
+### `reconnectMCP`
+
+**POST** `/api/v1/agent/mcp/reconnect`
+
+Reload MCP config and reconnect.
+
+```typescript
+client.agent.mcp.reconnectMCP(data: AgentReconnectMCPRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentReconnectMCPResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentReconnectMCPRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentReconnectMCPResponse`
+
+**CLI:** `hoody agent mcp reconnect`
+
+---
+
+### `setMCPServerEnabled`
+
+**POST** `/api/v1/agent/mcp/servers/enable`
+
+Enable or disable an MCP server.
+
+```typescript
+client.agent.mcp.setMCPServerEnabled(data: AgentSetMCPServerEnabledRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentSetMCPServerEnabledResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentSetMCPServerEnabledRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentSetMCPServerEnabledResponse`
+
+**CLI:** `hoody agent mcp set-enabled`
+
+---
+
+### `upsertMCPServer`
+
+**PUT** `/api/v1/agent/mcp/servers`
+
+Create or update an MCP server.
+
+```typescript
+client.agent.mcp.upsertMCPServer(data: AgentUpsertMCPServerRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentUpsertMCPServerResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentUpsertMCPServerRequest` | Yes | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentUpsertMCPServerResponse`
+
+**CLI:** `hoody agent mcp upsert`
 
 ---
 
@@ -3187,7 +3459,7 @@ client.agent.sessions.trimSession(id: string, data?: AgentTrimSessionRequest, op
 
 ---
 
-## `client.agent.settings` (9 methods)
+## `client.agent.settings` (11 methods)
 
 ### `deleteFusion`
 
@@ -3365,6 +3637,54 @@ client.agent.settings.patchSettings(data: AgentPatchSettingsRequest, options?: {
 **Returns:** `AgentPatchSettingsResponse`
 
 **CLI:** `hoody agent settings patch`
+
+---
+
+### `setACPAgentModel`
+
+**PUT** `/api/v1/agent/acp/agents/{agent}/model`
+
+Set a BYOA backend's default model and effort.
+
+```typescript
+client.agent.settings.setACPAgentModel(agent: string, data?: AgentSetACPAgentModelRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentSetACPAgentModelResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `agent` | `string` | Yes | path | Path identifier. |
+| `data` | `AgentSetACPAgentModelRequest` | No | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentSetACPAgentModelResponse`
+
+---
+
+### `setACPEnabled`
+
+**PUT** `/api/v1/agent/acp/agents/{agent}/enabled`
+
+Enable or disable a BYOA ACP backend.
+
+```typescript
+client.agent.settings.setACPEnabled(agent: string, data?: AgentSetACPEnabledRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentSetACPEnabledResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `agent` | `string` | Yes | path | Path identifier. |
+| `data` | `AgentSetACPEnabledRequest` | No | body |  |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentSetACPEnabledResponse`
 
 ---
 

@@ -1,6 +1,6 @@
-# `api` — 289 methods
+# `api` — 290 methods
 
-**Version:** 1.0.0-beta.9
+**Version:** 1.0.0-beta.10
 **Accessor:** `client.api`
 
 ```typescript
@@ -524,13 +524,14 @@ client.api.authentication.githubOAuthCallback(options?: { state: string; code?: 
 Redirect to GitHub OAuth
 
 ```typescript
-client.api.authentication.githubOAuthRedirect(options?: { redirect_uri: string; code_challenge: string; intent?: "login" | "star_check"; invite_code?: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.githubOAuthRedirect(options?: { redirect_uri: string; code_challenge: string; client?: string; intent?: "login" | "star_check"; invite_code?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `redirect_uri` | `string` | Yes | query | Frontend URL to redirect to after OAuth completes (must be on an allowed domain) |
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
+| `client` | `string` | No | query | Optional client-declared source channel for analytics: web \| ssh \| webssh \| cli \| sdk \| agent. Folded into the signed OAuth state so it survives the provider round trip. Unrecognised values are recorded as "unknown". |
 | `intent` | `"login" \| "star_check"` | No | query | OAuth intent: login (default). "star_check" is accepted but ignored (retired). |
 | `invite_code` | `string` | No | query | Optional invite code ("coupon") captured from the signup link. Normalized and hashed at redirect time — only the hash travels in the OAuth state, never the raw code. Memorized hash-only on a NEW account and applied automatically; not validated here. |
 
@@ -571,13 +572,14 @@ client.api.authentication.googleOAuthCallback(options?: { state: string; code?: 
 Redirect to Google OAuth
 
 ```typescript
-client.api.authentication.googleOAuthRedirect(options?: { redirect_uri: string; code_challenge: string; invite_code?: string }): Promise<ApiResponse<unknown>>
+client.api.authentication.googleOAuthRedirect(options?: { redirect_uri: string; code_challenge: string; client?: string; invite_code?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `redirect_uri` | `string` | Yes | query | Frontend URL to redirect to after OAuth completes (must be on an allowed domain) |
 | `code_challenge` | `string` | Yes | query | PKCE code_challenge (base64url SHA-256 of code_verifier). Required — all OAuth flows must use PKCE post-migration. |
+| `client` | `string` | No | query | Optional client-declared source channel for analytics: web \| ssh \| webssh \| cli \| sdk \| agent. Folded into the signed OAuth state so it survives the provider round trip. Unrecognised values are recorded as "unknown". |
 | `invite_code` | `string` | No | query | Optional invite code ("coupon") captured from the signup link. Normalized and hashed at redirect time — only the hash travels in the OAuth state, never the raw code. Memorized hash-only on a NEW account and applied automatically; not validated here. |
 
 **Returns:** `ApiResponse<unknown>`
@@ -917,7 +919,7 @@ client.api.authentication.verifyEmail(data: ApiAuthenticationVerifyEmailRequest)
 
 ---
 
-## `client.api.containers` (28 methods)
+## `client.api.containers` (29 methods)
 
 ### `authorize`
 
@@ -1426,6 +1428,27 @@ client.api.containers.restoreSnapshot(id: string, name: string): Promise<ApiCont
 **Returns:** `ApiContainersRestoreSnapshotResponse`
 
 **CLI:** `hoody snapshots restore`
+
+---
+
+### `setContainerKvm`
+
+**PUT** `/api/v1/containers/{id}/kvm`
+
+Enable or disable /dev/kvm (run VMs in the container)
+
+```typescript
+client.api.containers.setContainerKvm(id: string, data: SetContainerKvmPatchRequest): Promise<SetContainerKvmPatchResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique identifier of the container |
+| `data` | `SetContainerKvmPatchRequest` | Yes | body |  |
+
+**Returns:** `SetContainerKvmPatchResponse`
+
+**CLI:** `hoody containers kvm`
 
 ---
 

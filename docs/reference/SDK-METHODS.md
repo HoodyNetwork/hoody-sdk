@@ -1,12 +1,12 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.9
-**Total methods:** 1081
+**Version:** 1.0.0-beta.10
+**Total methods:** 1095
 **Namespaces:** 19
 
 ---
 
-## `agent` (209 methods)
+## `agent` (222 methods)
 
 ### `client.agent`
 
@@ -54,8 +54,10 @@
 | `githubCommit` | POST | `/api/v1/agent/github/commit` | Stage all and commit. |
 | `githubLogin` | POST | `/api/v1/agent/github/auth/login` | Start a GitHub device-flow login (or add a PAT). |
 | `githubLoginPoll` | POST | `/api/v1/agent/github/auth/login/poll` | Poll a GitHub device-flow login to completion. |
+| `githubLogout` | POST | `/api/v1/agent/github/auth/logout` | Remove a linked GitHub account. |
 | `githubPullRequest` | POST | `/api/v1/agent/github/pr` | Open a pull request. |
 | `githubRepos` | GET | `/api/v1/agent/github/repos` | List GitHub repos. |
+| `githubSetActiveAccount` | POST | `/api/v1/agent/github/auth/active` | Switch the active GitHub account. |
 | `githubStatus` | GET | `/api/v1/agent/github/status` | GitHub working-tree status. |
 | `githubSync` | POST | `/api/v1/agent/github/sync` | Sync (fetch → pull → push). |
 
@@ -114,6 +116,20 @@
 | `listLoopsIterator` | GET | `/api/v1/agent/sessions/{id}/loops` | List a session's loops. (async iterator) |
 | `runLoopNow` | POST | `/api/v1/agent/sessions/{id}/loops/{loopId}/run-now` | Run a loop immediately. |
 | `updateLoop` | PATCH | `/api/v1/agent/sessions/{id}/loops/{loopId}` | Update a loop. |
+
+### `client.agent.mcp`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `beginMCPWrite` | POST | `/api/v1/agent/mcp/write-intents` | Begin an MCP config write. |
+| `deleteMCPServer` | DELETE | `/api/v1/agent/mcp/servers` | Delete an MCP server. |
+| `importMCPServers` | POST | `/api/v1/agent/mcp/import` | Import MCP servers from another tool's config. |
+| `listMCPServers` | GET | `/api/v1/agent/mcp/servers` | List configured MCP servers. |
+| `parseMCPImport` | POST | `/api/v1/agent/mcp/parse` | Preview an MCP config import. |
+| `probeMCPServer` | POST | `/api/v1/agent/mcp/probe` | Probe an MCP server without saving it. |
+| `reconnectMCP` | POST | `/api/v1/agent/mcp/reconnect` | Reload MCP config and reconnect. |
+| `setMCPServerEnabled` | POST | `/api/v1/agent/mcp/servers/enable` | Enable or disable an MCP server. |
+| `upsertMCPServer` | PUT | `/api/v1/agent/mcp/servers` | Create or update an MCP server. |
 
 ### `client.agent.memory`
 
@@ -205,6 +221,8 @@
 | `listFusionAll` | GET | `/api/v1/agent/settings/fusion` | List fusion composites. (collect all pages) |
 | `listFusionIterator` | GET | `/api/v1/agent/settings/fusion` | List fusion composites. (async iterator) |
 | `patchSettings` | PATCH | `/api/v1/agent/settings` | Patch settings. |
+| `setACPAgentModel` | PUT | `/api/v1/agent/acp/agents/{agent}/model` | Set a BYOA backend's default model and effort. |
+| `setACPEnabled` | PUT | `/api/v1/agent/acp/agents/{agent}/enabled` | Enable or disable a BYOA ACP backend. |
 | `setACPSecret` | PUT | `/api/v1/agent/acp/agents/{agent}/secrets/{key}` | Store an ACP per-agent secret value. |
 | `upsertFusion` | PUT | `/api/v1/agent/settings/fusion/{slug}` | Create or update a fusion composite. |
 
@@ -322,7 +340,7 @@
 | `resumeWorkflowRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `runSessionWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 
-## `api` (289 methods)
+## `api` (290 methods)
 
 ### `client.api.activity`
 
@@ -417,6 +435,7 @@
 | `manage` | POST | `/api/v1/containers/{id}/{operation}` | Manage container |
 | `removeNetworkConfig` | DELETE | `/api/v1/containers/{id}/network` | Remove container network configuration |
 | `restoreSnapshot` | PUT | `/api/v1/containers/{id}/snapshots/{name}` | Restore container from snapshot |
+| `setContainerKvm` | PUT | `/api/v1/containers/{id}/kvm` | Enable or disable /dev/kvm (run VMs in the container) |
 | `startNetwork` | POST | `/api/v1/containers/{id}/network/start` | Start container network proxy/blocking |
 | `stopNetwork` | POST | `/api/v1/containers/{id}/network/stop` | Stop container network proxy/blocking |
 | `sync` | POST | `/api/v1/containers/{id}/sync` | Sync a copied container with its source |
@@ -767,83 +786,6 @@
 | `setDefaultPaymentMethod` | PUT | `/api/v1/wallet/payment-methods/{id}/default` | Set a payment method as default |
 | `transferToAi` | POST | `/api/v1/wallet/transfers` | Transfer from general balance to AI credits |
 | `updatePaymentMethod` | PUT | `/api/v1/wallet/payment-methods/{id}` | Update a payment method |
-
-## `app` (35 methods)
-
-### `client.app.configuration`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `get` | GET | `/api/v1/run/config` | Get full runtime configuration |
-
-### `client.app.docs`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `getJson` | GET | `/api/v1/run/openapi.json` | OpenAPI specification (JSON) |
-| `getYaml` | GET | `/api/v1/run/openapi.yaml` | OpenAPI specification (YAML) |
-
-### `client.app.execution`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `preflight` | POST | `/api/v1/run/preflight` | Preflight a run request |
-| `runAppGet` | GET | `/api/v1/run/run` | Resolve an application and return exact shell command |
-| `runAppPost` | POST | `/api/v1/run/run` | Resolve an application via JSON body |
-| `runBatch` | POST | `/api/v1/run/batch` | Execute a batch of search or run requests |
-| `runPathBased` | GET | `/api/v1/run/go/{rest}` | Path-based resolve (positional or key-value) |
-| `runTerminalAnchored` | GET | `/api/v1/run/t/{terminal_id}/go/{rest}` | Terminal-anchored path-based resolve |
-| `searchCandidates` | GET | `/api/v1/run/search` | Search for app candidates |
-| `searchCandidatesPaged` | POST | `/api/v1/run/search/paged` | Search for app candidates with cursor pagination |
-| `searchCandidatesPagedAll` | POST | `/api/v1/run/search/paged` | Search for app candidates with cursor pagination (collect all pages) |
-| `searchCandidatesPagedIterator` | POST | `/api/v1/run/search/paged` | Search for app candidates with cursor pagination (async iterator) |
-
-### `client.app.health`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `check` | GET | `/api/v1/run/health` | Service health check |
-
-### `client.app.jobs`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `createSearch` | POST | `/api/v1/run/search/jobs` | Start an async search job |
-| `getStatus` | GET | `/api/v1/run/jobs/{job_id}` | Get job status |
-
-### `client.app.profiles`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `create` | POST | `/api/v1/run/profiles` | Create a new profile |
-| `delete` | DELETE | `/api/v1/run/profiles/{profile}` | Delete a profile |
-| `list` | GET | `/api/v1/run/profiles` | List all profiles |
-| `select` | POST | `/api/v1/run/profiles/{profile}/select` | Select the active profile |
-| `update` | PATCH | `/api/v1/run/profiles/{profile}` | Update a profile |
-
-### `client.app.recipes`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `create` | POST | `/api/v1/run/recipes` | Create a saved recipe |
-| `delete` | DELETE | `/api/v1/run/recipes/{name}` | Delete a saved recipe |
-| `get` | GET | `/api/v1/run/recipes/{name}` | Get a saved recipe |
-| `list` | GET | `/api/v1/run/recipes` | List saved launch recipes |
-| `run` | POST | `/api/v1/run/recipes/{name}/run` | Run using a saved recipe |
-| `search` | POST | `/api/v1/run/recipes/{name}/search` | Search using a saved recipe |
-| `update` | PATCH | `/api/v1/run/recipes/{name}` | Update a saved recipe |
-
-### `client.app.sources`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `create` | POST | `/api/v1/run/sources` | Create a new package source |
-| `delete` | DELETE | `/api/v1/run/sources/{source_id}` | Delete a package source |
-| `getDiagnostics` | GET | `/api/v1/run/sources/{source_id}/diagnostics` | Get runtime diagnostics for a source |
-| `list` | GET | `/api/v1/run/sources` | List all package sources |
-| `sync` | POST | `/api/v1/run/sources/{source_id}/sync` | Sync a single source |
-| `syncAll` | POST | `/api/v1/run/sources/sync` | Sync all sources |
-| `update` | PATCH | `/api/v1/run/sources/{source_id}` | Update a package source |
 
 ## `browser` (29 methods)
 
@@ -1789,6 +1731,78 @@
 | `listAll` | GET | `/_logs` | Query centralized logs (collect all pages) |
 | `listIterator` | GET | `/_logs` | Query centralized logs (async iterator) |
 | `streamLogs` | GET | `/_logs/stream` | Live-tail logs over Server-Sent Events (v8 SSE contract) |
+
+## `run` (35 methods)
+
+### `client.run.configuration`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getConfig` | GET | `/api/v1/run/config` | Get full runtime configuration |
+
+### `client.run.documentation`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `getOpenApiJson` | GET | `/api/v1/run/openapi.json` | OpenAPI specification (JSON) |
+| `getOpenApiYaml` | GET | `/api/v1/run/openapi.yaml` | OpenAPI specification (YAML) |
+
+### `client.run.jobs`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `createSearchJob` | POST | `/api/v1/run/search/jobs` | Start an async search job |
+| `getJobStatus` | GET | `/api/v1/run/jobs/{job_id}` | Get job status |
+
+### `client.run.profiles`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `createProfile` | POST | `/api/v1/run/profiles` | Create a new profile |
+| `deleteProfile` | DELETE | `/api/v1/run/profiles/{profile}` | Delete a profile |
+| `listProfiles` | GET | `/api/v1/run/profiles` | List all profiles |
+| `selectProfile` | POST | `/api/v1/run/profiles/{profile}/select` | Select the active profile |
+| `updateProfile` | PATCH | `/api/v1/run/profiles/{profile}` | Update a profile |
+
+### `client.run.recipes`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `createRecipe` | POST | `/api/v1/run/recipes` | Create a saved recipe |
+| `deleteRecipe` | DELETE | `/api/v1/run/recipes/{name}` | Delete a saved recipe |
+| `getRecipe` | GET | `/api/v1/run/recipes/{name}` | Get a saved recipe |
+| `listRecipes` | GET | `/api/v1/run/recipes` | List saved launch recipes |
+| `runRecipe` | POST | `/api/v1/run/recipes/{name}/run` | Run using a saved recipe |
+| `searchRecipe` | POST | `/api/v1/run/recipes/{name}/search` | Search using a saved recipe |
+| `updateRecipe` | PATCH | `/api/v1/run/recipes/{name}` | Update a saved recipe |
+
+### `client.run`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `healthCheck` | GET | `/api/v1/run/health` | Service health check |
+| `preflightRun` | POST | `/api/v1/run/preflight` | Preflight a run request |
+| `resolve` | POST | `/api/v1/run/resolve` | Resolve an application via JSON body |
+| `resolveGet` | GET | `/api/v1/run/resolve` | Resolve an application and return exact shell command |
+| `runBatch` | POST | `/api/v1/run/batch` | Execute a batch of search or run requests |
+| `runPathBased` | GET | `/api/v1/run/go/{rest}` | Path-based resolve (positional or key-value) |
+| `runTerminalAnchored` | GET | `/api/v1/run/t/{terminal_id}/go/{rest}` | Terminal-anchored path-based resolve |
+| `searchCandidates` | GET | `/api/v1/run/search` | Search for app candidates |
+| `searchCandidatesPaged` | POST | `/api/v1/run/search/paged` | Search for app candidates with cursor pagination |
+| `searchCandidatesPagedAll` | POST | `/api/v1/run/search/paged` | Search for app candidates with cursor pagination (collect all pages) |
+| `searchCandidatesPagedIterator` | POST | `/api/v1/run/search/paged` | Search for app candidates with cursor pagination (async iterator) |
+
+### `client.run.sources`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `createSource` | POST | `/api/v1/run/sources` | Create a new package source |
+| `deleteSource` | DELETE | `/api/v1/run/sources/{source_id}` | Delete a package source |
+| `getSourceDiagnostics` | GET | `/api/v1/run/sources/{source_id}/diagnostics` | Get runtime diagnostics for a source |
+| `listSources` | GET | `/api/v1/run/sources` | List all package sources |
+| `syncAllSources` | POST | `/api/v1/run/sources/sync` | Sync all sources |
+| `syncSource` | POST | `/api/v1/run/sources/{source_id}/sync` | Sync a single source |
+| `updateSource` | PATCH | `/api/v1/run/sources/{source_id}` | Update a package source |
 
 ## `sqlite` (33 methods)
 

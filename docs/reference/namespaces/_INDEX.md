@@ -1,12 +1,11 @@
 # Namespace Index
 
-**Version:** 1.0.0-beta.9
+**Version:** 1.0.0-beta.10
 
 | Namespace | Description | Methods | Services | Accessor |
 |-----------|-------------|---------|----------|----------|
-| [`agent`](agent.md) | In-container AI agent — sessions, prompts, workflows, skills, memory, and tools. | 209 | 21 | `client.agent` |
-| [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 289 | 31 | `client.api` |
-| [`app`](app.md) | Resolve and serve apps from multiple sources (Hoody Run). | 35 | 8 | `client.app` |
+| [`agent`](agent.md) | In-container AI agent — sessions, prompts, workflows, skills, memory, and tools. | 222 | 22 | `client.agent` |
+| [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 290 | 31 | `client.api` |
 | [`browser`](browser.md) | Drive a cloud headless browser — navigate, script, and screenshot. | 29 | 8 | `client.browser` |
 | [`code`](code.md) | Code intelligence and file-editing helpers. | 19 | 6 | `client.code` |
 | [`cron`](cron.md) | Schedule recurring jobs inside the container. | 15 | 4 | `client.cron` |
@@ -19,6 +18,7 @@
 | [`notifications`](notifications.md) | Send and manage notifications and their delivery channels. | 10 | 4 | `client.notifications` |
 | [`pipe`](pipe.md) | Stream data between endpoints and processes. | 7 | 4 | `client.pipe` |
 | [`proxyLogs`](proxyLogs.md) | Reverse-proxy routing and centralized request logs. | 5 | 1 | `client.proxyLogs` |
+| [`run`](run.md) |  | 35 | 7 | `client.run` |
 | [`sqlite`](sqlite.md) | A per-container SQLite database over HTTP. | 33 | 7 | `client.sqlite` |
 | [`terminal`](terminal.md) | Interactive shell / PTY sessions over HTTP and WebSocket. | 48 | 10 | `client.terminal` |
 | [`tunnel`](tunnel.md) | Expose a service on a public URL; bridge and share ports. | 7 | 2 | `client.tunnel` |
