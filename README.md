@@ -34,7 +34,7 @@ TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers 
 | **Batteries included** | Create a container with the Kit (`hoody_kit: true`) and the full service layer is available at stable HTTPS URLs: shell, files, cloud browser, GUI desktop, databases, cron, tunnels, and a built-in AI agent, each starting on demand with the first call. |
 | **Who it's for** | Cloud IDEs, AI-agent platforms, browser-automation pipelines, remote-desktop products, and education: anything that needs a real Linux environment on demand without running the infrastructure. |
 | **The economics** | Flat-rate bare metal: a dedicated machine, marketplace-priced from ~$30/month, with no per-container fee or usage meter. Run dev through prod for every project on one box. [How ↓](#bare-metal-underneath) |
-| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1081<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->825<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
+| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1095<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->835<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
 
 **Prefer references?** Nearly the whole surface fits in three lists: [CLI commands](./docs/reference/CLI-COMMANDS.md) · [SDK methods](./docs/reference/SDK-METHODS.md) · [HTTP endpoints](./docs/reference/HTTP-METHODS.md). The HTTP list maps every endpoint to its SDK method and to a CLI command wherever one exists.
 
@@ -184,14 +184,14 @@ bun add hoody-sdk@beta
 Browser (IIFE global, exposes `window.HoodySDK`) — pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.9/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.10/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.9/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.10/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -427,7 +427,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.9/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.10/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
@@ -578,7 +578,7 @@ When the deployment is configured to issue a public URL, EXPOSE makes a local HT
 
 ### The built-in agent
 
-Every Hoody Kit container ships an agent. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->209<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the SDK's largest container-scoped namespace.
+Every Hoody Kit container ships an agent. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->222<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the SDK's largest container-scoped namespace.
 
 The agent is the one kit that needs more than the URL: it is **claim-gated**, so the
 first agent call after a bare `withContainer(container)` returns `401 CLAIM_REQUIRED`.
@@ -637,7 +637,7 @@ Beyond prompting, the namespace covers recurring loops with hard budgets and one
 
 ### Everything else in the box
 
-The box also includes filesystem watchers streaming over SSE/WebSocket (`box.watch`), collaborative docs and notebooks (`box.notes`), outbound HTTP jobs with cookie sessions and scheduling (`box.curl`), streaming transfer channels (`box.pipe`), a prebuilt-app launcher (`box.app`), desktop and mobile notifications (`box.notifications`), VS Code Server (`box.code`), and reverse-proxy access logs (`box.proxyLogs`). See [Namespaces](#namespaces) for the full map.
+The box also includes filesystem watchers streaming over SSE/WebSocket (`box.watch`), collaborative docs and notebooks (`box.notes`), outbound HTTP jobs with cookie sessions and scheduling (`box.curl`), streaming transfer channels (`box.pipe`), the Hoody Run app resolver (`box.run`), desktop and mobile notifications (`box.notifications`), VS Code Server (`box.code`), and reverse-proxy access logs (`box.proxyLogs`). See [Namespaces](#namespaces) for the full map.
 
 ### Fork a machine instantly
 
@@ -936,7 +936,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 
 ## Namespaces
 
-19 namespaces, <!-- ref:sdk-methods -->1081<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
+19 namespaces, <!-- ref:sdk-methods -->1095<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
 
 <details>
 <summary>The full namespace map — scope, coverage, and a one-liner you'd actually call</summary>
@@ -956,12 +956,12 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 | `sqlite`          | Container | SQL queries, KV store, query history                                                    | `box.sqlite.query.executeShareable({ db: 'app', sql })`                    |
 | `curl`            | Container | Outbound HTTP with scheduling, sessions, cookie persistence                             | `box.curl.execute({ url, method: 'GET' })`                                 |
 | `pipe`            | Container | HTTP streaming channels for real-time data flow                                         | `box.pipe.send(path, body)`                                                |
-| `app`             | Container | Application launcher — resolve & run prebuilt apps from package sources, profiles, recipes | `box.app.recipes.get('newsletter')`                                        |
+| `run`             | Container | Hoody Run — resolve apps to shell commands across package sources (system-path, nixpkgs, pkgx, AppImage, OCI), profiles, recipes | `box.run.resolve({ app: 'firefox' })`                                      |
 | `notes`           | Container | Collaborative docs, notebooks, comments, versioning, embedded DBs                       | `box.notes.notebooks.create({ name: 'plans' })`                            |
 | `notifications`   | Container | Desktop and mobile push notifications, real-time stream                                | `box.notifications.notify.trigger({ summary, body, display: '0' })`        |
 | `tunnel`          | Container | Reverse tunnels — publish HTTP/WebSocket to a public URL, or pull TCP onto container-loopback ([recipe](#reverse-tunnel-localhost-to-a-public-url)) | `box.tunnel.listSessions()`                                                |
 | `proxyLogs`       | Container | Reverse-proxy access logs and stats                                                     | `box.proxyLogs.logs.list()`                                                |
-| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->209<!-- /ref:agent-sdk-methods --> methods) — sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.promptSync(id, { text })`                              |
+| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->222<!-- /ref:agent-sdk-methods --> methods) — sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.promptSync(id, { text })`                              |
 
 </details>
 
@@ -1175,33 +1175,29 @@ hoody local lock remove                  # (requires confirmation)
 
 Lock mode is a CLI-only feature — SDK consumers don't interact with it.
 
-### `hoody chat` — built-in AI assistant
+### `hoody chat` — ask Hoody about Hoody
 
-`hoody chat` is an interactive LLM that knows the Hoody CLI and platform. It answers questions with real `hoody ...` commands.
+`hoody chat` asks Hoody's documentation assistant, from your terminal. It is **free** and needs **no API key, no model choice, and no account** — there is nothing to configure before the first question.
 
 ```bash
 # One-shot — pipe-safe, streams the answer to stdout:
 hoody chat "how do I list containers on a specific server?"
 
-# Interactive REPL (session/conversation history not persisted by default):
+# Interactive REPL — follow-up questions resolve against earlier turns:
 hoody chat
 
-# Persistent session (opt-in):
+# Persistent session (opt-in; nothing is written to disk by default):
 hoody chat --persist
 
-# Pull in Hoody docs context via the @hoody.com pre-fetch:
-hoody chat "@hoody.com what is a realm?"
+# Leave nothing on disk at all:
+hoody chat --private "what is a realm?"
 ```
 
-**Provider config.** `hoody chat` needs a configured provider: an LLM key or keyless local/RFC1918 endpoint. It checks three env-var tiers and uses the first one set. Tier 1 (`HOODY_CHAT_KEY`, chat-dedicated, MiniMax by default) and Tier 3 (any OpenAI-compatible endpoint) appear below. Tier 2 (`HOODY_CLI_AI_KEY`) and the full resolution order are in [CLI authentication](./cli/CLI_AUTHENTICATION.md):
+Answers are grounded in the Hoody documentation and cite the pages they came from. Scope is Hoody — the platform, CLI, SDK, API, and code meant to run on it; unrelated questions are declined.
 
-```bash
-export HOODY_CHAT_KEY=sk-…          # your MiniMax API key (from minimax.io) — the chat-dedicated tier's default provider
-# OR any OpenAI-compatible endpoint:
-export OPENAI_API_KEY=sk-…
-export OPENAI_BASE_URL=https://api.openai.com/v1
-export OPENAI_MODEL=gpt-4o-mini
-```
+It is deliberately non-agentic: it produces text and cannot read files, run commands, or reach your container. For that, use [`hoody agent`](./docs/reference/CLI-COMMANDS.md).
+
+Free means metered: 30 questions/hour, 2000 characters per question.
 
 Full command reference: [Chat guide](./docs/reference/guides/chat.md).
 Privacy model and data-retention details: [Chat privacy](./docs/reference/guides/chat-privacy.md).
