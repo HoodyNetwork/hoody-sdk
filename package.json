@@ -1,6 +1,6 @@
 {
   "name": "hoody-sdk",
-  "version": "1.0.0-beta.9",
+  "version": "1.0.0-beta.10",
   "description": "Official Hoody Platform SDK - unified access to all Hoody APIs",
   "license": "Apache-2.0",
   "author": "Hoody Platform",
@@ -183,7 +183,7 @@
     "semver": "^7.7.4",
     "socket.io-client": "^4.8.3",
     "tweetnacl": "^1.0.3",
-    "undici": "^8.1.0",
+    "undici": "^8.9.0",
     "ws": "^8.18.0"
   },
   "publishConfig": {
