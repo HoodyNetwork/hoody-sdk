@@ -3020,7 +3020,7 @@ export interface ApiImagesGetDetailsResponse {
     };
 }
 /**
- * PNG image
+ * PNG image. Falls back to a generic placeholder PNG when the image has no icon, is not public, or does not exist.
  */
 export interface ApiImagesGetIconResponse {
     statusCode: number;
@@ -7010,6 +7010,7 @@ export interface ListServerOffersResponse {
         pricing_rules?: Record<string, unknown>;
         hold_rules?: Record<string, unknown>;
         setup_fee_cents?: number;
+        setup_fee_rules?: Record<string, unknown> | null;
         delivery_hours?: number;
         setup_time_minutes?: number;
         stock?: null | number;
@@ -15433,10 +15434,10 @@ export type SqliteDatabaseExecuteTransactionRequest = main_request;
 export type SqliteKvStoreSetRequest = string;
 export type SqliteKvStorePushRequest = Record<string, unknown>;
 export type SqliteKvStoreRemoveElementRequest = Record<string, unknown>;
-export type SqliteKvStoreBatchDeleteRequest = Record<string, unknown>;
-export type SqliteKvStoreBatchGetRequest = Record<string, unknown>;
-export type SqliteKvStoreBatchSetRequest = Record<string, unknown>;
-export type SqliteKvStoreRollbackTableRequest = Record<string, unknown>;
+export type SqliteKvStoreBatchDeleteRequest = main_kvBatchDeleteRequest;
+export type SqliteKvStoreBatchGetRequest = main_kvBatchGetRequest;
+export type SqliteKvStoreBatchSetRequest = main_kvBatchSetRequest;
+export type SqliteKvStoreRollbackTableRequest = main_kvTableRollbackRequest;
 export type RunMaintenanceRequest = Record<string, unknown>;
 export interface TerminalExecutionExecuteRequest {
     /** The command to execute */
@@ -22084,6 +22085,26 @@ export interface main_request {
     resultFormat?: string;
     transaction?: main_requestItem[];
 }
+export interface main_kvBatchDeleteRequest {
+    /** Keys to delete. 1-100 entries; no entry may be empty or whitespace-only. */
+    keys: string[];
+}
+export interface main_kvBatchGetRequest {
+    /** Keys to retrieve. 1-100 entries; no entry may be empty or whitespace-only. */
+    keys: string[];
+}
+export interface main_kvBatchSetRequest {
+    /** Items to write in a single transaction. 1-100 entries. */
+    items: main_kvBatchSetItem[];
+}
+export interface main_kvTableRollbackRequest {
+    /** Keys to leave untouched. Applied after keys.
+  At most 10000 entries; more is rejected with 413. */
+    exclude_keys?: string[];
+    /** Keys to roll back. Omit or leave empty to roll back the whole table.
+  At most 10000 entries; more is rejected with 413. */
+    keys?: string[];
+}
 export interface TerminalMouseEvent {
     /** Mouse event kind. `click` expands to down/up; `scroll` uses wheel buttons. */
     type: "move" | "down" | "up" | "click" | "scroll";
@@ -23110,6 +23131,19 @@ export interface main_requestItem {
     valuesBatch?: number[][];
     /** Alias for `statement` (backward compatibility) */
     sql?: string;
+}
+export interface main_kvBatchSetItem {
+    /** Content type recorded alongside the value. Defaults to application/octet-stream. */
+    content_type?: string;
+    /** Key to write. Must not be empty or whitespace-only. */
+    key: string;
+    /**
+     * Lifetime in seconds from now. 0 or omitted stores without expiry; negative is rejected.
+     * @minimum 0
+     */
+    ttl?: number;
+    /** Value to store. */
+    value?: string;
 }
 export interface HealthMemory4 {
     heap?: number | null;

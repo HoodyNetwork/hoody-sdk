@@ -34,7 +34,7 @@ export interface ProxyAuthIp {
 }
 export type ProxyAuth = ProxyAuthJwt | ProxyAuthPassword | ProxyAuthToken | ProxyAuthContainerClaim | ProxyAuthIp;
 /** Known Kit program slugs (from kit-catalog). Extensible with string. */
-export type KitProgram = 'terminal' | 'browser' | 'code' | 'curl' | 'cron' | 'daemon' | 'display' | 'exec' | 'files' | 'notifications' | 'sqlite' | 'agent' | 'watch' | 'logs' | 'notes' | 'app' | 'pipe' | (string & {});
+export type KitProgram = 'terminal' | 'browser' | 'code' | 'curl' | 'cron' | 'daemon' | 'display' | 'exec' | 'files' | 'notifications' | 'sqlite' | 'agent' | 'watch' | 'logs' | 'notes' | 'run' | 'pipe' | (string & {});
 /** Per-service auth overrides. */
 export interface ProxyAuthPolicy {
     default?: ProxyAuth;

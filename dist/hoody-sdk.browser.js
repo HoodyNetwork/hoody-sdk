@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.10
+ * Hoody SDK v1.0.0-beta.11
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -10891,7 +10891,7 @@ var HoodySDK = (() => {
     /**
      * Bulk set container environment variables
      *
-     * Merge environment variables into the container. Existing keys are updated, new keys are added. Keys not present in the body are left unchanged (merge semantics). Keys starting with HOODY_ are reserved and will be rejected. Propagation: vars are written to `/etc/environment` inside the container (visible to PAM/SSH on next login) AND set as Incus `environment.<key>` config (visible to `incus exec`). Already-running processes do not pick up the change until they re-exec.
+     * Merge environment variables into the container. Existing keys are updated, new keys are added. Keys not present in the body are left unchanged (merge semantics). Keys starting with HOODY_ are reserved and will be rejected. Propagation: vars are written to `/etc/environment` inside the container (visible to PAM/SSH on next login) AND applied to the container runtime environment (visible to new exec/console sessions). Already-running processes do not pick up the change until they re-exec.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async bulkSet(id, data, options) {
@@ -10945,7 +10945,7 @@ var HoodySDK = (() => {
     /**
      * Set a single environment variable
      *
-     * Set or update a single environment variable on the container. Keys starting with HOODY_ are reserved and will be rejected. Propagation: written to `/etc/environment` (visible to PAM/SSH on next login) AND set as Incus `environment.<key>` (visible to `incus exec`). Already-running processes do not pick up the change until they re-exec.
+     * Set or update a single environment variable on the container. Keys starting with HOODY_ are reserved and will be rejected. Propagation: written to `/etc/environment` (visible to PAM/SSH on next login) AND applied to the container runtime environment (visible to new exec/console sessions). Already-running processes do not pick up the change until they re-exec.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async set(id, key, data, options) {
@@ -11011,7 +11011,7 @@ var HoodySDK = (() => {
     /**
      * Delete a single environment variable
      *
-     * Remove a single environment variable from the container. Idempotent — returns 200 whether the key existed or not. Keys starting with HOODY_ are reserved and cannot be deleted. Propagation: removed from `/etc/environment` (new PAM/SSH logins no longer see it) AND unset from Incus `environment.<key>`. Already-running processes keep their copy until they re-exec.
+     * Remove a single environment variable from the container. Idempotent — returns 200 whether the key existed or not. Keys starting with HOODY_ are reserved and cannot be deleted. Propagation: removed from `/etc/environment` (new PAM/SSH logins no longer see it) AND removed from the container runtime environment. Already-running processes keep their copy until they re-exec.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async delete(id, key, options) {
