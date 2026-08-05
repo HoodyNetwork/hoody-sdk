@@ -44,7 +44,7 @@ export type ProxyAuth = ProxyAuthJwt | ProxyAuthPassword | ProxyAuthToken | Prox
 export type KitProgram =
   | 'terminal' | 'browser' | 'code' | 'curl' | 'cron'
   | 'daemon' | 'display' | 'exec' | 'files' | 'notifications'
-  | 'sqlite' | 'agent' | 'watch' | 'logs' | 'notes' | 'app' | 'pipe'
+  | 'sqlite' | 'agent' | 'watch' | 'logs' | 'notes' | 'run' | 'pipe'
   | (string & {}); // extensible but autocomplete-friendly
 
 /** Per-service auth overrides. */
