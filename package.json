@@ -1,6 +1,6 @@
 {
   "name": "hoody-sdk",
-  "version": "1.0.0-beta.10",
+  "version": "1.0.0-beta.11",
   "description": "Official Hoody Platform SDK - unified access to all Hoody APIs",
   "license": "Apache-2.0",
   "author": "Hoody Platform",
@@ -114,9 +114,13 @@
       "types": "./dist-ts/generated/tunnel/index.d.ts",
       "default": "./dist-ts/generated/tunnel/index.js"
     },
-    "./app": {
-      "types": "./dist-ts/generated/app/index.d.ts",
-      "default": "./dist-ts/generated/app/index.js"
+    "./run": {
+      "types": "./dist-ts/generated/run/index.d.ts",
+      "default": "./dist-ts/generated/run/index.js"
+    },
+    "./agent": {
+      "types": "./dist-ts/generated/agent/index.d.ts",
+      "default": "./dist-ts/generated/agent/index.js"
     },
     "./chat": {
       "types": "./dist-ts/lib/chat/index.d.ts",
@@ -151,6 +155,7 @@
     "cli/dist",
     "cli/CLI_AUTHENTICATION.md",
     "docs/reference",
+    "docs/agent/skills",
     "assets",
     "README.md",
     "CHANGELOG.md",
@@ -164,7 +169,8 @@
     "!**/.DS_Store",
     "!**/*.phase*-backup",
     "!**/.gitignore",
-    "AGENTS.md"
+    "AGENTS.md",
+    "SKILLS"
   ],
   "repository": {
     "type": "git",
