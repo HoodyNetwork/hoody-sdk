@@ -107,13 +107,13 @@ Container lifecycle lives under `hoody.api.containers.*`: `manage(id, 'start' | 
 
 ## The five invariants (learn these once)
 
-1. **The envelope.** Ordinary HTTP/SDK requests return `{ statusCode, message, data }`; HTTP reads `.data`, SDK reads `response.data`, and CLI `json`, `yaml`, and `raw` unwrap before printing. SDK failures throw `ApiError`. Streaming and structural helpers—`box.agent.sessions.promptStream()`, `box.watch`, `pipe`, `createCurlFetch`, and `EventsClient`—return purpose-built clients or streams. SDK `rawResponse: true` returns the unwrapped body.
+1. **The envelope.** Ordinary HTTP/SDK requests return `{ statusCode, message, data }`; HTTP reads `.data`, SDK reads `response.data`, and CLI `json`, `yaml`, and `raw` unwrap before printing. The envelope is guaranteed at the *client* boundary, not on every wire: some kits (Hoody Run among them) answer with a flat body and the SDK/CLI normalize it into the envelope, so raw `curl` against those routes sees the bare payload. SDK request failures throw `ApiError`; argument validation throws `ValidationError`, which extends `Error`, not `ApiError`. Streaming and structural helpers—`box.agent.sessions.promptStream()`, `createCurlFetch`, and `EventsClient`—return purpose-built clients or streams (note the generated `watch` and `pipe` methods are ordinary enveloped calls). SDK `rawResponse: true` returns the unwrapped body.
 
 2. **Parameters stay endpoint-specific.** Most SDK methods end with an options bag containing endpoint query parameters and transport overrides: `retries`, `retryDelayMs`, `retryOnStatuses`, `timeoutMs`, `signal`, `responseType`, and, for account calls, `_realm`. CLI exposes generated arguments/flags; HTTP uses path, query, headers, and JSON body. Check references instead of assuming argument order.
 
 3. **Pagination is contractual.** Paginated SDK list endpoints commonly provide `list()` for one page, `listAll()` for all pages, and `listIterator()` for an async iterable. Not every `list()` paginates; consult the generated CLI command or OpenAPI contract.
 
-4. **Everything is a structural URL.** Container services use `https://{projectId}-{containerId}-{segment}.{server}.containers.hoody.com`. Build SDK URLs with `hoody.getKitUrl(service, container, index?)`, never string concatenation; it handles slug remaps and raw-port routes.
+4. **Everything is a structural URL.** Container services use `https://{projectId}-{containerId}-{segment}.{server}.containers.hoody.com`. Build SDK URLs with `hoody.getKitUrl(service, container, index?)`, never string concatenation; it handles slug remaps and raw-port routes. Passing `{ local: true }` instead returns `https://localhost.{containersDomain}/{serviceSegment}`, which needs no container identity but only resolves from inside that container — use it for in-container cron jobs and scripts.
 
 5. **The container URL is the credential.** Open Kit services need no account bearer token: possession of the full structural URL grants access. Treat container ids and URLs like passwords. Before exposing one, use `hoody.api.proxyPermissionsContainer.replace(...)` for access rules, `hoody.api.proxyAliases.create(...)` to hide ids behind an alias, and a DNS CNAME for your own domain. The agent kit is claim-gated and requires a signed container claim.
 
@@ -162,7 +162,7 @@ Modes: `table`, `json`, `yaml`, `wide`, `raw`. **`json`, `yaml`, and `raw` unwra
 {"statusCode":200,"message":"OK","data":{"containers":[]}}
 ```
 
-Thus `-o json` prints `{"containers":[]}`. `raw` prints string payloads verbatim for piping; non-strings fall back to JSON.
+Thus `-o json` prints `{"containers":[]}`. `raw` prints string payloads for piping (adding a trailing newline only if missing); for objects it emits the first string field among `content`, `data`, `body`, `text`, falling back to JSON only when none is a string.
 
 ```text
 -c, --container <id>
@@ -176,39 +176,57 @@ Thus `-o json` prints `{"containers":[]}`. `raw` prints string payloads verbatim
 
 ```bash
 # Auth, token export, account creation
-hoody login --username you@example.com
-hoody login --print-token
+# --username is for a real username (^[a-zA-Z0-9_-]+$); an email needs --email
+hoody login --email you@example.com
+# --print-token modifies a fresh login; it does not export a stored token
+hoody login --email you@example.com -p --print-token
 hoody logout
 hoody signup --email you@example.com
 
 # Containers and commands
 hoody ps                            # same as: hoody containers ls
-hoody run <container-id> -- uname -a
-hoody run <container-id> -- npm test
+hoody shell <container-id> -- uname -a
+hoody shell <container-id> -- npm test
+# `hoody run` is the Hoody Run app resolver, not a container-exec verb:
+hoody run firefox -c <container-id>          # print the resolved shell command
+hoody run firefox -c <container-id> --open   # launch detached; viewer URL on stdout
 
-# Interactive PTY; hoody pty and hoody ssh are aliases
-hoody shell
-hoody sh
-# The ssh form can bridge with --ssh-host and --ssh-user
+# Interactive PTY; hoody sh, hoody pty and hoody ssh are all aliases of hoody shell
+hoody shell <container-id>
+hoody sh <container-id>
+# hoody ssh is NOT an SSH client — it opens a PTY in the container. To bridge to a
+# real SSH server, pass --ssh-host (+ --ssh-user) to ANY form; --ssh-host implies
+# --shell ssh, and --shell ssh without --ssh-host is an error.
+hoody shell <container-id> --ssh-host bastion.example.com --ssh-user admin
 
-# Kit UI: argument is a service slug, not a container id
+# Kit UI: argument is a service slug (a fixed set — `agent` and `run` are NOT in it),
+# not a container id. The container comes from
+# -c / HOODY_CONTAINER / ~/.hoody/config.json (login saves a default only when the
+# response carries a container, and --no-save skips saving entirely).
 hoody open terminal
 hoody open files
 hoody open code
 hoody open http-8080
 
-# Kit screenshots
-hoody screenshot display --path ./display.png
-hoody screenshot browser --path ./browser.png
-hoody screenshot terminal --path ./terminal.png
+# Kit screenshots — --path is a CONTAINER path, not a local one.
+# A bare filename lands in /hoody/storage/hoody-sdk/screenshots.
+hoody screenshot display --path /tmp/display.png
+hoody screenshot browser --path /tmp/browser.png
+hoody screenshot terminal --path /tmp/terminal.png
 
-# Mount container data
+# Mount container data (needs rclone on PATH plus FUSE/WinFsp; local dir must be empty)
 hoody mount <container-id>:/data ./data
-hoody unmount
+hoody unmount ./data                # or: --all | --container <container-id>
 
-# Dropped script: exec/scripts/api/build.ts becomes this command,
-# an HTTP endpoint, a cron target, and an agent tool
-hoody exec api/build
+# Dropped script: exec/scripts/api/build.ts becomes this command and an HTTP
+# endpoint. Add `// @schedule */5 * * * *` for a cron target (5-field cron or a
+# nickname like `@daily`; UTC; one per file; then `hoody exec schedules reload`),
+# or `@tags agent` for an agent tool.
+# Path separators become dashes: api/build.ts -> api-build. Discovery is cached
+# ~5 min, so a JUST-dropped script may not appear until the cache expires;
+# --refresh-scripts forces a re-fetch.
+hoody exec api-build
+hoody exec api-build --refresh-scripts
 
 # Other utilities
 hoody config set <key> <value>
@@ -278,12 +296,11 @@ Kit calls use structural service URLs, not `api.hoody.com`:
 https://{projectId}-{containerId}-{segment}.{server}.containers.hoody.com
 ```
 
-Segments include `files`, `terminal`, and `exec`; three SDK namespaces are remapped:
+Segments include `files`, `terminal`, and `exec`; two SDK namespaces are remapped:
 
 ```text
 notifications → n
 proxyLogs     → logs
-app           → run
 ```
 
 Open kits need no account token because the URL is the credential. The agent kit requires a signed claim minted by `POST /api/v1/containers/{id}/authorize`. Kits protected by proxy rules use those rules' credentials. Never send an account-wide bearer token to a container URL.
@@ -292,14 +309,14 @@ Open kits need no account token because the URL is the credential. The agent kit
 
 ```text
 Dropped file: exec/scripts/api/build.ts
-Endpoint:     POST https://{projectId}-{containerId}-exec.{server}.containers.hoody.com/api/build
-CLI:          hoody exec api/build
+Endpoint:     POST https://{projectId}-{containerId}-exec-1.{server}.containers.hoody.com/api/build
+CLI:          hoody exec api-build
 SDK:          box.exec.*
 ```
 
 ```bash
 curl -s -X POST \
-  "https://${PROJECT_ID}-${CONTAINER_ID}-exec.${SERVER}.containers.hoody.com/api/build?branch=main"
+  "https://${PROJECT_ID}-${CONTAINER_ID}-exec-1.${SERVER}.containers.hoody.com/api/build?branch=main"
 ```
 
 ---
@@ -327,7 +344,7 @@ const hoody = new HoodyClient({
 });
 ```
 
-`onTokenExpired` fires once per 401, adopts the returned token, and replays the request; concurrent 401s coalesce through one refresh. `await hoody.getAuthToken()` returns the current token, logging in first for a lazy client.
+`onTokenExpired` adopts the returned token and replays the request; concurrent 401s coalesce through one refresh. It is narrower than "any 401": it fires only for the first 401 on an auth-retry-enabled, **same-origin**, replayable request. A 401 from a container/Kit host is cross-origin and routes to `onKitAuthExpired` instead. `await hoody.getAuthToken()` returns the current token, logging in first for a lazy client.
 
 ```typescript
 // No account yet
@@ -360,8 +377,8 @@ const shell = await box.shell(); // interactive Node/Bun stream
 `box.execute(cmd, opts?)` uses a fresh ephemeral PTY, waits, and returns `{ stdout, stderr, exitCode, timedOut, duration, commandId }`. Options include `cwd`, `timeout` in seconds, `env`, `user`, and `serviceIndex`.
 
 ```bash
-hoody run <container-id> -- npm test
-hoody shell
+hoody shell <container-id> -- npm test
+hoody shell <container-id>
 ```
 
 ### 2. Files
@@ -481,8 +498,8 @@ const res = await fetch(
 Inside a dropped script, `req`, `res`, and `metadata` are ambient. See [docs/reference/namespaces/exec.md](./docs/reference/namespaces/exec.md).
 
 ```text
-CLI:  hoody exec api/build
-HTTP: POST https://{projectId}-{containerId}-exec.{server}.containers.hoody.com/api/build
+CLI:  hoody exec api-build
+HTTP: POST https://{projectId}-{containerId}-exec-1.{server}.containers.hoody.com/api/build
 ```
 
 ### 6. Daemon, cron, and SQLite
@@ -564,7 +581,7 @@ A realm-scoped client sees only resources tagged with that realm. CLI uses globa
 
 ## The traps
 
-**1 — No stdout from `box.terminal.execution.execute()`.** It returns immediately with `command_id`; poll `box.terminal.execution.getResult(command_id)`. Use `box.execute(cmd)` to wait for output or `hoody run <container-id> -- <cmd>` in a shell.
+**1 — No stdout from `box.terminal.execution.execute()`.** It returns immediately with `command_id`; poll `box.terminal.execution.getResult(command_id)`. Use `box.execute(cmd)` to wait for output or `hoody shell <container-id> -- <cmd>` in a shell.
 
 **2 — `401 CLAIM_REQUIRED` from `box.agent.*`.** Attach the claim from [recipe 4](#4-the-built-in-agent-claim-gated), or let `streamAgentPrompt` do it. Stringify the `container_claim` object; obtain the bearer token through `getAuthToken()`.
 
@@ -585,12 +602,11 @@ box.cron.entries.create(user, data, _templateVars?, requestOptions?)
 
 If options seem ignored, inspect the actual signature.
 
-**5 — Three Kit slugs differ from SDK namespaces.**
+**5 — Two Kit slugs differ from SDK namespaces.**
 
 ```text
 notifications → n
 proxyLogs     → logs
-app           → run
 ```
 
 Always use `getKitUrl()`. Raw ports use `hoody.getKitUrl('http', container, { port: 8080 })`, producing `http-8080`. `ssh` and `proxy` are unindexed; the default service index is `1`.
@@ -685,7 +701,7 @@ SDK namespaces are one account scope (`hoody.api`) plus 18 container scopes:
 
 ```text
 terminal · files · browser · display · code · exec · daemon · cron
-watch · sqlite · curl · pipe · app · notes · notifications · tunnel
+watch · sqlite · curl · pipe · run · notes · notifications · tunnel
 proxyLogs · agent
 ```
 

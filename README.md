@@ -40,9 +40,16 @@ TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers 
 
 **At a glance** — one account client (`hoody.api.*`) plus eighteen container-scoped `box.*` Kit namespaces:
 
-`terminal` · `files` · `browser` · `display` · `code` · `exec` · `daemon` · `cron` · `watch` · `sqlite` · `curl` · `pipe` · `app` · `notes` · `notifications` · `tunnel` · `proxyLogs` · `agent` — [full table ↓](#namespaces)
+`terminal` · `files` · `browser` · `display` · `code` · `exec` · `daemon` · `cron` · `watch` · `sqlite` · `curl` · `pipe` · `run` · `notes` · `notifications` · `tunnel` · `proxyLogs` · `agent` — [full table ↓](#namespaces)
 
-> **Reading this as an AI agent?** Fetch the machine-readable Skills at [hoody.com/SKILLS/](https://hoody.com/SKILLS/), a structured HTTP map of every capability below. Three facts: request methods resolve by default to a `{ statusCode, message, data }` envelope (payloads live on `response.data`; streaming, WebSocket, and iterator helpers return their own types, and `rawResponse: true` skips envelope normalization and returns the parsed body directly); the snippets are real, verified calls; and [One client, two scopes](#one-client-two-scopes) defines their `hoody` / `box` convention. Building from a clone? [**AGENTS.md**](./AGENTS.md) is the 10-minute guide to driving this SDK with an agent.
+> **Reading this as an AI agent?** Install the skill:
+>
+> ```bash
+> npx skills add https://hoody.com/SKILLS/SKILL.md   # the skill; deeper docs fetched on demand
+> npx skills add HoodyNetwork/hoody-sdk              # same skill + the whole corpus on disk (offline)
+> ```
+>
+> Or fetch the machine-readable Skills at [hoody.com/SKILLS/](https://hoody.com/SKILLS/), a structured HTTP map of every capability below. Three facts: request methods resolve by default to a `{ statusCode, message, data }` envelope (payloads live on `response.data`; streaming, WebSocket, and iterator helpers return their own types, and `rawResponse: true` skips envelope normalization and returns the parsed body directly); the snippets are real, verified calls; and [One client, two scopes](#one-client-two-scopes) defines their `hoody` / `box` convention. Building from a clone? [**AGENTS.md**](./AGENTS.md) is the 10-minute guide to driving this SDK with an agent.
 
 <details open>
 <summary><b>Contents</b></summary>
@@ -184,14 +191,14 @@ bun add hoody-sdk@beta
 Browser (IIFE global, exposes `window.HoodySDK`) — pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.10/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.11/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.10/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.11/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -314,7 +321,7 @@ https://{projectId}-{containerId}-{service}-{index}.{server}.containers.hoody.co
 | `index`        | `1`, `2`, …        | Which instance (terminal 1 vs terminal 2)              | Public       |
 | `server`       | `node-example-1`    | Physical host. Stable per container                    | Public       |
 
-Beyond the indexed services in [Namespaces](#namespaces), raw container ports are reachable as `http-{port}` / `https-{port}`, while `ssh` / `proxy` are un-indexed special routes with no `-{index}` segment. Build them with `hoody.getKitUrl('terminal', container, 1)` or compose the string by hand. Three namespaces have shorter URL slugs than their SDK names: `notifications` → `n`, `proxyLogs` → `logs`, and `app` → `run`. Use `getKitUrl()` for those so it applies the mapping.
+Beyond the indexed services in [Namespaces](#namespaces), raw container ports are reachable as `http-{port}` / `https-{port}`, while `ssh` / `proxy` are un-indexed special routes with no `-{index}` segment. Build them with `hoody.getKitUrl('terminal', container, 1)` or compose the string by hand. Two namespaces have shorter URL slugs than their SDK names: `notifications` → `n` and `proxyLogs` → `logs`. Use `getKitUrl()` for those so it applies the mapping.
 
 ### Containers are open by default
 
@@ -427,7 +434,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.10/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.11/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
@@ -1122,7 +1129,7 @@ hoody login -u alice -p "$HOODY_PASSWORD"    # supplies credentials up front (ad
 hoody signup                                 # create an account, verify, and land logged in
 ```
 
-`--web` uses the RFC 8628 device flow with PKCE. The CLI prints a short code and URL, opens a browser when possible, then completes login after approval. Browser opening is suppressed by `--no-browser`, `--print-token`, a machine-readable output mode, or a non-interactive session. `hoody auth login` / `hoody auth signup` remain flag-only scripting primitives with `--print-token` and the global `-o`; `hoody login` adds the interactive method menu, browser/device flow, and secure password prompt.
+`--web` uses the RFC 8628 device flow with PKCE. The CLI prints a short code and URL, opens a browser when possible, then completes login after approval. Browser opening is suppressed by `--no-browser`, `--print-token`, a machine-readable output mode, or a non-interactive session. `hoody auth login` / `hoody auth signup` remain flag-only scripting primitives with the global `-o`; `hoody auth login` also takes `--print-token` (`hoody auth signup` does not — use the top-level `hoody signup` for that). `hoody login` adds the interactive method menu, browser/device flow, and secure password prompt.
 
 Or install the SDK package globally for the `hoody` command:
 
@@ -1158,19 +1165,22 @@ Both paths expose the same command tree as the npm package, using your checkout 
 
 See the [CLI commands reference](./docs/reference/CLI-COMMANDS.md) for the full command reference.
 
-**Pipe-friendly output.** Generated request commands accept global `--output <format>` values of `table`, `json`, `yaml`, `wide`, or `raw`; streaming commands (agent streams) accept `ndjson` (default), `pretty`, or `raw`. Dynamic exec-script commands render only `json`/`raw`, with other formats falling back to JSON. Some hand-written commands have their own flags, such as `hoody mount --json` and `local lock status --json`. `--output raw` prints string response bodies verbatim; non-string objects fall back to formatted JSON. This is useful for piping file contents, logs, or `package.json` without unpacking an envelope with jq.
+**Pipe-friendly output.** Generated request commands accept global `--output <format>` values of `table`, `json`, `yaml`, `wide`, or `raw`; streaming commands (agent streams) accept `ndjson` (default), `pretty`, or `raw`. Dynamic exec-script commands render only `json`/`raw`; any other mode falls back to JSON for objects but still emits a top-level string result as-is, under the same add-a-newline-only-if-missing rule as `raw`. Some hand-written commands have their own flags, such as `hoody mount --list --json` (mount's `--json` reports on `--list`/`--prune` and on a successful mount, not on a usage error) and `hoody local lock status --json`. `--output raw` prints a string response body as-is, appending a trailing newline only if one is missing; for objects it emits the first string field among `content`, `data`, `body`, and `text`, and falls back to formatted JSON (with a stderr warning) only when none of those is a string. This is useful for piping file contents, logs, or `package.json` without unpacking an envelope with jq.
 
-**Dynamic script commands.** Eligible scripts under `exec/scripts` become subcommands at `hoody exec <name>` (for example, `api/reports.ts` → `hoody exec api-reports`); reserved names, internal scripts, and command-name collisions are skipped. Declared schemas produce type-aware flags for top-level scalar fields. Use the SDK or `--body @file.json` for nested object or array fields because the CLI maps only scalars. Schema-less scripts accept `--method`, repeatable `--query k=v`, and `--body @file.json`. Pass `-c <containerId>` to target a container, or use the configured default. After adding or editing a script, `--refresh-scripts` bypasses the discovery cache.
+**Dynamic script commands.** Eligible scripts under `exec/scripts` become subcommands at `hoody exec <name>` (for example, `api/reports.ts` → `hoody exec api-reports`); reserved names, internal scripts, and command-name collisions are skipped. Declared schemas produce type-aware flags for top-level fields, and only `integer`/`number`/`boolean` keep their type — every other property, including nested objects and arrays, becomes a string flag. Schema-typed commands register **no** `--body`, so use the SDK for nested structures. Schema-less scripts accept `--method`, repeatable `--query k=v`, and `--body @file.json`. Pass `-c <containerId>` to target a container, or use the configured default. After adding or editing a script, `--refresh-scripts` bypasses the discovery cache.
 
 ### Secret storage — lock mode
 
-`hoody local lock` encrypts CLI credentials at rest with XChaCha20-Poly1305 using key material derived from a user password with argon2id. While locked, `config.json` stores `{"token": {"__locked__": "v1"}}` sentinels instead of plaintext for every sensitive field: `refreshToken`, `kitToken`, `kitPassword`, and the routing defaults `container`, `project`, `realm`. The account login `password` is the exception: it is removed from `config.json` instead of encrypted, so it never sits at rest.
+`hoody local lock` encrypts CLI credentials at rest with XChaCha20-Poly1305 using key material derived from a user password with argon2id. While locked, `config.json` stores `{"token": {"__locked__": "v1"}}` sentinels instead of plaintext for every sensitive field: `refreshToken`, `kitToken`, `kitPassword`, and the routing defaults `container`, `project`, `realm`. `kitPassword` is the odd one out: setup will encrypt a legacy hand-written value, but `hoody config set kitPassword` is refused outright and the runtime never reads it back from the lock — kit password auth comes only from `HOODY_KIT_PASSWORD` / `HOODY_KIT_PASS`. The account login `password` is the exception: it is removed from `config.json` instead of encrypted, so it never sits at rest.
 
 ```bash
-hoody local lock setup                   # prompts for a password
+hoody local lock setup                   # prompts for a password; exits 11 if the
+                                         # config has no plaintext field to lock yet
 hoody local lock status
 HOODY_LOCAL_PASSWORD=… hoody containers list   # unlocks for this invocation only
-hoody local lock remove                  # (requires confirmation)
+hoody local lock remove                  # needs the current password AND confirmation;
+                                         # DELETES the stored tokens and routing
+                                         # defaults unless you pass --write-plaintext
 ```
 
 Lock mode is a CLI-only feature — SDK consumers don't interact with it.
@@ -1186,7 +1196,9 @@ hoody chat "how do I list containers on a specific server?"
 # Interactive REPL — follow-up questions resolve against earlier turns:
 hoody chat
 
-# Persistent session (opt-in; nothing is written to disk by default):
+# Persistent session (opt-in; transcripts are not saved by default, though
+# ~/.hoody/chats is still created — --private keeps the session in memory, with
+# no chat-store reads or writes; the local-lock preflight still stats ~/.hoody):
 hoody chat --persist
 
 # Leave nothing on disk at all:
