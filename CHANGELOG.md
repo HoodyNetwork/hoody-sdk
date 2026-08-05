@@ -4,6 +4,52 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.10] — 2026-08-04
+
+### Changed
+
+- **Breaking — the `app` namespace is now `run`, and its methods are renamed.** `client.app` no longer exists; every one of its 35 methods lives under `client.run`. With one exception, noted below, each still calls the same `/api/v1/run/*` endpoint it always did, so the migration is a rename, one call site at a time. The methods that were grouped under `app.execution` and `app.health` are now directly on `client.run`:
+
+  | Before | After |
+  | --- | --- |
+  | `app.health.check` | `run.healthCheck` |
+  | `app.execution.preflight` | `run.preflightRun` |
+  | `app.execution.runBatch` | `run.runBatch` |
+  | `app.execution.runPathBased` | `run.runPathBased` |
+  | `app.execution.runTerminalAnchored` | `run.runTerminalAnchored` |
+  | `app.execution.searchCandidates` | `run.searchCandidates` |
+  | `app.execution.searchCandidatesPaged` | `run.searchCandidatesPaged` |
+  | `app.execution.searchCandidatesPagedAll` | `run.searchCandidatesPagedAll` |
+  | `app.execution.searchCandidatesPagedIterator` | `run.searchCandidatesPagedIterator` |
+  | `app.configuration.get` | `run.configuration.getConfig` |
+  | `app.docs.getJson` | `run.documentation.getOpenApiJson` |
+  | `app.docs.getYaml` | `run.documentation.getOpenApiYaml` |
+  | `app.jobs.createSearch` | `run.jobs.createSearchJob` |
+  | `app.jobs.getStatus` | `run.jobs.getJobStatus` |
+  | `app.profiles.create` · `delete` · `list` · `select` · `update` | `run.profiles.createProfile` · `deleteProfile` · `listProfiles` · `selectProfile` · `updateProfile` |
+  | `app.recipes.create` · `delete` · `get` · `list` · `run` · `search` · `update` | `run.recipes.createRecipe` · `deleteRecipe` · `getRecipe` · `listRecipes` · `runRecipe` · `searchRecipe` · `updateRecipe` |
+  | `app.sources.create` · `delete` · `getDiagnostics` · `list` · `sync` · `syncAll` · `update` | `run.sources.createSource` · `deleteSource` · `getSourceDiagnostics` · `listSources` · `syncSource` · `syncAllSources` · `updateSource` |
+
+  The generated types follow the same rename: the 42 `App*` types are replaced by 42 `Run*` types (`AppExecutionRunBatchRequest` → `RunRunBatchRequest`, and so on). **The CLI is unaffected** — it already spelled this `hoody run`, and no command was added, removed or renamed by this change.
+
+- **Breaking — resolving an app moved from `/api/v1/run/run` to `/api/v1/run/resolve`.** Both methods were renamed with it: `app.execution.runAppPost` is now `run.resolve` and `app.execution.runAppGet` is now `run.resolveGet`. `GET` still takes the selector as query parameters and `POST` still takes the full selector as a JSON body; both return the exact shell command to run. The response no longer carries the `terminal` and `terminal_request_preview` fields, so the two types that described them — `TerminalExecuteResponse` and `TerminalRequestPreview` — are gone. Nothing else about the call changed.
+
+- **`hoody chat` needs no API key any more.** It previously required a configured AI provider and refused to start without one, running the model itself. It now asks Hoody's documentation assistant: you ask, the service answers, and the CLI renders it. There is no model, provider, token or temperature setting left to configure, and answers arrive with links to the documentation pages they came from. `--private` still disables every disk read and write for the process, and a non-default service origin is still refused unless you accept it explicitly with `--accept-endpoint`. The service caps a question at 2000 characters and a conversation at 20 turns.
+
+### Added
+
+- **Manage the agent's MCP servers over HTTP.** Nine methods under `agent.mcp` cover the whole lifecycle: `listMCPServers` returns the effective merged configuration for a live session together with each server's live state — connected or not, negotiated protocol revision, tool count, why it was revoked, recent stderr — and reports credentials as key *names* only, never values. `upsertMCPServer` and `deleteMCPServer` write one entry, `setMCPServerEnabled` flips a single `enabled` flag so credentials survive a disable, and `reconnectMCP` re-reads the settings layers and reconciles every live session.
+
+  Every write is nonce-guarded: `beginMCPWrite` mints a single-use nonce bound to `{session, operation, resolved path}` and returns the current config hash, which you pass back as `expect_hash` so a concurrent edit is reported as a conflict instead of being silently overwritten. A nonce minted for a different operation fails closed. `parseMCPImport` previews what an import would write without touching a file and strips credential values from the preview; `importMCPServers` then applies it, understanding the Hoody, Claude/Cursor and VS Code dialects — a document mixing more than one is refused rather than guessed at, and validation is whole-batch so one bad entry aborts the import. `probeMCPServer` connects to a candidate config, reports the tools it advertises, and tears the connection down; because probing starts a process or makes an outbound request to a caller-chosen URL, it is human-only and refuses a machine caller with `403 human_only`.
+
+  The same nine arrive in the CLI as `hoody agent mcp list · upsert · delete · set-enabled · probe · reconnect · import · parse · begin-write`.
+
+- **Sign out of GitHub, and switch between linked accounts.** `agent.github.githubLogout` forgets a linked account and deletes the token copies an interactive clone left in checkouts the daemon can currently reach. That purge is best-effort by construction — a repository in a stopped container keeps its copy — so the reply carries `credential_purge: "partial"` and says to revoke the token on GitHub for a complete removal. `agent.github.githubSetActiveAccount` points every subsequent GitHub operation at an already-linked account, keyed by the `accounts[].key` (`<host>/<login>`) from `githubAuthStatus`. Adding a token already activates the account it belongs to; switching between accounts that both already exist is what this route is for.
+
+- **Arm a BYOA agent backend and pin its model.** `agent.settings.setACPEnabled` enables or disables an ACP backend for delegated sessions — a delegated session is refused while its backend is disabled, so this is the prerequisite for delegated sessions on a host configured over HTTP. `agent.settings.setACPAgentModel` sets the default model and reasoning effort that backend connects with; a delegated session started without an explicit model inherits them, and an empty value clears the pin and returns the backend to its own default. Both answer `404 unknown_agent` for anything that is not a known backend.
+
+- **Turn hardware virtualisation on for a container.** `api.containers.setContainerKvm` enables or disables `/dev/kvm` passthrough, so a container can run full virtual machines. It is available on rented and dedicated servers only, never on free-tier ones, and the container must be stopped. Send `kvm: true` or `kvm: false` (`dev_kvm` is accepted as an alias). The CLI spells it `hoody containers kvm`.
+
 ## [1.0.0-beta.9] — 2026-07-30
 
 ### Added
