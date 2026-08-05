@@ -16,6 +16,7 @@ export { HooksService } from './hooks.service.js';
 export { JobsService } from './jobs.service.js';
 export { LogsService } from './logs.service.js';
 export { AgentService } from './agent.service.js';
+export { McpService } from './mcp.service.js';
 export { MemoryService } from './memory.service.js';
 export { ModelsService } from './models.service.js';
 export { SessionsService } from './sessions.service.js';

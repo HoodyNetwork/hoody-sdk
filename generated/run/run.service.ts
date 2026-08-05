@@ -1,6 +1,6 @@
 /**
- * NotifyService
- * User-extensible Notify service
+ * RunService
+ * User-extensible Run service
  * 
  * ✅ SAFE TO EDIT ✅
  * This file extends the generated base class and is yours to customize.
@@ -9,9 +9,9 @@
  * Generated at: 2026-08-05T00:07:44.000Z
  */
 
-import { NotifyServiceBase } from './notify.service.generated.js';
+import { RunServiceBase } from './run.service.generated.js';
 
-export class NotifyService extends NotifyServiceBase {
+export class RunService extends RunServiceBase {
   // Add custom properties here
 
 }

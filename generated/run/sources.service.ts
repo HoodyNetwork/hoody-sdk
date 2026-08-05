@@ -1,17 +1,17 @@
 /**
- * HealthService
- * User-extensible Health service
+ * SourcesService
+ * User-extensible Sources service
  * 
  * ✅ SAFE TO EDIT ✅
  * This file extends the generated base class and is yours to customize.
  * Add your own methods, override base methods, or add custom logic here.
  * 
- * Generated at: 2026-07-30T21:23:37.000Z
+ * Generated at: 2026-08-05T00:07:44.000Z
  */
 
-import { HealthServiceBase } from './health.service.generated.js';
+import { SourcesServiceBase } from './sources.service.generated.js';
 
-export class HealthService extends HealthServiceBase {
+export class SourcesService extends SourcesServiceBase {
   // Add custom properties here
 
 }

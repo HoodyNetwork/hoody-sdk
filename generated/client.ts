@@ -25,7 +25,7 @@ import * as cron from './cron/index.js';
 import * as pipe from './pipe/index.js';
 import * as notes from './notes/index.js';
 import * as tunnel from './tunnel/index.js';
-import * as app from './app/index.js';
+import * as run from './run/index.js';
 import * as proxyLogs from './proxyLogs/index.js';
 import * as agent from './agent/index.js';
 
@@ -266,15 +266,13 @@ export class HoodyClient {
     health: tunnel.HealthService;
   };
 
-  public readonly app: {
-    health: app.HealthService;
-    docs: app.ApiDocumentationService;
-    execution: app.AppExecutionService;
-    jobs: app.JobsService;
-    sources: app.SourcesService;
-    configuration: app.ConfigurationService;
-    profiles: app.ProfilesService;
-    recipes: app.RecipesService;
+  public readonly run: run.RunService & {
+    documentation: run.ApiDocumentationService;
+    jobs: run.JobsService;
+    sources: run.SourcesService;
+    configuration: run.ConfigurationService;
+    profiles: run.ProfilesService;
+    recipes: run.RecipesService;
   };
 
   public readonly proxyLogs: {
@@ -292,6 +290,7 @@ export class HoodyClient {
     hooks: agent.HooksService;
     jobs: agent.JobsService;
     logs: agent.LogsService;
+    mcp: agent.McpService;
     memory: agent.MemoryService;
     models: agent.ModelsService;
     sessions: agent.SessionsService;
@@ -548,16 +547,14 @@ export class HoodyClient {
       health: new tunnel.HealthService(this.http, 'tunnel', this.urlTemplates?.['tunnel'] as any, this.getKitUrlTemplatePattern('tunnel')),
     });
 
-    this.app = {
-      health: new app.HealthService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-      docs: new app.ApiDocumentationService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-      execution: new app.AppExecutionService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-      jobs: new app.JobsService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-      sources: new app.SourcesService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-      configuration: new app.ConfigurationService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-      profiles: new app.ProfilesService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-      recipes: new app.RecipesService(this.http, 'app', this.urlTemplates?.['app'] as any, this.getKitUrlTemplatePattern('app')),
-    };
+    this.run = Object.assign(new run.RunService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')), {
+      documentation: new run.ApiDocumentationService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+      jobs: new run.JobsService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+      sources: new run.SourcesService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+      configuration: new run.ConfigurationService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+      profiles: new run.ProfilesService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+      recipes: new run.RecipesService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')),
+    });
 
     this.proxyLogs = {
       logs: new proxyLogs.LogsService(this.http, 'proxyLogs', this.urlTemplates?.['proxyLogs'] as any, this.getKitUrlTemplatePattern('proxyLogs')),
@@ -574,6 +571,7 @@ export class HoodyClient {
       hooks: new agent.HooksService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       jobs: new agent.JobsService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       logs: new agent.LogsService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      mcp: new agent.McpService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       memory: new agent.MemoryService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       models: new agent.ModelsService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       sessions: new agent.SessionsService(this.http, 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
@@ -944,7 +942,7 @@ export class HoodyClient {
           serverName: containerServer,
           serviceIndex: 1
         },
-        'app': {
+        'run': {
           projectId: container.project_id,
           containerId: container.id,
           server: containerServer,
@@ -1136,7 +1134,6 @@ export class HoodyClient {
   private resolveKitNamespaceSegment(namespace: string): string {
     if (namespace === 'notifications') return 'n';
     if (namespace === 'proxyLogs') return 'logs';
-    if (namespace === 'app') return 'run';
     return namespace;
   }
 
@@ -1162,7 +1159,6 @@ export class HoodyClient {
     // produces a URL subdomain like proxyLogs-1 instead of logs-1.
     const normalizedKit =
       rawKit === 'notifications' ? 'n'
-      : rawKit === 'app' ? 'run'
       : rawKit === 'proxylogs' ? 'logs'
       : rawKit;
 
@@ -1213,7 +1209,7 @@ export class HoodyClient {
     container: ContainerLike | null,
     serviceIndexOrOptions: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean } = 1
   ): Record<string, string> {
-    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'app', 'pipe', 'tunnel', 'agent', 'proxy'];
+    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'run', 'pipe', 'tunnel', 'agent', 'proxy'];
     const urls: Record<string, string> = {};
 
     for (const kit of kits) {

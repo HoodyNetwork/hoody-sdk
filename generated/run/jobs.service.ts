@@ -1,17 +1,17 @@
 /**
- * SourcesService
- * User-extensible Sources service
+ * JobsService
+ * User-extensible Jobs service
  * 
  * ✅ SAFE TO EDIT ✅
  * This file extends the generated base class and is yours to customize.
  * Add your own methods, override base methods, or add custom logic here.
  * 
- * Generated at: 2026-07-30T21:23:37.000Z
+ * Generated at: 2026-08-05T00:07:44.000Z
  */
 
-import { SourcesServiceBase } from './sources.service.generated.js';
+import { JobsServiceBase } from './jobs.service.generated.js';
 
-export class SourcesService extends SourcesServiceBase {
+export class JobsService extends JobsServiceBase {
   // Add custom properties here
 
 }

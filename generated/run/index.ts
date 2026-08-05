@@ -1,13 +1,12 @@
 /**
- * app - Namespace Services
+ * run - Namespace Services
  *
- * Auto-generated service exports for app namespace
+ * Auto-generated service exports for run namespace
  * @packageDocumentation
  */
 
-export { HealthService } from './health.service.js';
+export { RunService } from './run.service.js';
 export { ApiDocumentationService } from './api-documentation.service.js';
-export { AppExecutionService } from './app-execution.service.js';
 export { JobsService } from './jobs.service.js';
 export { SourcesService } from './sources.service.js';
 export { ConfigurationService } from './configuration.service.js';
