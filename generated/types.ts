@@ -21,7 +21,7 @@ export type Long = number;
 export interface ApiAuthTokensListResponse {
   statusCode: 200;
   message: string;
-  data: ({ id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string })[];
+  data: ({ id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string })[];
   truncated?: boolean;
 }
 
@@ -42,7 +42,7 @@ export interface ApiAuthTokensCreateRequest {
   /** Optional permission template to apply. If provided, it takes precedence over `permissions`. Templates: full_access, external_customer, dev_team, finance_team, read_only. */
   permission_template?: string;
   /** Fine-grained permissions for this token. Any missing permission path defaults to false (deny). */
-  permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
+  permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
   /** List of realm IDs this token is restricted to. If provided, the token can ONLY be used on these specific realm subdomains. */
   realm_ids?: string[];
   /** Whether this token can be used without a realm scope (e.g. on base domain). Defaults to true (server-side). Set to false to create a strict sub-account token that ONLY works on specific realms. */
@@ -65,7 +65,7 @@ export interface ApiAuthTokensCreateRequest {
 export interface ApiAuthTokensCreateResponse {
   statusCode: 201;
   message: string;
-  data: { token: string; id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string };
+  data: { token: string; id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string };
 }
 
 export interface ApiAuthTokensCopyRequest {
@@ -88,13 +88,13 @@ export interface ApiAuthTokensCopyRequest {
 export interface ApiAuthTokensCopyResponse {
   statusCode: 201;
   message: string;
-  data: { token: string; id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string };
+  data: { token: string; id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string };
 }
 
 export interface ApiAuthTokensGetCurrentResponse {
   statusCode: 200;
   message: string;
-  data: { token: { id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string }; restrictions: { has_realm_restrictions: boolean; requires_realm_scope: boolean; allowed_realm_ids: string[]; allow_no_realm: boolean; active_realm_id: null | string } };
+  data: { token: { id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string }; restrictions: { has_realm_restrictions: boolean; requires_realm_scope: boolean; allowed_realm_ids: string[]; allow_no_realm: boolean; active_realm_id: null | string } };
 }
 
 export interface ApiAuthTokensUpdatePublicProfileRequest {
@@ -107,7 +107,7 @@ export interface ApiAuthTokensUpdatePublicProfileRequest {
 export interface ApiAuthTokensUpdatePublicProfileResponse {
   statusCode: 200;
   message: string;
-  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
+  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
 }
 
 export interface ApiAuthTokensGetPublicProfileResponse {
@@ -119,7 +119,7 @@ export interface ApiAuthTokensGetPublicProfileResponse {
 export interface ApiAuthTokensGetResponse {
   statusCode: 200;
   message: string;
-  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
+  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
 }
 
 export interface ApiAuthTokensUpdateRequest {
@@ -137,7 +137,7 @@ export interface ApiAuthTokensUpdateRequest {
   /** IP whitelist for this token. Accepts an array of IPv4 addresses/CIDR ranges, a comma-separated string, or "*" wildcard. Defaults to "*" (allow all) if not provided. */
   ip_whitelist?: string[] | string;
   /** Fine-grained permissions for this token. Any missing permission path defaults to false (deny). */
-  permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
+  permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
   /** List of realm IDs this token is restricted to */
   realm_ids?: string[];
   /** Whether this token can be used without a realm scope */
@@ -160,7 +160,7 @@ export interface ApiAuthTokensUpdateRequest {
 export interface ApiAuthTokensUpdateResponse {
   statusCode: 200;
   message: string;
-  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
+  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
 }
 
 export interface ApiAuthTokensDeleteResponse {
@@ -185,7 +185,7 @@ export interface ApiAuthTokensAddRealmRequest {
 export interface ApiAuthTokensAddRealmResponse {
   statusCode: 200;
   message: string;
-  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
+  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
 }
 
 export interface ApiAuthTokensRemoveRealmRequest {
@@ -204,7 +204,7 @@ export interface ApiAuthTokensRemoveRealmRequest {
 export interface ApiAuthTokensRemoveRealmResponse {
   statusCode: 200;
   message: string;
-  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
+  data: { id: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at?: string; updated_at?: string };
 }
 
 export interface ApiVaultGetStatsResponse {
@@ -271,6 +271,11 @@ export interface ApiAuthenticationLoginRequest {
   password: string;
   /** Response shape. 'tokens' (default) returns access/refresh tokens. 'intent' returns an opaque auth_intent_token for PKCE exchange (hosted auth UI only; server forces intent mode for requests from the hosted UI origin with code_challenge). */
   response_mode?: "intent" | "tokens";
+  /**
+   * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+   * @maxLength 64
+   */
+  client?: string;
   /** PKCE code_challenge (base64url SHA-256 of the code_verifier). Required when response_mode=intent. */
   code_challenge?: string;
 }
@@ -302,6 +307,11 @@ export interface ApiTfaVerifyRequest {
   code: string;
   /** Response shape. 'tokens' (default) returns access/refresh tokens. 'intent' returns an opaque auth_intent_token for PKCE exchange. */
   response_mode?: "intent" | "tokens";
+  /**
+   * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+   * @maxLength 64
+   */
+  client?: string;
 }
 
 export interface ApiTfaVerifyResponse {
@@ -403,13 +413,13 @@ export interface ApiTfaSetTokenGateResponse {
 export interface ApiAuthenticationGetCurrentUserResponse {
   statusCode: 200;
   message: string;
-  data: { id: string; username?: string; email?: string; alias?: string; public_key?: string; metadata?: Record<string, unknown>; is_admin?: boolean; is_banned?: boolean; email_verified?: boolean; avatar_url?: string | null; signup_method?: string | null; free_tier_unlocked?: boolean; free_tier_unlocked_at?: string | null; free_tier_unlock_source?: string | null; onboarding?: Record<string, unknown>; created_at?: string; updated_at?: string; auth_token?: { token: { id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string }; restrictions: { has_realm_restrictions: boolean; requires_realm_scope: boolean; allowed_realm_ids: string[]; allow_no_realm: boolean; active_realm_id: null | string } }; pending_pool_invitations?: number };
+  data: { id: string; username?: string; email?: string; alias?: string; public_key?: string; metadata?: Record<string, unknown>; is_admin?: boolean; is_banned?: boolean; email_verified?: boolean; avatar_url?: string | null; signup_method?: string | null; free_tier_unlocked?: boolean; free_tier_unlocked_at?: string | null; free_tier_unlock_source?: string | null; onboarding?: Record<string, unknown>; created_at?: string; updated_at?: string; auth_token?: { token: { id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string }; restrictions: { has_realm_restrictions: boolean; requires_realm_scope: boolean; allowed_realm_ids: string[]; allow_no_realm: boolean; active_realm_id: null | string } }; pending_pool_invitations?: number };
 }
 
 export interface GetCurrentUserAliasResponse {
   statusCode: 200;
   message: string;
-  data: { id: string; username?: string; email?: string; alias?: string; public_key?: string; metadata?: Record<string, unknown>; is_admin?: boolean; is_banned?: boolean; email_verified?: boolean; avatar_url?: string | null; signup_method?: string | null; free_tier_unlocked?: boolean; free_tier_unlocked_at?: string | null; free_tier_unlock_source?: string | null; onboarding?: Record<string, unknown>; created_at?: string; updated_at?: string; auth_token?: { token: { id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string }; restrictions: { has_realm_restrictions: boolean; requires_realm_scope: boolean; allowed_realm_ids: string[]; allow_no_realm: boolean; active_realm_id: null | string } }; pending_pool_invitations?: number };
+  data: { id: string; username?: string; email?: string; alias?: string; public_key?: string; metadata?: Record<string, unknown>; is_admin?: boolean; is_banned?: boolean; email_verified?: boolean; avatar_url?: string | null; signup_method?: string | null; free_tier_unlocked?: boolean; free_tier_unlocked_at?: string | null; free_tier_unlock_source?: string | null; onboarding?: Record<string, unknown>; created_at?: string; updated_at?: string; auth_token?: { token: { id: string; alias: string; prefix: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } }; expires_at?: null | string; is_enabled: boolean; vault_access: boolean; event_access: boolean; created_by_token_id?: null | string; delegation_depth?: number; last_used_at?: null | string; last_used_ip?: null | string; created_at: string; updated_at: string }; restrictions: { has_realm_restrictions: boolean; requires_realm_scope: boolean; allowed_realm_ids: string[]; allow_no_realm: boolean; active_realm_id: null | string } }; pending_pool_invitations?: number };
 }
 
 export interface ApiAuthenticationLogoutResponse {
@@ -642,7 +652,7 @@ export interface ApiProjectsRemovePermissionResponse {
 export interface ApiContainersListByProjectResponse {
   statusCode: number;
   message: string;
-  data: { containers?: ({ id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } })[]; pagination?: { total?: number; page?: number; limit?: number; totalPages?: number } };
+  data: { containers?: ({ id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; kvm?: boolean; autostart?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } })[]; pagination?: { total?: number; page?: number; limit?: number; totalPages?: number } };
   example?: unknown;
 }
 
@@ -660,7 +670,7 @@ export interface ApiContainersCreateRequest {
    * @pattern ^#[0-9A-Fa-f]{3}$|^#[0-9A-Fa-f]{6}$|^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$
    */
   color?: string;
-  /** Container image to use. If null or not provided, will use the default configured image. */
+  /** Container image to use. If null or not provided, will use the default configured image. Shorthand is resolved automatically: a bare distribution name or a hyphenated version ("debian", "debian-13") becomes the canonical base image ("debian/13"), as do the "debian:13" and "debian 13" forms. */
   container_image?: string | null;
   /** Whether AI features are enabled (default: true) */
   ai?: boolean;
@@ -676,6 +686,10 @@ export interface ApiContainersCreateRequest {
   hoody_kit?: boolean;
   /** Enable dev_kit development tools in the container. Defaults to true when hoody_kit is true, false when hoody_kit is false (unless explicitly set). Cannot be updated after creation. */
   dev_kit?: boolean;
+  /** Enable /dev/kvm passthrough (run full VMs inside the container) at creation. Available on rented / dedicated (bare-metal) servers ONLY — never free tier — and rejected (403) on a free server. Defaults to false. Can also be toggled later via PUT /containers/{id}/kvm on a stopped container. */
+  kvm?: boolean;
+  /** Accepted alias of `kvm` on input (`kvm` wins if both are sent and they must agree). */
+  dev_kvm?: boolean;
   /** Whether the container should start automatically on host boot (default: true) */
   autostart?: boolean;
   /** Whether to mount a ramdisk at /ramdisk in the container (default: true). The ramdisk KEEPS data when you stop/start/reboot the container, but LOSES data if the physical host server reboots. Can store up to 50% of total host memory. Ideal for security (data automatically wiped on server seizure), temporary files, or extremely fast I/O at no cost. */
@@ -695,20 +709,20 @@ export interface ApiContainersCreateRequest {
 export interface ApiContainersCreateResponse {
   statusCode: number;
   message: string;
-  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; prespawn?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[] };
+  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; kvm?: boolean; kvm_note?: string; autostart?: boolean; prespawn?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[] };
   example?: unknown;
 }
 
 export interface ApiContainersListResponse {
   statusCode: number;
   message: string;
-  data: { containers?: ({ id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } })[]; pagination?: { total?: number; page?: number; limit?: number; totalPages?: number } };
+  data: { containers?: ({ id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; kvm?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } })[]; pagination?: { total?: number; page?: number; limit?: number; totalPages?: number } };
 }
 
 export interface ApiContainersGetResponse {
   statusCode: number;
   message: string;
-  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; warnings?: ({ type?: string; message?: string; expired_at?: null | string })[]; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } };
+  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; kvm?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; server_expired?: boolean; server_expired_at?: null | string; server_expired_reason?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; snapshot_count?: number; last_used_snapshot?: null | string; warnings?: ({ type?: string; message?: string; expired_at?: null | string })[]; runtime_info?: { displays?: ({ display?: number; pid?: number; session_name?: string; user?: string; project_id?: string; container_id?: string; start_time?: string; connected_clients?: number; last_activity_timestamp?: string; latency?: null | Record<string, unknown> | number; windows?: { id: number; title?: string; pid?: number; size?: { width?: number; height?: number }; position?: { x?: number; y?: number }; state?: string[]; focused?: boolean; fullscreen?: boolean; "class-instance"?: string[]; role?: string; group_leader_xid?: string; command?: string }[]; screenshots?: Record<string, unknown>[] })[]; services?: ({ name?: string; status?: string; pid?: number; unit?: string; load?: string; active?: string; sub?: string; description?: string; since?: string; memory?: null | string; cpu_usage?: null | string; tasks?: null | number; restart_count?: null | number; last_restart?: null | string; enabled?: null | boolean; vendor_preset?: null | string; main_pid?: null | number; control_group?: null | string; drop_in?: null | string; loaded?: null | string; docs?: null | string; fragment_path?: null | string })[]; network_services?: { protocol?: string; port?: number; ip?: string; pid?: number; user?: string; program?: string; path?: string; args?: string }[]; terminals?: { id: string; display?: number; username?: string; created_at?: number; created_at_formatted?: string; last_activity?: number; last_activity_formatted?: string; command_history?: string[] }[] } | null; pool_id?: null | string; proxy_domains?: ({ id: string; alias?: string; program?: string; index?: number; target_path?: null | string; allow_path_override?: boolean; expires_at?: null | string; enabled?: boolean; created_at?: string; updated_at?: string; url?: null | string })[]; has_proxy_permissions?: boolean; proxy_permissions_scope?: "none" | "container" | "project" | "both"; has_proxy_domains?: boolean; proxy_domains_count?: number /* min: 0 */; proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string }; project_proxy_permissions?: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string } };
 }
 
 export interface ApiContainersUpdateRequest {
@@ -744,13 +758,26 @@ export interface ApiContainersUpdateRequest {
 export interface ApiContainersUpdateResponse {
   statusCode: number;
   message: string;
-  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; pool_id?: null | string };
+  data: { id: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; name?: string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; kvm?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; source_container_id?: null | string; created_at?: string; updated_at?: string; realm_ids?: string[]; pool_id?: null | string };
 }
 
 export interface ApiContainersDeleteResponse {
   statusCode: number;
   message: string;
   data: null;
+}
+
+export interface SetContainerKvmPatchRequest {
+  /** Enable (true) or disable (false) /dev/kvm passthrough (run VMs in the container). Rented/dedicated servers only; the container must be stopped. */
+  kvm?: boolean;
+  /** Accepted alias of `kvm` on input (`kvm` wins if both are sent and they must agree). */
+  dev_kvm?: boolean;
+}
+
+export interface SetContainerKvmPatchResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; name?: string; status?: string; kvm?: boolean };
 }
 
 /**
@@ -791,6 +818,10 @@ export interface ApiContainersCopyRequest {
   copy_firewall_rules?: boolean;
   /** Whether to copy network rules/settings from source container to target container */
   copy_network_rules?: boolean;
+  /** Grant the COPY /dev/kvm passthrough (run full VMs). The copy NEVER inherits the source's KVM grant — the source device is always stripped — so this decides KVM for the copy independently, granting it afresh on the TARGET server. Available on rented / dedicated (bare-metal) targets ONLY (never free tier); rejected (403) otherwise. Defaults to false. */
+  kvm?: boolean;
+  /** Accepted alias of `kvm` on input (`kvm` wins if both are sent and they must agree). */
+  dev_kvm?: boolean;
 }
 
 /**
@@ -799,7 +830,7 @@ export interface ApiContainersCopyRequest {
 export interface ApiContainersCopyResponse {
   statusCode: number;
   message: string;
-  data: { id: string; name?: string; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; source_container_id?: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; container_image_id?: null | string; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; copy_firewall_rules?: boolean; copy_network_rules?: boolean; created_at?: string; updated_at?: string; realm_ids?: string[] };
+  data: { id: string; name?: string; status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming"; source_container_id?: string; project_id?: string; project_alias?: null | string; server_id?: null | string; server_name?: null | string; subserver_name?: string; server?: null | { name?: string; country?: string; country_name?: string; city?: string; region?: string; datacenter?: string; is_free?: boolean; specs?: null | { cpu_cores?: null | number; ram_gb?: null | number; disk_gb?: null | number; shared_compute?: boolean }; expires_at?: null | string }; ssh_hostname?: null | string; color?: string; container_image?: string; ai?: boolean; hoody_kit?: boolean; dev_kit?: boolean; kvm?: boolean; autostart?: boolean; ramdisk_scope?: "container" | "project"; ramdisk?: boolean; prespawn?: boolean; is_default?: boolean; container_image_id?: null | string; environment_vars?: Record<string, unknown>; volumes?: Record<string, unknown>; ssh_public_key?: null | string; comment?: null | string; copy_firewall_rules?: boolean; copy_network_rules?: boolean; created_at?: string; updated_at?: string; realm_ids?: string[] };
 }
 
 /**
@@ -979,7 +1010,7 @@ export interface ApiContainersUpdateSnapshotAliasResponse {
 export interface ApiFirewallListResponse {
   statusCode: number;
   message: string;
-  data: { ingress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string; direction?: "ingress" | "egress" })[]; egress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string; direction?: "ingress" | "egress" })[] };
+  data: { ingress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string; direction?: "ingress" | "egress" })[]; egress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string; direction?: "ingress" | "egress" })[]; rule_count?: number; byte_count?: number; max_rules?: number; max_bytes?: number };
 }
 
 export interface ApiFirewallResetResponse {
@@ -993,19 +1024,37 @@ export interface ApiFirewallAddIngressRuleRequest {
   action: "allow" | "reject" | "drop";
   /** Network protocol */
   protocol: "tcp" | "udp" | "icmp4";
-  /** Human-readable rule description */
+  /**
+   * Human-readable rule description
+   * @maxLength 255
+   */
   description: string;
-  /** Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP. */
+  /**
+   * Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source IPv4 address or CIDR range. Use 0.0.0.0/0 for any source. */
+  /**
+   * Source IPv4 address or CIDR range. Use 0.0.0.0/0 for any source.
+   * @maxLength 512
+   */
   source?: string;
-  /** Source port filter (rarely used) */
+  /**
+   * Source port filter (rarely used)
+   * @maxLength 64
+   */
   source_port?: string;
   /** Rule state (defaults to enabled) */
   state?: "enabled" | "disabled";
-  /** ICMP type number (e.g., 8 for echo request/ping) */
+  /**
+   * ICMP type number (e.g., 8 for echo request/ping)
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number */
+  /**
+   * ICMP code number
+   * @maxLength 8
+   */
   icmp_code?: string;
 }
 
@@ -1022,17 +1071,35 @@ export interface ApiFirewallToggleIngressRuleRequest {
   action?: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol?: "tcp" | "udp" | "icmp4";
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
-  /** Source IPv4/CIDR address(es) */
+  /**
+   * Source IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   source?: string;
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description?: string;
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
 }
 
@@ -1049,19 +1116,37 @@ export interface ApiFirewallRemoveIngressRuleRequest {
   action?: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol?: "tcp" | "udp" | "icmp4";
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source IPv4/CIDR address(es) */
+  /**
+   * Source IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   source?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description?: string;
   /** Rule state */
   state?: "enabled" | "disabled";
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
 }
 
@@ -1076,19 +1161,37 @@ export interface ApiFirewallAddEgressRuleRequest {
   action: "allow" | "reject" | "drop";
   /** Network protocol */
   protocol: "tcp" | "udp" | "icmp4";
-  /** Human-readable rule description */
+  /**
+   * Human-readable rule description
+   * @maxLength 255
+   */
   description: string;
-  /** Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP. */
+  /**
+   * Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Destination IPv4 address or CIDR range. Use 0.0.0.0/0 for any destination. */
+  /**
+   * Destination IPv4 address or CIDR range. Use 0.0.0.0/0 for any destination.
+   * @maxLength 512
+   */
   destination?: string;
-  /** Source port filter (rarely used) */
+  /**
+   * Source port filter (rarely used)
+   * @maxLength 64
+   */
   source_port?: string;
   /** Rule state (defaults to enabled) */
   state?: "enabled" | "disabled";
-  /** ICMP type number */
+  /**
+   * ICMP type number
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number */
+  /**
+   * ICMP code number
+   * @maxLength 8
+   */
   icmp_code?: string;
 }
 
@@ -1105,17 +1208,35 @@ export interface ApiFirewallToggleEgressRuleRequest {
   action?: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol?: "tcp" | "udp" | "icmp4";
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
-  /** Destination IPv4/CIDR address(es) */
+  /**
+   * Destination IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   destination?: string;
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description?: string;
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
 }
 
@@ -1132,19 +1253,37 @@ export interface ApiFirewallRemoveEgressRuleRequest {
   action?: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol?: "tcp" | "udp" | "icmp4";
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Destination IPv4/CIDR address(es) */
+  /**
+   * Destination IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   destination?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description?: string;
   /** Rule state */
   state?: "enabled" | "disabled";
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
 }
 
@@ -1693,7 +1832,7 @@ export interface ApiProxyAliasesCreateRequest {
    * @pattern ^[0-9a-f]{24}$
    */
   container_id: string;
-  /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across your account. Reserved and rejected with 422: the exact label "containers" (it collides with the proxy base domain), and anything starting with "proxy-"/"workspaces-" or equal to "proxy"/"workspaces". Prefixed forms such as "containers-my-app" are allowed. */
+  /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed. */
   alias?: string | null | false;
   /** Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). To point an alias at an HTTP server you run yourself inside the container (a process started via the daemon, a dev server, anything listening on a TCP port) use program "http" — or "https" for a TLS backend — and give the port via the "port" field (e.g. program "http" + port 3000 forwards to http://<container>:3000). The combined "http-3000" form and the legacy "index"-as-port form also work; when more than one is supplied the order of authority is port > the port embedded in "http-<port>" > index, so a leftover/default index can never override a real port. Must be a name or alias from container-programs.json. */
   program: string;
@@ -1732,7 +1871,7 @@ export interface ApiProxyAliasesGetResponse {
 
 export interface ApiProxyAliasesUpdateRequest {
   /**
-   * New alias name. Must be unique across your account. Reserved and rejected with 422: the exact label "containers" (it collides with the proxy base domain), and anything starting with "proxy-"/"workspaces-" or equal to "proxy"/"workspaces". Prefixed forms such as "containers-my-app" are allowed.
+   * New alias name. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.
    * @minLength 3
    * @maxLength 61
    * @pattern ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
@@ -2319,12 +2458,13 @@ export interface ApiServerRentalRentRequest {
   /** @pattern ^[0-9a-f]{24}$ */
   pool_id?: string;
   /**
-   * Number of days to rent (must match server pricing durations)
+   * Number of days to rent (must match server pricing durations, max 3650)
    * @minimum 1
+   * @maximum 3650
    */
-  rental_days: number /* min: 1 */;
+  rental_days: number /* min: 1, max: 3650 */;
   /**
-   * Ceiling on the TOTAL debit (rental price + one-time setup fee), in integer cents. REQUIRED whenever the server has a non-zero setup_fee_cents — omitting it returns 409 SETUP_FEE_CONFIRMATION_REQUIRED. Optional for fee-less servers. If the live total exceeds this ceiling the request is rejected with 409 CHARGE_EXCEEDS_MAX and nothing is charged; re-read the server and confirm the new total. A ceiling (not an exact match) so a price DROP still succeeds. Read it from pricing.price_tiers[rental_days].total_first_payment.
+   * Ceiling on the TOTAL debit (rental price + one-time setup fee), in integer cents. REQUIRED for every paid rental. Omitting it returns 409 CHARGE_CONFIRMATION_REQUIRED, or 409 SETUP_FEE_CONFIRMATION_REQUIRED when the server also carries a one-time fee. It is NOT optional for fee-less servers: the fee is a separate charge, and its absence never meant the total did not need confirming. Only a total of zero needs no ceiling. If the live total exceeds this ceiling the request is rejected with 409 CHARGE_EXCEEDS_MAX and nothing is charged; re-read the server and confirm the new total. A ceiling (not an exact match) so a price DROP still succeeds. Read it from pricing.price_tiers[rental_days].total_first_payment.
    * @minimum 0
    */
   max_charge_cents?: number /* min: 0 */;
@@ -2333,47 +2473,55 @@ export interface ApiServerRentalRentRequest {
 export interface ApiServerRentalRentResponse {
   statusCode: number;
   message: string;
-  data: { rental?: { id: string; server_id?: string; rental_start?: string; rental_end?: string; hold_days?: number; actual_usage_days?: number; status?: string; setup_fee_cents?: number; total_paid_cents?: number }; transaction?: { id: string; amount?: number; currency?: string } };
+  data: { rental?: { id: string; server_id?: string; rental_start?: string; rental_end?: string; hold_days?: number; actual_usage_days?: number; status?: string; setup_fee_cents?: number; total_paid_cents?: number; renewal_pricing_frozen?: Record<string, unknown> | null }; transaction?: { id: string; amount?: number; currency?: string } };
   example?: unknown;
 }
 
 export interface ApiRentalsListResponse {
   statusCode: number;
   message: string;
-  data: ({ id: string; rental_start?: string; rental_end?: string; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; remaining_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } } })[];
+  data: ({ id: string; rental_start?: string; rental_end?: string; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; renewal_pricing_frozen?: Record<string, unknown> | null; remaining_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } } })[];
 }
 
 export interface ApiRentalsGetResponse {
   statusCode: number;
   message: string;
-  data: { id: string; rental_start?: string; rental_end?: string; hold_days?: number; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; remaining_days?: number; usage_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } }; transaction?: null | { id?: string; amount?: number; currency?: string; created_at?: string } };
+  data: { id: string; rental_start?: string; rental_end?: string; hold_days?: number; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; renewal_pricing_frozen?: Record<string, unknown> | null; remaining_days?: number; usage_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } }; transaction?: null | { id?: string; amount?: number; currency?: string; created_at?: string } };
   example?: unknown;
 }
 
 export interface ApiRentalsExtendRequest {
+  /** The rental's CURRENT rental_end, exactly as the API returned it. The extension is applied only if it still matches, so a retried request — a lost response, a double click — is refused with 409 EXTENSION_ALREADY_APPLIED instead of charging and extending a second time. Re-read the rental before retrying; never resend blindly. */
+  expected_rental_end: string;
   /**
-   * Number of additional days to extend the rental (must match server pricing durations)
+   * Number of additional days to extend the rental (must match server pricing durations, max 3650)
    * @minimum 1
+   * @maximum 3650
    */
-  additional_days: number /* min: 1 */;
+  additional_days: number /* min: 1, max: 3650 */;
+  /**
+   * The total you confirmed, in whole cents. The extension is refused if it would cost more. REQUIRED when the rental has no frozen renewal price (409 CHARGE_CONFIRMATION_REQUIRED) — without a quoted ceiling nothing bounds what the current server tiers can charge. Optional when the rental still carries frozen tiers, which are themselves a ceiling the customer accepted at purchase.
+   * @minimum 0
+   */
+  max_charge_cents?: number /* min: 0 */;
 }
 
 export interface ApiRentalsExtendResponse {
   statusCode: number;
   message: string;
-  data: { rental?: { id: string; rental_end?: string; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; remaining_days?: number }; transaction?: { id: string; amount?: number; currency?: string } };
+  data: { rental?: { id: string; rental_end?: string; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; renewal_pricing_frozen?: Record<string, unknown> | null; remaining_days?: number }; transaction?: { id: string; amount?: number; currency?: string } };
 }
 
 export interface ApiServerRentalListResponse {
   statusCode: number;
   message: string;
-  data: ({ id: string; rental_start?: string; rental_end?: string; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; remaining_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } } })[];
+  data: ({ id: string; rental_start?: string; rental_end?: string; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; renewal_pricing_frozen?: Record<string, unknown> | null; remaining_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } } })[];
 }
 
 export interface ApiServerRentalGetResponse {
   statusCode: number;
   message: string;
-  data: { id: string; rental_start?: string; rental_end?: string; hold_days?: number; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; remaining_days?: number; usage_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } }; transaction?: null | { id?: string; amount?: number; currency?: string; created_at?: string } };
+  data: { id: string; rental_start?: string; rental_end?: string; hold_days?: number; status?: string; amount?: string; setup_fee_cents?: number; total_paid_cents?: number; renewal_pricing_frozen?: Record<string, unknown> | null; remaining_days?: number; usage_days?: number; server_id?: null | string; pool_id?: null | string; is_free_tier?: boolean; server?: null | { container_capacity?: { used: number /* min: 0 */; max: number /* min: 0 */ }; id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; model?: string; is_vm?: boolean; specs?: { cpu?: null | { model?: null | string; cores?: null | number; threads?: null | number; score?: null | number; score_type?: null | "passmark" | "geekbench_single" | "geekbench_multi" }; ram?: null | { capacity_gb?: number; type?: null | "DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5"; speed_mhz?: null | number }; disks?: null | { config?: ({ count?: number; capacity_gb?: number; type?: "HDD" | "SSD" | "NVMe" | "SAS"; interface?: string; model?: string })[]; total_gb?: number; summary?: string }; network?: null | { bandwidth_mbps?: null | number; bandwidth_formatted?: null | string; traffic_tb?: null | number; traffic_unlimited?: boolean }; additional?: { ipv4_count?: number; ipv6_enabled?: boolean } } }; transaction?: null | { id?: string; amount?: number; currency?: string; created_at?: string } };
 }
 
 export interface GetRentalRuntimeResponse {
@@ -2449,6 +2597,11 @@ export interface ApiAuthenticationSignupRequest {
    * @maxLength 128
    */
   invite_code?: string;
+  /**
+   * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects account behaviour.
+   * @maxLength 64
+   */
+  client?: string;
 }
 
 export interface ApiAuthenticationSignupResponse {
@@ -2458,6 +2611,11 @@ export interface ApiAuthenticationSignupResponse {
 }
 
 export interface ApiAuthenticationVerifyEmailRequest {
+  /**
+   * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects verification.
+   * @maxLength 64
+   */
+  client?: string;
   /**
    * Verification token from the email link
    * @minLength 64
@@ -2568,6 +2726,11 @@ export interface WaitlistEnrichResponse {
 export interface OauthLaunchInitiateRequest {
   provider: "github" | "google";
   /**
+   * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+   * @maxLength 64
+   */
+  client?: string;
+  /**
    * PKCE code_challenge (base64url SHA-256 of code_verifier, exactly 43 chars)
    * @minLength 43
    * @maxLength 43
@@ -2593,6 +2756,11 @@ export interface OauthDeviceCodeRequest {
    * @maxLength 64
    */
   client_name?: string;
+  /**
+   * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+   * @maxLength 64
+   */
+  client?: string;
   /**
    * Optional PKCE on the device flow itself; if present the poll REQUIRES the verifier
    * @minLength 43
@@ -10844,13 +11012,13 @@ export interface TunnelListTunnelsResponse {
   data: { fdPermitsAvailable: number /* min: 0 */; orphanedSessions: number /* min: 0 */; sessions: TunnelSessionView[]; totalBindings: number /* min: 0 */; totalStreams: number /* min: 0 */ };
 }
 
-export interface AppHealthCheckResponse {
+export interface RunHealthCheckResponse {
   statusCode: number;
   message: string;
   data: { status: "ok"; service: string; built?: string | null; started: string; memory?: HealthMemory8 | null; fds?: number | null; pid: number; ip: string; userAgent?: string | null };
 }
 
-export interface AppDocsGetJsonResponse {
+export interface RunGetOpenApiJsonResponse {
   statusCode: number;
   message: string;
   data: Record<string, unknown>;
@@ -10859,26 +11027,26 @@ export interface AppDocsGetJsonResponse {
 /**
  * Response from the search endpoint containing a set ID for race-free selection and the ranked list of candidates.
  */
-export interface AppExecutionSearchCandidatesResponse {
+export interface RunSearchCandidatesResponse {
   statusCode: number;
   message: string;
   data: { set_id: string; candidates: Candidate[] };
 }
 
-export type AppExecutionSearchCandidatesPagedRequest = PagedSearchRequest;
+export type RunSearchCandidatesPagedRequest = PagedSearchRequest;
 
-export interface AppExecutionSearchCandidatesPagedResponse {
+export interface RunSearchCandidatesPagedResponse {
   statusCode: number;
   message: string;
   data: { set_id: string; total_count: number; items: Candidate[]; next_cursor?: string };
 }
 
-export type AppJobsCreateSearchRequest = Selector;
+export type RunCreateSearchJobRequest = Selector;
 
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppJobsCreateSearchResponse {
+export interface RunCreateSearchJobResponse {
   job_id: string;
   kind: JobKind;
   status: JobStatus2;
@@ -10893,17 +11061,17 @@ export interface AppJobsCreateSearchResponse {
   data: unknown;
 }
 
-export type AppExecutionPreflightRequest = Selector;
+export type RunPreflightRunRequest = Selector;
 
-export interface AppExecutionPreflightResponse {
+export interface RunPreflightRunResponse {
   statusCode: number;
   message: string;
-  data: { set_id: string; selected?: Candidate; shell_command?: string; recommended_mode: RecommendedMode; terminal_request_preview?: TerminalRequestPreview; redirect_target?: string; handoff?: RunHandoff; missing_requirements: MissingRequirement[]; warnings: WarningEntry[]; effective_policy: EffectivePolicy };
+  data: { set_id: string; selected?: Candidate; shell_command?: string; recommended_mode: RecommendedMode; handoff?: RunHandoff; missing_requirements: MissingRequirement[]; warnings: WarningEntry[]; effective_policy: EffectivePolicy };
 }
 
-export type AppExecutionRunBatchRequest = BatchRequest;
+export type RunRunBatchRequest = BatchRequest;
 
-export interface AppExecutionRunBatchResponse {
+export interface RunRunBatchResponse {
   statusCode: number;
   message: string;
   data: { items?: BatchItemResult[] };
@@ -10911,19 +11079,17 @@ export interface AppExecutionRunBatchResponse {
 
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppRunAppGetResponse {
+export interface RunResolveGetResponse {
   status: RunStatus;
   set_id?: string;
   candidates?: Candidate[];
   selected?: Candidate;
   shell_command?: string;
-  terminal?: TerminalExecuteResponse;
   curl?: string;
   error?: string;
   handoff?: RunHandoff;
@@ -10933,23 +11099,21 @@ export interface AppRunAppGetResponse {
   data: unknown;
 }
 
-export type AppRunAppPostRequest = Selector;
+export type RunResolveRequest = Selector;
 
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppRunAppPostResponse {
+export interface RunResolveResponse {
   status: RunStatus;
   set_id?: string;
   candidates?: Candidate[];
   selected?: Candidate;
   shell_command?: string;
-  terminal?: TerminalExecuteResponse;
   curl?: string;
   error?: string;
   handoff?: RunHandoff;
@@ -10961,19 +11125,17 @@ export interface AppRunAppPostResponse {
 
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppExecutionRunPathBasedResponse {
+export interface RunRunPathBasedResponse {
   status: RunStatus;
   set_id?: string;
   candidates?: Candidate[];
   selected?: Candidate;
   shell_command?: string;
-  terminal?: TerminalExecuteResponse;
   curl?: string;
   error?: string;
   handoff?: RunHandoff;
@@ -10985,19 +11147,17 @@ export interface AppExecutionRunPathBasedResponse {
 
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppExecutionRunTerminalAnchoredResponse {
+export interface RunRunTerminalAnchoredResponse {
   status: RunStatus;
   set_id?: string;
   candidates?: Candidate[];
   selected?: Candidate;
   shell_command?: string;
-  terminal?: TerminalExecuteResponse;
   curl?: string;
   error?: string;
   handoff?: RunHandoff;
@@ -11007,27 +11167,27 @@ export interface AppExecutionRunTerminalAnchoredResponse {
   data: unknown;
 }
 
-export interface AppSourcesListResponse {
+export interface RunListSourcesResponse {
   statusCode: number;
   message: string;
   data: SourceConfig[];
 }
 
-export type AppSourcesCreateRequest = SourceConfig;
+export type RunCreateSourceRequest = SourceConfig;
 
-export interface AppSourcesCreateResponse {
+export interface RunCreateSourceResponse {
   statusCode: number;
   message: string;
   data: SourceConfig[];
 }
 
-export interface AppSourcesUpdateRequest {
+export interface RunUpdateSourceRequest {
 }
 
 /**
  * Configuration for a package source including its type, provider, priority, and provider-specific settings.
  */
-export interface AppSourcesUpdateResponse {
+export interface RunUpdateSourceResponse {
   statusCode: number;
   message: string;
   data: { source_id: string; enabled: boolean; priority: number; provider: SourceKind; source_type: SourceType; pin?: SourcePin; config?: Record<string, unknown> };
@@ -11036,7 +11196,7 @@ export interface AppSourcesUpdateResponse {
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppSourcesSyncResponse {
+export interface RunSyncSourceResponse {
   job_id: string;
   kind: JobKind;
   status: JobStatus2;
@@ -11054,7 +11214,7 @@ export interface AppSourcesSyncResponse {
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppSourcesSyncAllResponse {
+export interface RunSyncAllSourcesResponse {
   job_id: string;
   kind: JobKind;
   status: JobStatus2;
@@ -11069,7 +11229,7 @@ export interface AppSourcesSyncAllResponse {
   data: unknown;
 }
 
-export interface AppSourcesGetDiagnosticsResponse {
+export interface RunGetSourceDiagnosticsResponse {
   statusCode: number;
   message: string;
   data: { source_id: string; status: SourceHealthStatus; last_success_at?: string; last_error_at?: string; last_error?: string; last_search_latency_ms?: number; last_sync_job_id?: string; cache_hint?: string; effective_enabled_reason?: string; provider_details?: Record<string, unknown> };
@@ -11078,33 +11238,33 @@ export interface AppSourcesGetDiagnosticsResponse {
 /**
  * Full runtime configuration snapshot including sources, profiles, and active profile selection.
  */
-export interface AppConfigurationGetResponse {
+export interface RunGetConfigResponse {
   statusCode: number;
   message: string;
   data: { version: number; sources: SourceConfig[]; profiles: ProfileConfig[]; policy?: PolicyConfig; selected_profile?: string; recipes?: RecipeConfig[]; webhooks?: WebhookConfig[] };
 }
 
-export interface AppProfilesListResponse {
+export interface RunListProfilesResponse {
   statusCode: number;
   message: string;
   data: ProfileConfig[];
 }
 
-export type AppProfilesCreateRequest = ProfileConfig;
+export type RunCreateProfileRequest = ProfileConfig;
 
-export interface AppProfilesCreateResponse {
+export interface RunCreateProfileResponse {
   statusCode: number;
   message: string;
   data: ProfileConfig[];
 }
 
-export interface AppProfilesUpdateRequest {
+export interface RunUpdateProfileRequest {
 }
 
 /**
  * User profile containing default preferences and source overrides.
  */
-export interface AppProfilesUpdateResponse {
+export interface RunUpdateProfileResponse {
   statusCode: number;
   message: string;
   data: { name: string; description?: string; defaults?: ProfileDefaults; sources_mode?: ProfileSourceMode; sources?: ProfileSourceOverride[]; policy?: PolicyConfig };
@@ -11113,69 +11273,67 @@ export interface AppProfilesUpdateResponse {
 /**
  * Confirms which profile is currently selected as the active default profile.
  */
-export interface AppProfilesSelectResponse {
+export interface RunSelectProfileResponse {
   statusCode: number;
   message: string;
   data: { selected_profile: string };
 }
 
-export interface AppRecipesListResponse {
+export interface RunListRecipesResponse {
   statusCode: number;
   message: string;
   data: RecipeConfig[];
 }
 
-export type AppRecipesCreateRequest = RecipeConfig;
+export type RunCreateRecipeRequest = RecipeConfig;
 
-export interface AppRecipesCreateResponse {
+export interface RunCreateRecipeResponse {
   statusCode: number;
   message: string;
   data: RecipeConfig[];
 }
 
-export interface AppRecipesGetResponse {
+export interface RunGetRecipeResponse {
   statusCode: number;
   message: string;
   data: { name: string; description?: string; selector_template?: SelectorTemplate; allowed_overrides?: string[] };
 }
 
-export interface AppRecipesUpdateRequest {
+export interface RunUpdateRecipeRequest {
 }
 
-export interface AppRecipesUpdateResponse {
+export interface RunUpdateRecipeResponse {
   statusCode: number;
   message: string;
   data: { name: string; description?: string; selector_template?: SelectorTemplate; allowed_overrides?: string[] };
 }
 
-export type AppRecipesSearchRequest = RecipeExecutionRequest;
+export type RunSearchRecipeRequest = RecipeExecutionRequest;
 
 /**
  * Response from the search endpoint containing a set ID for race-free selection and the ranked list of candidates.
  */
-export interface AppRecipesSearchResponse {
+export interface RunSearchRecipeResponse {
   statusCode: number;
   message: string;
   data: { set_id: string; candidates: Candidate[] };
 }
 
-export type AppRecipesRunRequest = RecipeExecutionRequest;
+export type RunRunRecipeRequest = RecipeExecutionRequest;
 
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppRecipesRunResponse {
+export interface RunRunRecipeResponse {
   status: RunStatus;
   set_id?: string;
   candidates?: Candidate[];
   selected?: Candidate;
   shell_command?: string;
-  terminal?: TerminalExecuteResponse;
   curl?: string;
   error?: string;
   handoff?: RunHandoff;
@@ -11188,7 +11346,7 @@ export interface AppRecipesRunResponse {
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppJobsGetStatusResponse {
+export interface RunGetJobStatusResponse {
   job_id: string;
   kind: JobKind;
   status: JobStatus2;
@@ -11222,6 +11380,36 @@ export interface AgentGetACPStatusResponse {
   statusCode: number;
   message: string;
   data: Record<string, unknown>;
+}
+
+export interface AgentSetACPEnabledRequest {
+  /** True arms the backend; false disarms it. Defaults to true when omitted. */
+  enabled?: boolean;
+}
+
+/**
+ * Confirmation of the stored enablement.
+ */
+export interface AgentSetACPEnabledResponse {
+  statusCode: number;
+  message: string;
+  data: { agent?: string; enabled?: boolean };
+}
+
+export interface AgentSetACPAgentModelRequest {
+  /** Backend model id or alias. Empty clears the pin. */
+  model?: string;
+  /** Reasoning effort (backend-specific; empty clears). */
+  effort?: string;
+}
+
+/**
+ * Confirmation of the stored defaults.
+ */
+export interface AgentSetACPAgentModelResponse {
+  statusCode: number;
+  message: string;
+  data: { agent?: string; model?: string; effort?: string };
 }
 
 export interface AgentSetACPSecretRequest {
@@ -11402,11 +11590,27 @@ export interface AgentListContainersResponse {
   data: unknown;
 }
 
+export interface AgentGithubSetActiveAccountRequest {
+  /** Account handle from githubAuthStatus accounts[].key, e.g. "github.com/octocat". */
+  key: string;
+}
+
+/**
+ * The verbatim reply {status, accounts} — the refreshed secret-free account list with the new active one marked.
+ */
+export interface AgentGithubSetActiveAccountResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
 export interface AgentGithubLoginRequest {
   /** Optional PAT. When present the login validates + persists this token (no device flow); kept in env, never returned. */
   token?: string;
   /** GitHub host for GitHub Enterprise (GHES); defaults to github.com. Must match the host on the subsequent poll call. */
   host?: string;
+  /** Whether the linked account becomes the ACTIVE one. Defaults to FALSE — linking stores the credential without changing which account is in use, because activation decides the identity your next push authenticates as. Send true when RECOVERING from an expired/revoked token: the account is linked and activated in this single call, so no follow-up githubSetActiveAccount is needed. The first account ever linked becomes active regardless, since none was. A non-boolean value is rejected. */
+  activate?: boolean;
 }
 
 /**
@@ -11433,6 +11637,20 @@ export interface AgentGithubLoginPollRequest {
  * The reply {key, login, host} — secret-free.
  */
 export interface AgentGithubLoginPollResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+export interface AgentGithubLogoutRequest {
+  /** Account handle from githubAuthStatus accounts[].key, e.g. "github.com/octocat". */
+  key: string;
+}
+
+/**
+ * The verbatim reply {status, accounts, credential_purge, message}.
+ */
+export interface AgentGithubLogoutResponse {
   statusCode: number;
   message: string;
   data: Record<string, unknown>;
@@ -11805,6 +12023,164 @@ export interface AgentLogsStatsResponse {
   statusCode: number;
   message: string;
   data: Record<string, unknown>;
+}
+
+export interface AgentImportMCPServersRequest {
+  /** Live session id. */
+  session_id: string;
+  /** Single-use nonce from beginMCPWrite minted for op:import and this scope. */
+  nonce: string;
+  /** Settings layer to write. Must match the scope the nonce was minted for. */
+  scope?: "user" | "project" | "local";
+  /** A pasted config document in any supported dialect. Mutually exclusive with servers. */
+  document?: string;
+  /** Explicit server entries, in hoody's own shape. Mutually exclusive with document. */
+  servers?: unknown[];
+  /** Overwrite entries whose name already exists. Without it, a collision aborts the whole import. */
+  replace?: boolean;
+  /** The mcp_servers hash you last read. */
+  expect_hash: string;
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.import` RPC.
+ */
+export interface AgentImportMCPServersResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; sessions?: number; revoked?: number; deferred_sessions?: number; deferred_started?: boolean; servers?: unknown[]; path?: string; hash?: string; imported?: number };
+}
+
+export interface AgentParseMCPImportRequest {
+  /** Live session id. */
+  session_id: string;
+  /** A config document in any supported dialect. */
+  document: string;
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.parse` RPC.
+ */
+export interface AgentParseMCPImportResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; dialect?: string; servers?: unknown[]; count?: number };
+}
+
+export interface AgentProbeMCPServerRequest {
+  /** Live session id (supplies the deny list and transport policy). */
+  session_id: string;
+  /** The candidate entry, same shape as upsertMCPServer's server. */
+  server: Record<string, unknown>;
+}
+
+export interface AgentReconnectMCPRequest {
+  /** Live session id. */
+  session_id: string;
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.reconnect` RPC.
+ */
+export interface AgentReconnectMCPResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; sessions?: number; revoked?: number; deferred_sessions?: number; deferred_started?: boolean; servers?: unknown[] };
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.list` RPC.
+ */
+export interface AgentListMCPServersResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; servers?: unknown[]; files?: unknown[]; warnings?: unknown[] };
+}
+
+export interface AgentUpsertMCPServerRequest {
+  /** Live session id. */
+  session_id: string;
+  /** Single-use nonce from beginMCPWrite minted for op:upsert and this scope; the RPC fails closed without it. */
+  nonce: string;
+  /** Settings layer to write. Must match the scope the nonce was minted for. */
+  scope?: "user" | "project" | "local";
+  /** The mcp_servers hash you last read, as returned by beginMCPWrite or listMCPServers. REQUIRED: a mismatch returns a conflict instead of overwriting a concurrent edit, and a first write into a file that does not exist yet states its expectation with the empty-array hash rather than omitting this. */
+  expect_hash: string;
+  /** The server entry. Fields: `name` — letters, digits, `_` and `-`, max 64 chars, no `__` (it separates the tool name), may not be `hoody` or `mcp` — both are reserved namespaces, and that check alone is case-insensitive, so `Hoody` is refused too; `type` — `stdio` (default), `http` (aliases `url`, `streamable`, `streamable-http`) for Streamable HTTP, or `sse` for the deprecated 2024-11-05 HTTP+SSE transport, matched case-insensitively; `command` + `args` for stdio, or `url` for the remote transports; `env` / `headers` — values support full ${VAR} expansion, so a token lives in your environment rather than in settings.json; `allowed_tools` — restrict which of the server's tools are advertised AND dispatchable; `require_confirmation` — park every call from this server for human approval; `enabled` — defaults to true; a disabled server keeps its config but is neither connected nor advertised. */
+  server: Record<string, unknown>;
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.upsert` RPC.
+ */
+export interface AgentUpsertMCPServerResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; sessions?: number; revoked?: number; deferred_sessions?: number; deferred_started?: boolean; servers?: unknown[]; path?: string; hash?: string };
+}
+
+export interface AgentDeleteMCPServerRequest {
+  /** Live session id. */
+  session_id: string;
+  /** Single-use nonce from beginMCPWrite minted for op:delete and this scope. */
+  nonce: string;
+  /** Settings layer to write. Must match the scope the nonce was minted for. */
+  scope?: "user" | "project" | "local";
+  /** The server name to remove. */
+  name: string;
+  /** The mcp_servers hash you last read. */
+  expect_hash: string;
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.delete` RPC.
+ */
+export interface AgentDeleteMCPServerResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; sessions?: number; revoked?: number; deferred_sessions?: number; deferred_started?: boolean; servers?: unknown[]; path?: string; hash?: string };
+}
+
+export interface AgentSetMCPServerEnabledRequest {
+  /** Live session id. */
+  session_id: string;
+  /** Single-use nonce from beginMCPWrite minted for op:set_enabled and this scope. */
+  nonce: string;
+  /** Settings layer to write. Must match the scope the nonce was minted for. */
+  scope?: "user" | "project" | "local";
+  /** The server name. */
+  name: string;
+  /** true to enable, false to disable. */
+  enabled: boolean;
+  /** The mcp_servers hash you last read. */
+  expect_hash: string;
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.set_enabled` RPC.
+ */
+export interface AgentSetMCPServerEnabledResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; sessions?: number; revoked?: number; deferred_sessions?: number; deferred_started?: boolean; servers?: unknown[]; path?: string; hash?: string };
+}
+
+export interface AgentBeginMCPWriteRequest {
+  /** Live session id (MCP config is resolved against the session's settings layers). */
+  session_id: string;
+  /** Which write the nonce authorizes. The minted nonce is valid for this op alone. */
+  op: "upsert" | "delete" | "set_enabled" | "import";
+  /** Settings layer to write. Defaults to user, or project when there is no user layer (which is the case under --config-dir). */
+  scope?: "user" | "project" | "local";
+}
+
+/**
+ * The verbatim JSON reply from the daemon `mcp.begin_write` RPC.
+ */
+export interface AgentBeginMCPWriteResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; nonce?: string; path?: string; hash?: string };
 }
 
 export interface AgentConsolidateMemoryRequest {
@@ -12190,7 +12566,7 @@ export interface AgentCreateSessionRequest {
   fork_turn_idx?: number;
   /** Session backend: "" (Hoody LLM) or "acp" (BYOA delegated agent). */
   backend?: string;
-  /** BYOA agent when backend:"acp": codex|claude|gemini|opencode. */
+  /** BYOA agent when backend:"acp": claude. */
   delegated_agent?: string;
   /** Start the session in headless posture. */
   headless?: boolean;
@@ -13726,7 +14102,7 @@ export interface AuthToken {
   /** Whether this token can be used without a realm scope (e.g. on base domain). Set to false for strict sub-account tokens. */
   allow_no_realm?: boolean;
   /** Fine-grained permissions for this token. Any missing permission path defaults to false (deny). */
-  permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
+  permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
   /** ISO 8601 date when the token expires, or null if it never expires */
   expires_at?: null | string;
   /** Whether the token is currently active and can be used for authentication */
@@ -13761,21 +14137,42 @@ export interface DuplicateRuleInfo {
   action?: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol?: "tcp" | "udp" | "icmp4";
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description?: string;
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source IPv4/CIDR address(es) */
+  /**
+   * Source IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   source?: string;
-  /** Destination IPv4/CIDR address(es) */
+  /**
+   * Destination IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   destination?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
   /** Rule state */
   state?: "enabled" | "disabled";
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
   /** Indicates the rule was a duplicate */
   duplicate?: boolean;
@@ -14152,7 +14549,7 @@ export interface def_13 {
   /** Whether this token can be used without a realm scope (e.g. on base domain). Set to false for strict sub-account tokens. */
   allow_no_realm?: boolean;
   /** Fine-grained permissions for this token. Any missing permission path defaults to false (deny). */
-  permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
+  permissions: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean }; admin?: { users?: boolean; servers?: boolean; system?: boolean; billing?: boolean; monitoring?: boolean } };
   /** ISO 8601 date when the token expires, or null if it never expires */
   expires_at?: string | null;
   /** Whether the token is currently active and can be used for authentication */
@@ -14180,21 +14577,42 @@ export interface def_14 {
   action: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol: "tcp" | "udp" | "icmp4";
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description: string;
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source IPv4/CIDR address(es) */
+  /**
+   * Source IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   source?: string;
-  /** Destination IPv4/CIDR address(es) */
+  /**
+   * Destination IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   destination?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
   /** Rule state */
   state?: "enabled" | "disabled";
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
   /** Rule direction (ingress for inbound, egress for outbound) */
   direction?: "ingress" | "egress";
@@ -14212,21 +14630,42 @@ export interface def_16 {
   action?: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol?: "tcp" | "udp" | "icmp4";
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description?: string;
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source IPv4/CIDR address(es) */
+  /**
+   * Source IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   source?: string;
-  /** Destination IPv4/CIDR address(es) */
+  /**
+   * Destination IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   destination?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
   /** Rule state */
   state?: "enabled" | "disabled";
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
   /** Indicates the rule was a duplicate */
   duplicate?: boolean;
@@ -15553,7 +15992,7 @@ export interface NotifyRequest {
   body?: string;
   /** Notification category */
   category?: string;
-  /** Target display ID (e.g., "0" or ":0") */
+  /** Target display ID (e.g., "1" or ":1") */
   display: string;
   /** Expiration time in milliseconds */
   expire_time?: number;
@@ -15851,7 +16290,7 @@ export interface PagedSearchResponse {
 export interface PreflightResponse {
   statusCode: number;
   message: string;
-  data: { set_id: string; selected?: Candidate; shell_command?: string; recommended_mode: RecommendedMode; terminal_request_preview?: TerminalRequestPreview; redirect_target?: string; handoff?: RunHandoff; missing_requirements: MissingRequirement[]; warnings: WarningEntry[]; effective_policy: EffectivePolicy };
+  data: { set_id: string; selected?: Candidate; shell_command?: string; recommended_mode: RecommendedMode; handoff?: RunHandoff; missing_requirements: MissingRequirement[]; warnings: WarningEntry[]; effective_policy: EffectivePolicy };
 }
 
 export interface BatchRequest {
@@ -16004,21 +16443,42 @@ export interface FirewallRule {
   action: "allow" | "reject" | "drop";
   /** Protocol type */
   protocol: "tcp" | "udp" | "icmp4";
-  /** Rule description */
+  /**
+   * Rule description
+   * @maxLength 255
+   */
   description: string;
-  /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+  /**
+   * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+   * @maxLength 64
+   */
   destination_port?: string;
-  /** Source IPv4/CIDR address(es) */
+  /**
+   * Source IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   source?: string;
-  /** Destination IPv4/CIDR address(es) */
+  /**
+   * Destination IPv4/CIDR address(es)
+   * @maxLength 512
+   */
   destination?: string;
-  /** Source port, range, or list */
+  /**
+   * Source port, range, or list
+   * @maxLength 64
+   */
   source_port?: string;
   /** Rule state */
   state?: "enabled" | "disabled";
-  /** ICMP type number for icmp4 protocol */
+  /**
+   * ICMP type number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_type?: string;
-  /** ICMP code number for icmp4 protocol */
+  /**
+   * ICMP code number for icmp4 protocol
+   * @maxLength 8
+   */
   icmp_code?: string;
   /** Rule direction (ingress for inbound, egress for outbound) */
   direction?: "ingress" | "egress";
@@ -16663,19 +17123,7 @@ export interface HealthMemory8 {
 /**
  * Recommended execution mode returned by preflight.
  */
-export type RecommendedMode = "search-only" | "dry-run" | "delegated-execute" | "printed-curl";
-
-export interface TerminalRequestPreview {
-  terminal_url: string;
-  terminal_id: number;
-  display: string;
-  origin: string;
-  command: string;
-  defer_pid?: number;
-  defer_start_time_ticks?: string;
-  defer_timeout_ms?: number;
-  defer_poll_ms?: number;
-}
+export type RecommendedMode = "search-only" | "dry-run" | "printed-curl";
 
 export interface MissingRequirement {
   kind: string;
@@ -16687,8 +17135,6 @@ export interface MissingRequirement {
 export interface EffectivePolicy {
   require_verified: boolean;
   require_integrity: boolean;
-  allow_delegated_execution: boolean;
-  allow_redirect: boolean;
   deny_providers?: SourceKind[];
   deny_source_ids?: string[];
 }
@@ -16966,8 +17412,8 @@ export type BatchMode = "search" | "run";
 
 /**
  * Full selector (search/run request) combining query filters, pick mode,
-execution context, deferred execution, and output control fields. Can be
-expressed via query parameters, path segments, or JSON body.
+execution context, and output control fields. Can be expressed via query
+parameters, path segments, or JSON body.
  */
 export interface Selector {
   /** Primary name query (aliases q, name) */
@@ -17015,20 +17461,8 @@ export interface Selector {
   display?: string;
   /** Origin identifier for observability propagation */
   origin?: string;
-  /** Defer command injection until this PID exits (TUI-safe) */
-  defer_pid?: number;
-  /** /proc/<pid>/stat field 22 to avoid PID reuse bugs */
-  defer_start_time_ticks?: string;
-  /** Max wait time for defer_pid exit in ms (default: 60000) */
-  defer_timeout_ms?: number;
-  /** Poll interval for defer_pid in ms (default: 50, min: 10) */
-  defer_poll_ms?: number;
   format?: OutputFormat;
-  /** If true and HTML, redirect to display page after scheduling */
-  redirect?: boolean;
-  /** Override redirect target URL */
-  redirect_to?: string;
-  /** If true, force command-only output (no hoody-terminal delegation) */
+  /** Force command-only output. hoody-run never executes, so this is always in effect. */
   dry_run?: boolean;
   print_curl?: PrintCurlMode;
   /**
@@ -17050,9 +17484,8 @@ export interface SearchResponse {
 
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
@@ -17062,7 +17495,6 @@ export interface RunResponse {
   candidates?: Candidate[];
   selected?: Candidate;
   shell_command?: string;
-  terminal?: TerminalExecuteResponse;
   curl?: string;
   error?: string;
   handoff?: RunHandoff;
@@ -17118,8 +17550,6 @@ export interface ProfileDefaults {
   terminal_id?: number /* min: 1, max: 65535 */;
   /** Default X11 DISPLAY number */
   display?: string;
-  /** Default redirect behavior for HTML responses */
-  redirect?: boolean;
   /**
    * Default maximum candidates to return
    * @minimum 1
@@ -17150,8 +17580,6 @@ export interface ProfileSourceOverride {
 export interface PolicyConfig {
   require_verified?: boolean;
   require_integrity?: boolean;
-  allow_delegated_execution?: boolean;
-  allow_redirect?: boolean;
   deny_providers?: SourceKind[];
   deny_source_ids?: string[];
 }
@@ -17186,13 +17614,7 @@ export interface SelectorTemplate {
   terminal_id?: number /* min: 1, max: 65535 */;
   display?: string;
   origin?: string;
-  defer_pid?: number;
-  defer_start_time_ticks?: string;
-  defer_timeout_ms?: number;
-  defer_poll_ms?: number;
   format?: OutputFormat;
-  redirect?: boolean;
-  redirect_to?: string;
   dry_run?: boolean;
   print_curl?: PrintCurlMode;
   /**
@@ -17221,13 +17643,12 @@ export type WatchEventKind = "created" | "modified" | "removed" | "renamed" | "m
 
 /**
  * Status of a run request:
-- resolved: candidates found but no execution (no pick or pick=ask)
-- scheduled: candidate selected and execution delegated to hoody-terminal (only when HOODY_RUN_ENABLE_TERMINAL_EXECUTE=true)
-- dry-run: candidate selected and exact shell command returned without delegation
+- resolved: candidates found but no single candidate selected (no pick or pick=ask)
+- dry-run: candidate selected and its exact shell command returned (hoody-run never executes)
 - printed-curl: equivalent curl command generated (print_curl set)
-- error: an error occurred during resolution or execution
+- error: an error occurred during resolution
  */
-export type RunStatus = "resolved" | "scheduled" | "dry-run" | "printed-curl" | "error";
+export type RunStatus = "resolved" | "dry-run" | "printed-curl" | "error";
 
 /**
  * A standardized runnable application candidate produced by a source provider. Contains all information needed to identify, rank, and return exact shell commands for execution.
@@ -17239,6 +17660,8 @@ export interface Candidate {
   title: string;
   /** Brief description of the candidate */
   description: string;
+  /** Whether the candidate is a GUI or CLI application. `any` means the source does not classify it; only sources with an explicit kind (e.g. manifest registries) emit gui/cli. */
+  kind: AppKind;
   /** Provider-reported version string */
   version?: string;
   /** Provider or project homepage URL */
@@ -17265,29 +17688,16 @@ export interface Candidate {
 }
 
 /**
- * Response received from the hoody-terminal execute API after delegating command execution.
- */
-export interface TerminalExecuteResponse {
-  statusCode: number;
-  message: string;
-  data: { status: number; ok: boolean; body_text?: string; json: Record<string, unknown> | null };
-}
-
-/**
- * Where the selected app appears (scheduled) or will appear (preview).
+ * Where the selected app will appear once the returned command runs.
  */
 export interface RunHandoff {
   state: HandoffState;
   terminal_id: number;
   display: string;
-  /** Live display page URL (present only when state=scheduled) */
-  display_url?: string;
-  /** Live terminal viewer URL (present only when state=scheduled) */
-  terminal_url?: string;
-  /** Predicted display page URL (present only when state=preview) */
-  predicted_display_url?: string;
-  /** Predicted terminal viewer URL (present only when state=preview) */
-  predicted_terminal_url?: string;
+  /** Preview display page URL — where the app will appear (present only when state=preview) */
+  preview_display_url?: string;
+  /** Preview terminal viewer URL — where the app will appear (present only when state=preview) */
+  preview_terminal_url?: string;
 }
 
 export interface WarningEntry {
@@ -17299,11 +17709,6 @@ export interface WarningEntry {
  * Target app runtime OS (not the host OS). Determines which candidates are eligible.
  */
 export type Os = "linux" | "windows" | "any";
-
-/**
- * Application kind filter - gui for graphical apps, cli for terminal apps, any for both.
- */
-export type AppKind = "gui" | "cli" | "any";
 
 /**
  * Target CPU architecture for filtering candidates.
@@ -17326,10 +17731,14 @@ export type OutputFormat = "json" | "html";
 
 /**
  * Curl command generation mode:
-- hoody-run: generate curl for the hoody-run /api/v1/run/run endpoint
-- hoody-terminal: generate curl for the hoody-terminal /api/v1/terminal/execute endpoint directly
+- hoody-run: generate curl for the hoody-run /api/v1/run/resolve endpoint
  */
-export type PrintCurlMode = "hoody-run" | "hoody-terminal";
+export type PrintCurlMode = "hoody-run";
+
+/**
+ * Application kind filter - gui for graphical apps, cli for terminal apps, any for both.
+ */
+export type AppKind = "gui" | "cli" | "any";
 
 /**
  * Package source provider kind. Used for filtering candidates by source and as the provider field on candidates.
@@ -17382,12 +17791,10 @@ export interface CandidateProvenance {
 }
 
 /**
- * Liveness of the display/terminal handoff:
-- preview: nothing executed; predicted_* URLs show where the app WILL appear
-- scheduled: delegated execution succeeded; live display_url/terminal_url
-- failed: delegation was attempted and failed; no URL is asserted
+ * Liveness of the handoff. hoody-run never executes, so the only state is:
+- preview: nothing executed; preview_* URLs show where the app WILL appear
  */
-export type HandoffState = "preview" | "scheduled" | "failed";
+export type HandoffState = "preview";
 
 /**
  * Structured execution plan mode.
