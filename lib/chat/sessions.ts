@@ -28,7 +28,7 @@ import { hoodyHomeDir } from './home-dir.js';
 import { prepareChatsDir } from './prepare-dir.js';
 import { redactForDisk } from './redact.js';
 
-export type TurnRole = 'user' | 'assistant' | 'system';
+export type TurnRole = 'user' | 'assistant';
 
 export interface SessionMeta {
   type: 'meta';
@@ -240,7 +240,7 @@ function coerceTurn(parsed: unknown): SessionTurn | null {
   if (!parsed || typeof parsed !== 'object') return null;
   const p = parsed as Record<string, unknown>;
   if (p.type !== 'turn') return null;
-  if (p.role !== 'user' && p.role !== 'assistant' && p.role !== 'system') return null;
+  if (p.role !== 'user' && p.role !== 'assistant') return null;
   if (typeof p.content !== 'string') return null;
   if (typeof p.ts !== 'string') return null;
   return { type: 'turn', role: p.role, content: p.content, ts: p.ts };
@@ -389,8 +389,17 @@ export async function findMatchingSessions(idOrPrefix: string): Promise<SessionS
 // ===== Delete / wipe =====
 // ---------------------------------------------------------------------------
 
+/** Throws on a real failure; a already-absent file is success. */
 export async function deleteSession(filePath: string): Promise<void> {
-  try { await unlink(filePath); } catch { /* best-effort */ }
+  try {
+    await unlink(filePath);
+  } catch (err: any) {
+    // Already gone is the outcome the caller wanted. Anything else — EACCES on
+    // the chats dir, EROFS — must NOT be reported as a successful delete: the
+    // transcript is still there and the user was told it was destroyed.
+    if (err?.code === 'ENOENT') return;
+    throw err;
+  }
 }
 
 /**
@@ -445,13 +454,35 @@ export async function truncateSessionTurns(
   }
 }
 
-export async function wipeAllSessions(): Promise<number> {
-  const all = await listSessions();
-  let count = 0;
-  for (const s of all) {
-    try { await unlink(s.filePath); count++; } catch { /* skip */ }
+export async function wipeAllSessions(): Promise<{ deleted: number; failed: number }> {
+  // Enumerate the DIRECTORY, not listSessions(): that helper skips any file
+  // whose meta line will not parse, so a corrupt or unreadable transcript was
+  // never even attempted — and "Deleted N sessions" was a lie while it sat
+  // there. "Delete everything" has to mean every session-shaped file.
+  await prepareChatsDir();
+  const dir = sessionsDir();
+  let entries: string[];
+  try {
+    entries = await readdir(dir);
+  } catch {
+    return { deleted: 0, failed: 0 };
   }
-  return count;
+  let deleted = 0;
+  let failed = 0;
+  for (const name of entries) {
+    if (!SESSION_FILE_RE.test(name)) continue;
+    try {
+      await unlink(join(dir, name));
+      deleted++;
+    } catch (err: any) {
+      // Already gone counts as deleted; anything else must be REPORTED, not
+      // swallowed — otherwise "Deleted N sessions" is a lie and the transcripts
+      // the user asked to destroy are still there.
+      if (err?.code === 'ENOENT') deleted++;
+      else failed++;
+    }
+  }
+  return { deleted, failed };
 }
 
 // ---------------------------------------------------------------------------
@@ -459,7 +490,11 @@ export async function wipeAllSessions(): Promise<number> {
 // ---------------------------------------------------------------------------
 
 async function enforceRetention(): Promise<void> {
-  const max = Number(process.env.HOODY_CHAT_MAX_SESSIONS) || 50;
+  // `Number(x) || 50` accepted -1 and deleted EVERYTHING: `all.length <= -1`
+  // is false, so retention pruned down to a negative target. Only a positive
+  // integer is a cap; anything else falls back to the default.
+  const raw = Number(process.env.HOODY_CHAT_MAX_SESSIONS);
+  const max = Number.isInteger(raw) && raw > 0 ? raw : 50;
   const all = await listSessions();
   if (all.length <= max) return;
   // Sort by `createdAt` ASCENDING — earliest first. `listSessions()` sorts

@@ -10,24 +10,22 @@
  *   - SIGINT state machine: idle → confirm-exit; inflight → abort + return
  *     to idle. Ctrl-D exits cleanly.
  *   - Slash commands never network (dispatched synchronously).
- *   - MAX_TOOL_CALLS_PER_TURN=1 still enforced via dispatchTurn.
- *   - `/private` toggles disk-write + disk-read disable for rest of REPL.
- *   - `/tool on|off` mutates tool-enabled state for subsequent turns.
+ *   - `/private` turns disk-write + disk-read disable on for the rest of the
+ *     REPL, and cannot downgrade process-scoped `--private`.
  */
 
 import chalk from 'chalk';
 import readline from 'node:readline';
-import type { Msg } from '../ai/types.js';
-import type { ProviderConfig } from '../ai/provider-resolve.js';
-import { buildSystemPrompt } from './system-prompt.js';
+import { existsSync } from 'node:fs';
 import { createRenderer } from './markdown-renderer.js';
 import {
-  executeDocsSearch,
-  type DocsSearchResult,
-} from './docs-search-tool.js';
-import { dispatchTurn } from './tool-dispatch.js';
-import { detectTrigger, escapeXmlLike } from './trigger-parse.js';
-import { docsLimiter, triggerDedupe } from './docs-singletons.js';
+  askHoody,
+  renderSources,
+  TRUNCATION_NOTICE,
+  SERVICE_MODEL_LABEL,
+  SERVICE_TIER_LABEL,
+} from './service-client.js';
+import { docsLimiter } from './docs-singletons.js';
 import {
   createSession,
   appendTurn,
@@ -45,17 +43,15 @@ import { showBannerIfNeeded } from './first-run-banner.js';
 import { redactForDisk } from './redact.js';
 
 export interface ReplOptions {
-  provider: ProviderConfig;
-  model: string;
-  maxTokens: number;
-  temperature: number;
-  initialToolsEnabled: boolean;
   initialPrivate: boolean;
   persist: boolean;
   resume: string | boolean | undefined; // undefined | true (latest) | '<id>'
   acceptEndpointFlag: string | undefined;
   acceptEndpointEnv: string | undefined;
-  contextPreface: string | undefined; // --context, applied to first turn only
+  /** false when --no-markdown was passed. */
+  markdown?: boolean;
+  /** false when --no-stream was passed: buffer the answer, print it once. */
+  stream?: boolean;
   /** For tests. */
   input?: NodeJS.ReadableStream;
   output?: NodeJS.WritableStream;
@@ -88,7 +84,8 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
   }
 
   // Mutable REPL state.
-  let toolsEnabled = opts.initialToolsEnabled;
+  const noMarkdown = opts.markdown === false;
+  const noStream = opts.stream === false;
   let privateMode = opts.initialPrivate;
   // In-memory session state (ephemeral unless --persist is on).
   let sessionFilePath: string | undefined;
@@ -101,23 +98,53 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     if (persistenceDisabled) return;
     persistenceDisabled = true;
     const msg = err instanceof Error ? err.message : String(err);
-    output.write(
+    process.stderr.write(
       chalk.yellow(
         `\n[hoody chat] Persistence ${action} failed (${msg}). Continuing in-memory only — disk writes disabled for this REPL.\n`,
       ),
     );
   };
   const transcript: Array<Omit<SessionTurn, 'type'>> = [];
-  // docsLimiter + triggerDedupe are process-wide singletons from
-  // ./docs-singletons.js so runChat + runRepl share ONE rate bucket and ONE
-  // dedupe cache per process.
+  // docsLimiter is a process-wide singleton from ./docs-singletons.js so
+  // runChat + runRepl share ONE rate bucket per process.
+  // Non-interactive callers read the exit code; a piped REPL whose last turn
+  // failed must not report success.
+  let lastTurnFailed = false;
+  /** Set by /save, which promotes an ephemeral session to a persistent one. */
+  let persistFromSave = false;
+  /** Documented exit code 2 — kept distinct from a generic runtime failure. */
+  let endpointRefused = false;
+  /** Delete one session file, reporting failure instead of tearing down the REPL. */
+  const tryDeleteSession = async (filePath: string, label: string): Promise<boolean> => {
+    try {
+      await deleteSessionFile(filePath);
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      process.stderr.write(chalk.red(`Failed to delete ${label}: ${msg}\n`));
+      // A scripted run reads the exit code; a destructive command that did NOT
+      // happen must not look like success.
+      lastTurnFailed = true;
+      return false;
+    }
+  };
   let state: ReplState = 'idle';
   let currentAbort: AbortController | undefined;
 
-  // --context applied on first user message only.
-  let pendingContext = opts.contextPreface;
-
-  // Resume persistent session if requested.
+  // Resume persistent session if requested. Without --persist the request is
+  // meaningless — say so rather than starting a blank session that looks
+  // resumed. docs/reference/guides/chat.md documents --resume as requiring it.
+  if (opts.resume !== undefined && privateMode) {
+    process.stderr.write(
+      chalk.yellow(
+        'hoody chat: --resume does nothing in private mode (it would have to read from disk); starting a new session.\n',
+      ),
+    );
+  } else if (opts.resume !== undefined && !opts.persist) {
+    process.stderr.write(
+      chalk.yellow('hoody chat: --resume requires --persist; starting a new session.\n'),
+    );
+  }
   if (opts.persist && opts.resume !== undefined && !privateMode) {
     const resumed = await resolveResumeTarget(opts.resume);
     if (resumed) {
@@ -128,6 +155,16 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
       }
       output.write(
         chalk.dim(`Resumed session ${resumed.meta.id} — ${redactForDisk(resumed.meta.title)}\n`),
+      );
+    } else {
+      // Say so. Silently starting fresh leaves the user believing they are
+      // continuing a conversation while every follow-up lacks its context.
+      process.stderr.write(
+        chalk.yellow(
+          typeof opts.resume === 'string'
+            ? `hoody chat: no session matches "${opts.resume}" — starting a new one.\n`
+            : 'hoody chat: no previous session to resume — starting a new one.\n',
+        ),
       );
     }
   }
@@ -161,6 +198,14 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     // Any new line flips state back; we handle that in the `line` handler.
   };
   if (isStdinTty) {
+    // Readline in terminal mode CONSUMES ^C itself: it emits its own 'SIGINT'
+    // event and, when nobody is listening for it, closes the interface. A
+    // process-level handler alone therefore never runs, and the first Ctrl-C
+    // exits the REPL outright — contradicting the "press twice" contract the
+    // banner and /help advertise. Listening on `rl` is what actually takes
+    // over that key; the process-level handler stays for the non-terminal
+    // case, where readline does not intercept the signal.
+    rl.on('SIGINT', onSigint);
     process.on('SIGINT', onSigint);
   }
   if (opts.sigintSignal) {
@@ -291,6 +336,15 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     rl.prompt();
   }
 
+  // A non-interactive run (`printf 'q\n' | hoody chat`) is scripted: its exit
+  // code is the only signal the caller gets, so a failed final turn must not
+  // report success. An interactive session is not failed by one bad turn.
+  if (!isInteractive && lastTurnFailed) {
+    // docs/reference/guides/chat.md reserves 2 for "service endpoint not
+    // accepted"; the one-shot path already exits 2 for it.
+    process.exitCode = endpointRefused ? 2 : 1;
+  }
+
   return cleanup();
 
   // -------------------------------------------------------------------------
@@ -299,7 +353,12 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
 
   async function handleMessage(userMsg: string): Promise<void> {
     state = 'inflight';
-    currentAbort = new AbortController();
+    // Hold our OWN reference. The SIGINT handler sets `currentAbort` back to
+    // undefined, and there are awaits (the persist write) between here and the
+    // request — reading the shared binding afterwards can dereference null and
+    // crash the REPL instead of returning to the prompt.
+    const abort = new AbortController();
+    currentAbort = abort;
 
     // Persist this user turn (if applicable) — AFTER redaction downstream.
     const ts = new Date().toISOString();
@@ -316,108 +375,100 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
       }
     }
 
-    // @hoody.com trigger pre-fetch — same logic as run.ts one-shot path.
-    let docsPrefetch: DocsSearchResult | undefined;
-    let prefetchedQuery = '';
-    if (toolsEnabled) {
-      const trig = detectTrigger({ userMessage: userMsg });
-      if (trig.hit && trig.query.length >= 8) {
-        prefetchedQuery = trig.query;
-        const cached = triggerDedupe.get(prefetchedQuery);
-        if (cached) docsPrefetch = cached;
-        else {
-          if (isTty) output.write(chalk.dim('[hoody chat] searching docs…\r'));
-          docsPrefetch = await executeDocsSearch({
-            query: prefetchedQuery,
-            limiter: docsLimiter,
-            acceptEndpointFlag: opts.acceptEndpointFlag,
-            acceptEndpointEnv: opts.acceptEndpointEnv,
-            isTty: isInteractive,
-            sessionOnly: privateMode,
-            // SIGINT during the pre-fetch cancels immediately rather than
-            // waiting for the 30s docs timeout.
-            signal: currentAbort?.signal,
-          });
-          if (isTty) output.write('\x1b[2K\r');
-          triggerDedupe.set(prefetchedQuery, docsPrefetch);
-        }
-      }
-    }
-
-    // Build system prompt with per-turn retrieval.
-    const { systemPrompt, retrievalText } = buildSystemPrompt({ userMessage: userMsg });
-    const retrievalBlock = retrievalText
-      ? `<retrieved-context source="cli-reference">\n${retrievalText}\n</retrieved-context>\n\n`
-      : '';
-    const ctxBlock = pendingContext
-      ? `<user-context untrusted="true">\n${escapeXmlLike(pendingContext.slice(0, 1000))}\n</user-context>\n\n`
-      : '';
-    pendingContext = undefined; // applied only once
-    const docsBlock = docsPrefetch
-      ? `<hoody-docs-result untrusted="true" source="https://docs.hoody.com" query=${JSON.stringify(prefetchedQuery)}>\n${
-          'error' in docsPrefetch
-            ? `<error code="${docsPrefetch.error}">${escapeXmlLike(docsPrefetch.message)}</error>`
-            : escapeXmlLike(docsPrefetch.text)
-        }\n</hoody-docs-result>\n\n`
-      : '';
-
-    // Replay transcript as message history — capped at HOODY_CHAT_MAX_HISTORY.
-    // Parse carefully so an explicit `0` (disable memory) is honored rather
-    // than falling through to the default 10.
+    // Replay prior turns as conversation history so follow-ups resolve
+    // ("it", "that one"). Capped at HOODY_CHAT_MAX_HISTORY, then again at the
+    // service's own limit inside the client. Parse carefully so an explicit
+    // `0` (disable memory) is honored rather than falling through to 10.
     const rawHistoryEnv = process.env.HOODY_CHAT_MAX_HISTORY;
     const parsedHistory = rawHistoryEnv !== undefined && /^\d+$/.test(rawHistoryEnv)
       ? Number(rawHistoryEnv)
       : undefined;
     const historyCap = parsedHistory !== undefined ? parsedHistory : 10;
-    const historyTurns = transcript.slice(-historyCap * 2 - 1); // pairs + current
-    const llmMessages: Msg[] = [{ role: 'system', content: systemPrompt }];
-    for (let i = 0; i < historyTurns.length - 1; i++) {
-      const t = historyTurns[i]!;
-      llmMessages.push({ role: t.role, content: t.content });
+    // Replay COMPLETE exchanges only. The current user turn is already on the
+    // transcript (the client sends it as `message`), and a user turn whose
+    // request FAILED — rejected locally as over-long, network error, Ctrl-C —
+    // has no assistant reply. Replaying those forever re-sends the same dead
+    // text on every later turn, so a 60 KB rejected question keeps pushing the
+    // request past the server's body cap. Walking pairs drops them.
+    //
+    // `historyCap === 0` means "send each question standalone" — a documented
+    // privacy control. It MUST be special-cased: `slice(-0)` is `slice(0)`,
+    // which returns the WHOLE array, so the naive expression would send
+    // everything precisely when the user asked for nothing.
+    const pairs: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+    const prior = transcript.slice(0, -1);
+    for (let i = 0; i < prior.length - 1; i++) {
+      const u = prior[i]!;
+      const a = prior[i + 1]!;
+      if (u.role === 'user' && a.role === 'assistant') {
+        pairs.push({ role: 'user', content: u.content });
+        pairs.push({ role: 'assistant', content: a.content });
+        i++; // consume the assistant turn too
+      }
     }
-    llmMessages.push({
-      role: 'user',
-      content: `${retrievalBlock}${docsBlock}${ctxBlock}${userMsg}`,
-    });
+    const history = historyCap <= 0 ? [] : pairs.slice(-historyCap * 2);
 
-    const renderer = createRenderer({ out: output });
+    const renderer = createRenderer({ out: output, noMarkdown });
     let assistantText = '';
     let turnFailed = false;
     // Spinner: braille-dots rotation + "thinking…" label, shown only on a
     // real TTY so piped output stays clean. Auto-clears on the first stream
-    // byte (model started answering) and on turn end / abort / error. The
-    // line is cleared with `\x1b[2K\r` before writing the real answer so
-    // there's no leftover spinner residue.
+    // byte and on turn end / abort / error.
     const spinner = isInteractive ? startSpinner(output) : null;
-    try {
-      await dispatchTurn({
-        url: opts.provider.url,
-        key: opts.provider.key,
-        model: opts.model,
-        messages: llmMessages,
-        maxTokens: opts.maxTokens,
-        temperature: opts.temperature,
-        onDelta: chunk => {
-          if (spinner) spinner.stop();
-          assistantText += chunk;
-          renderer.write(chunk);
-        },
-        toolsEnabled,
-        limiter: docsLimiter,
-        acceptEndpointFlag: opts.acceptEndpointFlag,
-        acceptEndpointEnv: opts.acceptEndpointEnv,
-        isTty: isInteractive,
-        sessionOnly: privateMode,
-        // Thread the per-turn abort signal through so SIGINT cancels the
-        // in-flight LLM fetch and any docs-tool fetch.
-        signal: currentAbort.signal,
-      });
-    } catch (err) {
+    const result = await askHoody({
+      message: userMsg,
+      history,
+      limiter: docsLimiter,
+      acceptEndpointFlag: opts.acceptEndpointFlag,
+      acceptEndpointEnv: opts.acceptEndpointEnv,
+      isTty: isInteractive,
+      sessionOnly: privateMode,
+      // Thread the per-turn abort signal so SIGINT cancels the in-flight
+      // request instead of waiting out the timeout.
+      signal: abort.signal,
+      onDelta: noStream
+        ? undefined
+        : chunk => {
+            if (spinner) spinner.stop();
+            assistantText += chunk;
+            renderer.write(chunk);
+          },
+    });
+    if (spinner) spinner.stop();
+
+    if ('error' in result) {
       turnFailed = true;
-      const msg = err instanceof Error ? err.message : String(err);
-      output.write('\n' + chalk.red(`Error: ${msg}`) + '\n');
-    } finally {
-      if (spinner) spinner.stop();
+      // A user-initiated abort (Ctrl-C) or a closed stdin is not a failure to
+      // report — onSigint has already printed "(aborted)". Printing a red
+      // "Error: user-interrupt" on top of it is noise, and it must not set a
+      // non-zero exit code for a scripted run either.
+      const userAborted =
+        abort.signal.aborted ||
+        /user-interrupt|stdin-closed|aborted by caller/.test(result.message);
+      // Per-turn, not sticky: a refusal on turn 1 must not relabel a network
+      // failure on turn 2 as an endpoint refusal.
+      endpointRefused = result.error === 'endpoint-not-accepted';
+      if (!userAborted) {
+        lastTurnFailed = true;
+        // Errors go to stderr, never stdout: a piped `hoody chat` must not get
+        // an error message mixed into the answer text.
+        process.stderr.write(chalk.red(`Error: ${result.message}`) + '\n');
+      }
+    } else {
+      lastTurnFailed = false;
+      if (noStream) {
+        assistantText = result.text;
+        renderer.write(result.text);
+      }
+      if (result.truncated) renderer.write(TRUNCATION_NOTICE);
+      // Citations are RENDERED, never folded back into `assistantText`.
+      // That text is replayed to the service as conversation history, and a
+      // model shown a hand-written "Sources:" list in a prior assistant turn
+      // copies the pattern — inventing doc links on later turns, which the
+      // service's own instructions forbid. Keep history to what the model
+      // actually said; the links are ours, derived from the `sources` frame.
+      const citations = renderSources(result.sources);
+      if (citations) renderer.write(citations);
     }
     renderer.end();
 
@@ -425,7 +476,7 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     // and we have content. An aborted (Ctrl-C) or network-errored turn would
     // otherwise leave a partial/empty assistant message in the transcript
     // and on disk.
-    const aborted = currentAbort?.signal.aborted === true;
+    const aborted = abort.signal.aborted === true;
     if (!turnFailed && !aborted && assistantText.length > 0) {
       const tsA = new Date().toISOString();
       transcript.push({ role: 'assistant', content: assistantText, ts: tsA });
@@ -472,8 +523,6 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
         return wipeCmd(readConfirmation);
       case 'private':
         return privateCmd();
-      case 'tool':
-        return toolCmd(rest);
       case 'retry':
         return retryCmd();
       default:
@@ -526,15 +575,6 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
         disablePersistenceOnError(err, 'retry truncate');
       }
     }
-    // Restore the `--context` preface when /retry drops the FIRST user
-    // turn (the one handleMessage originally consumed pendingContext on).
-    // Without this, `hoody chat --context "pretend you are an expert" ...`
-    // loses the expert persona on the retry. Subsequent retries preserve
-    // context via earlier transcript turns already in conversation history,
-    // so we only re-seed when the transcript is now empty.
-    if (transcript.length === 0 && opts.contextPreface && !pendingContext) {
-      pendingContext = opts.contextPreface;
-    }
     output.write(chalk.dim('Retrying last message…\n'));
     // A fenced-block message whose first char is '/' must not re-enter the
     // slash dispatcher when replayed.
@@ -556,7 +596,6 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
       ['/delete [id]', `Delete session <id>; no arg = delete current + /new${privateMode ? ' (disabled in private mode)' : ''}`],
       ['/wipe', `Delete ALL persistent sessions (confirms)${privateMode ? ' (disabled in private mode)' : ''}`],
       ['/private', `Toggle private mode (currently: ${privateMode ? 'ON' : 'OFF'})`],
-      ['/tool on|off', `Toggle hoody_docs_search (currently: ${toolsEnabled ? 'ON' : 'OFF'})`],
       ['/retry', 'Drop the last assistant reply and re-send the last user message'],
     ];
     for (const [name, desc] of rows) {
@@ -565,11 +604,26 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     return 'continue';
   }
 
+  /** Adopt a session file as the live one, persisting subsequent turns to it. */
+  function adoptSession(filePath: string, meta: SessionMeta): void {
+    sessionFilePath = filePath;
+    sessionMeta = meta;
+    // Without this, follow-ups after /load are answered but never written, and
+    // /save then reports "already persisted" while still dropping them.
+    persistFromSave = true;
+  }
+
   function newCmd(): 'continue' {
     transcript.length = 0;
     sessionFilePath = undefined;
     sessionMeta = undefined;
-    pendingContext = undefined;
+    // /save promoted the PREVIOUS conversation. A fresh one is ephemeral again
+    // unless the user asks for it — a REPL started without --persist must not
+    // start writing new files just because one conversation was saved.
+    persistFromSave = false;
+    // privateMode is deliberately NOT reset: /private is one-way for the life
+    // of the process, and silently re-enabling disk writes here would be the
+    // surprising direction to be wrong in.
     output.write(chalk.dim('New session.\n'));
     return 'continue';
   }
@@ -641,8 +695,7 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
       output.write(chalk.red(`Failed to read session ${id}.\n`));
       return 'continue';
     }
-    sessionFilePath = session.filePath;
-    sessionMeta = session.meta;
+    adoptSession(session.filePath, session.meta);
     transcript.length = 0;
     for (const t of session.turns) {
       transcript.push({ role: t.role, content: t.content, ts: t.ts });
@@ -676,12 +729,16 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     try {
       const created = await saveEphemeralSession({
         firstUserMessage: first.content,
-        model: opts.model,
-        tier: opts.provider.tier,
+        model: SERVICE_MODEL_LABEL,
+        tier: SERVICE_TIER_LABEL,
         turns: transcript,
       });
       sessionFilePath = created.filePath;
       sessionMeta = created.meta;
+      // Turn persistence ON for the rest of the REPL. Without this the file is
+      // a one-off snapshot: later turns are never appended, and a second /save
+      // just reports "already persisted" while still dropping them.
+      persistFromSave = true;
       output.write(chalk.dim(`Saved as ${created.meta.id} — ${created.meta.title}\n`));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -701,11 +758,15 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
         transcript.length = 0;
         return 'continue';
       }
-      await deleteSessionFile(sessionFilePath);
+      if (!(await tryDeleteSession(sessionFilePath, `session ${sessionMeta?.id}`))) {
+        return 'continue';
+      }
       output.write(chalk.dim(`Deleted current session ${sessionMeta?.id}. Starting fresh.\n`));
       sessionFilePath = undefined;
       sessionMeta = undefined;
       transcript.length = 0;
+      // A save-promoted session is gone; don't silently mint a new file.
+      persistFromSave = false;
       return 'continue';
     }
     // Destructive op → refuse ambiguous prefixes.
@@ -725,12 +786,13 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
       return 'continue';
     }
     const match = matches[0]!;
-    await deleteSessionFile(match.filePath);
+    if (!(await tryDeleteSession(match.filePath, match.id))) return 'continue';
     output.write(chalk.dim(`Deleted ${match.id}.\n`));
     if (match.filePath === sessionFilePath) {
       sessionFilePath = undefined;
       sessionMeta = undefined;
       transcript.length = 0;
+      persistFromSave = false;
     }
     return 'continue';
   }
@@ -750,19 +812,46 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
       output.write(chalk.dim('Wipe cancelled.\n'));
       return 'continue';
     }
-    const count = await wipeAllSessions();
-    output.write(chalk.dim(`Deleted ${count} session${count === 1 ? '' : 's'}.\n`));
-    sessionFilePath = undefined;
-    sessionMeta = undefined;
+    const { deleted, failed } = await wipeAllSessions();
+    output.write(chalk.dim(`Deleted ${deleted} session${deleted === 1 ? '' : 's'}.\n`));
+    if (failed > 0) {
+      process.stderr.write(
+        chalk.red(`Failed to delete ${failed} session file${failed === 1 ? '' : 's'} — they are still on disk.\n`),
+      );
+      lastTurnFailed = true;
+    }
+    // Only detach the current session if it is actually gone. Detaching a
+    // survivor makes /delete report "ephemeral" for a file still on disk, and a
+    // later /save mints a duplicate once permissions recover.
+    if (failed === 0 || !sessionFilePath || !existsSync(sessionFilePath)) {
+      sessionFilePath = undefined;
+      sessionMeta = undefined;
+      // Everything the user saved is gone; don't re-create a file behind them.
+      persistFromSave = false;
+    }
     return 'continue';
   }
 
   function privateCmd(): 'continue' {
-    privateMode = !privateMode;
-    // Docs-search results are keyed by query text only; keeping a refusal
-    // cached across a private-mode toggle would replay the wrong accept-mode
-    // on the next identical query. Cheap to rebuild — just clear.
-    triggerDedupe.clear();
+    // `--private` / HOODY_CHAT_PRIVATE=1 are documented as process-scoped:
+    // no disk access "from startup". A mid-session toggle must not be able to
+    // downgrade that — otherwise `--private` followed by `/private` then
+    // `/save` writes the transcript the flag promised never to write.
+    // One-way. Turning privacy back OFF is not a safe operation: the turns
+    // taken while it was on are still in the transcript, so a later /save or
+    // /persist would write exactly the material the user hid. `--private` and
+    // HOODY_CHAT_PRIVATE=1 are process-scoped and equally irreversible.
+    if (privateMode) {
+      output.write(
+        chalk.yellow(
+          opts.initialPrivate
+            ? 'Private mode was set for this whole process (--private / HOODY_CHAT_PRIVATE=1) and cannot be turned off.\n'
+            : 'Private mode is already on and cannot be turned off — turns taken while it was on would otherwise become writable. Restart `hoody chat` for a non-private session.\n',
+        ),
+      );
+      return 'continue';
+    }
+    privateMode = true;
     output.write(
       chalk.dim(
         `Private mode ${privateMode ? chalk.green('ON') : chalk.yellow('OFF')}. ${
@@ -773,28 +862,12 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     return 'continue';
   }
 
-  function toolCmd(arg: string): 'continue' {
-    const a = arg.toLowerCase();
-    if (a === 'on') {
-      toolsEnabled = true;
-      output.write(chalk.dim('hoody_docs_search tool: ON.\n'));
-    } else if (a === 'off') {
-      toolsEnabled = false;
-      output.write(chalk.dim('hoody_docs_search tool: OFF.\n'));
-    } else {
-      output.write(
-        chalk.dim(`Usage: /tool on|off (currently: ${toolsEnabled ? 'ON' : 'OFF'})\n`),
-      );
-    }
-    return 'continue';
-  }
-
   // -------------------------------------------------------------------------
   // Session file helpers
   // -------------------------------------------------------------------------
 
   function shouldPersist(): boolean {
-    return opts.persist && !privateMode && !persistenceDisabled;
+    return (opts.persist || persistFromSave) && !privateMode && !persistenceDisabled;
   }
 
   async function ensureSessionFile(firstUserMessage: string): Promise<void> {
@@ -802,8 +875,8 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     if (!shouldPersist()) return;
     const created = await createSession({
       firstUserMessage,
-      model: opts.model,
-      tier: opts.provider.tier,
+      model: SERVICE_MODEL_LABEL,
+      tier: SERVICE_TIER_LABEL,
     });
     sessionFilePath = created.filePath;
     sessionMeta = created.meta;
