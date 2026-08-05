@@ -23,7 +23,7 @@ import * as cron from './cron/index.js';
 import * as pipe from './pipe/index.js';
 import * as notes from './notes/index.js';
 import * as tunnel from './tunnel/index.js';
-import * as app from './app/index.js';
+import * as run from './run/index.js';
 import * as proxyLogs from './proxyLogs/index.js';
 import * as agent from './agent/index.js';
 export interface HoodyClientConfig extends IHttpClientConfig {
@@ -236,15 +236,13 @@ export declare class HoodyClient {
     readonly tunnel: tunnel.TunnelService & {
         health: tunnel.HealthService;
     };
-    readonly app: {
-        health: app.HealthService;
-        docs: app.ApiDocumentationService;
-        execution: app.AppExecutionService;
-        jobs: app.JobsService;
-        sources: app.SourcesService;
-        configuration: app.ConfigurationService;
-        profiles: app.ProfilesService;
-        recipes: app.RecipesService;
+    readonly run: run.RunService & {
+        documentation: run.ApiDocumentationService;
+        jobs: run.JobsService;
+        sources: run.SourcesService;
+        configuration: run.ConfigurationService;
+        profiles: run.ProfilesService;
+        recipes: run.RecipesService;
     };
     readonly proxyLogs: {
         logs: proxyLogs.LogsService;
@@ -260,6 +258,7 @@ export declare class HoodyClient {
         hooks: agent.HooksService;
         jobs: agent.JobsService;
         logs: agent.LogsService;
+        mcp: agent.McpService;
         memory: agent.MemoryService;
         models: agent.ModelsService;
         sessions: agent.SessionsService;

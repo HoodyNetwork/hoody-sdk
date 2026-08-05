@@ -21,25 +21,16 @@ export { createSession, listSessions, readSession, findSessionById, findMatching
 // ─── Endpoint acceptance (privacy gate) ───────────────────────────────────
 export { checkAcceptance, confirmAcceptance, readAcceptFile, acceptFilePath, BUILTIN_ACCEPTED_ORIGINS, } from './endpoint-accept.js';
 // ─── Docs search tool (read-only web fetch + SSE aggregation) ─────────────
-export { executeDocsSearch, validateToolArgs, RollingRateLimiter, computeBackoffMs, HOODY_DOCS_SEARCH_TOOL, DEFAULT_DOCS_URL, DEFAULT_MAX_RESULT_BYTES, DEFAULT_TIMEOUT_MS, DEFAULT_FIRST_BYTE_MS, DEFAULT_CLIENT_RATE_LIMIT, } from './docs-search-tool.js';
-// ─── Tool dispatch (turn loop: model → tool → model) ──────────────────────
-export { dispatchTurn, MAX_TOOL_CALLS_PER_TURN } from './tool-dispatch.js';
+export { askHoody, renderSources, RollingRateLimiter, computeBackoffMs, DEFAULT_SERVICE_URL, DOCS_SITE_BASE, DEFAULT_MAX_RESULT_BYTES, DEFAULT_TIMEOUT_MS, DEFAULT_FIRST_BYTE_MS, DEFAULT_CLIENT_RATE_LIMIT, MAX_MESSAGE_CHARS, MAX_HISTORY_TURNS, SERVICE_MODEL_LABEL, SERVICE_TIER_LABEL, } from './service-client.js';
 // ─── Paste-safety classifier (fence-block danger detection) ───────────────
 export { classifyShellBlock, DANGER_PATTERNS, REVIEW_PATTERNS, SHELL_LANG_TAGS, parseExtraPatterns, } from './paste-safety.js';
 // ─── Redaction (secret-pattern stripper) ──────────────────────────────────
 export { redactSecrets, redactForDisk, redactArgv, SECRET_PATTERNS, SENSITIVE_FLAGS, REDACTED, } from './redact.js';
-// ─── Trigger / dedupe (for @hoody.com pre-parse) ──────────────────────────
-export { detectTrigger, DedupeCache, escapeXmlLike, stripCodeContexts, } from './trigger-parse.js';
 // ─── First-run banner ─────────────────────────────────────────────────────
 export { showBannerIfNeeded, hasSeenBanner, getBannerText, } from './first-run-banner.js';
 // ─── Home-dir helpers (HOME override + platform env-var hints) ────────────
 export { hoodyHomeDir, platformEnvHint } from './home-dir.js';
 // ─── Markdown renderer (streaming ANSI output) ────────────────────────────
 export { createRenderer, } from './markdown-renderer.js';
-// ─── System prompt / product blurb / reference retriever ──────────────────
-export { buildSystemPrompt } from './system-prompt.js';
-export { PRODUCT_BLURB } from './product-blurb.js';
-export { retrieveReference, } from './reference-retriever.js';
-export { CLI_REFERENCE, } from './ai-cli-reference.generated.js';
 // ─── Prep helpers ─────────────────────────────────────────────────────────
 export { prepareChatsDir } from './prepare-dir.js';

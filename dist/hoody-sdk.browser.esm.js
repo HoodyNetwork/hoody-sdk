@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.9
+ * Hoody SDK v1.0.0-beta.10
  * Browser Build (ESM) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  * @license Apache-2.0
@@ -4475,7 +4475,7 @@ var AuthenticationServiceBase = class {
    * @param options._realm - Realm host-scope override (subdomain routing only)
    */
   async githubOAuthRedirect(options) {
-    const { redirect_uri, code_challenge, intent, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    const { redirect_uri, code_challenge, client, intent, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (redirect_uri === void 0 || redirect_uri === null) {
       throw new ValidationError("redirect_uri is required", "redirect_uri");
     }
@@ -4488,6 +4488,11 @@ var AuthenticationServiceBase = class {
       throw new ValidationError("code_challenge is required", "code_challenge");
     }
     if (code_challenge !== void 0 && code_challenge !== null) {
+    }
+    if (client !== void 0 && client !== null) {
+      if (typeof client === "string" && client.length > 64) {
+        throw new ValidationError("client must be at most 64 characters", "client");
+      }
     }
     if (intent !== void 0 && intent !== null) {
       if (!["login", "star_check"].includes(intent)) {
@@ -4512,6 +4517,9 @@ var AuthenticationServiceBase = class {
     }
     if (code_challenge !== void 0) {
       requestData.query["code_challenge"] = code_challenge;
+    }
+    if (client !== void 0) {
+      requestData.query["client"] = client;
     }
     if (intent !== void 0) {
       requestData.query["intent"] = intent;
@@ -4628,7 +4636,7 @@ var AuthenticationServiceBase = class {
    * @param options._realm - Realm host-scope override (subdomain routing only)
    */
   async googleOAuthRedirect(options) {
-    const { redirect_uri, code_challenge, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    const { redirect_uri, code_challenge, client, invite_code, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (redirect_uri === void 0 || redirect_uri === null) {
       throw new ValidationError("redirect_uri is required", "redirect_uri");
     }
@@ -4641,6 +4649,11 @@ var AuthenticationServiceBase = class {
       throw new ValidationError("code_challenge is required", "code_challenge");
     }
     if (code_challenge !== void 0 && code_challenge !== null) {
+    }
+    if (client !== void 0 && client !== null) {
+      if (typeof client === "string" && client.length > 64) {
+        throw new ValidationError("client must be at most 64 characters", "client");
+      }
     }
     if (invite_code !== void 0 && invite_code !== null) {
       if (typeof invite_code === "string" && invite_code.length > 128) {
@@ -4660,6 +4673,9 @@ var AuthenticationServiceBase = class {
     }
     if (code_challenge !== void 0) {
       requestData.query["code_challenge"] = code_challenge;
+    }
+    if (client !== void 0) {
+      requestData.query["client"] = client;
     }
     if (invite_code !== void 0) {
       requestData.query["invite_code"] = invite_code;
@@ -8031,6 +8047,63 @@ var ContainersServiceBase = class {
       requestData.responseType = responseType;
     }
     return this.http.delete(requestUrl, requestData);
+  }
+  /**
+   * Enable or disable /dev/kvm (run VMs in the container)
+   *
+   * Enable or disable hardware virtualization passthrough (/dev/kvm) so the container can run full virtual machines. Available on rented/dedicated (bare-metal) servers only — never on free-tier servers. The container must be STOPPED. Send `kvm: true` to enable or `kvm: false` to disable; `dev_kvm` is accepted as an alias of `kvm`.
+   * @param options._realm - Realm host-scope override (subdomain routing only)
+   */
+  async setContainerKvm(id, data, options) {
+    const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (id === void 0 || id === null) {
+      throw new ValidationError("id is required", "id");
+    }
+    if (id !== void 0 && id !== null) {
+      if (typeof id === "string" && !new RegExp("^[0-9a-f]{24}$").test(id)) {
+        throw new ValidationError("id must match pattern: ^[0-9a-f]{24}$", "id");
+      }
+    }
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    let requestUrl = this.buildRealmUrl(`/api/v1/containers/{id}/kvm`, _realm, {
+      optional: true,
+      baseDomain: "api.hoody.com",
+      subdomainPattern: "{realm}.api.hoody.com",
+      parameterName: "realm_id"
+    });
+    requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+    const requestData = {};
+    requestData.body = data;
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.put(requestUrl, requestData);
   }
   /**
    * Get status logs for a container
@@ -11772,7 +11845,7 @@ var ProxyPermissionsProjectServiceBase = class {
   /**
    * Update project proxy enable state
    *
-   * Enable or disable the proxy entirely for a project. When disabled, the proxy layer is bypassed and all access control is removed regardless of configured rules.
+   * Enable or disable the proxy for a project. Disabling is a kill-switch, not a bypass: while enable_proxy is false, new requests that reach the proxy permission layer are denied with 403, evaluated before authentication groups, permission rules and the default policy, so no configured rule can re-open access while it is off. Containers keep running; only proxy reachability is cut. Note the project value applies only to containers that do not set enable_proxy themselves - a container document with enable_proxy true overrides a disabled project, and saving a container permissions document persists an explicit true. Use the container-level endpoint to disable a specific container reliably.
    * @param options._realm - Realm host-scope override (subdomain routing only)
    */
   async updateState(id, data, options) {
@@ -14939,7 +15012,7 @@ var ProxyAliasesServiceBase = class {
   /**
    * Enable or disable proxy alias
    *
-   * Temporarily enable or disable a proxy alias without deleting it. Disabled aliases return 404 but can be re-enabled later.
+   * Temporarily enable or disable a proxy alias without deleting it. Disabled aliases return 404 but can be re-enabled later. One exception: for an alias whose name is now reserved (only possible for aliases created before the name was reserved), a request that would make it serve traffic again is refused — rename it to a non-reserved alias first, or delete it. Disabling is never refused for that reason (note that any alias update is separately rejected with 409 while its container is finalizing a claim).
    * @param options._realm - Realm host-scope override (subdomain routing only)
    */
   async setState(id, data, options) {
@@ -65384,21 +65457,20 @@ var HealthService14 = class extends HealthServiceBase14 {
   // Add custom properties here
 };
 
-// generated/app/index.ts
-var app_exports = {};
-__export(app_exports, {
+// generated/run/index.ts
+var run_exports = {};
+__export(run_exports, {
   ApiDocumentationService: () => ApiDocumentationService2,
-  AppExecutionService: () => AppExecutionService,
   ConfigurationService: () => ConfigurationService,
-  HealthService: () => HealthService15,
   JobsService: () => JobsService2,
   ProfilesService: () => ProfilesService,
   RecipesService: () => RecipesService,
+  RunService: () => RunService,
   SourcesService: () => SourcesService
 });
 
-// generated/app/health.service.generated.ts
-var HealthServiceBase15 = class {
+// generated/run/run.service.generated.ts
+var RunServiceBase = class {
   constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
     this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
     __publicField(this, "http");
@@ -65487,7 +65559,7 @@ var HealthServiceBase15 = class {
    *
    * Returns the standardized 9-field health response. Unauthenticated. Always returns HTTP 200 with application/json when the service is up.
    */
-  async check(_templateVars, requestOptions) {
+  async healthCheck(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/run/health`, _templateVars || {});
     const requestData = {};
     if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -65518,264 +65590,6 @@ var HealthServiceBase15 = class {
       requestData.responseType = requestOptions.responseType;
     }
     return this.http.get(requestUrl, requestData);
-  }
-};
-
-// generated/app/health.service.ts
-var HealthService15 = class extends HealthServiceBase15 {
-  // Add custom properties here
-};
-
-// generated/app/api-documentation.service.generated.ts
-var ApiDocumentationServiceBase2 = class {
-  constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
-    this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
-    __publicField(this, "http");
-    __publicField(this, "_kitNamespace");
-    __publicField(this, "urlTemplatePattern");
-    this._kitNamespace = namespace;
-    this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
-    this.urlTemplatePattern = urlTemplatePattern;
-  }
-  /**
-   * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
-   */
-  _wrapHttpClient(http, ns) {
-    return new Proxy(http, {
-      get: (target, prop) => {
-        const val = target[prop];
-        if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
-          return (...args) => {
-            const dataIndex = prop === "request" ? 2 : 1;
-            const data = args[dataIndex] ? { ...args[dataIndex] } : {};
-            data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
-            args[dataIndex] = data;
-            return val.apply(target, args);
-          };
-        }
-        return typeof val === "function" ? val.bind(target) : val;
-      }
-    });
-  }
-  /**
-   * Build URL with template variables or fallback to baseURL
-   *
-   * @param path - API endpoint path
-   * @param variables - Method-level template variables to override defaults
-   * @returns Full URL (template mode) or path only (baseURL mode)
-   */
-  buildTemplateUrl(path, variables) {
-    var _a;
-    const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-run-{serviceIndex}.{server}.containers.hoody.com";
-    const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
-    const hasVariables = Object.keys(allVariables).length > 0;
-    if (!hasVariables) {
-      return path;
-    }
-    let url2 = urlPattern;
-    for (const [key, value2] of Object.entries(allVariables)) {
-      if (value2 !== void 0) {
-        url2 = url2.replace(`{${key}}`, () => String(value2));
-      }
-    }
-    if (url2.includes("{") && url2.includes("}")) {
-      const processRef = globalThis.process;
-      if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
-        console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
-        console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
-      }
-      return path;
-    }
-    return `${url2}${path}`;
-  }
-  /**
-   * Read nested values from objects using dotted paths.
-   * Example: "data.items" or "data.pagination.total"
-   */
-  getPathValue(input, path) {
-    if (!path) return void 0;
-    const segments = path.split(".").filter(Boolean);
-    let current = input;
-    for (const segment of segments) {
-      if (current === void 0 || current === null) {
-        return void 0;
-      }
-      if (Array.isArray(current) && segment === "length") {
-        current = current.length;
-        continue;
-      }
-      if (typeof current !== "object") {
-        return void 0;
-      }
-      current = current[segment];
-    }
-    return current;
-  }
-  /**
-   * OpenAPI specification (YAML)
-   *
-   * Returns the OpenAPI 3.0.3 specification for this API in YAML format.
-   */
-  async getYaml(_templateVars, requestOptions) {
-    let requestUrl = this.buildTemplateUrl(`/api/v1/run/openapi.yaml`, _templateVars || {});
-    const requestData = {};
-    if (requestOptions == null ? void 0 : requestOptions.signal) {
-      requestData.signal = requestOptions.signal;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
-      requestData.timeoutMs = requestOptions.timeoutMs;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
-      requestData.retries = requestOptions.retries;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
-      requestData.retryDelayMs = requestOptions.retryDelayMs;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
-      requestData.retryOnStatuses = requestOptions.retryOnStatuses;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
-      requestData.middlewareContext = requestOptions.middlewareContext;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
-      requestData.authRetry = requestOptions.authRetry;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
-      requestData.rawResponse = requestOptions.rawResponse;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
-      requestData.responseType = requestOptions.responseType;
-    }
-    return this.http.get(requestUrl, requestData);
-  }
-  /**
-   * OpenAPI specification (JSON)
-   *
-   * Returns the OpenAPI 3.0.3 specification for this API in JSON format. Converted from the canonical YAML source.
-   */
-  async getJson(_templateVars, requestOptions) {
-    let requestUrl = this.buildTemplateUrl(`/api/v1/run/openapi.json`, _templateVars || {});
-    const requestData = {};
-    if (requestOptions == null ? void 0 : requestOptions.signal) {
-      requestData.signal = requestOptions.signal;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
-      requestData.timeoutMs = requestOptions.timeoutMs;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
-      requestData.retries = requestOptions.retries;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
-      requestData.retryDelayMs = requestOptions.retryDelayMs;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
-      requestData.retryOnStatuses = requestOptions.retryOnStatuses;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
-      requestData.middlewareContext = requestOptions.middlewareContext;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
-      requestData.authRetry = requestOptions.authRetry;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
-      requestData.rawResponse = requestOptions.rawResponse;
-    }
-    if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
-      requestData.responseType = requestOptions.responseType;
-    }
-    return this.http.get(requestUrl, requestData);
-  }
-};
-
-// generated/app/api-documentation.service.ts
-var ApiDocumentationService2 = class extends ApiDocumentationServiceBase2 {
-  // Add custom properties here
-};
-
-// generated/app/app-execution.service.generated.ts
-var AppExecutionServiceBase = class {
-  constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
-    this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
-    __publicField(this, "http");
-    __publicField(this, "_kitNamespace");
-    __publicField(this, "urlTemplatePattern");
-    this._kitNamespace = namespace;
-    this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
-    this.urlTemplatePattern = urlTemplatePattern;
-  }
-  /**
-   * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
-   */
-  _wrapHttpClient(http, ns) {
-    return new Proxy(http, {
-      get: (target, prop) => {
-        const val = target[prop];
-        if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
-          return (...args) => {
-            const dataIndex = prop === "request" ? 2 : 1;
-            const data = args[dataIndex] ? { ...args[dataIndex] } : {};
-            data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
-            args[dataIndex] = data;
-            return val.apply(target, args);
-          };
-        }
-        return typeof val === "function" ? val.bind(target) : val;
-      }
-    });
-  }
-  /**
-   * Build URL with template variables or fallback to baseURL
-   *
-   * @param path - API endpoint path
-   * @param variables - Method-level template variables to override defaults
-   * @returns Full URL (template mode) or path only (baseURL mode)
-   */
-  buildTemplateUrl(path, variables) {
-    var _a;
-    const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-run-{serviceIndex}.{server}.containers.hoody.com";
-    const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
-    const hasVariables = Object.keys(allVariables).length > 0;
-    if (!hasVariables) {
-      return path;
-    }
-    let url2 = urlPattern;
-    for (const [key, value2] of Object.entries(allVariables)) {
-      if (value2 !== void 0) {
-        url2 = url2.replace(`{${key}}`, () => String(value2));
-      }
-    }
-    if (url2.includes("{") && url2.includes("}")) {
-      const processRef = globalThis.process;
-      if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
-        console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
-        console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
-      }
-      return path;
-    }
-    return `${url2}${path}`;
-  }
-  /**
-   * Read nested values from objects using dotted paths.
-   * Example: "data.items" or "data.pagination.total"
-   */
-  getPathValue(input, path) {
-    if (!path) return void 0;
-    const segments = path.split(".").filter(Boolean);
-    let current = input;
-    for (const segment of segments) {
-      if (current === void 0 || current === null) {
-        return void 0;
-      }
-      if (Array.isArray(current) && segment === "length") {
-        current = current.length;
-        continue;
-      }
-      if (typeof current !== "object") {
-        return void 0;
-      }
-      current = current[segment];
-    }
-    return current;
   }
   /**
      * Search for app candidates
@@ -66036,7 +65850,7 @@ var AppExecutionServiceBase = class {
    *
    * Resolve, optionally pick, and normalize the execution plan for a selector without scheduling execution.
    */
-  async preflight(data, _templateVars, requestOptions) {
+  async preflightRun(data, _templateVars, requestOptions) {
     if (data === void 0 || data === null) {
       throw new ValidationError("data is required", "data");
     }
@@ -66117,11 +65931,10 @@ var AppExecutionServiceBase = class {
      * Resolve an application and return exact shell command
      *
      * Resolve and select an application using query parameters, then return the exact shell command to run.
-  By default this endpoint is command-only and does not call hoody-terminal. Legacy delegation is opt-in via HOODY_RUN_ENABLE_TERMINAL_EXECUTE=true.
-  Supports all selector fields plus pick mode, output control, deferred execution metadata, and redirect behavior.
+  Supports all selector fields plus pick mode and output control.
      */
-  async runAppGet(options, _templateVars) {
-    const { app, os, source, kind, arch, tags, profile, channel, version, variant, publisher, repo, release, asset, pick: pick2, pick_index, candidate_id, set_id, terminal_id, display, origin, defer_pid, defer_start_time_ticks, defer_timeout_ms, defer_poll_ms, dry_run, print_curl, format, redirect, redirect_to, limit, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+  async resolveGet(options, _templateVars) {
+    const { app, os, source, kind, arch, tags, profile, channel, version, variant, publisher, repo, release, asset, pick: pick2, pick_index, candidate_id, set_id, terminal_id, display, origin, dry_run, print_curl, format, limit, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (app === void 0 || app === null) {
       throw new ValidationError("app is required", "app");
     }
@@ -66173,39 +65986,18 @@ var AppExecutionServiceBase = class {
     }
     if (origin !== void 0 && origin !== null) {
     }
-    if (defer_pid !== void 0 && defer_pid !== null) {
-      if (!Number.isFinite(defer_pid) || !Number.isInteger(defer_pid)) {
-        throw new ValidationError("defer_pid must be an integer", "defer_pid");
-      }
-    }
-    if (defer_start_time_ticks !== void 0 && defer_start_time_ticks !== null) {
-    }
-    if (defer_timeout_ms !== void 0 && defer_timeout_ms !== null) {
-      if (!Number.isFinite(defer_timeout_ms) || !Number.isInteger(defer_timeout_ms)) {
-        throw new ValidationError("defer_timeout_ms must be an integer", "defer_timeout_ms");
-      }
-    }
-    if (defer_poll_ms !== void 0 && defer_poll_ms !== null) {
-      if (!Number.isFinite(defer_poll_ms) || !Number.isInteger(defer_poll_ms)) {
-        throw new ValidationError("defer_poll_ms must be an integer", "defer_poll_ms");
-      }
-    }
     if (dry_run !== void 0 && dry_run !== null) {
     }
     if (print_curl !== void 0 && print_curl !== null) {
     }
     if (format !== void 0 && format !== null) {
     }
-    if (redirect !== void 0 && redirect !== null) {
-    }
-    if (redirect_to !== void 0 && redirect_to !== null) {
-    }
     if (limit !== void 0 && limit !== null) {
       if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
         throw new ValidationError("limit must be an integer", "limit");
       }
     }
-    let requestUrl = this.buildTemplateUrl(`/api/v1/run/run`, _templateVars || {});
+    let requestUrl = this.buildTemplateUrl(`/api/v1/run/resolve`, _templateVars || {});
     const requestData = {};
     requestData.query = {};
     if (app !== void 0) {
@@ -66271,18 +66063,6 @@ var AppExecutionServiceBase = class {
     if (origin !== void 0) {
       requestData.query["origin"] = origin;
     }
-    if (defer_pid !== void 0) {
-      requestData.query["defer_pid"] = defer_pid;
-    }
-    if (defer_start_time_ticks !== void 0) {
-      requestData.query["defer_start_time_ticks"] = defer_start_time_ticks;
-    }
-    if (defer_timeout_ms !== void 0) {
-      requestData.query["defer_timeout_ms"] = defer_timeout_ms;
-    }
-    if (defer_poll_ms !== void 0) {
-      requestData.query["defer_poll_ms"] = defer_poll_ms;
-    }
     if (dry_run !== void 0) {
       requestData.query["dry_run"] = dry_run;
     }
@@ -66291,12 +66071,6 @@ var AppExecutionServiceBase = class {
     }
     if (format !== void 0) {
       requestData.query["format"] = format;
-    }
-    if (redirect !== void 0) {
-      requestData.query["redirect"] = redirect;
-    }
-    if (redirect_to !== void 0) {
-      requestData.query["redirect_to"] = redirect_to;
     }
     if (limit !== void 0) {
       requestData.query["limit"] = limit;
@@ -66333,13 +66107,13 @@ var AppExecutionServiceBase = class {
   /**
    * Resolve an application via JSON body
    *
-   * Same behavior as GET /api/v1/run/run but accepts the full Selector as a JSON request body. Useful for programmatic clients and complex selectors.
+   * Same behavior as GET /api/v1/run/resolve but accepts the full Selector as a JSON request body. Useful for programmatic clients and complex selectors.
    */
-  async runAppPost(data, _templateVars, requestOptions) {
+  async resolve(data, _templateVars, requestOptions) {
     if (data === void 0 || data === null) {
       throw new ValidationError("data is required", "data");
     }
-    let requestUrl = this.buildTemplateUrl(`/api/v1/run/run`, _templateVars || {});
+    let requestUrl = this.buildTemplateUrl(`/api/v1/run/resolve`, _templateVars || {});
     const requestData = {};
     requestData.body = data;
     if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -66379,7 +66153,7 @@ var AppExecutionServiceBase = class {
   Key-value: /api/v1/run/go/app/{app}/os/{os}/source/{source}/kind/{kind}/pick/{pick}/...
      */
   async runPathBased(rest, options, _templateVars) {
-    const { os, source, kind, arch, tags, profile, channel, version, variant, publisher, repo, release, asset, pick: pick2, pick_index, candidate_id, set_id, terminal_id, display, origin, defer_pid, defer_start_time_ticks, defer_timeout_ms, defer_poll_ms, dry_run, print_curl, format, redirect, redirect_to, limit, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    const { os, source, kind, arch, tags, profile, channel, version, variant, publisher, repo, release, asset, pick: pick2, pick_index, candidate_id, set_id, terminal_id, display, origin, dry_run, print_curl, format, limit, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (rest === void 0 || rest === null) {
       throw new ValidationError("rest is required", "rest");
     }
@@ -66431,32 +66205,11 @@ var AppExecutionServiceBase = class {
     }
     if (origin !== void 0 && origin !== null) {
     }
-    if (defer_pid !== void 0 && defer_pid !== null) {
-      if (!Number.isFinite(defer_pid) || !Number.isInteger(defer_pid)) {
-        throw new ValidationError("defer_pid must be an integer", "defer_pid");
-      }
-    }
-    if (defer_start_time_ticks !== void 0 && defer_start_time_ticks !== null) {
-    }
-    if (defer_timeout_ms !== void 0 && defer_timeout_ms !== null) {
-      if (!Number.isFinite(defer_timeout_ms) || !Number.isInteger(defer_timeout_ms)) {
-        throw new ValidationError("defer_timeout_ms must be an integer", "defer_timeout_ms");
-      }
-    }
-    if (defer_poll_ms !== void 0 && defer_poll_ms !== null) {
-      if (!Number.isFinite(defer_poll_ms) || !Number.isInteger(defer_poll_ms)) {
-        throw new ValidationError("defer_poll_ms must be an integer", "defer_poll_ms");
-      }
-    }
     if (dry_run !== void 0 && dry_run !== null) {
     }
     if (print_curl !== void 0 && print_curl !== null) {
     }
     if (format !== void 0 && format !== null) {
-    }
-    if (redirect !== void 0 && redirect !== null) {
-    }
-    if (redirect_to !== void 0 && redirect_to !== null) {
     }
     if (limit !== void 0 && limit !== null) {
       if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
@@ -66527,18 +66280,6 @@ var AppExecutionServiceBase = class {
     if (origin !== void 0) {
       requestData.query["origin"] = origin;
     }
-    if (defer_pid !== void 0) {
-      requestData.query["defer_pid"] = defer_pid;
-    }
-    if (defer_start_time_ticks !== void 0) {
-      requestData.query["defer_start_time_ticks"] = defer_start_time_ticks;
-    }
-    if (defer_timeout_ms !== void 0) {
-      requestData.query["defer_timeout_ms"] = defer_timeout_ms;
-    }
-    if (defer_poll_ms !== void 0) {
-      requestData.query["defer_poll_ms"] = defer_poll_ms;
-    }
     if (dry_run !== void 0) {
       requestData.query["dry_run"] = dry_run;
     }
@@ -66547,12 +66288,6 @@ var AppExecutionServiceBase = class {
     }
     if (format !== void 0) {
       requestData.query["format"] = format;
-    }
-    if (redirect !== void 0) {
-      requestData.query["redirect"] = redirect;
-    }
-    if (redirect_to !== void 0) {
-      requestData.query["redirect_to"] = redirect_to;
     }
     if (limit !== void 0) {
       requestData.query["limit"] = limit;
@@ -66593,7 +66328,7 @@ var AppExecutionServiceBase = class {
   Example: /api/v1/run/t/2/go/linux/nix/firefox runs Firefox in terminal 2.
      */
   async runTerminalAnchored(terminal_id, rest, options, _templateVars) {
-    const { os, source, kind, arch, tags, profile, channel, version, variant, publisher, repo, release, asset, pick: pick2, pick_index, candidate_id, set_id, display, origin, defer_pid, defer_start_time_ticks, defer_timeout_ms, defer_poll_ms, dry_run, print_curl, format, redirect, redirect_to, limit, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    const { os, source, kind, arch, tags, profile, channel, version, variant, publisher, repo, release, asset, pick: pick2, pick_index, candidate_id, set_id, display, origin, dry_run, print_curl, format, limit, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (terminal_id === void 0 || terminal_id === null) {
       throw new ValidationError("terminal_id is required", "terminal_id");
     }
@@ -66648,32 +66383,11 @@ var AppExecutionServiceBase = class {
     }
     if (origin !== void 0 && origin !== null) {
     }
-    if (defer_pid !== void 0 && defer_pid !== null) {
-      if (!Number.isFinite(defer_pid) || !Number.isInteger(defer_pid)) {
-        throw new ValidationError("defer_pid must be an integer", "defer_pid");
-      }
-    }
-    if (defer_start_time_ticks !== void 0 && defer_start_time_ticks !== null) {
-    }
-    if (defer_timeout_ms !== void 0 && defer_timeout_ms !== null) {
-      if (!Number.isFinite(defer_timeout_ms) || !Number.isInteger(defer_timeout_ms)) {
-        throw new ValidationError("defer_timeout_ms must be an integer", "defer_timeout_ms");
-      }
-    }
-    if (defer_poll_ms !== void 0 && defer_poll_ms !== null) {
-      if (!Number.isFinite(defer_poll_ms) || !Number.isInteger(defer_poll_ms)) {
-        throw new ValidationError("defer_poll_ms must be an integer", "defer_poll_ms");
-      }
-    }
     if (dry_run !== void 0 && dry_run !== null) {
     }
     if (print_curl !== void 0 && print_curl !== null) {
     }
     if (format !== void 0 && format !== null) {
-    }
-    if (redirect !== void 0 && redirect !== null) {
-    }
-    if (redirect_to !== void 0 && redirect_to !== null) {
     }
     if (limit !== void 0 && limit !== null) {
       if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
@@ -66742,18 +66456,6 @@ var AppExecutionServiceBase = class {
     if (origin !== void 0) {
       requestData.query["origin"] = origin;
     }
-    if (defer_pid !== void 0) {
-      requestData.query["defer_pid"] = defer_pid;
-    }
-    if (defer_start_time_ticks !== void 0) {
-      requestData.query["defer_start_time_ticks"] = defer_start_time_ticks;
-    }
-    if (defer_timeout_ms !== void 0) {
-      requestData.query["defer_timeout_ms"] = defer_timeout_ms;
-    }
-    if (defer_poll_ms !== void 0) {
-      requestData.query["defer_poll_ms"] = defer_poll_ms;
-    }
     if (dry_run !== void 0) {
       requestData.query["dry_run"] = dry_run;
     }
@@ -66762,12 +66464,6 @@ var AppExecutionServiceBase = class {
     }
     if (format !== void 0) {
       requestData.query["format"] = format;
-    }
-    if (redirect !== void 0) {
-      requestData.query["redirect"] = redirect;
-    }
-    if (redirect_to !== void 0) {
-      requestData.query["redirect_to"] = redirect_to;
     }
     if (limit !== void 0) {
       requestData.query["limit"] = limit;
@@ -66803,12 +66499,178 @@ var AppExecutionServiceBase = class {
   }
 };
 
-// generated/app/app-execution.service.ts
-var AppExecutionService = class extends AppExecutionServiceBase {
+// generated/run/run.service.ts
+var RunService = class extends RunServiceBase {
   // Add custom properties here
 };
 
-// generated/app/jobs.service.generated.ts
+// generated/run/api-documentation.service.generated.ts
+var ApiDocumentationServiceBase2 = class {
+  constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
+    this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
+    __publicField(this, "http");
+    __publicField(this, "_kitNamespace");
+    __publicField(this, "urlTemplatePattern");
+    this._kitNamespace = namespace;
+    this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
+    this.urlTemplatePattern = urlTemplatePattern;
+  }
+  /**
+   * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
+   */
+  _wrapHttpClient(http, ns) {
+    return new Proxy(http, {
+      get: (target, prop) => {
+        const val = target[prop];
+        if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
+          return (...args) => {
+            const dataIndex = prop === "request" ? 2 : 1;
+            const data = args[dataIndex] ? { ...args[dataIndex] } : {};
+            data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
+            args[dataIndex] = data;
+            return val.apply(target, args);
+          };
+        }
+        return typeof val === "function" ? val.bind(target) : val;
+      }
+    });
+  }
+  /**
+   * Build URL with template variables or fallback to baseURL
+   *
+   * @param path - API endpoint path
+   * @param variables - Method-level template variables to override defaults
+   * @returns Full URL (template mode) or path only (baseURL mode)
+   */
+  buildTemplateUrl(path, variables) {
+    var _a;
+    const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-run-{serviceIndex}.{server}.containers.hoody.com";
+    const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
+    const hasVariables = Object.keys(allVariables).length > 0;
+    if (!hasVariables) {
+      return path;
+    }
+    let url2 = urlPattern;
+    for (const [key, value2] of Object.entries(allVariables)) {
+      if (value2 !== void 0) {
+        url2 = url2.replace(`{${key}}`, () => String(value2));
+      }
+    }
+    if (url2.includes("{") && url2.includes("}")) {
+      const processRef = globalThis.process;
+      if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
+        console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
+        console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
+      }
+      return path;
+    }
+    return `${url2}${path}`;
+  }
+  /**
+   * Read nested values from objects using dotted paths.
+   * Example: "data.items" or "data.pagination.total"
+   */
+  getPathValue(input, path) {
+    if (!path) return void 0;
+    const segments = path.split(".").filter(Boolean);
+    let current = input;
+    for (const segment of segments) {
+      if (current === void 0 || current === null) {
+        return void 0;
+      }
+      if (Array.isArray(current) && segment === "length") {
+        current = current.length;
+        continue;
+      }
+      if (typeof current !== "object") {
+        return void 0;
+      }
+      current = current[segment];
+    }
+    return current;
+  }
+  /**
+   * OpenAPI specification (YAML)
+   *
+   * Returns the OpenAPI 3.0.3 specification for this API in YAML format.
+   */
+  async getOpenApiYaml(_templateVars, requestOptions) {
+    let requestUrl = this.buildTemplateUrl(`/api/v1/run/openapi.yaml`, _templateVars || {});
+    const requestData = {};
+    if (requestOptions == null ? void 0 : requestOptions.signal) {
+      requestData.signal = requestOptions.signal;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+      requestData.timeoutMs = requestOptions.timeoutMs;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+      requestData.retries = requestOptions.retries;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+      requestData.retryDelayMs = requestOptions.retryDelayMs;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+      requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+      requestData.middlewareContext = requestOptions.middlewareContext;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+      requestData.authRetry = requestOptions.authRetry;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+      requestData.rawResponse = requestOptions.rawResponse;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+      requestData.responseType = requestOptions.responseType;
+    }
+    return this.http.get(requestUrl, requestData);
+  }
+  /**
+   * OpenAPI specification (JSON)
+   *
+   * Returns the OpenAPI 3.0.3 specification for this API in JSON format. Converted from the canonical YAML source.
+   */
+  async getOpenApiJson(_templateVars, requestOptions) {
+    let requestUrl = this.buildTemplateUrl(`/api/v1/run/openapi.json`, _templateVars || {});
+    const requestData = {};
+    if (requestOptions == null ? void 0 : requestOptions.signal) {
+      requestData.signal = requestOptions.signal;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+      requestData.timeoutMs = requestOptions.timeoutMs;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+      requestData.retries = requestOptions.retries;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+      requestData.retryDelayMs = requestOptions.retryDelayMs;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+      requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+      requestData.middlewareContext = requestOptions.middlewareContext;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+      requestData.authRetry = requestOptions.authRetry;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+      requestData.rawResponse = requestOptions.rawResponse;
+    }
+    if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+      requestData.responseType = requestOptions.responseType;
+    }
+    return this.http.get(requestUrl, requestData);
+  }
+};
+
+// generated/run/api-documentation.service.ts
+var ApiDocumentationService2 = class extends ApiDocumentationServiceBase2 {
+  // Add custom properties here
+};
+
+// generated/run/jobs.service.generated.ts
 var JobsServiceBase2 = class {
   constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
     this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
@@ -66898,7 +66760,7 @@ var JobsServiceBase2 = class {
    *
    * Queue a candidate search in the background and return a job handle that can be polled through the jobs endpoint.
    */
-  async createSearch(data, _templateVars, requestOptions) {
+  async createSearchJob(data, _templateVars, requestOptions) {
     if (data === void 0 || data === null) {
       throw new ValidationError("data is required", "data");
     }
@@ -66939,7 +66801,7 @@ var JobsServiceBase2 = class {
    *
    * Retrieve the current status of an async background job. Supports long-polling with wait=done to block until the job completes or a timeout is reached.
    */
-  async getStatus(job_id, options, _templateVars) {
+  async getJobStatus(job_id, options, _templateVars) {
     const { wait, timeout_ms, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
     if (job_id === void 0 || job_id === null) {
       throw new ValidationError("job_id is required", "job_id");
@@ -66994,12 +66856,12 @@ var JobsServiceBase2 = class {
   }
 };
 
-// generated/app/jobs.service.ts
+// generated/run/jobs.service.ts
 var JobsService2 = class extends JobsServiceBase2 {
   // Add custom properties here
 };
 
-// generated/app/sources.service.generated.ts
+// generated/run/sources.service.generated.ts
 var SourcesServiceBase = class {
   constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
     this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
@@ -67089,7 +66951,7 @@ var SourcesServiceBase = class {
    *
    * List all configured package sources with their type, provider, priority, enabled state, and provider-specific configuration.
    */
-  async list(_templateVars, requestOptions) {
+  async listSources(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/run/sources`, _templateVars || {});
     const requestData = {};
     if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -67126,7 +66988,7 @@ var SourcesServiceBase = class {
    *
    * Add a new package source configuration. The source will be appended to the existing list and immediately available for searches if enabled.
    */
-  async create(data, _templateVars, requestOptions) {
+  async createSource(data, _templateVars, requestOptions) {
     if (data === void 0 || data === null) {
       throw new ValidationError("data is required", "data");
     }
@@ -67167,7 +67029,7 @@ var SourcesServiceBase = class {
    *
    * Partially update a source configuration. Supports merging enabled, priority, pin, and config fields.
    */
-  async update(source_id, data, _templateVars, requestOptions) {
+  async updateSource(source_id, data, _templateVars, requestOptions) {
     if (source_id === void 0 || source_id === null) {
       throw new ValidationError("source_id is required", "source_id");
     }
@@ -67214,7 +67076,7 @@ var SourcesServiceBase = class {
    *
    * Remove a package source by its ID. Returns 204 on success.
    */
-  async delete(source_id, _templateVars, requestOptions) {
+  async deleteSource(source_id, _templateVars, requestOptions) {
     if (source_id === void 0 || source_id === null) {
       throw new ValidationError("source_id is required", "source_id");
     }
@@ -67257,7 +67119,7 @@ var SourcesServiceBase = class {
    *
    * Trigger a sync operation for a specific source. Returns immediately with a job handle for tracking progress via the jobs endpoint.
    */
-  async sync(source_id, _templateVars, requestOptions) {
+  async syncSource(source_id, _templateVars, requestOptions) {
     if (source_id === void 0 || source_id === null) {
       throw new ValidationError("source_id is required", "source_id");
     }
@@ -67301,7 +67163,7 @@ var SourcesServiceBase = class {
      * Trigger a sync operation for all enabled sources. Returns immediately with a job handle.
   Use GET /api/v1/run/jobs/{job_id}?wait=done&timeout_ms=30000 to poll for completion.
      */
-  async syncAll(_templateVars, requestOptions) {
+  async syncAllSources(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/run/sources/sync`, _templateVars || {});
     const requestData = {};
     if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -67338,7 +67200,7 @@ var SourcesServiceBase = class {
    *
    * Return runtime-only health and observability data for a configured source, including recent search or sync failures.
    */
-  async getDiagnostics(source_id, _templateVars, requestOptions) {
+  async getSourceDiagnostics(source_id, _templateVars, requestOptions) {
     if (source_id === void 0 || source_id === null) {
       throw new ValidationError("source_id is required", "source_id");
     }
@@ -67378,12 +67240,12 @@ var SourcesServiceBase = class {
   }
 };
 
-// generated/app/sources.service.ts
+// generated/run/sources.service.ts
 var SourcesService = class extends SourcesServiceBase {
   // Add custom properties here
 };
 
-// generated/app/configuration.service.generated.ts
+// generated/run/configuration.service.generated.ts
 var ConfigurationServiceBase = class {
   constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
     this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
@@ -67473,7 +67335,7 @@ var ConfigurationServiceBase = class {
    *
    * Returns the full persisted runtime configuration including sources, profiles, and the currently selected profile.
    */
-  async get(_templateVars, requestOptions) {
+  async getConfig(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/run/config`, _templateVars || {});
     const requestData = {};
     if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -67507,12 +67369,12 @@ var ConfigurationServiceBase = class {
   }
 };
 
-// generated/app/configuration.service.ts
+// generated/run/configuration.service.ts
 var ConfigurationService = class extends ConfigurationServiceBase {
   // Add custom properties here
 };
 
-// generated/app/profiles.service.generated.ts
+// generated/run/profiles.service.generated.ts
 var ProfilesServiceBase = class {
   constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
     this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
@@ -67602,7 +67464,7 @@ var ProfilesServiceBase = class {
    *
    * List all configured user profiles with their default preferences and source overrides.
    */
-  async list(_templateVars, requestOptions) {
+  async listProfiles(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/run/profiles`, _templateVars || {});
     const requestData = {};
     if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -67639,7 +67501,7 @@ var ProfilesServiceBase = class {
    *
    * Create a new user profile with default preferences and optional source overrides.
    */
-  async create(data, _templateVars, requestOptions) {
+  async createProfile(data, _templateVars, requestOptions) {
     if (data === void 0 || data === null) {
       throw new ValidationError("data is required", "data");
     }
@@ -67680,7 +67542,7 @@ var ProfilesServiceBase = class {
    *
    * Partially update a profile configuration. Supports merging description, defaults, sources_mode, and sources fields.
    */
-  async update(profile, data, _templateVars, requestOptions) {
+  async updateProfile(profile, data, _templateVars, requestOptions) {
     if (profile === void 0 || profile === null) {
       throw new ValidationError("profile is required", "profile");
     }
@@ -67727,7 +67589,7 @@ var ProfilesServiceBase = class {
    *
    * Remove a profile by name. If the deleted profile was the selected profile, the selection is cleared.
    */
-  async delete(profile, _templateVars, requestOptions) {
+  async deleteProfile(profile, _templateVars, requestOptions) {
     if (profile === void 0 || profile === null) {
       throw new ValidationError("profile is required", "profile");
     }
@@ -67770,7 +67632,7 @@ var ProfilesServiceBase = class {
    *
    * Set the given profile as the currently active profile. Its defaults will be applied to all subsequent requests that do not explicitly override them.
    */
-  async select(profile, _templateVars, requestOptions) {
+  async selectProfile(profile, _templateVars, requestOptions) {
     if (profile === void 0 || profile === null) {
       throw new ValidationError("profile is required", "profile");
     }
@@ -67810,12 +67672,12 @@ var ProfilesServiceBase = class {
   }
 };
 
-// generated/app/profiles.service.ts
+// generated/run/profiles.service.ts
 var ProfilesService = class extends ProfilesServiceBase {
   // Add custom properties here
 };
 
-// generated/app/recipes.service.generated.ts
+// generated/run/recipes.service.generated.ts
 var RecipesServiceBase = class {
   constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
     this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
@@ -67905,7 +67767,7 @@ var RecipesServiceBase = class {
    *
    * List all saved recipes that can be reused as named selector templates.
    */
-  async list(_templateVars, requestOptions) {
+  async listRecipes(_templateVars, requestOptions) {
     let requestUrl = this.buildTemplateUrl(`/api/v1/run/recipes`, _templateVars || {});
     const requestData = {};
     if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -67942,7 +67804,7 @@ var RecipesServiceBase = class {
    *
    * Create a named selector template that can later be searched or run with optional overrides.
    */
-  async create(data, _templateVars, requestOptions) {
+  async createRecipe(data, _templateVars, requestOptions) {
     if (data === void 0 || data === null) {
       throw new ValidationError("data is required", "data");
     }
@@ -67983,7 +67845,7 @@ var RecipesServiceBase = class {
    *
    * Retrieve a single saved recipe by name.
    */
-  async get(name, _templateVars, requestOptions) {
+  async getRecipe(name, _templateVars, requestOptions) {
     if (name === void 0 || name === null) {
       throw new ValidationError("name is required", "name");
     }
@@ -68026,7 +67888,7 @@ var RecipesServiceBase = class {
    *
    * Partially update an existing recipe.
    */
-  async update(name, data, _templateVars, requestOptions) {
+  async updateRecipe(name, data, _templateVars, requestOptions) {
     if (name === void 0 || name === null) {
       throw new ValidationError("name is required", "name");
     }
@@ -68073,7 +67935,7 @@ var RecipesServiceBase = class {
    *
    * Remove a saved recipe by name.
    */
-  async delete(name, _templateVars, requestOptions) {
+  async deleteRecipe(name, _templateVars, requestOptions) {
     if (name === void 0 || name === null) {
       throw new ValidationError("name is required", "name");
     }
@@ -68116,7 +67978,7 @@ var RecipesServiceBase = class {
    *
    * Resolve a recipe to a candidate set after applying allowed overrides.
    */
-  async search(name, data, _templateVars, requestOptions) {
+  async searchRecipe(name, data, _templateVars, requestOptions) {
     if (name === void 0 || name === null) {
       throw new ValidationError("name is required", "name");
     }
@@ -68163,7 +68025,7 @@ var RecipesServiceBase = class {
    *
    * Resolve and optionally select a candidate from a saved recipe after applying allowed overrides.
    */
-  async run(name, data, _templateVars, requestOptions) {
+  async runRecipe(name, data, _templateVars, requestOptions) {
     if (name === void 0 || name === null) {
       throw new ValidationError("name is required", "name");
     }
@@ -68207,7 +68069,7 @@ var RecipesServiceBase = class {
   }
 };
 
-// generated/app/recipes.service.ts
+// generated/run/recipes.service.ts
 var RecipesService = class extends RecipesServiceBase {
   // Add custom properties here
 };
@@ -68685,6 +68547,7 @@ __export(agent_exports, {
   JobsService: () => JobsService3,
   LogsService: () => LogsService3,
   LoopsService: () => LoopsService,
+  McpService: () => McpService,
   MemoryService: () => MemoryService,
   ModelsService: () => ModelsService,
   SessionsService: () => SessionsService2,
@@ -68786,7 +68649,7 @@ var SettingsServiceBase = class {
   /**
    * Get BYOA ACP backend status.
    *
-   * Reports the BYOA delegated-session backend availability (codex/claude/gemini/opencode) — enabled flag, on-PATH status, trust posture (acp.status). A fixed status object, NOT a paginated collection. SCOPE: the report is resolved through the layered settings the delegated session would use, so X-Hoody-Config-Dir (override) and X-Hoody-Cwd (project layer) are folded. For REMOTE BYOA, a bound X-Hoody-Container switches the report to ON-CONTAINER detection/login probing, and X-Hoody-Realm scopes that probe (threaded as realm_selector). A realm header WITHOUT a container returns 400 realm_scope_unsupported (the local report has no realm dimension). The per-agent secret value WRITE is PUT /acp/agents/{agent}/secrets/{key} (setACPSecret).
+   * Reports the BYOA delegated-session backend availability (claude) — enabled flag, on-PATH status, trust posture (acp.status). A fixed status object, NOT a paginated collection. SCOPE: the report is resolved through the layered settings the delegated session would use, so X-Hoody-Config-Dir (override) and X-Hoody-Cwd (project layer) are folded. For REMOTE BYOA, a bound X-Hoody-Container switches the report to ON-CONTAINER detection/login probing, and X-Hoody-Realm scopes that probe (threaded as realm_selector). A realm header WITHOUT a container returns 400 realm_scope_unsupported (the local report has no realm dimension). The per-agent secret value WRITE is PUT /acp/agents/{agent}/secrets/{key} (setACPSecret).
    */
   async getACPStatus(options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -68849,9 +68712,153 @@ var SettingsServiceBase = class {
     return this.http.get(requestUrl, requestData);
   }
   /**
+   * Enable or disable a BYOA ACP backend.
+   *
+   * Arms (or disarms) a BYOA ACP backend for delegated sessions (acp.set_enabled). A delegated session — POST /sessions with backend:"acp" — is refused by the daemon while its backend is disabled, so this is the prerequisite for the whole delegated-session capability on a host configured over HTTP. Writes tools.acp_agents.<agent>.enabled in settings.json. 404 unknown_agent for anything that is not a known BYOA backend (claude).
+   */
+  async setACPEnabled(agent, data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (agent === void 0 || agent === null) {
+      throw new ValidationError("agent is required", "agent");
+    }
+    if (agent !== void 0 && agent !== null) {
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/acp/agents/{agent}/enabled`, _templateVars || {});
+    requestUrl = requestUrl.replace("{agent}", () => encodeURIComponent(String(agent)));
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.put(requestUrl, requestData);
+  }
+  /**
+   * Set a BYOA backend&#x27;s default model and effort.
+   *
+   * Sets the default model (and reasoning effort) a BYOA ACP backend runs on (acp.set_agent_model). These are the values the daemon passes to the backend at connect; a delegated session started without an explicit model inherits them. An empty value clears the pin and returns the backend to its own default. 404 unknown_agent for anything that is not a known BYOA backend (claude).
+   */
+  async setACPAgentModel(agent, data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (agent === void 0 || agent === null) {
+      throw new ValidationError("agent is required", "agent");
+    }
+    if (agent !== void 0 && agent !== null) {
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/acp/agents/{agent}/model`, _templateVars || {});
+    requestUrl = requestUrl.replace("{agent}", () => encodeURIComponent(String(agent)));
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.put(requestUrl, requestData);
+  }
+  /**
    * Store an ACP per-agent secret value.
    *
-   * Stores (or clears) one per-backend env VALUE for a BYOA ACP agent (acp.set_secret) in the dedicated 0600 ~/.hoody/acp-secrets.env store under acp/<agent>/<ENVKEY> (atomic temp+rename, flock). settings.json holds only the env KEY NAMES; the VALUE lives ONLY in the 0600 store. An empty value DELETES (unsets) the reference. SECURITY: the value is NEVER returned — the reply confirms only (agent, key, stored|cleared). 404 unknown_agent for an agent that is not a known BYOA backend (codex/claude/gemini/opencode).
+   * Stores (or clears) one per-backend env VALUE for a BYOA ACP agent (acp.set_secret) in the dedicated 0600 ~/.hoody/acp-secrets.env store under acp/<agent>/<ENVKEY> (atomic temp+rename, flock). settings.json holds only the env KEY NAMES; the VALUE lives ONLY in the 0600 store. An empty value DELETES (unsets) the reference. SECURITY: the value is NEVER returned — the reply confirms only (agent, key, stored|cleared). 404 unknown_agent for an agent that is not a known BYOA backend (claude).
    */
   async setACPSecret(agent, key, data, options, _templateVars) {
     const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -71338,6 +71345,75 @@ var GithubServiceBase = class {
     return current;
   }
   /**
+   * Switch the active GitHub account.
+   *
+   * Points every subsequent GitHub operation at an already-linked account. `key` is the account handle from githubAuthStatus's accounts[].key ("<host>/<login>"). Use this to recover when the ACTIVE account's token was revoked and another linked account is still good — adding a PAT activates the account it belongs to, but switching between EXISTING accounts needs this route. 400 when the key names no linked account.
+   */
+  async githubSetActiveAccount(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/github/auth/active`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
    * Start a GitHub device-flow login (or add a PAT).
    *
    * Begins a GitHub login. With NO body token this starts a DEVICE flow and returns the non-secret {device_code, user_code, verification_uri, interval, expires_in}; the user authorizes that URL out of band, then POST /github/auth/login/poll completes the login. With a body `token` (a PAT) this instead validates + persists the token directly (no device flow), returning the linked {login, host}. For GitHub Enterprise (GHES) set body `host` (default github.com) on BOTH the device-flow start and the PAT-add. SECURITY: the token lives only in env / the validate call and is never returned.
@@ -71424,6 +71500,75 @@ var GithubServiceBase = class {
     if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
     }
     let requestUrl = this.buildTemplateUrl(`/api/v1/agent/github/auth/login/poll`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
+   * Remove a linked GitHub account.
+   *
+   * Forgets a linked GitHub account and deletes the copies of its token that an interactive clone persisted into checkouts the daemon can currently reach. The purge is BEST-EFFORT and partial by construction — a repository in a stopped container, or one no open session is bound to, keeps its copy — so the reply carries credential_purge:"partial" and a message saying to revoke the token on GitHub for a complete removal. If the removed account was active, the active pointer moves to a remaining account (or clears).
+   */
+  async githubLogout(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/github/auth/logout`, _templateVars || {});
     const requestData = {};
     requestData.body = data;
     requestData.query = {};
@@ -75046,6 +75191,715 @@ var AgentServiceBase = class {
 
 // generated/agent/agent.service.ts
 var AgentService = class extends AgentServiceBase {
+  // Add custom properties here
+};
+
+// generated/agent/mcp.service.generated.ts
+var McpServiceBase = class {
+  constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
+    this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
+    __publicField(this, "http");
+    __publicField(this, "_kitNamespace");
+    __publicField(this, "urlTemplatePattern");
+    this._kitNamespace = namespace;
+    this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
+    this.urlTemplatePattern = urlTemplatePattern;
+  }
+  /**
+   * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
+   */
+  _wrapHttpClient(http, ns) {
+    return new Proxy(http, {
+      get: (target, prop) => {
+        const val = target[prop];
+        if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
+          return (...args) => {
+            const dataIndex = prop === "request" ? 2 : 1;
+            const data = args[dataIndex] ? { ...args[dataIndex] } : {};
+            data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
+            args[dataIndex] = data;
+            return val.apply(target, args);
+          };
+        }
+        return typeof val === "function" ? val.bind(target) : val;
+      }
+    });
+  }
+  /**
+   * Build URL with template variables or fallback to baseURL
+   *
+   * @param path - API endpoint path
+   * @param variables - Method-level template variables to override defaults
+   * @returns Full URL (template mode) or path only (baseURL mode)
+   */
+  buildTemplateUrl(path, variables) {
+    var _a;
+    const urlPattern = this.urlTemplatePattern || "https://{host}/api/v1/agent";
+    const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
+    const hasVariables = Object.keys(allVariables).length > 0;
+    if (!hasVariables) {
+      return path;
+    }
+    let url2 = urlPattern;
+    for (const [key, value2] of Object.entries(allVariables)) {
+      if (value2 !== void 0) {
+        url2 = url2.replace(`{${key}}`, () => String(value2));
+      }
+    }
+    if (url2.includes("{") && url2.includes("}")) {
+      const processRef = globalThis.process;
+      if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
+        console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
+        console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
+      }
+      return path;
+    }
+    return `${url2}${path}`;
+  }
+  /**
+   * Read nested values from objects using dotted paths.
+   * Example: "data.items" or "data.pagination.total"
+   */
+  getPathValue(input, path) {
+    if (!path) return void 0;
+    const segments = path.split(".").filter(Boolean);
+    let current = input;
+    for (const segment of segments) {
+      if (current === void 0 || current === null) {
+        return void 0;
+      }
+      if (Array.isArray(current) && segment === "length") {
+        current = current.length;
+        continue;
+      }
+      if (typeof current !== "object") {
+        return void 0;
+      }
+      current = current[segment];
+    }
+    return current;
+  }
+  /**
+   * Import MCP servers from another tool&#x27;s config.
+   *
+   * Imports a batch of servers (mcp.import) from a pasted config document or an explicit array. Understands the hoody (mcp_servers list), Claude/Cursor (mcpServers map) and VS Code (servers map) dialects; a document carrying more than one of them is REFUSED rather than guessed at. Validation is WHOLE-BATCH — one bad entry aborts everything, because a partial import leaves a config the operator did not author. Imported servers land DISABLED for review; enable them with setMCPServerEnabled. Requires the begin-write nonce for op:import.
+   */
+  async importMCPServers(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/import`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
+   * Preview an MCP config import.
+   *
+   * Parses a pasted config document into the entries an import WOULD write, without touching any file (mcp.parse). Credential values are stripped from the preview. Use it to show a user what they are about to import; it needs no nonce because it writes nothing.
+   */
+  async parseMCPImport(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/parse`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
+   * Probe an MCP server without saving it.
+   *
+   * Connects to a candidate server config and reports the tools it advertises and the protocol revision it negotiated, then tears the connection down (mcp.probe). Nothing is written. HUMAN-ONLY: probing STARTS A PROCESS (stdio) or makes an outbound request to a caller-chosen URL (http/sse), so a machine caller may not self-approve it and receives 403 human_only. The deny list is enforced on the candidate config before anything is started.
+   */
+  async probeMCPServer(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/probe`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
+   * Reload MCP config and reconnect.
+   *
+   * Re-reads the settings layers and reconciles every live session's MCP pool (mcp.reconnect): servers that vanished or were re-pointed are revoked, the rest are reconnected, and a healthy unchanged server is NOT restarted. Revocation lands in EVERY live session before the response. Reconnection is AWAITED only for the session you named — awaited, not guaranteed: a server that will not start leaves `connected` false and still returns 200. Other sessions reconnect in the background, best-effort. Use it after editing a settings file by hand, or to recover a server that died.
+   */
+  async reconnectMCP(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/reconnect`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
+   * List configured MCP servers.
+   *
+   * Returns the EFFECTIVE merged mcp_servers config for a live session, the per-layer settings files behind it, and the LIVE runtime state of each server (connected, negotiated protocol revision, tool count, pid, revocation reason, recent stderr). Credential VALUES are never returned — env and headers are reported as key NAMES only, because a redacted value invites a client to write the placeholder back as the real secret. Each file entry carries the content hash to pass as expect_hash on a write.
+   */
+  async listMCPServers(options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/servers`, _templateVars || {});
+    const requestData = {};
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.get(requestUrl, requestData);
+  }
+  /**
+   * Create or update an MCP server.
+   *
+   * Writes one mcp_servers entry (mcp.upsert), merging FIELD BY FIELD over any existing entry of the same name so fields you omit keep their stored value — including fields this build does not model. Requires the begin-write nonce for op:upsert. A body carrying the redaction placeholder for a credential is REFUSED rather than stored. On success a re-pointed server is REVOKED in every live session before the response, and the new config is APPLIED to the session you named before the response — its reconnect is AWAITED rather than merely started, so nothing is still pending when this returns. Awaited is NOT succeeded: a server that fails to start or handshake still returns 200, so read `servers[].connected` in this reply before calling its tools. A session that is MID-TURN keeps the tool set it was shown and picks the new one up at the next turn boundary. Other live sessions reconnect in the BACKGROUND, so this never waits out an unrelated session's slow server (it may pause briefly for a free background slot under sustained write pressure); that background pass is best-effort and is skipped under sustained pressure, in which case those sessions pick the change up on the next write or an explicit reconnect. Revocation is never best-effort.
+   */
+  async upsertMCPServer(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/servers`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.put(requestUrl, requestData);
+  }
+  /**
+   * Delete an MCP server.
+   *
+   * Removes one mcp_servers entry (mcp.delete) from the named settings layer. Requires the begin-write nonce for op:delete. The server is REVOKED in every live session before the response returns, so a caller mid-turn cannot still reach it; a stdio child is reaped when its last holder releases.
+   */
+  async deleteMCPServer(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/servers`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.delete(requestUrl, requestData);
+  }
+  /**
+   * Enable or disable an MCP server.
+   *
+   * Flips one entry's enabled flag (mcp.set_enabled) without touching the rest of its config, so credentials and options survive a disable. Requires the begin-write nonce for op:set_enabled. Disabling revokes the server in live sessions immediately.
+   */
+  async setMCPServerEnabled(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/servers/enable`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+  /**
+   * Begin an MCP config write.
+   *
+   * Mints the single-use nonce every MCP write requires (mcp.begin_write) and returns the target settings path plus its current mcp_servers hash. The nonce binds {session, op, resolved path}: a write presenting a nonce minted for a different op or scope fails closed. Pass the returned hash back as expect_hash so a concurrent edit is reported as a conflict rather than silently overwritten.
+   */
+  async beginMCPWrite(data, options, _templateVars) {
+    const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+    if (data === void 0 || data === null) {
+      throw new ValidationError("data is required", "data");
+    }
+    if (realm !== void 0 && realm !== null) {
+    }
+    if (XHoodyCwd !== void 0 && XHoodyCwd !== null) {
+    }
+    if (XHoodyConfigDir !== void 0 && XHoodyConfigDir !== null) {
+    }
+    if (XHoodyContainer !== void 0 && XHoodyContainer !== null) {
+    }
+    if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
+    }
+    let requestUrl = this.buildTemplateUrl(`/api/v1/agent/mcp/write-intents`, _templateVars || {});
+    const requestData = {};
+    requestData.body = data;
+    requestData.query = {};
+    if (realm !== void 0) {
+      requestData.query["realm"] = realm;
+    }
+    requestData.headers = requestData.headers || {};
+    if (XHoodyCwd !== void 0) {
+      requestData.headers["X-Hoody-Cwd"] = String(XHoodyCwd);
+    }
+    if (XHoodyConfigDir !== void 0) {
+      requestData.headers["X-Hoody-Config-Dir"] = String(XHoodyConfigDir);
+    }
+    if (XHoodyContainer !== void 0) {
+      requestData.headers["X-Hoody-Container"] = String(XHoodyContainer);
+    }
+    if (XHoodyRealm !== void 0) {
+      requestData.headers["X-Hoody-Realm"] = String(XHoodyRealm);
+    }
+    if (signal) {
+      requestData.signal = signal;
+    }
+    if (timeoutMs !== void 0) {
+      requestData.timeoutMs = timeoutMs;
+    }
+    if (retries !== void 0) {
+      requestData.retries = retries;
+    }
+    if (retryDelayMs !== void 0) {
+      requestData.retryDelayMs = retryDelayMs;
+    }
+    if (retryOnStatuses !== void 0) {
+      requestData.retryOnStatuses = retryOnStatuses;
+    }
+    if (middlewareContext !== void 0) {
+      requestData.middlewareContext = middlewareContext;
+    }
+    if (authRetry !== void 0) {
+      requestData.authRetry = authRetry;
+    }
+    if (rawResponse !== void 0) {
+      requestData.rawResponse = rawResponse;
+    }
+    if (responseType !== void 0) {
+      requestData.responseType = responseType;
+    }
+    return this.http.post(requestUrl, requestData);
+  }
+};
+
+// generated/agent/mcp.service.ts
+var McpService = class extends McpServiceBase {
   // Add custom properties here
 };
 
@@ -88556,7 +89410,7 @@ var HoodyClient = class _HoodyClient {
     __publicField(this, "pipe");
     __publicField(this, "notes");
     __publicField(this, "tunnel");
-    __publicField(this, "app");
+    __publicField(this, "run");
     __publicField(this, "proxyLogs");
     __publicField(this, "agent");
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga, _Ha, _Ia, _Ja, _Ka, _La, _Ma, _Na, _Oa, _Pa, _Qa, _Ra, _Sa, _Ta, _Ua, _Va, _Wa, _Xa, _Ya, _Za, __a, _$a, _ab, _bb, _cb, _db, _eb, _fb, _gb, _hb, _ib, _jb, _kb, _lb, _mb, _nb, _ob, _pb, _qb, _rb, _sb, _tb, _ub, _vb, _wb, _xb, _yb, _zb, _Ab, _Bb, _Cb, _Db, _Eb, _Fb, _Gb, _Hb, _Ib, _Jb, _Kb, _Lb, _Mb;
@@ -88778,30 +89632,29 @@ var HoodyClient = class _HoodyClient {
     this.tunnel = Object.assign(new TunnelService(this.http, "tunnel", (_hb = this.urlTemplates) == null ? void 0 : _hb["tunnel"], this.getKitUrlTemplatePattern("tunnel")), {
       health: new HealthService14(this.http, "tunnel", (_ib = this.urlTemplates) == null ? void 0 : _ib["tunnel"], this.getKitUrlTemplatePattern("tunnel"))
     });
-    this.app = {
-      health: new HealthService15(this.http, "app", (_jb = this.urlTemplates) == null ? void 0 : _jb["app"], this.getKitUrlTemplatePattern("app")),
-      docs: new ApiDocumentationService2(this.http, "app", (_kb = this.urlTemplates) == null ? void 0 : _kb["app"], this.getKitUrlTemplatePattern("app")),
-      execution: new AppExecutionService(this.http, "app", (_lb = this.urlTemplates) == null ? void 0 : _lb["app"], this.getKitUrlTemplatePattern("app")),
-      jobs: new JobsService2(this.http, "app", (_mb = this.urlTemplates) == null ? void 0 : _mb["app"], this.getKitUrlTemplatePattern("app")),
-      sources: new SourcesService(this.http, "app", (_nb = this.urlTemplates) == null ? void 0 : _nb["app"], this.getKitUrlTemplatePattern("app")),
-      configuration: new ConfigurationService(this.http, "app", (_ob = this.urlTemplates) == null ? void 0 : _ob["app"], this.getKitUrlTemplatePattern("app")),
-      profiles: new ProfilesService(this.http, "app", (_pb = this.urlTemplates) == null ? void 0 : _pb["app"], this.getKitUrlTemplatePattern("app")),
-      recipes: new RecipesService(this.http, "app", (_qb = this.urlTemplates) == null ? void 0 : _qb["app"], this.getKitUrlTemplatePattern("app"))
-    };
+    this.run = Object.assign(new RunService(this.http, "run", (_jb = this.urlTemplates) == null ? void 0 : _jb["run"], this.getKitUrlTemplatePattern("run")), {
+      documentation: new ApiDocumentationService2(this.http, "run", (_kb = this.urlTemplates) == null ? void 0 : _kb["run"], this.getKitUrlTemplatePattern("run")),
+      jobs: new JobsService2(this.http, "run", (_lb = this.urlTemplates) == null ? void 0 : _lb["run"], this.getKitUrlTemplatePattern("run")),
+      sources: new SourcesService(this.http, "run", (_mb = this.urlTemplates) == null ? void 0 : _mb["run"], this.getKitUrlTemplatePattern("run")),
+      configuration: new ConfigurationService(this.http, "run", (_nb = this.urlTemplates) == null ? void 0 : _nb["run"], this.getKitUrlTemplatePattern("run")),
+      profiles: new ProfilesService(this.http, "run", (_ob = this.urlTemplates) == null ? void 0 : _ob["run"], this.getKitUrlTemplatePattern("run")),
+      recipes: new RecipesService(this.http, "run", (_pb = this.urlTemplates) == null ? void 0 : _pb["run"], this.getKitUrlTemplatePattern("run"))
+    });
     this.proxyLogs = {
-      logs: new LogsService2(this.http, "proxyLogs", (_rb = this.urlTemplates) == null ? void 0 : _rb["proxyLogs"], this.getKitUrlTemplatePattern("proxyLogs"))
+      logs: new LogsService2(this.http, "proxyLogs", (_qb = this.urlTemplates) == null ? void 0 : _qb["proxyLogs"], this.getKitUrlTemplatePattern("proxyLogs"))
     };
-    this.agent = Object.assign(new AgentService(this.http, "agent", (_sb = this.urlTemplates) == null ? void 0 : _sb["agent"], this.getKitUrlTemplatePattern("agent")), {
-      settings: new SettingsService(this.http, "agent", (_tb = this.urlTemplates) == null ? void 0 : _tb["agent"], this.getKitUrlTemplatePattern("agent")),
-      agents: new AgentsService(this.http, "agent", (_ub = this.urlTemplates) == null ? void 0 : _ub["agent"], this.getKitUrlTemplatePattern("agent")),
-      discovery: new DiscoveryService(this.http, "agent", (_vb = this.urlTemplates) == null ? void 0 : _vb["agent"], this.getKitUrlTemplatePattern("agent")),
-      system: new SystemService5(this.http, "agent", (_wb = this.urlTemplates) == null ? void 0 : _wb["agent"], this.getKitUrlTemplatePattern("agent")),
-      github: new GithubService(this.http, "agent", (_xb = this.urlTemplates) == null ? void 0 : _xb["agent"], this.getKitUrlTemplatePattern("agent")),
-      headless: new HeadlessService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
-      hoody: new HoodyService(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
-      hooks: new HooksService(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
-      jobs: new JobsService3(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
-      logs: new LogsService3(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
+    this.agent = Object.assign(new AgentService(this.http, "agent", (_rb = this.urlTemplates) == null ? void 0 : _rb["agent"], this.getKitUrlTemplatePattern("agent")), {
+      settings: new SettingsService(this.http, "agent", (_sb = this.urlTemplates) == null ? void 0 : _sb["agent"], this.getKitUrlTemplatePattern("agent")),
+      agents: new AgentsService(this.http, "agent", (_tb = this.urlTemplates) == null ? void 0 : _tb["agent"], this.getKitUrlTemplatePattern("agent")),
+      discovery: new DiscoveryService(this.http, "agent", (_ub = this.urlTemplates) == null ? void 0 : _ub["agent"], this.getKitUrlTemplatePattern("agent")),
+      system: new SystemService5(this.http, "agent", (_vb = this.urlTemplates) == null ? void 0 : _vb["agent"], this.getKitUrlTemplatePattern("agent")),
+      github: new GithubService(this.http, "agent", (_wb = this.urlTemplates) == null ? void 0 : _wb["agent"], this.getKitUrlTemplatePattern("agent")),
+      headless: new HeadlessService(this.http, "agent", (_xb = this.urlTemplates) == null ? void 0 : _xb["agent"], this.getKitUrlTemplatePattern("agent")),
+      hoody: new HoodyService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
+      hooks: new HooksService(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
+      jobs: new JobsService3(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
+      logs: new LogsService3(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
+      mcp: new McpService(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
       memory: new MemoryService(this.http, "agent", (_Db = this.urlTemplates) == null ? void 0 : _Db["agent"], this.getKitUrlTemplatePattern("agent")),
       models: new ModelsService(this.http, "agent", (_Eb = this.urlTemplates) == null ? void 0 : _Eb["agent"], this.getKitUrlTemplatePattern("agent")),
       sessions: new SessionsService2(this.http, "agent", (_Fb = this.urlTemplates) == null ? void 0 : _Fb["agent"], this.getKitUrlTemplatePattern("agent")),
@@ -89106,7 +89959,7 @@ var HoodyClient = class _HoodyClient {
         serverName: containerServer,
         serviceIndex: 1
       },
-      "app": {
+      "run": {
         projectId: container.project_id,
         containerId: container.id,
         server: containerServer,
@@ -89257,7 +90110,6 @@ var HoodyClient = class _HoodyClient {
   resolveKitNamespaceSegment(namespace) {
     if (namespace === "notifications") return "n";
     if (namespace === "proxyLogs") return "logs";
-    if (namespace === "app") return "run";
     return namespace;
   }
   /**
@@ -89274,7 +90126,7 @@ var HoodyClient = class _HoodyClient {
     if (!rawKit) {
       throw new Error("Kit name is required");
     }
-    const normalizedKit = rawKit === "notifications" ? "n" : rawKit === "app" ? "run" : rawKit === "proxylogs" ? "logs" : rawKit;
+    const normalizedKit = rawKit === "notifications" ? "n" : rawKit === "proxylogs" ? "logs" : rawKit;
     if (/^(https?)-\d+$/.test(normalizedKit)) {
       return normalizedKit;
     }
@@ -89303,7 +90155,7 @@ var HoodyClient = class _HoodyClient {
    * Generate URLs for all standard kits
    */
   getKitUrls(container, serviceIndexOrOptions = 1) {
-    const kits = ["terminal", "browser", "code", "curl", "cron", "daemon", "display", "desktop", "exec", "files", "notifications", "sqlite", "watch", "logs", "notes", "app", "pipe", "tunnel", "agent", "proxy"];
+    const kits = ["terminal", "browser", "code", "curl", "cron", "daemon", "display", "desktop", "exec", "files", "notifications", "sqlite", "watch", "logs", "notes", "run", "pipe", "tunnel", "agent", "proxy"];
     const urls = {};
     for (const kit of kits) {
       urls[kit] = this.getKitUrl(kit, container, serviceIndexOrOptions);
@@ -93579,7 +94431,7 @@ function deconstructPacket(packet) {
   pack.attachments = buffers.length;
   return { packet: pack, buffers };
 }
-function _deconstructPacket(data, buffers) {
+function _deconstructPacket(data, buffers, toJSON) {
   if (!data)
     return data;
   if (isBinary(data)) {
@@ -93593,6 +94445,9 @@ function _deconstructPacket(data, buffers) {
     }
     return newData;
   } else if (typeof data === "object" && !(data instanceof Date)) {
+    if (data.toJSON && typeof data.toJSON === "function" && !toJSON) {
+      return _deconstructPacket(data.toJSON(), buffers, true);
+    }
     const newData = {};
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
@@ -93745,9 +94600,6 @@ var Decoder = class _Decoder extends Emitter {
       if (isBinaryEvent || packet.type === PacketType.BINARY_ACK) {
         packet.type = isBinaryEvent ? PacketType.EVENT : PacketType.ACK;
         this.reconstructor = new BinaryReconstructor(packet);
-        if (packet.attachments === 0) {
-          super.emitReserved("decoded", packet);
-        }
       } else {
         super.emitReserved("decoded", packet);
       }
@@ -93788,7 +94640,7 @@ var Decoder = class _Decoder extends Emitter {
         throw new Error("Illegal attachments");
       }
       const n = Number(buf);
-      if (!isInteger(n) || n < 0) {
+      if (!isInteger(n) || n < 1) {
         throw new Error("Illegal attachments");
       } else if (n > this.opts.maxAttachments) {
         throw new Error("too many attachments");
@@ -101081,7 +101933,6 @@ export {
   VaultCryptoError,
   agent_exports as agent,
   api_exports as api,
-  app_exports as app,
   browser_exports as browser,
   clearDiscoveryCache,
   code_exports as code,
@@ -101126,6 +101977,7 @@ export {
   patchHoodyClientMetrics,
   pipe_exports as pipe,
   proxyLogs_exports as proxyLogs,
+  run_exports as run,
   sanitizeDescription,
   scriptPathToName,
   sqlite_exports as sqlite,

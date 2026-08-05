@@ -44,6 +44,7 @@ export interface ApiAuthTokensListResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -143,6 +144,7 @@ export interface ApiAuthTokensCreateRequest {
                 hoody_kit?: boolean;
                 snapshots?: boolean;
                 networking?: boolean;
+                kvm?: boolean;
             };
         };
         projects?: {
@@ -243,6 +245,7 @@ export interface ApiAuthTokensCreateResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -353,6 +356,7 @@ export interface ApiAuthTokensCopyResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -447,6 +451,7 @@ export interface ApiAuthTokensGetCurrentResponse {
                         hoody_kit?: boolean;
                         snapshots?: boolean;
                         networking?: boolean;
+                        kvm?: boolean;
                     };
                 };
                 projects?: {
@@ -554,6 +559,7 @@ export interface ApiAuthTokensUpdatePublicProfileResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -655,6 +661,7 @@ export interface ApiAuthTokensGetResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -751,6 +758,7 @@ export interface ApiAuthTokensUpdateRequest {
                 hoody_kit?: boolean;
                 snapshots?: boolean;
                 networking?: boolean;
+                kvm?: boolean;
             };
         };
         projects?: {
@@ -850,6 +858,7 @@ export interface ApiAuthTokensUpdateResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -960,6 +969,7 @@ export interface ApiAuthTokensAddRealmResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -1065,6 +1075,7 @@ export interface ApiAuthTokensRemoveRealmResponse {
                     hoody_kit?: boolean;
                     snapshots?: boolean;
                     networking?: boolean;
+                    kvm?: boolean;
                 };
             };
             projects?: {
@@ -1217,6 +1228,11 @@ export interface ApiAuthenticationLoginRequest {
     password: string;
     /** Response shape. 'tokens' (default) returns access/refresh tokens. 'intent' returns an opaque auth_intent_token for PKCE exchange (hosted auth UI only; server forces intent mode for requests from the hosted UI origin with code_challenge). */
     response_mode?: "intent" | "tokens";
+    /**
+     * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+     * @maxLength 64
+     */
+    client?: string;
     /** PKCE code_challenge (base64url SHA-256 of the code_verifier). Required when response_mode=intent. */
     code_challenge?: string;
 }
@@ -1316,6 +1332,11 @@ export interface ApiTfaVerifyRequest {
     code: string;
     /** Response shape. 'tokens' (default) returns access/refresh tokens. 'intent' returns an opaque auth_intent_token for PKCE exchange. */
     response_mode?: "intent" | "tokens";
+    /**
+     * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+     * @maxLength 64
+     */
+    client?: string;
 }
 export interface ApiTfaVerifyResponse {
     statusCode: 200;
@@ -1503,6 +1524,7 @@ export interface ApiAuthenticationGetCurrentUserResponse {
                             hoody_kit?: boolean;
                             snapshots?: boolean;
                             networking?: boolean;
+                            kvm?: boolean;
                         };
                     };
                     projects?: {
@@ -1625,6 +1647,7 @@ export interface GetCurrentUserAliasResponse {
                             hoody_kit?: boolean;
                             snapshots?: boolean;
                             networking?: boolean;
+                            kvm?: boolean;
                         };
                     };
                     projects?: {
@@ -2100,6 +2123,7 @@ export interface ApiContainersListByProjectResponse {
             ai?: boolean;
             hoody_kit?: boolean;
             dev_kit?: boolean;
+            kvm?: boolean;
             autostart?: boolean;
             prespawn?: boolean;
             is_default?: boolean;
@@ -2258,7 +2282,7 @@ export interface ApiContainersCreateRequest {
      * @pattern ^#[0-9A-Fa-f]{3}$|^#[0-9A-Fa-f]{6}$|^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$
      */
     color?: string;
-    /** Container image to use. If null or not provided, will use the default configured image. */
+    /** Container image to use. If null or not provided, will use the default configured image. Shorthand is resolved automatically: a bare distribution name or a hyphenated version ("debian", "debian-13") becomes the canonical base image ("debian/13"), as do the "debian:13" and "debian 13" forms. */
     container_image?: string | null;
     /** Whether AI features are enabled (default: true) */
     ai?: boolean;
@@ -2274,6 +2298,10 @@ export interface ApiContainersCreateRequest {
     hoody_kit?: boolean;
     /** Enable dev_kit development tools in the container. Defaults to true when hoody_kit is true, false when hoody_kit is false (unless explicitly set). Cannot be updated after creation. */
     dev_kit?: boolean;
+    /** Enable /dev/kvm passthrough (run full VMs inside the container) at creation. Available on rented / dedicated (bare-metal) servers ONLY — never free tier — and rejected (403) on a free server. Defaults to false. Can also be toggled later via PUT /containers/{id}/kvm on a stopped container. */
+    kvm?: boolean;
+    /** Accepted alias of `kvm` on input (`kvm` wins if both are sent and they must agree). */
+    dev_kvm?: boolean;
     /** Whether the container should start automatically on host boot (default: true) */
     autostart?: boolean;
     /** Whether to mount a ramdisk at /ramdisk in the container (default: true). The ramdisk KEEPS data when you stop/start/reboot the container, but LOSES data if the physical host server reboots. Can store up to 50% of total host memory. Ideal for security (data automatically wiped on server seizure), temporary files, or extremely fast I/O at no cost. */
@@ -2306,6 +2334,8 @@ export interface ApiContainersCreateResponse {
         ai?: boolean;
         hoody_kit?: boolean;
         dev_kit?: boolean;
+        kvm?: boolean;
+        kvm_note?: string;
         autostart?: boolean;
         prespawn?: boolean;
         status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
@@ -2353,6 +2383,7 @@ export interface ApiContainersListResponse {
             ai?: boolean;
             hoody_kit?: boolean;
             dev_kit?: boolean;
+            kvm?: boolean;
             autostart?: boolean;
             ramdisk_scope?: "container" | "project";
             ramdisk?: boolean;
@@ -2535,6 +2566,7 @@ export interface ApiContainersGetResponse {
         ai?: boolean;
         hoody_kit?: boolean;
         dev_kit?: boolean;
+        kvm?: boolean;
         autostart?: boolean;
         ramdisk_scope?: "container" | "project";
         ramdisk?: boolean;
@@ -2744,6 +2776,7 @@ export interface ApiContainersUpdateResponse {
         ai?: boolean;
         hoody_kit?: boolean;
         dev_kit?: boolean;
+        kvm?: boolean;
         autostart?: boolean;
         ramdisk_scope?: "container" | "project";
         ramdisk?: boolean;
@@ -2765,6 +2798,22 @@ export interface ApiContainersDeleteResponse {
     statusCode: number;
     message: string;
     data: null;
+}
+export interface SetContainerKvmPatchRequest {
+    /** Enable (true) or disable (false) /dev/kvm passthrough (run VMs in the container). Rented/dedicated servers only; the container must be stopped. */
+    kvm?: boolean;
+    /** Accepted alias of `kvm` on input (`kvm` wins if both are sent and they must agree). */
+    dev_kvm?: boolean;
+}
+export interface SetContainerKvmPatchResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        id: string;
+        name?: string;
+        status?: string;
+        kvm?: boolean;
+    };
 }
 /**
  * Successful response
@@ -2820,6 +2869,10 @@ export interface ApiContainersCopyRequest {
     copy_firewall_rules?: boolean;
     /** Whether to copy network rules/settings from source container to target container */
     copy_network_rules?: boolean;
+    /** Grant the COPY /dev/kvm passthrough (run full VMs). The copy NEVER inherits the source's KVM grant — the source device is always stripped — so this decides KVM for the copy independently, granting it afresh on the TARGET server. Available on rented / dedicated (bare-metal) targets ONLY (never free tier); rejected (403) otherwise. Defaults to false. */
+    kvm?: boolean;
+    /** Accepted alias of `kvm` on input (`kvm` wins if both are sent and they must agree). */
+    dev_kvm?: boolean;
 }
 /**
  * Container copy initiated successfully
@@ -2859,6 +2912,7 @@ export interface ApiContainersCopyResponse {
         ai?: boolean;
         hoody_kit?: boolean;
         dev_kit?: boolean;
+        kvm?: boolean;
         autostart?: boolean;
         ramdisk_scope?: "container" | "project";
         ramdisk?: boolean;
@@ -3243,6 +3297,10 @@ export interface ApiFirewallListResponse {
             icmp_code?: string;
             direction?: "ingress" | "egress";
         })[];
+        rule_count?: number;
+        byte_count?: number;
+        max_rules?: number;
+        max_bytes?: number;
     };
 }
 export interface ApiFirewallResetResponse {
@@ -3260,19 +3318,37 @@ export interface ApiFirewallAddIngressRuleRequest {
     action: "allow" | "reject" | "drop";
     /** Network protocol */
     protocol: "tcp" | "udp" | "icmp4";
-    /** Human-readable rule description */
+    /**
+     * Human-readable rule description
+     * @maxLength 255
+     */
     description: string;
-    /** Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP. */
+    /**
+     * Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source IPv4 address or CIDR range. Use 0.0.0.0/0 for any source. */
+    /**
+     * Source IPv4 address or CIDR range. Use 0.0.0.0/0 for any source.
+     * @maxLength 512
+     */
     source?: string;
-    /** Source port filter (rarely used) */
+    /**
+     * Source port filter (rarely used)
+     * @maxLength 64
+     */
     source_port?: string;
     /** Rule state (defaults to enabled) */
     state?: "enabled" | "disabled";
-    /** ICMP type number (e.g., 8 for echo request/ping) */
+    /**
+     * ICMP type number (e.g., 8 for echo request/ping)
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number */
+    /**
+     * ICMP code number
+     * @maxLength 8
+     */
     icmp_code?: string;
 }
 export interface ApiFirewallAddIngressRuleResponse {
@@ -3326,17 +3402,35 @@ export interface ApiFirewallToggleIngressRuleRequest {
     action?: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol?: "tcp" | "udp" | "icmp4";
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
-    /** Source IPv4/CIDR address(es) */
+    /**
+     * Source IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     source?: string;
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description?: string;
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
 }
 export interface ApiFirewallToggleIngressRuleResponse {
@@ -3365,19 +3459,37 @@ export interface ApiFirewallRemoveIngressRuleRequest {
     action?: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol?: "tcp" | "udp" | "icmp4";
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source IPv4/CIDR address(es) */
+    /**
+     * Source IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     source?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description?: string;
     /** Rule state */
     state?: "enabled" | "disabled";
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
 }
 export interface ApiFirewallRemoveIngressRuleResponse {
@@ -3404,19 +3516,37 @@ export interface ApiFirewallAddEgressRuleRequest {
     action: "allow" | "reject" | "drop";
     /** Network protocol */
     protocol: "tcp" | "udp" | "icmp4";
-    /** Human-readable rule description */
+    /**
+     * Human-readable rule description
+     * @maxLength 255
+     */
     description: string;
-    /** Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP. */
+    /**
+     * Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Destination IPv4 address or CIDR range. Use 0.0.0.0/0 for any destination. */
+    /**
+     * Destination IPv4 address or CIDR range. Use 0.0.0.0/0 for any destination.
+     * @maxLength 512
+     */
     destination?: string;
-    /** Source port filter (rarely used) */
+    /**
+     * Source port filter (rarely used)
+     * @maxLength 64
+     */
     source_port?: string;
     /** Rule state (defaults to enabled) */
     state?: "enabled" | "disabled";
-    /** ICMP type number */
+    /**
+     * ICMP type number
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number */
+    /**
+     * ICMP code number
+     * @maxLength 8
+     */
     icmp_code?: string;
 }
 export interface ApiFirewallAddEgressRuleResponse {
@@ -3470,17 +3600,35 @@ export interface ApiFirewallToggleEgressRuleRequest {
     action?: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol?: "tcp" | "udp" | "icmp4";
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
-    /** Destination IPv4/CIDR address(es) */
+    /**
+     * Destination IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     destination?: string;
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description?: string;
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
 }
 export interface ApiFirewallToggleEgressRuleResponse {
@@ -3509,19 +3657,37 @@ export interface ApiFirewallRemoveEgressRuleRequest {
     action?: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol?: "tcp" | "udp" | "icmp4";
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Destination IPv4/CIDR address(es) */
+    /**
+     * Destination IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     destination?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description?: string;
     /** Rule state */
     state?: "enabled" | "disabled";
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
 }
 export interface ApiFirewallRemoveEgressRuleResponse {
@@ -4549,7 +4715,7 @@ export interface ApiProxyAliasesCreateRequest {
      * @pattern ^[0-9a-f]{24}$
      */
     container_id: string;
-    /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across your account. Reserved and rejected with 422: the exact label "containers" (it collides with the proxy base domain), and anything starting with "proxy-"/"workspaces-" or equal to "proxy"/"workspaces". Prefixed forms such as "containers-my-app" are allowed. */
+    /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed. */
     alias?: string | null | false;
     /** Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). To point an alias at an HTTP server you run yourself inside the container (a process started via the daemon, a dev server, anything listening on a TCP port) use program "http" — or "https" for a TLS backend — and give the port via the "port" field (e.g. program "http" + port 3000 forwards to http://<container>:3000). The combined "http-3000" form and the legacy "index"-as-port form also work; when more than one is supplied the order of authority is port > the port embedded in "http-<port>" > index, so a leftover/default index can never override a real port. Must be a name or alias from container-programs.json. */
     program: string;
@@ -4629,7 +4795,7 @@ export interface ApiProxyAliasesGetResponse {
 }
 export interface ApiProxyAliasesUpdateRequest {
     /**
-     * New alias name. Must be unique across your account. Reserved and rejected with 422: the exact label "containers" (it collides with the proxy base domain), and anything starting with "proxy-"/"workspaces-" or equal to "proxy"/"workspaces". Prefixed forms such as "containers-my-app" are allowed.
+     * New alias name. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.
      * @minLength 3
      * @maxLength 61
      * @pattern ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
@@ -5844,12 +6010,13 @@ export interface ApiServerRentalRentRequest {
     /** @pattern ^[0-9a-f]{24}$ */
     pool_id?: string;
     /**
-     * Number of days to rent (must match server pricing durations)
+     * Number of days to rent (must match server pricing durations, max 3650)
      * @minimum 1
+     * @maximum 3650
      */
     rental_days: number;
     /**
-     * Ceiling on the TOTAL debit (rental price + one-time setup fee), in integer cents. REQUIRED whenever the server has a non-zero setup_fee_cents — omitting it returns 409 SETUP_FEE_CONFIRMATION_REQUIRED. Optional for fee-less servers. If the live total exceeds this ceiling the request is rejected with 409 CHARGE_EXCEEDS_MAX and nothing is charged; re-read the server and confirm the new total. A ceiling (not an exact match) so a price DROP still succeeds. Read it from pricing.price_tiers[rental_days].total_first_payment.
+     * Ceiling on the TOTAL debit (rental price + one-time setup fee), in integer cents. REQUIRED for every paid rental. Omitting it returns 409 CHARGE_CONFIRMATION_REQUIRED, or 409 SETUP_FEE_CONFIRMATION_REQUIRED when the server also carries a one-time fee. It is NOT optional for fee-less servers: the fee is a separate charge, and its absence never meant the total did not need confirming. Only a total of zero needs no ceiling. If the live total exceeds this ceiling the request is rejected with 409 CHARGE_EXCEEDS_MAX and nothing is charged; re-read the server and confirm the new total. A ceiling (not an exact match) so a price DROP still succeeds. Read it from pricing.price_tiers[rental_days].total_first_payment.
      * @minimum 0
      */
     max_charge_cents?: number;
@@ -5868,6 +6035,7 @@ export interface ApiServerRentalRentResponse {
             status?: string;
             setup_fee_cents?: number;
             total_paid_cents?: number;
+            renewal_pricing_frozen?: Record<string, unknown> | null;
         };
         transaction?: {
             id: string;
@@ -5888,6 +6056,7 @@ export interface ApiRentalsListResponse {
         amount?: string;
         setup_fee_cents?: number;
         total_paid_cents?: number;
+        renewal_pricing_frozen?: Record<string, unknown> | null;
         remaining_days?: number;
         server_id?: null | string;
         pool_id?: null | string;
@@ -5955,6 +6124,7 @@ export interface ApiRentalsGetResponse {
         amount?: string;
         setup_fee_cents?: number;
         total_paid_cents?: number;
+        renewal_pricing_frozen?: Record<string, unknown> | null;
         remaining_days?: number;
         usage_days?: number;
         server_id?: null | string;
@@ -6019,11 +6189,19 @@ export interface ApiRentalsGetResponse {
     example?: unknown;
 }
 export interface ApiRentalsExtendRequest {
+    /** The rental's CURRENT rental_end, exactly as the API returned it. The extension is applied only if it still matches, so a retried request — a lost response, a double click — is refused with 409 EXTENSION_ALREADY_APPLIED instead of charging and extending a second time. Re-read the rental before retrying; never resend blindly. */
+    expected_rental_end: string;
     /**
-     * Number of additional days to extend the rental (must match server pricing durations)
+     * Number of additional days to extend the rental (must match server pricing durations, max 3650)
      * @minimum 1
+     * @maximum 3650
      */
     additional_days: number;
+    /**
+     * The total you confirmed, in whole cents. The extension is refused if it would cost more. REQUIRED when the rental has no frozen renewal price (409 CHARGE_CONFIRMATION_REQUIRED) — without a quoted ceiling nothing bounds what the current server tiers can charge. Optional when the rental still carries frozen tiers, which are themselves a ceiling the customer accepted at purchase.
+     * @minimum 0
+     */
+    max_charge_cents?: number;
 }
 export interface ApiRentalsExtendResponse {
     statusCode: number;
@@ -6036,6 +6214,7 @@ export interface ApiRentalsExtendResponse {
             amount?: string;
             setup_fee_cents?: number;
             total_paid_cents?: number;
+            renewal_pricing_frozen?: Record<string, unknown> | null;
             remaining_days?: number;
         };
         transaction?: {
@@ -6056,6 +6235,7 @@ export interface ApiServerRentalListResponse {
         amount?: string;
         setup_fee_cents?: number;
         total_paid_cents?: number;
+        renewal_pricing_frozen?: Record<string, unknown> | null;
         remaining_days?: number;
         server_id?: null | string;
         pool_id?: null | string;
@@ -6123,6 +6303,7 @@ export interface ApiServerRentalGetResponse {
         amount?: string;
         setup_fee_cents?: number;
         total_paid_cents?: number;
+        renewal_pricing_frozen?: Record<string, unknown> | null;
         remaining_days?: number;
         usage_days?: number;
         server_id?: null | string;
@@ -6405,6 +6586,11 @@ export interface ApiAuthenticationSignupRequest {
      * @maxLength 128
      */
     invite_code?: string;
+    /**
+     * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects account behaviour.
+     * @maxLength 64
+     */
+    client?: string;
 }
 export interface ApiAuthenticationSignupResponse {
     statusCode: 200;
@@ -6414,6 +6600,11 @@ export interface ApiAuthenticationSignupResponse {
     };
 }
 export interface ApiAuthenticationVerifyEmailRequest {
+    /**
+     * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects verification.
+     * @maxLength 64
+     */
+    client?: string;
     /**
      * Verification token from the email link
      * @minLength 64
@@ -6563,6 +6754,11 @@ export interface WaitlistEnrichResponse {
 export interface OauthLaunchInitiateRequest {
     provider: "github" | "google";
     /**
+     * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+     * @maxLength 64
+     */
+    client?: string;
+    /**
      * PKCE code_challenge (base64url SHA-256 of code_verifier, exactly 43 chars)
      * @minLength 43
      * @maxLength 43
@@ -6588,6 +6784,11 @@ export interface OauthDeviceCodeRequest {
      * @maxLength 64
      */
     client_name?: string;
+    /**
+     * Optional client-declared source channel for analytics: web | ssh | webssh | cli | sdk | agent. Unrecognised values are recorded as "unknown"; never affects authentication.
+     * @maxLength 64
+     */
+    client?: string;
     /**
      * Optional PKCE on the device flow itself; if present the poll REQUIRES the verifier
      * @minLength 43
@@ -16701,7 +16902,7 @@ export interface TunnelListTunnelsResponse {
         totalStreams: number;
     };
 }
-export interface AppHealthCheckResponse {
+export interface RunHealthCheckResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16716,7 +16917,7 @@ export interface AppHealthCheckResponse {
         userAgent?: string | null;
     };
 }
-export interface AppDocsGetJsonResponse {
+export interface RunGetOpenApiJsonResponse {
     statusCode: number;
     message: string;
     data: Record<string, unknown>;
@@ -16724,7 +16925,7 @@ export interface AppDocsGetJsonResponse {
 /**
  * Response from the search endpoint containing a set ID for race-free selection and the ranked list of candidates.
  */
-export interface AppExecutionSearchCandidatesResponse {
+export interface RunSearchCandidatesResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16732,8 +16933,8 @@ export interface AppExecutionSearchCandidatesResponse {
         candidates: Candidate[];
     };
 }
-export type AppExecutionSearchCandidatesPagedRequest = PagedSearchRequest;
-export interface AppExecutionSearchCandidatesPagedResponse {
+export type RunSearchCandidatesPagedRequest = PagedSearchRequest;
+export interface RunSearchCandidatesPagedResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16743,11 +16944,11 @@ export interface AppExecutionSearchCandidatesPagedResponse {
         next_cursor?: string;
     };
 }
-export type AppJobsCreateSearchRequest = Selector;
+export type RunCreateSearchJobRequest = Selector;
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppJobsCreateSearchResponse {
+export interface RunCreateSearchJobResponse {
     job_id: string;
     kind: JobKind;
     status: JobStatus2;
@@ -16761,8 +16962,8 @@ export interface AppJobsCreateSearchResponse {
     message: string;
     data: unknown;
 }
-export type AppExecutionPreflightRequest = Selector;
-export interface AppExecutionPreflightResponse {
+export type RunPreflightRunRequest = Selector;
+export interface RunPreflightRunResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16770,16 +16971,14 @@ export interface AppExecutionPreflightResponse {
         selected?: Candidate;
         shell_command?: string;
         recommended_mode: RecommendedMode;
-        terminal_request_preview?: TerminalRequestPreview;
-        redirect_target?: string;
         handoff?: RunHandoff;
         missing_requirements: MissingRequirement[];
         warnings: WarningEntry[];
         effective_policy: EffectivePolicy;
     };
 }
-export type AppExecutionRunBatchRequest = BatchRequest;
-export interface AppExecutionRunBatchResponse {
+export type RunRunBatchRequest = BatchRequest;
+export interface RunRunBatchResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16788,19 +16987,17 @@ export interface AppExecutionRunBatchResponse {
 }
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppRunAppGetResponse {
+export interface RunResolveGetResponse {
     status: RunStatus;
     set_id?: string;
     candidates?: Candidate[];
     selected?: Candidate;
     shell_command?: string;
-    terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
     handoff?: RunHandoff;
@@ -16809,22 +17006,20 @@ export interface AppRunAppGetResponse {
     message: string;
     data: unknown;
 }
-export type AppRunAppPostRequest = Selector;
+export type RunResolveRequest = Selector;
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppRunAppPostResponse {
+export interface RunResolveResponse {
     status: RunStatus;
     set_id?: string;
     candidates?: Candidate[];
     selected?: Candidate;
     shell_command?: string;
-    terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
     handoff?: RunHandoff;
@@ -16835,19 +17030,17 @@ export interface AppRunAppPostResponse {
 }
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppExecutionRunPathBasedResponse {
+export interface RunRunPathBasedResponse {
     status: RunStatus;
     set_id?: string;
     candidates?: Candidate[];
     selected?: Candidate;
     shell_command?: string;
-    terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
     handoff?: RunHandoff;
@@ -16858,19 +17051,17 @@ export interface AppExecutionRunPathBasedResponse {
 }
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppExecutionRunTerminalAnchoredResponse {
+export interface RunRunTerminalAnchoredResponse {
     status: RunStatus;
     set_id?: string;
     candidates?: Candidate[];
     selected?: Candidate;
     shell_command?: string;
-    terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
     handoff?: RunHandoff;
@@ -16879,23 +17070,23 @@ export interface AppExecutionRunTerminalAnchoredResponse {
     message: string;
     data: unknown;
 }
-export interface AppSourcesListResponse {
+export interface RunListSourcesResponse {
     statusCode: number;
     message: string;
     data: SourceConfig[];
 }
-export type AppSourcesCreateRequest = SourceConfig;
-export interface AppSourcesCreateResponse {
+export type RunCreateSourceRequest = SourceConfig;
+export interface RunCreateSourceResponse {
     statusCode: number;
     message: string;
     data: SourceConfig[];
 }
-export interface AppSourcesUpdateRequest {
+export interface RunUpdateSourceRequest {
 }
 /**
  * Configuration for a package source including its type, provider, priority, and provider-specific settings.
  */
-export interface AppSourcesUpdateResponse {
+export interface RunUpdateSourceResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16911,7 +17102,7 @@ export interface AppSourcesUpdateResponse {
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppSourcesSyncResponse {
+export interface RunSyncSourceResponse {
     job_id: string;
     kind: JobKind;
     status: JobStatus2;
@@ -16928,7 +17119,7 @@ export interface AppSourcesSyncResponse {
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppSourcesSyncAllResponse {
+export interface RunSyncAllSourcesResponse {
     job_id: string;
     kind: JobKind;
     status: JobStatus2;
@@ -16942,7 +17133,7 @@ export interface AppSourcesSyncAllResponse {
     message: string;
     data: unknown;
 }
-export interface AppSourcesGetDiagnosticsResponse {
+export interface RunGetSourceDiagnosticsResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16961,7 +17152,7 @@ export interface AppSourcesGetDiagnosticsResponse {
 /**
  * Full runtime configuration snapshot including sources, profiles, and active profile selection.
  */
-export interface AppConfigurationGetResponse {
+export interface RunGetConfigResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16974,23 +17165,23 @@ export interface AppConfigurationGetResponse {
         webhooks?: WebhookConfig[];
     };
 }
-export interface AppProfilesListResponse {
+export interface RunListProfilesResponse {
     statusCode: number;
     message: string;
     data: ProfileConfig[];
 }
-export type AppProfilesCreateRequest = ProfileConfig;
-export interface AppProfilesCreateResponse {
+export type RunCreateProfileRequest = ProfileConfig;
+export interface RunCreateProfileResponse {
     statusCode: number;
     message: string;
     data: ProfileConfig[];
 }
-export interface AppProfilesUpdateRequest {
+export interface RunUpdateProfileRequest {
 }
 /**
  * User profile containing default preferences and source overrides.
  */
-export interface AppProfilesUpdateResponse {
+export interface RunUpdateProfileResponse {
     statusCode: number;
     message: string;
     data: {
@@ -17005,25 +17196,25 @@ export interface AppProfilesUpdateResponse {
 /**
  * Confirms which profile is currently selected as the active default profile.
  */
-export interface AppProfilesSelectResponse {
+export interface RunSelectProfileResponse {
     statusCode: number;
     message: string;
     data: {
         selected_profile: string;
     };
 }
-export interface AppRecipesListResponse {
+export interface RunListRecipesResponse {
     statusCode: number;
     message: string;
     data: RecipeConfig[];
 }
-export type AppRecipesCreateRequest = RecipeConfig;
-export interface AppRecipesCreateResponse {
+export type RunCreateRecipeRequest = RecipeConfig;
+export interface RunCreateRecipeResponse {
     statusCode: number;
     message: string;
     data: RecipeConfig[];
 }
-export interface AppRecipesGetResponse {
+export interface RunGetRecipeResponse {
     statusCode: number;
     message: string;
     data: {
@@ -17033,9 +17224,9 @@ export interface AppRecipesGetResponse {
         allowed_overrides?: string[];
     };
 }
-export interface AppRecipesUpdateRequest {
+export interface RunUpdateRecipeRequest {
 }
-export interface AppRecipesUpdateResponse {
+export interface RunUpdateRecipeResponse {
     statusCode: number;
     message: string;
     data: {
@@ -17045,11 +17236,11 @@ export interface AppRecipesUpdateResponse {
         allowed_overrides?: string[];
     };
 }
-export type AppRecipesSearchRequest = RecipeExecutionRequest;
+export type RunSearchRecipeRequest = RecipeExecutionRequest;
 /**
  * Response from the search endpoint containing a set ID for race-free selection and the ranked list of candidates.
  */
-export interface AppRecipesSearchResponse {
+export interface RunSearchRecipeResponse {
     statusCode: number;
     message: string;
     data: {
@@ -17057,22 +17248,20 @@ export interface AppRecipesSearchResponse {
         candidates: Candidate[];
     };
 }
-export type AppRecipesRunRequest = RecipeExecutionRequest;
+export type RunRunRecipeRequest = RecipeExecutionRequest;
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
-export interface AppRecipesRunResponse {
+export interface RunRunRecipeResponse {
     status: RunStatus;
     set_id?: string;
     candidates?: Candidate[];
     selected?: Candidate;
     shell_command?: string;
-    terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
     handoff?: RunHandoff;
@@ -17084,7 +17273,7 @@ export interface AppRecipesRunResponse {
 /**
  * Represents an async background job (e.g. source sync).
  */
-export interface AppJobsGetStatusResponse {
+export interface RunGetJobStatusResponse {
     job_id: string;
     kind: JobKind;
     status: JobStatus2;
@@ -17126,6 +17315,39 @@ export interface AgentGetACPStatusResponse {
     statusCode: number;
     message: string;
     data: Record<string, unknown>;
+}
+export interface AgentSetACPEnabledRequest {
+    /** True arms the backend; false disarms it. Defaults to true when omitted. */
+    enabled?: boolean;
+}
+/**
+ * Confirmation of the stored enablement.
+ */
+export interface AgentSetACPEnabledResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        agent?: string;
+        enabled?: boolean;
+    };
+}
+export interface AgentSetACPAgentModelRequest {
+    /** Backend model id or alias. Empty clears the pin. */
+    model?: string;
+    /** Reasoning effort (backend-specific; empty clears). */
+    effort?: string;
+}
+/**
+ * Confirmation of the stored defaults.
+ */
+export interface AgentSetACPAgentModelResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        agent?: string;
+        model?: string;
+        effort?: string;
+    };
 }
 export interface AgentSetACPSecretRequest {
     /** The env secret value. Empty string clears (unsets) the reference. Stored only in the 0600 acp-secrets.env store. */
@@ -17295,11 +17517,25 @@ export interface AgentListContainersResponse {
     message: string;
     data: unknown;
 }
+export interface AgentGithubSetActiveAccountRequest {
+    /** Account handle from githubAuthStatus accounts[].key, e.g. "github.com/octocat". */
+    key: string;
+}
+/**
+ * The verbatim reply {status, accounts} — the refreshed secret-free account list with the new active one marked.
+ */
+export interface AgentGithubSetActiveAccountResponse {
+    statusCode: number;
+    message: string;
+    data: Record<string, unknown>;
+}
 export interface AgentGithubLoginRequest {
     /** Optional PAT. When present the login validates + persists this token (no device flow); kept in env, never returned. */
     token?: string;
     /** GitHub host for GitHub Enterprise (GHES); defaults to github.com. Must match the host on the subsequent poll call. */
     host?: string;
+    /** Whether the linked account becomes the ACTIVE one. Defaults to FALSE — linking stores the credential without changing which account is in use, because activation decides the identity your next push authenticates as. Send true when RECOVERING from an expired/revoked token: the account is linked and activated in this single call, so no follow-up githubSetActiveAccount is needed. The first account ever linked becomes active regardless, since none was. A non-boolean value is rejected. */
+    activate?: boolean;
 }
 /**
  * The reply: a device flow {device_code, user_code, verification_uri, interval, expires_in}, or for a PAT {key, login, host}.
@@ -17323,6 +17559,18 @@ export interface AgentGithubLoginPollRequest {
  * The reply {key, login, host} — secret-free.
  */
 export interface AgentGithubLoginPollResponse {
+    statusCode: number;
+    message: string;
+    data: Record<string, unknown>;
+}
+export interface AgentGithubLogoutRequest {
+    /** Account handle from githubAuthStatus accounts[].key, e.g. "github.com/octocat". */
+    key: string;
+}
+/**
+ * The verbatim reply {status, accounts, credential_purge, message}.
+ */
+export interface AgentGithubLogoutResponse {
     statusCode: number;
     message: string;
     data: Record<string, unknown>;
@@ -17658,6 +17906,207 @@ export interface AgentLogsStatsResponse {
     statusCode: number;
     message: string;
     data: Record<string, unknown>;
+}
+export interface AgentImportMCPServersRequest {
+    /** Live session id. */
+    session_id: string;
+    /** Single-use nonce from beginMCPWrite minted for op:import and this scope. */
+    nonce: string;
+    /** Settings layer to write. Must match the scope the nonce was minted for. */
+    scope?: "user" | "project" | "local";
+    /** A pasted config document in any supported dialect. Mutually exclusive with servers. */
+    document?: string;
+    /** Explicit server entries, in hoody's own shape. Mutually exclusive with document. */
+    servers?: unknown[];
+    /** Overwrite entries whose name already exists. Without it, a collision aborts the whole import. */
+    replace?: boolean;
+    /** The mcp_servers hash you last read. */
+    expect_hash: string;
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.import` RPC.
+ */
+export interface AgentImportMCPServersResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        sessions?: number;
+        revoked?: number;
+        deferred_sessions?: number;
+        deferred_started?: boolean;
+        servers?: unknown[];
+        path?: string;
+        hash?: string;
+        imported?: number;
+    };
+}
+export interface AgentParseMCPImportRequest {
+    /** Live session id. */
+    session_id: string;
+    /** A config document in any supported dialect. */
+    document: string;
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.parse` RPC.
+ */
+export interface AgentParseMCPImportResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        dialect?: string;
+        servers?: unknown[];
+        count?: number;
+    };
+}
+export interface AgentProbeMCPServerRequest {
+    /** Live session id (supplies the deny list and transport policy). */
+    session_id: string;
+    /** The candidate entry, same shape as upsertMCPServer's server. */
+    server: Record<string, unknown>;
+}
+export interface AgentReconnectMCPRequest {
+    /** Live session id. */
+    session_id: string;
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.reconnect` RPC.
+ */
+export interface AgentReconnectMCPResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        sessions?: number;
+        revoked?: number;
+        deferred_sessions?: number;
+        deferred_started?: boolean;
+        servers?: unknown[];
+    };
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.list` RPC.
+ */
+export interface AgentListMCPServersResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        servers?: unknown[];
+        files?: unknown[];
+        warnings?: unknown[];
+    };
+}
+export interface AgentUpsertMCPServerRequest {
+    /** Live session id. */
+    session_id: string;
+    /** Single-use nonce from beginMCPWrite minted for op:upsert and this scope; the RPC fails closed without it. */
+    nonce: string;
+    /** Settings layer to write. Must match the scope the nonce was minted for. */
+    scope?: "user" | "project" | "local";
+    /** The mcp_servers hash you last read, as returned by beginMCPWrite or listMCPServers. REQUIRED: a mismatch returns a conflict instead of overwriting a concurrent edit, and a first write into a file that does not exist yet states its expectation with the empty-array hash rather than omitting this. */
+    expect_hash: string;
+    /** The server entry. Fields: `name` — letters, digits, `_` and `-`, max 64 chars, no `__` (it separates the tool name), may not be `hoody` or `mcp` — both are reserved namespaces, and that check alone is case-insensitive, so `Hoody` is refused too; `type` — `stdio` (default), `http` (aliases `url`, `streamable`, `streamable-http`) for Streamable HTTP, or `sse` for the deprecated 2024-11-05 HTTP+SSE transport, matched case-insensitively; `command` + `args` for stdio, or `url` for the remote transports; `env` / `headers` — values support full ${VAR} expansion, so a token lives in your environment rather than in settings.json; `allowed_tools` — restrict which of the server's tools are advertised AND dispatchable; `require_confirmation` — park every call from this server for human approval; `enabled` — defaults to true; a disabled server keeps its config but is neither connected nor advertised. */
+    server: Record<string, unknown>;
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.upsert` RPC.
+ */
+export interface AgentUpsertMCPServerResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        sessions?: number;
+        revoked?: number;
+        deferred_sessions?: number;
+        deferred_started?: boolean;
+        servers?: unknown[];
+        path?: string;
+        hash?: string;
+    };
+}
+export interface AgentDeleteMCPServerRequest {
+    /** Live session id. */
+    session_id: string;
+    /** Single-use nonce from beginMCPWrite minted for op:delete and this scope. */
+    nonce: string;
+    /** Settings layer to write. Must match the scope the nonce was minted for. */
+    scope?: "user" | "project" | "local";
+    /** The server name to remove. */
+    name: string;
+    /** The mcp_servers hash you last read. */
+    expect_hash: string;
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.delete` RPC.
+ */
+export interface AgentDeleteMCPServerResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        sessions?: number;
+        revoked?: number;
+        deferred_sessions?: number;
+        deferred_started?: boolean;
+        servers?: unknown[];
+        path?: string;
+        hash?: string;
+    };
+}
+export interface AgentSetMCPServerEnabledRequest {
+    /** Live session id. */
+    session_id: string;
+    /** Single-use nonce from beginMCPWrite minted for op:set_enabled and this scope. */
+    nonce: string;
+    /** Settings layer to write. Must match the scope the nonce was minted for. */
+    scope?: "user" | "project" | "local";
+    /** The server name. */
+    name: string;
+    /** true to enable, false to disable. */
+    enabled: boolean;
+    /** The mcp_servers hash you last read. */
+    expect_hash: string;
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.set_enabled` RPC.
+ */
+export interface AgentSetMCPServerEnabledResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        sessions?: number;
+        revoked?: number;
+        deferred_sessions?: number;
+        deferred_started?: boolean;
+        servers?: unknown[];
+        path?: string;
+        hash?: string;
+    };
+}
+export interface AgentBeginMCPWriteRequest {
+    /** Live session id (MCP config is resolved against the session's settings layers). */
+    session_id: string;
+    /** Which write the nonce authorizes. The minted nonce is valid for this op alone. */
+    op: "upsert" | "delete" | "set_enabled" | "import";
+    /** Settings layer to write. Defaults to user, or project when there is no user layer (which is the case under --config-dir). */
+    scope?: "user" | "project" | "local";
+}
+/**
+ * The verbatim JSON reply from the daemon `mcp.begin_write` RPC.
+ */
+export interface AgentBeginMCPWriteResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status?: string;
+        nonce?: string;
+        path?: string;
+        hash?: string;
+    };
 }
 export interface AgentConsolidateMemoryRequest {
     /** Project key to consolidate (required). */
@@ -18032,7 +18481,7 @@ export interface AgentCreateSessionRequest {
     fork_turn_idx?: number;
     /** Session backend: "" (Hoody LLM) or "acp" (BYOA delegated agent). */
     backend?: string;
-    /** BYOA agent when backend:"acp": codex|claude|gemini|opencode. */
+    /** BYOA agent when backend:"acp": claude. */
     delegated_agent?: string;
     /** Start the session in headless posture. */
     headless?: boolean;
@@ -19505,6 +19954,7 @@ export interface AuthToken {
                 hoody_kit?: boolean;
                 snapshots?: boolean;
                 networking?: boolean;
+                kvm?: boolean;
             };
         };
         projects?: {
@@ -19588,21 +20038,42 @@ export interface DuplicateRuleInfo {
     action?: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol?: "tcp" | "udp" | "icmp4";
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description?: string;
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source IPv4/CIDR address(es) */
+    /**
+     * Source IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     source?: string;
-    /** Destination IPv4/CIDR address(es) */
+    /**
+     * Destination IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     destination?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
     /** Rule state */
     state?: "enabled" | "disabled";
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
     /** Indicates the rule was a duplicate */
     duplicate?: boolean;
@@ -19996,6 +20467,7 @@ export interface def_13 {
                 hoody_kit?: boolean;
                 snapshots?: boolean;
                 networking?: boolean;
+                kvm?: boolean;
             };
         };
         projects?: {
@@ -20073,21 +20545,42 @@ export interface def_14 {
     action: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol: "tcp" | "udp" | "icmp4";
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description: string;
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source IPv4/CIDR address(es) */
+    /**
+     * Source IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     source?: string;
-    /** Destination IPv4/CIDR address(es) */
+    /**
+     * Destination IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     destination?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
     /** Rule state */
     state?: "enabled" | "disabled";
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
     /** Rule direction (ingress for inbound, egress for outbound) */
     direction?: "ingress" | "egress";
@@ -20103,21 +20596,42 @@ export interface def_16 {
     action?: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol?: "tcp" | "udp" | "icmp4";
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description?: string;
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source IPv4/CIDR address(es) */
+    /**
+     * Source IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     source?: string;
-    /** Destination IPv4/CIDR address(es) */
+    /**
+     * Destination IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     destination?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
     /** Rule state */
     state?: "enabled" | "disabled";
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
     /** Indicates the rule was a duplicate */
     duplicate?: boolean;
@@ -21529,7 +22043,7 @@ export interface NotifyRequest {
     body?: string;
     /** Notification category */
     category?: string;
-    /** Target display ID (e.g., "0" or ":0") */
+    /** Target display ID (e.g., "1" or ":1") */
     display: string;
     /** Expiration time in milliseconds */
     expire_time?: number;
@@ -21866,8 +22380,6 @@ export interface PreflightResponse {
         selected?: Candidate;
         shell_command?: string;
         recommended_mode: RecommendedMode;
-        terminal_request_preview?: TerminalRequestPreview;
-        redirect_target?: string;
         handoff?: RunHandoff;
         missing_requirements: MissingRequirement[];
         warnings: WarningEntry[];
@@ -22024,21 +22536,42 @@ export interface FirewallRule {
     action: "allow" | "reject" | "drop";
     /** Protocol type */
     protocol: "tcp" | "udp" | "icmp4";
-    /** Rule description */
+    /**
+     * Rule description
+     * @maxLength 255
+     */
     description: string;
-    /** Destination port, range (e.g., 80-90), or list (e.g., 80,443) */
+    /**
+     * Destination port, range (e.g., 80-90), or list (e.g., 80,443)
+     * @maxLength 64
+     */
     destination_port?: string;
-    /** Source IPv4/CIDR address(es) */
+    /**
+     * Source IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     source?: string;
-    /** Destination IPv4/CIDR address(es) */
+    /**
+     * Destination IPv4/CIDR address(es)
+     * @maxLength 512
+     */
     destination?: string;
-    /** Source port, range, or list */
+    /**
+     * Source port, range, or list
+     * @maxLength 64
+     */
     source_port?: string;
     /** Rule state */
     state?: "enabled" | "disabled";
-    /** ICMP type number for icmp4 protocol */
+    /**
+     * ICMP type number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_type?: string;
-    /** ICMP code number for icmp4 protocol */
+    /**
+     * ICMP code number for icmp4 protocol
+     * @maxLength 8
+     */
     icmp_code?: string;
     /** Rule direction (ingress for inbound, egress for outbound) */
     direction?: "ingress" | "egress";
@@ -22696,18 +23229,7 @@ export interface HealthMemory8 {
 /**
  * Recommended execution mode returned by preflight.
  */
-export type RecommendedMode = "search-only" | "dry-run" | "delegated-execute" | "printed-curl";
-export interface TerminalRequestPreview {
-    terminal_url: string;
-    terminal_id: number;
-    display: string;
-    origin: string;
-    command: string;
-    defer_pid?: number;
-    defer_start_time_ticks?: string;
-    defer_timeout_ms?: number;
-    defer_poll_ms?: number;
-}
+export type RecommendedMode = "search-only" | "dry-run" | "printed-curl";
 export interface MissingRequirement {
     kind: string;
     name: string;
@@ -22717,8 +23239,6 @@ export interface MissingRequirement {
 export interface EffectivePolicy {
     require_verified: boolean;
     require_integrity: boolean;
-    allow_delegated_execution: boolean;
-    allow_redirect: boolean;
     deny_providers?: SourceKind[];
     deny_source_ids?: string[];
 }
@@ -22970,8 +23490,8 @@ export interface TunnelBindingView {
 export type BatchMode = "search" | "run";
 /**
  * Full selector (search/run request) combining query filters, pick mode,
-execution context, deferred execution, and output control fields. Can be
-expressed via query parameters, path segments, or JSON body.
+execution context, and output control fields. Can be expressed via query
+parameters, path segments, or JSON body.
  */
 export interface Selector {
     /** Primary name query (aliases q, name) */
@@ -23019,20 +23539,8 @@ export interface Selector {
     display?: string;
     /** Origin identifier for observability propagation */
     origin?: string;
-    /** Defer command injection until this PID exits (TUI-safe) */
-    defer_pid?: number;
-    /** /proc/<pid>/stat field 22 to avoid PID reuse bugs */
-    defer_start_time_ticks?: string;
-    /** Max wait time for defer_pid exit in ms (default: 60000) */
-    defer_timeout_ms?: number;
-    /** Poll interval for defer_pid in ms (default: 50, min: 10) */
-    defer_poll_ms?: number;
     format?: OutputFormat;
-    /** If true and HTML, redirect to display page after scheduling */
-    redirect?: boolean;
-    /** Override redirect target URL */
-    redirect_to?: string;
-    /** If true, force command-only output (no hoody-terminal delegation) */
+    /** Force command-only output. hoody-run never executes, so this is always in effect. */
     dry_run?: boolean;
     print_curl?: PrintCurlMode;
     /**
@@ -23055,9 +23563,8 @@ export interface SearchResponse {
 }
 /**
  * Response from run endpoints. The shape varies by status:
-- resolved: set_id + candidates (no execution)
-- scheduled: set_id + selected + shell_command + terminal response (only when execution is enabled)
-- dry-run: set_id + selected + shell_command (default command-only behavior)
+- resolved: set_id + candidates (no single candidate selected)
+- dry-run: set_id + selected + shell_command (hoody-run never executes)
 - printed-curl: set_id + selected + curl command
 - error: set_id + error message
  */
@@ -23067,7 +23574,6 @@ export interface RunResponse {
     candidates?: Candidate[];
     selected?: Candidate;
     shell_command?: string;
-    terminal?: TerminalExecuteResponse;
     curl?: string;
     error?: string;
     handoff?: RunHandoff;
@@ -23119,8 +23625,6 @@ export interface ProfileDefaults {
     terminal_id?: number;
     /** Default X11 DISPLAY number */
     display?: string;
-    /** Default redirect behavior for HTML responses */
-    redirect?: boolean;
     /**
      * Default maximum candidates to return
      * @minimum 1
@@ -23148,8 +23652,6 @@ export interface ProfileSourceOverride {
 export interface PolicyConfig {
     require_verified?: boolean;
     require_integrity?: boolean;
-    allow_delegated_execution?: boolean;
-    allow_redirect?: boolean;
     deny_providers?: SourceKind[];
     deny_source_ids?: string[];
 }
@@ -23183,13 +23685,7 @@ export interface SelectorTemplate {
     terminal_id?: number;
     display?: string;
     origin?: string;
-    defer_pid?: number;
-    defer_start_time_ticks?: string;
-    defer_timeout_ms?: number;
-    defer_poll_ms?: number;
     format?: OutputFormat;
-    redirect?: boolean;
-    redirect_to?: string;
     dry_run?: boolean;
     print_curl?: PrintCurlMode;
     /**
@@ -23213,13 +23709,12 @@ export type AnyValue = string | number | boolean | unknown[] | Record<string, un
 export type WatchEventKind = "created" | "modified" | "removed" | "renamed" | "metadata" | "overflow" | "other";
 /**
  * Status of a run request:
-- resolved: candidates found but no execution (no pick or pick=ask)
-- scheduled: candidate selected and execution delegated to hoody-terminal (only when HOODY_RUN_ENABLE_TERMINAL_EXECUTE=true)
-- dry-run: candidate selected and exact shell command returned without delegation
+- resolved: candidates found but no single candidate selected (no pick or pick=ask)
+- dry-run: candidate selected and its exact shell command returned (hoody-run never executes)
 - printed-curl: equivalent curl command generated (print_curl set)
-- error: an error occurred during resolution or execution
+- error: an error occurred during resolution
  */
-export type RunStatus = "resolved" | "scheduled" | "dry-run" | "printed-curl" | "error";
+export type RunStatus = "resolved" | "dry-run" | "printed-curl" | "error";
 /**
  * A standardized runnable application candidate produced by a source provider. Contains all information needed to identify, rank, and return exact shell commands for execution.
  */
@@ -23230,6 +23725,8 @@ export interface Candidate {
     title: string;
     /** Brief description of the candidate */
     description: string;
+    /** Whether the candidate is a GUI or CLI application. `any` means the source does not classify it; only sources with an explicit kind (e.g. manifest registries) emit gui/cli. */
+    kind: AppKind;
     /** Provider-reported version string */
     version?: string;
     /** Provider or project homepage URL */
@@ -23255,33 +23752,16 @@ export interface Candidate {
     href_path?: string;
 }
 /**
- * Response received from the hoody-terminal execute API after delegating command execution.
- */
-export interface TerminalExecuteResponse {
-    statusCode: number;
-    message: string;
-    data: {
-        status: number;
-        ok: boolean;
-        body_text?: string;
-        json: Record<string, unknown> | null;
-    };
-}
-/**
- * Where the selected app appears (scheduled) or will appear (preview).
+ * Where the selected app will appear once the returned command runs.
  */
 export interface RunHandoff {
     state: HandoffState;
     terminal_id: number;
     display: string;
-    /** Live display page URL (present only when state=scheduled) */
-    display_url?: string;
-    /** Live terminal viewer URL (present only when state=scheduled) */
-    terminal_url?: string;
-    /** Predicted display page URL (present only when state=preview) */
-    predicted_display_url?: string;
-    /** Predicted terminal viewer URL (present only when state=preview) */
-    predicted_terminal_url?: string;
+    /** Preview display page URL — where the app will appear (present only when state=preview) */
+    preview_display_url?: string;
+    /** Preview terminal viewer URL — where the app will appear (present only when state=preview) */
+    preview_terminal_url?: string;
 }
 export interface WarningEntry {
     code: string;
@@ -23291,10 +23771,6 @@ export interface WarningEntry {
  * Target app runtime OS (not the host OS). Determines which candidates are eligible.
  */
 export type Os = "linux" | "windows" | "any";
-/**
- * Application kind filter - gui for graphical apps, cli for terminal apps, any for both.
- */
-export type AppKind = "gui" | "cli" | "any";
 /**
  * Target CPU architecture for filtering candidates.
  */
@@ -23313,10 +23789,13 @@ export type PickMode = "ask" | "first" | "index" | "id";
 export type OutputFormat = "json" | "html";
 /**
  * Curl command generation mode:
-- hoody-run: generate curl for the hoody-run /api/v1/run/run endpoint
-- hoody-terminal: generate curl for the hoody-terminal /api/v1/terminal/execute endpoint directly
+- hoody-run: generate curl for the hoody-run /api/v1/run/resolve endpoint
  */
-export type PrintCurlMode = "hoody-run" | "hoody-terminal";
+export type PrintCurlMode = "hoody-run";
+/**
+ * Application kind filter - gui for graphical apps, cli for terminal apps, any for both.
+ */
+export type AppKind = "gui" | "cli" | "any";
 /**
  * Package source provider kind. Used for filtering candidates by source and as the provider field on candidates.
  */
@@ -23363,12 +23842,10 @@ export interface CandidateProvenance {
     provider_notes?: string[];
 }
 /**
- * Liveness of the display/terminal handoff:
-- preview: nothing executed; predicted_* URLs show where the app WILL appear
-- scheduled: delegated execution succeeded; live display_url/terminal_url
-- failed: delegation was attempted and failed; no URL is asserted
+ * Liveness of the handoff. hoody-run never executes, so the only state is:
+- preview: nothing executed; preview_* URLs show where the app WILL appear
  */
-export type HandoffState = "preview" | "scheduled" | "failed";
+export type HandoffState = "preview";
 /**
  * Structured execution plan mode.
  */

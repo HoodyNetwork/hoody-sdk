@@ -10,23 +10,19 @@
  *   - SIGINT state machine: idle → confirm-exit; inflight → abort + return
  *     to idle. Ctrl-D exits cleanly.
  *   - Slash commands never network (dispatched synchronously).
- *   - MAX_TOOL_CALLS_PER_TURN=1 still enforced via dispatchTurn.
- *   - `/private` toggles disk-write + disk-read disable for rest of REPL.
- *   - `/tool on|off` mutates tool-enabled state for subsequent turns.
+ *   - `/private` turns disk-write + disk-read disable on for the rest of the
+ *     REPL, and cannot downgrade process-scoped `--private`.
  */
-import type { ProviderConfig } from '../ai/provider-resolve.js';
 export interface ReplOptions {
-    provider: ProviderConfig;
-    model: string;
-    maxTokens: number;
-    temperature: number;
-    initialToolsEnabled: boolean;
     initialPrivate: boolean;
     persist: boolean;
     resume: string | boolean | undefined;
     acceptEndpointFlag: string | undefined;
     acceptEndpointEnv: string | undefined;
-    contextPreface: string | undefined;
+    /** false when --no-markdown was passed. */
+    markdown?: boolean;
+    /** false when --no-stream was passed: buffer the answer, print it once. */
+    stream?: boolean;
     /** For tests. */
     input?: NodeJS.ReadableStream;
     output?: NodeJS.WritableStream;

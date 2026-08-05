@@ -20,7 +20,7 @@
  * Malformed JSONL → rename to <name>.bad-<unixts>.jsonl + stderr warning
  * + fresh start. No auto-delete (user may want to recover).
  */
-export type TurnRole = 'user' | 'assistant' | 'system';
+export type TurnRole = 'user' | 'assistant';
 export interface SessionMeta {
     type: 'meta';
     id: string;
@@ -92,6 +92,7 @@ export declare function findSessionById(idOrPrefix: string): Promise<SessionSumm
  * silently acting on the newest match.
  */
 export declare function findMatchingSessions(idOrPrefix: string): Promise<SessionSummary[]>;
+/** Throws on a real failure; a already-absent file is success. */
 export declare function deleteSession(filePath: string): Promise<void>;
 /**
  * Atomically truncate a persistent session to the first `keepCount` turns.
@@ -104,7 +105,10 @@ export declare function deleteSession(filePath: string): Promise<void>;
  * retried reply only.
  */
 export declare function truncateSessionTurns(filePath: string, keepCount: number): Promise<void>;
-export declare function wipeAllSessions(): Promise<number>;
+export declare function wipeAllSessions(): Promise<{
+    deleted: number;
+    failed: number;
+}>;
 /**
  * Promote an in-memory ephemeral session to persistent by writing all
  * collected turns atomically. Used by the REPL `/save` slash command.

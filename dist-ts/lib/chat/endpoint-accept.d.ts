@@ -8,8 +8,6 @@
  *
  * Built-in allowlist (no prompt needed, always accepted):
  *   - chatbot.hoody.com         (docs-chatbot service)
- *   - ai.hoody.com              (Hoody's AI proxy)
- *   - api.minimax.io            (tier-1 default)
  *   - localhost / 127.0.0.1 / ::1 / RFC1918 (local/LAN endpoints)
  *
  * For any other origin, a caller must pass `--accept-endpoint <origin>`

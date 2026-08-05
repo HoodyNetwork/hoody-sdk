@@ -21,7 +21,7 @@ import * as cron from './cron/index.js';
 import * as pipe from './pipe/index.js';
 import * as notes from './notes/index.js';
 import * as tunnel from './tunnel/index.js';
-import * as app from './app/index.js';
+import * as run from './run/index.js';
 import * as proxyLogs from './proxyLogs/index.js';
 import * as agent from './agent/index.js';
 function _resolveContainerServer(container) {
@@ -54,7 +54,7 @@ export class HoodyClient {
     pipe;
     notes;
     tunnel;
-    app;
+    run;
     proxyLogs;
     agent;
     constructor(config) {
@@ -278,16 +278,14 @@ export class HoodyClient {
         this.tunnel = Object.assign(new tunnel.TunnelService(this.http, 'tunnel', this.urlTemplates?.['tunnel'], this.getKitUrlTemplatePattern('tunnel')), {
             health: new tunnel.HealthService(this.http, 'tunnel', this.urlTemplates?.['tunnel'], this.getKitUrlTemplatePattern('tunnel')),
         });
-        this.app = {
-            health: new app.HealthService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-            docs: new app.ApiDocumentationService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-            execution: new app.AppExecutionService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-            jobs: new app.JobsService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-            sources: new app.SourcesService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-            configuration: new app.ConfigurationService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-            profiles: new app.ProfilesService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-            recipes: new app.RecipesService(this.http, 'app', this.urlTemplates?.['app'], this.getKitUrlTemplatePattern('app')),
-        };
+        this.run = Object.assign(new run.RunService(this.http, 'run', this.urlTemplates?.['run'], this.getKitUrlTemplatePattern('run')), {
+            documentation: new run.ApiDocumentationService(this.http, 'run', this.urlTemplates?.['run'], this.getKitUrlTemplatePattern('run')),
+            jobs: new run.JobsService(this.http, 'run', this.urlTemplates?.['run'], this.getKitUrlTemplatePattern('run')),
+            sources: new run.SourcesService(this.http, 'run', this.urlTemplates?.['run'], this.getKitUrlTemplatePattern('run')),
+            configuration: new run.ConfigurationService(this.http, 'run', this.urlTemplates?.['run'], this.getKitUrlTemplatePattern('run')),
+            profiles: new run.ProfilesService(this.http, 'run', this.urlTemplates?.['run'], this.getKitUrlTemplatePattern('run')),
+            recipes: new run.RecipesService(this.http, 'run', this.urlTemplates?.['run'], this.getKitUrlTemplatePattern('run')),
+        });
         this.proxyLogs = {
             logs: new proxyLogs.LogsService(this.http, 'proxyLogs', this.urlTemplates?.['proxyLogs'], this.getKitUrlTemplatePattern('proxyLogs')),
         };
@@ -302,6 +300,7 @@ export class HoodyClient {
             hooks: new agent.HooksService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             jobs: new agent.JobsService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             logs: new agent.LogsService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
+            mcp: new agent.McpService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             memory: new agent.MemoryService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             models: new agent.ModelsService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
             sessions: new agent.SessionsService(this.http, 'agent', this.urlTemplates?.['agent'], this.getKitUrlTemplatePattern('agent')),
@@ -661,7 +660,7 @@ export class HoodyClient {
                 serverName: containerServer,
                 serviceIndex: 1
             },
-            'app': {
+            'run': {
                 projectId: container.project_id,
                 containerId: container.id,
                 server: containerServer,
@@ -854,8 +853,6 @@ export class HoodyClient {
             return 'n';
         if (namespace === 'proxyLogs')
             return 'logs';
-        if (namespace === 'app')
-            return 'run';
         return namespace;
     }
     /**
@@ -876,9 +873,8 @@ export class HoodyClient {
         // resolveKitNamespaceSegment. Without this, getKitUrl('proxyLogs', ...)
         // produces a URL subdomain like proxyLogs-1 instead of logs-1.
         const normalizedKit = rawKit === 'notifications' ? 'n'
-            : rawKit === 'app' ? 'run'
-                : rawKit === 'proxylogs' ? 'logs'
-                    : rawKit;
+            : rawKit === 'proxylogs' ? 'logs'
+                : rawKit;
         // Accept explicit dynamic service slugs as-is (http-8080, https-8443).
         if (/^(https?)-\d+$/.test(normalizedKit)) {
             return normalizedKit;
@@ -915,7 +911,7 @@ export class HoodyClient {
      * Generate URLs for all standard kits
      */
     getKitUrls(container, serviceIndexOrOptions = 1) {
-        const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'app', 'pipe', 'tunnel', 'agent', 'proxy'];
+        const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'run', 'pipe', 'tunnel', 'agent', 'proxy'];
         const urls = {};
         for (const kit of kits) {
             urls[kit] = this.getKitUrl(kit, container, serviceIndexOrOptions);

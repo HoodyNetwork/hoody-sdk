@@ -2,32 +2,20 @@
  * runChat — top-level dispatcher for `hoody chat` invocations. Handles the
  * one-shot path; delegates to ./repl.ts when no prompt is supplied.
  *
- * Initialization order is LOAD-BEARING:
- *   1. prepareChatsDir() — idempotent, runs before any disk write.
- *   2. resolveProvider('chat') — fail fast with exit(2) on no-config.
- *      MUST happen before any network call; prevents a missing-key path
- *      from making an unintended network request.
- *   3. Build the system prompt with selective reference injection.
- *   4. Wrap --context as <user-context untrusted="true">.
- *   5. Stream the completion to stdout via the markdown renderer.
+ * `hoody chat` asks Hoody's documentation assistant. There is no local model
+ * and no API key: the question goes to the service, the service answers, and
+ * this module renders the answer. That is the whole data flow.
  */
-import { escapeXmlLike } from './trigger-parse.js';
-export { escapeXmlLike };
 export interface RunChatOptions {
     promptParts: string[];
     opts: {
-        model?: string;
         stream?: boolean;
         markdown?: boolean;
         persist?: boolean;
         new?: boolean;
         resume?: string | boolean;
         private?: boolean;
-        tools?: boolean;
-        context?: string;
         acceptEndpoint?: string;
-        maxTokens?: number;
-        temperature?: number;
     };
 }
 /**

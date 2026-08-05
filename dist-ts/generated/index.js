@@ -18,7 +18,7 @@
  * - pipe
  * - notes
  * - tunnel
- * - app
+ * - run
  * - proxyLogs
  * - agent
    *
@@ -43,7 +43,7 @@
  * const pipeService = new SDK.pipe.SomeService(); // pipe
  * const notesService = new SDK.notes.SomeService(); // notes
  * const tunnelService = new SDK.tunnel.SomeService(); // tunnel
- * const appService = new SDK.app.SomeService(); // app
+ * const runService = new SDK.run.SomeService(); // run
  * const proxyLogsService = new SDK.proxyLogs.SomeService(); // proxyLogs
  * const agentService = new SDK.agent.SomeService(); // agent
    * ```
@@ -66,7 +66,7 @@ export * as cron from './cron/index.js';
 export * as pipe from './pipe/index.js';
 export * as notes from './notes/index.js';
 export * as tunnel from './tunnel/index.js';
-export * as app from './app/index.js';
+export * as run from './run/index.js';
 export * as proxyLogs from './proxyLogs/index.js';
 export * as agent from './agent/index.js';
 // Export shared runtime/types
