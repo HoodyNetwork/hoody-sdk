@@ -4,6 +4,48 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.11] — 2026-08-05
+
+### Fixed
+
+- **The `hoody-sdk/run` and `hoody-sdk/agent` subpath imports resolve.** Renaming the namespace in beta.10 left the package's `./app` subpath export pointing at `dist-ts/generated/app/`, a directory that is no longer built — so `import … from 'hoody-sdk/app'` failed to resolve, and `'hoody-sdk/run'` was not exported at all even though its compiled output shipped. `./app` is replaced by `./run`, and `./agent` gets a subpath entry for the first time: it shipped compiled but was unreachable by that name. Importing from the package root was never affected.
+
+- **`hoody unmount --container <id>` unmounts instead of refusing.** The CLI hoists `-c` / `--container` onto the root program, so this command's own copy of the option never filled and the form its usage line advertises always fell through to the "nothing to unmount" error. It reads the hoisted value now. Two combinations that could only be resolved by guessing are refused instead, because the readings differ in what gets torn down: `--all` together with `-c`, and `-c` together with a positional `<idOrPath>`.
+
+- **`KitProgram` spells the run kit `run`.** The union in the proxy-auth helper still listed `'app'` after the beta.10 rename, so a program name that both `getKitUrl()` and `client.run` accept was a type error there.
+
+### Changed
+
+- **Breaking — the four `kv` batch commands take typed flags instead of `--body`.** The SQLite kit now publishes real request schemas for its batch routes, so the CLI generates proper flags and the raw-JSON escape hatch is gone from these four:
+
+  | Command | Was | Now |
+  | --- | --- | --- |
+  | `hoody kv batch get` | `--body '<json>'` | `--keys` — repeatable, comma-separated also accepted; 1–100 entries |
+  | `hoody kv batch delete` | `--body '<json>'` | `--keys` — same |
+  | `hoody kv batch set` | `--body '<json>'` | `--items '<json>'` — 1–100 entries |
+  | `hoody kv rollback-table` | `--body '<json>'` | `--keys` and `--exclude-keys`, both optional, up to 10 000 entries each |
+
+  Omitting `--keys` on `rollback-table` still rolls back the whole table, and `--exclude-keys` is applied after `--keys`.
+
+  The same four SDK request types stop being `Record<string, unknown>` and describe their fields: `SqliteKvStoreBatchGetRequest`, `SqliteKvStoreBatchSetRequest`, `SqliteKvStoreBatchDeleteRequest` and `SqliteKvStoreRollbackTableRequest`, with `main_kvBatchSetItem` describing one write (`key`, `value`, `content_type`, `ttl`). Code already passing a correct object keeps compiling; a wrong shape is now a type error rather than a `400` at run time.
+
+### Added
+
+- **The agent Skills bundle ships inside the package.** The mode-blend skill, the compact `SKILL.lite.md`, per-surface SDK/HTTP/CLI skills in basic and FULL variants, and one file per namespace are now part of the published tarball, so an agent working offline can read them straight out of `node_modules` — and `npx skills add HoodyNetwork/hoody-sdk` now finds a skill in this repository, which before this release it did not. The 77 files sit at the top level in `SKILLS/`, matching the path they are served from at [hoody.com/SKILLS/](https://hoody.com/SKILLS/), and are mirrored under `docs/agent/skills/` for anyone already pointing there; the two copies are identical.
+
+  The bundle also became installable and browsable. `SKILL.md` carries the `name` and `description` frontmatter that skill installers require:
+
+  ```bash
+  npx skills add https://hoody.com/SKILLS/SKILL.md   # the skill; deeper files fetched on demand
+  npx skills add HoodyNetwork/hoody-sdk              # the same skill plus the whole corpus, on disk
+  ```
+
+  Every directory in the bundle now has an `index.html` for reading it in a browser, with the identical content as markdown alongside it in `listing.md`; each row is annotated with the file's surface and its approximate token count, so an agent can see before fetching that `SKILL-SDK-FULL.md` is an order of magnitude larger than `SKILL-SDK.md`.
+
+### Documentation
+
+- **Accuracy pass over `README.md`, `AGENTS.md` and `CHEATSHEET.md`.** These had accumulated claims that no longer matched the CLI. Corrected, among others: `hoody login` takes `--email` for an email address (`--username` is for a username, and `--print-token` modifies a fresh login rather than exporting a stored one); `hoody run` is the Hoody Run app resolver, not a container-exec verb — that is `hoody shell`, of which `sh`, `pty` and `ssh` are aliases; `hoody ssh` opens a PTY in the container and only bridges to a real SSH server when given `--ssh-host`; `--output raw` emits a string body as-is and, for an object, the first string field among `content`, `data`, `body`, `text`; dynamic exec-script commands keep only `integer`, `number` and `boolean` types and register no `--body`; `hoody local lock setup` exits 11 when there is nothing to lock, and `remove` deletes the stored tokens unless given `--write-plaintext`; `hoody chat --persist` still creates `~/.hoody/chats`; `getKitUrl(…, { local: true })` builds the in-container URL; and `ValidationError` extends `Error`, not `ApiError`.
+
 ## [1.0.0-beta.10] — 2026-08-04
 
 ### Changed
