@@ -1,11 +1,10 @@
 # `agent` — 222 methods
 
-**Version:** 1.0.0-beta.10
+**Version:** 1.0.0-beta.11
 **Accessor:** `client.agent`
 
 ```typescript
-import { HoodyClient } from 'hoody-sdk';
-// Access via: client.agent
+import * as agent from 'hoody-sdk/agent';
 ```
 
 ---

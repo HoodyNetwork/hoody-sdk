@@ -1,6 +1,6 @@
 # Hoody SDK — Reference Documentation
 
-**Version:** 1.0.0-beta.10
+**Version:** 1.0.0-beta.11
 **SDK Methods:** 1095
 **CLI Commands:** 835
 **Namespaces:** 19
@@ -59,7 +59,7 @@ Parity across the published surface, counted over OpenAPI **operations**:
 | CLI-only (no SDK method) | 12 |
 
 SDK-only operations are mostly spec/health, WebDAV, and other transport-level
-endpoints, plus `app` operations with no first-class CLI command. CLI-only
+endpoints, plus `run` operations with no first-class CLI command. CLI-only
 operations are a small set of client-side helpers — proxy-log maintenance and
 configuration commands (`hoody proxy logs export`, `… db vacuum`,
 `… config get`, …) — that don't map to a single published request.

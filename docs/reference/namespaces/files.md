@@ -1,6 +1,6 @@
 # `files` — 127 methods
 
-**Version:** 1.0.0-beta.10
+**Version:** 1.0.0-beta.11
 **Accessor:** `client.files`
 
 ```typescript

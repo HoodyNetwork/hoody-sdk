@@ -1,6 +1,6 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.10
+**Version:** 1.0.0-beta.11
 **Total commands:** 835
 **Command groups:** 38
 **Top-level utility commands:** 24
@@ -25,7 +25,7 @@ entrypoints to chat, account management, shells, and update flow.
 | `hoody completion` | Generate shell completion scripts (bash/zsh/fish). | `hoody completion bash` |
 | `hoody config` | Manage the CLI configuration file (~/.hoody/config.json). | `hoody config set baseUrl https://api.hoody.com` |
 | `hoody local` | Local-only client tooling — defaults, password-protected lock. | `hoody local defaults set container <id>` |
-| `hoody login` | Log in with username/email + password (if 2FA is enabled, a follow-up `hoody auth 2fa verify` step is prompted). | `hoody login --username u@example.com` |
+| `hoody login` | Log in with username/email + password (if 2FA is enabled, a follow-up `hoody auth 2fa verify` step is prompted). | `hoody login --email u@example.com` |
 | `hoody logout` | Log out and clear the stored session. | `hoody logout` |
 | `hoody open` | Open (or print) a kit service web UI for a container. Takes a SERVICE SLUG (`terminal`, `files`, `code`, `http-8080`, …), not a container id. | `hoody open files` |
 | `hoody ps` | List containers (alias of `hoody containers ls`). | `hoody ps` |
@@ -785,9 +785,9 @@ Key-value store
 | `hoody kv arrays delete` |  | destructive | Remove array element | `sqlite.kvStore.removeElement` | `hoody kv arrays delete <key> --db <db> --table kv_store --path /home/user/file.txt --index 10 --history --body '{}'` |
 | `hoody kv arrays pop` |  | write | Remove from array end | `sqlite.kvStore.pop` | `hoody kv arrays pop <key> --db <db> --table kv_store --path /home/user/file.txt --history` |
 | `hoody kv arrays push` |  | write | Append to array | `sqlite.kvStore.push` | `hoody kv arrays push <key> --db <db> --table kv_store --path /home/user/file.txt --history --body '{}'` |
-| `hoody kv batch delete` |  | write | Batch delete multiple keys | `sqlite.kvStore.batchDelete` | `hoody kv batch delete --db <db> --table kv_store --body '{}'` |
-| `hoody kv batch get` |  | write | Batch get multiple keys | `sqlite.kvStore.batchGet` | `hoody kv batch get --db <db> --table kv_store --body '{}'` |
-| `hoody kv batch set` |  | write | Batch set multiple keys | `sqlite.kvStore.batchSet` | `hoody kv batch set --db <db> --table kv_store --body '{}'` |
+| `hoody kv batch delete` |  | write | Batch delete multiple keys | `sqlite.kvStore.batchDelete` | `hoody kv batch delete --db <db> --table kv_store --keys <keys>` |
+| `hoody kv batch get` |  | write | Batch get multiple keys | `sqlite.kvStore.batchGet` | `hoody kv batch get --db <db> --table kv_store --keys <keys>` |
+| `hoody kv batch set` |  | write | Batch set multiple keys | `sqlite.kvStore.batchSet` | `hoody kv batch set --db <db> --table kv_store --items <items>` |
 | `hoody kv decr` |  | write | Atomic decrement | `sqlite.kvStore.decr` | `hoody kv decr <key> --db <db> --table kv_store --delta 1 --path /home/user/file.txt --history` |
 | `hoody kv delete` |  | destructive | Delete key | `sqlite.kvStore.delete` | `hoody kv delete <key> --db <db> --table kv_store --history` |
 | `hoody kv exists` |  | read | Check if key exists | `sqlite.kvStore.exists` | `hoody kv exists <key> --db <db> --table kv_store` |
@@ -796,7 +796,7 @@ Key-value store
 | `hoody kv incr` |  | write | Atomic increment | `sqlite.kvStore.incr` | `hoody kv incr <key> --db <db> --table kv_store --delta 1 --path /home/user/file.txt --history` |
 | `hoody kv list` | ls | read | List keys | `sqlite.kvStore.listIterator` | `hoody kv list --db <db> --table kv_store --prefix <prefix> --limit 100 --offset 0 --at-timestamp 10` |
 | `hoody kv rollback` |  | write | Rollback key operations | `sqlite.kvStore.rollback` | `hoody kv rollback <key> --db <db> --table kv_store --steps 1` |
-| `hoody kv rollback-table` |  | write | Rollback entire table | `sqlite.kvStore.rollbackTable` | `hoody kv rollback-table --db <db> --table kv_store --to-timestamp 10 --dry-run --confirm <confirm> --body '{}'` |
+| `hoody kv rollback-table` |  | write | Rollback entire table | `sqlite.kvStore.rollbackTable` | `hoody kv rollback-table --db <db> --table kv_store --to-timestamp 10 --dry-run --confirm <confirm> --exclude-keys <exclude_keys> --keys <keys>` |
 | `hoody kv set` |  | write | Set value for key | `sqlite.kvStore.set` | `hoody kv set <key> --db <db> --table kv_store --path /home/user/file.txt --ttl 10 --if-match <if_match> --history --create-db-if-missing --body '{}'` |
 | `hoody kv snapshots compare-table` |  | read | Compare table snapshots | `sqlite.kvStore.compareSnapshots` | `hoody kv snapshots compare-table --db <db> --table kv_store --from 10 --to 10 --keys <keys>` |
 | `hoody kv snapshots get-key` |  | read | Get key snapshot at operation | `sqlite.kvStore.getSnapshot` | `hoody kv snapshots get-key <key> --db <db> --table kv_store --op-number 10` |
