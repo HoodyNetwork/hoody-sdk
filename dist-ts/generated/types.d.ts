@@ -1832,6 +1832,25 @@ export interface ApiIssueIdentityClaimResponse {
         audience?: string;
     };
 }
+export interface GetSecurityHistoryResponse {
+    statusCode: number;
+    message: string;
+    data: ({
+        id: string;
+        event?: string;
+        outcome?: "success" | "failed";
+        ip_address?: string;
+        country?: string | null;
+        client?: string | null;
+        created_at?: string;
+    })[];
+    metadata?: {
+        total?: number;
+        page?: number;
+        limit?: number;
+        pages?: number;
+    };
+}
 export interface MarkOnboardingMilestoneRequest {
     /**
      * Milestone key, e.g. "hub_tour_v1".
@@ -2923,6 +2942,7 @@ export interface ApiContainersCopyResponse {
         volumes?: Record<string, unknown>;
         ssh_public_key?: null | string;
         comment?: null | string;
+        kvm_note?: string;
         copy_firewall_rules?: boolean;
         copy_network_rules?: boolean;
         created_at?: string;
@@ -5194,7 +5214,7 @@ export interface ApiEventsListResponse {
     data: {
         events: ({
             id: string;
-            event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "user.created" | "auth.token.updated" | "auth.token.enabled" | "auth.token.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "storage.share.mount_changed" | "notification.read" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged";
+            event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "project.created" | "project.updated" | "project.deleted" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.created" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged";
             resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log";
             resource_id: string;
             user_id: string;
@@ -5212,7 +5232,7 @@ export interface ApiEventsListResponse {
 }
 export interface ApiEventsBulkDeleteRequest {
     /** Delete all events of this type */
-    event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "user.created" | "auth.token.updated" | "auth.token.enabled" | "auth.token.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "storage.share.mount_changed" | "notification.read" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged";
+    event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "project.created" | "project.updated" | "project.deleted" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.created" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged";
     /** Delete all events for this resource type */
     resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log";
     /**
@@ -5240,7 +5260,7 @@ export interface ApiEventsGetResponse {
     message: string;
     data: {
         id: string;
-        event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "user.created" | "auth.token.updated" | "auth.token.enabled" | "auth.token.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "storage.share.mount_changed" | "notification.read" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged";
+        event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "project.created" | "project.updated" | "project.deleted" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.created" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged";
         resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log";
         resource_id: string;
         user_id: string;
@@ -7007,8 +7027,8 @@ export interface ListServerOffersResponse {
         traffic_tb?: null | number;
         traffic_unlimited?: boolean;
         ipv4_count?: number;
-        pricing_rules?: Record<string, unknown>;
-        hold_rules?: Record<string, unknown>;
+        pricing_rules?: Record<string, unknown> | null;
+        hold_rules?: Record<string, unknown> | null;
         setup_fee_cents?: number;
         setup_fee_rules?: Record<string, unknown> | null;
         delivery_hours?: number;

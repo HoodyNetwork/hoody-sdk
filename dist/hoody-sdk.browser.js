@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.11
+ * Hoody SDK v1.0.0-beta.12
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -6129,6 +6129,201 @@ var HoodySDK = (() => {
         requestData.responseType = responseType;
       }
       return this.http.put(requestUrl, requestData);
+    }
+    /**
+     * Get your account security history
+     *
+     * Returns your own account security history — sign-ins and, on request, rejected attempts and other security events (logout, 2FA changes, OTP outcomes) — with IP address, resolved country, source channel and timestamp, newest first. **History is bounded by the platform audit retention window (`AUDIT_LOGS_RETENTION_DAYS`, 180 days by default); older logins are purged automatically and cannot be recovered.** Login records cannot be edited or deleted by the account holder — the trail is append-only so it stays trustworthy as evidence. Pass `include_failed=true` to also see REJECTED sign-in attempts — a burst of them, or any from a country you have not visited, is the clearest sign someone else is trying to get in. Failures are only recorded when a credential was presented against a REAL account (an attempt on an unknown address is never recorded, so this cannot be used to test whether an account exists), and are capped at 200 per account per hour — beyond that, further attempts in the same hour are not listed. Pass `include_security=true` for other account-security events: logout, 2FA enable/disable, OTP verification outcomes and backup-code use. `country` is resolved in the background after the event is recorded. It is `null` when the address is not geolocatable at all (private, reserved, or IPv6 — these stay null permanently), when the provider returned no country for it, or when resolution has not completed. Treat null as **unavailable**, never as a location — and note that a null does not necessarily become non-null later: background retries stop once the row ages out of the retry window.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async getSecurityHistory(options) {
+      const { page, limit, include_failed, include_security, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (page !== void 0 && page !== null) {
+        if (!Number.isFinite(page) || !Number.isInteger(page)) {
+          throw new ValidationError("page must be an integer", "page");
+        }
+        if (page < 1) {
+          throw new ValidationError("page must be >= 1", "page");
+        }
+        if (page > 1e4) {
+          throw new ValidationError("page must be <= 10000", "page");
+        }
+      }
+      if (limit !== void 0 && limit !== null) {
+        if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
+          throw new ValidationError("limit must be an integer", "limit");
+        }
+        if (limit < 1) {
+          throw new ValidationError("limit must be >= 1", "limit");
+        }
+        if (limit > 100) {
+          throw new ValidationError("limit must be <= 100", "limit");
+        }
+      }
+      if (include_failed !== void 0 && include_failed !== null) {
+      }
+      if (include_security !== void 0 && include_security !== null) {
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/users/me/security-history`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.query = {};
+      if (page !== void 0) {
+        requestData.query["page"] = page;
+      }
+      if (limit !== void 0) {
+        requestData.query["limit"] = limit;
+      }
+      if (include_failed !== void 0) {
+        requestData.query["include_failed"] = include_failed;
+      }
+      if (include_security !== void 0) {
+        requestData.query["include_security"] = include_security;
+      }
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+     * Async iterator helper for paginated operation getSecurityHistory.
+     */
+    async *getSecurityHistoryIterator(...args) {
+      const paginationType = "page-number";
+      const itemsPath = "data.data";
+      const totalPath = "metadata.total";
+      const nextCursorPath = "data.next_cursor";
+      const hasMorePath = "data.has_more";
+      const limitParam = "limit";
+      const offsetParam = "page";
+      const requestArgs = [...args];
+      const optionsIndex = 0;
+      const initialOptions = requestArgs[optionsIndex] || {};
+      const rawInitialOffset = initialOptions[offsetParam];
+      const parsedInitialOffset = typeof rawInitialOffset === "number" ? rawInitialOffset : typeof rawInitialOffset === "string" && /^\d+$/.test(rawInitialOffset.trim()) ? Number(rawInitialOffset.trim()) : Number.NaN;
+      let hasNext = true;
+      let currentOffset = Number.isFinite(parsedInitialOffset) ? Number(parsedInitialOffset) : paginationType.includes("page") ? 1 : 0;
+      let cursor;
+      let pageCount = 0;
+      let fetchedCount = 0;
+      const maxPages = 1e3;
+      while (hasNext && pageCount < maxPages) {
+        pageCount += 1;
+        for (const maybeOpts of requestArgs) {
+          const sig = maybeOpts == null ? void 0 : maybeOpts.signal;
+          if (sig && sig.aborted) {
+            const reason = sig.reason;
+            throw reason instanceof Error ? reason : new Error("Paginator aborted before fetching next page.");
+          }
+        }
+        const options = {
+          ...requestArgs[optionsIndex] || {}
+        };
+        if (cursor !== void 0) {
+          options[offsetParam] = cursor;
+        } else {
+          options[offsetParam] = currentOffset;
+        }
+        if (!Object.prototype.hasOwnProperty.call(options, limitParam) && "50") {
+          options[limitParam] = Number("50");
+        }
+        requestArgs[optionsIndex] = options;
+        const response = await this.getSecurityHistory(...requestArgs);
+        const items = this.getPathValue(response, itemsPath);
+        const normalizedItems = Array.isArray(items) ? items : items === void 0 || items === null ? [] : [items];
+        fetchedCount += normalizedItems.length;
+        for (const item of normalizedItems) {
+          yield item;
+        }
+        if (normalizedItems.length === 0) {
+          break;
+        }
+        const hasMore = this.getPathValue(response, hasMorePath);
+        const nextCursor = this.getPathValue(response, nextCursorPath);
+        const total = this.getPathValue(response, totalPath);
+        if (typeof hasMore === "boolean") {
+          hasNext = hasMore;
+        } else if (typeof nextCursor === "string" && nextCursor.length > 0) {
+          hasNext = true;
+        } else if (typeof total === "number" && Number.isFinite(total)) {
+          if (paginationType.includes("page")) {
+            hasNext = fetchedCount < total;
+          } else {
+            const nextOffset = currentOffset + normalizedItems.length;
+            hasNext = nextOffset < total;
+          }
+        } else {
+          hasNext = normalizedItems.length > 0;
+        }
+        if (typeof nextCursor === "string" && nextCursor.length > 0) {
+          cursor = nextCursor;
+        } else {
+          cursor = void 0;
+        }
+        if (cursor === void 0 && normalizedItems.length > 0) {
+          currentOffset += paginationType.includes("page") ? 1 : normalizedItems.length;
+        }
+      }
+    }
+    getSecurityHistoryAll(...args) {
+      const expectedArgCount = 0 + 1;
+      const maybeControl = args.length > 0 ? args[args.length - 1] : void 0;
+      const controlMode = maybeControl && typeof maybeControl === "object" && !Array.isArray(maybeControl) && maybeControl.__allMode;
+      const isOnlyControlObject = Boolean(
+        controlMode !== void 0 && maybeControl && Object.keys(maybeControl).every((key) => key === "__allMode")
+      );
+      const hasControl = Boolean(
+        args.length > expectedArgCount && controlMode !== void 0 || args.length === expectedArgCount && isOnlyControlObject
+      );
+      const requestArgs = hasControl ? args.slice(0, -1) : args;
+      if (!hasControl && requestArgs.length > 0) {
+        const optionsArgIndex = 0;
+        const optionsArg = requestArgs[optionsArgIndex];
+        if (optionsArg && typeof optionsArg === "object" && !Array.isArray(optionsArg) && Object.prototype.hasOwnProperty.call(optionsArg, "__allMode")) {
+          const sanitizedOptions = { ...optionsArg };
+          delete sanitizedOptions.__allMode;
+          requestArgs[optionsArgIndex] = sanitizedOptions;
+        }
+      }
+      const iterator = this.getSecurityHistoryIterator(...requestArgs);
+      if (hasControl && controlMode === "iterator") {
+        return iterator;
+      }
+      return (async () => {
+        const items = [];
+        for await (const item of iterator) {
+          items.push(item);
+        }
+        return items;
+      })();
     }
     /**
      * Mark an onboarding milestone as completed
@@ -16526,8 +16721,8 @@ var HoodySDK = (() => {
         }
       }
       if (event_type !== void 0 && event_type !== null) {
-        if (!["container.creating", "container.running", "container.stopped", "container.failed", "container.deleting", "auth.token.deleted", "container.autostart_enabled", "container.autostart_disabled", "container.renamed", "container.resource_updated", "container.ssh_key.added", "container.ssh_key.removed", "container.snapshot.created", "container.snapshot.deleted", "container.snapshot.restored", "container.snapshot.renamed", "container.display.enabled", "user.created", "auth.token.updated", "auth.token.enabled", "auth.token.disabled", "proxy.alias.expiring_soon", "proxy.alias.expired", "storage.share.mount_changed", "notification.read", "server.health_changed", "server.rental_expiring", "firewall.rule.added", "firewall.rule.removed", "firewall.rule.updated", "firewall.rule.enabled", "firewall.rule.disabled", "proxy.permissions.default_changed", "proxy.permissions.group_added", "proxy.permissions.group_updated", "proxy.permissions.group_removed", "pool.member.joined", "pool.member.left", "pool.member.role_changed", "pool.invited", "pool.invitation_revoked", "user.banned", "user.unbanned", "user.role_changed", "activity.logged"].includes(event_type)) {
-          throw new ValidationError("event_type must be one of: container.creating, container.running, container.stopped, container.failed, container.deleting, auth.token.deleted, container.autostart_enabled, container.autostart_disabled, container.renamed, container.resource_updated, container.ssh_key.added, container.ssh_key.removed, container.snapshot.created, container.snapshot.deleted, container.snapshot.restored, container.snapshot.renamed, container.display.enabled, user.created, auth.token.updated, auth.token.enabled, auth.token.disabled, proxy.alias.expiring_soon, proxy.alias.expired, storage.share.mount_changed, notification.read, server.health_changed, server.rental_expiring, firewall.rule.added, firewall.rule.removed, firewall.rule.updated, firewall.rule.enabled, firewall.rule.disabled, proxy.permissions.default_changed, proxy.permissions.group_added, proxy.permissions.group_updated, proxy.permissions.group_removed, pool.member.joined, pool.member.left, pool.member.role_changed, pool.invited, pool.invitation_revoked, user.banned, user.unbanned, user.role_changed, activity.logged", "event_type");
+        if (!["container.creating", "container.running", "container.stopped", "container.failed", "container.deleting", "container.deleted", "container.autostart_enabled", "container.autostart_disabled", "container.renamed", "container.resource_updated", "container.ssh_key.added", "container.ssh_key.removed", "container.snapshot.created", "container.snapshot.deleted", "container.snapshot.restored", "container.snapshot.renamed", "container.display.enabled", "storage.share.created", "storage.share.updated", "storage.share.deleted", "storage.share.enabled", "storage.share.disabled", "storage.share.expiring_soon", "storage.share.expired", "storage.share.mount_changed", "notification.created", "notification.read", "notification.deleted", "project.created", "project.updated", "project.deleted", "server.created", "server.updated", "server.enabled", "server.disabled", "server.health_changed", "server.rental_expiring", "firewall.rule.added", "firewall.rule.removed", "firewall.rule.updated", "firewall.rule.enabled", "firewall.rule.disabled", "proxy.alias.created", "proxy.alias.updated", "proxy.alias.deleted", "proxy.alias.enabled", "proxy.alias.disabled", "proxy.alias.expiring_soon", "proxy.alias.expired", "proxy.permissions.updated", "proxy.permissions.default_changed", "proxy.permissions.group_added", "proxy.permissions.group_updated", "proxy.permissions.group_removed", "auth.token.created", "auth.token.updated", "auth.token.deleted", "auth.token.enabled", "auth.token.disabled", "pool.member.joined", "pool.member.left", "pool.member.role_changed", "pool.invited", "pool.invitation_revoked", "user.created", "user.banned", "user.unbanned", "user.role_changed", "activity.logged"].includes(event_type)) {
+          throw new ValidationError("event_type must be one of: container.creating, container.running, container.stopped, container.failed, container.deleting, container.deleted, container.autostart_enabled, container.autostart_disabled, container.renamed, container.resource_updated, container.ssh_key.added, container.ssh_key.removed, container.snapshot.created, container.snapshot.deleted, container.snapshot.restored, container.snapshot.renamed, container.display.enabled, storage.share.created, storage.share.updated, storage.share.deleted, storage.share.enabled, storage.share.disabled, storage.share.expiring_soon, storage.share.expired, storage.share.mount_changed, notification.created, notification.read, notification.deleted, project.created, project.updated, project.deleted, server.created, server.updated, server.enabled, server.disabled, server.health_changed, server.rental_expiring, firewall.rule.added, firewall.rule.removed, firewall.rule.updated, firewall.rule.enabled, firewall.rule.disabled, proxy.alias.created, proxy.alias.updated, proxy.alias.deleted, proxy.alias.enabled, proxy.alias.disabled, proxy.alias.expiring_soon, proxy.alias.expired, proxy.permissions.updated, proxy.permissions.default_changed, proxy.permissions.group_added, proxy.permissions.group_updated, proxy.permissions.group_removed, auth.token.created, auth.token.updated, auth.token.deleted, auth.token.enabled, auth.token.disabled, pool.member.joined, pool.member.left, pool.member.role_changed, pool.invited, pool.invitation_revoked, user.created, user.banned, user.unbanned, user.role_changed, activity.logged", "event_type");
         }
       }
       if (resource_type !== void 0 && resource_type !== null) {
