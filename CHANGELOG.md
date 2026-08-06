@@ -4,7 +4,9 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## [1.0.0-beta.11] — 2026-08-05
+## [1.0.0-beta.12] — 2026-08-06
+
+> Supersedes 1.0.0-beta.11, which was published briefly on 2026-08-05 and withdrawn. Everything it contained is in this release; nothing was dropped.
 
 ### Fixed
 
@@ -31,7 +33,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Ver
 
 ### Added
 
-- **The agent Skills bundle ships inside the package.** The mode-blend skill, the compact `SKILL.lite.md`, per-surface SDK/HTTP/CLI skills in basic and FULL variants, and one file per namespace are now part of the published tarball, so an agent working offline can read them straight out of `node_modules` — and `npx skills add HoodyNetwork/hoody-sdk` now finds a skill in this repository, which before this release it did not. The 77 files sit at the top level in `SKILLS/`, matching the path they are served from at [hoody.com/SKILLS/](https://hoody.com/SKILLS/), and are mirrored under `docs/agent/skills/` for anyone already pointing there; the two copies are identical.
+- **See your account's security history.** `api.users.getSecurityHistory` returns your own sign-ins, newest first, with the IP address, the resolved country, the client used, and the time. It paginates like the other list endpoints, so `getSecurityHistoryAll` collects every page and `getSecurityHistoryIterator` streams them one at a time.
+
+  Two flags widen it. `include_failed=true` adds rejected sign-in attempts, which is what makes the endpoint useful defensively: a burst of them, or any from a country you have never been in, is the clearest signal someone is trying to get into your account. A rejection is only recorded when a credential was presented against a real account, so the endpoint cannot be used to test whether an address is registered, and failures are capped at 200 per account per hour. `include_security=true` adds the other account events: logout, 2FA enabled or disabled, OTP outcomes, and backup-code use. Each row carries `event` and `outcome` so you can tell them apart.
+
+  Two properties are worth knowing before you build on it. The trail is append-only: you cannot edit or delete a record, which is what makes it usable as evidence. And it is bounded by the platform's audit retention window, 180 days by default, after which older records are purged and cannot be recovered.
+
+  Treat `country: null` as unavailable, never as a location. It is null for an address that cannot be geolocated at all, when the provider returned nothing, or when resolution has not finished, and a null does not necessarily become non-null later, since background retries stop once a row ages out of the retry window.
+
+- **The agent Skills bundle ships inside the package.** The mode-blend skill, the compact `SKILL.lite.md`, per-surface SDK/HTTP/CLI skills in basic and FULL variants, and one file per namespace are now part of the published tarball, so an agent working offline can read them straight out of `node_modules` — and `npx skills add HoodyNetwork/hoody-sdk` now finds a skill in this repository, which before this release it did not. The 71 files sit at the top level in `SKILLS/`, matching the path they are served from at [hoody.com/SKILLS/](https://hoody.com/SKILLS/), and are mirrored under `docs/agent/skills/` for anyone already pointing there; the two copies are identical. Both are markdown and nothing else — the browsable `index.html` skin belongs to the website and is served from there, not shipped in a package.
 
   The bundle also became installable and browsable. `SKILL.md` carries the `name` and `description` frontmatter that skill installers require:
 
@@ -40,11 +50,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Ver
   npx skills add HoodyNetwork/hoody-sdk              # the same skill plus the whole corpus, on disk
   ```
 
-  Every directory in the bundle now has an `index.html` for reading it in a browser, with the identical content as markdown alongside it in `listing.md`; each row is annotated with the file's surface and its approximate token count, so an agent can see before fetching that `SKILL-SDK-FULL.md` is an order of magnitude larger than `SKILL-SDK.md`.
+  Every directory in the bundle now carries a `listing.md` index, with each row annotated by the file's surface and its approximate token count — so an agent can see before fetching that `SKILL-SDK-FULL.md` is an order of magnitude larger than `SKILL-SDK.md`. [hoody.com/SKILLS/](https://hoody.com/SKILLS/) renders the same listings for reading in a browser.
 
 ### Documentation
 
 - **Accuracy pass over `README.md`, `AGENTS.md` and `CHEATSHEET.md`.** These had accumulated claims that no longer matched the CLI. Corrected, among others: `hoody login` takes `--email` for an email address (`--username` is for a username, and `--print-token` modifies a fresh login rather than exporting a stored one); `hoody run` is the Hoody Run app resolver, not a container-exec verb — that is `hoody shell`, of which `sh`, `pty` and `ssh` are aliases; `hoody ssh` opens a PTY in the container and only bridges to a real SSH server when given `--ssh-host`; `--output raw` emits a string body as-is and, for an object, the first string field among `content`, `data`, `body`, `text`; dynamic exec-script commands keep only `integer`, `number` and `boolean` types and register no `--body`; `hoody local lock setup` exits 11 when there is nothing to lock, and `remove` deletes the stored tokens unless given `--write-plaintext`; `hoody chat --persist` still creates `~/.hoody/chats`; `getKitUrl(…, { local: true })` builds the in-container URL; and `ValidationError` extends `Error`, not `ApiError`.
+
+- **Clearer help text for `hoody containers env`, `hoody projects delete` and `hoody agent hooks ack-trust`.** These four entries explained themselves in terms of the software Hoody happens to run, which told you nothing you could act on. They now describe what the command does for you: `containers env` writes to `/etc/environment` and to the container runtime environment, visible to new exec and console sessions, with already-running processes keeping their copy until they re-exec; `projects delete` destroys the project on every target server along with its containers, permissions and proxy aliases; `ack-trust` arms the hooks that were held pending review, and reports when there is nothing to acknowledge or when the trust gate is briefly unavailable.
 
 ## [1.0.0-beta.10] — 2026-08-04
 
