@@ -1,0 +1,95 @@
+name: Bug report
+description: Something in Hoody behaves differently from what the documentation says.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This tracker covers everything a Hoody user touches: the CLI, the SDK, the HTTP API, the Kit services, Hoody OS, and the documentation. Report it here even if you are not using the SDK.
+
+        Two things it cannot cover, because nobody reading this can see your account: billing questions, and one specific container misbehaving. Those go to https://hoody.com/support.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      description: Where you hit it. Pick the one you were using directly.
+      options:
+        - CLI (the `hoody` command)
+        - SDK (hoody-sdk in TypeScript or JavaScript)
+        - HTTP API (calling endpoints yourself)
+        - Hoody OS (Home, Console, Workspaces)
+        - Agent (hoody-agent, or `hoody agent`)
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: service
+    attributes:
+      label: Service
+      description: Which part of the platform. Account operations are `api`; leave blank if none apply.
+      options:
+        - api (account, projects, containers, servers, billing)
+        - terminal
+        - files
+        - browser
+        - display
+        - code
+        - exec
+        - daemon
+        - cron
+        - watch
+        - sqlite
+        - curl
+        - pipe
+        - run
+        - notes
+        - notifications
+        - tunnel
+        - proxyLogs
+        - agent
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead. If there was an error, paste it whole rather than describing it.
+      placeholder: |
+        Expected: files.list returns entries under /home/hoody
+        Got: 404 with {"statusCode":404,"message":"not found"}
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce it
+      description: The exact command or call. Replace container and project IDs with placeholders; treat a full container URL as a password, since anyone holding it can reach the service.
+      render: shell
+      placeholder: |
+        hoody files list --path /home/hoody -c <container-id>
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`hoody --version`, or the hoody-sdk version from your package.json. Skip for the HTTP API and Hoody OS."
+      placeholder: 1.0.0-beta.12
+
+  - type: input
+    id: environment
+    attributes:
+      label: Runtime and OS
+      description: Node, Bun, Deno, or a browser, and the operating system. Skip if you called the API directly.
+      placeholder: Node 22.11 on macOS 15
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output
+      description: "Add `-o json` to a CLI command for the full response. Remove tokens, passwords, and container URLs before pasting."
+      render: shell

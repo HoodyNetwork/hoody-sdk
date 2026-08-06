@@ -1,0 +1,21 @@
+Hoody SDK
+Copyright 2021-2026 Hoody Inc.
+
+This product includes software developed at Hoody Inc. (https://hoody.com).
+
+Licensed under the Apache License, Version 2.0. See LICENSE for the full text.
+
+
+How the pieces are licensed
+---------------------------
+
+hoody-sdk (this package)
+    Apache-2.0. See LICENSE.
+
+hoody-agent (the AI agent that runs inside a Hoody container)
+    GNU GPL v3, with an additional grant that lets Hoody.com run it as part of
+    the hosted platform.
+
+The wider Hoody ecosystem
+    Proprietary. The server-side platform behind Hoody Computers is not open
+    source today; it is being opened progressively.

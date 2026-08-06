@@ -1,0 +1,38 @@
+name: Documentation problem
+description: A page is wrong, out of date, or missing something you needed.
+labels: ["documentation", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Code examples in the documentation are meant to run as written. If one does not, that is a bug in the documentation and worth reporting on its own.
+
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: The URL, or the file path if you found it in the repository.
+      placeholder: https://docs.hoody.com/kits/files/
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - The documented behavior does not match what happens
+        - A code example fails to run
+        - Something is missing
+        - A link is broken
+        - Wording is unclear
+    validations:
+      required: true
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: Detail
+      description: Quote the passage, then say what is actually true. If an example failed, paste the error.
+    validations:
+      required: true

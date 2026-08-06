@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.hoody.com
+    about: Guides and reference for every service, the CLI, the SDK, and the HTTP API.
+  - name: Account, billing, or a container that will not start
+    url: https://hoody.com/support
+    about: Anything tied to your account or a specific machine. This tracker cannot see either.
+  - name: Report a security vulnerability
+    url: https://github.com/HoodyNetwork/hoody-sdk/security/advisories/new
+    about: Private disclosure. Do not open a public issue for a vulnerability.
+  - name: Ask the documentation assistant
+    url: https://docs.hoody.com
+    about: "Run `hoody chat \"how do I ...\"` for an answer with links to the pages it came from. No API key required."

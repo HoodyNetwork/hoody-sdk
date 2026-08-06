@@ -1,0 +1,43 @@
+name: Feature request
+description: Something Hoody cannot do that you need it to do.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The most useful request describes the task you are trying to finish, not the API you imagine. The task survives a redesign; a proposed method signature usually does not.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - CLI (the `hoody` command)
+        - SDK (hoody-sdk in TypeScript or JavaScript)
+        - HTTP API (calling endpoints yourself)
+        - Hoody OS (Home, Console, Workspaces)
+        - Agent (hoody-agent, or `hoody agent`)
+        - Documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you are trying to do
+      description: The end goal, and where the current surface stops short.
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What you do instead today
+      description: Scripting around it, a different service, or nothing. This is often the strongest argument for the request, so include it even when it is ugly.
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: What it might look like
+      description: Optional. A command, a method call, or an endpoint. Being wrong here costs nothing.
+      render: shell
