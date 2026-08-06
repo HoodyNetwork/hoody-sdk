@@ -1,6 +1,6 @@
 # `api` — 290 methods
 
-**Version:** 1.0.0-beta.11
+**Version:** 1.0.0-beta.12
 **Accessor:** `client.api`
 
 ```typescript
@@ -2210,7 +2210,7 @@ client.api.images.listPublic(options?: { os?: string; architecture?: string; min
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `os` | `string` | No | query | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | No | query | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | No | query | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | No | query | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
@@ -2240,7 +2240,7 @@ client.api.images.listPublicAll(options?: { os?: string; architecture?: string; 
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `os` | `string` | No | query | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | No | query | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | No | query | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | No | query | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
@@ -2270,7 +2270,7 @@ client.api.images.listPublicIterator(options?: { os?: string; architecture?: str
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `os` | `string` | No | query | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | No | query | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | No | query | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | No | query | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
