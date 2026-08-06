@@ -18,18 +18,18 @@ curl -O https://hoody.com/SKILLS/ALL_SKILLS.zip
 
 ## Start here
 
-- [`SKILL.md`](SKILL.md) — mode-blend skill (chooser + SDK/HTTP/CLI side-by-side) · ~11,438 tokens
+- [`SKILL.md`](SKILL.md) — mode-blend skill (chooser + SDK/HTTP/CLI side-by-side) · ~11,446 tokens
 - [`SKILL.lite.md`](SKILL.lite.md) — compact tier-0 skill (always-loaded by agents) · ~4,083 tokens
-- [`ONBOARDING.md`](ONBOARDING.md) — guided onboarding skill (agent-directed) · ~6,385 tokens
+- [`ONBOARDING.md`](ONBOARDING.md) — guided onboarding skill (agent-directed) · ~6,383 tokens
 
 ## One surface, in depth
 
-- [`SKILL-HTTP.md`](SKILL-HTTP.md) — HTTP skill (basic) · ~15,790 tokens
-- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL — basic + all 19 namespaces) · ~210,085 tokens
-- [`SKILL-SDK.md`](SKILL-SDK.md) — SDK skill (basic) · ~17,182 tokens
-- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL — basic + all 19 namespaces) · ~335,993 tokens
-- [`SKILL-CLI.md`](SKILL-CLI.md) — CLI skill (basic) · ~16,919 tokens
-- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL — basic + all 19 namespaces) · ~153,080 tokens
+- [`SKILL-HTTP.md`](SKILL-HTTP.md) — HTTP skill (basic) · ~15,795 tokens
+- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL — basic + all 19 namespaces) · ~210,212 tokens
+- [`SKILL-SDK.md`](SKILL-SDK.md) — SDK skill (basic) · ~17,196 tokens
+- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL — basic + all 19 namespaces) · ~336,695 tokens
+- [`SKILL-CLI.md`](SKILL-CLI.md) — CLI skill (basic) · ~16,925 tokens
+- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL — basic + all 19 namespaces) · ~153,064 tokens
 
 ## Per-namespace reference
 

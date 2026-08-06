@@ -7,7 +7,7 @@ One file per namespace for the SDK surface. Fetch only the namespaces a task nee
 ## Namespaces
 
 - [`agent.md`](agent.md) — SDK skill · `agent` namespace · ~97,415 tokens
-- [`api.md`](api.md) — SDK skill · `api` namespace · ~44,784 tokens
+- [`api.md`](api.md) — SDK skill · `api` namespace · ~45,493 tokens
 - [`browser.md`](browser.md) — SDK skill · `browser` namespace · ~12,359 tokens
 - [`code.md`](code.md) — SDK skill · `code` namespace · ~7,062 tokens
 - [`cron.md`](cron.md) — SDK skill · `cron` namespace · ~4,899 tokens
@@ -22,6 +22,6 @@ One file per namespace for the SDK surface. Fetch only the namespaces a task nee
 - [`proxyLogs.md`](proxyLogs.md) — SDK skill · `proxyLogs` namespace · ~4,397 tokens
 - [`run.md`](run.md) — SDK skill · `run` namespace · ~9,971 tokens
 - [`sqlite.md`](sqlite.md) — SDK skill · `sqlite` namespace · ~10,148 tokens
-- [`terminal.md`](terminal.md) — SDK skill · `terminal` namespace · ~15,590 tokens
-- [`tunnel.md`](tunnel.md) — SDK skill · `tunnel` namespace · ~4,497 tokens
+- [`terminal.md`](terminal.md) — SDK skill · `terminal` namespace · ~15,594 tokens
+- [`tunnel.md`](tunnel.md) — SDK skill · `tunnel` namespace · ~4,473 tokens
 - [`watch.md`](watch.md) — SDK skill · `watch` namespace · ~5,313 tokens

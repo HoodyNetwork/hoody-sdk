@@ -1,4 +1,4 @@
-> _**HTTP skill · `sqlite` namespace** · ~6,866 tokens · hoody-sdk v1.0.0-beta.11_
+> _**HTTP skill · `sqlite` namespace** · ~6,866 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `sqlite` — SQLite HTTP API
 

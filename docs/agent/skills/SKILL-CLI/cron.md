@@ -1,4 +1,4 @@
-> _**CLI skill · `cron` namespace** · ~3,574 tokens · hoody-sdk v1.0.0-beta.11_
+> _**CLI skill · `cron` namespace** · ~3,574 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `cron` — managed crontab entries per system user
 

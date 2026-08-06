@@ -1,4 +1,4 @@
-> _**CLI skill · `pipe` namespace** · ~3,560 tokens · hoody-sdk v1.0.0-beta.11_
+> _**CLI skill · `pipe` namespace** · ~3,560 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `pipe` — Zero-storage streaming HTTP transfers
 

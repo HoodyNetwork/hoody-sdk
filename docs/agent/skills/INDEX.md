@@ -1,4 +1,4 @@
-> _**routing manifest (full INDEX with routing-hints appendix; ~7k tokens, on-demand)** · ~7,629 tokens · hoody-sdk v1.0.0-beta.11_
+> _**routing manifest (full INDEX with routing-hints appendix; ~7k tokens, on-demand)** · ~7,629 tokens · hoody-sdk v1.0.0-beta.12_
 
 # Hoody — surface index
 

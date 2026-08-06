@@ -1,4 +1,4 @@
-> _**SDK skill · `agent` namespace** · ~97,415 tokens · hoody-sdk v1.0.0-beta.11_
+> _**SDK skill · `agent` namespace** · ~97,415 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `agent` — In-container AI coding agent over HTTP
 

@@ -1,4 +1,4 @@
-> _**SDK skill (FULL — basic + all 19 namespaces)** · ~335,993 tokens · hoody-sdk v1.0.0-beta.11_
+> _**SDK skill (FULL — basic + all 19 namespaces)** · ~336,695 tokens · hoody-sdk v1.0.0-beta.12_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 
@@ -211,7 +211,7 @@ Defense in depth: gate the kit URL AND scope any auth-token bearer (realms, IP a
 
 ## Kit slug table — every namespace's public URL
 
-Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `code-sg-sin-1`). All URLs route through `*.containers.hoody.com`.
+Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `node-example-1`). All URLs route through `*.containers.hoody.com`.
 
 | Namespace | Kit slug | Public URL (single-instance form) |
 |---|---|---|
@@ -240,22 +240,22 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 
 ### Concrete example
 
-For project `65f1...c8a`, container `65f2...41e`, server `code-sg-sin-1`:
+For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.code-sg-sin-1.containers.hoody.com/api/v1/files/workspace/main.py` |
-| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.code-sg-sin-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
-| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.code-sg-sin-1.containers.hoody.com/api/v1/sqlite/db/...` |
-| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.code-sg-sin-1.containers.hoody.com/` |
-| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/` |
-| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/?desktop_env=mate` |
-| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.code-sg-sin-1.containers.hoody.com/api/v1/terminal/...` |
-| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.code-sg-sin-1.containers.hoody.com/` |
-| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.code-sg-sin-1.containers.hoody.com/watchers/...` |
-| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/api/v1/agent/...` |
-| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/` |
-| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com/` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
+| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
+| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
+| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/` |
+| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/?desktop_env=mate` |
+| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.node-example-1.containers.hoody.com/api/v1/terminal/...` |
+| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.node-example-1.containers.hoody.com/` |
+| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/watchers/...` |
+| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/api/v1/agent/...` |
+| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/` |
+| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com/` |
 
 ### Conventions
 
@@ -364,13 +364,13 @@ Examples:
 
 ```
 # Plain HTTP server on :8080 inside the container
-https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com
 
 # Service that already terminates TLS on :8443
-https://65f1...c8a-65f2...41e-https-8443.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-https-8443.node-example-1.containers.hoody.com
 
 # WebSockets just work (use `wss://`)
-wss://65f1...c8a-65f2...41e-http-3000.code-sg-sin-1.containers.hoody.com/ws
+wss://65f1...c8a-65f2...41e-http-3000.node-example-1.containers.hoody.com/ws
 ```
 
 Defaults when port omitted: `http` ⇒ port 80, `https` ⇒ port 443. Port range `1..65535`. Capability-token rules still apply — gate the URL via `proxyPermissionsContainer.*` if you don't want it open.
@@ -688,7 +688,7 @@ const box = await hoody.withContainer(container);
 // Password 12-128 chars with at least 3 of 4 classes (upper/lower/digit/symbol).
 await hoody.api.authentication.signup({
   email: 'you@example.com',
-  password: 'Hoody-Pass-12!',
+  password: process.env.HOODY_PASSWORD,
 });
 ```
 
@@ -708,7 +708,7 @@ await hoody.api.authentication.verifyEmail({
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
 const login = await hoody.api.authentication.login({
   email: 'you@example.com',  // or `username: 'alex_3'`
-  password: 'hunter2-Yz',
+  password: process.env.HOODY_PASSWORD,
 });
 const token = (login.data as any).token;
 hoody.setToken(token);
@@ -719,7 +719,7 @@ hoody.setToken(token);
 ```typescript
 const r = await hoody.api.authentication.login({
   email: 'you@example.com',
-  password: 'hunter2-Yz',
+  password: process.env.HOODY_PASSWORD,
 });
 if ((r.data as any)?.requires_2fa) {
   const r2 = await hoody.api.tfa.verify({
@@ -7483,7 +7483,7 @@ client.api.events.bulkDelete(data: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(45 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
+**Body:** `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(69 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
 
 **Returns:** `any`  |  **HTTP:** `DELETE /api/v1/events`
 **CLI:** `hoody events bulk-delete`
@@ -7911,7 +7911,7 @@ client.api.images.listPublic(os?: string, architecture?: string, min_price?: num
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `os` | `string` | query | No | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | query | No | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | query | No | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
@@ -7936,7 +7936,7 @@ client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: 
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `os` | `string` | query | No | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | query | No | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | query | No | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
@@ -7961,7 +7961,7 @@ client.api.images.listPublicIterator(os?: string, architecture?: string, min_pri
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `os` | `string` | query | No | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | query | No | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | query | No | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
@@ -10202,7 +10202,7 @@ client.api.tfa.verifySetup(data: object)
 
 ---
 
-### `client.api.users` (6) — Users
+### `client.api.users` (9) — Users
 
 #### `get` — Get user by ID
 
@@ -10226,6 +10226,57 @@ client.api.users.getFreeTierStatus()
 ```
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/users/me/free-tier-status`
+
+---
+
+#### `getSecurityHistory` — Get your account security history
+
+```typescript
+client.api.users.getSecurityHistory(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number |
+| `limit` | `integer` | query | No | Results per page |
+| `include_failed` | `boolean` | query | No | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | query | No | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `any`  |  **HTTP:** `GET /api/v1/users/me/security-history`
+
+---
+
+#### `getSecurityHistoryAll` — Get your account security history (collect all pages)
+
+```typescript
+client.api.users.getSecurityHistoryAll(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number |
+| `limit` | `integer` | query | No | Results per page |
+| `include_failed` | `boolean` | query | No | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | query | No | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `any[]`  |  **HTTP:** `GET /api/v1/users/me/security-history`
+
+---
+
+#### `getSecurityHistoryIterator` — Get your account security history (async iterator)
+
+```typescript
+client.api.users.getSecurityHistoryIterator(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number |
+| `limit` | `integer` | query | No | Results per page |
+| `include_failed` | `boolean` | query | No | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | query | No | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `AsyncIterableIterator<any>`  |  **HTTP:** `GET /api/v1/users/me/security-history`
 
 ---
 
@@ -24258,7 +24309,7 @@ Cleanup: kill `xeyes` via `system.sendSignal { name: 'xeyes', signal: 'SIGTERM' 
 ```typescript
 await client.terminal.sessions.create({
   terminal_id: '11', shell: 'ssh',
-  ssh_host: '10.0.0.42', ssh_user: 'deploy', ssh_port: '22', ssh_password: 'hunter2',
+  ssh_host: '10.0.0.42', ssh_user: 'deploy', ssh_port: '22', ssh_password: process.env.SSH_PASSWORD,
 });
 await client.terminal.execution.execute({ command: 'hostname; whoami' }, { terminal_id: '11', wait: true });
 ```
@@ -25293,7 +25344,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 The `tunnel` namespace covers only the **observability + admin** surface — `health.check`, `listTunnels`, `listSessions`, `listBindings`, `getMetrics`, `killSession`. The data plane (open / pull) is a long-running WebSocket driver that lives in a separate package; it is intentionally out of scope here, so these 7 examples assume *somebody else* (a teammate's tunnel expose/pull session, your CI machine's tunnel session, a test rig) is currently holding the tunnel. You're the operator: inspecting it, scraping metrics, killing it. Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first.
 
-Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`, and a previously-recorded happy-path run (`scenarios/logs/2026-05-05_22-21-38/tunnel-kit.json`).
+Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
 
 ### 1. Health probe — kit alive, FD budget not exhausted
 

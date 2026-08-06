@@ -1,4 +1,4 @@
-> _**HTTP skill (FULL — basic + all 19 namespaces)** · ~210,085 tokens · hoody-sdk v1.0.0-beta.11_
+> _**HTTP skill (FULL — basic + all 19 namespaces)** · ~210,212 tokens · hoody-sdk v1.0.0-beta.12_
 
 # HTTP mode — drive Hoody with curl
 
@@ -204,7 +204,7 @@ Defense in depth: gate the kit URL AND scope any auth-token bearer (realms, IP a
 
 ## Kit slug table — every namespace's public URL
 
-Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `code-sg-sin-1`). All URLs route through `*.containers.hoody.com`.
+Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `node-example-1`). All URLs route through `*.containers.hoody.com`.
 
 | Namespace | Kit slug | Public URL (single-instance form) |
 |---|---|---|
@@ -233,22 +233,22 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 
 ### Concrete example
 
-For project `65f1...c8a`, container `65f2...41e`, server `code-sg-sin-1`:
+For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.code-sg-sin-1.containers.hoody.com/api/v1/files/workspace/main.py` |
-| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.code-sg-sin-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
-| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.code-sg-sin-1.containers.hoody.com/api/v1/sqlite/db/...` |
-| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.code-sg-sin-1.containers.hoody.com/` |
-| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/` |
-| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/?desktop_env=mate` |
-| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.code-sg-sin-1.containers.hoody.com/api/v1/terminal/...` |
-| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.code-sg-sin-1.containers.hoody.com/` |
-| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.code-sg-sin-1.containers.hoody.com/watchers/...` |
-| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/api/v1/agent/...` |
-| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/` |
-| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com/` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
+| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
+| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
+| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/` |
+| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/?desktop_env=mate` |
+| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.node-example-1.containers.hoody.com/api/v1/terminal/...` |
+| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.node-example-1.containers.hoody.com/` |
+| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/watchers/...` |
+| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/api/v1/agent/...` |
+| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/` |
+| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com/` |
 
 ### Conventions
 
@@ -357,13 +357,13 @@ Examples:
 
 ```
 # Plain HTTP server on :8080 inside the container
-https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com
 
 # Service that already terminates TLS on :8443
-https://65f1...c8a-65f2...41e-https-8443.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-https-8443.node-example-1.containers.hoody.com
 
 # WebSockets just work (use `wss://`)
-wss://65f1...c8a-65f2...41e-http-3000.code-sg-sin-1.containers.hoody.com/ws
+wss://65f1...c8a-65f2...41e-http-3000.node-example-1.containers.hoody.com/ws
 ```
 
 Defaults when port omitted: `http` ⇒ port 80, `https` ⇒ port 443. Port range `1..65535`. Capability-token rules still apply — gate the URL via `* /api/v1/containers/{id}/proxy/permissions*` if you don't want it open.
@@ -673,14 +673,14 @@ All curls assume `-sS`; SSE adds `-N`. JSON bodies imply `-H 'Content-Type: appl
 ```bash
 # password must be 12-128 chars with at least 3 of 4 classes (upper/lower/digit/symbol).
 # Signup + verify-email live under /auth (NOT /users/auth); login + 2FA live under /users/auth.
-curl -X POST $A/auth/signup -d '{"email":"you@example.com","password":"Hoody-Pass-12!"}'
+curl -X POST $A/auth/signup -d '{"email":"you@example.com","password":"<your-password>"}'
 curl -X POST $A/auth/verify-email -d '{"token":"{64-char-token}"}'
 ```
 
 ### 2. Login (+ 2FA branch) — returns `{data:{token,refreshToken,expires_in}}`; 2FA branch returns `{data:{requires_2fa:true,temp_token}}`
 ```bash
 TOKEN=$(curl -X POST $A/users/auth/login \
-  -d '{"username":"alex","password":"hunter2-Yz"}' | jq -r '.data.token')
+  -d '{"username":"alex","password":"<your-password>"}' | jq -r '.data.token')
 curl -X POST $A/users/auth/2fa/verify \
   -d '{"temp_token":"{tt}","code":"123456"}'
 ```
@@ -2377,7 +2377,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 **Body shapes:**
 
-- `DELETE /api/v1/events` body — `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(45 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
+- `DELETE /api/v1/events` body — `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(69 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
   - `event_type` — Delete all events of this type
   - `resource_type` — Delete all events for this resource type
   - `resource_id` — Delete all events for this resource
@@ -2450,7 +2450,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `limit` — Number of images to return per page - maximum 100 items
 - `sort_by` — Field to sort user images by - currently only supports creation date
 - `sort_order` — Sort direction - ascending or descending
-- `os` — Filter images by operating system - e.g., ubuntu, debian, alpine, centos
+- `os` — Filter images by operating system - e.g., debian (the platform currently carries debian/13 only)
 - `architecture` — Filter images by CPU architecture - e.g., amd64, arm64, armhf
 - `min_price` — Minimum price filter for paid images - 0 includes free images
 - `max_price` — Maximum price filter for paid images - useful for budget constraints
@@ -2927,16 +2927,24 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/users/auth/2fa/verify-setup` body — `{ code*: string }`
   - `code` — 6-digit code from authenticator app
 
-### `users` (6) — Users
+### `users` (7) — Users
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/users/{id}` | Get user by ID |  |
 | `GET /api/v1/users/me/free-tier-status` | Get free-tier claim status |  |
+| `GET /api/v1/users/me/security-history` | Get your account security history | `?page` `?limit` `?include_failed` `?include_security` |
 | `POST /api/v1/users/me/onboarding` | Mark an onboarding milestone as completed | `body*` |
 | `POST /api/v1/users/me/redeem-invite` | Redeem a beta invite code | `body*` |
 | `POST /api/v1/users/me/retry-setup` | Retry free-tier account setup | `body*` |
 | `PUT /api/v1/users/{id}` | Update user profile | `body*` |
+
+**Param notes:**
+
+- `page` — Page number
+- `limit` — Results per page
+- `include_failed` — Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions.
+- `include_security` — Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration.
 
 **Body shapes:**
 
@@ -10085,7 +10093,7 @@ curl -sX POST "$KIT/api/v1/terminal/create" \
     "ssh_host":"10.0.0.42",
     "ssh_user":"deploy",
     "ssh_port":"22",
-    "ssh_password":"hunter2"
+    "ssh_password":"<ssh-password>"
   }'
 # Then drive it like any other PTY (body `command` is raw UTF-8):
 curl -sX POST "$KIT/api/v1/terminal/execute?terminal_id=11&wait=true" \
@@ -10600,7 +10608,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 The `tunnel` namespace covers only the **observability + admin** surface — `GET /api/v1/tunnel/health`, `GET /api/v1/tunnel/tunnels`, `GET /api/v1/tunnel/sessions`, `GET /api/v1/tunnel/bindings`, `GET /api/v1/tunnel/metrics`, `DELETE /api/v1/tunnel/sessions/{session_id}`. The data plane (open / pull) is a long-running WebSocket driver that lives in a separate package; it is intentionally out of scope here, so these 7 examples assume *somebody else* (a teammate's tunnel expose/pull session, your CI machine's tunnel session, a test rig) is currently holding the tunnel. You're the operator: inspecting it, scraping metrics, killing it. Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
 
-Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`, and a previously-recorded happy-path run (`scenarios/logs/2026-05-05_22-21-38/tunnel-kit.json`).
+Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
 
 ### 1. Health probe — kit alive, FD budget not exhausted
 

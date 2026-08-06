@@ -1,4 +1,4 @@
-> _**HTTP skill · `api` namespace** · ~22,846 tokens · hoody-sdk v1.0.0-beta.11_
+> _**HTTP skill · `api` namespace** · ~22,990 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -491,7 +491,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 **Body shapes:**
 
-- `DELETE /api/v1/events` body — `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(45 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
+- `DELETE /api/v1/events` body — `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(69 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
   - `event_type` — Delete all events of this type
   - `resource_type` — Delete all events for this resource type
   - `resource_id` — Delete all events for this resource
@@ -564,7 +564,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `limit` — Number of images to return per page - maximum 100 items
 - `sort_by` — Field to sort user images by - currently only supports creation date
 - `sort_order` — Sort direction - ascending or descending
-- `os` — Filter images by operating system - e.g., ubuntu, debian, alpine, centos
+- `os` — Filter images by operating system - e.g., debian (the platform currently carries debian/13 only)
 - `architecture` — Filter images by CPU architecture - e.g., amd64, arm64, armhf
 - `min_price` — Minimum price filter for paid images - 0 includes free images
 - `max_price` — Maximum price filter for paid images - useful for budget constraints
@@ -1041,16 +1041,24 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `POST /api/v1/users/auth/2fa/verify-setup` body — `{ code*: string }`
   - `code` — 6-digit code from authenticator app
 
-### `users` (6) — Users
+### `users` (7) — Users
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/users/{id}` | Get user by ID |  |
 | `GET /api/v1/users/me/free-tier-status` | Get free-tier claim status |  |
+| `GET /api/v1/users/me/security-history` | Get your account security history | `?page` `?limit` `?include_failed` `?include_security` |
 | `POST /api/v1/users/me/onboarding` | Mark an onboarding milestone as completed | `body*` |
 | `POST /api/v1/users/me/redeem-invite` | Redeem a beta invite code | `body*` |
 | `POST /api/v1/users/me/retry-setup` | Retry free-tier account setup | `body*` |
 | `PUT /api/v1/users/{id}` | Update user profile | `body*` |
+
+**Param notes:**
+
+- `page` — Page number
+- `limit` — Results per page
+- `include_failed` — Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions.
+- `include_security` — Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration.
 
 **Body shapes:**
 

@@ -1,4 +1,4 @@
-> _**compact tier-0 skill (always-loaded by agents)** · ~4,083 tokens · hoody-sdk v1.0.0-beta.11_
+> _**compact tier-0 skill (always-loaded by agents)** · ~4,083 tokens · hoody-sdk v1.0.0-beta.12_
 
 # Hoody — lightweight agent skill
 
@@ -48,7 +48,7 @@ hoody.setToken(r.data.token);
 
 ```bash
 # CLI
-hoody auth signup --email you@example.com --password 'Hunter2-Yz!Strong'
+hoody auth signup --email you@example.com --password "$HOODY_PASSWORD"
 hoody login --username <user> --password <pass>   # bare `hoody login` is interactive; `--web` runs the device flow
 ```
 

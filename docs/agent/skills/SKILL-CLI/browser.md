@@ -1,4 +1,4 @@
-> _**CLI skill · `browser` namespace** · ~5,762 tokens · hoody-sdk v1.0.0-beta.11_
+> _**CLI skill · `browser` namespace** · ~5,762 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `browser` — Per-container Chromium/Firefox via Playwright/Patchright
 

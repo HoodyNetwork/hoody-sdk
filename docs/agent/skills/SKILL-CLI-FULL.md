@@ -1,4 +1,4 @@
-> _**CLI skill (FULL — basic + all 19 namespaces)** · ~153,080 tokens · hoody-sdk v1.0.0-beta.11_
+> _**CLI skill (FULL — basic + all 19 namespaces)** · ~153,064 tokens · hoody-sdk v1.0.0-beta.12_
 
 # CLI mode — `hoody` command
 
@@ -259,7 +259,7 @@ Defense in depth: gate the kit URL AND scope any auth-token bearer (realms, IP a
 
 ## Kit slug table — every namespace's public URL
 
-Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `code-sg-sin-1`). All URLs route through `*.containers.hoody.com`.
+Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `node-example-1`). All URLs route through `*.containers.hoody.com`.
 
 | Namespace | Kit slug | Public URL (single-instance form) |
 |---|---|---|
@@ -288,22 +288,22 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 
 ### Concrete example
 
-For project `65f1...c8a`, container `65f2...41e`, server `code-sg-sin-1`:
+For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.code-sg-sin-1.containers.hoody.com/api/v1/files/workspace/main.py` |
-| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.code-sg-sin-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
-| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.code-sg-sin-1.containers.hoody.com/api/v1/sqlite/db/...` |
-| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.code-sg-sin-1.containers.hoody.com/` |
-| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/` |
-| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/?desktop_env=mate` |
-| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.code-sg-sin-1.containers.hoody.com/api/v1/terminal/...` |
-| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.code-sg-sin-1.containers.hoody.com/` |
-| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.code-sg-sin-1.containers.hoody.com/watchers/...` |
-| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/api/v1/agent/...` |
-| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/` |
-| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com/` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
+| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
+| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
+| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/` |
+| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/?desktop_env=mate` |
+| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.node-example-1.containers.hoody.com/api/v1/terminal/...` |
+| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.node-example-1.containers.hoody.com/` |
+| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/watchers/...` |
+| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/api/v1/agent/...` |
+| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/` |
+| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com/` |
 
 ### Conventions
 
@@ -412,13 +412,13 @@ Examples:
 
 ```
 # Plain HTTP server on :8080 inside the container
-https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com
 
 # Service that already terminates TLS on :8443
-https://65f1...c8a-65f2...41e-https-8443.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-https-8443.node-example-1.containers.hoody.com
 
 # WebSockets just work (use `wss://`)
-wss://65f1...c8a-65f2...41e-http-3000.code-sg-sin-1.containers.hoody.com/ws
+wss://65f1...c8a-65f2...41e-http-3000.node-example-1.containers.hoody.com/ws
 ```
 
 Defaults when port omitted: `http` ⇒ port 80, `https` ⇒ port 443. Port range `1..65535`. Capability-token rules still apply — gate the URL via `hoody containers proxy *` if you don't want it open.
@@ -735,10 +735,10 @@ State is per-container: `hoody containers copy` clones the disk including everyt
 ---
 
 ### 1. Sign up
-`hoody signup --email you@example.com --password 'Hoody-Pass-12!'` — a distinct interactive command that ends logged in, NOT an alias for the non-interactive `hoody auth signup`. Signup CLI flags are `--email --password [--region]` (no `--username`); username is auto-generated from the email local part. Password 12–128 chars with at least **3 of 4** character classes (upper/lower/digit/symbol). Resend: `hoody auth email resend`.
+`hoody signup --email you@example.com --password "$HOODY_PASSWORD"` — a distinct interactive command that ends logged in, NOT an alias for the non-interactive `hoody auth signup`. Signup CLI flags are `--email --password [--region]` (no `--username`); username is auto-generated from the email local part. Password 12–128 chars with at least **3 of 4** character classes (upper/lower/digit/symbol). Resend: `hoody auth email resend`.
 
 ### 2. Log in (+2FA)
-`hoody login --username alex --password 'hunter2-Yz'` (or `--email you@example.com`); then `hoody auth 2fa verify --code 123456` (also accepts a 10-character backup code via `--code`). Login password ≥8 chars (signup is ≥12).
+`hoody login --username alex --password "$HOODY_PASSWORD"` (or `--email you@example.com`); then `hoody auth 2fa verify --code 123456` (also accepts a 10-character backup code via `--code`). Login password ≥8 chars (signup is ≥12).
 
 ### 3. Base URL / profiles
 Global flags: `--base-url <URL>`, `--profile <P>`. Persist with `hoody config set baseUrl <URL>` (camelCase key).
@@ -6189,7 +6189,7 @@ Cleanup: kill `xeyes` via `system.sendSignal { name: 'xeyes', signal: 'SIGTERM' 
 
 ```bash
 hoody --container "$C" terminal sessions create --terminal-id 11 \
-  --shell ssh --ssh-host 10.0.0.42 --ssh-user deploy --ssh-port 22 --ssh-password hunter2
+  --shell ssh --ssh-host 10.0.0.42 --ssh-user deploy --ssh-port 22 --ssh-password "$SSH_PASSWORD"
 hoody --container "$C" terminal sessions exec --terminal-id 11 --command 'hostname; whoami' --wait
 ```
 For SOCKS5, swap to `socks5_host` / `socks5_port` / `socks5_user` / `socks5_pass`. Common 400 config-error triggers: `ssh_user` without `ssh_host`, `socks5_port` out of range; `ssh_password` and `ssh_key` may be sent together (no mutual-exclusion error).
@@ -6386,7 +6386,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 The `tunnel` namespace covers only the **observability + admin** surface — `hoody tunnel health`, `hoody tunnel list`, `hoody tunnel sessions list`, `hoody tunnel bindings list`, `hoody tunnel metrics`, `hoody tunnel sessions kill`. The data plane (open / pull) is a long-running WebSocket driver that lives in a separate package; it is intentionally out of scope here, so these 7 examples assume *somebody else* (a teammate's tunnel expose/pull session, your CI machine's tunnel session, a test rig) is currently holding the tunnel. You're the operator: inspecting it, scraping metrics, killing it. Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first.
 
-Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`, and a previously-recorded happy-path run (`scenarios/logs/2026-05-05_22-21-38/tunnel-kit.json`).
+Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
 
 ### 1. Health probe — kit alive, FD budget not exhausted
 

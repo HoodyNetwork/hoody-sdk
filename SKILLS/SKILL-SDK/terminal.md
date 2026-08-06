@@ -1,4 +1,4 @@
-> _**SDK skill · `terminal` namespace** · ~15,590 tokens · hoody-sdk v1.0.0-beta.11_
+> _**SDK skill · `terminal` namespace** · ~15,594 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 
@@ -253,7 +253,7 @@ Cleanup: kill `xeyes` via `system.sendSignal { name: 'xeyes', signal: 'SIGTERM' 
 ```typescript
 await client.terminal.sessions.create({
   terminal_id: '11', shell: 'ssh',
-  ssh_host: '10.0.0.42', ssh_user: 'deploy', ssh_port: '22', ssh_password: 'hunter2',
+  ssh_host: '10.0.0.42', ssh_user: 'deploy', ssh_port: '22', ssh_password: process.env.SSH_PASSWORD,
 });
 await client.terminal.execution.execute({ command: 'hostname; whoami' }, { terminal_id: '11', wait: true });
 ```

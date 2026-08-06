@@ -1,4 +1,4 @@
-> _**SDK skill · `curl` namespace** · ~9,068 tokens · hoody-sdk v1.0.0-beta.11_
+> _**SDK skill · `curl` namespace** · ~9,068 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `curl` — full HTTP client gateway + REST-as-GET-URL bridge
 

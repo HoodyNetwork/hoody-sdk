@@ -22,6 +22,6 @@ One file per namespace for the CLI surface. Fetch only the namespaces a task nee
 - [`proxyLogs.md`](proxyLogs.md) — CLI skill · `proxyLogs` namespace · ~2,772 tokens
 - [`run.md`](run.md) — CLI skill · `run` namespace · ~3,174 tokens
 - [`sqlite.md`](sqlite.md) — CLI skill · `sqlite` namespace · ~5,961 tokens
-- [`terminal.md`](terminal.md) — CLI skill · `terminal` namespace · ~7,556 tokens
-- [`tunnel.md`](tunnel.md) — CLI skill · `tunnel` namespace · ~4,175 tokens
+- [`terminal.md`](terminal.md) — CLI skill · `terminal` namespace · ~7,558 tokens
+- [`tunnel.md`](tunnel.md) — CLI skill · `tunnel` namespace · ~4,151 tokens
 - [`watch.md`](watch.md) — CLI skill · `watch` namespace · ~3,333 tokens

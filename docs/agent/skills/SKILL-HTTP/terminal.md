@@ -1,4 +1,4 @@
-> _**HTTP skill · `terminal` namespace** · ~12,950 tokens · hoody-sdk v1.0.0-beta.11_
+> _**HTTP skill · `terminal` namespace** · ~12,951 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 
@@ -272,7 +272,7 @@ curl -sX POST "$KIT/api/v1/terminal/create" \
     "ssh_host":"10.0.0.42",
     "ssh_user":"deploy",
     "ssh_port":"22",
-    "ssh_password":"hunter2"
+    "ssh_password":"<ssh-password>"
   }'
 # Then drive it like any other PTY (body `command` is raw UTF-8):
 curl -sX POST "$KIT/api/v1/terminal/execute?terminal_id=11&wait=true" \

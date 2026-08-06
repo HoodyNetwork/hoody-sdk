@@ -1,4 +1,4 @@
-> _**guided onboarding skill (agent-directed)** · ~6,385 tokens · hoody-sdk v1.0.0-beta.11_
+> _**guided onboarding skill (agent-directed)** · ~6,383 tokens · hoody-sdk v1.0.0-beta.12_
 
 # Hoody — Onboarding (a brief for the agent running this)
 
@@ -68,7 +68,7 @@ Collect, in one friendly batch: **email** and a **password** (≥12 chars, must 
 ```bash
 curl -sX POST "https://api.hoody.com/api/v1/auth/signup" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"them@example.com","password":"Their-Strong-Pass1!"}'
+  -d '{"email":"them@example.com","password":"<your-password>"}'
 # add "region":"<one from available-regions>" only if they want to choose — a bad region 400s
 ```
 
@@ -81,7 +81,7 @@ Now the important part — **the account isn't active until they click the verif
 ```bash
 curl -sX POST "https://api.hoody.com/api/v1/users/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"them@example.com","password":"Their-Strong-Pass1!"}'
+  -d '{"email":"them@example.com","password":"<your-password>"}'
 # → grab .data.token  (a brand-new account has no 2FA, so there's no extra step)
 ```
 

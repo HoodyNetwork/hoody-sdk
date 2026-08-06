@@ -1,4 +1,4 @@
-> _**SDK skill (basic)** · ~17,182 tokens · hoody-sdk v1.0.0-beta.11_
+> _**SDK skill (basic)** · ~17,196 tokens · hoody-sdk v1.0.0-beta.12_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 
@@ -211,7 +211,7 @@ Defense in depth: gate the kit URL AND scope any auth-token bearer (realms, IP a
 
 ## Kit slug table — every namespace's public URL
 
-Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `code-sg-sin-1`). All URLs route through `*.containers.hoody.com`.
+Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` = `server_name` (e.g. `node-example-1`). All URLs route through `*.containers.hoody.com`.
 
 | Namespace | Kit slug | Public URL (single-instance form) |
 |---|---|---|
@@ -240,22 +240,22 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 
 ### Concrete example
 
-For project `65f1...c8a`, container `65f2...41e`, server `code-sg-sin-1`:
+For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.code-sg-sin-1.containers.hoody.com/api/v1/files/workspace/main.py` |
-| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.code-sg-sin-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
-| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.code-sg-sin-1.containers.hoody.com/api/v1/sqlite/db/...` |
-| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.code-sg-sin-1.containers.hoody.com/` |
-| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/` |
-| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.code-sg-sin-1.containers.hoody.com/?desktop_env=mate` |
-| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.code-sg-sin-1.containers.hoody.com/api/v1/terminal/...` |
-| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.code-sg-sin-1.containers.hoody.com/` |
-| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.code-sg-sin-1.containers.hoody.com/watchers/...` |
-| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/api/v1/agent/...` |
-| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.code-sg-sin-1.containers.hoody.com/` |
-| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com/` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
+| SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
+| Display 1 (X11 / Xpra) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
+| **Full XFCE desktop** | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/` |
+| Same, but MATE | `https://65f1...c8a-65f2...41e-desktop-1.node-example-1.containers.hoody.com/?desktop_env=mate` |
+| Terminal session 3 | `https://65f1...c8a-65f2...41e-terminal-3.node-example-1.containers.hoody.com/api/v1/terminal/...` |
+| Proxy logs | `https://65f1...c8a-65f2...41e-logs-1.node-example-1.containers.hoody.com/` |
+| Watch (file-events) | `https://65f1...c8a-65f2...41e-watch-1.node-example-1.containers.hoody.com/watchers/...` |
+| Coding agent HTTP API | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/api/v1/agent/...` |
+| Hoody Agent GUI (for humans) | `https://65f1...c8a-65f2...41e-agent-1.node-example-1.containers.hoody.com/` |
+| User HTTP server on `:8080` | `https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com/` |
 
 ### Conventions
 
@@ -364,13 +364,13 @@ Examples:
 
 ```
 # Plain HTTP server on :8080 inside the container
-https://65f1...c8a-65f2...41e-http-8080.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-http-8080.node-example-1.containers.hoody.com
 
 # Service that already terminates TLS on :8443
-https://65f1...c8a-65f2...41e-https-8443.code-sg-sin-1.containers.hoody.com
+https://65f1...c8a-65f2...41e-https-8443.node-example-1.containers.hoody.com
 
 # WebSockets just work (use `wss://`)
-wss://65f1...c8a-65f2...41e-http-3000.code-sg-sin-1.containers.hoody.com/ws
+wss://65f1...c8a-65f2...41e-http-3000.node-example-1.containers.hoody.com/ws
 ```
 
 Defaults when port omitted: `http` ⇒ port 80, `https` ⇒ port 443. Port range `1..65535`. Capability-token rules still apply — gate the URL via `proxyPermissionsContainer.*` if you don't want it open.
@@ -688,7 +688,7 @@ const box = await hoody.withContainer(container);
 // Password 12-128 chars with at least 3 of 4 classes (upper/lower/digit/symbol).
 await hoody.api.authentication.signup({
   email: 'you@example.com',
-  password: 'Hoody-Pass-12!',
+  password: process.env.HOODY_PASSWORD,
 });
 ```
 
@@ -708,7 +708,7 @@ await hoody.api.authentication.verifyEmail({
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
 const login = await hoody.api.authentication.login({
   email: 'you@example.com',  // or `username: 'alex_3'`
-  password: 'hunter2-Yz',
+  password: process.env.HOODY_PASSWORD,
 });
 const token = (login.data as any).token;
 hoody.setToken(token);
@@ -719,7 +719,7 @@ hoody.setToken(token);
 ```typescript
 const r = await hoody.api.authentication.login({
   email: 'you@example.com',
-  password: 'hunter2-Yz',
+  password: process.env.HOODY_PASSWORD,
 });
 if ((r.data as any)?.requires_2fa) {
   const r2 = await hoody.api.tfa.verify({

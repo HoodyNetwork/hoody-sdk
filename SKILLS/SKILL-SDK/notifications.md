@@ -1,4 +1,4 @@
-> _**SDK skill · `notifications` namespace** · ~6,182 tokens · hoody-sdk v1.0.0-beta.11_
+> _**SDK skill · `notifications` namespace** · ~6,182 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `notifications` — Trigger and consume desktop notifications inside a container
 

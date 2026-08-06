@@ -1,4 +1,4 @@
-> _**SDK skill · `api` namespace** · ~44,784 tokens · hoody-sdk v1.0.0-beta.11_
+> _**SDK skill · `api` namespace** · ~45,493 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -1514,7 +1514,7 @@ client.api.events.bulkDelete(data: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(45 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
+**Body:** `{ event_type: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | …(69 values), resource_type: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | …(12 values), resource_id: string, before_date: string, realm_id: string }`
 
 **Returns:** `any`  |  **HTTP:** `DELETE /api/v1/events`
 **CLI:** `hoody events bulk-delete`
@@ -1942,7 +1942,7 @@ client.api.images.listPublic(os?: string, architecture?: string, min_price?: num
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `os` | `string` | query | No | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | query | No | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | query | No | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
@@ -1967,7 +1967,7 @@ client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: 
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `os` | `string` | query | No | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | query | No | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | query | No | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
@@ -1992,7 +1992,7 @@ client.api.images.listPublicIterator(os?: string, architecture?: string, min_pri
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `os` | `string` | query | No | Filter images by operating system - e.g., ubuntu, debian, alpine, centos |
+| `os` | `string` | query | No | Filter images by operating system - e.g., debian (the platform currently carries debian/13 only) |
 | `architecture` | `string` | query | No | Filter images by CPU architecture - e.g., amd64, arm64, armhf |
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
@@ -4233,7 +4233,7 @@ client.api.tfa.verifySetup(data: object)
 
 ---
 
-### `client.api.users` (6) — Users
+### `client.api.users` (9) — Users
 
 #### `get` — Get user by ID
 
@@ -4257,6 +4257,57 @@ client.api.users.getFreeTierStatus()
 ```
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/users/me/free-tier-status`
+
+---
+
+#### `getSecurityHistory` — Get your account security history
+
+```typescript
+client.api.users.getSecurityHistory(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number |
+| `limit` | `integer` | query | No | Results per page |
+| `include_failed` | `boolean` | query | No | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | query | No | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `any`  |  **HTTP:** `GET /api/v1/users/me/security-history`
+
+---
+
+#### `getSecurityHistoryAll` — Get your account security history (collect all pages)
+
+```typescript
+client.api.users.getSecurityHistoryAll(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number |
+| `limit` | `integer` | query | No | Results per page |
+| `include_failed` | `boolean` | query | No | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | query | No | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `any[]`  |  **HTTP:** `GET /api/v1/users/me/security-history`
+
+---
+
+#### `getSecurityHistoryIterator` — Get your account security history (async iterator)
+
+```typescript
+client.api.users.getSecurityHistoryIterator(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number |
+| `limit` | `integer` | query | No | Results per page |
+| `include_failed` | `boolean` | query | No | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | query | No | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `AsyncIterableIterator<any>`  |  **HTTP:** `GET /api/v1/users/me/security-history`
 
 ---
 

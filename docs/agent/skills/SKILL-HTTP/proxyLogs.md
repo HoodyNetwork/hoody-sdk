@@ -1,4 +1,4 @@
-> _**HTTP skill · `proxyLogs` namespace** · ~2,872 tokens · hoody-sdk v1.0.0-beta.11_
+> _**HTTP skill · `proxyLogs` namespace** · ~2,872 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `proxyLogs` — Per-container request/response/event log query, stats, and SSE tail
 

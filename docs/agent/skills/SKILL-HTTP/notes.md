@@ -1,4 +1,4 @@
-> _**HTTP skill · `notes` namespace** · ~11,039 tokens · hoody-sdk v1.0.0-beta.11_
+> _**HTTP skill · `notes` namespace** · ~11,039 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 

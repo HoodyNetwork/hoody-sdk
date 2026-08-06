@@ -1,4 +1,4 @@
-> _**CLI skill · `terminal` namespace** · ~7,556 tokens · hoody-sdk v1.0.0-beta.11_
+> _**CLI skill · `terminal` namespace** · ~7,558 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 
@@ -238,7 +238,7 @@ Cleanup: kill `xeyes` via `system.sendSignal { name: 'xeyes', signal: 'SIGTERM' 
 
 ```bash
 hoody --container "$C" terminal sessions create --terminal-id 11 \
-  --shell ssh --ssh-host 10.0.0.42 --ssh-user deploy --ssh-port 22 --ssh-password hunter2
+  --shell ssh --ssh-host 10.0.0.42 --ssh-user deploy --ssh-port 22 --ssh-password "$SSH_PASSWORD"
 hoody --container "$C" terminal sessions exec --terminal-id 11 --command 'hostname; whoami' --wait
 ```
 For SOCKS5, swap to `socks5_host` / `socks5_port` / `socks5_user` / `socks5_pass`. Common 400 config-error triggers: `ssh_user` without `ssh_host`, `socks5_port` out of range; `ssh_password` and `ssh_key` may be sent together (no mutual-exclusion error).

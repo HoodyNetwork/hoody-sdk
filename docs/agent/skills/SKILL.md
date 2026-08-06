@@ -2,7 +2,7 @@
 name: "hoody"
 description: "Hoody: run code, processes, GUIs, browsers, databases, cron jobs and HTTP services on real cloud computers the user owns, and operate their Hoody account — containers, files across 60+ storage providers, secrets, proxies, billing, notifications. Use when a task needs a real computer in the cloud, or any operation against the user's own tenant. Abstain for pre-sales, compliance, support/status, third-party SSO, and generic programming help."
 ---
-> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~11,438 tokens · hoody-sdk v1.0.0-beta.11_
+> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~11,446 tokens · hoody-sdk v1.0.0-beta.12_
 
 # Hoody Agent Skill — pick a surface (SDK / HTTP / CLI)
 
@@ -53,7 +53,7 @@ export A=https://api.hoody.com
 # If you don't have a token yet, sign up + log in to mint a JWT (see §1 sign-up and §2 login 2FA branch):
 TOKEN=$(curl -sX POST "$A/api/v1/users/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"alex","password":"hunter2-Yz"}' | jq -r '.data.token')
+  -d '{"username":"alex","password":"<your-password>"}' | jq -r '.data.token')
 # Headless / long-lived alternative: POST /api/v1/auth/tokens (see § Auth model).
 curl -s "$A/api/v1/users/auth/me" -H "Authorization: Bearer $TOKEN"
 ```
@@ -88,7 +88,7 @@ Create a new account: `email` + `password` (≥ 12 chars, MUST include uppercase
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
 const r = await hoody.api.authentication.signup({
   email: 'you@example.com',
-  password: 'Hunter2-Yz!Strong',
+  password: process.env.HOODY_PASSWORD,
   region: 'eu-west',                 // optional — auto-provisioned server region
 });
 // r.data → { email: 'you@example.com' }
@@ -102,7 +102,7 @@ const r = await hoody.api.authentication.signup({
 ```bash
 curl -X POST "$A/api/v1/auth/signup" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"Hunter2-Yz!Strong","region":"eu-west"}'
+  -d '{"email":"you@example.com","password":"<your-password>","region":"eu-west"}'
 # → {"statusCode":200,"message":"...","data":{"email":"you@example.com"}}
 # Verify the email link, log in (§2), then:
 #   curl "$A/api/v1/containers" -H "Authorization: Bearer $TOKEN" | jq '.data.containers[] | select(.is_default)'
@@ -112,7 +112,7 @@ curl -X POST "$A/api/v1/auth/signup" \
 **CLI**
 
 ```bash
-hoody auth signup --email you@example.com --password 'Hunter2-Yz!Strong' --region eu-west
+hoody auth signup --email you@example.com --password "$HOODY_PASSWORD" --region eu-west
 # Verify email, then `hoody login` (§2); the default container appears automatically:
 #   hoody containers list -o json | jq '.containers[] | select(.is_default)'
 # Rare async-setup failure → hoody users retry-setup
@@ -128,7 +128,7 @@ hoody auth signup --email you@example.com --password 'Hunter2-Yz!Strong' --regio
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
 const r = await hoody.api.authentication.login({
   email: 'you@example.com',  // or `username: 'alex_3'`
-  password: 'hunter2-Yz',
+  password: process.env.HOODY_PASSWORD,
 });
 const d = r.data as any;
 if (d?.requires_2fa) {
@@ -145,14 +145,14 @@ if (d?.requires_2fa) {
 ```bash
 TOKEN=$(curl -X POST $A/api/v1/users/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"username":"alex","password":"hunter2-Yz"}' | jq -r '.data.token')
+  -d '{"username":"alex","password":"<your-password>"}' | jq -r '.data.token')
 # 2FA branch returns {data:{requires_2fa:true,temp_token}}; verify at /users/auth/2fa/verify.
 ```
 
 **CLI**
 
 ```bash
-hoody login --username alex --password 'hunter2-Yz'
+hoody login --username alex --password "$HOODY_PASSWORD"
 # 2FA: hoody auth 2fa verify --temp-token "$TEMP_TOKEN" --code 123456  # TEMP_TOKEN is data.temp_token from the login response
 ```
 

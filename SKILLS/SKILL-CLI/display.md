@@ -1,4 +1,4 @@
-> _**CLI skill · `display` namespace** · ~5,816 tokens · hoody-sdk v1.0.0-beta.11_
+> _**CLI skill · `display` namespace** · ~5,816 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 

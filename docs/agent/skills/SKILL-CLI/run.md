@@ -1,4 +1,4 @@
-> _**CLI skill · `run` namespace** · ~3,174 tokens · hoody-sdk v1.0.0-beta.11_
+> _**CLI skill · `run` namespace** · ~3,174 tokens · hoody-sdk v1.0.0-beta.12_
 
 # `run` — resolve apps to shell commands
 
