@@ -118,9 +118,30 @@ export HOODY_CHAT_MODEL=MiniMax-M2.7-highspeed       # default
 
 ```bash
 export HOODY_CLI_AI_KEY=…
-export HOODY_CLI_AI_URL=https://ai.hoody.com/api/v1   # default
-export HOODY_CLI_AI_MODEL=openai/gpt-5.4-nano          # default
+export HOODY_CLI_AI_URL=https://ai.hoody.com/api/v1    # default
+export HOODY_CLI_AI_MODEL=hoody-ai/hoody-free          # default (free tier —
+                                                       # needs no wallet credit;
+                                                       # catalog models are paid
+                                                       # and are refused while
+                                                       # ai_limit is 0.00)
 ```
+
+### AI typo corrector (`ai-fix`)
+
+Off unless you turn it on. `suggest` prints a corrected command; `auto` **runs
+it** — and a suggestion is model output, so `auto` grants whoever answers your
+provider the ability to run any `hoody` command as you, including
+`hoody shell <id> <cmd>`. Prefer `suggest` unless you trust the provider as much
+as your own shell.
+
+```bash
+export HOODY_CLI_AI_FIX=suggest              # auto | suggest | off (default: off)
+export HOODY_CLI_AI_MAX_TOKENS=2048          # output + reasoning cap (max 16000)
+export HOODY_CLI_AI_REASONING_EFFORT=low     # minimal|low|medium|high; unset by default
+```
+
+Inside a Hoody container these are pre-set for you, so the corrector works with
+no configuration.
 
 ### Tier 3 — OpenAI-compatible
 
@@ -139,8 +160,7 @@ accidentally going to MiniMax because you forgot to set the base URL.
 ### Endpoint acceptance
 
 Non-allowlisted origins require `--accept-endpoint <origin>`,
-`HOODY_CHAT_ACCEPT_ENDPOINT`, or a one-time interactive confirmation at a TTY prompt. Built-in allowlist: `chatbot.hoody.com`,
-`ai.hoody.com`, `api.minimax.io`, plus localhost/RFC1918 private IPs.
+`HOODY_CHAT_ACCEPT_ENDPOINT`, or a one-time interactive confirmation at a TTY prompt. Built-in allowlist: `chatbot.hoody.com`, plus localhost/RFC1918 private IPs. Note that the tier-1 and tier-2 defaults (`api.minimax.io`, `ai.hoody.com`) are NOT built-in — first use prompts for acceptance like any other origin.
 Accepted origins persist to `~/.hoody/chats/chat-accept.json`.
 
 ### Other chat env vars
