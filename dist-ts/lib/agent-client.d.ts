@@ -9,11 +9,16 @@
  * POSTs the turn, reads the SSE body, unwraps the gatedEvent envelope, and
  * exposes the assistant text deltas + every turn event + a `done` promise.
  *
- * Auth: the platform Bearer is stripped on cross-origin kit URLs, so this mints
- * a container claim via the public `client.api.containers.authorize()` and
- * sends `X-Hoody-Container-Claim` + `X-Hoody-Token` (mirroring the kit handshake
- * in lib/proxy-auth-middleware.ts / lib/terminal-client.ts). Pass an explicit
- * `auth` to override (e.g. when a deployment proxy-injects).
+ * Auth: the agent kit takes no auth of its own — the container URL is the
+ * credential, as it is for every other kit. No proxy permission group verifies
+ * a container claim either (the group types are password / jwt / ip / token /
+ * hoody-identity). This still mints one via `client.api.containers.authorize()`
+ * and sends `X-Hoody-Container-Claim` + `X-Hoody-Token` when it succeeds, for
+ * parity with the kit handshake in lib/proxy-auth-middleware.ts /
+ * lib/terminal-client.ts and for any container program of your own that checks
+ * it, but the mint is BEST-EFFORT: where it fails (e.g. a deployment with
+ * response signing disabled answers `503 SIGNING_NOT_CONFIGURED`) the turn runs
+ * on the bare URL instead of failing. Pass an explicit `auth` to override.
  *
  * Runtime-agnostic: uses global `fetch` + `ReadableStream` + the SSE parser in
  * lib/pipe-stream.ts (Node 18+/Bun/browser), same as the tunnel/pipe helpers.
@@ -54,7 +59,9 @@ export interface StreamAgentPromptArgs {
     policy?: 'auto_approve';
     /** Kit service index (the agent daemon is a singleton at 1). */
     serviceIndex?: number;
-    /** Explicit kit auth; if omitted, a container claim is minted via authorize(). */
+    /** Explicit kit auth. If omitted, a container claim is minted via authorize()
+     *  on a best-effort basis; the agent kit does not require one, so a failed
+     *  mint falls through to the bare kit URL. */
     auth?: AgentPromptKitAuth;
     /** Abort the in-flight turn. */
     signal?: AbortSignal;

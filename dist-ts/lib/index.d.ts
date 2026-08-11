@@ -104,6 +104,14 @@ export type { Frame as TunnelFrame, FrameHeader as TunnelFrameHeader, } from './
 export { encodeFrame as encodeTunnelFrame, encodeFrames as encodeTunnelFrames, decodeFrame as decodeTunnelFrame, decodeFrames as decodeTunnelFrames, dataFrame as tunnelDataFrame, pingFrame as tunnelPingFrame, pongFrame as tunnelPongFrame, windowFrame as tunnelWindowFrame, eofFrame as tunnelEofFrame, CodecError as TunnelCodecError, MAX_MESSAGE_SIZE as TUNNEL_MAX_MESSAGE_SIZE, MAX_FRAMES_PER_MESSAGE as TUNNEL_MAX_FRAMES_PER_MESSAGE, } from './tunnel-protocol-codec.js';
 export type { DecodeResult as TunnelDecodeResult } from './tunnel-protocol-codec.js';
 export { handleHttpStream as handleTunnelHttpStream, handleTcpStream as handleTunnelTcpStream, setupAutoForwarding as setupTunnelAutoForwarding, destroyAllLocalAgents as destroyAllTunnelLocalAgents, } from './tunnel-http-pump.js';
+export { startLocalExit, fetchThroughProxy, LocalExitStartupError, } from './local-exit.js';
+export type { LocalExitOptions, LocalExitHandle, LocalExitVerification, LocalExitTeardownReport, LocalExitContainerLike, } from './local-exit.js';
+export { tunnelSocks5 } from './tunnel-socks5.js';
+export type { TunnelSocks5Options, TunnelSocks5Handle, } from './tunnel-socks5.js';
+export { handleSocks5Stream, createServerState as createSocks5ServerState, } from './socks5-server.js';
+export type { Socks5Stream, Socks5Credentials, Socks5ServerOptions, Socks5ServerState, Socks5ConnectEvent, Socks5DenyReason, } from './socks5-server.js';
+export { resolveAndAuthorize as resolveAndAuthorizeDestination, isPrivateAddress, clearDnsCache as clearDestinationDnsCache, DestinationDeniedError, } from './net-destination-policy.js';
+export type { DestinationPolicy, ResolvedDestination, DenyReason as DestinationDenyReason, DnsLookup as DestinationDnsLookup, } from './net-destination-policy.js';
 export { CurlChannel, CurlChannelStream, createCurlFetch, ChannelError as CurlChannelError, AbortError as CurlAbortError, createAbortError as createCurlAbortError, SSE_EVENT_QUEUE_CAP as CURL_SSE_EVENT_QUEUE_CAP, MAX_INBOUND_FRAME_BYTES as CURL_MAX_INBOUND_FRAME_BYTES, } from './curl-channel-client.js';
 export type { CurlRequest, ExecutionMode as CurlExecutionMode, SseEvent as CurlSseEvent, ChannelHello as CurlChannelHello, ChannelHooks as CurlChannelHooks, ChannelOptions as CurlChannelOptions, ReconnectOptions as CurlChannelReconnectOptions, RequestOptions as CurlChannelRequestOptions, CurlFetch, CurlFetchOptions, ChannelClientMessage as CurlChannelClientMessage, ChannelServerMessage as CurlChannelServerMessage, } from './curl-channel-client.js';
 export type { CurlChannelHelperOptions } from './curl-channel-helper.js';

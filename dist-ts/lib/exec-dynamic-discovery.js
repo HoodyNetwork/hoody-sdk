@@ -157,11 +157,12 @@ export function sanitizeDescription(text) {
  */
 export async function discoverScripts(openapiService, scriptsService, options) {
     const templateVars = options?.templateVars;
-    // listScripts is not paginated (spec returns oneOf with inline scripts
+    // listScripts is not paginated (spec returns a union with inline scripts
     // array); call it directly and extract the array from the response.
     const requestOptions = options?.signal ? { signal: options.signal } : undefined;
     const response = await openapiService.listScripts(requestOptions, templateVars);
-    // Response shape is oneOf — look for `scripts` or `items` in .data.
+    // Response shape is a union (anyOf — its branches have subset `required` sets,
+    // so `oneOf` would reject a full response) — look for `scripts` or `items` in .data.
     const data = response.data ?? response;
     const scriptsArr = data.scripts
         ?? data.items

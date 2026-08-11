@@ -27,7 +27,14 @@ export function isResolverError(r) {
 const TIER1_DEFAULT_URL = 'https://api.minimax.io/v1';
 const TIER1_DEFAULT_MODEL = 'MiniMax-M2.7-highspeed';
 const TIER2_DEFAULT_URL = 'https://ai.hoody.com/api/v1';
-const TIER2_DEFAULT_MODEL = 'openai/gpt-5.4-nano';
+// Hoody AI's free tier — the only model that runs without wallet credit. Keep in
+// sync with `cli/ai-fix.ts:DEFAULT_MODEL`; a paid catalog id here is refused
+// outright (403) on any account whose `ai_limit` is 0.00.
+const TIER2_DEFAULT_MODEL = 'hoody-ai/hoody-free';
+// Cosmetic non-secret bearer for the built-in gateway, which authorizes by
+// network position. Mirrors `cli/ai-fix.ts:DEFAULT_API_KEY` — used only by the
+// 'ai-fix' profile, so `chat` keeps requiring a real key at a public origin.
+const AI_FIX_DEFAULT_KEY = 'anonymous';
 // RFC1918 + loopback — no acceptance prompt needed, keyless allowed.
 const LOCAL_ORIGIN_REGEX = /^(https?):\/\/(localhost|127\.0\.0\.1|\[::1\]|10\.[0-9.]+|172\.(1[6-9]|2[0-9]|3[01])\.[0-9.]+|192\.168\.[0-9.]+)(:[0-9]+)?$/i;
 /**
@@ -109,13 +116,20 @@ function readTier3(env) {
  */
 export function resolveProvider(profile, env = process.env) {
     if (profile === 'ai-fix') {
-        // the ai-fix profile never cascades; it uses tier 2 defaults with optional overrides.
+        // The ai-fix profile never cascades; it uses tier 2 defaults with optional
+        // overrides. It also fills the cosmetic bearer that `cli/ai-fix.ts` uses
+        // (`DEFAULT_API_KEY = 'anonymous'`): the built-in Hoody AI gateway
+        // authorizes by network position, not key secrecy. Without it, every
+        // keyless call fell foul of the non-local `missing-key` rule below and this
+        // profile could not resolve its OWN defaults — it returned an error for the
+        // exact configuration the shipped CLI runs on, so the two code paths
+        // disagreed about whether the default setup is even valid.
         const t2 = readTier2(env);
         if (t2)
-            return finalizeTier(t2);
+            return finalizeTier({ ...t2, key: t2.key ?? AI_FIX_DEFAULT_KEY });
         return finalizeTier({
             tier: 'cli-ai',
-            key: undefined,
+            key: AI_FIX_DEFAULT_KEY,
             url: TIER2_DEFAULT_URL,
             model: TIER2_DEFAULT_MODEL,
         });

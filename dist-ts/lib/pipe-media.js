@@ -163,9 +163,49 @@ export class PipeMedia {
     // -------------------------------------------------------------------------
     // URL helpers
     // -------------------------------------------------------------------------
-    /** Build the full pipe URL for a given path. */
+    /**
+     * Build the full pipe URL for a given path.
+     *
+     * Encodes PER SEGMENT. Whole-value `encodeURIComponent` turns a multi-segment
+     * channel like `cam/1` into `cam%2F1`, which the server's segment-wise router
+     * answers with 400.
+     *
+     * Rejects `.` and `..` segments (checked after percent-decoding, since `%2e%2e`
+     * normalises identically). Preserving `/` separators means a caller-supplied
+     * path can introduce segments, and without this guard it walks out of the pipe
+     * route entirely — measured against this exact expression:
+     *
+     *     '../../x' -> /api/x      '..' -> /api/v1/      'a/../../b' -> /api/v1/b
+     *
+     * with the caller's bearer token still attached. `validatePipePath` does not
+     * cover it either; it checks only length and reserved names.
+     *
+     * Deliberately inlined rather than importing `encodePipePath` from
+     * `pipe-stream.ts`: this module is browser-only and dependency-free, and
+     * pipe-stream imports `node:net`/`node:fs`/`node:stream`/`node:url` — pulling
+     * it in breaks `build:browser` outright (measured). Keep the two in sync by
+     * hand; they encode the same rule, and `tests/unit/pipe-path-traversal.test.ts`
+     * fails if they drift.
+     */
     getUrl(path) {
-        return `${this.baseUrl}${this.basePath}/${encodeURIComponent(path)}`;
+        const encoded = String(path)
+            .split('/')
+            .map(segment => {
+            let decoded = segment;
+            try {
+                decoded = decodeURIComponent(segment);
+            }
+            catch {
+                // Malformed escape cannot decode to a dot segment.
+            }
+            if (segment === '.' || segment === '..' || decoded === '.' || decoded === '..') {
+                throw new Error(`Invalid pipe path: "${path}" contains a "${segment}" path segment. ` +
+                    'Relative segments are not allowed because they change which endpoint is called.');
+            }
+            return encodeURIComponent(segment);
+        })
+            .join('/');
+        return `${this.baseUrl}${this.basePath}/${encoded}`;
     }
     // -------------------------------------------------------------------------
     // Share screen

@@ -63,6 +63,58 @@ function classifyFile(filepath) {
     return 'text';
 }
 // ---------------------------------------------------------------------------
+// Path encoding
+// ---------------------------------------------------------------------------
+/**
+ * Percent-encode a filesystem path per segment, REFUSING relative segments.
+ *
+ * Separators must survive — whole-value encoding turns `/tmp/f.txt` into one
+ * opaque segment and the server answers `400 Invalid path`. But preserving them
+ * lets a caller-supplied value introduce segments, and dots are unreserved, so
+ * `encodeURIComponent('..') === '..'` passes straight through. These helpers
+ * build `/api/v1/files/<path>` URLs, so without this guard a caller-supplied
+ * value resolves out of the route before the request is even sent:
+ *
+ *     /api/v1/files/../../elsewhere   ->   /api/elsewhere
+ *
+ * hoody-files DOES reject dot segments server-side, but that check never runs —
+ * `new URL()` normalises the traversal during URL construction, so the request
+ * arrives at a different endpoint entirely and the file-path validator is never
+ * consulted. Same mechanism as the pipe traversal fixed in lib/pipe-stream.ts.
+ *
+ * Checked after percent-decoding, since `%2e%2e` normalises identically.
+ */
+function encodeFilePathSegments(path, label) {
+    const segments = path.split('/');
+    // Drop LEADING empties. The call sites strip exactly ONE separator, so a
+    // `//tmp/f.txt` input previously survived as `/tmp/f.txt` here and emitted
+    // `/api/v1/files//tmp/f.txt` — hoody-files strips one separator then rejects
+    // the remaining leading one as an absolute path (src/api/files.rs), so it 400'd
+    // where the CLI's encoder handled the same value. Interior and trailing empties
+    // are preserved: hoody-code proxies on this path and hoody-pipe keys channels by
+    // it, so a doubled separator names a DIFFERENT target.
+    let start = 0;
+    while (start < segments.length && segments[start] === '')
+        start++;
+    return segments
+        .slice(start)
+        .map(segment => {
+        let decoded = segment;
+        try {
+            decoded = decodeURIComponent(segment);
+        }
+        catch {
+            // Malformed escape cannot decode to a dot segment.
+        }
+        if (segment === '.' || segment === '..' || decoded === '.' || decoded === '..') {
+            throw new Error(`Invalid ${label}: "${path}" contains a "${segment}" path segment. ` +
+                'Relative segments are not allowed because they change which endpoint is called.');
+        }
+        return encodeURIComponent(segment);
+    })
+        .join('/');
+}
+// ---------------------------------------------------------------------------
 // Prototype patching
 // ---------------------------------------------------------------------------
 function patchFilesService(proto, includeJsonOverrides) {
@@ -71,7 +123,7 @@ function patchFilesService(proto, includeJsonOverrides) {
     proto.classifyFile = classifyFile;
     proto.getFileUrl = function (absPath, options, templateVars) {
         const cleanPath = absPath.startsWith('/') ? absPath.slice(1) : absPath;
-        const encoded = cleanPath.split('/').map(encodeURIComponent).join('/');
+        const encoded = encodeFilePathSegments(cleanPath, 'file path');
         let requestUrl = this.buildTemplateUrl('/api/v1/files/{path}', templateVars || {});
         requestUrl = requestUrl.replace('{path}', () => encoded);
         if (options && 'download' in options) {
@@ -115,7 +167,7 @@ function patchArchivesService(proto) {
             throw new Error('directory is required');
         }
         const cleanDir = directory.startsWith('/') ? directory.slice(1) : directory;
-        const encoded = cleanDir.split('/').map(encodeURIComponent).join('/');
+        const encoded = encodeFilePathSegments(cleanDir, 'directory');
         let requestUrl = this.buildTemplateUrl('/{directory}?zip', templateVars || {});
         requestUrl = requestUrl.replace('{directory}', () => encoded);
         return requestUrl;
@@ -127,7 +179,7 @@ function patchImageProcessingService(proto) {
         return;
     proto.getThumbnailUrl = function (imagePath, options, templateVars) {
         const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-        const encoded = cleanPath.split('/').map(encodeURIComponent).join('/');
+        const encoded = encodeFilePathSegments(cleanPath, 'image path');
         let requestUrl = this.buildTemplateUrl('/{image}', templateVars || {});
         requestUrl = requestUrl.replace('{image}', () => encoded);
         const params = ['thumbnail'];

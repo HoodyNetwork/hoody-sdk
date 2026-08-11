@@ -77,37 +77,45 @@ export async function pull(opts) {
         // aren't dropped by the default onmessage handler (which has no
         // stream handlers registered at that point). See expose() for the
         // race explanation.
-        const origWs = session.ws;
-        origWs.onmessage = (event) => {
-            const data = new Uint8Array(event.data);
-            let result;
-            try {
-                result = decodeFrames(data);
-            }
-            catch {
-                return;
-            }
-            for (const frame of result.frames) {
-                if (frame.header.frameType === FrameType.StreamOpen) {
-                    // Guard JSON.parse on peer-controlled STREAM_OPEN payload. Without
-                    // this, malformed JSON would throw synchronously and kill the
-                    // onmessage handler for the rest of the session.
-                    let payload;
-                    try {
-                        payload = JSON.parse(new TextDecoder().decode(frame.payload));
-                    }
-                    catch {
-                        session.resetStream?.(frame.header.streamId);
-                        continue;
-                    }
-                    if (payload.kind === "tcp") {
-                        handleTcpStream(session, frame.header.streamId, opts.to);
-                        continue;
-                    }
+        // Attach to EVERY WebSocket, not just the primary. A v2 session opens
+        // secondary sockets and the kit may deliver STREAM_OPEN on any of them; a
+        // primary-only interceptor silently drops those streams, because the default
+        // handler has no stream handler registered for a kit-initiated id. expose()
+        // already does this via setupAutoForwarding -> getAllWebSockets().
+        for (const ws of session.getAllWebSockets()) {
+            if (!ws)
+                continue;
+            ws.onmessage = (event) => {
+                const data = new Uint8Array(event.data);
+                let result;
+                try {
+                    result = decodeFrames(data);
                 }
-                session.dispatchFrame(frame, origWs);
-            }
-        };
+                catch {
+                    return;
+                }
+                for (const frame of result.frames) {
+                    if (frame.header.frameType === FrameType.StreamOpen) {
+                        // Guard JSON.parse on peer-controlled STREAM_OPEN payload. Without
+                        // this, malformed JSON would throw synchronously and kill the
+                        // onmessage handler for the rest of the session.
+                        let payload;
+                        try {
+                            payload = JSON.parse(new TextDecoder().decode(frame.payload));
+                        }
+                        catch {
+                            session.resetStream?.(frame.header.streamId);
+                            continue;
+                        }
+                        if (payload.kind === "tcp") {
+                            handleTcpStream(session, frame.header.streamId, opts.to);
+                            continue;
+                        }
+                    }
+                    session.dispatchFrame(frame, ws);
+                }
+            };
+        }
         const bind = await session.bind({
             kind: "tcp",
             mode: "pull",

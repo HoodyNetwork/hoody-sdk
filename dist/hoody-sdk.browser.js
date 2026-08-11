@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.12
+ * Hoody SDK v1.0.0-beta.13
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -2335,6 +2335,7 @@ var HoodySDK = (() => {
     decrypt: () => decrypt,
     discoverScripts: () => discoverScripts,
     display: () => display_exports,
+    egress: () => egress_exports,
     encrypt: () => encrypt2,
     exec: () => exec_exports,
     extractParamsFromSchema: () => extractParamsFromSchema,
@@ -2790,7 +2791,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -2980,7 +2992,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{public_key}", () => encodeURIComponent(String(public_key)));
+      requestUrl = requestUrl.replace("{public_key}", () => {
+        const v = String(public_key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('public_key must not be a "." or ".." path segment', "public_key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -3033,7 +3056,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -3089,7 +3123,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -3143,7 +3188,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -3199,7 +3255,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -3256,7 +3323,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -3648,7 +3726,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm_id !== void 0) {
@@ -3719,7 +3808,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -3788,7 +3888,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm_id !== void 0) {
@@ -6042,7 +6153,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -6098,7 +6220,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -6133,7 +6266,7 @@ var HoodySDK = (() => {
     /**
      * Get your account security history
      *
-     * Returns your own account security history — sign-ins and, on request, rejected attempts and other security events (logout, 2FA changes, OTP outcomes) — with IP address, resolved country, source channel and timestamp, newest first. **History is bounded by the platform audit retention window (`AUDIT_LOGS_RETENTION_DAYS`, 180 days by default); older logins are purged automatically and cannot be recovered.** Login records cannot be edited or deleted by the account holder — the trail is append-only so it stays trustworthy as evidence. Pass `include_failed=true` to also see REJECTED sign-in attempts — a burst of them, or any from a country you have not visited, is the clearest sign someone else is trying to get in. Failures are only recorded when a credential was presented against a REAL account (an attempt on an unknown address is never recorded, so this cannot be used to test whether an account exists), and are capped at 200 per account per hour — beyond that, further attempts in the same hour are not listed. Pass `include_security=true` for other account-security events: logout, 2FA enable/disable, OTP verification outcomes and backup-code use. `country` is resolved in the background after the event is recorded. It is `null` when the address is not geolocatable at all (private, reserved, or IPv6 — these stay null permanently), when the provider returned no country for it, or when resolution has not completed. Treat null as **unavailable**, never as a location — and note that a null does not necessarily become non-null later: background retries stop once the row ages out of the retry window.
+     * Returns your own account security history — sign-ins and, on request, rejected attempts and other security events (logout, 2FA changes, OTP outcomes) — with IP address, resolved country, source channel and timestamp, newest first. **History covers the last 180 days, which is platform policy and the same for every account; older logins are purged automatically and cannot be recovered.** Login records cannot be edited or deleted by the account holder — the trail is append-only so it stays trustworthy as evidence. Pass `include_failed=true` to also see REJECTED sign-in attempts — a burst of them, or any from a country you have not visited, is the clearest sign someone else is trying to get in. Failures are only recorded when a credential was presented against a REAL account (an attempt on an unknown address is never recorded, so this cannot be used to test whether an account exists), and are capped at 200 per account per hour — beyond that, further attempts in the same hour are not listed. Pass `include_security=true` for other account-security events: logout, 2FA enable/disable, OTP verification outcomes and backup-code use. `country` is resolved in the background after the event is recorded. It is `null` when the address is not geolocatable at all (private, reserved, or IPv6 — these stay null permanently), when the provider returned no country for it, or when resolution has not completed. Treat null as **unavailable**, never as a location — and note that a null does not necessarily become non-null later: background retries stop once the row ages out of the retry window.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async getSecurityHistory(options) {
@@ -6900,7 +7033,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (include_permissions !== void 0) {
@@ -6960,7 +7104,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -7016,7 +7171,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (include_deleted_items !== void 0) {
@@ -7102,7 +7268,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -7283,7 +7460,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -7348,8 +7536,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{permissionId}", () => encodeURIComponent(String(permissionId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{permissionId}", () => {
+        const v = String(permissionId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('permissionId must not be a "." or ".." path segment', "permissionId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -7411,8 +7621,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{permissionId}", () => encodeURIComponent(String(permissionId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{permissionId}", () => {
+        const v = String(permissionId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('permissionId must not be a "." or ".." path segment', "permissionId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -7465,7 +7697,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -7675,7 +7918,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -7868,7 +8122,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -8185,7 +8450,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (runtime !== void 0) {
@@ -8251,7 +8527,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -8305,7 +8592,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -8361,7 +8659,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -8444,7 +8753,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -8513,7 +8833,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -8567,7 +8898,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -8637,7 +8979,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -8695,8 +9048,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{operation}", () => encodeURIComponent(String(operation)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{operation}", () => {
+        const v = String(operation);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('operation must not be a "." or ".." path segment', "operation");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -8749,7 +9124,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -8805,7 +9191,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -8859,7 +9256,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -8912,7 +9320,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -8965,7 +9384,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -9018,7 +9448,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -9186,7 +9627,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -9245,8 +9697,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -9304,8 +9778,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -9366,8 +9862,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -9421,7 +9939,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -9834,7 +10363,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -9887,7 +10427,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -10138,7 +10689,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -10191,7 +10753,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -10247,7 +10820,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -10407,7 +10991,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -10569,7 +11164,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -10622,7 +11228,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -10676,7 +11293,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -10730,7 +11358,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -10784,7 +11423,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -10838,7 +11488,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -10892,7 +11553,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -11052,7 +11724,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -11105,7 +11788,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -11170,8 +11864,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -11233,8 +11949,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -11531,14 +12269,14 @@ var HoodySDK = (() => {
       })();
     }
     /**
-     * Get all notifications for the authenticated user
+     * Unread notification count and newest position
      *
-     * Get all notifications for the authenticated user, including global notifications and notifications targeted to the user
+     * Lightweight polling endpoint: returns the unread count and the newest notification position without any notification bodies. Use this to detect new notifications; fetch the list only when something changed. Auth-token callers must hold the `resources.read_account` permission; tokens without it receive 403. It is gated with the list rather than left open because the count and the newest timestamp are an activity oracle for the notifications themselves. JWT/owner callers are unaffected.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
-    async list(options) {
+    async getUserNotificationSummary(options) {
       const { _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
-      let requestUrl = this.buildRealmUrl(`/api/v1/notifications/`, _realm, {
+      let requestUrl = this.buildRealmUrl(`/api/v1/notifications/summary`, _realm, {
         optional: true,
         baseDomain: "api.hoody.com",
         subdomainPattern: "{realm}.api.hoody.com",
@@ -11575,16 +12313,104 @@ var HoodySDK = (() => {
       return this.http.get(requestUrl, requestData);
     }
     /**
+     * List notifications for the authenticated user
+     *
+     * Paginated list of the notifications visible to the authenticated user (global notifications plus those targeted to them), newest first. Results are PAGINATED — page 1 is not the complete set; follow pagination.next_cursor (or increment page) to read the rest. Notification bodies carry account-security, billing and infrastructure events, so auth-token callers must hold the `resources.read_account` permission; tokens without it receive 403. JWT/owner callers are unaffected.
+     * @param options._realm - Realm host-scope override (subdomain routing only)
+     */
+    async list(options) {
+      const { page, limit, unread_only, read_only, before, _realm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
+      if (page !== void 0 && page !== null) {
+        if (!Number.isFinite(page) || !Number.isInteger(page)) {
+          throw new ValidationError("page must be an integer", "page");
+        }
+        if (page < 1) {
+          throw new ValidationError("page must be >= 1", "page");
+        }
+        if (page > 1e5) {
+          throw new ValidationError("page must be <= 100000", "page");
+        }
+      }
+      if (limit !== void 0 && limit !== null) {
+        if (!Number.isFinite(limit) || !Number.isInteger(limit)) {
+          throw new ValidationError("limit must be an integer", "limit");
+        }
+        if (limit < 1) {
+          throw new ValidationError("limit must be >= 1", "limit");
+        }
+        if (limit > 100) {
+          throw new ValidationError("limit must be <= 100", "limit");
+        }
+      }
+      if (unread_only !== void 0 && unread_only !== null) {
+      }
+      if (read_only !== void 0 && read_only !== null) {
+      }
+      if (before !== void 0 && before !== null) {
+      }
+      let requestUrl = this.buildRealmUrl(`/api/v1/notifications/`, _realm, {
+        optional: true,
+        baseDomain: "api.hoody.com",
+        subdomainPattern: "{realm}.api.hoody.com",
+        parameterName: "realm_id"
+      });
+      const requestData = {};
+      requestData.query = {};
+      if (page !== void 0) {
+        requestData.query["page"] = page;
+      }
+      if (limit !== void 0) {
+        requestData.query["limit"] = limit;
+      }
+      if (unread_only !== void 0) {
+        requestData.query["unread_only"] = unread_only;
+      }
+      if (read_only !== void 0) {
+        requestData.query["read_only"] = read_only;
+      }
+      if (before !== void 0) {
+        requestData.query["before"] = before;
+      }
+      if (signal) {
+        requestData.signal = signal;
+      }
+      if (timeoutMs !== void 0) {
+        requestData.timeoutMs = timeoutMs;
+      }
+      if (retries !== void 0) {
+        requestData.retries = retries;
+      }
+      if (retryDelayMs !== void 0) {
+        requestData.retryDelayMs = retryDelayMs;
+      }
+      if (retryOnStatuses !== void 0) {
+        requestData.retryOnStatuses = retryOnStatuses;
+      }
+      if (middlewareContext !== void 0) {
+        requestData.middlewareContext = middlewareContext;
+      }
+      if (authRetry !== void 0) {
+        requestData.authRetry = authRetry;
+      }
+      if (rawResponse !== void 0) {
+        requestData.rawResponse = rawResponse;
+      }
+      if (responseType !== void 0) {
+        requestData.responseType = responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
      * Async iterator helper for paginated operation list.
      */
     async *listIterator(...args) {
-      const paginationType = "simple-array";
+      const paginationType = "page-number";
       const itemsPath = "data.data";
-      const totalPath = "data.length";
+      const totalPath = "pagination.total";
       const nextCursorPath = "data.next_cursor";
       const hasMorePath = "data.has_more";
       const limitParam = "limit";
-      const offsetParam = "offset";
+      const offsetParam = "page";
       const requestArgs = [...args];
       const optionsIndex = 0;
       const initialOptions = requestArgs[optionsIndex] || {};
@@ -11613,8 +12439,8 @@ var HoodySDK = (() => {
         } else {
           options[offsetParam] = currentOffset;
         }
-        if (!Object.prototype.hasOwnProperty.call(options, limitParam) && "") {
-          options[limitParam] = Number("0");
+        if (!Object.prototype.hasOwnProperty.call(options, limitParam) && "20") {
+          options[limitParam] = Number("20");
         }
         requestArgs[optionsIndex] = options;
         const response = await this.list(...requestArgs);
@@ -11689,7 +12515,7 @@ var HoodySDK = (() => {
     /**
      * Mark a notification as read
      *
-     * Mark a notification as read for the authenticated user
+     * Mark a notification as read. Requires a first-party account login (JWT): auth tokens, HTTP Basic, impersonation and realm-scoped sessions are refused, so a delegated or leaked credential cannot dismiss the account’s own security notices.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async markRead(id, options) {
@@ -11708,7 +12534,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -11742,7 +12579,7 @@ var HoodySDK = (() => {
     /**
      * Mark all notifications as read
      *
-     * Mark all notifications as read for the authenticated user
+     * Mark all notifications as read. Requires a first-party account login (JWT) for the same reason as marking a single notification read.
      * @param options._realm - Realm host-scope override (subdomain routing only)
      */
     async markAllRead(options) {
@@ -11914,7 +12751,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -11972,7 +12820,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12032,7 +12891,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -12094,7 +12964,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12157,7 +13038,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12225,8 +13117,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -12293,8 +13207,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12362,8 +13298,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12431,8 +13389,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12500,8 +13480,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12569,8 +13571,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12638,8 +13662,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -12711,9 +13757,42 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
-      requestUrl = requestUrl.replace("{program}", () => encodeURIComponent(String(program)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{program}", () => {
+        const v = String(program);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('program must not be a "." or ".." path segment', "program");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -12879,7 +13958,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -12937,7 +14027,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -12997,7 +14098,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -13059,7 +14171,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -13122,7 +14245,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -13190,8 +14324,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -13258,8 +14414,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -13327,8 +14505,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -13396,8 +14596,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -13465,8 +14687,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -13534,8 +14778,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -13603,8 +14869,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -13676,9 +14964,42 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{groupName}", () => encodeURIComponent(String(groupName)));
-      requestUrl = requestUrl.replace("{program}", () => encodeURIComponent(String(program)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{groupName}", () => {
+        const v = String(groupName);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('groupName must not be a "." or ".." path segment', "groupName");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{program}", () => {
+        const v = String(program);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('program must not be a "." or ".." path segment', "program");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -13844,7 +15165,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -13905,8 +15237,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -13972,8 +15326,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -14041,8 +15417,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -14115,9 +15513,42 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
-      requestUrl = requestUrl.replace("{hookId}", () => encodeURIComponent(String(hookId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{hookId}", () => {
+        const v = String(hookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('hookId must not be a "." or ".." path segment', "hookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -14191,9 +15622,42 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
-      requestUrl = requestUrl.replace("{hookId}", () => encodeURIComponent(String(hookId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{hookId}", () => {
+        const v = String(hookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('hookId must not be a "." or ".." path segment', "hookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -14269,9 +15733,42 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
-      requestUrl = requestUrl.replace("{hookId}", () => encodeURIComponent(String(hookId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{hookId}", () => {
+        const v = String(hookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('hookId must not be a "." or ".." path segment', "hookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (ifMatch !== void 0) {
@@ -14349,9 +15846,42 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
-      requestUrl = requestUrl.replace("{hookId}", () => encodeURIComponent(String(hookId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{hookId}", () => {
+        const v = String(hookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('hookId must not be a "." or ".." path segment', "hookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -14518,7 +16048,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -14576,7 +16117,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -14634,7 +16186,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -14687,7 +16250,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -14748,8 +16322,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{service}", () => encodeURIComponent(String(service)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{service}", () => {
+        const v = String(service);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('service must not be a "." or ".." path segment', "service");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -15156,7 +16752,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -15212,7 +16819,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -15266,7 +16884,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -15322,7 +16951,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -15512,7 +17152,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (target_type !== void 0) {
@@ -15699,7 +17350,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -15761,8 +17423,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{shareId}", () => encodeURIComponent(String(shareId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{shareId}", () => {
+        const v = String(shareId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('shareId must not be a "." or ".." path segment', "shareId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -15826,8 +17510,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{shareId}", () => encodeURIComponent(String(shareId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{shareId}", () => {
+        const v = String(shareId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('shareId must not be a "." or ".." path segment', "shareId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -15881,7 +17587,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{shareId}", () => encodeURIComponent(String(shareId)));
+      requestUrl = requestUrl.replace("{shareId}", () => {
+        const v = String(shareId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('shareId must not be a "." or ".." path segment', "shareId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -15934,7 +17651,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -16328,8 +18056,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{shareId}", () => encodeURIComponent(String(shareId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{shareId}", () => {
+        const v = String(shareId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('shareId must not be a "." or ".." path segment', "shareId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -17009,7 +18759,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -17062,7 +18823,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -18617,7 +20389,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19072,7 +20855,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19128,7 +20922,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -19182,7 +20987,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19235,7 +21051,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19406,7 +21233,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19577,7 +21415,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19830,7 +21679,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19883,7 +21743,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -19936,7 +21807,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -20230,7 +22112,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -20283,7 +22176,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -20649,7 +22553,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -20705,7 +22620,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -20759,7 +22685,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -20924,7 +22861,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -20989,8 +22937,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{userId}", () => encodeURIComponent(String(userId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{userId}", () => {
+        const v = String(userId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('userId must not be a "." or ".." path segment', "userId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -21052,8 +23022,30 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{userId}", () => encodeURIComponent(String(userId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{userId}", () => {
+        const v = String(userId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('userId must not be a "." or ".." path segment', "userId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -21482,7 +23474,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -21692,7 +23695,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -21745,7 +23759,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -21798,7 +23823,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -21895,7 +23931,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -22013,7 +24060,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -22331,7 +24389,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (signal) {
         requestData.signal = signal;
@@ -22387,7 +24456,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -22553,7 +24633,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{serverId}", () => encodeURIComponent(String(serverId)));
+      requestUrl = requestUrl.replace("{serverId}", () => {
+        const v = String(serverId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('serverId must not be a "." or ".." path segment', "serverId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (signal) {
@@ -22614,7 +24705,18 @@ var HoodySDK = (() => {
         subdomainPattern: "{realm}.api.hoody.com",
         parameterName: "realm_id"
       });
-      requestUrl = requestUrl.replace("{serverId}", () => encodeURIComponent(String(serverId)));
+      requestUrl = requestUrl.replace("{serverId}", () => {
+        const v = String(serverId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('serverId must not be a "." or ".." path segment', "serverId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (category !== void 0) {
@@ -26442,7 +28544,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/_static/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -26495,7 +28611,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/hoody-code/injected/{script}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{script}", () => encodeURIComponent(String(script)));
+      requestUrl = requestUrl.replace("{script}", () => {
+        const v = String(script);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('script must not be a "." or ".." path segment', "script");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -27108,8 +29235,33 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/code/proxy/{port}/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{port}", () => encodeURIComponent(String(port)));
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{port}", () => {
+        const v = String(port);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('port must not be a "." or ".." path segment', "port");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -27174,8 +29326,33 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/code/absproxy/{port}/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{port}", () => encodeURIComponent(String(port)));
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{port}", () => {
+        const v = String(port);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('port must not be a "." or ".." path segment', "port");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -28965,7 +31142,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/jobs/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -29008,7 +31196,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/jobs/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -29051,7 +31250,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/jobs/{id}/result`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -29698,7 +31908,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/schedule/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -29741,7 +31962,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/schedule/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -29787,7 +32019,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/schedule/{id}/toggle`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -30105,7 +32348,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/sessions/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -30148,7 +32402,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/sessions/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -30191,7 +32456,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/sessions/{id}/cookies`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -30508,7 +32784,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/storage/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -30551,7 +32841,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/curl/storage/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -31201,7 +33505,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -31336,7 +33651,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/edit/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -31386,7 +33712,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/remove/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -31527,7 +33864,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/{id}/enable`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -31576,7 +33924,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/{id}/disable`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -31625,7 +33984,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/{id}/start`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -31675,7 +34045,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/{id}/stop`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -31871,7 +34252,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/status/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (port !== void 0) {
@@ -31946,7 +34338,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/programs/{id}/logs`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -32283,7 +34686,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/quick-start/{id}/status`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -32343,7 +34757,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/quick-start/{id}/logs`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -32404,7 +34829,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/daemon/quick-start/{id}/stop`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -32930,7 +35366,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/display/screenshot/{timestamp}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{timestamp}", () => encodeURIComponent(String(timestamp)));
+      requestUrl = requestUrl.replace("{timestamp}", () => {
+        const v = String(timestamp);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('timestamp must not be a "." or ".." path segment', "timestamp");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (base64 !== void 0) {
@@ -33208,7 +35655,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/display/thumbnail/{timestamp}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{timestamp}", () => encodeURIComponent(String(timestamp)));
+      requestUrl = requestUrl.replace("{timestamp}", () => {
+        const v = String(timestamp);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('timestamp must not be a "." or ".." path segment', "timestamp");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (base64 !== void 0) {
@@ -34044,7 +36502,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/display/window/{windowId}/properties`, _templateVars || {});
-      requestUrl = requestUrl.replace("{windowId}", () => encodeURIComponent(String(windowId)));
+      requestUrl = requestUrl.replace("{windowId}", () => {
+        const v = String(windowId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('windowId must not be a "." or ".." path segment', "windowId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (displayId !== void 0) {
@@ -35315,7 +37784,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/display/window/{windowId}/geometry`, _templateVars || {});
-      requestUrl = requestUrl.replace("{windowId}", () => encodeURIComponent(String(windowId)));
+      requestUrl = requestUrl.replace("{windowId}", () => {
+        const v = String(windowId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('windowId must not be a "." or ".." path segment', "windowId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (displayId !== void 0) {
@@ -35374,7 +37854,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/display/window/{windowId}/name`, _templateVars || {});
-      requestUrl = requestUrl.replace("{windowId}", () => encodeURIComponent(String(windowId)));
+      requestUrl = requestUrl.replace("{windowId}", () => {
+        const v = String(windowId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('windowId must not be a "." or ".." path segment', "windowId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (displayId !== void 0) {
@@ -36282,7 +38773,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -36934,7 +39439,7 @@ var HoodySDK = (() => {
     /**
      * Update Custom Template
      *
-     * PUT /api/v1/exec/templates/update-custom/:name
+     * PUT /api/v1/exec/templates/update-custom/{name}
      */
     async updateCustom(name, data, _templateVars, requestOptions) {
       if (name === void 0 || name === null) {
@@ -36942,8 +39447,19 @@ var HoodySDK = (() => {
       }
       if (name !== void 0 && name !== null) {
       }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/templates/update-custom/:name`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/templates/update-custom/{name}`, _templateVars || {});
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -36978,7 +39494,7 @@ var HoodySDK = (() => {
     /**
      * Delete Custom Template
      *
-     * DELETE /api/v1/exec/templates/delete-custom/:name
+     * DELETE /api/v1/exec/templates/delete-custom/{name}
      */
     async deleteCustom(name, _templateVars, requestOptions) {
       if (name === void 0 || name === null) {
@@ -36986,8 +39502,19 @@ var HoodySDK = (() => {
       }
       if (name !== void 0 && name !== null) {
       }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/templates/delete-custom/:name`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/templates/delete-custom/{name}`, _templateVars || {});
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -39923,7 +42450,7 @@ var HoodySDK = (() => {
     /**
      * Get S D K
      *
-     * GET /api/v1/exec/sdk/:id
+     * GET /api/v1/exec/sdk/{id}
      */
     async get(id, _templateVars, requestOptions) {
       if (id === void 0 || id === null) {
@@ -39931,8 +42458,19 @@ var HoodySDK = (() => {
       }
       if (id !== void 0 && id !== null) {
       }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/sdk/:id`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/sdk/{id}`, _templateVars || {});
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -39966,7 +42504,7 @@ var HoodySDK = (() => {
     /**
      * Delete S D K
      *
-     * DELETE /api/v1/exec/sdk/:id
+     * DELETE /api/v1/exec/sdk/{id}
      */
     async delete(id, _templateVars, requestOptions) {
       if (id === void 0 || id === null) {
@@ -39974,8 +42512,19 @@ var HoodySDK = (() => {
       }
       if (id !== void 0 && id !== null) {
       }
-      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/sdk/:id`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      let requestUrl = this.buildTemplateUrl(`/api/v1/exec/sdk/{id}`, _templateVars || {});
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -40885,7 +43434,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{directory}?download`, _templateVars || {});
-      requestUrl = requestUrl.replace("{directory}", () => encodeURIComponent(String(directory)));
+      requestUrl = requestUrl.replace("{directory}", () => String(directory).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('directory must not contain "." or ".." path segments', "directory");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (download !== void 0) {
@@ -40947,7 +43510,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{directory}?downloads`, _templateVars || {});
-      requestUrl = requestUrl.replace("{directory}", () => encodeURIComponent(String(directory)));
+      requestUrl = requestUrl.replace("{directory}", () => String(directory).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('directory must not contain "." or ".." path segments', "directory");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (downloads !== void 0) {
@@ -41231,7 +43808,21 @@ var HoodySDK = (() => {
       if (dest !== void 0 && dest !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{archive}?extract`, _templateVars || {});
-      requestUrl = requestUrl.replace("{archive}", () => encodeURIComponent(String(archive)));
+      requestUrl = requestUrl.replace("{archive}", () => String(archive).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('archive must not contain "." or ".." path segments', "archive");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (extract !== void 0) {
@@ -41289,7 +43880,21 @@ var HoodySDK = (() => {
       if (dest !== void 0 && dest !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{archive}?extract_file`, _templateVars || {});
-      requestUrl = requestUrl.replace("{archive}", () => encodeURIComponent(String(archive)));
+      requestUrl = requestUrl.replace("{archive}", () => String(archive).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('archive must not contain "." or ".." path segments', "archive");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (extract !== void 0) {
@@ -41344,7 +43949,21 @@ var HoodySDK = (() => {
       if (contents !== void 0 && contents !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{archive}?preview`, _templateVars || {});
-      requestUrl = requestUrl.replace("{archive}", () => encodeURIComponent(String(archive)));
+      requestUrl = requestUrl.replace("{archive}", () => String(archive).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('archive must not contain "." or ".." path segments', "archive");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (preview !== void 0) {
@@ -41400,7 +44019,21 @@ var HoodySDK = (() => {
       if (preview !== void 0 && preview !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{archive}?view_file`, _templateVars || {});
-      requestUrl = requestUrl.replace("{archive}", () => encodeURIComponent(String(archive)));
+      requestUrl = requestUrl.replace("{archive}", () => String(archive).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('archive must not contain "." or ".." path segments', "archive");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (preview !== void 0) {
@@ -41456,7 +44089,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{directory}?zip`, _templateVars || {});
-      requestUrl = requestUrl.replace("{directory}", () => encodeURIComponent(String(directory)));
+      requestUrl = requestUrl.replace("{directory}", () => String(directory).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('directory must not contain "." or ".." path segments', "directory");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (zip !== void 0) {
@@ -44174,7 +46821,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/backends/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -44220,7 +46878,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/backends/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -44264,7 +46933,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/backends/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -44307,7 +46987,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/backends/{id}/test`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -44448,7 +47139,21 @@ var HoodySDK = (() => {
       if (owner !== void 0 && owner !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/append/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -44502,7 +47207,21 @@ var HoodySDK = (() => {
       if (chmod !== void 0 && chmod !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/chmod/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (chmod !== void 0) {
@@ -44555,7 +47274,21 @@ var HoodySDK = (() => {
       if (chown !== void 0 && chown !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/chown/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (chown !== void 0) {
@@ -44615,7 +47348,21 @@ var HoodySDK = (() => {
       if (owner !== void 0 && owner !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/copy/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (copy_to !== void 0) {
@@ -44718,7 +47465,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/glob/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (pattern !== void 0) {
@@ -44848,7 +47609,21 @@ var HoodySDK = (() => {
       if (no_ignore !== void 0 && no_ignore !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/grep/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (pattern !== void 0) {
@@ -44933,7 +47708,21 @@ var HoodySDK = (() => {
       if (owner !== void 0 && owner !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/move/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (move_to !== void 0) {
@@ -44983,7 +47772,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/realpath/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -45026,7 +47829,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/stat/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -45251,7 +48068,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (backend !== void 0) {
@@ -45425,7 +48256,21 @@ var HoodySDK = (() => {
       if (owner !== void 0 && owner !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (backend !== void 0) {
@@ -45509,7 +48354,21 @@ var HoodySDK = (() => {
       if (owner !== void 0 && owner !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -45572,7 +48431,21 @@ var HoodySDK = (() => {
       if (chown !== void 0 && chown !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -45632,7 +48505,21 @@ var HoodySDK = (() => {
       if (backend !== void 0 && backend !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/files/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (backend !== void 0) {
@@ -45690,7 +48577,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{directory}?q`, _templateVars || {});
-      requestUrl = requestUrl.replace("{directory}", () => encodeURIComponent(String(directory)));
+      requestUrl = requestUrl.replace("{directory}", () => String(directory).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('directory must not contain "." or ".." path segments', "directory");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (q !== void 0) {
@@ -45852,7 +48753,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (json !== void 0) {
@@ -45962,7 +48877,21 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -46012,7 +48941,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -46060,7 +49003,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -46160,7 +49117,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (history !== void 0) {
@@ -46243,7 +49214,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{path}?touch`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (touch !== void 0) {
@@ -46838,7 +49823,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/mounts/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -46884,7 +49880,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/mounts/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -46928,7 +49935,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/mounts/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -47272,7 +50290,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{image}?thumbnail`, _templateVars || {});
-      requestUrl = requestUrl.replace("{image}", () => encodeURIComponent(String(image)));
+      requestUrl = requestUrl.replace("{image}", () => String(image).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('image must not contain "." or ".." path segments', "image");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (thumbnail !== void 0) {
@@ -47441,7 +50473,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -47495,7 +50541,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (Destination !== void 0) {
@@ -47551,7 +50611,21 @@ var HoodySDK = (() => {
       if (Destination !== void 0 && Destination !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (Destination !== void 0) {
@@ -47604,7 +50678,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -47658,7 +50746,21 @@ var HoodySDK = (() => {
       if (LockToken !== void 0 && LockToken !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.headers = requestData.headers || {};
       if (LockToken !== void 0) {
@@ -47711,7 +50813,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -47759,7 +50875,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -47823,7 +50953,21 @@ var HoodySDK = (() => {
       if (webdav_path !== void 0 && webdav_path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}?type=webdav`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -47974,7 +51118,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -48109,7 +51267,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -48152,7 +51324,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -48309,7 +51495,21 @@ var HoodySDK = (() => {
       if (ftp_passive !== void 0 && ftp_passive !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}?type=ftp`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -48481,7 +51681,21 @@ var HoodySDK = (() => {
       if (pass !== void 0 && pass !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}?type=git`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -48659,7 +51873,21 @@ var HoodySDK = (() => {
       if (s3_endpoint !== void 0 && s3_endpoint !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}?type=s3`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -48841,7 +52069,21 @@ var HoodySDK = (() => {
       if (passphrase !== void 0 && passphrase !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}?type=ssh`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -48923,7 +52165,21 @@ var HoodySDK = (() => {
       if (passphrase !== void 0 && passphrase !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/{path}?type=ssh`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -49707,7 +52963,18 @@ var HoodySDK = (() => {
       if (session !== void 0 && session !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notifications/{display}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{display}", () => encodeURIComponent(String(display)));
+      requestUrl = requestUrl.replace("{display}", () => {
+        const v = String(display);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('display must not be a "." or ".." path segment', "display");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (limit !== void 0) {
@@ -50133,7 +53400,18 @@ var HoodySDK = (() => {
       if (iconId !== void 0 && iconId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notifications/icons/{iconId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{iconId}", () => encodeURIComponent(String(iconId)));
+      requestUrl = requestUrl.replace("{iconId}", () => {
+        const v = String(iconId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('iconId must not be a "." or ".." path segment', "iconId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -50901,7 +54179,18 @@ var HoodySDK = (() => {
       if (db !== void 0 && db !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/history/{index}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{index}", () => encodeURIComponent(String(index)));
+      requestUrl = requestUrl.replace("{index}", () => {
+        const v = String(index);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('index must not be a "." or ".." path segment', "index");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51297,7 +54586,18 @@ var HoodySDK = (() => {
       if (rebuild !== void 0 && rebuild !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51380,7 +54680,18 @@ var HoodySDK = (() => {
       if (create_db_if_missing !== void 0 && create_db_if_missing !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -51456,7 +54767,18 @@ var HoodySDK = (() => {
       if (history !== void 0 && history !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51517,7 +54839,18 @@ var HoodySDK = (() => {
       if (table !== void 0 && table !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51584,7 +54917,18 @@ var HoodySDK = (() => {
       if (history !== void 0 && history !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/decr`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51656,7 +55000,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/history`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51726,7 +55081,18 @@ var HoodySDK = (() => {
       if (history !== void 0 && history !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/incr`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51797,7 +55163,18 @@ var HoodySDK = (() => {
       if (history !== void 0 && history !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/pop`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -51868,7 +55245,18 @@ var HoodySDK = (() => {
       if (history !== void 0 && history !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/push`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -51945,7 +55333,18 @@ var HoodySDK = (() => {
       if (history !== void 0 && history !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/remove`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -52018,7 +55417,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/rollback`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -52087,7 +55497,18 @@ var HoodySDK = (() => {
       if (table !== void 0 && table !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/sqlite/kv/{key}/snapshot`, _templateVars || {});
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (db !== void 0) {
@@ -53982,7 +57403,18 @@ var HoodySDK = (() => {
       if (terminal_id !== void 0 && terminal_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/history/{terminal_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{terminal_id}", () => encodeURIComponent(String(terminal_id)));
+      requestUrl = requestUrl.replace("{terminal_id}", () => {
+        const v = String(terminal_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('terminal_id must not be a "." or ".." path segment', "terminal_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -54117,7 +57549,18 @@ var HoodySDK = (() => {
       if (terminal_id !== void 0 && terminal_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/{terminal_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{terminal_id}", () => encodeURIComponent(String(terminal_id)));
+      requestUrl = requestUrl.replace("{terminal_id}", () => {
+        const v = String(terminal_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('terminal_id must not be a "." or ".." path segment', "terminal_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -54734,7 +58177,18 @@ var HoodySDK = (() => {
       if (command_id !== void 0 && command_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/result/{command_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{command_id}", () => encodeURIComponent(String(command_id)));
+      requestUrl = requestUrl.replace("{command_id}", () => {
+        const v = String(command_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('command_id must not be a "." or ".." path segment', "command_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -56025,7 +59479,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/system/processes/{pid}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{pid}", () => encodeURIComponent(String(pid)));
+      requestUrl = requestUrl.replace("{pid}", () => {
+        const v = String(pid);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('pid must not be a "." or ".." path segment', "pid");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -56242,7 +59707,18 @@ var HoodySDK = (() => {
       if (command_id !== void 0 && command_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/execute/{command_id}/abort`, _templateVars || {});
-      requestUrl = requestUrl.replace("{command_id}", () => encodeURIComponent(String(command_id)));
+      requestUrl = requestUrl.replace("{command_id}", () => {
+        const v = String(command_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('command_id must not be a "." or ".." path segment', "command_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -56917,7 +60393,18 @@ var HoodySDK = (() => {
       if (terminal_id !== void 0 && terminal_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/terminal/{terminal_id}/automation`, _templateVars || {});
-      requestUrl = requestUrl.replace("{terminal_id}", () => encodeURIComponent(String(terminal_id)));
+      requestUrl = requestUrl.replace("{terminal_id}", () => {
+        const v = String(terminal_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('terminal_id must not be a "." or ".." path segment', "terminal_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -57877,7 +61364,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/watchers/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -57918,7 +61416,18 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/watchers/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -58060,7 +61569,18 @@ var HoodySDK = (() => {
       if (limit !== void 0 && limit !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/watchers/{id}/events`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (since_id !== void 0) {
@@ -58231,7 +61751,18 @@ var HoodySDK = (() => {
       if (since_timestamp !== void 0 && since_timestamp !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/watchers/{id}/events/sse`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (since_id !== void 0) {
@@ -58284,7 +61815,18 @@ var HoodySDK = (() => {
       if (since_timestamp !== void 0 && since_timestamp !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/watchers/{id}/events/ws`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (since_id !== void 0) {
@@ -58598,7 +62140,18 @@ var HoodySDK = (() => {
       if (user !== void 0 && user !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/users/{user}/crontab`, _templateVars || {});
-      requestUrl = requestUrl.replace("{user}", () => encodeURIComponent(String(user)));
+      requestUrl = requestUrl.replace("{user}", () => {
+        const v = String(user);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('user must not be a "." or ".." path segment', "user");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -58642,7 +62195,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/users/{user}/crontab`, _templateVars || {});
-      requestUrl = requestUrl.replace("{user}", () => encodeURIComponent(String(user)));
+      requestUrl = requestUrl.replace("{user}", () => {
+        const v = String(user);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('user must not be a "." or ".." path segment', "user");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -59076,7 +62640,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/users/{user}/entries`, _templateVars || {});
-      requestUrl = requestUrl.replace("{user}", () => encodeURIComponent(String(user)));
+      requestUrl = requestUrl.replace("{user}", () => {
+        const v = String(user);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('user must not be a "." or ".." path segment', "user");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -59239,7 +62814,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/users/{user}/entries`, _templateVars || {});
-      requestUrl = requestUrl.replace("{user}", () => encodeURIComponent(String(user)));
+      requestUrl = requestUrl.replace("{user}", () => {
+        const v = String(user);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('user must not be a "." or ".." path segment', "user");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -59286,8 +62872,30 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/users/{user}/entries/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{user}", () => encodeURIComponent(String(user)));
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{user}", () => {
+        const v = String(user);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('user must not be a "." or ".." path segment', "user");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -59336,8 +62944,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/users/{user}/entries/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{user}", () => encodeURIComponent(String(user)));
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{user}", () => {
+        const v = String(user);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('user must not be a "." or ".." path segment', "user");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -59384,8 +63014,30 @@ var HoodySDK = (() => {
       if (id !== void 0 && id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/users/{user}/entries/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{user}", () => encodeURIComponent(String(user)));
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{user}", () => {
+        const v = String(user);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('user must not be a "." or ".." path segment', "user");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -60056,7 +63708,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/pipe/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.query = {};
       if (n !== void 0) {
@@ -60164,7 +63830,21 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/pipe/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -60222,7 +63902,21 @@ var HoodySDK = (() => {
       if (path !== void 0 && path !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/pipe/{path}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{path}", () => encodeURIComponent(String(path)));
+      requestUrl = requestUrl.replace("{path}", () => String(path).split("/").reduce((acc, s, i, arr) => {
+        if (s === "" && acc.length === 0 && arr.slice(0, i).every((p) => p === "")) return acc;
+        acc.push(s);
+        return acc;
+      }, []).map((s) => {
+        let d = s;
+        try {
+          d = decodeURIComponent(s);
+        } catch {
+        }
+        if (s === "." || s === ".." || d === "." || d === "..") {
+          throw new ValidationError('path must not contain "." or ".." path segments', "path");
+        }
+        return encodeURIComponent(s);
+      }).join("/"));
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -60673,7 +64367,18 @@ var HoodySDK = (() => {
       if (socketId !== void 0 && socketId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/sockets/{socketId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{socketId}", () => encodeURIComponent(String(socketId)));
+      requestUrl = requestUrl.replace("{socketId}", () => {
+        const v = String(socketId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('socketId must not be a "." or ".." path segment', "socketId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -60848,7 +64553,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/avatars/{avatarId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{avatarId}", () => encodeURIComponent(String(avatarId)));
+      requestUrl = requestUrl.replace("{avatarId}", () => {
+        const v = String(avatarId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('avatarId must not be a "." or ".." path segment', "avatarId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61061,7 +64777,18 @@ var HoodySDK = (() => {
       if (notebookId !== void 0 && notebookId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61107,7 +64834,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -61151,7 +64889,18 @@ var HoodySDK = (() => {
       if (notebookId !== void 0 && notebookId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61291,8 +65040,30 @@ var HoodySDK = (() => {
       if (fileId !== void 0 && fileId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{fileId}", () => encodeURIComponent(String(fileId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{fileId}", () => {
+        const v = String(fileId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('fileId must not be a "." or ".." path segment', "fileId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61340,8 +65111,30 @@ var HoodySDK = (() => {
       if (fileId !== void 0 && fileId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{fileId}", () => encodeURIComponent(String(fileId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{fileId}", () => {
+        const v = String(fileId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('fileId must not be a "." or ".." path segment', "fileId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61389,8 +65182,30 @@ var HoodySDK = (() => {
       if (fileId !== void 0 && fileId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{fileId}", () => encodeURIComponent(String(fileId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{fileId}", () => {
+        const v = String(fileId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('fileId must not be a "." or ".." path segment', "fileId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61438,8 +65253,30 @@ var HoodySDK = (() => {
       if (fileId !== void 0 && fileId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{fileId}", () => encodeURIComponent(String(fileId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{fileId}", () => {
+        const v = String(fileId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('fileId must not be a "." or ".." path segment', "fileId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61487,8 +65324,30 @@ var HoodySDK = (() => {
       if (notebookId !== void 0 && notebookId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/files/{fileId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{fileId}", () => encodeURIComponent(String(fileId)));
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{fileId}", () => {
+        const v = String(fileId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('fileId must not be a "." or ".." path segment', "fileId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61551,7 +65410,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/files`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (limit !== void 0) {
@@ -61831,7 +65701,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (type !== void 0) {
@@ -61893,7 +65774,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -61942,8 +65834,30 @@ var HoodySDK = (() => {
       if (alias !== void 0 && alias !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/alias/{alias}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{alias}", () => encodeURIComponent(String(alias)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{alias}", () => {
+        const v = String(alias);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('alias must not be a "." or ".." path segment', "alias");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -61991,8 +65905,30 @@ var HoodySDK = (() => {
       if (nodeId !== void 0 && nodeId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -62043,8 +65979,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -62093,8 +66051,30 @@ var HoodySDK = (() => {
       if (nodeId !== void 0 && nodeId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -62162,8 +66142,30 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/children`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (limit !== void 0) {
@@ -62313,8 +66315,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/export-ticket`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -62380,8 +66404,30 @@ var HoodySDK = (() => {
       if (ticket !== void 0 && ticket !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (blockIds !== void 0) {
@@ -62448,8 +66494,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -62501,8 +66569,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -62560,8 +66650,30 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.headers = requestData.headers || {};
@@ -62633,9 +66745,42 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/blocks/{blockId}/svg`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{blockId}", () => encodeURIComponent(String(blockId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{blockId}", () => {
+        const v = String(blockId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('blockId must not be a "." or ".." path segment', "blockId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (bg !== void 0) {
@@ -62782,8 +66927,30 @@ var HoodySDK = (() => {
       if (nodeId !== void 0 && nodeId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -62834,8 +67001,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -62892,9 +67081,42 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators/{collaboratorId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{collaboratorId}", () => encodeURIComponent(String(collaboratorId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{collaboratorId}", () => {
+        const v = String(collaboratorId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('collaboratorId must not be a "." or ".." path segment', "collaboratorId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -62948,9 +67170,42 @@ var HoodySDK = (() => {
       if (collaboratorId !== void 0 && collaboratorId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators/{collaboratorId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{collaboratorId}", () => encodeURIComponent(String(collaboratorId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{collaboratorId}", () => {
+        const v = String(collaboratorId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('collaboratorId must not be a "." or ".." path segment', "collaboratorId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -63090,8 +67345,30 @@ var HoodySDK = (() => {
       if (nodeId !== void 0 && nodeId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/reactions`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -63142,8 +67419,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/reactions`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -63197,9 +67496,42 @@ var HoodySDK = (() => {
       if (reaction !== void 0 && reaction !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/reactions/{reaction}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{reaction}", () => encodeURIComponent(String(reaction)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{reaction}", () => {
+        const v = String(reaction);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('reaction must not be a "." or ".." path segment', "reaction");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -63342,8 +67674,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -63395,8 +67749,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -63559,8 +67935,30 @@ var HoodySDK = (() => {
       if (cursor !== void 0 && cursor !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (limit !== void 0) {
@@ -63621,8 +68019,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -63693,8 +68113,30 @@ var HoodySDK = (() => {
       if (cursor !== void 0 && cursor !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comment-anchors`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (limit !== void 0) {
@@ -63760,9 +68202,42 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{commentId}", () => encodeURIComponent(String(commentId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{commentId}", () => {
+        const v = String(commentId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('commentId must not be a "." or ".." path segment', "commentId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -63828,9 +68303,42 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{commentId}", () => encodeURIComponent(String(commentId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{commentId}", () => {
+        const v = String(commentId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('commentId must not be a "." or ".." path segment', "commentId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (expectedVersion !== void 0) {
@@ -63890,9 +68398,42 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{commentId}", () => encodeURIComponent(String(commentId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{commentId}", () => {
+        const v = String(commentId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('commentId must not be a "." or ".." path segment', "commentId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -63949,9 +68490,42 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/reanchor`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{commentId}", () => encodeURIComponent(String(commentId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{commentId}", () => {
+        const v = String(commentId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('commentId must not be a "." or ".." path segment', "commentId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -64112,8 +68686,30 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (limit !== void 0) {
@@ -64168,8 +68764,30 @@ var HoodySDK = (() => {
       if (nodeId !== void 0 && nodeId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -64222,9 +68840,42 @@ var HoodySDK = (() => {
       if (versionId !== void 0 && versionId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{versionId}", () => encodeURIComponent(String(versionId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{versionId}", () => {
+        const v = String(versionId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('versionId must not be a "." or ".." path segment', "versionId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -64277,9 +68928,42 @@ var HoodySDK = (() => {
       if (versionId !== void 0 && versionId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{versionId}", () => encodeURIComponent(String(versionId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{versionId}", () => {
+        const v = String(versionId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('versionId must not be a "." or ".." path segment', "versionId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -64332,9 +69016,42 @@ var HoodySDK = (() => {
       if (versionId !== void 0 && versionId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}/restore`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{nodeId}", () => encodeURIComponent(String(nodeId)));
-      requestUrl = requestUrl.replace("{versionId}", () => encodeURIComponent(String(versionId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{nodeId}", () => {
+        const v = String(nodeId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('nodeId must not be a "." or ".." path segment', "nodeId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{versionId}", () => {
+        const v = String(versionId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('versionId must not be a "." or ".." path segment', "versionId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -64501,8 +69218,30 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{databaseId}", () => encodeURIComponent(String(databaseId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{databaseId}", () => {
+        const v = String(databaseId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('databaseId must not be a "." or ".." path segment', "databaseId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (filters !== void 0) {
@@ -64678,8 +69417,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{databaseId}", () => encodeURIComponent(String(databaseId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{databaseId}", () => {
+        const v = String(databaseId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('databaseId must not be a "." or ".." path segment', "databaseId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -64733,8 +69494,30 @@ var HoodySDK = (() => {
       if (exclude !== void 0 && exclude !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{databaseId}", () => encodeURIComponent(String(databaseId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{databaseId}", () => {
+        const v = String(databaseId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('databaseId must not be a "." or ".." path segment', "databaseId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (q !== void 0) {
@@ -64794,9 +69577,42 @@ var HoodySDK = (() => {
       if (recordId !== void 0 && recordId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{databaseId}", () => encodeURIComponent(String(databaseId)));
-      requestUrl = requestUrl.replace("{recordId}", () => encodeURIComponent(String(recordId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{databaseId}", () => {
+        const v = String(databaseId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('databaseId must not be a "." or ".." path segment', "databaseId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{recordId}", () => {
+        const v = String(recordId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('recordId must not be a "." or ".." path segment', "recordId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -64852,9 +69668,42 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{databaseId}", () => encodeURIComponent(String(databaseId)));
-      requestUrl = requestUrl.replace("{recordId}", () => encodeURIComponent(String(recordId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{databaseId}", () => {
+        const v = String(databaseId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('databaseId must not be a "." or ".." path segment', "databaseId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{recordId}", () => {
+        const v = String(recordId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('recordId must not be a "." or ".." path segment', "recordId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -64908,9 +69757,42 @@ var HoodySDK = (() => {
       if (recordId !== void 0 && recordId !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{databaseId}", () => encodeURIComponent(String(databaseId)));
-      requestUrl = requestUrl.replace("{recordId}", () => encodeURIComponent(String(recordId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{databaseId}", () => {
+        const v = String(databaseId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('databaseId must not be a "." or ".." path segment', "databaseId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{recordId}", () => {
+        const v = String(recordId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('recordId must not be a "." or ".." path segment', "recordId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -65048,7 +69930,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/users`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -65100,8 +69993,30 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/users/{userId}/role`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
-      requestUrl = requestUrl.replace("{userId}", () => encodeURIComponent(String(userId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{userId}", () => {
+        const v = String(userId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('userId must not be a "." or ".." path segment', "userId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -65240,7 +70155,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/notes/notebooks/{notebookId}/mutations`, _templateVars || {});
-      requestUrl = requestUrl.replace("{notebookId}", () => encodeURIComponent(String(notebookId)));
+      requestUrl = requestUrl.replace("{notebookId}", () => {
+        const v = String(notebookId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('notebookId must not be a "." or ".." path segment', "notebookId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -65537,7 +70463,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/tunnel/sessions/{session_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{session_id}", () => encodeURIComponent(String(session_id)));
+      requestUrl = requestUrl.replace("{session_id}", () => {
+        const v = String(session_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('session_id must not be a "." or ".." path segment', "session_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (grace_ms !== void 0) {
@@ -65742,6 +70679,298 @@ var HoodySDK = (() => {
 
   // generated/tunnel/health.service.ts
   var HealthService14 = class extends HealthServiceBase14 {
+    // Add custom properties here
+  };
+
+  // generated/egress/index.ts
+  var egress_exports = {};
+  __export(egress_exports, {
+    EgressService: () => EgressService
+  });
+
+  // generated/egress/egress.service.generated.ts
+  var EgressServiceBase = class {
+    constructor(http, namespace, defaultUrlTemplateVariables, urlTemplatePattern) {
+      this.defaultUrlTemplateVariables = defaultUrlTemplateVariables;
+      __publicField(this, "http");
+      __publicField(this, "_kitNamespace");
+      __publicField(this, "urlTemplatePattern");
+      this._kitNamespace = namespace;
+      this.http = namespace ? this._wrapHttpClient(http, namespace) : http;
+      this.urlTemplatePattern = urlTemplatePattern;
+    }
+    /**
+     * Wrap HttpClient to auto-inject _kitNamespace into middlewareContext
+     */
+    _wrapHttpClient(http, ns) {
+      return new Proxy(http, {
+        get: (target, prop) => {
+          const val = target[prop];
+          if (typeof val === "function" && ["get", "post", "put", "patch", "delete", "head", "options", "request"].includes(prop)) {
+            return (...args) => {
+              const dataIndex = prop === "request" ? 2 : 1;
+              const data = args[dataIndex] ? { ...args[dataIndex] } : {};
+              data.middlewareContext = { ...data.middlewareContext, _kitNamespace: ns };
+              args[dataIndex] = data;
+              return val.apply(target, args);
+            };
+          }
+          return typeof val === "function" ? val.bind(target) : val;
+        }
+      });
+    }
+    /**
+     * Build URL with template variables or fallback to baseURL
+     *
+     * @param path - API endpoint path
+     * @param variables - Method-level template variables to override defaults
+     * @returns Full URL (template mode) or path only (baseURL mode)
+     */
+    buildTemplateUrl(path, variables) {
+      var _a;
+      const urlPattern = this.urlTemplatePattern || "https://{projectId}-{containerId}-egress-{serviceIndex}.{server}.containers.hoody.com";
+      const allVariables = { ...this.defaultUrlTemplateVariables, ...variables };
+      const hasVariables = Object.keys(allVariables).length > 0;
+      if (!hasVariables) {
+        return path;
+      }
+      let url2 = urlPattern;
+      for (const [key, value2] of Object.entries(allVariables)) {
+        if (value2 !== void 0) {
+          url2 = url2.replace(`{${key}}`, () => String(value2));
+        }
+      }
+      if (url2.includes("{") && url2.includes("}")) {
+        const processRef = globalThis.process;
+        if ((_a = processRef == null ? void 0 : processRef.env) == null ? void 0 : _a.SDK_DEBUG) {
+          console.warn(`[Hoody SDK] URL template has unreplaced variables: ${url2}`);
+          console.warn(`[Hoody SDK] Falling back to baseURL mode.`);
+        }
+        return path;
+      }
+      return `${url2}${path}`;
+    }
+    /**
+     * Read nested values from objects using dotted paths.
+     * Example: "data.items" or "data.pagination.total"
+     */
+    getPathValue(input, path) {
+      if (!path) return void 0;
+      const segments = path.split(".").filter(Boolean);
+      let current = input;
+      for (const segment of segments) {
+        if (current === void 0 || current === null) {
+          return void 0;
+        }
+        if (Array.isArray(current) && segment === "length") {
+          current = current.length;
+          continue;
+        }
+        if (typeof current !== "object") {
+          return void 0;
+        }
+        current = current[segment];
+      }
+      return current;
+    }
+    /**
+     * Service health check
+     *
+     * Returns the standardized 9-field health response. Unauthenticated.
+     */
+    async healthCheck(_templateVars, requestOptions) {
+      let requestUrl = this.buildTemplateUrl(`/api/v1/egress/health`, _templateVars || {});
+      const requestData = {};
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+     * Get upstream status
+     *
+     * Returns upstream status. Credentials are never returned.
+     */
+    async getUpstream(_templateVars, requestOptions) {
+      let requestUrl = this.buildTemplateUrl(`/api/v1/egress/upstream`, _templateVars || {});
+      const requestData = {};
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.get(requestUrl, requestData);
+    }
+    /**
+       * Set upstream
+       *
+       * Accepted as an alias for PUT, which shares the same handler branch.
+    POST exists for clients that cannot send a PUT.
+       */
+    async setUpstreamPost(data, _templateVars, requestOptions) {
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildTemplateUrl(`/api/v1/egress/upstream`, _templateVars || {});
+      const requestData = {};
+      requestData.body = data;
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.post(requestUrl, requestData);
+    }
+    /**
+     * Set upstream
+     *
+     * Sets upstream from the request body (first non-empty, non-comment line). Writes atomically to the upstream config file. Credentials are allowed.
+     */
+    async setUpstream(data, _templateVars, requestOptions) {
+      if (data === void 0 || data === null) {
+        throw new ValidationError("data is required", "data");
+      }
+      let requestUrl = this.buildTemplateUrl(`/api/v1/egress/upstream`, _templateVars || {});
+      const requestData = {};
+      requestData.body = data;
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.put(requestUrl, requestData);
+    }
+    /**
+     * Disable upstream
+     *
+     * Disable upstream
+     */
+    async disableUpstream(_templateVars, requestOptions) {
+      let requestUrl = this.buildTemplateUrl(`/api/v1/egress/upstream`, _templateVars || {});
+      const requestData = {};
+      if (requestOptions == null ? void 0 : requestOptions.signal) {
+        requestData.signal = requestOptions.signal;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.timeoutMs) !== void 0) {
+        requestData.timeoutMs = requestOptions.timeoutMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retries) !== void 0) {
+        requestData.retries = requestOptions.retries;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryDelayMs) !== void 0) {
+        requestData.retryDelayMs = requestOptions.retryDelayMs;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.retryOnStatuses) !== void 0) {
+        requestData.retryOnStatuses = requestOptions.retryOnStatuses;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.middlewareContext) !== void 0) {
+        requestData.middlewareContext = requestOptions.middlewareContext;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.authRetry) !== void 0) {
+        requestData.authRetry = requestOptions.authRetry;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.rawResponse) !== void 0) {
+        requestData.rawResponse = requestOptions.rawResponse;
+      }
+      if ((requestOptions == null ? void 0 : requestOptions.responseType) !== void 0) {
+        requestData.responseType = requestOptions.responseType;
+      }
+      return this.http.delete(requestUrl, requestData);
+    }
+  };
+
+  // generated/egress/egress.service.ts
+  var EgressService = class extends EgressServiceBase {
     // Add custom properties here
   };
 
@@ -66505,7 +71734,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/go/{rest}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{rest}", () => encodeURIComponent(String(rest)));
+      requestUrl = requestUrl.replace("{rest}", () => {
+        const v = String(rest);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('rest must not be a "." or ".." path segment', "rest");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (os !== void 0) {
@@ -66683,8 +71923,30 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/t/{terminal_id}/go/{rest}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{terminal_id}", () => encodeURIComponent(String(terminal_id)));
-      requestUrl = requestUrl.replace("{rest}", () => encodeURIComponent(String(rest)));
+      requestUrl = requestUrl.replace("{terminal_id}", () => {
+        const v = String(terminal_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('terminal_id must not be a "." or ".." path segment', "terminal_id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{rest}", () => {
+        const v = String(rest);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('rest must not be a "." or ".." path segment', "rest");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (os !== void 0) {
@@ -67104,7 +72366,18 @@ var HoodySDK = (() => {
         }
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/jobs/{job_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{job_id}", () => encodeURIComponent(String(job_id)));
+      requestUrl = requestUrl.replace("{job_id}", () => {
+        const v = String(job_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('job_id must not be a "." or ".." path segment', "job_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (wait !== void 0) {
@@ -67327,7 +72600,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/sources/{source_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{source_id}", () => encodeURIComponent(String(source_id)));
+      requestUrl = requestUrl.replace("{source_id}", () => {
+        const v = String(source_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('source_id must not be a "." or ".." path segment', "source_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -67371,7 +72655,18 @@ var HoodySDK = (() => {
       if (source_id !== void 0 && source_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/sources/{source_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{source_id}", () => encodeURIComponent(String(source_id)));
+      requestUrl = requestUrl.replace("{source_id}", () => {
+        const v = String(source_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('source_id must not be a "." or ".." path segment', "source_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -67414,7 +72709,18 @@ var HoodySDK = (() => {
       if (source_id !== void 0 && source_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/sources/{source_id}/sync`, _templateVars || {});
-      requestUrl = requestUrl.replace("{source_id}", () => encodeURIComponent(String(source_id)));
+      requestUrl = requestUrl.replace("{source_id}", () => {
+        const v = String(source_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('source_id must not be a "." or ".." path segment', "source_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -67495,7 +72801,18 @@ var HoodySDK = (() => {
       if (source_id !== void 0 && source_id !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/sources/{source_id}/diagnostics`, _templateVars || {});
-      requestUrl = requestUrl.replace("{source_id}", () => encodeURIComponent(String(source_id)));
+      requestUrl = requestUrl.replace("{source_id}", () => {
+        const v = String(source_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('source_id must not be a "." or ".." path segment', "source_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -67840,7 +73157,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/profiles/{profile}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{profile}", () => encodeURIComponent(String(profile)));
+      requestUrl = requestUrl.replace("{profile}", () => {
+        const v = String(profile);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('profile must not be a "." or ".." path segment', "profile");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -67884,7 +73212,18 @@ var HoodySDK = (() => {
       if (profile !== void 0 && profile !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/profiles/{profile}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{profile}", () => encodeURIComponent(String(profile)));
+      requestUrl = requestUrl.replace("{profile}", () => {
+        const v = String(profile);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('profile must not be a "." or ".." path segment', "profile");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -67927,7 +73266,18 @@ var HoodySDK = (() => {
       if (profile !== void 0 && profile !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/profiles/{profile}/select`, _templateVars || {});
-      requestUrl = requestUrl.replace("{profile}", () => encodeURIComponent(String(profile)));
+      requestUrl = requestUrl.replace("{profile}", () => {
+        const v = String(profile);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('profile must not be a "." or ".." path segment', "profile");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -68140,7 +73490,18 @@ var HoodySDK = (() => {
       if (name !== void 0 && name !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/recipes/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -68186,7 +73547,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/recipes/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -68230,7 +73602,18 @@ var HoodySDK = (() => {
       if (name !== void 0 && name !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/recipes/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       if (requestOptions == null ? void 0 : requestOptions.signal) {
         requestData.signal = requestOptions.signal;
@@ -68276,7 +73659,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/recipes/{name}/search`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -68323,7 +73717,18 @@ var HoodySDK = (() => {
         throw new ValidationError("data is required", "data");
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/run/recipes/{name}/run`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       if (requestOptions == null ? void 0 : requestOptions.signal) {
@@ -69022,7 +74427,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/acp/agents/{agent}/enabled`, _templateVars || {});
-      requestUrl = requestUrl.replace("{agent}", () => encodeURIComponent(String(agent)));
+      requestUrl = requestUrl.replace("{agent}", () => {
+        const v = String(agent);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('agent must not be a "." or ".." path segment', "agent");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -69094,7 +74510,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/acp/agents/{agent}/model`, _templateVars || {});
-      requestUrl = requestUrl.replace("{agent}", () => encodeURIComponent(String(agent)));
+      requestUrl = requestUrl.replace("{agent}", () => {
+        const v = String(agent);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('agent must not be a "." or ".." path segment', "agent");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -69171,8 +74598,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/acp/agents/{agent}/secrets/{key}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{agent}", () => encodeURIComponent(String(agent)));
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{agent}", () => {
+        const v = String(agent);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('agent must not be a "." or ".." path segment', "agent");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -69579,7 +75028,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/settings/fusion/{slug}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{slug}", () => encodeURIComponent(String(slug)));
+      requestUrl = requestUrl.replace("{slug}", () => {
+        const v = String(slug);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('slug must not be a "." or ".." path segment', "slug");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -69651,7 +75111,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/settings/fusion/{slug}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{slug}", () => encodeURIComponent(String(slug)));
+      requestUrl = requestUrl.replace("{slug}", () => {
+        const v = String(slug);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('slug must not be a "." or ".." path segment', "slug");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -70076,7 +75547,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -70150,7 +75632,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/copy`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -70222,7 +75715,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/model`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -70297,7 +75801,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/rename`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -70369,7 +75884,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/reset-to-shipped`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -70440,7 +75966,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/source`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -70514,7 +76051,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/source`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -70586,7 +76134,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/tools`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -70663,8 +76222,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/tools/{tool}/toggle`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
-      requestUrl = requestUrl.replace("{tool}", () => encodeURIComponent(String(tool)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{tool}", () => {
+        const v = String(tool);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('tool must not be a "." or ".." path segment', "tool");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -70736,7 +76317,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/agents/{name}/turns`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -74041,7 +79633,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/jobs/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -74112,7 +79715,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/jobs/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -74183,7 +79797,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/jobs/{id}/result`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -74870,7 +80495,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/logs/entries/{ref}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{ref}", () => encodeURIComponent(String(ref)));
+      requestUrl = requestUrl.replace("{ref}", () => {
+        const v = String(ref);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('ref must not be a "." or ".." path segment', "ref");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -76946,7 +82582,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/memory/items/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (project !== void 0) {
@@ -77023,7 +82670,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/memory/items/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -77639,7 +83297,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/models/{spec}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{spec}", () => encodeURIComponent(String(spec)));
+      requestUrl = requestUrl.replace("{spec}", () => {
+        const v = String(spec);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('spec must not be a "." or ".." path segment', "spec");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -77903,7 +83572,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -77974,7 +83654,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -78055,7 +83746,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/accounts`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -78244,7 +83946,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/accounts`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -78321,8 +84034,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/accounts/{key}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -78398,8 +84133,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/accounts/{key}/active`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{key}", () => encodeURIComponent(String(key)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{key}", () => {
+        const v = String(key);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('key must not be a "." or ".." path segment', "key");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -78474,7 +84231,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/api-key`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -78546,7 +84314,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/api-key`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -78620,7 +84399,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/default`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -78692,7 +84482,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/oauth`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -78764,7 +84565,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/oauth`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -78840,8 +84652,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/oauth/{job}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{job}", () => encodeURIComponent(String(job)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{job}", () => {
+        const v = String(job);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('job must not be a "." or ".." path segment', "job");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -78920,8 +84754,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/providers/{id}/auth/oauth/{job}/code`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{job}", () => encodeURIComponent(String(job)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{job}", () => {
+        const v = String(job);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('job must not be a "." or ".." path segment', "job");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -79309,7 +85165,7 @@ var HoodySDK = (() => {
       this.ws.send(JSON.stringify(message));
     }
     /**
-     * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
+     * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
      * @param callback Function to call when unknown message received
      * @returns Unsubscribe function
      */
@@ -79743,7 +85599,7 @@ var HoodySDK = (() => {
       });
     }
     /**
-     * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
+     * Provider account rotated mid-turn. | Turn complete — terminates a session.input turn. | Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors hoody.auth_status). | Auto-user composed the next user turn. | Auto-user composition progress. | Background bash job list snapshot. | Background bash job output tail chunk. | Conversation cleared. | Context window compacted. | Context compaction started. | Tool/plan confirmation requested (parks a gate). | Directory-access scope changed/locked. | A peer client detached from this shared live session (multi-attach presence). | A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). | Session error (e.g. join_not_ready). | A parked confirm/question gate was resolved (possibly by another attached client). | Files-tab import progress. | Fusion configuration changed. | Fusion member trajectory progress (emitIfVisible). | Hoody concept mode toggled. | A hook executed. | Hook execution summary. | Initial session state snapshot. | Available loops list updated. | A master TODO was filed. | Memory subsystem notice. | Orchestrator delegation finished. | Orchestrator delegated a task to a subagent. | Orchestrator run complete. | Orchestrator narration. | Orchestrator run started. | Orchestrator step progress. | global pause-freeze state changed. | A session permission rule auto-applied (first time). | Session permission rules snapshot. | Plan-mode planning complete. | Question-assist suggestion. | Daemon quitting. | Active realm changed (global broadcast). | Resolved default working dir of the bound container (filetree/chip scope hint). | Full viewport snapshot after session_started. | Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). | LLM call retried. | The session was archived for every attached client (session.close_all). | The set of listable sessions (or a session's attach state) changed — clients re-list. | Session title set or cleared. | Session attached (server-constructed SessionEvent). | Available skills list updated. | Skill enable/trust state changed. | Assistant text stream chunk. | Assistant text stream complete. | Profile sync status. | Background task activity. | Background task finished. | Background task started. | Background task transcript entry (upsert-poll). | Snapshot of background tasks. | Reasoning/thinking stream chunk. | Thinking stall warning. | TODO list updated. | Tool invocation. | Tool mode changed/locked. | Tool result. | Echo of the user's input. | Question posed to the user (parks a gate). | Verbosity setting changed. | Workflow run complete. | Workflow run started. | Workflow step done (emitIfVisible). | Workflow step output (emitIfVisible). | Workflow step start (emitIfVisible). | Workflow-authoring tool availability changed mid-session (setTools flip). | Available workflows list updated. | YOLO auto-approve mode toggled. | Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring. Carries {code: lagged|replay_gap[, min_seq, max_seq, resume]}; reconcile by reconnecting with ?since=. | Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq}. | Gateway control frame: the stream is terminating because the session closed. Carries {reason}.
      * @param callback Function to call when unknown message received
      * @returns Unsubscribe function
      */
@@ -80274,7 +86130,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -80347,7 +86214,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (hard !== void 0) {
@@ -80421,7 +86299,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/agent`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -80493,7 +86382,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/answer`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -80565,7 +86465,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/answer:assist`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -80637,7 +86548,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/auto-reply`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -80709,7 +86631,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/auto-reply/writes`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -80781,7 +86714,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/cancel`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -80852,7 +86796,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/close`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -80923,7 +86878,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/confirm`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -80995,7 +86961,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/effort`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81067,7 +87044,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/hoody-env`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81139,7 +87127,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/messages`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81214,7 +87213,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/model`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81290,7 +87300,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/prompt:stream`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81409,7 +87430,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/prompt:sync`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81487,7 +87519,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/replay`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -81565,7 +87608,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/stream`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (since !== void 0) {
@@ -81684,7 +87738,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/transcript`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (after_turn !== void 0) {
@@ -81758,7 +87823,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/trim`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81830,7 +87906,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/verbosity`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -81902,7 +87989,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/workflow/messages`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -82076,7 +88174,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/loops`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -82268,7 +88377,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/loops`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -82345,8 +88465,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/loops/{loopId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{loopId}", () => encodeURIComponent(String(loopId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{loopId}", () => {
+        const v = String(loopId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('loopId must not be a "." or ".." path segment', "loopId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -82423,8 +88565,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/loops/{loopId}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{loopId}", () => encodeURIComponent(String(loopId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{loopId}", () => {
+        const v = String(loopId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('loopId must not be a "." or ".." path segment', "loopId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -82501,8 +88665,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/loops/{loopId}/run-now`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{loopId}", () => encodeURIComponent(String(loopId)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{loopId}", () => {
+        const v = String(loopId);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('loopId must not be a "." or ".." path segment', "loopId");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -82666,7 +88852,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/tasks`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -82737,7 +88934,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/tasks/cancel`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -82813,8 +89021,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/tasks/{tid}/cancel`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{tid}", () => encodeURIComponent(String(tid)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{tid}", () => {
+        const v = String(tid);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('tid must not be a "." or ".." path segment', "tid");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -82895,8 +89125,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/tasks/{tid}/transcript`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{tid}", () => encodeURIComponent(String(tid)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{tid}", () => {
+        const v = String(tid);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('tid must not be a "." or ".." path segment', "tid");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (after_seq !== void 0) {
@@ -83498,7 +89750,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/tools`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -83697,7 +89960,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/tools/mcp`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (page !== void 0) {
@@ -83895,8 +90169,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/tools/{name}/run`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -84360,7 +90656,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/tools/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -84439,7 +90746,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/tools/{name}/run`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -84531,7 +90849,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/tools/{name}/runAsync`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -84623,7 +90952,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/tools/{name}/stream`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -84841,8 +91181,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/sessions/{id}/workflows/{name}/runs`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -85300,7 +91662,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/workflows/runs/{run_id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{run_id}", () => encodeURIComponent(String(run_id)));
+      requestUrl = requestUrl.replace("{run_id}", () => {
+        const v = String(run_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('run_id must not be a "." or ".." path segment', "run_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -85371,7 +91744,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/workflows/runs/{run_id}/cancel`, _templateVars || {});
-      requestUrl = requestUrl.replace("{run_id}", () => encodeURIComponent(String(run_id)));
+      requestUrl = requestUrl.replace("{run_id}", () => {
+        const v = String(run_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('run_id must not be a "." or ".." path segment', "run_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -85445,7 +91829,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/workflows/runs/{run_id}/resume`, _templateVars || {});
-      requestUrl = requestUrl.replace("{run_id}", () => encodeURIComponent(String(run_id)));
+      requestUrl = requestUrl.replace("{run_id}", () => {
+        const v = String(run_id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('run_id must not be a "." or ".." path segment', "run_id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -85519,7 +91914,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/workflows/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (include_revision !== void 0) {
@@ -85596,7 +92002,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/workflows/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -85668,7 +92085,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/workflows/{name}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -85739,7 +92167,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/workflows/{name}/hide`, _templateVars || {});
-      requestUrl = requestUrl.replace("{name}", () => encodeURIComponent(String(name)));
+      requestUrl = requestUrl.replace("{name}", () => {
+        const v = String(name);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('name must not be a "." or ".." path segment', "name");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -87925,7 +94364,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.query = {};
       if (realm !== void 0) {
@@ -87999,7 +94449,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88074,7 +94535,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/archive`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88146,7 +94618,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/cancel-run`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88218,7 +94701,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/claim`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88293,7 +94787,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/message`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88368,7 +94873,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/messages`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88445,8 +94961,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/proposals/{pid}/approve`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{pid}", () => encodeURIComponent(String(pid)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{pid}", () => {
+        const v = String(pid);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('pid must not be a "." or ".." path segment', "pid");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88523,8 +95061,30 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/proposals/{pid}/deny`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
-      requestUrl = requestUrl.replace("{pid}", () => encodeURIComponent(String(pid)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
+      requestUrl = requestUrl.replace("{pid}", () => {
+        const v = String(pid);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('pid must not be a "." or ".." path segment', "pid");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88596,7 +95156,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/release`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88668,7 +95239,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/run`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -88743,7 +95325,18 @@ var HoodySDK = (() => {
       if (XHoodyRealm !== void 0 && XHoodyRealm !== null) {
       }
       let requestUrl = this.buildTemplateUrl(`/api/v1/agent/todos/{id}/snooze`, _templateVars || {});
-      requestUrl = requestUrl.replace("{id}", () => encodeURIComponent(String(id)));
+      requestUrl = requestUrl.replace("{id}", () => {
+        const v = String(id);
+        let d = v;
+        try {
+          d = decodeURIComponent(v);
+        } catch {
+        }
+        if (v === "." || v === ".." || d === "." || d === "..") {
+          throw new ValidationError('id must not be a "." or ".." path segment', "id");
+        }
+        return encodeURIComponent(v);
+      });
       const requestData = {};
       requestData.body = data;
       requestData.query = {};
@@ -89698,10 +96291,11 @@ var HoodySDK = (() => {
       __publicField(this, "pipe");
       __publicField(this, "notes");
       __publicField(this, "tunnel");
+      __publicField(this, "egress");
       __publicField(this, "run");
       __publicField(this, "proxyLogs");
       __publicField(this, "agent");
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga, _Ha, _Ia, _Ja, _Ka, _La, _Ma, _Na, _Oa, _Pa, _Qa, _Ra, _Sa, _Ta, _Ua, _Va, _Wa, _Xa, _Ya, _Za, __a, _$a, _ab, _bb, _cb, _db, _eb, _fb, _gb, _hb, _ib, _jb, _kb, _lb, _mb, _nb, _ob, _pb, _qb, _rb, _sb, _tb, _ub, _vb, _wb, _xb, _yb, _zb, _Ab, _Bb, _Cb, _Db, _Eb, _Fb, _Gb, _Hb, _Ib, _Jb, _Kb, _Lb, _Mb;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga, _Ha, _Ia, _Ja, _Ka, _La, _Ma, _Na, _Oa, _Pa, _Qa, _Ra, _Sa, _Ta, _Ua, _Va, _Wa, _Xa, _Ya, _Za, __a, _$a, _ab, _bb, _cb, _db, _eb, _fb, _gb, _hb, _ib, _jb, _kb, _lb, _mb, _nb, _ob, _pb, _qb, _rb, _sb, _tb, _ub, _vb, _wb, _xb, _yb, _zb, _Ab, _Bb, _Cb, _Db, _Eb, _Fb, _Gb, _Hb, _Ib, _Jb, _Kb, _Lb, _Mb, _Nb;
       this.credentials = config.credentials ? config.credentials : void 0;
       this.autoRefresh = config.autoRefresh !== false;
       this.urlTemplates = config.urlTemplates ? config.urlTemplates : void 0;
@@ -89920,39 +96514,40 @@ var HoodySDK = (() => {
       this.tunnel = Object.assign(new TunnelService(this.http, "tunnel", (_hb = this.urlTemplates) == null ? void 0 : _hb["tunnel"], this.getKitUrlTemplatePattern("tunnel")), {
         health: new HealthService14(this.http, "tunnel", (_ib = this.urlTemplates) == null ? void 0 : _ib["tunnel"], this.getKitUrlTemplatePattern("tunnel"))
       });
-      this.run = Object.assign(new RunService(this.http, "run", (_jb = this.urlTemplates) == null ? void 0 : _jb["run"], this.getKitUrlTemplatePattern("run")), {
-        documentation: new ApiDocumentationService2(this.http, "run", (_kb = this.urlTemplates) == null ? void 0 : _kb["run"], this.getKitUrlTemplatePattern("run")),
-        jobs: new JobsService2(this.http, "run", (_lb = this.urlTemplates) == null ? void 0 : _lb["run"], this.getKitUrlTemplatePattern("run")),
-        sources: new SourcesService(this.http, "run", (_mb = this.urlTemplates) == null ? void 0 : _mb["run"], this.getKitUrlTemplatePattern("run")),
-        configuration: new ConfigurationService(this.http, "run", (_nb = this.urlTemplates) == null ? void 0 : _nb["run"], this.getKitUrlTemplatePattern("run")),
-        profiles: new ProfilesService(this.http, "run", (_ob = this.urlTemplates) == null ? void 0 : _ob["run"], this.getKitUrlTemplatePattern("run")),
-        recipes: new RecipesService(this.http, "run", (_pb = this.urlTemplates) == null ? void 0 : _pb["run"], this.getKitUrlTemplatePattern("run"))
+      this.egress = Object.assign(new EgressService(this.http, "egress", (_jb = this.urlTemplates) == null ? void 0 : _jb["egress"], this.getKitUrlTemplatePattern("egress")), {});
+      this.run = Object.assign(new RunService(this.http, "run", (_kb = this.urlTemplates) == null ? void 0 : _kb["run"], this.getKitUrlTemplatePattern("run")), {
+        documentation: new ApiDocumentationService2(this.http, "run", (_lb = this.urlTemplates) == null ? void 0 : _lb["run"], this.getKitUrlTemplatePattern("run")),
+        jobs: new JobsService2(this.http, "run", (_mb = this.urlTemplates) == null ? void 0 : _mb["run"], this.getKitUrlTemplatePattern("run")),
+        sources: new SourcesService(this.http, "run", (_nb = this.urlTemplates) == null ? void 0 : _nb["run"], this.getKitUrlTemplatePattern("run")),
+        configuration: new ConfigurationService(this.http, "run", (_ob = this.urlTemplates) == null ? void 0 : _ob["run"], this.getKitUrlTemplatePattern("run")),
+        profiles: new ProfilesService(this.http, "run", (_pb = this.urlTemplates) == null ? void 0 : _pb["run"], this.getKitUrlTemplatePattern("run")),
+        recipes: new RecipesService(this.http, "run", (_qb = this.urlTemplates) == null ? void 0 : _qb["run"], this.getKitUrlTemplatePattern("run"))
       });
       this.proxyLogs = {
-        logs: new LogsService2(this.http, "proxyLogs", (_qb = this.urlTemplates) == null ? void 0 : _qb["proxyLogs"], this.getKitUrlTemplatePattern("proxyLogs"))
+        logs: new LogsService2(this.http, "proxyLogs", (_rb = this.urlTemplates) == null ? void 0 : _rb["proxyLogs"], this.getKitUrlTemplatePattern("proxyLogs"))
       };
-      this.agent = Object.assign(new AgentService(this.http, "agent", (_rb = this.urlTemplates) == null ? void 0 : _rb["agent"], this.getKitUrlTemplatePattern("agent")), {
-        settings: new SettingsService(this.http, "agent", (_sb = this.urlTemplates) == null ? void 0 : _sb["agent"], this.getKitUrlTemplatePattern("agent")),
-        agents: new AgentsService(this.http, "agent", (_tb = this.urlTemplates) == null ? void 0 : _tb["agent"], this.getKitUrlTemplatePattern("agent")),
-        discovery: new DiscoveryService(this.http, "agent", (_ub = this.urlTemplates) == null ? void 0 : _ub["agent"], this.getKitUrlTemplatePattern("agent")),
-        system: new SystemService5(this.http, "agent", (_vb = this.urlTemplates) == null ? void 0 : _vb["agent"], this.getKitUrlTemplatePattern("agent")),
-        github: new GithubService(this.http, "agent", (_wb = this.urlTemplates) == null ? void 0 : _wb["agent"], this.getKitUrlTemplatePattern("agent")),
-        headless: new HeadlessService(this.http, "agent", (_xb = this.urlTemplates) == null ? void 0 : _xb["agent"], this.getKitUrlTemplatePattern("agent")),
-        hoody: new HoodyService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
-        hooks: new HooksService(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
-        jobs: new JobsService3(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
-        logs: new LogsService3(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
-        mcp: new McpService(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
-        memory: new MemoryService(this.http, "agent", (_Db = this.urlTemplates) == null ? void 0 : _Db["agent"], this.getKitUrlTemplatePattern("agent")),
-        models: new ModelsService(this.http, "agent", (_Eb = this.urlTemplates) == null ? void 0 : _Eb["agent"], this.getKitUrlTemplatePattern("agent")),
-        sessions: new SessionsService2(this.http, "agent", (_Fb = this.urlTemplates) == null ? void 0 : _Fb["agent"], this.getKitUrlTemplatePattern("agent")),
-        loops: new LoopsService(this.http, "agent", (_Gb = this.urlTemplates) == null ? void 0 : _Gb["agent"], this.getKitUrlTemplatePattern("agent")),
-        tasks: new TasksService(this.http, "agent", (_Hb = this.urlTemplates) == null ? void 0 : _Hb["agent"], this.getKitUrlTemplatePattern("agent")),
-        tools: new ToolsService(this.http, "agent", (_Ib = this.urlTemplates) == null ? void 0 : _Ib["agent"], this.getKitUrlTemplatePattern("agent")),
-        workflows: new WorkflowsService(this.http, "agent", (_Jb = this.urlTemplates) == null ? void 0 : _Jb["agent"], this.getKitUrlTemplatePattern("agent")),
-        skills: new SkillsService(this.http, "agent", (_Kb = this.urlTemplates) == null ? void 0 : _Kb["agent"], this.getKitUrlTemplatePattern("agent")),
-        statistics: new StatisticsService(this.http, "agent", (_Lb = this.urlTemplates) == null ? void 0 : _Lb["agent"], this.getKitUrlTemplatePattern("agent")),
-        todos: new TodosService(this.http, "agent", (_Mb = this.urlTemplates) == null ? void 0 : _Mb["agent"], this.getKitUrlTemplatePattern("agent"))
+      this.agent = Object.assign(new AgentService(this.http, "agent", (_sb = this.urlTemplates) == null ? void 0 : _sb["agent"], this.getKitUrlTemplatePattern("agent")), {
+        settings: new SettingsService(this.http, "agent", (_tb = this.urlTemplates) == null ? void 0 : _tb["agent"], this.getKitUrlTemplatePattern("agent")),
+        agents: new AgentsService(this.http, "agent", (_ub = this.urlTemplates) == null ? void 0 : _ub["agent"], this.getKitUrlTemplatePattern("agent")),
+        discovery: new DiscoveryService(this.http, "agent", (_vb = this.urlTemplates) == null ? void 0 : _vb["agent"], this.getKitUrlTemplatePattern("agent")),
+        system: new SystemService5(this.http, "agent", (_wb = this.urlTemplates) == null ? void 0 : _wb["agent"], this.getKitUrlTemplatePattern("agent")),
+        github: new GithubService(this.http, "agent", (_xb = this.urlTemplates) == null ? void 0 : _xb["agent"], this.getKitUrlTemplatePattern("agent")),
+        headless: new HeadlessService(this.http, "agent", (_yb = this.urlTemplates) == null ? void 0 : _yb["agent"], this.getKitUrlTemplatePattern("agent")),
+        hoody: new HoodyService(this.http, "agent", (_zb = this.urlTemplates) == null ? void 0 : _zb["agent"], this.getKitUrlTemplatePattern("agent")),
+        hooks: new HooksService(this.http, "agent", (_Ab = this.urlTemplates) == null ? void 0 : _Ab["agent"], this.getKitUrlTemplatePattern("agent")),
+        jobs: new JobsService3(this.http, "agent", (_Bb = this.urlTemplates) == null ? void 0 : _Bb["agent"], this.getKitUrlTemplatePattern("agent")),
+        logs: new LogsService3(this.http, "agent", (_Cb = this.urlTemplates) == null ? void 0 : _Cb["agent"], this.getKitUrlTemplatePattern("agent")),
+        mcp: new McpService(this.http, "agent", (_Db = this.urlTemplates) == null ? void 0 : _Db["agent"], this.getKitUrlTemplatePattern("agent")),
+        memory: new MemoryService(this.http, "agent", (_Eb = this.urlTemplates) == null ? void 0 : _Eb["agent"], this.getKitUrlTemplatePattern("agent")),
+        models: new ModelsService(this.http, "agent", (_Fb = this.urlTemplates) == null ? void 0 : _Fb["agent"], this.getKitUrlTemplatePattern("agent")),
+        sessions: new SessionsService2(this.http, "agent", (_Gb = this.urlTemplates) == null ? void 0 : _Gb["agent"], this.getKitUrlTemplatePattern("agent")),
+        loops: new LoopsService(this.http, "agent", (_Hb = this.urlTemplates) == null ? void 0 : _Hb["agent"], this.getKitUrlTemplatePattern("agent")),
+        tasks: new TasksService(this.http, "agent", (_Ib = this.urlTemplates) == null ? void 0 : _Ib["agent"], this.getKitUrlTemplatePattern("agent")),
+        tools: new ToolsService(this.http, "agent", (_Jb = this.urlTemplates) == null ? void 0 : _Jb["agent"], this.getKitUrlTemplatePattern("agent")),
+        workflows: new WorkflowsService(this.http, "agent", (_Kb = this.urlTemplates) == null ? void 0 : _Kb["agent"], this.getKitUrlTemplatePattern("agent")),
+        skills: new SkillsService(this.http, "agent", (_Lb = this.urlTemplates) == null ? void 0 : _Lb["agent"], this.getKitUrlTemplatePattern("agent")),
+        statistics: new StatisticsService(this.http, "agent", (_Mb = this.urlTemplates) == null ? void 0 : _Mb["agent"], this.getKitUrlTemplatePattern("agent")),
+        todos: new TodosService(this.http, "agent", (_Nb = this.urlTemplates) == null ? void 0 : _Nb["agent"], this.getKitUrlTemplatePattern("agent"))
       });
     }
     /**
@@ -90247,6 +96842,13 @@ var HoodySDK = (() => {
           serverName: containerServer,
           serviceIndex: 1
         },
+        "egress": {
+          projectId: container.project_id,
+          containerId: container.id,
+          server: containerServer,
+          serverName: containerServer,
+          serviceIndex: 1
+        },
         "run": {
           projectId: container.project_id,
           containerId: container.id,
@@ -90418,7 +97020,7 @@ var HoodySDK = (() => {
       if (/^(https?)-\d+$/.test(normalizedKit)) {
         return normalizedKit;
       }
-      if (normalizedKit === "ssh" || normalizedKit === "proxy") {
+      if (normalizedKit === "ssh") {
         return normalizedKit;
       }
       const hasOptionsObject = typeof serviceIndexOrOptions === "object" && serviceIndexOrOptions !== null && !Array.isArray(serviceIndexOrOptions);
@@ -90437,13 +97039,16 @@ var HoodySDK = (() => {
       if (!Number.isInteger(serviceIndex) || serviceIndex < 1) {
         throw new Error(`Invalid serviceIndex for kit URL: ${serviceIndex}`);
       }
+      if (normalizedKit === "egress" && serviceIndex === 1) {
+        return normalizedKit;
+      }
       return `${normalizedKit}-${serviceIndex}`;
     }
     /**
      * Generate URLs for all standard kits
      */
     getKitUrls(container, serviceIndexOrOptions = 1) {
-      const kits = ["terminal", "browser", "code", "curl", "cron", "daemon", "display", "desktop", "exec", "files", "notifications", "sqlite", "watch", "logs", "notes", "run", "pipe", "tunnel", "agent", "proxy"];
+      const kits = ["terminal", "browser", "code", "curl", "cron", "daemon", "display", "desktop", "exec", "files", "notifications", "sqlite", "watch", "logs", "notes", "run", "pipe", "tunnel", "agent", "egress"];
       const urls = {};
       for (const kit of kits) {
         urls[kit] = this.getKitUrl(kit, container, serviceIndexOrOptions);
@@ -90997,9 +97602,9 @@ var HoodySDK = (() => {
     if (decoded.includes("\0")) {
       throw new Error(`${helperName} path cannot resolve to null bytes`);
     }
-    const hasTraversal = (value2) => value2.split("/").filter(Boolean).includes("..");
-    if (hasTraversal(normalized) || hasTraversal(decoded)) {
-      throw new Error(`${helperName} path cannot contain ".." segments`);
+    const hasRelativeSegment = (value2) => value2.split("/").filter(Boolean).some((seg) => seg === "." || seg === "..");
+    if (hasRelativeSegment(normalized) || hasRelativeSegment(decoded)) {
+      throw new Error(`${helperName} path cannot contain "." or ".." segments`);
     }
   }
   function assertBasePath(path, helperName) {
@@ -91925,12 +98530,30 @@ var HoodySDK = (() => {
     if (BINARY.has(ext)) return "binary";
     return "text";
   }
+  function encodeFilePathSegments(path, label) {
+    const segments = path.split("/");
+    let start = 0;
+    while (start < segments.length && segments[start] === "") start++;
+    return segments.slice(start).map((segment) => {
+      let decoded = segment;
+      try {
+        decoded = decodeURIComponent(segment);
+      } catch {
+      }
+      if (segment === "." || segment === ".." || decoded === "." || decoded === "..") {
+        throw new Error(
+          `Invalid ${label}: "${path}" contains a "${segment}" path segment. Relative segments are not allowed because they change which endpoint is called.`
+        );
+      }
+      return encodeURIComponent(segment);
+    }).join("/");
+  }
   function patchFilesService(proto, includeJsonOverrides) {
     if (proto[FILES_PATCH_MARKER]) return;
     proto.classifyFile = classifyFile;
     proto.getFileUrl = function(absPath, options, templateVars) {
       const cleanPath = absPath.startsWith("/") ? absPath.slice(1) : absPath;
-      const encoded = cleanPath.split("/").map(encodeURIComponent).join("/");
+      const encoded = encodeFilePathSegments(cleanPath, "file path");
       let requestUrl = this.buildTemplateUrl("/api/v1/files/{path}", templateVars || {});
       requestUrl = requestUrl.replace("{path}", () => encoded);
       if (options && "download" in options) {
@@ -91973,7 +98596,7 @@ var HoodySDK = (() => {
         throw new Error("directory is required");
       }
       const cleanDir = directory.startsWith("/") ? directory.slice(1) : directory;
-      const encoded = cleanDir.split("/").map(encodeURIComponent).join("/");
+      const encoded = encodeFilePathSegments(cleanDir, "directory");
       let requestUrl = this.buildTemplateUrl("/{directory}?zip", templateVars || {});
       requestUrl = requestUrl.replace("{directory}", () => encoded);
       return requestUrl;
@@ -91984,7 +98607,7 @@ var HoodySDK = (() => {
     if (proto[IMAGE_PATCH_MARKER]) return;
     proto.getThumbnailUrl = function(imagePath, options, templateVars) {
       const cleanPath = imagePath.startsWith("/") ? imagePath.slice(1) : imagePath;
-      const encoded = cleanPath.split("/").map(encodeURIComponent).join("/");
+      const encoded = encodeFilePathSegments(cleanPath, "image path");
       let requestUrl = this.buildTemplateUrl("/{image}", templateVars || {});
       requestUrl = requestUrl.replace("{image}", () => encoded);
       const params = ["thumbnail"];
@@ -92239,11 +98862,11 @@ var HoodySDK = (() => {
       supportsIndex: false
     },
     {
-      slug: "proxy",
+      slug: "egress",
       kind: "special",
       description: "Container egress proxy endpoint (no instance index).",
-      serviceSegmentPattern: "proxy",
-      urlTemplateSample: "https://{projectId}-{containerId}-proxy.{server}.containers.hoody.com",
+      serviceSegmentPattern: "egress",
+      urlTemplateSample: "https://{projectId}-{containerId}-egress.{server}.containers.hoody.com",
       supportsIndex: false
     },
     {
@@ -100190,9 +106813,45 @@ ${bodyStr}`
     // -------------------------------------------------------------------------
     // URL helpers
     // -------------------------------------------------------------------------
-    /** Build the full pipe URL for a given path. */
+    /**
+     * Build the full pipe URL for a given path.
+     *
+     * Encodes PER SEGMENT. Whole-value `encodeURIComponent` turns a multi-segment
+     * channel like `cam/1` into `cam%2F1`, which the server's segment-wise router
+     * answers with 400.
+     *
+     * Rejects `.` and `..` segments (checked after percent-decoding, since `%2e%2e`
+     * normalises identically). Preserving `/` separators means a caller-supplied
+     * path can introduce segments, and without this guard it walks out of the pipe
+     * route entirely — measured against this exact expression:
+     *
+     *     '../../x' -> /api/x      '..' -> /api/v1/      'a/../../b' -> /api/v1/b
+     *
+     * with the caller's bearer token still attached. `validatePipePath` does not
+     * cover it either; it checks only length and reserved names.
+     *
+     * Deliberately inlined rather than importing `encodePipePath` from
+     * `pipe-stream.ts`: this module is browser-only and dependency-free, and
+     * pipe-stream imports `node:net`/`node:fs`/`node:stream`/`node:url` — pulling
+     * it in breaks `build:browser` outright (measured). Keep the two in sync by
+     * hand; they encode the same rule, and `tests/unit/pipe-path-traversal.test.ts`
+     * fails if they drift.
+     */
     getUrl(path) {
-      return `${this.baseUrl}${this.basePath}/${encodeURIComponent(path)}`;
+      const encoded = String(path).split("/").map((segment) => {
+        let decoded = segment;
+        try {
+          decoded = decodeURIComponent(segment);
+        } catch {
+        }
+        if (segment === "." || segment === ".." || decoded === "." || decoded === "..") {
+          throw new Error(
+            `Invalid pipe path: "${path}" contains a "${segment}" path segment. Relative segments are not allowed because they change which endpoint is called.`
+          );
+        }
+        return encodeURIComponent(segment);
+      }).join("/");
+      return `${this.baseUrl}${this.basePath}/${encoded}`;
     }
     // -------------------------------------------------------------------------
     // Share screen

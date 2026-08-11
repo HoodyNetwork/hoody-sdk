@@ -1,0 +1,13 @@
+/**
+ * EgressService
+ * User-extensible Egress service
+ *
+ * ✅ SAFE TO EDIT ✅
+ * This file extends the generated base class and is yours to customize.
+ * Add your own methods, override base methods, or add custom logic here.
+ *
+ * Generated at: 2026-08-11T23:40:39.000Z
+ */
+import { EgressServiceBase } from './egress.service.generated.js';
+export declare class EgressService extends EgressServiceBase {
+}

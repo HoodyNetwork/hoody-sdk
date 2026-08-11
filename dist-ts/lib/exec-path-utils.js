@@ -77,9 +77,18 @@ export function validatePathCommon(normalized, decoded, helperName) {
     if (decoded.includes('\0')) {
         throw new Error(`${helperName} path cannot resolve to null bytes`);
     }
-    const hasTraversal = (value) => value.split('/').filter(Boolean).includes('..');
-    if (hasTraversal(normalized) || hasTraversal(decoded)) {
-        throw new Error(`${helperName} path cannot contain ".." segments`);
+    // Reject BOTH `..` and `.`. Checking only `..` left a real gap: a bare `.`
+    // segment is removed by URL normalisation, so `.` as the whole path made the
+    // segment vanish and retargeted the request, and `foo/.` collapsed to `foo/`.
+    // Measured before this fix — `assertBasePath` accepted '.', 'foo/.', '%2e' and
+    // 'foo/%2e' while correctly rejecting every '..' form. `decoded` is the
+    // fixed-point decode, so the percent-spelled variants are covered by it.
+    //
+    // Only a WHOLE segment equal to `.`/`..` is refused; ordinary names that merely
+    // contain dots (`.env`, `a.b`, `..hidden`) are untouched.
+    const hasRelativeSegment = (value) => value.split('/').filter(Boolean).some(seg => seg === '.' || seg === '..');
+    if (hasRelativeSegment(normalized) || hasRelativeSegment(decoded)) {
+        throw new Error(`${helperName} path cannot contain "." or ".." segments`);
     }
 }
 /**

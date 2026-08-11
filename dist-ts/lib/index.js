@@ -92,6 +92,15 @@ export { FrameType as TunnelFrameType, ResetCode as TunnelResetCode, HEADER_SIZE
 export { encodeFrame as encodeTunnelFrame, encodeFrames as encodeTunnelFrames, decodeFrame as decodeTunnelFrame, decodeFrames as decodeTunnelFrames, dataFrame as tunnelDataFrame, pingFrame as tunnelPingFrame, pongFrame as tunnelPongFrame, windowFrame as tunnelWindowFrame, eofFrame as tunnelEofFrame, CodecError as TunnelCodecError, MAX_MESSAGE_SIZE as TUNNEL_MAX_MESSAGE_SIZE, MAX_FRAMES_PER_MESSAGE as TUNNEL_MAX_FRAMES_PER_MESSAGE, } from './tunnel-protocol-codec.js';
 // -- Tunnel HTTP/TCP pump (stream handlers for custom session users) --
 export { handleHttpStream as handleTunnelHttpStream, handleTcpStream as handleTunnelTcpStream, setupAutoForwarding as setupTunnelAutoForwarding, destroyAllLocalAgents as destroyAllTunnelLocalAgents, } from './tunnel-http-pump.js';
+// -- Local exit proxy (publish a container's HTTPS proxy, exit from this machine) --
+// `startLocalExit` is the one-call entry point the CLI uses. The layers
+// below it are exported too, because the pieces are independently useful: the
+// SOCKS5 machine runs on any transport implementing `Socks5Stream`, and the
+// destination gate is the same authorization used by every outbound dial.
+export { startLocalExit, fetchThroughProxy, LocalExitStartupError, } from './local-exit.js';
+export { tunnelSocks5 } from './tunnel-socks5.js';
+export { handleSocks5Stream, createServerState as createSocks5ServerState, } from './socks5-server.js';
+export { resolveAndAuthorize as resolveAndAuthorizeDestination, isPrivateAddress, clearDnsCache as clearDestinationDnsCache, DestinationDeniedError, } from './net-destination-policy.js';
 // -- curl-channel (WebSocket-multiplexed fetch over Hoody curl kit) --
 // Vendored from the upstream Hoody curl client. Public surface is `client.curlChannel()`;
 // the lower-level `CurlChannel` / `createCurlFetch` are re-exported for

@@ -23,6 +23,7 @@ import * as cron from './cron/index.js';
 import * as pipe from './pipe/index.js';
 import * as notes from './notes/index.js';
 import * as tunnel from './tunnel/index.js';
+import * as egress from './egress/index.js';
 import * as run from './run/index.js';
 import * as proxyLogs from './proxyLogs/index.js';
 import * as agent from './agent/index.js';
@@ -236,6 +237,7 @@ export declare class HoodyClient {
     readonly tunnel: tunnel.TunnelService & {
         health: tunnel.HealthService;
     };
+    readonly egress: egress.EgressService & {};
     readonly run: run.RunService & {
         documentation: run.ApiDocumentationService;
         jobs: run.JobsService;

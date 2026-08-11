@@ -216,6 +216,16 @@ export declare class TunnelSession {
      * CreditGate and marks the streamId as closed so subsequent sendData calls
      * reject cleanly. */
     sendEof(streamId: number): void;
+    /**
+     * Send RESET and release the stream's local state.
+     *
+     * The mirror of `sendEof`. Sending a raw RESET frame closes the stream on the
+     * wire but leaves this side's CreditGate allocated, so every locally refused
+     * stream (bad auth, denied destination, timeout) permanently grew
+     * `streamCredit` for the life of the session, and a reused stream id would
+     * inherit the stale gate.
+     */
+    sendReset(streamId: number, reason: string): void;
     close(): Promise<void>;
     /** Full session-scoped state wipe. Used by connect() to supersede a
      *  prior session cleanly. close() does its own richer teardown (flushes

@@ -237,11 +237,11 @@ const KIT_CATALOG = [
         supportsIndex: false,
     },
     {
-        slug: 'proxy',
+        slug: 'egress',
         kind: 'special',
         description: 'Container egress proxy endpoint (no instance index).',
-        serviceSegmentPattern: 'proxy',
-        urlTemplateSample: 'https://{projectId}-{containerId}-proxy.{server}.containers.hoody.com',
+        serviceSegmentPattern: 'egress',
+        urlTemplateSample: 'https://{projectId}-{containerId}-egress.{server}.containers.hoody.com',
         supportsIndex: false,
     },
     {

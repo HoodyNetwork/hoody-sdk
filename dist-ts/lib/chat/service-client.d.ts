@@ -51,6 +51,8 @@ export declare const DEFAULT_SERVICE_URL = "https://chatbot.hoody.com/api/chat";
 /**
  * Public docs site, used to turn a citation into a clickable link. The service
  * emits site-relative paths and has never emitted an absolute URL.
+ *
+ * Treat this constant as generated: do not hand-edit it.
  */
 export declare const DOCS_SITE_BASE = "https://docs.hoody.com";
 /** Shown to the user when the answer hit the size cap. Never part of `text`. */

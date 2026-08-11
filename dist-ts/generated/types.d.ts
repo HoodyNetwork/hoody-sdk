@@ -2313,7 +2313,7 @@ export interface ApiContainersCreateRequest {
      * @maxLength 16000
      */
     comment?: string | null;
-    /** Enable all Hoody Kit features (extra-apt-sources, basic-packages, hoody-daemon, sudo-env, remove-snapd, webview, user, hoody-ai, ttyd) */
+    /** Enable all Hoody Kit features (extra-apt-sources, apt-proxy, basic-packages, dev-packages, extra-shells, hoody-daemon, sudo-env, remove-snapd, webview, desktop, user, ttyd, vm-packages). vm-packages is the hoody-vm QEMU runtime (~185 MiB); running VMs additionally needs the separate kvm grant. */
     hoody_kit?: boolean;
     /** Enable dev_kit development tools in the container. Defaults to true when hoody_kit is true, false when hoody_kit is false (unless explicitly set). Cannot be updated after creation. */
     dev_kit?: boolean;
@@ -3919,11 +3919,22 @@ export interface ApiNotificationsListPublicResponse {
         severity?: "INFO" | "WARNING" | "ERROR" | "SUCCESS";
         is_public?: boolean;
         is_global?: boolean;
-        target_user_ids?: string[] | null;
         expires_at?: string | null;
         created_at?: string;
         updated_at?: string;
     })[];
+}
+export interface GetUserNotificationSummaryResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        unread_count?: number;
+        is_capped?: boolean;
+        unread_cap?: number;
+        latest_id?: string | null;
+        latest_created_at?: string | null;
+        poll_interval_seconds?: number;
+    };
 }
 export interface ApiNotificationsListResponse {
     statusCode: number;
@@ -3936,13 +3947,19 @@ export interface ApiNotificationsListResponse {
         severity?: "INFO" | "WARNING" | "ERROR" | "SUCCESS";
         is_public?: boolean;
         is_global?: boolean;
-        target_user_ids?: string[] | null;
         expires_at?: string | null;
         created_at?: string;
         updated_at?: string;
         is_read?: boolean;
         read_at?: string | null;
     })[];
+    pagination?: {
+        total?: number;
+        page?: number;
+        limit?: number;
+        totalPages?: number;
+        next_cursor?: string | null;
+    };
 }
 export interface ApiNotificationsMarkReadResponse {
     statusCode: number;
@@ -4735,7 +4752,7 @@ export interface ApiProxyAliasesCreateRequest {
      * @pattern ^[0-9a-f]{24}$
      */
     container_id: string;
-    /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed. */
+    /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "egress"/"workspaces" or starting with "egress-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed. */
     alias?: string | null | false;
     /** Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). To point an alias at an HTTP server you run yourself inside the container (a process started via the daemon, a dev server, anything listening on a TCP port) use program "http" — or "https" for a TLS backend — and give the port via the "port" field (e.g. program "http" + port 3000 forwards to http://<container>:3000). The combined "http-3000" form and the legacy "index"-as-port form also work; when more than one is supplied the order of authority is port > the port embedded in "http-<port>" > index, so a leftover/default index can never override a real port. Must be a name or alias from container-programs.json. */
     program: string;
@@ -4815,7 +4832,7 @@ export interface ApiProxyAliasesGetResponse {
 }
 export interface ApiProxyAliasesUpdateRequest {
     /**
-     * New alias name. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.
+     * New alias name. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "egress"/"workspaces" or starting with "egress-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.
      * @minLength 3
      * @maxLength 61
      * @pattern ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
@@ -7039,7 +7056,7 @@ export interface ListServerOffersResponse {
 export interface ReserveServerOfferRequest {
     /** Must be one of the offer's pricing_rules keys. */
     days: number;
-    /** Ceiling on the TOTAL debit (rent + one-time setup fee). Required whenever a setup fee applies. */
+    /** Ceiling on the TOTAL debit (rent + any one-time setup fee). REQUIRED for every paid reservation, not only ones carrying a setup fee. Compute it as pricing_rules[days] plus setup_fee_rules[days] when that key is present, else setup_fee_cents — a present override wins even when it is 0. If you get a 409, that error's data carries the authoritative total_cents for the duration you asked for. */
     max_charge_cents?: number;
     /**
      * Caller-generated. Replaying it returns the original reservation, unpaid twice.
@@ -7068,7 +7085,7 @@ export interface ReserveServerOfferResponse {
             rental_cents?: number;
             setup_fee_cents?: number;
             total_paid_cents?: number;
-            offer_snapshot?: Record<string, unknown>;
+            offer_snapshot?: Record<string, unknown> | null;
         };
         replayed?: boolean;
     };
@@ -7091,7 +7108,7 @@ export interface ListMyReservationsResponse {
         rental_cents?: number;
         setup_fee_cents?: number;
         total_paid_cents?: number;
-        offer_snapshot?: Record<string, unknown>;
+        offer_snapshot?: Record<string, unknown> | null;
     })[];
     total?: number;
     limit?: number;
@@ -7115,7 +7132,7 @@ export interface GetMyReservationResponse {
         rental_cents?: number;
         setup_fee_cents?: number;
         total_paid_cents?: number;
-        offer_snapshot?: Record<string, unknown>;
+        offer_snapshot?: Record<string, unknown> | null;
     };
 }
 export interface BrowserInstancesStartResponse {
@@ -7793,13 +7810,20 @@ export interface DaemonStatusGetAllResponse {
         }[];
     };
 }
+/**
+ * Runtime status for one program. Three shapes are returned, distinguished by which field is present: standard programs carry `status`; a port-range program queried with a `port` carries `instance`; a port-range program queried without one carries `instances` plus `running_count`/`total_count`. Only `success` is common to all three, which is why it is the sole required field.
+ */
 export interface DaemonStatusGetResponse {
     statusCode: number;
     message: string;
     data: {
         success: boolean;
-        status: ProgramStatus;
-        stats?: unknown;
+        status?: ProgramStatus;
+        stats?: ProgramStats;
+        instance?: ProgramInstance;
+        instances?: ProgramInstance[];
+        running_count?: number;
+        total_count?: number;
     };
 }
 /**
@@ -7826,7 +7850,7 @@ export interface DaemonQuickStartLaunchResponse {
         temporary_id: string;
         name: string;
         display?: string | null;
-        status: "running" | "starting";
+        status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
         pid?: number | null;
         uptime?: string | null;
         created_at: string;
@@ -7844,7 +7868,7 @@ export interface DaemonQuickStartGetStatusResponse {
         temporary_id: string;
         name: string;
         display?: string | null;
-        status: "running" | "starting";
+        status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
         pid?: number | null;
         uptime?: string | null;
         created_at: string;
@@ -8408,8 +8432,8 @@ export interface ExecValidateValidateDependenciesResponse {
     totalModules: number;
     allInstalled: boolean;
     missingCount: number;
-    missingModules: unknown[];
-    dependencies: unknown[];
+    missingModules: string[];
+    dependencies: Record<string, unknown>[];
     message: string;
     installCommand: string | null;
     statusCode: number;
@@ -8496,7 +8520,7 @@ export interface ExecTemplatesListResponse {
     message: string;
     data: {
         count: number;
-        templates: unknown[];
+        templates: Record<string, unknown>[];
     };
 }
 export interface ExecTemplatesPreviewResponse {
@@ -8662,7 +8686,7 @@ export interface ExecScriptsListResponse {
     } | {
         directory: string;
         count: number;
-        scripts: unknown[];
+        scripts: Record<string, unknown>[];
     };
 }
 export interface ExecScriptsGetTreeRequest {
@@ -8717,12 +8741,12 @@ export interface ExecLogsListResponse {
     statusCode: number;
     message: string;
     data: {
-        logs: unknown[];
+        logs: Record<string, unknown>[];
         count: number;
     } | {
         directory: string | null;
         count: number;
-        logs: unknown[];
+        logs: Record<string, unknown>[];
     };
 }
 export interface ExecLogsReadRequest {
@@ -8756,7 +8780,7 @@ export interface ExecLogsSearchRequest {
     /** Regex */
     regex?: string;
     /** Files */
-    files?: unknown[];
+    files?: string[];
     /** Limit */
     limit?: number;
     /** Case Sensitive */
@@ -8770,7 +8794,7 @@ export interface ExecLogsSearchResponse {
         searchType: string;
         filesSearched: number;
         matchesFound: number;
-        results: unknown[];
+        results: Record<string, unknown>[];
     };
 }
 export interface ExecLogsClearResponse {
@@ -8864,6 +8888,11 @@ export interface ExecStateClearResponse {
     statusCode: number;
     message: string;
     data: {
+        hostname: string;
+        path: string;
+        cleared: boolean;
+        reason: string;
+    } | {
         cleared: boolean;
         count: number;
         remaining: number;
@@ -8877,11 +8906,19 @@ export interface ExecRouteResolveResponse {
     statusCode: number;
     message: string;
     data: {
-        matched: boolean;
+        matched: true;
+        path: string;
+        scriptPath: string;
+        routePattern: string;
+        parameters: Record<string, unknown>;
+        type: string;
+        baseDir: string;
+    } | {
+        matched: false;
         path: string;
         hostname: string;
         execId: string | null;
-        triedDirectories: unknown[];
+        triedDirectories: string[];
     };
 }
 export interface ExecRouteDiscoverRequest {
@@ -8896,7 +8933,7 @@ export interface ExecRouteDiscoverResponse {
     data: {
         baseDir: string;
         count: number;
-        routes: unknown[];
+        routes: Record<string, unknown>[];
     };
 }
 /**
@@ -8910,7 +8947,7 @@ export interface ExecRouteTestResponse {
         tested: number;
         matched: number;
         notMatched: number;
-        results: unknown[];
+        results: Record<string, unknown>[];
     };
 }
 export interface ExecMonitorGetStatsResponse {
@@ -9058,7 +9095,7 @@ export interface ExecDependenciesListBundledResponse {
     message: string;
     data: {
         total: number;
-        packages: unknown[];
+        packages: Record<string, unknown>[];
         allAvailable: boolean;
     };
 }
@@ -9073,14 +9110,14 @@ export interface ExecDependenciesCheckResponse {
     message: string;
     data: {
         total: number;
-        installed: unknown[];
-        missing: unknown[];
+        installed: Record<string, unknown>[];
+        missing: string[];
         message: string;
     } | {
         total: number;
-        installed: unknown[];
-        missing: unknown[];
-        details: unknown[];
+        installed: Record<string, unknown>[];
+        missing: string[];
+        details: Record<string, unknown>[];
     };
 }
 export interface ExecDependenciesInstallRequest {
@@ -9117,7 +9154,7 @@ export interface ExecSystemGetRestartStatusResponse {
         uptime: number;
         uptimeFormatted: string;
         activeRequests: number;
-        active: unknown[];
+        active: Record<string, unknown>[];
         restartReady: boolean;
     };
 }
@@ -9154,7 +9191,7 @@ export interface ExecPackageUpdateJsonResponse {
 }
 export interface ExecPackageInstallRequest {
     /** Packages */
-    packages?: unknown[];
+    packages?: string[];
     /** Dev */
     dev?: boolean;
     /** Save */
@@ -9197,14 +9234,14 @@ export interface ExecPackageCompareResponse {
 }
 export interface ExecPackagePinVersionsRequest {
     /** Packages */
-    packages?: unknown[];
+    packages?: string[];
 }
 export interface ExecPackagePinVersionsResponse {
     statusCode: number;
     message: string;
     data: ({
         message: "All dependencies are already pinned to exact versions";
-        pinned: unknown[];
+        pinned: string[];
         count: number;
     } & {
         message: "All dependencies are already pinned to exact versions";
@@ -9394,7 +9431,7 @@ export interface ExecSdkGetResponse {
         files: {
             total: number;
             endpoints: number;
-            list: unknown[];
+            list: Record<string, unknown>[];
         };
     };
 }
@@ -15669,7 +15706,7 @@ export interface FindInTerminalResponse {
 }
 export interface PressTerminalKeysRequest {
     /** Array of key names to press in sequence (e.g. ["ctrl+c", "arrow_up", "enter"]). Mutually exclusive with `key`. Maximum 256 entries per request. */
-    keys?: unknown[];
+    keys?: string[];
     /** Single key name for one-shot press (e.g. "enter"). Mutually exclusive with `keys` */
     key?: string;
 }
@@ -15758,7 +15795,7 @@ export interface CommitTerminalDropRequest {
     /** Clip-read correlation nonce ([A-Za-z0-9_-]{1,64}); echoed verbatim as the injected frame's cr field so the TUI can match a clipboard-read landing. Invalid/oversized values are ignored. */
     cr?: string;
     /** Manifest entries [{p,d,s,name,h?}] */
-    items: unknown[];
+    items: Record<string, unknown>[];
 }
 export interface CommitTerminalDropResponse {
     statusCode: number;
@@ -15773,7 +15810,7 @@ export interface OneShotTerminalDropRequest {
     /** Drop cell column */
     c?: number;
     /** File/dir items ([{name,b64}|{name,dir:true,items:[...]}]) */
-    items: unknown[];
+    items: Record<string, unknown>[];
 }
 export interface OneShotTerminalDropResponse {
     statusCode: number;
@@ -16923,7 +16960,7 @@ export interface TunnelListTunnelsResponse {
         totalStreams: number;
     };
 }
-export interface RunHealthCheckResponse {
+export interface EgressHealthCheckResponse {
     statusCode: number;
     message: string;
     data: {
@@ -16932,6 +16969,81 @@ export interface RunHealthCheckResponse {
         built?: string | null;
         started: string;
         memory?: HealthMemory8 | null;
+        fds?: number | null;
+        pid: number;
+        ip: string;
+        userAgent?: string | null;
+    };
+}
+/**
+ * Current upstream configuration. Credentials are never returned; `auth` reports only whether they are set.
+ */
+export interface EgressGetUpstreamResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        enabled: boolean;
+        scheme?: "socks5" | "socks5h" | "http" | "https";
+        host?: string;
+        port?: number;
+        auth?: boolean;
+        config_path: string;
+    };
+}
+/**
+ * Current upstream configuration. Credentials are never returned; `auth` reports only whether they are set.
+ */
+export interface EgressSetUpstreamPostResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        enabled: boolean;
+        scheme?: "socks5" | "socks5h" | "http" | "https";
+        host?: string;
+        port?: number;
+        auth?: boolean;
+        config_path: string;
+    };
+}
+/**
+ * Current upstream configuration. Credentials are never returned; `auth` reports only whether they are set.
+ */
+export interface EgressSetUpstreamResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        enabled: boolean;
+        scheme?: "socks5" | "socks5h" | "http" | "https";
+        host?: string;
+        port?: number;
+        auth?: boolean;
+        config_path: string;
+    };
+}
+/**
+ * Current upstream configuration. Credentials are never returned; `auth` reports only whether they are set.
+ */
+export interface EgressDisableUpstreamResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        enabled: boolean;
+        scheme?: "socks5" | "socks5h" | "http" | "https";
+        host?: string;
+        port?: number;
+        auth?: boolean;
+        config_path: string;
+    };
+}
+export interface RunHealthCheckResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        status: "ok";
+        service: string;
+        built?: string | null;
+        started: string;
+        memory?: HealthMemory9 | null;
         fds?: number | null;
         pid: number;
         ip: string;
@@ -17493,7 +17605,7 @@ export interface AgentPutAgentSourceResponse {
 }
 export interface AgentSetAgentToolsRequest {
     /** Tool names allowed for the agent; an empty list removes the line (= all tools). */
-    tools?: unknown[];
+    tools?: string[];
 }
 /**
  * The verbatim JSON reply from the daemon `agents.set_tools` RPC.
@@ -17935,10 +18047,10 @@ export interface AgentImportMCPServersRequest {
     nonce: string;
     /** Settings layer to write. Must match the scope the nonce was minted for. */
     scope?: "user" | "project" | "local";
-    /** A pasted config document in any supported dialect. Mutually exclusive with servers. */
+    /** A pasted config document in any supported dialect. Mutually exclusive with the servers field. This is the ONLY import form the CLI exposes: servers is an object array, and the CLI generator hides object-array flags rather than ask for a JSON blob on the command line, so `hoody agent mcp import` takes --document only. The hoody dialect is accepted here, so anything expressible via servers can be passed as a document. */
     document?: string;
-    /** Explicit server entries, in hoody's own shape. Mutually exclusive with document. */
-    servers?: unknown[];
+    /** Explicit server entries, in hoody's own shape. Mutually exclusive with document. API/SDK only — see document for why this has no CLI flag. */
+    servers?: Record<string, unknown>[];
     /** Overwrite entries whose name already exists. Without it, a collision aborts the whole import. */
     replace?: boolean;
     /** The mcp_servers hash you last read. */
@@ -17956,7 +18068,7 @@ export interface AgentImportMCPServersResponse {
         revoked?: number;
         deferred_sessions?: number;
         deferred_started?: boolean;
-        servers?: unknown[];
+        servers?: Record<string, unknown>[];
         path?: string;
         hash?: string;
         imported?: number;
@@ -17977,7 +18089,7 @@ export interface AgentParseMCPImportResponse {
     data: {
         status?: string;
         dialect?: string;
-        servers?: unknown[];
+        servers?: Record<string, unknown>[];
         count?: number;
     };
 }
@@ -18003,7 +18115,7 @@ export interface AgentReconnectMCPResponse {
         revoked?: number;
         deferred_sessions?: number;
         deferred_started?: boolean;
-        servers?: unknown[];
+        servers?: Record<string, unknown>[];
     };
 }
 /**
@@ -18014,9 +18126,9 @@ export interface AgentListMCPServersResponse {
     message: string;
     data: {
         status?: string;
-        servers?: unknown[];
-        files?: unknown[];
-        warnings?: unknown[];
+        servers?: Record<string, unknown>[];
+        files?: Record<string, unknown>[];
+        warnings?: string[];
     };
 }
 export interface AgentUpsertMCPServerRequest {
@@ -18043,7 +18155,7 @@ export interface AgentUpsertMCPServerResponse {
         revoked?: number;
         deferred_sessions?: number;
         deferred_started?: boolean;
-        servers?: unknown[];
+        servers?: Record<string, unknown>[];
         path?: string;
         hash?: string;
     };
@@ -18072,7 +18184,7 @@ export interface AgentDeleteMCPServerResponse {
         revoked?: number;
         deferred_sessions?: number;
         deferred_started?: boolean;
-        servers?: unknown[];
+        servers?: Record<string, unknown>[];
         path?: string;
         hash?: string;
     };
@@ -18103,7 +18215,7 @@ export interface AgentSetMCPServerEnabledResponse {
         revoked?: number;
         deferred_sessions?: number;
         deferred_started?: boolean;
-        servers?: unknown[];
+        servers?: Record<string, unknown>[];
         path?: string;
         hash?: string;
     };
@@ -18256,7 +18368,7 @@ export interface AgentSearchMemoryRequest {
     /** Maximum hits to return. */
     limit?: number;
     /** Optional memory kinds/stores to restrict the search to. */
-    kinds?: unknown[];
+    kinds?: string[];
     /** Skip the graph-fusion component of recall. */
     skip_graph?: boolean;
 }
@@ -19192,9 +19304,9 @@ export interface AgentGetStatisticsResponse {
 }
 export interface AgentListTodosRequest {
     /** Filter to these todo states (array of strings). */
-    states?: unknown[];
+    states?: string[];
     /** Filter to todos carrying these tags (array of strings). */
-    tags?: unknown[];
+    tags?: string[];
     /** Free-text filter over title/body. */
     query?: string;
     /** When true, only open (non-terminal) todos. */
@@ -19224,7 +19336,7 @@ export interface AgentCreateTodoRequest {
     /** Optional priority band 0..4 (0 = P0 urgent … 4 = P4 someday); defaults to 2 when omitted. Must be a JSON integer in range — a string or out-of-range value is rejected. */
     priority?: number;
     /** Optional tags. */
-    tags?: unknown[];
+    tags?: string[];
     /** The todo's working directory (labels the record's computer/path). Defaults to the X-Hoody-Cwd request-scope header when omitted; one of the two must be set. */
     cwd?: string;
 }
@@ -19286,7 +19398,7 @@ export interface AgentUpdateTodoRequest {
     /** New ordering rank. */
     rank?: number;
     /** New tag set. */
-    tags?: unknown[];
+    tags?: string[];
     /** Retarget the todo's working directory. */
     cwd?: string;
 }
@@ -20740,22 +20852,6 @@ export interface Error2 {
     error: string;
 }
 /**
- * Program configuration with optional runtime status (when include_status=true)
- */
-export type ProgramWithStatus = Program & {
-    status?: {
-        id?: number;
-        status?: "RUNNING" | "STOPPED" | "STARTING" | "STOPPING" | "BACKOFF" | "FATAL";
-        pid?: number | null;
-        uptime?: string | null;
-    } | {
-        type?: "port-range";
-        running_instances?: number;
-        total_instances?: number;
-        instances?: ProgramInstance[];
-    };
-};
-/**
  * JSON payload sent to webhook URLs when a program lifecycle event occurs. This is the exact HTTP POST body your webhook endpoint will receive.
  */
 export interface WebhookPayload {
@@ -21205,7 +21301,7 @@ export interface ProgramInput {
     /** Start automatically on system boot */
     boot?: boolean;
     /**
-     * Startup delay in seconds
+     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting.
      * @minimum 0
      * @maximum 3600
      */
@@ -21255,7 +21351,7 @@ export interface ProgramInput {
         start: number;
         end: number;
     };
-    /** Parameter name for passing port (e.g., "--port", "-p") */
+    /** Parameter name for passing port (e.g. --port, -p). Valid ONLY together with port_range; sending it on its own is rejected with "port_param requires port_range to be set". Has no schema default on purpose — omit it and the server applies --port itself, so a default here would make every port-less create fail. */
     port_param?: string;
     /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
     lazy_load?: boolean;
@@ -21311,13 +21407,20 @@ export interface AllStatusResponse {
         }[];
     };
 }
+/**
+ * Runtime status for one program. Three shapes are returned, distinguished by which field is present: standard programs carry `status`; a port-range program queried with a `port` carries `instance`; a port-range program queried without one carries `instances` plus `running_count`/`total_count`. Only `success` is common to all three, which is why it is the sole required field.
+ */
 export interface StatusResponse {
     statusCode: number;
     message: string;
     data: {
         success: boolean;
-        status: ProgramStatus;
-        stats?: unknown;
+        status?: ProgramStatus;
+        stats?: ProgramStats;
+        instance?: ProgramInstance;
+        instances?: ProgramInstance[];
+        running_count?: number;
+        total_count?: number;
     };
 }
 /**
@@ -21364,7 +21467,7 @@ export interface EphemeralProgramInput {
      */
     priority?: number;
     /**
-     * Delay before starting (seconds)
+     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting.
      * @minimum 0
      * @maximum 3600
      */
@@ -21431,10 +21534,10 @@ export interface QuickStartResponse2 {
     /** X11 DISPLAY number (normalized with ":" prefix) */
     display?: string | null;
     /** Current program status */
-    status: "running" | "starting";
+    status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
     /** Process ID (if wait=true and running) */
     pid?: number | null;
-    /** Uptime (if wait=true and running) */
+    /** Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when not running. */
     uptime?: string | null;
     /** ISO timestamp when program was created */
     created_at: string;
@@ -22388,6 +22491,36 @@ export interface HealthResponse8 {
     /** Process start time as RFC3339 string */
     started: string;
     memory?: HealthMemory8 | null;
+    fds?: number | null;
+    pid: number;
+    ip: string;
+    userAgent?: string | null;
+}
+/**
+ * Current upstream configuration. Credentials are never returned; `auth` reports only whether they are set.
+ */
+export interface UpstreamStatus {
+    /** Whether an upstream proxy is configured */
+    enabled: boolean;
+    /** Upstream scheme. Absent when disabled */
+    scheme?: "socks5" | "socks5h" | "http" | "https";
+    /** Upstream host. Absent when disabled */
+    host?: string;
+    /** Upstream port. Absent when disabled */
+    port?: number;
+    /** Whether upstream credentials are set */
+    auth?: boolean;
+    /** Path of the file the setting is persisted to */
+    config_path: string;
+}
+export interface HealthResponse9 {
+    status: "ok";
+    service: string;
+    /** Executable mtime as RFC3339 string */
+    built?: string | null;
+    /** Process start time as RFC3339 string */
+    started: string;
+    memory?: HealthMemory9 | null;
     /** Count of open file descriptors */
     fds?: number | null;
     pid: number;
@@ -22637,23 +22770,6 @@ export interface HealthMemory {
     /** Language runtime heap in bytes (null for Rust) */
     heap?: number | null;
 }
-/**
- * Represents a running instance of a port-range program. Each instance is an actual process running on a specific port.
- */
-export interface ProgramInstance {
-    /** Port number this instance is running on */
-    port?: number;
-    /** Supervisord process name (format: programname_port) */
-    instance_name?: string;
-    /** Current runtime status of this instance */
-    status?: "RUNNING" | "STOPPED" | "STARTING" | "STOPPING" | "BACKOFF" | "FATAL";
-    /** Process ID when running */
-    pid?: number | null;
-    /** Uptime in format "H:MM:SS" */
-    uptime?: string | null;
-    /** Resource stats for this instance's process tree. Only present when include_stats=true and the instance is running. */
-    stats?: unknown;
-}
 export interface HealthMemory2 {
     /** Resident set size in bytes */
     rss: number;
@@ -22845,7 +22961,7 @@ export interface Program {
     /** Start automatically when supervisord starts (typically on system boot) */
     boot?: boolean;
     /**
-     * Number of seconds to wait before starting the program after boot
+     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting.
      * @minimum 0
      * @maximum 3600
      */
@@ -22897,7 +23013,7 @@ export interface Program {
         start: number;
         end: number;
     };
-    /** Parameter name to pass port to command (used with port_range) */
+    /** Parameter name to pass port to command. Valid ONLY together with port_range; sending it on its own is rejected with "port_param requires port_range to be set". Has no schema default on purpose — omit it and the server applies --port itself, so a default here would make every port-less create fail. */
     port_param?: string;
     /** Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by edge proxy via ensure-started endpoint. Cannot be combined with boot:true. */
     lazy_load?: boolean;
@@ -22922,10 +23038,10 @@ export interface Program {
         timeout?: number;
         retry?: number;
     } | null;
-    /** Runtime status of the program. Only present when include_status=true or include_stats=true is passed to the listing endpoint. */
-    status?: ProgramStatus | Record<string, unknown>;
+    /** Runtime status of the program. Present when include_status=true, or when include_stats=true and include_status is not given (include_stats implies include_status). Exactly one shape applies: standard programs carry `id`/`status`, port-range programs carry `type: "port-range"` plus instance counts. */
+    status?: ProgramStatus | ProgramPortRangeStatus;
     /** Resource stats (CPU, memory, process tree) for the program. Only present when include_stats=true and the program is running. For port-range programs, stats appear per-instance inside the status.instances array. */
-    stats?: unknown;
+    stats?: ProgramStats;
 }
 /**
  * Ephemeral (temporary) program configuration. Not stored in programs.json, only tracked in ephemeral.json. Auto-cleans up when stopped or on container reboot.
@@ -22968,7 +23084,7 @@ export interface EphemeralProgram {
     /** X11 DISPLAY number (normalized with ":" prefix) */
     display?: string | null;
     /** Current runtime status */
-    status?: "running" | "stopped" | "starting" | "stopping" | "backoff" | "fatal";
+    status?: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
     /** Process ID when running */
     pid?: number | null;
     /** Uptime in format "H:MM:SS" */
@@ -23280,6 +23396,12 @@ export interface HealthMemory8 {
     /** Language runtime heap in bytes (null for Rust) */
     heap?: number | null;
 }
+export interface HealthMemory9 {
+    /** Resident set size in bytes */
+    rss: number;
+    /** Language runtime heap in bytes (null for Rust) */
+    heap?: number | null;
+}
 /**
  * Recommended execution mode returned by preflight.
  */
@@ -23467,16 +23589,26 @@ export interface StoredCookie {
  */
 export interface ProgramStatus {
     /** Program identifier */
-    id?: number;
-    /** Current runtime status of the program */
-    status?: "RUNNING" | "STOPPED" | "STARTING" | "STOPPING" | "BACKOFF" | "FATAL";
-    /** Process ID when running, null otherwise */
-    pid?: number | null;
-    /**
-     * Uptime in format "H:MM:SS" when running
-     * @pattern ^\d+:\d{2}:\d{2}$
-     */
-    uptime?: string | null;
+    id: number;
+    /** Current runtime status of the program. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed. */
+    status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
+    /** Process ID when running; omitted otherwise */
+    pid?: number;
+    /** Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when the program is not running. No `pattern` is declared: the day form is produced by Python's timedelta formatting and pinning a regex here would make valid responses invalid. */
+    uptime?: string;
+}
+/**
+ * Runtime status of a port-range program: aggregate counts plus one entry per non-stopped instance.
+ */
+export interface ProgramPortRangeStatus {
+    /** Discriminator. Present only on port-range status objects; standard programs carry `id`/`status` instead. */
+    type: "port-range";
+    /** Number of instances currently reported as not stopped */
+    running_instances: number;
+    /** Total number of possible instances (port_range.end - port_range.start + 1) */
+    total_instances: number;
+    /** One entry per non-stopped instance */
+    instances: ProgramInstance[];
 }
 export interface FileInfo {
     /** Absolute file path */
@@ -23757,6 +23889,23 @@ export type ExecutionMode = "sync" | "async";
  */
 export type ResponseMode = "transparent" | "json";
 /**
+ * Represents a running instance of a port-range program. Each instance is an actual process running on a specific port.
+ */
+export interface ProgramInstance {
+    /** Port number this instance is running on */
+    port: number;
+    /** Supervisord process name (format: programname_port) */
+    instance_name: string;
+    /** Current runtime status of this instance. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed. */
+    status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
+    /** Process ID when running; omitted otherwise */
+    pid?: number;
+    /** Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when not running. */
+    uptime?: string;
+    /** Resource stats for this instance's process tree. Only present when include_stats=true and the instance is running. */
+    stats?: ProgramStats;
+}
+/**
  * Flexible value type used for defaults metadata
  */
 export type AnyValue = string | number | boolean | unknown[] | Record<string, unknown> | null;
@@ -23847,6 +23996,23 @@ export type OutputFormat = "json" | "html";
  */
 export type PrintCurlMode = "hoody-run";
 /**
+ * Aggregated resource stats for a program including its full process tree (root process + all child/descendant processes). Read from /proc filesystem.
+ */
+export interface ProgramStats {
+    /** Root process ID (the PID supervisord manages) */
+    pid: number;
+    /** ISO 8601 timestamp of when the process started */
+    started_at: string;
+    /** Total CPU usage percentage across all processes in the tree (can exceed 100% on multi-core). This is a lifetime average — total CPU time divided by the process's age — not instantaneous usage. */
+    cpu_percent: number;
+    /** Total Resident Set Size in bytes across all processes in the tree */
+    memory_rss_bytes: number;
+    /** Number of processes in the tree (root + children) */
+    process_count: number;
+    /** Per-process breakdown of the process tree */
+    processes: ProcessInfo[];
+}
+/**
  * Application kind filter - gui for graphical apps, cli for terminal apps, any for both.
  */
 export type AppKind = "gui" | "cli" | "any";
@@ -23900,6 +24066,19 @@ export interface CandidateProvenance {
 - preview: nothing executed; preview_* URLs show where the app WILL appear
  */
 export type HandoffState = "preview";
+/**
+ * Resource stats for a single process in the process tree
+ */
+export interface ProcessInfo {
+    /** Process ID */
+    pid: number;
+    /** Command line of the process */
+    command: string;
+    /** CPU usage percentage (can exceed 100% on multi-core systems). This is a lifetime average — total CPU time divided by the process's age — not instantaneous usage. */
+    cpu_percent: number;
+    /** Resident Set Size in bytes */
+    memory_rss_bytes: number;
+}
 /**
  * Structured execution plan mode.
  */

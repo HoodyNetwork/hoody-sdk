@@ -19,16 +19,27 @@ export interface EventServerMessage {
     /** Event-specific payload; shape varies per event_type. */
     data?: any;
 }
-/** A client-to-server message sent over the WebSocket to control subscriptions. */
+/**
+ * Payload for the client-to-server `subscribe` and `unsubscribe` frames.
+ *
+ * The action is the Socket.IO event name, not a field: send this object as
+ * `socket.emit('subscribe', payload)` or `socket.emit('unsubscribe', payload)`.
+ *
+ * Subscribing joins a delivery room. It does not select event types, and there is no way to do
+ * so: the server broadcasts every event type to the rooms a connection holds — its own user room,
+ * its realm rooms, and any project or container room joined here — so filtering by `event_type`
+ * belongs on the client, which is what {@link EventsClient}'s per-type handlers do.
+ *
+ * This interface previously declared `action`, `event_types`, `resource_id` and `resource_type`.
+ * The server reads none of those names, and nothing in this SDK ever sent one, so anybody who
+ * hand-rolled a subscribe from the exported type got silence with no error. Omitting both fields
+ * below is valid and joins no additional room.
+ */
 export interface EventClientMessage {
-    /** The subscription action to perform (e.g. "subscribe", "unsubscribe"). */
-    action: string;
-    /** List of event type patterns to subscribe/unsubscribe from. */
-    event_types?: string[];
-    /** Scope the subscription to a specific resource UUID. */
-    resource_id?: string;
-    /** Scope the subscription to a specific resource category. */
-    resource_type?: string;
+    /** 24-hex project id. Joins that project's delivery room. */
+    projectId?: string;
+    /** 24-hex container id. Joins that container's delivery room. */
+    containerId?: string;
 }
 /**
  * Server wire-format for `message` events. Hoody API broadcasts these via
