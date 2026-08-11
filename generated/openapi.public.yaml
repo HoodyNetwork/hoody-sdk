@@ -1,7 +1,7 @@
 # Generated public OpenAPI specification — do not edit; regenerate instead.
 openapi: 3.0.3
 info:
-  title: Unified API - api, browser, code, curl, daemon, display, exec, files, notifications, sqlite, terminal, watch, cron, pipe, notes, tunnel, run, proxyLogs, agent
+  title: Unified API - api, browser, code, curl, daemon, display, exec, files, notifications, sqlite, terminal, watch, cron, pipe, notes, tunnel, egress, run, proxyLogs, agent
   description: Production-grade API for provisioning and managing containerized workloads
   version: 1.0.0
   contact:
@@ -88,6 +88,21 @@ servers:
       serviceIndex:
         default: "1"
         description: Service instance index
+  - url: https://{projectId}-{containerId}-egress-{serviceIndex}.{server}.containers.hoody.com
+    description: Container deployment
+    variables:
+      projectId:
+        default: 294faf1234567890abcd
+        description: Project identifier
+      containerId:
+        default: a446e671234567890abc
+        description: Container identifier
+      serviceIndex:
+        default: "0"
+        description: Service instance index (0 for primary, 1+ for replicas)
+      server:
+        default: node-example-1
+        description: Server node identifier
   - url: /
     description: hoody-agent HTTP API (deployment root; paths carry the /api/v1/agent prefix)
 paths:
@@ -298,7 +313,7 @@ paths:
                                   description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                                 read_account:
                                   type: boolean
-                                  description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                  description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                               additionalProperties: false
                             admin:
                               type: object
@@ -657,7 +672,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -1104,7 +1119,7 @@ paths:
                           description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                         read_account:
                           type: boolean
-                          description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                          description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                       additionalProperties: false
                     admin:
                       type: object
@@ -1407,7 +1422,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -1965,7 +1980,7 @@ paths:
                                     description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                                   read_account:
                                     type: boolean
-                                    description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                    description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                                 additionalProperties: false
                               admin:
                                 type: object
@@ -2383,7 +2398,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -2811,7 +2826,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -3402,7 +3417,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -3804,7 +3819,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -4258,7 +4273,7 @@ paths:
                           description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                         read_account:
                           type: boolean
-                          description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                          description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                       additionalProperties: false
                     admin:
                       type: object
@@ -4558,7 +4573,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -5012,7 +5027,7 @@ paths:
                           description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                         read_account:
                           type: boolean
-                          description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                          description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                       additionalProperties: false
                     admin:
                       type: object
@@ -5488,7 +5503,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -5856,7 +5871,7 @@ paths:
                                 description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                               read_account:
                                 type: boolean
-                                description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                             additionalProperties: false
                           admin:
                             type: object
@@ -9781,7 +9796,7 @@ paths:
                                         description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                                       read_account:
                                         type: boolean
-                                        description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                        description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                                     additionalProperties: false
                                   admin:
                                     type: object
@@ -10252,7 +10267,7 @@ paths:
                                         description: Can mint/copy/manage child auth tokens within its own subtree (delegated token issuance). Children are clamped to a subset of this token; default-deny.
                                       read_account:
                                         type: boolean
-                                        description: Can read the owning account's email + PII via /auth/me and GET/PUT /users/:id (self). Absent/false → only identity fields (id, username, alias, public_key, timestamps) are returned to the token.
+                                        description: Can read the owning account's PII. On the profile endpoints (/auth/me, GET/PUT /users/:id self) absent/false DEGRADES the response to identity fields (id, username, alias, public_key, timestamps). On the account-history surfaces — /users/me/security-history, /users/me/free-tier-status, and the notification inbox (GET /notifications, GET /notifications/summary), whose bodies carry security, billing and infrastructure events — absent/false is a hard 403, because a history has no meaningful reduced view.
                                     additionalProperties: false
                                   admin:
                                     type: object
@@ -11693,7 +11708,7 @@ paths:
     get:
       operationId: api_getSecurityHistory
       summary: Get your account security history
-      description: "Returns your own account security history — sign-ins and, on request, rejected attempts and other security events (logout, 2FA changes, OTP outcomes) — with IP address, resolved country, source channel and timestamp, newest first. **History is bounded by the platform audit retention window (`AUDIT_LOGS_RETENTION_DAYS`, 180 days by default); older logins are purged automatically and cannot be recovered.** Login records cannot be edited or deleted by the account holder — the trail is append-only so it stays trustworthy as evidence. Pass `include_failed=true` to also see REJECTED sign-in attempts — a burst of them, or any from a country you have not visited, is the clearest sign someone else is trying to get in. Failures are only recorded when a credential was presented against a REAL account (an attempt on an unknown address is never recorded, so this cannot be used to test whether an account exists), and are capped at 200 per account per hour — beyond that, further attempts in the same hour are not listed. Pass `include_security=true` for other account-security events: logout, 2FA enable/disable, OTP verification outcomes and backup-code use. `country` is resolved in the background after the event is recorded. It is `null` when the address is not geolocatable at all (private, reserved, or IPv6 — these stay null permanently), when the provider returned no country for it, or when resolution has not completed. Treat null as **unavailable**, never as a location — and note that a null does not necessarily become non-null later: background retries stop once the row ages out of the retry window."
+      description: "Returns your own account security history — sign-ins and, on request, rejected attempts and other security events (logout, 2FA changes, OTP outcomes) — with IP address, resolved country, source channel and timestamp, newest first. **History covers the last 180 days, which is platform policy and the same for every account; older logins are purged automatically and cannot be recovered.** Login records cannot be edited or deleted by the account holder — the trail is append-only so it stays trustworthy as evidence. Pass `include_failed=true` to also see REJECTED sign-in attempts — a burst of them, or any from a country you have not visited, is the clearest sign someone else is trying to get in. Failures are only recorded when a credential was presented against a REAL account (an attempt on an unknown address is never recorded, so this cannot be used to test whether an account exists), and are capped at 200 per account per hour — beyond that, further attempts in the same hour are not listed. Pass `include_security=true` for other account-security events: logout, 2FA enable/disable, OTP verification outcomes and backup-code use. `country` is resolved in the background after the event is recorded. It is `null` when the address is not geolocatable at all (private, reserved, or IPv6 — these stay null permanently), when the provider returned no country for it, or when resolution has not completed. Treat null as **unavailable**, never as a location — and note that a null does not necessarily become non-null later: background retries stop once the row ages out of the retry window."
       tags:
         - api:Users
       parameters:
@@ -16698,7 +16713,7 @@ paths:
                   description: Optional comment for the container (max 16000 characters)
                 hoody_kit:
                   type: boolean
-                  description: Enable all Hoody Kit features (extra-apt-sources, basic-packages, hoody-daemon, sudo-env, remove-snapd, webview, user, hoody-ai, ttyd)
+                  description: Enable all Hoody Kit features (extra-apt-sources, apt-proxy, basic-packages, dev-packages, extra-shells, hoody-daemon, sudo-env, remove-snapd, webview, desktop, user, ttyd, vm-packages). vm-packages is the hoody-vm QEMU runtime (~185 MiB); running VMs additionally needs the separate kvm grant.
                   default: true
                 dev_kit:
                   type: boolean
@@ -21322,7 +21337,7 @@ paths:
           in: query
           name: max_rating
           required: false
-          description: Maximum average rating filter - filters images with rating <= this value (0-5 stars)
+          description: Maximum average rating filter - filters images with rating at most this value (0-5 stars)
         - schema:
             type: string
           in: query
@@ -28783,12 +28798,6 @@ paths:
                         is_global:
                           type: boolean
                           example: true
-                        target_user_ids:
-                          type: array
-                          items:
-                            type: string
-                          nullable: true
-                          example: null
                         expires_at:
                           type: string
                           format: date-time
@@ -28813,7 +28822,6 @@ paths:
                       severity: WARNING
                       is_public: true
                       is_global: true
-                      target_user_ids: null
                       expires_at: "2025-01-26T00:00:00.000Z"
                       created_at: "2025-01-20T10:00:00.000Z"
                       updated_at: "2025-01-20T10:00:00.000Z"
@@ -28835,14 +28843,155 @@ paths:
         response_fields:
           items: data
           total: data.length
-  /api/v1/notifications/:
+  /api/v1/notifications/summary:
     get:
-      operationId: api_listUserNotifications
-      summary: Get all notifications for the authenticated user
-      description: Get all notifications for the authenticated user, including global notifications and notifications targeted to the user
+      operationId: api_getUserNotificationSummary
+      summary: Unread notification count and newest position
+      description: "Lightweight polling endpoint: returns the unread count and the newest notification position without any notification bodies. Use this to detect new notifications; fetch the list only when something changed. Auth-token callers must hold the `resources.read_account` permission; tokens without it receive 403. It is gated with the list rather than left open because the count and the newest timestamp are an activity oracle for the notifications themselves. JWT/owner callers are unaffected."
       tags:
         - api:Notifications
       parameters: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                title: UserNotificationSummaryResponse
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                    example: 200
+                  message:
+                    type: string
+                    example: Notification summary retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      unread_count:
+                        type: number
+                        example: 3
+                      is_capped:
+                        type: boolean
+                        example: false
+                        description: True when unread_count hit unread_cap and is a floor, not an exact total.
+                      unread_cap:
+                        type: number
+                        example: 100
+                      latest_id:
+                        type: string
+                        nullable: true
+                        example: 507f1f77bcf86cd799439030
+                      latest_created_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: "2025-01-20T10:00:00.000Z"
+                      poll_interval_seconds:
+                        type: number
+                        example: 300
+                        description: Server-advertised poll cadence. Clients MUST honour this rather than hardcoding an interval.
+        "401":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "403":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "429":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "500":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+      security:
+        - bearerAuth: []
+  /api/v1/notifications/:
+    get:
+      operationId: api_listUserNotifications
+      summary: List notifications for the authenticated user
+      description: Paginated list of the notifications visible to the authenticated user (global notifications plus those targeted to them), newest first. Results are PAGINATED — page 1 is not the complete set; follow pagination.next_cursor (or increment page) to read the rest. Notification bodies carry account-security, billing and infrastructure events, so auth-token callers must hold the `resources.read_account` permission; tokens without it receive 403. JWT/owner callers are unaffected.
+      tags:
+        - api:Notifications
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100000
+            default: 1
+          in: query
+          name: page
+          required: false
+          description: Page number (offset paging). Ignored when `before` is supplied.
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          in: query
+          name: limit
+          required: false
+          description: Rows per page (max 100).
+        - schema:
+            type: boolean
+            default: false
+          in: query
+          name: unread_only
+          required: false
+          description: Return only notifications the user has not read. Mutually exclusive with read_only.
+        - schema:
+            type: boolean
+            default: false
+          in: query
+          name: read_only
+          required: false
+          description: Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page).
+        - schema:
+            type: string
+          in: query
+          name: before
+          required: false
+          description: "Keyset cursor from a previous response's pagination.next_cursor (\"<created_at>,<id>\"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read."
       responses:
         "200":
           description: Default Response
@@ -28893,12 +29042,6 @@ paths:
                         is_global:
                           type: boolean
                           example: true
-                        target_user_ids:
-                          type: array
-                          items:
-                            type: string
-                          nullable: true
-                          example: null
                         expires_at:
                           type: string
                           format: date-time
@@ -28920,24 +29063,65 @@ paths:
                           format: date-time
                           nullable: true
                           example: null
-                example:
-                  statusCode: 200
-                  message: Notifications retrieved successfully
-                  data:
-                    - id: 507f1f77bcf86cd799439030
-                      title: System Maintenance Notice
-                      message: Scheduled maintenance will occur on January 25th at 2:00 AM UTC.
-                      type: MAINTENANCE
-                      severity: WARNING
-                      is_public: true
-                      is_global: true
-                      target_user_ids: null
-                      expires_at: "2025-01-26T00:00:00.000Z"
-                      created_at: "2025-01-20T10:00:00.000Z"
-                      updated_at: "2025-01-20T10:00:00.000Z"
-                      is_read: false
-                      read_at: null
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                        example: 41
+                      page:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      totalPages:
+                        type: number
+                        example: 3
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example: 2025-01-20T10:00:00.000Z,507f1f77bcf86cd799439030
+        "400":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
         "401":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "403":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "429":
           description: Default Response
           content:
             application/json:
@@ -28966,15 +29150,19 @@ paths:
       security:
         - bearerAuth: []
       x-pagination:
-        type: simple-array
+        type: page-number
+        default_limit: 20
+        request_params:
+          offset: page
+          limit: limit
         response_fields:
           items: data
-          total: data.length
+          total: pagination.total
   /api/v1/notifications/{id}/read:
     put:
       operationId: api_markUserNotificationAsReadPatch
       summary: Mark a notification as read
-      description: Mark a notification as read for the authenticated user
+      description: "Mark a notification as read. Requires a first-party account login (JWT): auth tokens, HTTP Basic, impersonation and realm-scoped sessions are refused, so a delegated or leaked credential cannot dismiss the account’s own security notices."
       tags:
         - api:Notifications
       parameters:
@@ -29095,7 +29283,7 @@ paths:
     patch:
       operationId: api_markUserNotificationAsReadPatch
       summary: Mark a notification as read
-      description: Mark a notification as read for the authenticated user
+      description: "Mark a notification as read. Requires a first-party account login (JWT): auth tokens, HTTP Basic, impersonation and realm-scoped sessions are refused, so a delegated or leaked credential cannot dismiss the account’s own security notices."
       tags:
         - api:Notifications
       parameters:
@@ -29217,7 +29405,7 @@ paths:
     put:
       operationId: api_markAllUserNotificationsAsReadPatch
       summary: Mark all notifications as read
-      description: Mark all notifications as read for the authenticated user
+      description: Mark all notifications as read. Requires a first-party account login (JWT) for the same reason as marking a single notification read.
       tags:
         - api:Notifications
       parameters: []
@@ -29248,6 +29436,19 @@ paths:
                   data:
                     count: 5
         "401":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "403":
           description: Default Response
           content:
             application/json:
@@ -29278,7 +29479,7 @@ paths:
     patch:
       operationId: api_markAllUserNotificationsAsReadPatch
       summary: Mark all notifications as read
-      description: Mark all notifications as read for the authenticated user
+      description: Mark all notifications as read. Requires a first-party account login (JWT) for the same reason as marking a single notification read.
       tags:
         - api:Notifications
       parameters: []
@@ -29309,6 +29510,19 @@ paths:
                   data:
                     count: 5
         "401":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "403":
           description: Default Response
           content:
             application/json:
@@ -37202,7 +37416,7 @@ paths:
                     - type: boolean
                       enum:
                         - false
-                  description: 'Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.'
+                  description: 'Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "egress"/"workspaces" or starting with "egress-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.'
                 program:
                   type: string
                   description: Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). To point an alias at an HTTP server you run yourself inside the container (a process started via the daemon, a dev server, anything listening on a TCP port) use program "http" — or "https" for a TLS backend — and give the port via the "port" field (e.g. program "http" + port 3000 forwards to http://<container>:3000). The combined "http-3000" form and the legacy "index"-as-port form also work; when more than one is supplied the order of authority is port > the port embedded in "http-<port>" > index, so a leftover/default index can never override a real port. Must be a name or alias from container-programs.json.
@@ -37599,7 +37813,7 @@ paths:
                   pattern: ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
                   minLength: 3
                   maxLength: 61
-                  description: 'New alias name. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "proxy"/"workspaces" or starting with "proxy-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.'
+                  description: 'New alias name. Must be unique across every container hosted on the same physical server, including containers owned by other tenants — not merely within your own account. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to "egress"/"workspaces" or starting with "egress-"/"workspaces-". Distinct labels such as "containers-my-app" and "proxymyapp" are allowed.'
                 program:
                   type: string
                   description: Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). Use "http"/"https" with the "port" field to reach an HTTP server running on that port inside the container (e.g. program "http" + port 3000). The combined "http-3000" form and "index"-as-port also work; order of authority is port > embedded "http-<port>" > index. Must exist in container-programs.json.
@@ -42306,7 +42520,7 @@ paths:
                         example: "2025-11-18T20:00:00Z"
                       retention_days:
                         type: integer
-                        example: 30
+                        example: 365
   /api/v1/ai/models:
     get:
       operationId: api_listAiModels
@@ -46314,11 +46528,11 @@ paths:
                                 "30": "250.00"
                             setup_fee:
                               type: string
-                              description: CURRENT one-time setup fee in dollars for this server, charged once when a rental starts and never on extension. "0.00" = none.
+                              description: DEFAULT one-time setup fee in dollars, charged once when a rental starts and never on extension. An individual duration can override this — including waiving it to zero — so for some tiers this is NOT what is charged. Use price_tiers[days].total_first_payment for the real first payment. "0.00" here means no default fee, not necessarily no fee.
                               example: "25.00"
                             setup_fee_cents:
                               type: number
-                              description: The same current one-time fee in integer cents.
+                              description: The same DEFAULT fee in integer cents. Per-duration overrides are already resolved into price_tiers[days].total_first_payment; this field is not.
                               example: 2500
                             price_tiers:
                               type: object
@@ -46719,12 +46933,12 @@ paths:
                       message: Server not available for rental
                   - code: SETUP_FEE_CONFIRMATION_REQUIRED
                     title: One-time setup fee must be confirmed
-                    description: This server carries a one-time setup fee, charged once when the rental starts. The request omitted max_charge_cents, so the total was never confirmed and nothing was charged.
-                    resolution: Read pricing.setup_fee_cents and pricing.price_tiers[rental_days].total_first_payment, show the customer the one-time fee, then retry with max_charge_cents set to the confirmed total.
+                    description: This machine carries a one-time setup fee, charged once when the rental starts and never on an extension. The request omitted max_charge_cents, so the total was never confirmed and nothing was charged.
+                    resolution: "The exact figures are in this error's data: show the customer data.setup_fee_cents as a one-time charge and data.total_cents as what they will pay now, then retry with max_charge_cents set to data.total_cents. Do not compute the total yourself."
                     example:
                       statusCode: 409
                       error: SETUP_FEE_CONFIRMATION_REQUIRED
-                      message: This server has a one-time setup fee. Please confirm the total before proceeding.
+                      message: This machine has a one-time setup fee. Please confirm the total before proceeding.
                       data:
                         rental_cents: 20000
                         setup_fee_cents: 2500
@@ -51451,6 +51665,7 @@ paths:
                           offer_snapshot:
                             type: object
                             additionalProperties: true
+                            nullable: true
                       replayed:
                         type: boolean
                         description: True when this returned an earlier reservation.
@@ -51504,12 +51719,12 @@ paths:
                       message: That idempotency key was used for a different reservation.
                   - code: SETUP_FEE_CONFIRMATION_REQUIRED
                     title: One-time setup fee must be confirmed
-                    description: This server carries a one-time setup fee, charged once when the rental starts. The request omitted max_charge_cents, so the total was never confirmed and nothing was charged.
-                    resolution: Read pricing.setup_fee_cents and pricing.price_tiers[rental_days].total_first_payment, show the customer the one-time fee, then retry with max_charge_cents set to the confirmed total.
+                    description: This machine carries a one-time setup fee, charged once when the rental starts and never on an extension. The request omitted max_charge_cents, so the total was never confirmed and nothing was charged.
+                    resolution: "The exact figures are in this error's data: show the customer data.setup_fee_cents as a one-time charge and data.total_cents as what they will pay now, then retry with max_charge_cents set to data.total_cents. Do not compute the total yourself."
                     example:
                       statusCode: 409
                       error: SETUP_FEE_CONFIRMATION_REQUIRED
-                      message: This server has a one-time setup fee. Please confirm the total before proceeding.
+                      message: This machine has a one-time setup fee. Please confirm the total before proceeding.
                       data:
                         rental_cents: 20000
                         setup_fee_cents: 2500
@@ -51539,6 +51754,38 @@ paths:
                         setup_fee_cents: 2500
                         total_cents: 22500
                         max_charge_cents: 20000
+        "500":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                title: ReserveOfferPricingInvalid
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                    description: HTTP status code
+                  error:
+                    type: string
+                    description: Error type
+                  message:
+                    type: string
+                    description: Error message
+                  data:
+                    description: Additional error details
+                required:
+                  - statusCode
+                  - error
+                  - message
+                x-error-codes:
+                  - code: PRICING_INVALID
+                    title: Stored pricing is misconfigured
+                    description: The server's stored pricing did not pass validation when the charge was attempted. The request fails closed and nothing is charged.
+                    resolution: This server cannot be rented until its pricing is corrected — please contact support. Retrying beforehand cannot succeed.
+                    example:
+                      statusCode: 500
+                      error: PRICING_INVALID
+                      message: Server pricing is misconfigured and cannot be charged. Please contact support.
       requestBody:
         required: true
         content:
@@ -51554,7 +51801,7 @@ paths:
                   description: Must be one of the offer's pricing_rules keys.
                 max_charge_cents:
                   type: number
-                  description: Ceiling on the TOTAL debit (rent + one-time setup fee). Required whenever a setup fee applies.
+                  description: Ceiling on the TOTAL debit (rent + any one-time setup fee). REQUIRED for every paid reservation, not only ones carrying a setup fee. Compute it as pricing_rules[days] plus setup_fee_rules[days] when that key is present, else setup_fee_cents — a present override wins even when it is 0. If you get a 409, that error's data carries the authoritative total_cents for the duration you asked for.
                 idempotency_key:
                   type: string
                   minLength: 1
@@ -51640,6 +51887,7 @@ paths:
                         offer_snapshot:
                           type: object
                           additionalProperties: true
+                          nullable: true
                   total:
                     type: number
                   limit:
@@ -51712,6 +51960,7 @@ paths:
                       offer_snapshot:
                         type: object
                         additionalProperties: true
+                        nullable: true
   /start:
     get:
       operationId: browser_startInstance
@@ -52511,10 +52760,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
         - name: url
           in: query
           description: The URL to navigate to
@@ -52626,10 +52876,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
         - name: url
           in: query
           description: The URL to navigate to
@@ -52714,10 +52965,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Navigation successful
@@ -52784,10 +53036,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
         - name: script
           in: query
           description: JavaScript code to execute (can be base64 encoded)
@@ -52853,10 +53106,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Script executed successfully
@@ -52925,10 +53179,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Instance metadata retrieved successfully
@@ -53013,10 +53268,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Tab list retrieved successfully
@@ -53058,10 +53314,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Tab closed successfully
@@ -53233,10 +53490,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: DevTools URL retrieved successfully
@@ -53452,10 +53710,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: HTML content
@@ -53490,10 +53749,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Text content
@@ -53528,10 +53788,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
         - name: url
           in: query
           description: Optional URL to navigate to before generating the PDF
@@ -53590,10 +53851,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
         - name: url
           in: query
           description: Filter cookies by URL
@@ -53645,10 +53907,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Cookies added
@@ -53711,10 +53974,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
       responses:
         "200":
           description: Cookies cleared
@@ -53752,10 +54016,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
         - name: type
           in: query
           description: Filter by message type (log, error, warning, info, etc.)
@@ -53824,10 +54089,11 @@ paths:
             Controls instance creation behavior.
             - Default mode: instances are created automatically. Set to `false` to prevent creation.
             - When auto-start is disabled globally: set to `true` to create an instance.
+
+            Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
           required: false
           schema:
             type: boolean
-            default: true
         - name: since
           in: query
           description: Only return logs after this ISO timestamp
@@ -56599,6 +56865,12 @@ paths:
                   summary: No programs configured
                   value:
                     programs: []
+        "400":
+          description: 'A query parameter was present but unparseable (include_status, include_stats, port, port_from, port_to). These are rejected rather than silently ignored: a dropped value does not mean "no opinion", it widens the operation to its default — an invalid `port` would return every instance instead of the one named, and an invalid filter would return the full list.'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/daemon_Error"
       x-pagination:
         type: none
         description: Returns all programs, no pagination needed for typical deployments
@@ -57081,7 +57353,7 @@ paths:
                         example: api-server_8042
                       status:
                         type: string
-                        example: STARTING
+                        example: starting
                       pid:
                         type: integer
                         example: 12345
@@ -57096,7 +57368,7 @@ paths:
                     instance:
                       port: 8042
                       instance_name: api-server_8042
-                      status: STARTING
+                      status: starting
                 idempotent-already-running:
                   summary: Idempotent mode - already running
                   value:
@@ -57105,7 +57377,7 @@ paths:
                     instance:
                       port: 8042
                       instance_name: api-server_8042
-                      status: RUNNING
+                      status: running
                       pid: 12345
                       uptime: "0:15:30"
                 idempotent-just-started:
@@ -57116,7 +57388,7 @@ paths:
                     instance:
                       port: 8042
                       instance_name: api-server_8042
-                      status: STARTING
+                      status: starting
         "400":
           description: Cannot start program
           content:
@@ -57318,7 +57590,7 @@ paths:
                         enabled: true
                         status:
                           id: 1
-                          status: RUNNING
+                          status: running
                           pid: 1234
                           uptime: "2:15:30"
                       - id: 2
@@ -57326,13 +57598,13 @@ paths:
                         enabled: false
                         status:
                           id: 2
-                          status: STOPPED
+                          status: stopped
                       - id: 3
                         name: worker
                         enabled: true
                         status:
                           id: 3
-                          status: BACKOFF
+                          status: backoff
                           pid: null
                 all-running:
                   summary: All programs running
@@ -57344,7 +57616,7 @@ paths:
                         enabled: true
                         status:
                           id: 1
-                          status: RUNNING
+                          status: running
                           pid: 1234
                           uptime: "5:30:15"
                       - id: 2
@@ -57352,9 +57624,15 @@ paths:
                         enabled: true
                         status:
                           id: 2
-                          status: RUNNING
+                          status: running
                           pid: 1235
                           uptime: "5:30:10"
+        "400":
+          description: 'A query parameter was present but unparseable (include_stats). These are rejected rather than silently ignored: a dropped value does not mean "no opinion", it widens the operation to its default — an invalid `port` would return every instance instead of the one named, and an invalid filter would return the full list.'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/daemon_Error"
   /api/v1/daemon/status/{id}:
     get:
       operationId: daemon_getProgramStatus
@@ -57383,7 +57661,7 @@ paths:
         - name: include_stats
           in: query
           required: false
-          description: Include resource stats (CPU, memory, process tree) for running programs. Adds a "stats" field with pid, started_at, cpu_percent, memory_rss_bytes, process_count, and per-process breakdown.
+          description: "Include resource stats (CPU, memory, process tree) for running programs. WHERE the stats land depends on the program: a standard program gets a top-level `stats`; a port-range program gets one `stats` per instance, on the instance itself (`instance.stats`, or `instances[].stats`), never at the top level. Each carries pid, started_at, cpu_percent, memory_rss_bytes, process_count and a per-process breakdown."
           schema:
             type: string
             enum:
@@ -57404,7 +57682,7 @@ paths:
                     success: true
                     status:
                       id: 1
-                      status: RUNNING
+                      status: running
                       pid: 1234
                       uptime: "2:15:30"
                 stopped:
@@ -57413,7 +57691,7 @@ paths:
                     success: true
                     status:
                       id: 1
-                      status: STOPPED
+                      status: stopped
                       pid: null
                       uptime: null
                 fatal:
@@ -57422,9 +57700,15 @@ paths:
                     success: true
                     status:
                       id: 1
-                      status: FATAL
+                      status: fatal
                       pid: null
                       uptime: null
+        "400":
+          description: 'A query parameter was present but unparseable (port, include_stats). These are rejected rather than silently ignored: a dropped value does not mean "no opinion", it widens the operation to its default — an invalid `port` would return every instance instead of the one named, and an invalid filter would return the full list.'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/daemon_Error"
         "404":
           description: Program not found
           content:
@@ -61335,9 +61619,13 @@ paths:
                   missingModules:
                     type: array
                     description: Missing Modules
+                    items:
+                      type: string
                   dependencies:
                     type: array
                     description: Dependencies
+                    items:
+                      type: object
                   message:
                     type: string
                     description: Message
@@ -61847,6 +62135,8 @@ paths:
                   templates:
                     type: array
                     description: Templates
+                    items:
+                      type: object
                 required:
                   - count
                   - templates
@@ -62401,11 +62691,11 @@ paths:
         next_steps:
           - operation_id: listCustomTemplate
             reason: View all created resources
-  /api/v1/exec/templates/update-custom/:name:
+  /api/v1/exec/templates/update-custom/{name}:
     put:
       operationId: exec_updateCustomTemplate
       summary: Update Custom Template
-      description: PUT /api/v1/exec/templates/update-custom/:name
+      description: PUT /api/v1/exec/templates/update-custom/{name}
       tags:
         - exec:Templates
         - exec:API
@@ -62543,11 +62833,11 @@ paths:
         prerequisites:
           - operation_id: getCustomTemplate
             reason: Retrieve current resource state before updating
-  /api/v1/exec/templates/delete-custom/:name:
+  /api/v1/exec/templates/delete-custom/{name}:
     delete:
       operationId: exec_deleteCustomTemplate
       summary: Delete Custom Template
-      description: DELETE /api/v1/exec/templates/delete-custom/:name
+      description: DELETE /api/v1/exec/templates/delete-custom/{name}
       tags:
         - exec:Templates
         - exec:API
@@ -63357,7 +63647,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - type: object
                     properties:
                       directory:
@@ -63424,6 +63714,8 @@ paths:
                       scripts:
                         type: array
                         description: Scripts
+                        items:
+                          type: object
                     required:
                       - directory
                       - count
@@ -64011,12 +64303,13 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - type: object
                     properties:
                       logs:
                         type: array
-                        items: {}
+                        items:
+                          type: object
                         description: Logs
                       count:
                         type: integer
@@ -64036,6 +64329,8 @@ paths:
                       logs:
                         type: array
                         description: Logs
+                        items:
+                          type: object
                     required:
                       - directory
                       - count
@@ -64380,7 +64675,8 @@ paths:
                     description: Matches Found
                   results:
                     type: array
-                    items: {}
+                    items:
+                      type: object
                     description: Results
                 required:
                   - query
@@ -64459,6 +64755,8 @@ paths:
                   description: Regex
                 files:
                   type: array
+                  items:
+                    type: string
                   description: Files
                 limit:
                   type: integer
@@ -64975,21 +65273,41 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  cleared:
-                    type: boolean
-                    description: Cleared
-                  count:
-                    type: integer
-                    description: Count
-                  remaining:
-                    type: integer
-                    description: Remaining
-                required:
-                  - cleared
-                  - count
-                  - remaining
+                oneOf:
+                  - type: object
+                    properties:
+                      hostname:
+                        type: string
+                        description: Hostname
+                      path:
+                        type: string
+                        description: Path
+                      cleared:
+                        type: boolean
+                        description: Cleared
+                      reason:
+                        type: string
+                        description: Reason
+                    required:
+                      - hostname
+                      - path
+                      - cleared
+                      - reason
+                  - type: object
+                    properties:
+                      cleared:
+                        type: boolean
+                        description: Cleared
+                      count:
+                        type: integer
+                        description: Count
+                      remaining:
+                        type: integer
+                        description: Remaining
+                    required:
+                      - cleared
+                      - count
+                      - remaining
         "400":
           description: Bad request
           content:
@@ -65080,30 +65398,74 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  matched:
-                    type: boolean
-                    description: Matched
-                  path:
-                    type: string
-                    description: Path
-                  hostname:
-                    type: string
-                    description: Hostname
-                  execId:
-                    type: string
-                    nullable: true
-                    description: Exec Id
-                  triedDirectories:
-                    type: array
-                    description: Tried Directories
-                required:
-                  - matched
-                  - path
-                  - hostname
-                  - execId
-                  - triedDirectories
+                oneOf:
+                  - type: object
+                    properties:
+                      matched:
+                        type: boolean
+                        enum:
+                          - true
+                        description: Always true on this branch.
+                      path:
+                        type: string
+                        description: Path
+                      scriptPath:
+                        type: string
+                        description: Script Path
+                      routePattern:
+                        type: string
+                        description: Route Pattern
+                      parameters:
+                        type: object
+                        description: Captured dynamic-segment values, keyed by param name.
+                        additionalProperties:
+                          oneOf:
+                            - type: string
+                            - type: array
+                              items:
+                                type: string
+                      type:
+                        type: string
+                        description: Type
+                      baseDir:
+                        type: string
+                        description: Base Dir
+                    required:
+                      - matched
+                      - path
+                      - scriptPath
+                      - routePattern
+                      - parameters
+                      - type
+                      - baseDir
+                  - type: object
+                    properties:
+                      matched:
+                        type: boolean
+                        enum:
+                          - false
+                        description: Always false on this branch.
+                      path:
+                        type: string
+                        description: Path
+                      hostname:
+                        type: string
+                        description: Hostname
+                      execId:
+                        type: string
+                        nullable: true
+                        description: Exec Id
+                      triedDirectories:
+                        type: array
+                        description: Tried Directories
+                        items:
+                          type: string
+                    required:
+                      - matched
+                      - path
+                      - hostname
+                      - execId
+                      - triedDirectories
         "400":
           description: Bad request
           content:
@@ -65193,6 +65555,8 @@ paths:
                   routes:
                     type: array
                     description: Routes
+                    items:
+                      type: object
                 required:
                   - baseDir
                   - count
@@ -65329,6 +65693,8 @@ paths:
                   results:
                     type: array
                     description: Results
+                    items:
+                      type: object
                 required:
                   - tested
                   - matched
@@ -66034,6 +66400,8 @@ paths:
                   packages:
                     type: array
                     description: Packages
+                    items:
+                      type: object
                   allAvailable:
                     type: boolean
                     description: All Available
@@ -66102,11 +66470,13 @@ paths:
                         description: Total
                       installed:
                         type: array
-                        items: {}
+                        items:
+                          type: object
                         description: Installed
                       missing:
                         type: array
-                        items: {}
+                        items:
+                          type: string
                         description: Missing
                       message:
                         type: string
@@ -66124,12 +66494,18 @@ paths:
                       installed:
                         type: array
                         description: Installed
+                        items:
+                          type: object
                       missing:
                         type: array
                         description: Missing
+                        items:
+                          type: string
                       details:
                         type: array
                         description: Details
+                        items:
+                          type: object
                     required:
                       - total
                       - installed
@@ -66429,6 +66805,8 @@ paths:
                   active:
                     type: array
                     description: Active
+                    items:
+                      type: object
                   restartReady:
                     type: boolean
                     description: Restart Ready
@@ -66722,7 +67100,7 @@ paths:
       parameters: []
       responses:
         "202":
-          description: Success
+          description: Accepted
           content:
             application/json:
               schema:
@@ -66746,14 +67124,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/exec_Error"
-          x-error-codes:
-            - code: VALIDATION_ERROR
-              title: Invalid input
-              description: Request parameters failed validation
-              resolution: Check parameter format and requirements
-              example:
-                error: VALIDATION_ERROR
-                message: Invalid parameter format
         "500":
           description: Internal server error
           content:
@@ -66769,6 +67139,8 @@ paths:
               properties:
                 packages:
                   type: array
+                  items:
+                    type: string
                   description: Packages
                 dev:
                   type: boolean
@@ -66965,7 +67337,8 @@ paths:
                         description: Message
                       pinned:
                         type: array
-                        items: {}
+                        items:
+                          type: string
                         description: Pinned
                       count:
                         type: integer
@@ -67079,6 +67452,8 @@ paths:
               properties:
                 packages:
                   type: array
+                  items:
+                    type: string
                   description: Packages
   /api/v1/exec/package/init:
     post:
@@ -67928,11 +68303,11 @@ paths:
                   details:
                     type: object
                     description: Optional additional error details.
-  /api/v1/exec/sdk/:id:
+  /api/v1/exec/sdk/{id}:
     get:
       operationId: exec_getSDK
       summary: Get S D K
-      description: GET /api/v1/exec/sdk/:id
+      description: GET /api/v1/exec/sdk/{id}
       tags:
         - exec:Sdk
         - exec:API
@@ -68015,6 +68390,8 @@ paths:
                       list:
                         type: array
                         description: List
+                        items:
+                          type: object
                     required:
                       - total
                       - endpoints
@@ -68119,7 +68496,7 @@ paths:
     delete:
       operationId: exec_deleteSDK
       summary: Delete S D K
-      description: DELETE /api/v1/exec/sdk/:id
+      description: DELETE /api/v1/exec/sdk/{id}
       tags:
         - exec:Sdk
         - exec:API
@@ -88555,6 +88932,8 @@ paths:
               properties:
                 keys:
                   type: array
+                  items:
+                    type: string
                   description: Array of key names to press in sequence (e.g. ["ctrl+c", "arrow_up", "enter"]). Mutually exclusive with `key`. Maximum 256 entries per request.
                 key:
                   type: string
@@ -89253,6 +89632,8 @@ paths:
                   description: Clip-read correlation nonce ([A-Za-z0-9_-]{1,64}); echoed verbatim as the injected frame's cr field so the TUI can match a clipboard-read landing. Invalid/oversized values are ignored.
                 items:
                   type: array
+                  items:
+                    type: object
                   description: Manifest entries [{p,d,s,name,h?}]
               required:
                 - ctx
@@ -89334,6 +89715,8 @@ paths:
                   description: Drop cell column
                 items:
                   type: array
+                  items:
+                    type: object
                   description: File/dir items ([{name,b64}|{name,dir:true,items:[...]}])
               required:
                 - ctx
@@ -101248,6 +101631,107 @@ paths:
         next_steps:
           - operation_id: getMetrics
             reason: Prometheus metrics expose kit resource counters
+  /api/v1/egress/health:
+    get:
+      operationId: egress_healthCheck
+      summary: Service health check
+      description: Returns the standardized 9-field health response. Unauthenticated.
+      tags:
+        - egress:egress
+      parameters: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/egress_HealthResponse"
+  /api/v1/egress/upstream:
+    get:
+      operationId: egress_getUpstream
+      summary: Get upstream status
+      description: Returns upstream status. Credentials are never returned.
+      tags:
+        - egress:egress
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/egress_UpstreamStatus"
+    post:
+      operationId: egress_setUpstreamPost
+      summary: Set upstream
+      description: |-
+        Accepted as an alias for PUT, which shares the same handler branch.
+        POST exists for clients that cannot send a PUT.
+      tags:
+        - egress:egress
+      parameters: []
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/egress_UpstreamStatus"
+        "400":
+          description: Bad request. Wire body is text/plain and is one of "Invalid upstream URL", "Failed to read body", or "Body must be UTF-8".
+        "411":
+          description: Missing Content-Length
+        "413":
+          description: Body too large
+        "500":
+          description: Failed to write config
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+    put:
+      operationId: egress_setUpstream
+      summary: Set upstream
+      description: Sets upstream from the request body (first non-empty, non-comment line). Writes atomically to the upstream config file. Credentials are allowed.
+      tags:
+        - egress:egress
+      parameters: []
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/egress_UpstreamStatus"
+        "400":
+          description: Bad request. Wire body is text/plain and is one of "Invalid upstream URL", "Failed to read body", or "Body must be UTF-8".
+        "411":
+          description: Missing Content-Length
+        "413":
+          description: Body too large
+        "500":
+          description: Failed to write config
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+    delete:
+      operationId: egress_disableUpstream
+      summary: Disable upstream
+      tags:
+        - egress:egress
+      parameters: []
+      responses:
+        "200":
+          description: Disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/egress_UpstreamStatus"
   /api/v1/run/health:
     get:
       operationId: run_healthCheck
@@ -107363,6 +107847,8 @@ paths:
               properties:
                 tools:
                   type: array
+                  items:
+                    type: string
                   description: Tool names allowed for the agent; an empty list removes the line (= all tools).
               additionalProperties: true
       x-related-operations:
@@ -117082,6 +117568,8 @@ paths:
                     description: "False when that background pass was skipped entirely because every fanout slot was busy — those sessions MAY hold a stale tool list until the next write or an explicit reconnect (a no-op change leaves them already current). True when it was started, or when there was nothing to defer. It cannot report how many SUCCEEDED: the pass outlives this response by design."
                   servers:
                     type: array
+                    items:
+                      type: object
                     description: The effective server list for the session you named, after the write — the same entries listMCPServers returns.
                   path:
                     type: string
@@ -117363,10 +117851,12 @@ paths:
                     - local
                 document:
                   type: string
-                  description: A pasted config document in any supported dialect. Mutually exclusive with servers.
+                  description: "A pasted config document in any supported dialect. Mutually exclusive with the servers field. This is the ONLY import form the CLI exposes: servers is an object array, and the CLI generator hides object-array flags rather than ask for a JSON blob on the command line, so `hoody agent mcp import` takes --document only. The hoody dialect is accepted here, so anything expressible via servers can be passed as a document."
                 servers:
                   type: array
-                  description: Explicit server entries, in hoody's own shape. Mutually exclusive with document.
+                  items:
+                    type: object
+                  description: Explicit server entries, in hoody's own shape. Mutually exclusive with document. API/SDK only — see document for why this has no CLI flag.
                 replace:
                   type: boolean
                   description: Overwrite entries whose name already exists. Without it, a collision aborts the whole import.
@@ -117442,6 +117932,8 @@ paths:
                     description: "Which dialect the document was read as: hoody | claude | vscode."
                   servers:
                     type: array
+                    items:
+                      type: object
                     description: The entries an import WOULD write, redacted for display — credential values appear as key names (env_keys, headers_keys). Nothing is written by this call.
                   count:
                     type: integer
@@ -118041,6 +118533,8 @@ paths:
                     description: "False when that background pass was skipped entirely because every fanout slot was busy — those sessions MAY hold a stale tool list until the next write or an explicit reconnect (a no-op change leaves them already current). True when it was started, or when there was nothing to defer. It cannot report how many SUCCEEDED: the pass outlives this response by design."
                   servers:
                     type: array
+                    items:
+                      type: object
                     description: The effective server list for the session you named, after the write — the same entries listMCPServers returns.
                 additionalProperties: true
         "400":
@@ -118333,12 +118827,18 @@ paths:
                     description: '"ok" on success.'
                   servers:
                     type: array
+                    items:
+                      type: object
                     description: "The EFFECTIVE merged entries, each with its originating layer and its live runtime state flattened onto it. `transport`, `require_confirmation` and `connected` are always present; `protocol_version`, `server_name`, `server_version`, `tool_count` and `pid` appear only for a server that actually connected, and `revoked`/`revoked_reason`/`stderr_tail` only when they apply — a disabled or never-connected entry carries `connected: false` and little else. Credential values are reported as key NAMES only (env_keys, header_keys)."
                   files:
                     type: array
+                    items:
+                      type: object
                     description: The per-layer settings files behind that merge, each with the content hash to pass as expect_hash on a write.
                   warnings:
                     type: array
+                    items:
+                      type: string
                     description: Config problems the daemon found while merging (an unreadable layer, an entry it had to drop). Always present, usually empty.
                 additionalProperties: true
         "400":
@@ -118600,6 +119100,8 @@ paths:
                     description: "False when that background pass was skipped entirely because every fanout slot was busy — those sessions MAY hold a stale tool list until the next write or an explicit reconnect (a no-op change leaves them already current). True when it was started, or when there was nothing to defer. It cannot report how many SUCCEEDED: the pass outlives this response by design."
                   servers:
                     type: array
+                    items:
+                      type: object
                     description: The effective server list for the session you named, after the write — the same entries listMCPServers returns.
                   path:
                     type: string
@@ -118959,6 +119461,8 @@ paths:
                     description: "False when that background pass was skipped entirely because every fanout slot was busy — those sessions MAY hold a stale tool list until the next write or an explicit reconnect (a no-op change leaves them already current). True when it was started, or when there was nothing to defer. It cannot report how many SUCCEEDED: the pass outlives this response by design."
                   servers:
                     type: array
+                    items:
+                      type: object
                     description: The effective server list for the session you named, after the write — the same entries listMCPServers returns.
                   path:
                     type: string
@@ -119318,6 +119822,8 @@ paths:
                     description: "False when that background pass was skipped entirely because every fanout slot was busy — those sessions MAY hold a stale tool list until the next write or an explicit reconnect (a no-op change leaves them already current). True when it was started, or when there was nothing to defer. It cannot report how many SUCCEEDED: the pass outlives this response by design."
                   servers:
                     type: array
+                    items:
+                      type: object
                     description: The effective server list for the session you named, after the write — the same entries listMCPServers returns.
                   path:
                     type: string
@@ -122929,6 +123435,8 @@ paths:
                   description: Maximum hits to return.
                 kinds:
                   type: array
+                  items:
+                    type: string
                   description: Optional memory kinds/stores to restrict the search to.
                 skip_graph:
                   type: boolean
@@ -145096,9 +145604,13 @@ paths:
               properties:
                 states:
                   type: array
+                  items:
+                    type: string
                   description: Filter to these todo states (array of strings).
                 tags:
                   type: array
+                  items:
+                    type: string
                   description: Filter to todos carrying these tags (array of strings).
                 query:
                   type: string
@@ -145409,6 +145921,8 @@ paths:
                   description: Optional priority band 0..4 (0 = P0 urgent … 4 = P4 someday); defaults to 2 when omitted. Must be a JSON integer in range — a string or out-of-range value is rejected.
                 tags:
                   type: array
+                  items:
+                    type: string
                   description: Optional tags.
                 cwd:
                   type: string
@@ -146755,6 +147269,8 @@ paths:
                   description: New ordering rank.
                 tags:
                   type: array
+                  items:
+                    type: string
                   description: New tag set.
                 cwd:
                   type: string
@@ -155261,7 +155777,7 @@ components:
           default: false
         delay_seconds:
           type: integer
-          description: Number of seconds to wait before starting the program after boot
+          description: "Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting."
           example: 5
           minimum: 0
           maximum: 3600
@@ -155356,9 +155872,8 @@ components:
             - end
         port_param:
           type: string
-          description: Parameter name to pass port to command (used with port_range)
+          description: Parameter name to pass port to command. Valid ONLY together with port_range; sending it on its own is rejected with "port_param requires port_range to be set". Has no schema default on purpose — omit it and the server applies --port itself, so a default here would make every port-less create fail.
           example: --port
-          default: --port
         lazy_load:
           type: boolean
           description: Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by edge proxy via ensure-started endpoint. Cannot be combined with boot:true.
@@ -155460,11 +155975,10 @@ components:
             - enabled
             - urls
         status:
-          description: Runtime status of the program. Only present when include_status=true or include_stats=true is passed to the listing endpoint.
+          description: 'Runtime status of the program. Present when include_status=true, or when include_stats=true and include_status is not given (include_stats implies include_status). Exactly one shape applies: standard programs carry `id`/`status`, port-range programs carry `type: "port-range"` plus instance counts.'
           oneOf:
             - $ref: "#/components/schemas/daemon_ProgramStatus"
-            - type: object
-              description: Port-range status with instances array
+            - $ref: "#/components/schemas/daemon_ProgramPortRangeStatus"
         stats:
           description: Resource stats (CPU, memory, process tree) for the program. Only present when include_stats=true and the program is running. For port-range programs, stats appear per-instance inside the status.instances array.
           $ref: "#/components/schemas/daemon_ProgramStats"
@@ -155527,7 +156041,7 @@ components:
         delay_seconds:
           type: integer
           default: 0
-          description: Startup delay in seconds
+          description: "Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting."
           minimum: 0
           maximum: 3600
         autorestart:
@@ -155606,9 +156120,8 @@ components:
             - end
         port_param:
           type: string
-          description: Parameter name for passing port (e.g., "--port", "-p")
+          description: Parameter name for passing port (e.g. --port, -p). Valid ONLY together with port_range; sending it on its own is rejected with "port_param requires port_range to be set". Has no schema default on purpose — omit it and the server applies --port itself, so a default here would make every port-less create fail.
           example: --port
-          default: --port
         lazy_load:
           type: boolean
           description: Enable lazy loading (autostart=false). When true, program/instances NOT started automatically. Started on-demand by edge proxy via ensure-started endpoint. Cannot be combined with boot:true.
@@ -155705,9 +156218,58 @@ components:
           DATABASE_URL: postgresql://localhost/mydb
         stdout_logfile: /var/log/myapp/stdout.log
         stderr_logfile: /var/log/myapp/stderr.log
+    daemon_ProgramInstance:
+      type: object
+      description: Represents a running instance of a port-range program. Each instance is an actual process running on a specific port.
+      required:
+        - port
+        - instance_name
+        - status
+      properties:
+        port:
+          type: integer
+          description: Port number this instance is running on
+          example: 8042
+        instance_name:
+          type: string
+          description: "Supervisord process name (format: programname_port)"
+          example: api-server_8042
+        status:
+          type: string
+          enum:
+            - running
+            - stopped
+            - starting
+            - stopping
+            - backoff
+            - exited
+            - fatal
+            - unknown
+          description: Current runtime status of this instance. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed.
+          example: running
+        pid:
+          type: integer
+          description: Process ID when running; omitted otherwise
+          example: 12345
+        uptime:
+          type: string
+          description: Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when not running.
+          example: "0:15:30"
+        stats:
+          description: Resource stats for this instance's process tree. Only present when include_stats=true and the instance is running.
+          $ref: "#/components/schemas/daemon_ProgramStats"
+      example:
+        port: 8042
+        instance_name: api-server_8042
+        status: running
+        pid: 12345
+        uptime: "0:15:30"
     daemon_ProgramStatus:
       type: object
       description: Runtime status for a standard (non-port-range) program
+      required:
+        - id
+        - status
       properties:
         id:
           type: integer
@@ -155716,28 +156278,27 @@ components:
         status:
           type: string
           enum:
-            - RUNNING
-            - STOPPED
-            - STARTING
-            - STOPPING
-            - BACKOFF
-            - FATAL
-          description: Current runtime status of the program
-          example: RUNNING
+            - running
+            - stopped
+            - starting
+            - stopping
+            - backoff
+            - exited
+            - fatal
+            - unknown
+          description: Current runtime status of the program. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed.
+          example: running
         pid:
           type: integer
-          nullable: true
-          description: Process ID when running, null otherwise
+          description: Process ID when running; omitted otherwise
           example: 1234
         uptime:
           type: string
-          nullable: true
-          description: Uptime in format "H:MM:SS" when running
+          description: "Uptime as supervisord renders it — \"H:MM:SS\", or \"N day(s), H:MM:SS\" once the process has been up for more than a day. Omitted when the program is not running. No `pattern` is declared: the day form is produced by Python's timedelta formatting and pinning a regex here would make valid responses invalid."
           example: "0:01:23"
-          pattern: ^\d+:\d{2}:\d{2}$
       example:
         id: 1
-        status: RUNNING
+        status: running
         pid: 1234
         uptime: "2:15:30"
     daemon_Error:
@@ -155871,9 +156432,9 @@ components:
         id: 1
     daemon_StatusResponse:
       type: object
+      description: "Runtime status for one program. Three shapes are returned, distinguished by which field is present: standard programs carry `status`; a port-range program queried with a `port` carries `instance`; a port-range program queried without one carries `instances` plus `running_count`/`total_count`. Only `success` is common to all three, which is why it is the sole required field."
       required:
         - success
-        - status
       properties:
         success:
           type: boolean
@@ -155881,13 +156442,29 @@ components:
         status:
           $ref: "#/components/schemas/daemon_ProgramStatus"
         stats:
-          description: Resource stats for the program's process tree. Only present when include_stats=true and the program is running.
+          description: "Standard (non-port-range) programs only: resource stats for the program's process tree. Port-range programs carry their stats on each instance instead (ProgramInstance.stats), whether one port was asked about or all of them. Only present when include_stats=true and the program is running."
           $ref: "#/components/schemas/daemon_ProgramStats"
+        instance:
+          description: "Port-range programs, single-port query: the one instance that was asked about."
+          $ref: "#/components/schemas/daemon_ProgramInstance"
+        instances:
+          type: array
+          description: "Port-range programs, no port given: one entry per non-stopped instance."
+          items:
+            $ref: "#/components/schemas/daemon_ProgramInstance"
+        running_count:
+          type: integer
+          description: "Port-range programs: number of instances currently reported as not stopped"
+          example: 2
+        total_count:
+          type: integer
+          description: "Port-range programs: total number of possible instances"
+          example: 100
       example:
         success: true
         status:
           id: 1
-          status: RUNNING
+          status: running
           pid: 1234
           uptime: "2:15:30"
     daemon_AllStatusResponse:
@@ -155929,7 +156506,7 @@ components:
             enabled: true
             status:
               id: 1
-              status: RUNNING
+              status: running
               pid: 1234
               uptime: "2:15:30"
           - id: 2
@@ -155937,7 +156514,7 @@ components:
             enabled: false
             status:
               id: 2
-              status: STOPPED
+              status: stopped
     daemon_EphemeralProgram:
       type: object
       description: Ephemeral (temporary) program configuration. Not stored in programs.json, only tracked in ephemeral.json. Auto-cleans up when stopped or on container reboot.
@@ -156004,7 +156581,9 @@ components:
             - starting
             - stopping
             - backoff
+            - exited
             - fatal
+            - unknown
           description: Current runtime status
           example: running
         pid:
@@ -156090,7 +156669,7 @@ components:
         delay_seconds:
           type: integer
           default: 0
-          description: Delay before starting (seconds)
+          description: "Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting."
           minimum: 0
           maximum: 3600
           example: 5
@@ -156208,7 +156787,13 @@ components:
           type: string
           enum:
             - running
+            - stopped
             - starting
+            - stopping
+            - backoff
+            - exited
+            - fatal
+            - unknown
           description: Current program status
           example: running
         pid:
@@ -156219,7 +156804,7 @@ components:
         uptime:
           type: string
           nullable: true
-          description: Uptime (if wait=true and running)
+          description: Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when not running.
           example: "0:00:05"
         created_at:
           type: string
@@ -156329,6 +156914,134 @@ components:
         log_file:
           type: string
           description: Path to the log file that was read
+    daemon_ProcessInfo:
+      type: object
+      description: Resource stats for a single process in the process tree
+      required:
+        - pid
+        - command
+        - cpu_percent
+        - memory_rss_bytes
+      properties:
+        pid:
+          type: integer
+          description: Process ID
+          example: 1234
+        command:
+          type: string
+          description: Command line of the process
+          example: node server.js
+        cpu_percent:
+          type: number
+          format: double
+          description: CPU usage percentage (can exceed 100% on multi-core systems). This is a lifetime average — total CPU time divided by the process's age — not instantaneous usage.
+          example: 2.1
+        memory_rss_bytes:
+          type: integer
+          format: int64
+          description: Resident Set Size in bytes
+          example: 30000000
+    daemon_ProgramStats:
+      type: object
+      description: Aggregated resource stats for a program including its full process tree (root process + all child/descendant processes). Read from /proc filesystem.
+      required:
+        - pid
+        - started_at
+        - cpu_percent
+        - memory_rss_bytes
+        - process_count
+        - processes
+      properties:
+        pid:
+          type: integer
+          description: Root process ID (the PID supervisord manages)
+          example: 1234
+        started_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when the process started
+          example: "2026-02-10T17:39:50Z"
+        cpu_percent:
+          type: number
+          format: double
+          description: Total CPU usage percentage across all processes in the tree (can exceed 100% on multi-core). This is a lifetime average — total CPU time divided by the process's age — not instantaneous usage.
+          example: 12.5
+        memory_rss_bytes:
+          type: integer
+          format: int64
+          description: Total Resident Set Size in bytes across all processes in the tree
+          example: 52428800
+        process_count:
+          type: integer
+          description: Number of processes in the tree (root + children)
+          example: 3
+        processes:
+          type: array
+          description: Per-process breakdown of the process tree
+          items:
+            $ref: "#/components/schemas/daemon_ProcessInfo"
+      example:
+        pid: 1234
+        started_at: "2026-02-10T17:39:50Z"
+        cpu_percent: 12.5
+        memory_rss_bytes: 52428800
+        process_count: 3
+        processes:
+          - pid: 1234
+            command: node server.js
+            cpu_percent: 2.1
+            memory_rss_bytes: 30000000
+          - pid: 1235
+            command: node worker.js
+            cpu_percent: 5.2
+            memory_rss_bytes: 12000000
+          - pid: 1236
+            command: node worker.js
+            cpu_percent: 5.2
+            memory_rss_bytes: 10428800
+    daemon_ProgramPortRangeStatus:
+      type: object
+      description: "Runtime status of a port-range program: aggregate counts plus one entry per non-stopped instance."
+      required:
+        - type
+        - running_instances
+        - total_instances
+        - instances
+      properties:
+        type:
+          type: string
+          enum:
+            - port-range
+          description: Discriminator. Present only on port-range status objects; standard programs carry `id`/`status` instead.
+          example: port-range
+        running_instances:
+          type: integer
+          description: Number of instances currently reported as not stopped
+          example: 2
+        total_instances:
+          type: integer
+          description: Total number of possible instances (port_range.end - port_range.start + 1)
+          example: 100
+        instances:
+          type: array
+          description: One entry per non-stopped instance
+          items:
+            $ref: "#/components/schemas/daemon_ProgramInstance"
+      example:
+        type: port-range
+        running_instances: 2
+        total_instances: 100
+        instances:
+          - port: 8042
+            instance_name: api-server_8042
+            status: running
+            pid: 12345
+            uptime: "0:15:30"
+          - port: 8050
+            instance_name: api-server_8050
+            status: running
+            pid: 12350
+            uptime: "0:10:20"
     display_InputActionResponse:
       type: object
       required:
@@ -159208,6 +159921,87 @@ components:
         - exposeBindings
         - pullBindings
       type: object
+    egress_UpstreamStatus:
+      type: object
+      description: Current upstream configuration. Credentials are never returned; `auth` reports only whether they are set.
+      required:
+        - enabled
+        - config_path
+      properties:
+        enabled:
+          type: boolean
+          description: Whether an upstream proxy is configured
+        scheme:
+          type: string
+          enum:
+            - socks5
+            - socks5h
+            - http
+            - https
+          description: Upstream scheme. Absent when disabled
+        host:
+          type: string
+          description: Upstream host. Absent when disabled
+        port:
+          type: integer
+          format: int32
+          description: Upstream port. Absent when disabled
+        auth:
+          type: boolean
+          description: Whether upstream credentials are set
+        config_path:
+          type: string
+          description: Path of the file the setting is persisted to
+    egress_HealthMemory:
+      type: object
+      required:
+        - rss
+      properties:
+        rss:
+          type: integer
+          format: int64
+          description: Resident set size in bytes
+        heap:
+          type: integer
+          format: int64
+          nullable: true
+          description: Language runtime heap in bytes (null for Rust)
+    egress_HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - started
+        - pid
+        - ip
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+        service:
+          type: string
+        built:
+          type: string
+          nullable: true
+          description: Executable mtime as RFC3339 string
+        started:
+          type: string
+          description: Process start time as RFC3339 string
+        memory:
+          allOf:
+            - $ref: "#/components/schemas/egress_HealthMemory"
+          nullable: true
+        fds:
+          type: integer
+          nullable: true
+        pid:
+          type: integer
+        ip:
+          type: string
+        userAgent:
+          type: string
+          nullable: true
     run_Os:
       type: string
       enum:
@@ -160697,10 +161491,11 @@ components:
         Controls instance creation behavior.
         - Default mode: instances are created automatically. Set to `false` to prevent creation.
         - When auto-start is disabled globally: set to `true` to create an instance.
+
+        Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
       required: false
       schema:
         type: boolean
-        default: true
     browser_TabId:
       name: tabId
       in: query
