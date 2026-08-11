@@ -1,6 +1,6 @@
 /**
- * MagicCommentsService
- * User-extensible MagicComments service
+ * EgressService
+ * User-extensible Egress service
  * 
  * ✅ SAFE TO EDIT ✅
  * This file extends the generated base class and is yours to customize.
@@ -9,9 +9,9 @@
  * Generated at: 2026-08-11T23:40:39.000Z
  */
 
-import { MagicCommentsServiceBase } from './magic-comments.service.generated.js';
+import { EgressServiceBase } from './egress.service.generated.js';
 
-export class MagicCommentsService extends MagicCommentsServiceBase {
+export class EgressService extends EgressServiceBase {
   // Add custom properties here
 
 }

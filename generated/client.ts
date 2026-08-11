@@ -25,6 +25,7 @@ import * as cron from './cron/index.js';
 import * as pipe from './pipe/index.js';
 import * as notes from './notes/index.js';
 import * as tunnel from './tunnel/index.js';
+import * as egress from './egress/index.js';
 import * as run from './run/index.js';
 import * as proxyLogs from './proxyLogs/index.js';
 import * as agent from './agent/index.js';
@@ -264,6 +265,10 @@ export class HoodyClient {
 
   public readonly tunnel: tunnel.TunnelService & {
     health: tunnel.HealthService;
+  };
+
+  public readonly egress: egress.EgressService & {
+
   };
 
   public readonly run: run.RunService & {
@@ -545,6 +550,10 @@ export class HoodyClient {
 
     this.tunnel = Object.assign(new tunnel.TunnelService(this.http, 'tunnel', this.urlTemplates?.['tunnel'] as any, this.getKitUrlTemplatePattern('tunnel')), {
       health: new tunnel.HealthService(this.http, 'tunnel', this.urlTemplates?.['tunnel'] as any, this.getKitUrlTemplatePattern('tunnel')),
+    });
+
+    this.egress = Object.assign(new egress.EgressService(this.http, 'egress', this.urlTemplates?.['egress'] as any, this.getKitUrlTemplatePattern('egress')), {
+
     });
 
     this.run = Object.assign(new run.RunService(this.http, 'run', this.urlTemplates?.['run'] as any, this.getKitUrlTemplatePattern('run')), {
@@ -942,6 +951,13 @@ export class HoodyClient {
           serverName: containerServer,
           serviceIndex: 1
         },
+        'egress': {
+          projectId: container.project_id,
+          containerId: container.id,
+          server: containerServer,
+          serverName: containerServer,
+          serviceIndex: 1
+        },
         'run': {
           projectId: container.project_id,
           containerId: container.id,
@@ -1167,8 +1183,8 @@ export class HoodyClient {
       return normalizedKit;
     }
 
-    // SSH and proxy are special cases and do not use a numeric suffix.
-    if (normalizedKit === 'ssh' || normalizedKit === 'proxy') {
+    // SSH is a protocol endpoint, not an indexed kit service.
+    if (normalizedKit === 'ssh') {
       return normalizedKit;
     }
 
@@ -1199,6 +1215,16 @@ export class HoodyClient {
       throw new Error(`Invalid serviceIndex for kit URL: ${serviceIndex}`);
     }
 
+    // One egress process serves the whole container, so every index reaches the
+    // same proxy and the canonical URL carries no suffix — the form the CLI,
+    // the docs and the edge's prefix handling all use. The suffix is not
+    // cosmetic though: proxy permissions are evaluated per service index, so an
+    // explicit index above 1 is preserved. Dropping it at index 1 is lossless
+    // because the router normalizes a missing index to 1 (sniParser).
+    if (normalizedKit === 'egress' && serviceIndex === 1) {
+      return normalizedKit;
+    }
+
     return `${normalizedKit}-${serviceIndex}`;
   }
 
@@ -1209,7 +1235,7 @@ export class HoodyClient {
     container: ContainerLike | null,
     serviceIndexOrOptions: number | { serviceIndex?: number; protocol?: 'http' | 'https'; port?: number; local?: boolean } = 1
   ): Record<string, string> {
-    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'run', 'pipe', 'tunnel', 'agent', 'proxy'];
+    const kits = ['terminal', 'browser', 'code', 'curl', 'cron', 'daemon', 'display', 'desktop', 'exec', 'files', 'notifications', 'sqlite', 'watch', 'logs', 'notes', 'run', 'pipe', 'tunnel', 'agent', 'egress'];
     const urls: Record<string, string> = {};
 
     for (const kit of kits) {
