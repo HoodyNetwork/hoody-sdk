@@ -1,6 +1,6 @@
-# `api` — 290 methods
+# `api` — 294 methods
 
-**Version:** 1.0.0-beta.12
+**Version:** 1.0.0-beta.13
 **Accessor:** `client.api`
 
 ```typescript
@@ -1773,7 +1773,7 @@ client.api.events.getStats(options?: { start_date?: string; end_date?: string; r
 List event history
 
 ```typescript
-client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "user.created" | "auth.token.updated" | "auth.token.enabled" | "auth.token.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "storage.share.mount_changed" | "notification.read" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string }): Promise<ApiEventsListResponse>
+client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "project.created" | "project.updated" | "project.deleted" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.created" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string }): Promise<ApiEventsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1782,7 +1782,7 @@ client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "c
 | `offset` | `number` | No | query | Number of events to skip |
 | `sort_by` | `"created_at" \| "event_type"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
-| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "auth.token.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "user.created" \| "auth.token.updated" \| "auth.token.enabled" \| "auth.token.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "storage.share.mount_changed" \| "notification.read" \| "server.health_changed" \| "server.rental_expiring" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "user.banned" \| "user.unbanned" \| "user.role_changed" \| "activity.logged"` | No | query | Filter by specific event type |
+| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "container.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "project.created" \| "project.updated" \| "project.deleted" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "user.created" \| "user.banned" \| "user.unbanned" \| "user.role_changed" \| "activity.logged"` | No | query | Filter by specific event type |
 | `resource_type` | `"container" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "user" \| "activity_log"` | No | query | Filter by resource type |
 | `resource_id` | `string` | No | query | Filter by specific resource ID |
 | `project_id` | `string` | No | query | Filter by project ID |
@@ -1804,7 +1804,7 @@ client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "c
 List event history (collect all pages)
 
 ```typescript
-client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "user.created" | "auth.token.updated" | "auth.token.enabled" | "auth.token.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "storage.share.mount_changed" | "notification.read" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string }): Promise<unknown[]>
+client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "project.created" | "project.updated" | "project.deleted" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.created" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1813,7 +1813,7 @@ client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?:
 | `offset` | `number` | No | query | Number of events to skip |
 | `sort_by` | `"created_at" \| "event_type"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
-| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "auth.token.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "user.created" \| "auth.token.updated" \| "auth.token.enabled" \| "auth.token.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "storage.share.mount_changed" \| "notification.read" \| "server.health_changed" \| "server.rental_expiring" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "user.banned" \| "user.unbanned" \| "user.role_changed" \| "activity.logged"` | No | query | Filter by specific event type |
+| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "container.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "project.created" \| "project.updated" \| "project.deleted" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "user.created" \| "user.banned" \| "user.unbanned" \| "user.role_changed" \| "activity.logged"` | No | query | Filter by specific event type |
 | `resource_type` | `"container" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "user" \| "activity_log"` | No | query | Filter by resource type |
 | `resource_id` | `string` | No | query | Filter by specific resource ID |
 | `project_id` | `string` | No | query | Filter by project ID |
@@ -1835,7 +1835,7 @@ client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?:
 List event history (async iterator)
 
 ```typescript
-client.api.events.listIterator(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "auth.token.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "user.created" | "auth.token.updated" | "auth.token.enabled" | "auth.token.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "storage.share.mount_changed" | "notification.read" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string }): AsyncIterableIterator<unknown>
+client.api.events.listIterator(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "project.created" | "project.updated" | "project.deleted" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "user.created" | "user.banned" | "user.unbanned" | "user.role_changed" | "activity.logged"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "user" | "activity_log"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1844,7 +1844,7 @@ client.api.events.listIterator(options?: { limit?: number; offset?: number; sort
 | `offset` | `number` | No | query | Number of events to skip |
 | `sort_by` | `"created_at" \| "event_type"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
-| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "auth.token.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "user.created" \| "auth.token.updated" \| "auth.token.enabled" \| "auth.token.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "storage.share.mount_changed" \| "notification.read" \| "server.health_changed" \| "server.rental_expiring" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "user.banned" \| "user.unbanned" \| "user.role_changed" \| "activity.logged"` | No | query | Filter by specific event type |
+| `event_type` | `"container.creating" \| "container.running" \| "container.stopped" \| "container.failed" \| "container.deleting" \| "container.deleted" \| "container.autostart_enabled" \| "container.autostart_disabled" \| "container.renamed" \| "container.resource_updated" \| "container.ssh_key.added" \| "container.ssh_key.removed" \| "container.snapshot.created" \| "container.snapshot.deleted" \| "container.snapshot.restored" \| "container.snapshot.renamed" \| "container.display.enabled" \| "storage.share.created" \| "storage.share.updated" \| "storage.share.deleted" \| "storage.share.enabled" \| "storage.share.disabled" \| "storage.share.expiring_soon" \| "storage.share.expired" \| "storage.share.mount_changed" \| "notification.created" \| "notification.read" \| "notification.deleted" \| "project.created" \| "project.updated" \| "project.deleted" \| "server.created" \| "server.updated" \| "server.enabled" \| "server.disabled" \| "server.health_changed" \| "server.rental_expiring" \| "firewall.rule.added" \| "firewall.rule.removed" \| "firewall.rule.updated" \| "firewall.rule.enabled" \| "firewall.rule.disabled" \| "proxy.alias.created" \| "proxy.alias.updated" \| "proxy.alias.deleted" \| "proxy.alias.enabled" \| "proxy.alias.disabled" \| "proxy.alias.expiring_soon" \| "proxy.alias.expired" \| "proxy.permissions.updated" \| "proxy.permissions.default_changed" \| "proxy.permissions.group_added" \| "proxy.permissions.group_updated" \| "proxy.permissions.group_removed" \| "auth.token.created" \| "auth.token.updated" \| "auth.token.deleted" \| "auth.token.enabled" \| "auth.token.disabled" \| "pool.member.joined" \| "pool.member.left" \| "pool.member.role_changed" \| "pool.invited" \| "pool.invitation_revoked" \| "user.created" \| "user.banned" \| "user.unbanned" \| "user.role_changed" \| "activity.logged"` | No | query | Filter by specific event type |
 | `resource_type` | `"container" \| "storage_share" \| "notification" \| "project" \| "server" \| "firewall" \| "proxy_alias" \| "proxy_permissions" \| "auth_token" \| "pool" \| "user" \| "activity_log"` | No | query | Filter by resource type |
 | `resource_id` | `string` | No | query | Filter by specific resource ID |
 | `project_id` | `string` | No | query | Filter by project ID |
@@ -2215,7 +2215,7 @@ client.api.images.listPublic(options?: { os?: string; architecture?: string; min
 | `min_price` | `number` | No | query | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | No | query | Minimum average rating filter - filters images with rating &gt;= this value (0-5 stars) |
-| `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating &lt;= this value (0-5 stars) |
+| `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | No | query | Search term to filter images by name, description, or tags |
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
@@ -2245,7 +2245,7 @@ client.api.images.listPublicAll(options?: { os?: string; architecture?: string; 
 | `min_price` | `number` | No | query | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | No | query | Minimum average rating filter - filters images with rating &gt;= this value (0-5 stars) |
-| `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating &lt;= this value (0-5 stars) |
+| `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | No | query | Search term to filter images by name, description, or tags |
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
@@ -2275,7 +2275,7 @@ client.api.images.listPublicIterator(options?: { os?: string; architecture?: str
 | `min_price` | `number` | No | query | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | No | query | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | No | query | Minimum average rating filter - filters images with rating &gt;= this value (0-5 stars) |
-| `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating &lt;= this value (0-5 stars) |
+| `max_rating` | `number` | No | query | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | No | query | Search term to filter images by name, description, or tags |
 | `page` | `number` | No | query | Page number for pagination - starts from 1 |
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
@@ -2361,17 +2361,39 @@ client.api.meta.getSocialStats(): Promise<GetSocialStatsResponse>
 
 ---
 
-## `client.api.notifications` (8 methods)
+## `client.api.notifications` (9 methods)
+
+### `getUserNotificationSummary`
+
+**GET** `/api/v1/notifications/summary`
+
+Unread notification count and newest position
+
+```typescript
+client.api.notifications.getUserNotificationSummary(): Promise<GetUserNotificationSummaryResponse>
+```
+
+**Returns:** `GetUserNotificationSummaryResponse`
+
+---
 
 ### `list`
 
 **GET** `/api/v1/notifications/`
 
-Get all notifications for the authenticated user
+List notifications for the authenticated user
 
 ```typescript
-client.api.notifications.list(): Promise<ApiNotificationsListResponse>
+client.api.notifications.list(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string }): Promise<ApiNotificationsListResponse>
 ```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `number` | No | query | Rows per page (max 100). |
+| `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `ApiNotificationsListResponse`
 
@@ -2383,11 +2405,19 @@ client.api.notifications.list(): Promise<ApiNotificationsListResponse>
 
 **GET** `/api/v1/notifications/`
 
-Get all notifications for the authenticated user (collect all pages)
+List notifications for the authenticated user (collect all pages)
 
 ```typescript
-client.api.notifications.listAll(): Promise<unknown[]>
+client.api.notifications.listAll(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string }): Promise<unknown[]>
 ```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `number` | No | query | Rows per page (max 100). |
+| `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `unknown[]`
 
@@ -2399,11 +2429,19 @@ client.api.notifications.listAll(): Promise<unknown[]>
 
 **GET** `/api/v1/notifications/`
 
-Get all notifications for the authenticated user (async iterator)
+List notifications for the authenticated user (async iterator)
 
 ```typescript
-client.api.notifications.listIterator(): AsyncIterableIterator<unknown>
+client.api.notifications.listIterator(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string }): AsyncIterableIterator<unknown>
 ```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `number` | No | query | Rows per page (max 100). |
+| `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5075,7 +5113,7 @@ client.api.tfa.verifySetup(data: ApiTfaVerifySetupRequest): Promise<ApiTfaVerify
 
 ---
 
-## `client.api.users` (6 methods)
+## `client.api.users` (9 methods)
 
 ### `get`
 
@@ -5108,6 +5146,69 @@ client.api.users.getFreeTierStatus(): Promise<GetFreeTierStatusResponse>
 ```
 
 **Returns:** `GetFreeTierStatusResponse`
+
+---
+
+### `getSecurityHistory`
+
+**GET** `/api/v1/users/me/security-history`
+
+Get your account security history
+
+```typescript
+client.api.users.getSecurityHistory(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean }): Promise<GetSecurityHistoryResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number |
+| `limit` | `number` | No | query | Results per page |
+| `include_failed` | `boolean` | No | query | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | No | query | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `GetSecurityHistoryResponse`
+
+---
+
+### `getSecurityHistoryAll`
+
+**GET** `/api/v1/users/me/security-history`
+
+Get your account security history (collect all pages)
+
+```typescript
+client.api.users.getSecurityHistoryAll(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number |
+| `limit` | `number` | No | query | Results per page |
+| `include_failed` | `boolean` | No | query | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | No | query | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `unknown[]`
+
+---
+
+### `getSecurityHistoryIterator`
+
+**GET** `/api/v1/users/me/security-history`
+
+Get your account security history (async iterator)
+
+```typescript
+client.api.users.getSecurityHistoryIterator(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `page` | `number` | No | query | Page number |
+| `limit` | `number` | No | query | Results per page |
+| `include_failed` | `boolean` | No | query | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
+| `include_security` | `boolean` | No | query | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
+
+**Returns:** `AsyncIterableIterator<unknown>`
 
 ---
 

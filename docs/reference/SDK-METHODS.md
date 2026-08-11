@@ -1,8 +1,8 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.12
-**Total methods:** 1095
-**Namespaces:** 19
+**Version:** 1.0.0-beta.13
+**Total methods:** 1104
+**Namespaces:** 20
 
 ---
 
@@ -340,7 +340,7 @@
 | `resumeWorkflowRun` | POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | Resume a failed or cancelled workflow run. |
 | `runSessionWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 
-## `api` (290 methods)
+## `api` (294 methods)
 
 ### `client.api.activity`
 
@@ -507,9 +507,10 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `list` | GET | `/api/v1/notifications/` | Get all notifications for the authenticated user |
-| `listAll` | GET | `/api/v1/notifications/` | Get all notifications for the authenticated user (collect all pages) |
-| `listIterator` | GET | `/api/v1/notifications/` | Get all notifications for the authenticated user (async iterator) |
+| `getUserNotificationSummary` | GET | `/api/v1/notifications/summary` | Unread notification count and newest position |
+| `list` | GET | `/api/v1/notifications/` | List notifications for the authenticated user |
+| `listAll` | GET | `/api/v1/notifications/` | List notifications for the authenticated user (collect all pages) |
+| `listIterator` | GET | `/api/v1/notifications/` | List notifications for the authenticated user (async iterator) |
 | `listPublic` | GET | `/api/v1/notifications/public` | Get all public notifications |
 | `listPublicAll` | GET | `/api/v1/notifications/public` | Get all public notifications (collect all pages) |
 | `listPublicIterator` | GET | `/api/v1/notifications/public` | Get all public notifications (async iterator) |
@@ -717,6 +718,9 @@
 |--------|------|------|---------|
 | `get` | GET | `/api/v1/users/{id}` | Get user by ID |
 | `getFreeTierStatus` | GET | `/api/v1/users/me/free-tier-status` | Get free-tier claim status |
+| `getSecurityHistory` | GET | `/api/v1/users/me/security-history` | Get your account security history |
+| `getSecurityHistoryAll` | GET | `/api/v1/users/me/security-history` | Get your account security history (collect all pages) |
+| `getSecurityHistoryIterator` | GET | `/api/v1/users/me/security-history` | Get your account security history (async iterator) |
 | `markOnboardingMilestone` | POST | `/api/v1/users/me/onboarding` | Mark an onboarding milestone as completed |
 | `redeemInviteCode` | POST | `/api/v1/users/me/redeem-invite` | Redeem a beta invite code |
 | `retrySetup` | POST | `/api/v1/users/me/retry-setup` | Retry free-tier account setup |
@@ -1143,6 +1147,18 @@
 | `getByTimestamp` | GET | `/api/v1/display/thumbnail/{timestamp}` | Retrieve a specific thumbnail by timestamp |
 | `getLatest` | GET | `/api/v1/display/thumbnail/last` | Retrieve the most recent thumbnail |
 
+## `egress` (5 methods)
+
+### `client.egress`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `disableUpstream` | DELETE | `/api/v1/egress/upstream` | Disable upstream |
+| `getUpstream` | GET | `/api/v1/egress/upstream` | Get upstream status |
+| `healthCheck` | GET | `/api/v1/egress/health` | Service health check |
+| `setUpstream` | PUT | `/api/v1/egress/upstream` | Set upstream |
+| `setUpstreamPost` | POST | `/api/v1/egress/upstream` | Set upstream |
+
 ## `exec` (69 methods)
 
 ### `client.exec.cache`
@@ -1260,8 +1276,8 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `delete` | DELETE | `/api/v1/exec/sdk/:id` | Delete SDK |
-| `get` | GET | `/api/v1/exec/sdk/:id` | Get SDK |
+| `delete` | DELETE | `/api/v1/exec/sdk/{id}` | Delete SDK |
+| `get` | GET | `/api/v1/exec/sdk/{id}` | Get SDK |
 | `importSDK` | POST | `/api/v1/exec/sdk/import` | Import SDK |
 | `list` | GET | `/api/v1/exec/sdk/list` | List SDKs |
 
@@ -1287,11 +1303,11 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `createCustom` | POST | `/api/v1/exec/templates/create-custom` | Create Custom Template |
-| `deleteCustom` | DELETE | `/api/v1/exec/templates/delete-custom/:name` | Delete Custom Template |
+| `deleteCustom` | DELETE | `/api/v1/exec/templates/delete-custom/{name}` | Delete Custom Template |
 | `generate` | POST | `/api/v1/exec/templates/generate` | Generate From Template |
 | `list` | GET | `/api/v1/exec/templates/list` | List Templates |
 | `preview` | GET | `/api/v1/exec/templates/preview` | Preview Template |
-| `updateCustom` | PUT | `/api/v1/exec/templates/update-custom/:name` | Update Custom Template |
+| `updateCustom` | PUT | `/api/v1/exec/templates/update-custom/{name}` | Update Custom Template |
 
 ### `client.exec.validate`
 

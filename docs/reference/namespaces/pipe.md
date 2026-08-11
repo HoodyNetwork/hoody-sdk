@@ -1,6 +1,6 @@
 # `pipe` — 7 methods
 
-**Version:** 1.0.0-beta.12
+**Version:** 1.0.0-beta.13
 **Accessor:** `client.pipe`
 
 ```typescript
@@ -91,13 +91,13 @@ client.pipe.receive(path: string, options?: { n?: number; download?: "true" | "f
 Send data to a pipe
 
 ```typescript
-client.pipe.send(path: string, data?: object, options?: { n?: number }): Promise<ApiResponse<unknown>>
+client.pipe.send(path: string, data?: string, options?: { n?: number }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Unique pipe path name. Must not be a reserved path (`/`, `/help`, `/noscript`, `/favicon.ico`, `/robots.txt`). Examples: `myfile`, `transfer123`, `secret.png`, `logs/today` |
-| `data` | `object` | No | body |  |
+| `data` | `string` | No | body |  |
 | `n` | `number` | No | query | Number of receivers to wait for before starting the transfer. All receivers get identical copies of the data (fan-out). Must be a positive integer, max 256. |
 
 **Returns:** `ApiResponse<unknown>`

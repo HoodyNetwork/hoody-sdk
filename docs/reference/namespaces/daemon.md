@@ -1,6 +1,6 @@
 # `daemon` — 23 methods
 
-**Version:** 1.0.0-beta.12
+**Version:** 1.0.0-beta.13
 **Accessor:** `client.daemon`
 
 ```typescript
@@ -442,7 +442,7 @@ client.daemon.status.get(id: number, options?: { port?: number; include_stats?: 
 |-----------|------|----------|----------|-------------|
 | `id` | `number` | Yes | path | Unique numeric identifier of the program |
 | `port` | `number` | No | query | Filter to specific port instance (for port-range programs only) |
-| `include_stats` | `"true" \| "false"` | No | query | Include resource stats (CPU, memory, process tree) for running programs. Adds a "stats" field with pid, started_at, cpu_percent, memory_rss_bytes, process_count, and per-process breakdown. |
+| `include_stats` | `"true" \| "false"` | No | query | Include resource stats (CPU, memory, process tree) for running programs. WHERE the stats land depends on the program: a standard program gets a top-level `stats`; a port-range program gets one `stats` per instance, on the instance itself (`instance.stats`, or `instances[].stats`), never at the top level. Each carries pid, started_at, cpu_percent, memory_rss_bytes, process_count and a per-process breakdown. |
 
 **Returns:** `DaemonStatusGetResponse`
 

@@ -1,8 +1,8 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.12
-**Total endpoints:** 961
-**Namespaces:** 19
+**Version:** 1.0.0-beta.13
+**Total endpoints:** 968
+**Namespaces:** 20
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
 and the CLI command that call it — the CLI ⇄ SDK ⇄ HTTP map in one place.
@@ -207,7 +207,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `api` — 236 endpoints
+## `api` — 238 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -327,10 +327,11 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/ip` | `api.utilities.getIpInfo` | `hoody ip get` | Get IP Information |
 | GET | `/api/v1/meta/public-key` | `api.meta.getPublicKey` | `hoody meta get` | Get Hoody API Signing Public Key |
 | GET | `/api/v1/meta/social-stats` | `api.meta.getSocialStats` | — | Get Hoody Social Counters |
-| GET | `/api/v1/notifications/` | `api.notifications.list` | `hoody inbox list` | Get all notifications for the authenticated user |
+| GET | `/api/v1/notifications/` | `api.notifications.list` | `hoody inbox list` | List notifications for the authenticated user |
 | PUT | `/api/v1/notifications/{id}/read` | `api.notifications.markRead` | `hoody inbox mark` | Mark a notification as read |
 | GET | `/api/v1/notifications/public` | `api.notifications.listPublic` | `hoody inbox list-public` | Get all public notifications |
 | PUT | `/api/v1/notifications/read-all` | `api.notifications.markAllRead` | `hoody inbox mark-all` | Mark all notifications as read |
+| GET | `/api/v1/notifications/summary` | `api.notifications.getUserNotificationSummary` | — | Unread notification count and newest position |
 | GET | `/api/v1/offers` | `api.serverRental.listServerOffers` | — | Browse machines available to order |
 | POST | `/api/v1/offers/{id}/reserve` | `api.serverRental.reserveServerOffer` | — | Reserve an offer (charges immediately) |
 | GET | `/api/v1/pools` | `api.pools.list` | `hoody pools list` | List user pools |
@@ -413,6 +414,7 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/api/v1/users/me/onboarding` | `api.users.markOnboardingMilestone` | — | Mark an onboarding milestone as completed |
 | POST | `/api/v1/users/me/redeem-invite` | `api.users.redeemInviteCode` | `hoody users redeem-invite` | Redeem a beta invite code |
 | POST | `/api/v1/users/me/retry-setup` | `api.users.retrySetup` | `hoody users retry-setup` | Retry free-tier account setup |
+| GET | `/api/v1/users/me/security-history` | `api.users.getSecurityHistory` | — | Get your account security history |
 | DELETE | `/api/v1/vault` | `api.vault.clear` | `hoody vault clear` | Clear entire vault |
 | GET | `/api/v1/vault/keys` | `api.vault.list` | `hoody vault list` | List vault keys |
 | DELETE | `/api/v1/vault/keys/{key}` | `api.vault.delete` | `hoody vault delete` | Delete vault key |
@@ -638,6 +640,18 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
+## `egress` — 5 endpoints
+
+| HTTP | Path | SDK Method | CLI Command | Summary |
+|------|------|------------|-------------|---------|
+| GET | `/api/v1/egress/health` | `egress.healthCheck` | `hoody egress health` | Service health check |
+| DELETE | `/api/v1/egress/upstream` | `egress.disableUpstream` | `hoody egress upstream clear` | Disable upstream |
+| GET | `/api/v1/egress/upstream` | `egress.getUpstream` | `hoody egress upstream get` | Get upstream status |
+| POST | `/api/v1/egress/upstream` | `egress.setUpstreamPost` | — | Set upstream |
+| PUT | `/api/v1/egress/upstream` | `egress.setUpstream` | `hoody egress upstream set` | Set upstream |
+
+---
+
 ## `exec` — 69 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
@@ -682,8 +696,8 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/exec/scripts/read` | `exec.scripts.read` | `hoody exec scripts read` | Read Script |
 | POST | `/api/v1/exec/scripts/tree` | `exec.scripts.getTree` | `hoody exec scripts tree` | Get Script Tree |
 | POST | `/api/v1/exec/scripts/write` | `exec.scripts.write` | `hoody exec scripts write` | Write Script |
-| DELETE | `/api/v1/exec/sdk/:id` | `exec.sdk.delete` | `hoody exec sdks delete` | Delete SDK |
-| GET | `/api/v1/exec/sdk/:id` | `exec.sdk.get` | `hoody exec sdks get` | Get SDK |
+| DELETE | `/api/v1/exec/sdk/{id}` | `exec.sdk.delete` | `hoody exec sdks delete` | Delete SDK |
+| GET | `/api/v1/exec/sdk/{id}` | `exec.sdk.get` | `hoody exec sdks get` | Get SDK |
 | POST | `/api/v1/exec/sdk/import` | `exec.sdk.importSDK` | `hoody exec sdks import` | Import SDK |
 | GET | `/api/v1/exec/sdk/list` | `exec.sdk.list` | `hoody exec sdks list` | List SDKs |
 | POST | `/api/v1/exec/shared-state/clear` | `exec.state.clear` | `hoody exec state clear` | Clear Shared State |
@@ -692,11 +706,11 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/api/v1/exec/system/restart` | `exec.system.restartServer` | `hoody exec system restart` | Restart Server |
 | GET | `/api/v1/exec/system/restart-status` | `exec.system.getRestartStatus` | `hoody exec system restart-status` | Get Restart Status |
 | POST | `/api/v1/exec/templates/create-custom` | `exec.templates.createCustom` | `hoody exec templates create` | Create Custom Template |
-| DELETE | `/api/v1/exec/templates/delete-custom/:name` | `exec.templates.deleteCustom` | `hoody exec templates delete` | Delete Custom Template |
+| DELETE | `/api/v1/exec/templates/delete-custom/{name}` | `exec.templates.deleteCustom` | `hoody exec templates delete` | Delete Custom Template |
 | POST | `/api/v1/exec/templates/generate` | `exec.templates.generate` | `hoody exec templates generate` | Generate From Template |
 | GET | `/api/v1/exec/templates/list` | `exec.templates.list` | `hoody exec templates list` | List Templates |
 | GET | `/api/v1/exec/templates/preview` | `exec.templates.preview` | `hoody exec templates preview` | Preview Template |
-| PUT | `/api/v1/exec/templates/update-custom/:name` | `exec.templates.updateCustom` | `hoody exec templates update` | Update Custom Template |
+| PUT | `/api/v1/exec/templates/update-custom/{name}` | `exec.templates.updateCustom` | `hoody exec templates update` | Update Custom Template |
 | POST | `/api/v1/exec/user-openapi/generate` | `exec.openapi.generate` | `hoody exec openapi generate` | Generate User OpenAPI |
 | GET | `/api/v1/exec/user-openapi/list` | `exec.openapi.listScripts` | `hoody exec scripts list-user` | List User Scripts |
 | POST | `/api/v1/exec/user-openapi/merge` | `exec.openapi.merge` | `hoody exec openapi merge` | Merge OpenAPI Specs |

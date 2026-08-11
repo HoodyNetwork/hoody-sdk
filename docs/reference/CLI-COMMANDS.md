@@ -1,8 +1,8 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.12
-**Total commands:** 835
-**Command groups:** 38
+**Version:** 1.0.0-beta.13
+**Total commands:** 840
+**Command groups:** 39
 **Top-level utility commands:** 24
 
 > **Note:** the streaming `hoody pipe` group (`send`, `receive`, `progress`,
@@ -110,7 +110,7 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent loops update` |  | write | Update a loop | `agent.loops.updateLoop` | `hoody agent loops update --id abc-123 --loop-id abc-123 --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --paused --expires-in <expires_in> --max-cost-usd 10 --max-wall-ms 100` |
 | `hoody agent mcp begin-write` |  | write | Mint the single-use nonce every MCP write requires | `agent.mcp.beginMCPWrite` | `hoody agent mcp begin-write --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --op upsert --scope user` |
 | `hoody agent mcp delete` |  | write | Delete an MCP server (needs a begin-write nonce + expect-hash) | `agent.mcp.deleteMCPServer` | `hoody agent mcp delete --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --nonce <nonce> --scope user --name my-resource --expect-hash <expect_hash>` |
-| `hoody agent mcp import` |  | write | Import MCP servers from a Claude/Cursor/VS Code config (needs a begin-write nonce + expect-hash) | `agent.mcp.importMCPServers` | `hoody agent mcp import --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --nonce <nonce> --scope user --document <document> --servers <servers> --replace --expect-hash <expect_hash>` |
+| `hoody agent mcp import` |  | write | Import MCP servers from a Claude/Cursor/VS Code config (needs a begin-write nonce + expect-hash) | `agent.mcp.importMCPServers` | `hoody agent mcp import --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --nonce <nonce> --scope user --document <document> --replace --expect-hash <expect_hash>` |
 | `hoody agent mcp list` |  | read | List configured MCP servers with live connection state | `agent.mcp.listMCPServers` | `hoody agent mcp list --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm>` |
 | `hoody agent mcp parse` |  | read | Preview what a config document would import (writes nothing) | `agent.mcp.parseMCPImport` | `hoody agent mcp parse --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --document <document>` |
 | `hoody agent mcp probe` |  | write | Try a candidate MCP server config without saving it (human-only) | `agent.mcp.probeMCPServer` | `hoody agent mcp probe --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --server srv-abc` |
@@ -433,10 +433,10 @@ Daemon and ephemeral programs
 | `hoody daemon ephemeral status` |  | read | Get ephemeral program status | `daemon.quickStart.getStatus` | `hoody daemon ephemeral status abc-123` |
 | `hoody daemon ephemeral stop` |  | write | Stop ephemeral program | `daemon.quickStart.stop` | `hoody daemon ephemeral stop abc-123` |
 | `hoody daemon health` |  | read | Service health check | `daemon.health.check` | `hoody daemon health` |
-| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.add` | `hoody daemon programs create --id 10 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param=--port --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
+| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.add` | `hoody daemon programs create --id 10 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param <port_param> --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
 | `hoody daemon programs delete` | rm, remove | destructive | Remove a program | `daemon.programs.remove` | `hoody daemon programs delete abc-123` |
 | `hoody daemon programs disable` |  | write | Disable a program | `daemon.control.disable` | `hoody daemon programs disable abc-123` |
-| `hoody daemon programs edit` |  | write | Edit a program | `daemon.programs.edit` | `hoody daemon programs edit abc-123 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param=--port --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
+| `hoody daemon programs edit` |  | write | Edit a program | `daemon.programs.edit` | `hoody daemon programs edit abc-123 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param <port_param> --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
 | `hoody daemon programs enable` |  | write | Enable a program | `daemon.control.enable` | `hoody daemon programs enable abc-123` |
 | `hoody daemon programs get` |  | read | Get a specific program | `daemon.programs.get` | `hoody daemon programs get abc-123` |
 | `hoody daemon programs list` |  | read | List all programs | `daemon.programs.listIterator` | `hoody daemon programs list --port 8080 --port-from 10 --port-to 10` |
@@ -516,6 +516,18 @@ Display control — screenshots, input, windows, clipboard
 | `hoody display windows raise` |  | write | Raise a window to the top | `display.input.windowRaise` | `hoody display windows raise --display-id 10 --window-id 100` |
 | `hoody display windows resize` |  | write | Resize a window | `display.input.windowResize` | `hoody display windows resize --display-id 10 --window-id 100 --width 10 --height 10 --sync --use-hints` |
 | `hoody display windows search` |  | write | Search for windows by pattern | `display.input.windowSearch` | `hoody display windows search --display-id 10 --pattern "TODO" --name --class --classname --only-visible` |
+
+## `hoody egress` — 5 commands
+
+Container egress proxy — outbound HTTP/CONNECT with an optional upstream
+
+| Command | Aliases | Category | Summary | SDK Link | Example |
+|---------|---------|----------|---------|----------|---------|
+| `hoody egress local` |  | action | Publish this machine's IP as the container's HTTPS proxy exit (long-running, Ctrl+C to stop) |  | `hoody egress local` |
+| `hoody egress health` |  | read | Egress service health | `egress.healthCheck` | `hoody egress health` |
+| `hoody egress upstream clear` | disable | destructive | Stop chaining through an upstream; egress goes direct | `egress.disableUpstream` | `hoody egress upstream clear` |
+| `hoody egress upstream get` | show | read | Show the upstream proxy the container chains through | `egress.getUpstream` | `hoody egress upstream get` |
+| `hoody egress upstream set` |  | action | Route the container's egress through an upstream proxy | `egress.setUpstream` | `hoody egress upstream set https://example.com` |
 
 ## `hoody events` (aliases: event, ev) — 6 commands
 
@@ -762,7 +774,7 @@ Platform account notification inbox
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
-| `hoody inbox list` |  | read | Get all notifications for the authenticated user | `api.notifications.listIterator` | `hoody inbox list` |
+| `hoody inbox list` |  | read | Get all notifications for the authenticated user | `api.notifications.listIterator` | `hoody inbox list --page 1 --limit 20 --unread-only --read-only --before <before>` |
 | `hoody inbox list-public` |  | read | Get all public notifications | `api.notifications.listPublicIterator` | `hoody inbox list-public` |
 | `hoody inbox mark` |  | write | Mark a notification as read | `api.notifications.markRead` | `hoody inbox mark abc-123` |
 | `hoody inbox mark-all` |  | write | Mark all notifications as read | `api.notifications.markAllRead` | `hoody inbox mark-all` |
@@ -999,7 +1011,7 @@ Storage shares
 | `hoody storage incoming list-all` |  | read | Get all incoming shares | `api.storageShares.listIncomingGlobalIterator` | `hoody storage incoming list-all --realm-id abc-123` |
 | `hoody storage incoming toggle-mount` |  | action | Toggle incoming share mount | `api.storageShares.toggleIncomingMount` | `hoody storage incoming toggle-mount --share-id abc-123 --mount` |
 | `hoody storage list` | ls | read | List storage shares | `api.storageShares.listIterator` | `hoody storage list --target-type container --label my-label --status active --realm-id abc-123` |
-| `hoody storage list-all` |  | read | List storage shares across all realms (privileged scope) | `api.storageShares.listGlobalIterator` | `hoody storage list-all --realm-id abc-123` |
+| `hoody storage list-all` |  | read | List all storage shares you have created, across all your containers | `api.storageShares.listGlobalIterator` | `hoody storage list-all --realm-id abc-123` |
 | `hoody storage update` | edit | write | Update storage share | `api.storageShares.update` | `hoody storage update --share-id abc-123 --mode readonly --alias my-resource --label my-label --description "My description" --enabled --expires-at 1750000000` |
 
 ## `hoody terminal` (aliases: term, t) — 31 commands

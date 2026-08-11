@@ -1,6 +1,6 @@
 # `exec` — 69 methods
 
-**Version:** 1.0.0-beta.12
+**Version:** 1.0.0-beta.13
 **Accessor:** `client.exec`
 
 ```typescript
@@ -964,7 +964,7 @@ client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: st
 
 ### `delete`
 
-**DELETE** `/api/v1/exec/sdk/:id`
+**DELETE** `/api/v1/exec/sdk/{id}`
 
 Delete SDK
 
@@ -984,7 +984,7 @@ client.exec.sdk.delete(id: string): Promise<ExecSdkDeleteResponse>
 
 ### `get`
 
-**GET** `/api/v1/exec/sdk/:id`
+**GET** `/api/v1/exec/sdk/{id}`
 
 Get SDK
 
@@ -1190,7 +1190,7 @@ client.exec.templates.createCustom(data: ExecTemplatesCreateCustomRequest): Prom
 
 ### `deleteCustom`
 
-**DELETE** `/api/v1/exec/templates/delete-custom/:name`
+**DELETE** `/api/v1/exec/templates/delete-custom/{name}`
 
 Delete Custom Template
 
@@ -1273,7 +1273,7 @@ client.exec.templates.preview(options?: { name: string; variables?: string }): P
 
 ### `updateCustom`
 
-**PUT** `/api/v1/exec/templates/update-custom/:name`
+**PUT** `/api/v1/exec/templates/update-custom/{name}`
 
 Update Custom Template
 
