@@ -1,4 +1,4 @@
-> _**SDK skill · `browser` namespace** · ~12,359 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `browser` namespace** · ~15,861 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `browser` — Per-container Chromium/Firefox via Playwright/Patchright
 
@@ -272,13 +272,13 @@ A `404 Instance not found` from `stop` means it was already gone — safe to ign
 #### `clear` — Clear all cookies
 
 ```typescript
-client.browser.cookies.clear(browser_id: string, start?: boolean)
+client.browser.cookies.clear(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `DELETE /cookies`
 **CLI:** `hoody browser cookies clear`
@@ -288,13 +288,13 @@ client.browser.cookies.clear(browser_id: string, start?: boolean)
 #### `get` — Get cookies
 
 ```typescript
-client.browser.cookies.get(browser_id: string, start?: boolean, url?: string)
+client.browser.cookies.get(options?: { browser_id?: string; start?: boolean; url?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | Filter cookies by URL |
 
 **Returns:** `any`  |  **HTTP:** `GET /cookies`
@@ -305,13 +305,13 @@ client.browser.cookies.get(browser_id: string, start?: boolean, url?: string)
 #### `set` — Set cookies
 
 ```typescript
-client.browser.cookies.set(browser_id: string, start?: boolean, data: object)
+client.browser.cookies.set(data: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | Yes |  |
 
 **Body:** `{ cookies*: { name*: string, value*: string, url*: string, domain: string, path: string, httpOnly: bool, secure: bool }[] }`
@@ -326,14 +326,14 @@ client.browser.cookies.set(browser_id: string, start?: boolean, data: object)
 #### `getConsoleLogs` — Get console logs
 
 ```typescript
-client.browser.debugging.getConsoleLogs(browser_id: string, tabId?: integer, start?: boolean, type?: string, since?: string, clear?: boolean)
+client.browser.debugging.getConsoleLogs(options?: { browser_id?: string; tabId?: integer; start?: boolean; type?: string; since?: string; clear?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `type` | `string` | query | No | Filter by message type (log, error, warning, info, etc.) |
 | `since` | `string` | query | No | Only return logs after this ISO timestamp |
 | `clear` | `boolean` | query | No | Clear the buffer after reading |
@@ -346,14 +346,14 @@ client.browser.debugging.getConsoleLogs(browser_id: string, tabId?: integer, sta
 #### `getNetworkLogs` — Get network logs
 
 ```typescript
-client.browser.debugging.getNetworkLogs(browser_id: string, tabId?: integer, start?: boolean, since?: string, clear?: boolean)
+client.browser.debugging.getNetworkLogs(options?: { browser_id?: string; tabId?: integer; start?: boolean; since?: string; clear?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `since` | `string` | query | No | Only return logs after this ISO timestamp |
 | `clear` | `boolean` | query | No | Clear the buffer after reading |
 
@@ -411,7 +411,7 @@ client.browser.health.getOpenApiYaml()
 #### `clear` — Delete browsing history
 
 ```typescript
-client.browser.history.clear(before?: string, browser_id?: string)
+client.browser.history.clear(options?: { before?: string; browser_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -427,7 +427,7 @@ client.browser.history.clear(before?: string, browser_id?: string)
 #### `list` — Query browsing history
 
 ```typescript
-client.browser.history.list(since?: string, domain?: string, browser_id?: string, limit?: integer, offset?: integer)
+client.browser.history.list(options?: { since?: string; domain?: string; browser_id?: string; limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -448,7 +448,7 @@ client.browser.history.list(since?: string, domain?: string, browser_id?: string
 #### `restart` — Restart browser instance
 
 ```typescript
-client.browser.instances.restart(browser_id: string, chromiumVersion?: string, fingerprintId?: string, useRemoteDebuggingPort?: boolean, remoteDebuggingPort?: integer, remoteDebuggingAddress?: string, extensions?: string, extensionsDir?: string, extensionsStoreIds?: string, proxyServer?: string, proxyUsername?: string, proxyPassword?: string, proxyBypass?: string, enableQuic?: boolean, enableDnsOverHttps?: boolean, dnsOverHttpsUrl?: string, display?: string, showBrowser?: boolean, sessionName?: string, timezoneId?: string, locale?: string, userAgent?: string, viewport?: string, noViewport?: boolean, geolocation?: string, launchArguments?: array, browser?: string, firefoxVersion?: string, firefoxExecutablePath?: string, showDevtools?: boolean, userProfile?: object, stealth?: boolean, iframe?: boolean, iframe_url?: string, maximize_new_windows?: boolean)
+client.browser.instances.restart(options?: { browser_id?: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: integer; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; launchArguments?: array; browser?: string; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: object; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -497,7 +497,7 @@ client.browser.instances.restart(browser_id: string, chromiumVersion?: string, f
 #### `start` — Create or retrieve browser instance
 
 ```typescript
-client.browser.instances.start(browser_id: string, chromiumVersion?: string, fingerprintId?: string, useRemoteDebuggingPort?: boolean, remoteDebuggingPort?: integer, remoteDebuggingAddress?: string, extensions?: string, extensionsDir?: string, extensionsStoreIds?: string, proxyServer?: string, proxyUsername?: string, proxyPassword?: string, proxyBypass?: string, enableQuic?: boolean, enableDnsOverHttps?: boolean, dnsOverHttpsUrl?: string, display?: string, showBrowser?: boolean, sessionName?: string, timezoneId?: string, locale?: string, userAgent?: string, viewport?: string, noViewport?: boolean, geolocation?: string, stealth?: boolean, iframe?: boolean, iframe_url?: string, maximize_new_windows?: boolean)
+client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: integer; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -540,7 +540,7 @@ client.browser.instances.start(browser_id: string, chromiumVersion?: string, fin
 #### `stop` — Stop browser instance
 
 ```typescript
-client.browser.instances.stop(browser_id: string)
+client.browser.instances.stop(options?: { browser_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -557,13 +557,13 @@ client.browser.instances.stop(browser_id: string)
 #### `browse` — Navigate to URL
 
 ```typescript
-client.browser.interaction.browse(browser_id: string, start?: boolean, url?: string, tabId?: integer, active?: boolean, onlyIfNotExists?: boolean, ignoreGetParameters?: boolean)
+client.browser.interaction.browse(options?: { browser_id?: string; start?: boolean; url?: string; tabId?: integer; active?: boolean; onlyIfNotExists?: boolean; ignoreGetParameters?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | The URL to navigate to |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
 | `active` | `boolean` | query | No | Make the tab active (focused) after navigation |
@@ -578,13 +578,13 @@ client.browser.interaction.browse(browser_id: string, start?: boolean, url?: str
 #### `browsePost` — Navigate to URL (POST)
 
 ```typescript
-client.browser.interaction.browsePost(browser_id: string, start?: boolean, data: object)
+client.browser.interaction.browsePost(data: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | Yes |  |
 
 **Body:** `{ url*: string, tabId: int, active: bool=true, onlyIfNotExists: bool=false, ignoreGetParameters: bool=false }`
@@ -597,13 +597,13 @@ client.browser.interaction.browsePost(browser_id: string, start?: boolean, data:
 #### `evalGet` — Execute JavaScript
 
 ```typescript
-client.browser.interaction.evalGet(browser_id: string, start?: boolean, script: string)
+client.browser.interaction.evalGet(options?: { browser_id?: string; start?: boolean; script?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `script` | `string` | query | Yes | JavaScript code to execute (can be base64 encoded) |
 
 **Returns:** `any`  |  **HTTP:** `GET /eval`
@@ -614,13 +614,13 @@ client.browser.interaction.evalGet(browser_id: string, start?: boolean, script: 
 #### `evalPost` — Execute JavaScript (POST)
 
 ```typescript
-client.browser.interaction.evalPost(browser_id: string, start?: boolean, data: object)
+client.browser.interaction.evalPost(data: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | Yes |  |
 
 **Body:** `{ script: string }`
@@ -633,13 +633,13 @@ client.browser.interaction.evalPost(browser_id: string, start?: boolean, data: o
 #### `takeScreenshot` — Capture browser screenshot
 
 ```typescript
-client.browser.interaction.takeScreenshot(browser_id: string, start?: boolean, url?: string, tabId?: integer, onlyIfNotExists?: boolean, ignoreGetParameters?: boolean, format?: string, quality?: integer, fullPage?: boolean)
+client.browser.interaction.takeScreenshot(options?: { browser_id?: string; start?: boolean; url?: string; tabId?: integer; onlyIfNotExists?: boolean; ignoreGetParameters?: boolean; format?: string; quality?: integer; fullPage?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | The URL to navigate to |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
 | `onlyIfNotExists` | `boolean` | query | No | Only create a new tab if no tab with the same URL exists |
@@ -658,13 +658,13 @@ client.browser.interaction.takeScreenshot(browser_id: string, start?: boolean, u
 #### `closeTab` — Close a browser tab
 
 ```typescript
-client.browser.introspection.closeTab(browser_id: string, start?: boolean, data?: object)
+client.browser.introspection.closeTab(data?: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | No |  |
 
 **Body:** `{ tabId: int }`
@@ -677,13 +677,13 @@ client.browser.introspection.closeTab(browser_id: string, start?: boolean, data?
 #### `getDevtoolsUrl` — Get DevTools URLs
 
 ```typescript
-client.browser.introspection.getDevtoolsUrl(browser_id: string, start?: boolean)
+client.browser.introspection.getDevtoolsUrl(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /devtools-url`
 **CLI:** `hoody browser devtools`
@@ -693,13 +693,13 @@ client.browser.introspection.getDevtoolsUrl(browser_id: string, start?: boolean)
 #### `getMetadata` — Get instance metadata
 
 ```typescript
-client.browser.introspection.getMetadata(browser_id: string, start?: boolean)
+client.browser.introspection.getMetadata(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `browser_BrowserMetadata`  |  **HTTP:** `GET /metadata`
 **CLI:** `hoody browser info`
@@ -709,7 +709,7 @@ client.browser.introspection.getMetadata(browser_id: string, start?: boolean)
 #### `getViewport` — Get the current viewport policy
 
 ```typescript
-client.browser.introspection.getViewport(browser_host?: string, browser_port?: integer)
+client.browser.introspection.getViewport(options?: { browser_host?: string; browser_port?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -724,13 +724,13 @@ client.browser.introspection.getViewport(browser_host?: string, browser_port?: i
 #### `listTabs` — List browser tabs
 
 ```typescript
-client.browser.introspection.listTabs(browser_id: string, start?: boolean)
+client.browser.introspection.listTabs(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /tabs`
 **CLI:** `hoody browser tabs list`
@@ -740,7 +740,7 @@ client.browser.introspection.listTabs(browser_id: string, start?: boolean)
 #### `setViewport` — Change the viewport at runtime
 
 ```typescript
-client.browser.introspection.setViewport(browser_host?: string, browser_port?: integer, data: object)
+client.browser.introspection.setViewport(data: object, options?: { browser_host?: string; browser_port?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -758,7 +758,7 @@ client.browser.introspection.setViewport(browser_host?: string, browser_port?: i
 #### `shutdown` — Shutdown browser instance
 
 ```typescript
-client.browser.introspection.shutdown(browser_id: string)
+client.browser.introspection.shutdown(options?: { browser_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -775,14 +775,14 @@ client.browser.introspection.shutdown(browser_id: string)
 #### `exportPdf` — Export page as PDF
 
 ```typescript
-client.browser.page.exportPdf(browser_id: string, tabId?: integer, start?: boolean, url?: string, format?: string, landscape?: boolean, printBackground?: boolean, margin?: string)
+client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: integer; start?: boolean; url?: string; format?: string; landscape?: boolean; printBackground?: boolean; margin?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | Optional URL to navigate to before generating the PDF |
 | `format` | `string` | query | No | Paper format (e.g. A4, Letter) |
 | `landscape` | `boolean` | query | No | Use landscape orientation |
@@ -797,14 +797,14 @@ client.browser.page.exportPdf(browser_id: string, tabId?: integer, start?: boole
 #### `getHtml` — Get page HTML
 
 ```typescript
-client.browser.page.getHtml(browser_id: string, tabId?: integer, start?: boolean)
+client.browser.page.getHtml(options?: { browser_id?: string; tabId?: integer; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /html`
 **CLI:** `hoody browser html`
@@ -814,14 +814,14 @@ client.browser.page.getHtml(browser_id: string, tabId?: integer, start?: boolean
 #### `getText` — Get page text
 
 ```typescript
-client.browser.page.getText(browser_id: string, tabId?: integer, start?: boolean)
+client.browser.page.getText(options?: { browser_id?: string; tabId?: integer; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /text`
 **CLI:** `hoody browser text`

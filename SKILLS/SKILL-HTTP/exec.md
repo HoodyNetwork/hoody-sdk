@@ -1,4 +1,4 @@
-> _**HTTP skill · `exec` namespace** · ~9,654 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `exec` namespace** · ~9,657 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `exec` — micro-services: any script or API as an instant HTTP endpoint
 
@@ -418,7 +418,7 @@ For structured output use `ai.object({ schema, prompt })` (Zod), and to stream j
 
 - `POST /api/v1/exec/logs/read` body — `{ file: string, executionId: string, lines: int=100, tail: bool=true, search: string }`
   - `executionId` — Execution Id
-- `POST /api/v1/exec/logs/search` body — `{ query: string, regex: string, files: any[], limit: int=1000, caseSensitive: bool=false }`
+- `POST /api/v1/exec/logs/search` body — `{ query: string, regex: string, files: string[], limit: int=1000, caseSensitive: bool=false }`
   - `caseSensitive` — Case Sensitive
 
 ### `magic` (4) — Magic-comments
@@ -504,8 +504,8 @@ For structured output use `ai.object({ schema, prompt })` (Zod), and to stream j
 
 - `POST /api/v1/exec/package/compare` body — `object` — Request payload
 - `POST /api/v1/exec/package/init` body — `{ name: string="hoody-exec-project", version: string="1.0.0", description: string="Hoody Exec project", force: bool=false }`
-- `POST /api/v1/exec/package/install` body — `{ packages: any[], dev: bool=false, save: bool=true, force: bool=false }`
-- `POST /api/v1/exec/package/pin` body — `{ packages: any[] }`
+- `POST /api/v1/exec/package/install` body — `{ packages: string[], dev: bool=false, save: bool=true, force: bool=false }`
+- `POST /api/v1/exec/package/pin` body — `{ packages: string[] }`
 - `POST /api/v1/exec/package/update` body — `{ dependencies: string, scripts: string, metadata: object, remove: string }`
 
 ### `route` (3) — Route
@@ -592,8 +592,8 @@ For structured output use `ai.object({ schema, prompt })` (Zod), and to stream j
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `DELETE /api/v1/exec/sdk/:id` | Delete S D K |  |
-| `GET /api/v1/exec/sdk/:id` | Get S D K |  |
+| `DELETE /api/v1/exec/sdk/{id}` | Delete S D K |  |
+| `GET /api/v1/exec/sdk/{id}` | Get S D K |  |
 | `POST /api/v1/exec/sdk/import` | Import S D K | `body*` |
 | `GET /api/v1/exec/sdk/list` | List S D Ks |  |
 
@@ -644,11 +644,11 @@ For structured output use `ai.object({ schema, prompt })` (Zod), and to stream j
 | Method | Summary | Params |
 |--------|---------|--------|
 | `POST /api/v1/exec/templates/create-custom` | Create Custom Template | `body*` |
-| `DELETE /api/v1/exec/templates/delete-custom/:name` | Delete Custom Template |  |
+| `DELETE /api/v1/exec/templates/delete-custom/{name}` | Delete Custom Template |  |
 | `POST /api/v1/exec/templates/generate` | Generate From Template | `body*` |
 | `GET /api/v1/exec/templates/list` | List Templates | `?category` `?includeBuiltin` `?includeCustom` |
 | `GET /api/v1/exec/templates/preview` | Preview Template | `?name*` `?variables` |
-| `PUT /api/v1/exec/templates/update-custom/:name` | Update Custom Template | `body` |
+| `PUT /api/v1/exec/templates/update-custom/{name}` | Update Custom Template | `body` |
 
 **Param notes:**
 
@@ -665,7 +665,7 @@ For structured output use `ai.object({ schema, prompt })` (Zod), and to stream j
 - `POST /api/v1/exec/templates/generate` body — `{ name*: string, variables: object, outputPath: string, saveFile: bool=false }`
   - `outputPath` — Output Path
   - `saveFile` — Save File
-- `PUT /api/v1/exec/templates/update-custom/:name` body — `{ code: string, metadata: object }`
+- `PUT /api/v1/exec/templates/update-custom/{name}` body — `{ code: string, metadata: object }`
 
 ### `validate` (6) — Validate
 

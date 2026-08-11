@@ -1,4 +1,4 @@
-> _**routing manifest (full INDEX with routing-hints appendix; ~7k tokens, on-demand)** · ~7,629 tokens · hoody-sdk v1.0.0-beta.12_
+> _**routing manifest (full INDEX with routing-hints appendix; ~7k tokens, on-demand)** · ~7,926 tokens · hoody-sdk v1.0.0-beta.13_
 
 # Hoody — surface index
 
@@ -103,7 +103,7 @@ const r = await box.exec.execution.execute('build');  // r: ApiResponse<unknown>
 ```
 
 **Ops**: `scripts.{write, read, list, delete}` · `execution.execute` · auto-mount at `{kit-url}/<bare-path>`
-**Gotcha**: scripts use CommonJS. Accessor URL-encodes `/`, so multi-segment routes (`api/build`) must be hit by fetching the bare kit URL.
+**Gotcha**: scripts use CommonJS. Multi-segment routes (`api/build`) work through the accessor — separators are preserved; `.`/`..` segments are rejected.
 
 ---
 
@@ -251,6 +251,22 @@ const page = await box.proxyLogs.logs.list({ serviceName: 'files', afterId });
 
 **Ops**: `logs.{list, getStats, streamLogs}` (SSE) · filter by `kind`/`level`/`method`/`serviceName`/`source`
 **Gotcha**: read-only — for write/inspect MITM, use `proxyHooks` (in the `api` control plane).
+
+## egress — outbound HTTP proxy with a switchable exit IP
+
+- **Skill**: SDK <https://hoody.com/SKILLS/SKILL-SDK/egress.md> · HTTP <https://hoody.com/SKILLS/SKILL-HTTP/egress.md> · CLI <https://hoody.com/SKILLS/SKILL-CLI/egress.md>
+- **Docs**: <https://docs.hoody.com/kit/egress/>
+
+```ts
+// Route the container's outbound traffic through an upstream proxy.
+const box = await client.withContainer(container);
+await box.egress.setUpstream('socks5h://user:pass@proxy.example:1080');
+const now = await box.egress.getUpstream();   // credentials are never returned
+await box.egress.disableUpstream();           // back to the container's own IP
+```
+
+**Ops**: `egress.{healthCheck, getUpstream, setUpstream, disableUpstream}` · four upstream schemes (`socks5h` resolves at the upstream, `socks5` resolves locally, `http`/`https` chain via CONNECT) · `startLocalExit()` / `hoody egress local` makes the operator's own machine the exit
+**Gotcha**: the endpoint authenticates nothing of its own — the container URL IS the credential, so an unguarded egress URL is an open proxy. Set `proxyPermissionsContainer` before sharing it. `proxyHooks` do NOT apply (egress is hook-rejected).
 
 ## tunnel — reverse tunnels (ngrok built-in, with proxy/auth/logs/MITM glued in)
 
@@ -466,7 +482,7 @@ await box.agent.sessions.prompt(s.data!.id, { text: 'Refactor src/parser.ts' });
 
 ## Long-tail concept search
 
-For questions outside the 19 namespaces above (SSO, realms vs projects, snapshots,
+For questions outside the 20 namespaces above (SSO, realms vs projects, snapshots,
 billing, networking model, …), search the canonical docs:
 **`POST https://chatbot.hoody.com/api/chat` `{ "message":"..." }` → SSE-streamed answer with cited URLs.**
 (Same retrieval + LLM substrate as the docs chat widget; one HTTP call, no tool-call wrapping.)

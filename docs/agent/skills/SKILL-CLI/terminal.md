@@ -1,4 +1,4 @@
-> _**CLI skill · `terminal` namespace** · ~7,558 tokens · hoody-sdk v1.0.0-beta.12_
+> _**CLI skill · `terminal` namespace** · ~7,558 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 

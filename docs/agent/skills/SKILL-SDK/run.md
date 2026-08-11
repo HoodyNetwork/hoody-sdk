@@ -1,4 +1,4 @@
-> _**SDK skill · `run` namespace** · ~9,971 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `run` namespace** · ~9,989 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `run` — resolve apps to shell commands
 
@@ -352,7 +352,7 @@ client.run.jobs.createSearchJob(data: run_Selector)
 #### `getJobStatus` — Get job status
 
 ```typescript
-client.run.jobs.getJobStatus(job_id: string, wait?: string, timeout_ms?: integer)
+client.run.jobs.getJobStatus(job_id: string, options?: { wait?: string; timeout_ms?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -576,7 +576,7 @@ client.run.resolve(data: run_Selector)
 #### `resolveGet` — Resolve an application and return exact shell command
 
 ```typescript
-client.run.resolveGet(app: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, pick?: string, pick_index?: integer, candidate_id?: string, set_id?: string, terminal_id?: integer, display?: string, origin?: string, dry_run?: boolean, print_curl?: string, format?: string, limit?: integer)
+client.run.resolveGet(options?: { app?: string; os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; terminal_id?: integer; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -628,7 +628,7 @@ client.run.runBatch(data: run_BatchRequest)
 #### `runPathBased` — Path-based resolve (positional or key-value)
 
 ```typescript
-client.run.runPathBased(rest: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, pick?: string, pick_index?: integer, candidate_id?: string, set_id?: string, terminal_id?: integer, display?: string, origin?: string, dry_run?: boolean, print_curl?: string, format?: string, limit?: integer)
+client.run.runPathBased(rest: string, options?: { os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; terminal_id?: integer; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -666,7 +666,7 @@ client.run.runPathBased(rest: string, os?: string, source?: array, kind?: string
 #### `runTerminalAnchored` — Terminal-anchored path-based resolve
 
 ```typescript
-client.run.runTerminalAnchored(terminal_id: integer, rest: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, pick?: string, pick_index?: integer, candidate_id?: string, set_id?: string, display?: string, origin?: string, dry_run?: boolean, print_curl?: string, format?: string, limit?: integer)
+client.run.runTerminalAnchored(terminal_id: integer, rest: string, options?: { os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -704,7 +704,7 @@ client.run.runTerminalAnchored(terminal_id: integer, rest: string, os?: string, 
 #### `searchCandidates` — Search for app candidates
 
 ```typescript
-client.run.searchCandidates(app: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, limit?: integer)
+client.run.searchCandidates(options?: { app?: string; os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |

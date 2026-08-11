@@ -1,4 +1,4 @@
-> _**guided onboarding skill (agent-directed)** · ~6,383 tokens · hoody-sdk v1.0.0-beta.12_
+> _**guided onboarding skill (agent-directed)** · ~6,383 tokens · hoody-sdk v1.0.0-beta.13_
 
 # Hoody — Onboarding (a brief for the agent running this)
 

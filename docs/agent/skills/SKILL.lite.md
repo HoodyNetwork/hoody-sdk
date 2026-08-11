@@ -1,4 +1,4 @@
-> _**compact tier-0 skill (always-loaded by agents)** · ~4,083 tokens · hoody-sdk v1.0.0-beta.12_
+> _**compact tier-0 skill (always-loaded by agents)** · ~4,154 tokens · hoody-sdk v1.0.0-beta.13_
 
 # Hoody — lightweight agent skill
 
@@ -6,7 +6,7 @@
 
 ## What Hoody is (and isn't)
 
-Hoody is a **cloud-container platform**. Each account owns full Linux boxes (systemd + root, like a VM, NOT Docker sandboxes). Every container has ~18 **kits** — sub-services at predictable URLs (`https://{P}-{C}-{kit}-{n}.{N}.containers.hoody.com`) exposing file I/O, shells, GUI desktops, HTTP services, browsers, notebooks, databases.
+Hoody is a **cloud-container platform**. Each account owns full Linux boxes (systemd + root, like a VM, NOT Docker sandboxes). Every container has ~19 **kits** — sub-services at predictable URLs (`https://{P}-{C}-{kit}-{n}.{N}.containers.hoody.com`) exposing file I/O, shells, GUI desktops, HTTP services, browsers, notebooks, databases.
 
 Use Hoody when the task involves: running code/processes/UI in the cloud, file storage with history, AI coding agents, GUI automation, HTTP services on demand, or container-scoped tooling. **Hoody-tenant account ops** also route to `api`: auth flows, 2FA/MFA, token management, *reading* usage/spend, projects, realms, proxy permissions, snapshots/backups.
 
@@ -18,13 +18,13 @@ file with sales / support / compliance, abstain.
 
 ## Mental model: Hoody is fully remote
 
-Every kit is reachable over plain HTTPS — no local install, no local FS, no agent-machine permissions. When the task involves *creating* something durable (file, script, record, notebook), the destination is a container kit (see "The 19 namespaces" table), not the agent's working directory.
+Every kit is reachable over plain HTTPS — no local install, no local FS, no agent-machine permissions. When the task involves *creating* something durable (file, script, record, notebook), the destination is a container kit (see "The 20 namespaces" table), not the agent's working directory.
 
 ## Three surfaces, one token
 
 **SDK** (`hoody-sdk` for TS/JS) · **HTTP** (`https://api.hoody.com` for any language) · **CLI** (`hoody`, install via `curl -fsSL https://install.hoody.com | sh`). One token works in all three.
 
-Pick by runtime: **writing code/scripts → SDK** (TS/JS; other languages → HTTP); **in a terminal — agent shell tool or human prompt → CLI** (preinstalled in every container; zero-install `npx https://cli.hoody.com`); **no CLI available, or pseudo-scripting one-off calls → raw HTTP** with `curl`. They interoperate — same token, same kit URLs. Full per-mode guides live in the same directory: `https://hoody.com/SKILLS/SKILL-SDK.md` / `SKILL-HTTP.md` / `SKILL-CLI.md` (SKILL-HTTP.md has every call as raw `curl`, login/token mint included).
+Pick by runtime: **writing code/scripts → SDK** (TS/JS; other languages → HTTP); **in a terminal — agent shell tool or human prompt → CLI** (preinstalled in every container; zero-install `npx hoody-sdk`); **no CLI available, or pseudo-scripting one-off calls → raw HTTP** with `curl`. They interoperate — same token, same kit URLs. Full per-mode guides live in the same directory: `https://hoody.com/SKILLS/SKILL-SDK.md` / `SKILL-HTTP.md` / `SKILL-CLI.md` (SKILL-HTTP.md has every call as raw `curl`, login/token mint included).
 
 ## Auth — one paragraph
 
@@ -112,7 +112,7 @@ in `api`. To hide `{P}{C}` behind a friendly host → `proxyAliases` in `api`.
 
 Kits compose — terminal+display+files, exec→daemon, files+watch+sqlite; the pairings are mapped in `INDEX.md`.
 
-## The 19 namespaces (one-liners)
+## The 20 namespaces (one-liners)
 
 Every container exposes these. For the full per-namespace API + snippet +
 gotcha, fetch the routing index at
@@ -140,6 +140,7 @@ per-namespace skill page at `https://hoody.com/SKILLS/SKILL-{SDK|HTTP|CLI}/<ns>.
 | `notifications` | **Reach the human operator remotely** — the agent fires a notification and the user gets a real OS toast on phone/desktop/smartwatch via a backgrounded web page (`{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all`); also drives container X11 desktop toasts |
 | `notes` | **Knowledge notebooks** — Notion-style collaborative pages (sections, pages, structured databases, attachments). NOT for executing code; for *compute* / Jupyter use `code`. |
 | `run` | **"Which tool / which command / which package?"** — searches nixpkgs/pkgx/AppImage/OCI and returns the shell invocation. Use for *any* "I need to install X" / "compress this" / "convert that" question. Result feeds into `terminal` (run now) or `daemon` (run supervised). |
+| `egress` | **Outbound HTTP proxy with a switchable exit IP** — point a client at the container's `egress` URL and requests leave through the container; set an *upstream* (`socks5h`/`socks5`/`http`/`https`) and they leave through that instead. `hoody egress local` makes YOUR machine the exit. |
 | `cron` | Managed `crontab(1)` per user — **shell** commands only. For recurring HTTP calls use `curl.schedules` instead (no shell needed). |
 | `agent` | **Drive the in-container AI agent over HTTP** — sessions/prompt (`createSession` → `promptSync` blocking or the `streamAgentPrompt` helper for streamed → `confirmGate`/`answerQuestion` → `cancelSession`), models (+ providers/auth), skills, memory, todos, workflows, hooks, github, tools, logs. CLI: `hoody agent prompt "<task>"`. |
 

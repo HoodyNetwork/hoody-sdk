@@ -1,4 +1,4 @@
-> _**SDK skill · `exec` namespace** · ~13,339 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `exec` namespace** · ~13,403 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `exec` — micro-services: any script or API as an instant HTTP endpoint
 
@@ -444,7 +444,7 @@ client.exec.ids.list()
 #### `clear` — Clear Logs
 
 ```typescript
-client.exec.logs.clear(file?: string, type?: string, olderThanDays?: string, confirm?: string)
+client.exec.logs.clear(options?: { file?: string; type?: string; olderThanDays?: string; confirm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -462,7 +462,7 @@ client.exec.logs.clear(file?: string, type?: string, olderThanDays?: string, con
 #### `list` — List Logs
 
 ```typescript
-client.exec.logs.list(type?: string, limit?: string)
+client.exec.logs.list(options?: { type?: string; limit?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -502,7 +502,7 @@ client.exec.logs.search(data?: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | No |  |
 
-**Body:** `{ query: string, regex: string, files: any[], limit: int=1000, caseSensitive: bool=false }`
+**Body:** `{ query: string, regex: string, files: string[], limit: int=1000, caseSensitive: bool=false }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/exec/logs/search`
 **CLI:** `hoody exec logs search`
@@ -512,7 +512,7 @@ client.exec.logs.search(data?: object)
 #### `stream` — Stream Logs
 
 ```typescript
-client.exec.logs.stream(file: string, follow?: string)
+client.exec.logs.stream(options?: { file?: string; follow?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -558,7 +558,7 @@ client.exec.magic.getSchema()
 #### `read` — Read Magic Comments
 
 ```typescript
-client.exec.magic.read(path: string)
+client.exec.magic.read(options?: { path?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -629,7 +629,7 @@ client.exec.monitor.getStats()
 #### `listMonitorScripts` — List Monitor Scripts
 
 ```typescript
-client.exec.monitor.listMonitorScripts(limit?: integer, sort?: string)
+client.exec.monitor.listMonitorScripts(options?: { limit?: integer; sort?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -672,7 +672,7 @@ client.exec.openapi.generate(data: object)
 #### `listScripts` — List User Scripts
 
 ```typescript
-client.exec.openapi.listScripts(directory?: string, dir?: string, subdomain?: string, execId?: string)
+client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; subdomain?: string; execId?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -705,7 +705,7 @@ client.exec.openapi.merge(data: object)
 #### `serve` — Serve Generated Spec
 
 ```typescript
-client.exec.openapi.serve(dir?: string, directory?: string, format?: string, subdomain?: string, execId?: string)
+client.exec.openapi.serve(options?: { dir?: string; directory?: string; format?: string; subdomain?: string; execId?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -724,7 +724,7 @@ client.exec.openapi.serve(dir?: string, directory?: string, format?: string, sub
 #### `serveSchema` — Serve Schema File
 
 ```typescript
-client.exec.openapi.serveSchema(file?: string, path?: string)
+client.exec.openapi.serveSchema(options?: { file?: string; path?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -796,7 +796,7 @@ client.exec.package.install(data?: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | No |  |
 
-**Body:** `{ packages: any[], dev: bool=false, save: bool=true, force: bool=false }`
+**Body:** `{ packages: string[], dev: bool=false, save: bool=true, force: bool=false }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/exec/package/install`
 **CLI:** `hoody exec packages install`
@@ -813,7 +813,7 @@ client.exec.package.pinVersions(data?: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | No |  |
 
-**Body:** `{ packages: any[] }`
+**Body:** `{ packages: string[] }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/exec/package/pin`
 **CLI:** `hoody exec packages pin`
@@ -930,7 +930,7 @@ client.exec.schedules.reloadSchedules(data?: object)
 #### `scheduleHistory` — Schedule History
 
 ```typescript
-client.exec.schedules.scheduleHistory(scriptPath?: string, since?: string, limit?: integer, includeRotated?: boolean)
+client.exec.schedules.scheduleHistory(options?: { scriptPath?: string; since?: string; limit?: integer; includeRotated?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -967,7 +967,7 @@ client.exec.schedules.triggerSchedule(data: object)
 #### `delete` — Delete Script
 
 ```typescript
-client.exec.scripts.delete(path: string, confirm?: string, execId?: string, exec_id?: string, subdomain?: string)
+client.exec.scripts.delete(options?: { path?: string; confirm?: string; execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -986,7 +986,7 @@ client.exec.scripts.delete(path: string, confirm?: string, execId?: string, exec
 #### `getTree` — Get Script Tree
 
 ```typescript
-client.exec.scripts.getTree(execId?: string, exec_id?: string, subdomain?: string, data?: object)
+client.exec.scripts.getTree(data?: object, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1006,7 +1006,7 @@ client.exec.scripts.getTree(execId?: string, exec_id?: string, subdomain?: strin
 #### `list` — List Scripts
 
 ```typescript
-client.exec.scripts.list(dir?: string, filter?: string, metadata?: string, label?: string, tags?: string, mode?: string, enabled?: string, websocket?: string, recursive?: string, include_comments?: string, execId?: string, exec_id?: string, subdomain?: string)
+client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: string; label?: string; tags?: string; mode?: string; enabled?: string; websocket?: string; recursive?: string; include_comments?: string; execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1033,7 +1033,7 @@ client.exec.scripts.list(dir?: string, filter?: string, metadata?: string, label
 #### `move` — Move Script
 
 ```typescript
-client.exec.scripts.move(execId?: string, exec_id?: string, subdomain?: string, data: object)
+client.exec.scripts.move(data: object, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1053,7 +1053,7 @@ client.exec.scripts.move(execId?: string, exec_id?: string, subdomain?: string, 
 #### `read` — Read Script
 
 ```typescript
-client.exec.scripts.read(path: string, execId?: string, exec_id?: string, subdomain?: string)
+client.exec.scripts.read(options?: { path?: string; execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1071,7 +1071,7 @@ client.exec.scripts.read(path: string, execId?: string, exec_id?: string, subdom
 #### `write` — Write Script
 
 ```typescript
-client.exec.scripts.write(execId?: string, exec_id?: string, subdomain?: string, data: object)
+client.exec.scripts.write(data: object, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1100,7 +1100,7 @@ client.exec.sdk.delete(id: string)
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Id parameter |
 
-**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/sdk/:id`
+**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/sdk/{id}`
 **CLI:** `hoody exec sdks delete`
 
 ---
@@ -1115,7 +1115,7 @@ client.exec.sdk.get(id: string)
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Id parameter |
 
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/exec/sdk/:id`
+**Returns:** `any`  |  **HTTP:** `GET /api/v1/exec/sdk/{id}`
 **CLI:** `hoody exec sdks get`
 
 ---
@@ -1278,7 +1278,7 @@ client.exec.templates.deleteCustom(name: string)
 |-----------|------|------|----------|-------------|
 | `name` | `string` | path | Yes | Name parameter |
 
-**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/templates/delete-custom/:name`
+**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/templates/delete-custom/{name}`
 **CLI:** `hoody exec templates delete`
 
 ---
@@ -1303,7 +1303,7 @@ client.exec.templates.generate(data: object)
 #### `list` — List Templates
 
 ```typescript
-client.exec.templates.list(category?: string, includeBuiltin?: boolean, includeCustom?: boolean)
+client.exec.templates.list(options?: { category?: string; includeBuiltin?: boolean; includeCustom?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1320,7 +1320,7 @@ client.exec.templates.list(category?: string, includeBuiltin?: boolean, includeC
 #### `preview` — Preview Template
 
 ```typescript
-client.exec.templates.preview(name: string, variables?: string)
+client.exec.templates.preview(options?: { name?: string; variables?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1346,7 +1346,7 @@ client.exec.templates.updateCustom(name: string, data?: object)
 
 **Body:** `{ code: string, metadata: object }`
 
-**Returns:** `any`  |  **HTTP:** `PUT /api/v1/exec/templates/update-custom/:name`
+**Returns:** `any`  |  **HTTP:** `PUT /api/v1/exec/templates/update-custom/{name}`
 **CLI:** `hoody exec templates update`
 
 ---

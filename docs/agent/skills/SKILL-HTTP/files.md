@@ -1,4 +1,4 @@
-> _**HTTP skill · `files` namespace** · ~30,756 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `files` namespace** · ~30,769 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 
@@ -859,7 +859,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `PUT /api/v1/files/append/{path}` | Append data to file | `?owner` |
+| `PUT /api/v1/files/append/{path}` | Append data to file | `?owner` `body*` |
 | `PATCH /api/v1/files/chmod/{path}` | Change file permissions | `?chmod*` |
 | `PATCH /api/v1/files/chown/{path}` | Change file ownership | `?chown*` |
 | `POST /api/v1/files/copy/{path}` | Copy file or directory | `?copy_to*` `?overwrite` `?owner` |
@@ -874,12 +874,12 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 | `POST /api/v1/files/{path}` | File operations (mkdir, extract, download, move, copy) | `?backend` `?mkdir` `?extract` `?dest` `?download_from` `?move_to` `?copy_to` `?overwrite` `?owner` |
 | `PATCH /{path}` | File operations | `H:X-Update-Range` `body` |
 | `PATCH /api/v1/files/{path}` | Modify file properties or move/rename | `?backend` `?owner` `?chmod` `?chown` `body` |
-| `PUT /api/v1/files/{path}` | Upload or append file | `?backend` `?append` `?owner` |
+| `PUT /api/v1/files/{path}` | Upload or append file | `?backend` `?append` `?owner` `body*` |
 | `GET /api/v1/files/realpath/{path}` | Resolve canonical path (realpath) |  |
 | `GET /{directory}?q` | Search directory | `?q*` `?json` |
 | `GET /api/v1/files/stat/{path}` | Get file metadata (stat) |  |
 | `PUT /{path}?touch` | Touch file (create or update mtime) | `?touch*` |
-| `PUT /{path}` | Upload file |  |
+| `PUT /{path}` | Upload file | `body*` |
 
 **Param notes:**
 
@@ -1094,7 +1094,7 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /{path}?type=ssh` | Access file via SSH/SFTP | `?type*` `?server*` `?user*` `?pass` `?key` `?passphrase` |
-| `PUT /{path}?type=ssh` | Upload file via SSH/SFTP | `?server*` `?user*` `?pass` `?key` `?passphrase` |
+| `PUT /{path}?type=ssh` | Upload file via SSH/SFTP | `?server*` `?user*` `?pass` `?key` `?passphrase` `body*` |
 
 **Param notes:**
 
@@ -1117,10 +1117,10 @@ curl -sf "$KIT/api/v1/journal?path=$DIR&limit=10" \
 | `GET /{path}?type=webdav` | Access file via WebDAV | `?type*` `?server*` `?user` `?pass` `?webdav_path` |
 | `COPY /{path}` | Copy file or directory | `H:Destination*` `H:Depth` |
 | `OPTIONS /{path}` | Get allowed methods |  |
-| `LOCK /{path}` | Lock file (WebDAV compatibility) | `H:Depth` |
+| `LOCK /{path}` | Lock file (WebDAV compatibility) | `H:Depth` `body` |
 | `MOVE /{path}` | Move or rename file/directory | `H:Destination*` |
-| `PROPFIND /{path}` | Get WebDAV properties | `H:Depth` |
-| `PROPPATCH /{path}` | Update WebDAV properties |  |
+| `PROPFIND /{path}` | Get WebDAV properties | `H:Depth` `body` |
+| `PROPPATCH /{path}` | Update WebDAV properties | `body` |
 | `UNLOCK /{path}` | Unlock file (WebDAV compatibility) | `H:Lock-Token*` |
 
 **Param notes:**

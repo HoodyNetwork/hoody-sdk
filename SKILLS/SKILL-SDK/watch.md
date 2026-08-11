@@ -1,4 +1,4 @@
-> _**SDK skill · `watch` namespace** · ~5,313 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `watch` namespace** · ~5,347 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `watch` — Linux inotify file-change streams with replay history
 
@@ -271,16 +271,16 @@ client.watch.health.check()
 #### `listEvents` — List Watcher Events
 
 ```typescript
-client.watch.streams.listEvents(id: string, since_id?: integer|null, since_timestamp?: string|null, page?: integer|null, limit?: integer|null)
+client.watch.streams.listEvents(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null; page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_EventHistoryResponse`  |  **HTTP:** `GET /watchers/{id}/events`
 **CLI:** `hoody watch events list`
@@ -290,16 +290,16 @@ client.watch.streams.listEvents(id: string, since_id?: integer|null, since_times
 #### `listEventsAll` — List Watcher Events (collect all pages)
 
 ```typescript
-client.watch.streams.listEventsAll(id: string, since_id?: integer|null, since_timestamp?: string|null, page?: integer|null, limit?: integer|null)
+client.watch.streams.listEventsAll(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null; page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_EventHistoryResponse[]`  |  **HTTP:** `GET /watchers/{id}/events`
 **CLI:** `hoody watch events list`
@@ -309,16 +309,16 @@ client.watch.streams.listEventsAll(id: string, since_id?: integer|null, since_ti
 #### `listEventsIterator` — List Watcher Events (async iterator)
 
 ```typescript
-client.watch.streams.listEventsIterator(id: string, since_id?: integer|null, since_timestamp?: string|null, page?: integer|null, limit?: integer|null)
+client.watch.streams.listEventsIterator(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null; page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `AsyncIterableIterator<watch_EventHistoryResponse>`  |  **HTTP:** `GET /watchers/{id}/events`
 **CLI:** `hoody watch events list`
@@ -328,14 +328,14 @@ client.watch.streams.listEventsIterator(id: string, since_id?: integer|null, sin
 #### `streamSse` — Stream Watcher Events Sse
 
 ```typescript
-client.watch.streams.streamSse(id: string, since_id?: integer|null, since_timestamp?: string|null)
+client.watch.streams.streamSse(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
 
 **Returns:** `any`  |  **HTTP:** `GET /watchers/{id}/events/sse`
 **CLI:** `hoody watch events stream`
@@ -345,14 +345,14 @@ client.watch.streams.streamSse(id: string, since_id?: integer|null, since_timest
 #### `streamWs` — Stream Watcher Events Ws
 
 ```typescript
-client.watch.streams.streamWs(id: string, since_id?: integer|null, since_timestamp?: string|null)
+client.watch.streams.streamWs(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
 
 **Returns:** `void`  |  **HTTP:** `GET /watchers/{id}/events/ws`
 
@@ -430,13 +430,13 @@ client.watch.watchers.get(id: string)
 #### `list` — List Watchers
 
 ```typescript
-client.watch.watchers.list(page?: integer|null, limit?: integer|null)
+client.watch.watchers.list(options?: { page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_WatcherListResponse`  |  **HTTP:** `GET /watchers`
 **CLI:** `hoody watch list`
@@ -446,13 +446,13 @@ client.watch.watchers.list(page?: integer|null, limit?: integer|null)
 #### `listAll` — List Watchers (collect all pages)
 
 ```typescript
-client.watch.watchers.listAll(page?: integer|null, limit?: integer|null)
+client.watch.watchers.listAll(options?: { page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_WatcherListResponse[]`  |  **HTTP:** `GET /watchers`
 **CLI:** `hoody watch list`
@@ -462,13 +462,13 @@ client.watch.watchers.listAll(page?: integer|null, limit?: integer|null)
 #### `listIterator` — List Watchers (async iterator)
 
 ```typescript
-client.watch.watchers.listIterator(page?: integer|null, limit?: integer|null)
+client.watch.watchers.listIterator(options?: { page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `AsyncIterableIterator<watch_WatcherListResponse>`  |  **HTTP:** `GET /watchers`
 **CLI:** `hoody watch list`

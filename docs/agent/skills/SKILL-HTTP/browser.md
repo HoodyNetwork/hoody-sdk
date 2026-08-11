@@ -1,4 +1,4 @@
-> _**HTTP skill · `browser` namespace** · ~7,907 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `browser` namespace** · ~8,910 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `browser` — Per-container Chromium/Firefox via Playwright/Patchright
 
@@ -281,7 +281,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 **Param notes:**
 
 - `browser_id` — Unique identifier for the browser instance (0-based index)
-- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.
+- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
 - `url` — Filter cookies by URL
 
 **Body shapes:**
@@ -299,7 +299,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 - `browser_id` — Unique identifier for the browser instance (0-based index)
 - `tabId` — The ID of the tab to interact with
-- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.
+- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
 - `type` — Filter by message type (log, error, warning, info, etc.)
 - `since` — Only return logs after this ISO timestamp
 - `clear` — Clear the buffer after reading
@@ -394,7 +394,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 **Param notes:**
 
 - `browser_id` — Unique identifier for the browser instance (0-based index)
-- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.
+- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
 - `url` — The URL to navigate to
 - `tabId` — The ID of the tab to interact with
 - `active` — Make the tab active (focused) after navigation
@@ -427,7 +427,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 **Param notes:**
 
 - `browser_id` — Unique identifier for the browser instance (0-based index)
-- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.
+- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
 - `browser_host` — Instance host. Optional — must be paired with browser_port; when both are omitted the single running instance is selected (400 AMBIGUOUS_INSTANCE with more than one).
 - `browser_port` — Instance port. Optional — must be paired with browser_host.
 
@@ -450,7 +450,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 - `browser_id` — Unique identifier for the browser instance (0-based index)
 - `tabId` — The ID of the tab to interact with
-- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.
+- `start` — Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value.
 - `url` — Optional URL to navigate to before generating the PDF
 - `format` — Paper format (e.g. A4, Letter)
 - `landscape` — Use landscape orientation

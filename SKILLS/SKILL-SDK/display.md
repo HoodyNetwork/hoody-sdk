@@ -1,4 +1,4 @@
-> _**SDK skill · `display` namespace** · ~12,999 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `display` namespace** · ~13,160 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 
@@ -249,7 +249,7 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 #### `accessClient` — Access the HTML5 Display client interface
 
 ```typescript
-client.display.accessClient(displayId?: integer, decorations?: boolean, toolbar?: boolean, menu?: boolean, maximize_new_windows?: boolean, readonly?: boolean, dark_mode?: boolean, node?: string, project_id?: string, container_id?: string, url_display_id?: string, ssl?: boolean, webtransport?: boolean, path?: string, action?: string, display?: string, encoding?: string, offscreen?: boolean, bandwidth_limit?: integer, override_width?: string, override_height?: string, vrefresh?: integer, suspend_inactive_tab?: boolean, sound?: boolean, audio_codec?: string, keyboard?: boolean, keyboard_layout?: string, swap_keys?: boolean, clipboard?: boolean, clipboard_preferred_format?: string, clipboard_poll?: boolean, printing?: boolean, file_transfer?: boolean, video?: boolean, mediasource_video?: boolean, open_url?: boolean, notification_server_url?: string, web_notifications?: boolean, display_notifications?: boolean, notification_connection_type?: string, sharing?: boolean, steal?: boolean, reconnect?: boolean, floating_menu?: boolean, clock?: boolean, scroll_reverse_y?: string, scroll_reverse_x?: boolean, title_show_hoody?: boolean, title_show_display_id?: boolean, app?: string, remote_logging?: boolean, insecure?: boolean, debug_main?: boolean, debug_keyboard?: boolean, debug_geometry?: boolean, debug_mouse?: boolean, debug_clipboard?: boolean, debug_draw?: boolean, debug_audio?: boolean, debug_network?: boolean, debug_file?: boolean)
+client.display.accessClient(options?: { displayId?: integer; decorations?: boolean; toolbar?: boolean; menu?: boolean; maximize_new_windows?: boolean; readonly?: boolean; dark_mode?: boolean; node?: string; project_id?: string; container_id?: string; url_display_id?: string; ssl?: boolean; webtransport?: boolean; path?: string; action?: string; display?: string; encoding?: string; offscreen?: boolean; bandwidth_limit?: integer; override_width?: string; override_height?: string; vrefresh?: integer; suspend_inactive_tab?: boolean; sound?: boolean; audio_codec?: string; keyboard?: boolean; keyboard_layout?: string; swap_keys?: boolean; clipboard?: boolean; clipboard_preferred_format?: string; clipboard_poll?: boolean; printing?: boolean; file_transfer?: boolean; video?: boolean; mediasource_video?: boolean; open_url?: boolean; notification_server_url?: string; web_notifications?: boolean; display_notifications?: boolean; notification_connection_type?: string; sharing?: boolean; steal?: boolean; reconnect?: boolean; floating_menu?: boolean; clock?: boolean; scroll_reverse_y?: string; scroll_reverse_x?: boolean; title_show_hoody?: boolean; title_show_display_id?: boolean; app?: string; remote_logging?: boolean; insecure?: boolean; debug_main?: boolean; debug_keyboard?: boolean; debug_geometry?: boolean; debug_mouse?: boolean; debug_clipboard?: boolean; debug_draw?: boolean; debug_audio?: boolean; debug_network?: boolean; debug_file?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -324,7 +324,7 @@ client.display.accessClient(displayId?: integer, decorations?: boolean, toolbar?
 #### `getClipboard` — Read clipboard text
 
 ```typescript
-client.display.getClipboard(displayId?: integer, selection?: string)
+client.display.getClipboard(options?: { displayId?: integer; selection?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -340,7 +340,7 @@ client.display.getClipboard(displayId?: integer, selection?: string)
 #### `getInformation` — Get display information and screenshots
 
 ```typescript
-client.display.getInformation(displayId?: integer)
+client.display.getInformation(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -355,7 +355,7 @@ client.display.getInformation(displayId?: integer)
 #### `getWindowProperties` — Get extended properties for a window
 
 ```typescript
-client.display.getWindowProperties(displayId?: integer, windowId: string)
+client.display.getWindowProperties(windowId: string, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -371,7 +371,7 @@ client.display.getWindowProperties(displayId?: integer, windowId: string)
 #### `listScreenshots` — List all available screenshots
 
 ```typescript
-client.display.listScreenshots(displayId?: integer)
+client.display.listScreenshots(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -386,7 +386,7 @@ client.display.listScreenshots(displayId?: integer)
 #### `listWindows` — List windows on the current display
 
 ```typescript
-client.display.listWindows(displayId?: integer, onlyVisible?: boolean)
+client.display.listWindows(options?: { displayId?: integer; onlyVisible?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -402,7 +402,7 @@ client.display.listWindows(displayId?: integer, onlyVisible?: boolean)
 #### `setClipboard` — Write clipboard text
 
 ```typescript
-client.display.setClipboard(displayId?: integer, data: display_ClipboardWriteBody)
+client.display.setClipboard(data: display_ClipboardWriteBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -433,7 +433,7 @@ client.display.health.check()
 #### `act` — Execute one action with optional screenshot
 
 ```typescript
-client.display.input.act(displayId?: integer, data: display_ActBody)
+client.display.input.act(data: display_ActBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -449,7 +449,7 @@ client.display.input.act(displayId?: integer, data: display_ActBody)
 #### `batch` — Execute a sequence of actions
 
 ```typescript
-client.display.input.batch(displayId?: integer, data: display_BatchBody)
+client.display.input.batch(data: display_BatchBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -465,7 +465,7 @@ client.display.input.batch(displayId?: integer, data: display_BatchBody)
 #### `clickAt` — Move cursor and click
 
 ```typescript
-client.display.input.clickAt(displayId?: integer, data: display_ClickAtBody)
+client.display.input.clickAt(data: display_ClickAtBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -481,7 +481,7 @@ client.display.input.clickAt(displayId?: integer, data: display_ClickAtBody)
 #### `drag` — Drag from one position to another
 
 ```typescript
-client.display.input.drag(displayId?: integer, data: display_DragBody)
+client.display.input.drag(data: display_DragBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -497,7 +497,7 @@ client.display.input.drag(displayId?: integer, data: display_DragBody)
 #### `geometry` — Get display dimensions
 
 ```typescript
-client.display.input.geometry(displayId?: integer)
+client.display.input.geometry(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -512,7 +512,7 @@ client.display.input.geometry(displayId?: integer)
 #### `keyboardKey` — Press key combinations
 
 ```typescript
-client.display.input.keyboardKey(displayId?: integer, data: display_KeyboardKeyBody)
+client.display.input.keyboardKey(data: display_KeyboardKeyBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -528,7 +528,7 @@ client.display.input.keyboardKey(displayId?: integer, data: display_KeyboardKeyB
 #### `keyboardKeyDown` — Hold a key down
 
 ```typescript
-client.display.input.keyboardKeyDown(displayId?: integer, data: display_KeyboardKeyDownBody)
+client.display.input.keyboardKeyDown(data: display_KeyboardKeyDownBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -544,7 +544,7 @@ client.display.input.keyboardKeyDown(displayId?: integer, data: display_Keyboard
 #### `keyboardKeyUp` — Release a held key
 
 ```typescript
-client.display.input.keyboardKeyUp(displayId?: integer, data: object)
+client.display.input.keyboardKeyUp(data: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -562,7 +562,7 @@ client.display.input.keyboardKeyUp(displayId?: integer, data: object)
 #### `keyboardType` — Type a string of text
 
 ```typescript
-client.display.input.keyboardType(displayId?: integer, data: display_KeyboardTypeBody)
+client.display.input.keyboardType(data: display_KeyboardTypeBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -578,7 +578,7 @@ client.display.input.keyboardType(displayId?: integer, data: display_KeyboardTyp
 #### `mouseClick` — Click a mouse button
 
 ```typescript
-client.display.input.mouseClick(displayId?: integer, data?: display_MouseClickBody)
+client.display.input.mouseClick(data?: display_MouseClickBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -594,7 +594,7 @@ client.display.input.mouseClick(displayId?: integer, data?: display_MouseClickBo
 #### `mouseDoubleClick` — Double-click a mouse button
 
 ```typescript
-client.display.input.mouseDoubleClick(displayId?: integer, data?: object)
+client.display.input.mouseDoubleClick(data?: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -612,7 +612,7 @@ client.display.input.mouseDoubleClick(displayId?: integer, data?: object)
 #### `mouseDown` — Press and hold a mouse button
 
 ```typescript
-client.display.input.mouseDown(displayId?: integer, data?: object)
+client.display.input.mouseDown(data?: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -630,7 +630,7 @@ client.display.input.mouseDown(displayId?: integer, data?: object)
 #### `mouseLocation` — Get cursor position
 
 ```typescript
-client.display.input.mouseLocation(displayId?: integer)
+client.display.input.mouseLocation(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -645,7 +645,7 @@ client.display.input.mouseLocation(displayId?: integer)
 #### `mouseMove` — Move cursor to absolute position
 
 ```typescript
-client.display.input.mouseMove(displayId?: integer, data: display_MouseMoveBody)
+client.display.input.mouseMove(data: display_MouseMoveBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -661,7 +661,7 @@ client.display.input.mouseMove(displayId?: integer, data: display_MouseMoveBody)
 #### `mouseMoveRelative` — Move cursor by offset
 
 ```typescript
-client.display.input.mouseMoveRelative(displayId?: integer, data: object)
+client.display.input.mouseMoveRelative(data: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -679,7 +679,7 @@ client.display.input.mouseMoveRelative(displayId?: integer, data: object)
 #### `mouseScroll` — Scroll in a direction
 
 ```typescript
-client.display.input.mouseScroll(displayId?: integer, data: display_MouseScrollBody)
+client.display.input.mouseScroll(data: display_MouseScrollBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -695,7 +695,7 @@ client.display.input.mouseScroll(displayId?: integer, data: display_MouseScrollB
 #### `mouseUp` — Release a mouse button
 
 ```typescript
-client.display.input.mouseUp(displayId?: integer, data?: object)
+client.display.input.mouseUp(data?: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -713,7 +713,7 @@ client.display.input.mouseUp(displayId?: integer, data?: object)
 #### `reset` — Emergency release all inputs
 
 ```typescript
-client.display.input.reset(displayId?: integer)
+client.display.input.reset(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -728,7 +728,7 @@ client.display.input.reset(displayId?: integer)
 #### `select` — Select a range via click + shift-click
 
 ```typescript
-client.display.input.select(displayId?: integer, data: display_SelectBody)
+client.display.input.select(data: display_SelectBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -744,7 +744,7 @@ client.display.input.select(displayId?: integer, data: display_SelectBody)
 #### `typeAt` — Move, click, and type in one operation
 
 ```typescript
-client.display.input.typeAt(displayId?: integer, data: display_TypeAtBody)
+client.display.input.typeAt(data: display_TypeAtBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -760,7 +760,7 @@ client.display.input.typeAt(displayId?: integer, data: display_TypeAtBody)
 #### `wait` — Wait for a duration with optional screenshot
 
 ```typescript
-client.display.input.wait(displayId?: integer, data: display_WaitBody)
+client.display.input.wait(data: display_WaitBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -776,7 +776,7 @@ client.display.input.wait(displayId?: integer, data: display_WaitBody)
 #### `windowActive` — Get the active window ID
 
 ```typescript
-client.display.input.windowActive(displayId?: integer)
+client.display.input.windowActive(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -791,7 +791,7 @@ client.display.input.windowActive(displayId?: integer)
 #### `windowClose` — Close a window
 
 ```typescript
-client.display.input.windowClose(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowClose(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -807,7 +807,7 @@ client.display.input.windowClose(displayId?: integer, data: display_WindowIdBody
 #### `windowFocus` — Focus/activate a window
 
 ```typescript
-client.display.input.windowFocus(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowFocus(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -823,7 +823,7 @@ client.display.input.windowFocus(displayId?: integer, data: display_WindowIdBody
 #### `windowGeometry` — Get window position and size
 
 ```typescript
-client.display.input.windowGeometry(displayId?: integer, windowId: string)
+client.display.input.windowGeometry(windowId: string, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -839,7 +839,7 @@ client.display.input.windowGeometry(displayId?: integer, windowId: string)
 #### `windowMinimize` — Minimize a window
 
 ```typescript
-client.display.input.windowMinimize(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowMinimize(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -855,7 +855,7 @@ client.display.input.windowMinimize(displayId?: integer, data: display_WindowIdB
 #### `windowMove` — Move a window
 
 ```typescript
-client.display.input.windowMove(displayId?: integer, data: display_WindowMoveBody)
+client.display.input.windowMove(data: display_WindowMoveBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -871,7 +871,7 @@ client.display.input.windowMove(displayId?: integer, data: display_WindowMoveBod
 #### `windowName` — Get window title
 
 ```typescript
-client.display.input.windowName(displayId?: integer, windowId: string)
+client.display.input.windowName(windowId: string, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -887,7 +887,7 @@ client.display.input.windowName(displayId?: integer, windowId: string)
 #### `windowRaise` — Raise a window to the top
 
 ```typescript
-client.display.input.windowRaise(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowRaise(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -903,7 +903,7 @@ client.display.input.windowRaise(displayId?: integer, data: display_WindowIdBody
 #### `windowResize` — Resize a window
 
 ```typescript
-client.display.input.windowResize(displayId?: integer, data: display_WindowResizeBody)
+client.display.input.windowResize(data: display_WindowResizeBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -919,7 +919,7 @@ client.display.input.windowResize(displayId?: integer, data: display_WindowResiz
 #### `windowSearch` — Search for windows by pattern
 
 ```typescript
-client.display.input.windowSearch(displayId?: integer, data: display_WindowSearchBody)
+client.display.input.windowSearch(data: display_WindowSearchBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -937,7 +937,7 @@ client.display.input.windowSearch(displayId?: integer, data: display_WindowSearc
 #### `capture` — Capture a new screenshot
 
 ```typescript
-client.display.screenshots.capture(base64?: boolean, displayId?: integer)
+client.display.screenshots.capture(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -953,7 +953,7 @@ client.display.screenshots.capture(base64?: boolean, displayId?: integer)
 #### `captureMetadata` — Capture screenshot and return metadata only
 
 ```typescript
-client.display.screenshots.captureMetadata(displayId?: integer)
+client.display.screenshots.captureMetadata(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -968,7 +968,7 @@ client.display.screenshots.captureMetadata(displayId?: integer)
 #### `getByTimestamp` — Retrieve a specific screenshot by timestamp
 
 ```typescript
-client.display.screenshots.getByTimestamp(timestamp: string, base64?: boolean, displayId?: integer)
+client.display.screenshots.getByTimestamp(timestamp: string, options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -985,7 +985,7 @@ client.display.screenshots.getByTimestamp(timestamp: string, base64?: boolean, d
 #### `getLatest` — Retrieve the most recent screenshot
 
 ```typescript
-client.display.screenshots.getLatest(base64?: boolean, displayId?: integer)
+client.display.screenshots.getLatest(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1001,7 +1001,7 @@ client.display.screenshots.getLatest(base64?: boolean, displayId?: integer)
 #### `getLatestMetadata` — Get metadata for the most recent screenshot
 
 ```typescript
-client.display.screenshots.getLatestMetadata(displayId?: integer)
+client.display.screenshots.getLatestMetadata(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1018,7 +1018,7 @@ client.display.screenshots.getLatestMetadata(displayId?: integer)
 #### `capture` — Capture a new screenshot thumbnail
 
 ```typescript
-client.display.thumbnails.capture(base64?: boolean, displayId?: integer)
+client.display.thumbnails.capture(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1034,7 +1034,7 @@ client.display.thumbnails.capture(base64?: boolean, displayId?: integer)
 #### `getByTimestamp` — Retrieve a specific thumbnail by timestamp
 
 ```typescript
-client.display.thumbnails.getByTimestamp(timestamp: string, base64?: boolean, displayId?: integer)
+client.display.thumbnails.getByTimestamp(timestamp: string, options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1051,7 +1051,7 @@ client.display.thumbnails.getByTimestamp(timestamp: string, base64?: boolean, di
 #### `getLatest` — Retrieve the most recent thumbnail
 
 ```typescript
-client.display.thumbnails.getLatest(base64?: boolean, displayId?: integer)
+client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |

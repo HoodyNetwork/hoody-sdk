@@ -1,4 +1,4 @@
-> _**SDK skill · `terminal` namespace** · ~15,594 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `terminal` namespace** · ~15,708 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 
@@ -349,7 +349,7 @@ client.terminal.docs.getYaml()
 #### `execute` — Execute command in terminal session
 
 ```typescript
-client.terminal.execution.execute(terminal_id?: string, ephemeral?: boolean, defer_pid?: integer, defer_start_time_ticks?: string, defer_timeout_ms?: integer, defer_poll_ms?: integer, reset?: boolean, cwd?: string, cwd_auto_create?: boolean, shell?: string, user?: string, cmd?: string, env?: string, skip_display_wait?: boolean, display_wait_timeout?: integer, display?: string, ssh_host?: string, ssh_user?: string, ssh_port?: string, ssh_password?: string, socks5_host?: string, socks5_port?: string, socks5_user?: string, ssh_key?: string, socks5_pass?: string, data: object)
+client.terminal.execution.execute(data: object, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: integer; defer_start_time_ticks?: string; defer_timeout_ms?: integer; defer_poll_ms?: integer; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; skip_display_wait?: boolean; display_wait_timeout?: integer; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -421,7 +421,7 @@ client.terminal.health.check()
 #### `captureScreenshot` — Capture terminal screenshot
 
 ```typescript
-client.terminal.sessions.captureScreenshot(terminal_id: string, format?: string, foreground?: string, background?: string, fontsize?: integer, save?: boolean)
+client.terminal.sessions.captureScreenshot(options?: { terminal_id?: string; format?: string; foreground?: string; background?: string; fontsize?: integer; save?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -441,7 +441,7 @@ client.terminal.sessions.captureScreenshot(terminal_id: string, format?: string,
 #### `connectWebSocket` — WebSocket terminal connection
 
 ```typescript
-client.terminal.sessions.connectWebSocket(terminal_id?: string, readonly?: boolean, cwd?: string, cwd_auto_create?: boolean, shell?: string, user?: string, cmd?: string, env?: string, display?: string, pid?: integer, ssh_host?: string, ssh_user?: string, ssh_port?: string, ssh_password?: string, socks5_host?: string, socks5_port?: string)
+client.terminal.sessions.connectWebSocket(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; display?: string; pid?: integer; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -503,7 +503,7 @@ client.terminal.sessions.delete(terminal_id: string)
 #### `getRawOutput` — Get raw terminal output
 
 ```typescript
-client.terminal.sessions.getRawOutput(terminal_id?: string, format?: string, tail?: integer)
+client.terminal.sessions.getRawOutput(options?: { terminal_id?: string; format?: string; tail?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -520,7 +520,7 @@ client.terminal.sessions.getRawOutput(terminal_id?: string, format?: string, tai
 #### `list` — List all terminal sessions
 
 ```typescript
-client.terminal.sessions.list(history_limit?: integer, history_lines?: integer)
+client.terminal.sessions.list(options?: { history_limit?: integer; history_lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -536,7 +536,7 @@ client.terminal.sessions.list(history_limit?: integer, history_lines?: integer)
 #### `listAll` — List all terminal sessions (collect all pages)
 
 ```typescript
-client.terminal.sessions.listAll(history_limit?: integer, history_lines?: integer)
+client.terminal.sessions.listAll(options?: { history_limit?: integer; history_lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -597,7 +597,7 @@ client.terminal.sessions.listHistoryIterator(terminal_id: string)
 #### `listIterator` — List all terminal sessions (async iterator)
 
 ```typescript
-client.terminal.sessions.listIterator(history_limit?: integer, history_lines?: integer)
+client.terminal.sessions.listIterator(options?: { history_limit?: integer; history_lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -679,7 +679,7 @@ client.terminal.system.getResources()
 #### `listPorts` — List all listening network ports
 
 ```typescript
-client.terminal.system.listPorts(protocol?: string, user?: string, port?: integer, ip?: string, skip_program?: string, http_only?: boolean, hoody_only?: boolean)
+client.terminal.system.listPorts(options?: { protocol?: string; user?: string; port?: integer; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -700,7 +700,7 @@ client.terminal.system.listPorts(protocol?: string, user?: string, port?: intege
 #### `listPortsAll` — List all listening network ports (collect all pages)
 
 ```typescript
-client.terminal.system.listPortsAll(protocol?: string, user?: string, port?: integer, ip?: string, skip_program?: string, http_only?: boolean, hoody_only?: boolean)
+client.terminal.system.listPortsAll(options?: { protocol?: string; user?: string; port?: integer; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -721,7 +721,7 @@ client.terminal.system.listPortsAll(protocol?: string, user?: string, port?: int
 #### `listPortsIterator` — List all listening network ports (async iterator)
 
 ```typescript
-client.terminal.system.listPortsIterator(protocol?: string, user?: string, port?: integer, ip?: string, skip_program?: string, http_only?: boolean, hoody_only?: boolean)
+client.terminal.system.listPortsIterator(options?: { protocol?: string; user?: string; port?: integer; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -742,7 +742,7 @@ client.terminal.system.listPortsIterator(protocol?: string, user?: string, port?
 #### `listProcesses` — List all system processes
 
 ```typescript
-client.terminal.system.listProcesses(sort?: string, limit?: integer, filter?: string)
+client.terminal.system.listProcesses(options?: { sort?: string; limit?: integer; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -759,7 +759,7 @@ client.terminal.system.listProcesses(sort?: string, limit?: integer, filter?: st
 #### `listProcessesAll` — List all system processes (collect all pages)
 
 ```typescript
-client.terminal.system.listProcessesAll(sort?: string, limit?: integer, filter?: string)
+client.terminal.system.listProcessesAll(options?: { sort?: string; limit?: integer; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -776,7 +776,7 @@ client.terminal.system.listProcessesAll(sort?: string, limit?: integer, filter?:
 #### `listProcessesIterator` — List all system processes (async iterator)
 
 ```typescript
-client.terminal.system.listProcessesIterator(sort?: string, limit?: integer, filter?: string)
+client.terminal.system.listProcessesIterator(options?: { sort?: string; limit?: integer; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -793,7 +793,7 @@ client.terminal.system.listProcessesIterator(sort?: string, limit?: integer, fil
 #### `reboot` — Reboot the system
 
 ```typescript
-client.terminal.system.reboot(delay?: integer)
+client.terminal.system.reboot(options?: { delay?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -825,7 +825,7 @@ client.terminal.system.sendSignal(data: object)
 #### `shutdown` — Shutdown the system
 
 ```typescript
-client.terminal.system.shutdown(delay?: integer)
+client.terminal.system.shutdown(options?: { delay?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -876,7 +876,7 @@ client.terminal.abort(command_id: string, data?: object)
 #### `write` — Write input to terminal
 
 ```typescript
-client.terminal.write(terminal_id: string, data?: object)
+client.terminal.write(data?: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -896,7 +896,7 @@ client.terminal.write(terminal_id: string, data?: object)
 #### `findInTerminal` — Search terminal screen with regex
 
 ```typescript
-client.terminal.terminalAutomation.findInTerminal(terminal_id: string, pattern: string, scope?: string, limit?: integer, case_insensitive?: boolean, scroll_offset?: integer)
+client.terminal.terminalAutomation.findInTerminal(options?: { terminal_id?: string; pattern?: string; scope?: string; limit?: integer; case_insensitive?: boolean; scroll_offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -942,7 +942,7 @@ client.terminal.terminalAutomation.getSessionAutomationState(terminal_id: string
 #### `getTerminalSnapshot` — Get rendered terminal snapshot
 
 ```typescript
-client.terminal.terminalAutomation.getTerminalSnapshot(terminal_id: string, include_colors?: boolean, include_highlights?: boolean, scroll_offset?: integer)
+client.terminal.terminalAutomation.getTerminalSnapshot(options?: { terminal_id?: string; include_colors?: boolean; include_highlights?: boolean; scroll_offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -971,7 +971,7 @@ client.terminal.terminalAutomation.listSupportedKeys()
 #### `pasteTerminalText` — Paste text into terminal
 
 ```typescript
-client.terminal.terminalAutomation.pasteTerminalText(terminal_id: string, data: object)
+client.terminal.terminalAutomation.pasteTerminalText(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -989,7 +989,7 @@ client.terminal.terminalAutomation.pasteTerminalText(terminal_id: string, data: 
 #### `pressTerminalKeys` — Send named key presses to terminal
 
 ```typescript
-client.terminal.terminalAutomation.pressTerminalKeys(terminal_id: string, data: object)
+client.terminal.terminalAutomation.pressTerminalKeys(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -997,7 +997,7 @@ client.terminal.terminalAutomation.pressTerminalKeys(terminal_id: string, data: 
 | `terminal_id` | `string` | query | Yes | Terminal session ID |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ keys: any[], key: string }`
+**Body:** `{ keys: string[], key: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/press`
 **CLI:** `hoody terminal sessions press`
@@ -1007,7 +1007,7 @@ client.terminal.terminalAutomation.pressTerminalKeys(terminal_id: string, data: 
 #### `sendTerminalMouseEvents` — Send cell-based mouse events to terminal
 
 ```typescript
-client.terminal.terminalAutomation.sendTerminalMouseEvents(terminal_id: string, data: object)
+client.terminal.terminalAutomation.sendTerminalMouseEvents(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1024,7 +1024,7 @@ client.terminal.terminalAutomation.sendTerminalMouseEvents(terminal_id: string, 
 #### `waitForTerminal` — Wait for terminal condition
 
 ```typescript
-client.terminal.terminalAutomation.waitForTerminal(terminal_id: string, data: object)
+client.terminal.terminalAutomation.waitForTerminal(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1044,7 +1044,7 @@ client.terminal.terminalAutomation.waitForTerminal(terminal_id: string, data: ob
 #### `beginTerminalDrop` — Begin a drag-and-drop staging transaction
 
 ```typescript
-client.terminal.terminalDragAndDrop.beginTerminalDrop(terminal_id: string)
+client.terminal.terminalDragAndDrop.beginTerminalDrop(options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1058,7 +1058,7 @@ client.terminal.terminalDragAndDrop.beginTerminalDrop(terminal_id: string)
 #### `commitTerminalDrop` — Finalize a drop and inject the OSC frame
 
 ```typescript
-client.terminal.terminalDragAndDrop.commitTerminalDrop(terminal_id: string, drop: string, token: string, data: object)
+client.terminal.terminalDragAndDrop.commitTerminalDrop(data: object, options?: { terminal_id?: string; drop?: string; token?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1068,7 +1068,7 @@ client.terminal.terminalDragAndDrop.commitTerminalDrop(terminal_id: string, drop
 | `token` | `string` | query | Yes | Drop token from /drop-begin |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ ctx*: string, r: int, c: int, cr: string, items*: any[] }`
+**Body:** `{ ctx*: string, r: int, c: int, cr: string, items*: object[] }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/drop-commit`
 
@@ -1077,7 +1077,7 @@ client.terminal.terminalDragAndDrop.commitTerminalDrop(terminal_id: string, drop
 #### `oneShotTerminalDrop` — One-shot drop (begin + stage + commit)
 
 ```typescript
-client.terminal.terminalDragAndDrop.oneShotTerminalDrop(terminal_id: string, data: object)
+client.terminal.terminalDragAndDrop.oneShotTerminalDrop(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1085,7 +1085,7 @@ client.terminal.terminalDragAndDrop.oneShotTerminalDrop(terminal_id: string, dat
 | `terminal_id` | `string` | query | Yes | Terminal session ID (numeric 1-65535) |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ ctx*: string, r: int, c: int, items*: any[] }`
+**Body:** `{ ctx*: string, r: int, c: int, items*: object[] }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/drop`
 
@@ -1094,7 +1094,7 @@ client.terminal.terminalDragAndDrop.oneShotTerminalDrop(terminal_id: string, dat
 #### `uploadTerminalDropSlice` — Upload a raw file slice into a drop
 
 ```typescript
-client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(terminal_id: string, drop: string, token: string, path: string, offset: integer)
+client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(data: object, options?: { terminal_id?: string; drop?: string; token?: string; path?: string; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1104,6 +1104,7 @@ client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(terminal_id: string,
 | `token` | `string` | query | Yes | Drop token from /drop-begin |
 | `path` | `string` | query | Yes | Sanitized relative path of the staged file (no `..`, not absolute) |
 | `offset` | `integer` | query | Yes | Byte offset to write at (must equal the current staged size) |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/upload`
 
@@ -1132,7 +1133,7 @@ client.terminal.terminalState.postTerminalState(data?: object)
 #### `get` — Get web terminal interface
 
 ```typescript
-client.terminal.web.get(terminal_id?: string, cwd?: string, cwd_auto_create?: boolean, shell?: string, user?: string, cmd?: string, readonly?: boolean, title?: string, fontSize?: integer, backgroundColor?: string, panel?: string, panel-visible?: boolean, panel-position?: string, panel-width?: string, panel-resizable?: boolean, hide-toolbar?: boolean, ssh_host?: string, ssh_user?: string, ssh_port?: string, ssh_password?: string, socks5_host?: string, socks5_port?: string, socks5_user?: string, socks5_pass?: string, desktop?: boolean, desktop_env?: string, redirect?: string, redirect_delay?: integer, arg?: string, welcome?: boolean, debug?: boolean, reset?: boolean, pid?: integer, env?: string, display?: string, env_inject?: boolean, startup_script?: string, ssh_key?: string, panel-height?: string)
+client.terminal.web.get(options?: { terminal_id?: string; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; readonly?: boolean; title?: string; fontSize?: integer; backgroundColor?: string; panel?: string; panel-visible?: boolean; panel-position?: string; panel-width?: string; panel-resizable?: boolean; hide-toolbar?: boolean; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; desktop?: boolean; desktop_env?: string; redirect?: string; redirect_delay?: integer; arg?: string; welcome?: boolean; debug?: boolean; reset?: boolean; pid?: integer; env?: string; display?: string; env_inject?: boolean; startup_script?: string; ssh_key?: string; panel-height?: string })
 ```
 
 | Parameter | Type | In | Required | Description |

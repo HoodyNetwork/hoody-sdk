@@ -1,4 +1,4 @@
-> _**SDK skill · `sqlite` namespace** · ~10,148 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `sqlite` namespace** · ~10,258 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `sqlite` — SQLite HTTP API
 
@@ -341,7 +341,7 @@ await client.files.delete(db);
 #### `create` — Create new SQLite database
 
 ```typescript
-client.sqlite.database.create(path: string, init_kv?: boolean, kv_table?: string)
+client.sqlite.database.create(options?: { path?: string; init_kv?: boolean; kv_table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -358,7 +358,7 @@ client.sqlite.database.create(path: string, init_kv?: boolean, kv_table?: string
 #### `executeTransaction` — Execute SQL transaction
 
 ```typescript
-client.sqlite.database.executeTransaction(db: string, create_db_if_missing?: boolean, data: sqlite_main.request)
+client.sqlite.database.executeTransaction(data: sqlite_main.request, options?: { db?: string; create_db_if_missing?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -421,7 +421,7 @@ client.sqlite.health.getHealthCache()
 #### `clear` — Clear query history
 
 ```typescript
-client.sqlite.history.clear(db: string)
+client.sqlite.history.clear(options?: { db?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -436,7 +436,7 @@ client.sqlite.history.clear(db: string)
 #### `deleteEntry` — Delete history entry
 
 ```typescript
-client.sqlite.history.deleteEntry(index: integer, db: string)
+client.sqlite.history.deleteEntry(index: integer, options?: { db?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -452,7 +452,7 @@ client.sqlite.history.deleteEntry(index: integer, db: string)
 #### `getStats` — Get history statistics
 
 ```typescript
-client.sqlite.history.getStats(db: string)
+client.sqlite.history.getStats(options?: { db?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -467,7 +467,7 @@ client.sqlite.history.getStats(db: string)
 #### `list` — Get query history
 
 ```typescript
-client.sqlite.history.list(db: string, limit?: integer)
+client.sqlite.history.list(options?: { db?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -485,7 +485,7 @@ client.sqlite.history.list(db: string, limit?: integer)
 #### `batchDelete` — Batch delete multiple keys
 
 ```typescript
-client.sqlite.kvStore.batchDelete(db: string, table?: string, data: sqlite_main.kvBatchDeleteRequest)
+client.sqlite.kvStore.batchDelete(data: sqlite_main.kvBatchDeleteRequest, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -502,7 +502,7 @@ client.sqlite.kvStore.batchDelete(db: string, table?: string, data: sqlite_main.
 #### `batchGet` — Batch get multiple keys
 
 ```typescript
-client.sqlite.kvStore.batchGet(db: string, table?: string, data: sqlite_main.kvBatchGetRequest)
+client.sqlite.kvStore.batchGet(data: sqlite_main.kvBatchGetRequest, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -519,7 +519,7 @@ client.sqlite.kvStore.batchGet(db: string, table?: string, data: sqlite_main.kvB
 #### `batchSet` — Batch set multiple keys
 
 ```typescript
-client.sqlite.kvStore.batchSet(db: string, table?: string, data: sqlite_main.kvBatchSetRequest)
+client.sqlite.kvStore.batchSet(data: sqlite_main.kvBatchSetRequest, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -536,7 +536,7 @@ client.sqlite.kvStore.batchSet(db: string, table?: string, data: sqlite_main.kvB
 #### `compareSnapshots` — Compare table snapshots
 
 ```typescript
-client.sqlite.kvStore.compareSnapshots(db: string, table?: string, from: integer, to: integer, keys?: string)
+client.sqlite.kvStore.compareSnapshots(options?: { db?: string; table?: string; from?: integer; to?: integer; keys?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -555,7 +555,7 @@ client.sqlite.kvStore.compareSnapshots(db: string, table?: string, from: integer
 #### `decr` — Atomic decrement
 
 ```typescript
-client.sqlite.kvStore.decr(key: string, db: string, table?: string, delta?: integer, path?: string, history?: boolean)
+client.sqlite.kvStore.decr(key: string, options?: { db?: string; table?: string; delta?: integer; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -575,7 +575,7 @@ client.sqlite.kvStore.decr(key: string, db: string, table?: string, delta?: inte
 #### `delete` — Delete key
 
 ```typescript
-client.sqlite.kvStore.delete(key: string, db: string, table?: string, history?: boolean)
+client.sqlite.kvStore.delete(key: string, options?: { db?: string; table?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -593,7 +593,7 @@ client.sqlite.kvStore.delete(key: string, db: string, table?: string, history?: 
 #### `exists` — Check if key exists
 
 ```typescript
-client.sqlite.kvStore.exists(key: string, db: string, table?: string)
+client.sqlite.kvStore.exists(key: string, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -610,7 +610,7 @@ client.sqlite.kvStore.exists(key: string, db: string, table?: string)
 #### `get` — Get value by key
 
 ```typescript
-client.sqlite.kvStore.get(key: string, db: string, table?: string, path?: string, at_timestamp?: integer, rebuild?: boolean)
+client.sqlite.kvStore.get(key: string, options?: { db?: string; table?: string; path?: string; at_timestamp?: integer; rebuild?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -630,7 +630,7 @@ client.sqlite.kvStore.get(key: string, db: string, table?: string, path?: string
 #### `getHistory` — Get key operation history
 
 ```typescript
-client.sqlite.kvStore.getHistory(key: string, db: string, table?: string, limit?: integer)
+client.sqlite.kvStore.getHistory(key: string, options?: { db?: string; table?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -648,7 +648,7 @@ client.sqlite.kvStore.getHistory(key: string, db: string, table?: string, limit?
 #### `getSnapshot` — Get key snapshot at operation
 
 ```typescript
-client.sqlite.kvStore.getSnapshot(key: string, db: string, table?: string, op_number: integer)
+client.sqlite.kvStore.getSnapshot(key: string, options?: { db?: string; table?: string; op_number?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -666,7 +666,7 @@ client.sqlite.kvStore.getSnapshot(key: string, db: string, table?: string, op_nu
 #### `getTableSnapshot` — Get table snapshot at timestamp
 
 ```typescript
-client.sqlite.kvStore.getTableSnapshot(db: string, table?: string, timestamp: integer, limit?: integer, prefix?: string)
+client.sqlite.kvStore.getTableSnapshot(options?: { db?: string; table?: string; timestamp?: integer; limit?: integer; prefix?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -685,7 +685,7 @@ client.sqlite.kvStore.getTableSnapshot(db: string, table?: string, timestamp: in
 #### `incr` — Atomic increment
 
 ```typescript
-client.sqlite.kvStore.incr(key: string, db: string, table?: string, delta?: integer, path?: string, history?: boolean)
+client.sqlite.kvStore.incr(key: string, options?: { db?: string; table?: string; delta?: integer; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -705,7 +705,7 @@ client.sqlite.kvStore.incr(key: string, db: string, table?: string, delta?: inte
 #### `list` — List keys
 
 ```typescript
-client.sqlite.kvStore.list(db: string, table?: string, prefix?: string, limit?: integer, offset?: integer, at_timestamp?: integer)
+client.sqlite.kvStore.list(options?: { db?: string; table?: string; prefix?: string; limit?: integer; offset?: integer; at_timestamp?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -725,7 +725,7 @@ client.sqlite.kvStore.list(db: string, table?: string, prefix?: string, limit?: 
 #### `listAll` — List keys (collect all pages)
 
 ```typescript
-client.sqlite.kvStore.listAll(db: string, table?: string, prefix?: string, limit?: integer, offset?: integer, at_timestamp?: integer)
+client.sqlite.kvStore.listAll(options?: { db?: string; table?: string; prefix?: string; limit?: integer; offset?: integer; at_timestamp?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -745,7 +745,7 @@ client.sqlite.kvStore.listAll(db: string, table?: string, prefix?: string, limit
 #### `listIterator` — List keys (async iterator)
 
 ```typescript
-client.sqlite.kvStore.listIterator(db: string, table?: string, prefix?: string, limit?: integer, offset?: integer, at_timestamp?: integer)
+client.sqlite.kvStore.listIterator(options?: { db?: string; table?: string; prefix?: string; limit?: integer; offset?: integer; at_timestamp?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -765,7 +765,7 @@ client.sqlite.kvStore.listIterator(db: string, table?: string, prefix?: string, 
 #### `pop` — Remove from array end
 
 ```typescript
-client.sqlite.kvStore.pop(key: string, db: string, table?: string, path?: string, history?: boolean)
+client.sqlite.kvStore.pop(key: string, options?: { db?: string; table?: string; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -784,7 +784,7 @@ client.sqlite.kvStore.pop(key: string, db: string, table?: string, path?: string
 #### `push` — Append to array
 
 ```typescript
-client.sqlite.kvStore.push(key: string, db: string, table?: string, path?: string, history?: boolean, data: object)
+client.sqlite.kvStore.push(key: string, data: object, options?: { db?: string; table?: string; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -804,7 +804,7 @@ client.sqlite.kvStore.push(key: string, db: string, table?: string, path?: strin
 #### `removeElement` — Remove array element
 
 ```typescript
-client.sqlite.kvStore.removeElement(key: string, db: string, table?: string, path?: string, index?: integer, history?: boolean, data: object)
+client.sqlite.kvStore.removeElement(key: string, data: object, options?: { db?: string; table?: string; path?: string; index?: integer; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -825,7 +825,7 @@ client.sqlite.kvStore.removeElement(key: string, db: string, table?: string, pat
 #### `rollback` — Rollback key operations
 
 ```typescript
-client.sqlite.kvStore.rollback(key: string, db: string, table?: string, steps?: integer)
+client.sqlite.kvStore.rollback(key: string, options?: { db?: string; table?: string; steps?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -843,7 +843,7 @@ client.sqlite.kvStore.rollback(key: string, db: string, table?: string, steps?: 
 #### `rollbackTable` — Rollback entire table
 
 ```typescript
-client.sqlite.kvStore.rollbackTable(db: string, table?: string, to_timestamp: integer, dry_run?: boolean, confirm?: string, data: sqlite_main.kvTableRollbackRequest)
+client.sqlite.kvStore.rollbackTable(data: sqlite_main.kvTableRollbackRequest, options?: { db?: string; table?: string; to_timestamp?: integer; dry_run?: boolean; confirm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -863,7 +863,7 @@ client.sqlite.kvStore.rollbackTable(db: string, table?: string, to_timestamp: in
 #### `set` — Set value for key
 
 ```typescript
-client.sqlite.kvStore.set(key: string, db: string, table?: string, path?: string, ttl?: integer, if_match?: string, history?: boolean, create_db_if_missing?: boolean, data: string)
+client.sqlite.kvStore.set(key: string, data: string, options?: { db?: string; table?: string; path?: string; ttl?: integer; if_match?: string; history?: boolean; create_db_if_missing?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -890,7 +890,7 @@ client.sqlite.kvStore.set(key: string, db: string, table?: string, path?: string
 #### `executeShareable` — Execute shareable SQL query
 
 ```typescript
-client.sqlite.query.executeShareable(db: string, sql: string)
+client.sqlite.query.executeShareable(options?: { db?: string; sql?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -908,7 +908,7 @@ client.sqlite.query.executeShareable(db: string, sql: string)
 #### `runMaintenance` — Run a database maintenance operation
 
 ```typescript
-client.sqlite.sql.runMaintenance(db: string, timeout?: integer, data: object)
+client.sqlite.sql.runMaintenance(data: object, options?: { db?: string; timeout?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |

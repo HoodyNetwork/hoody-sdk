@@ -1,4 +1,4 @@
-> _**HTTP skill · `terminal` namespace** · ~12,951 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `terminal` namespace** · ~12,956 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 
@@ -577,7 +577,7 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 - `POST /api/v1/terminal/paste` body — `{ text*: string, bracketed: bool }` — Paste text specification
   - `text` — Text to paste (UTF-8)
   - `bracketed` — Use bracketed paste mode if the program supports it. Default: true
-- `POST /api/v1/terminal/press` body — `{ keys: any[], key: string }` — Key press specification (exactly one of `keys` or `key` required)
+- `POST /api/v1/terminal/press` body — `{ keys: string[], key: string }` — Key press specification (exactly one of `keys` or `key` required)
   - `keys` — Array of key names to press in sequence (e.g. ["ctrl+c", "arrow_up", "enter"]). Mutually exclusive with `key`. Maximum 256 entries per request.
   - `key` — Single key name for one-shot press (e.g. "enter"). Mutually exclusive with `keys`
 - `POST /api/v1/terminal/mouse` body — `{ event: terminal_TerminalMouseEvent, events: terminal_TerminalMouseEvent[] } (exactly one of: event | events required)` — Mouse event specification
@@ -597,7 +597,7 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 | `POST /api/v1/terminal/drop-begin` | Begin a drag-and-drop staging transaction | `?terminal_id*` |
 | `POST /api/v1/terminal/drop-commit` | Finalize a drop and inject the OSC frame | `?terminal_id*` `?drop*` `?token*` `body*` |
 | `POST /api/v1/terminal/drop` | One-shot drop (begin + stage + commit) | `?terminal_id*` `body*` |
-| `POST /api/v1/terminal/upload` | Upload a raw file slice into a drop | `?terminal_id*` `?drop*` `?token*` `?path*` `?offset*` |
+| `POST /api/v1/terminal/upload` | Upload a raw file slice into a drop | `?terminal_id*` `?drop*` `?token*` `?path*` `?offset*` `body*` |
 
 **Param notes:**
 
@@ -609,13 +609,13 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 
 **Body shapes:**
 
-- `POST /api/v1/terminal/drop-commit` body — `{ ctx*: string, r: int, c: int, cr: string, items*: any[] }` — Manifest draft
+- `POST /api/v1/terminal/drop-commit` body — `{ ctx*: string, r: int, c: int, cr: string, items*: object[] }` — Manifest draft
   - `ctx` — Drop context: "drop" or "paste"
   - `r` — Drop cell row (Chat grid pane mapping)
   - `c` — Drop cell column
   - `cr` — Clip-read correlation nonce ([A-Za-z0-9_-]{1,64}); echoed verbatim as the injected frame's cr field so the TUI can match a clipboard-read landing. Invalid/oversized values are ignored.
   - `items` — Manifest entries [{p,d,s,name,h?}]
-- `POST /api/v1/terminal/drop` body — `{ ctx*: string, r: int, c: int, items*: any[] }` — One-shot drop payload
+- `POST /api/v1/terminal/drop` body — `{ ctx*: string, r: int, c: int, items*: object[] }` — One-shot drop payload
   - `r` — Drop cell row
   - `items` — File/dir items ([{name,b64}\|{name,dir:true,items:[...]}])
 

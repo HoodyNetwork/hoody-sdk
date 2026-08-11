@@ -1,4 +1,4 @@
-> _**HTTP skill · `code` namespace** · ~6,530 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `code` namespace** · ~6,496 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `code` — VS Code in the browser, per container
 
@@ -80,7 +80,7 @@ Form-POST the password to the **child instance** root `/login` (see Example 7) �
 - 3 mount prefixes; use `/api/v1/code`.
 - `GET /api/v1/code` persists `folder`/`workspace` as the last-opened workspace in the instance's user-data dir; `ew=true` wipes.
 - `POST /api/v1/code/mint-key` idempotent.
-- `POST /api/v1/code/extensions/install` / `GET /api/v1/code/extensions/list` are declared in the kit OpenAPI (and surfaced by the generated SDK/CLI) but the current kit does NOT implement them — no extensions router is mounted anywhere; requests fall through (child: vscode catch-all SPA/302; `code-1`: orchestrator plain-text 404). Pre-install via the child launch flags (`--install-extension`, `--install-builtin-extension`, `--preload-builtin-extensions-dir`) or in-editor.
+- `POST /api/v1/code/extensions/install` / `GET /api/v1/code/extensions/list` are declared in the kit OpenAPI (and surfaced by the generated SDK/CLI) but the current kit does NOT implement them — no extensions router is mounted anywhere, so requests fall through and the call fails rather than installing or listing anything. Pre-install via the child launch flags (`--install-extension`, `--install-builtin-extension`, `--preload-builtin-extensions-dir`) or in-editor.
 - `/proxy/:port` and `/absproxy/:port` are mounted at the **child instance root** (`{P}-{C}-http-<60000+id>.{N}` subdomain), NOT under `/api/v1/code` and NOT at the public `code-1` root — the orchestrator has no proxy routes. Use `https://{P}-{C}-http-60001.{N}.containers.hoody.com/proxy/{port}/...` (or `/absproxy/{port}/...`).
 - `/proxy/:port/...` rewrites `req.base` so the upstream sees `/<rest>`; `/absproxy/:port/...` keeps the full `/absproxy/:port/...` prefix verbatim — use `absproxy` for APIs/WS where the upstream cares about its own base path.
 - `GET /api/v1/code/update/check` (the generated accessor — the `update.*` service does not exist) queries GitHub releases. NOTE: the generated path is `/api/v1/code/update/check`, but `/update` is mounted on the **child instance** root only — the generated call and the public `code-1` root both miss it (orchestrator has no `/update` route). Call `https://{P}-{C}-http-<60000+id>.{N}…/update/check` directly. The route returns `{ checked, latest, current, isLatest }`, but the generated TS type `CodeHealthCheckUpdateResponse` (from the OpenAPI spec) mis-declares `{ current, latest, updateAvailable }` and drops `checked` — read `.isLatest`/`.checked` from the raw JSON, not `.updateAvailable`. `?force=true` bypasses the 24 h cache (kit-level only — not exposed via the generated SDK or CLI surfaces; reachable only by raw HTTP to `/update/check?force=true`).
@@ -138,7 +138,7 @@ The `extension` query value MUST match `^[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+$` — `pub
 
 ### 3. Install a custom VSIX programmatically
 
-**Goal:** push an internal extension (`.vsix`) into the container's VS Code. ⚠ **`POST /api/v1/code/extensions/install` is spec-only** — the current kit mounts no extensions router, so the documented `POST /api/v1/code/extensions/install` never reaches a handler (`code-1`: orchestrator plain-text 404; child: vscode catch-all SPA/302). What actually works:
+**Goal:** push an internal extension (`.vsix`) into the container's VS Code. ⚠ **`POST /api/v1/code/extensions/install` is spec-only** — the current kit mounts no extensions router, so the documented `POST /api/v1/code/extensions/install` never reaches a handler and the call fails. What actually works:
 
 - **At child boot (launch flags):** `--install-extension <id-or-vsix-path>`, `--install-builtin-extension <vsix-path>`, or drop VSIXes in the preload dir consumed by `--preload-builtin-extensions-dir` (the platform passes `/hoody/storage/hoody-code/extensions` by default).
 - **In-editor:** Extensions view → `…` menu → "Install from VSIX…" (the VSIX must already be on the container filesystem — push it via the `files` namespace).
@@ -231,7 +231,7 @@ HEALTH=$(curl -sf --max-time 30 "$KIT/api/v1/code/health" | jq -r .status)
 #      ls /hoody/storage/hoody-code/data/1/extensions | grep '^saoudrizwan\.claude-dev-'
 echo "smoke PASS"
 ```
-⚠ On the **child instance**, `/api/v1/code/health` resets the idle-shutdown heartbeat — only `/healthz` (kit-internal, not surfaced through the public path) is excluded; hitting it on a cron keeps the child hot. The orchestrator's `code-1` health endpoint does not touch child heartbeats.
+⚠ On the **child instance**, `/api/v1/code/health` resets the idle-shutdown heartbeat, so hitting it on a cron keeps the child hot. The orchestrator's `code-1` health endpoint does not touch child heartbeats.
 
 ### 9. Logout + verify the session cookie is revoked
 
@@ -280,7 +280,7 @@ The same iframe pattern works for **every** Hoody kit (`files`, `terminal`, `dis
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/code/login` | Get login page | `?to` |
-| `POST /api/v1/code/login` | Submit login credentials | `?to` |
+| `POST /api/v1/code/login` | Submit login credentials | `?to` `body*` |
 | `GET /api/v1/code/logout` | Logout |  |
 
 **Param notes:**

@@ -1,4 +1,4 @@
-> _**CLI skill · `daemon` namespace** · ~6,417 tokens · hoody-sdk v1.0.0-beta.12_
+> _**CLI skill · `daemon` namespace** · ~6,720 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `daemon` — supervisord program lifecycle (start any program; logs always retained)
 
@@ -219,8 +219,26 @@ hoody --container "$C" daemon programs reset
 ```
 ### 7. Patch only the env vars on a running program
 
-**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `hoody daemon programs edit` is a partial merge — fields you don't pass are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
+**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `hoody daemon programs edit` is a partial merge **on the server** — fields absent from the request body are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
 
+> ⚠️ **On the CLI, "don't pass it" is not the same as "it isn't sent."** Note
+> first that `programs edit` requires `--name`, `--command` and `--user` even
+> when you are changing something else — it reuses the create schema — so the
+> smallest real edit is those three plus the field you actually want. On top of
+> that, the generated CLI materialises every schema default into the request, so
+> that command still transmits ten more fields you never gave it.
+> **Nine of them overwrite stored state**: `enabled=true`, `boot=false`,
+> `delay_seconds=0`, `autorestart=unexpected`, `priority=999`,
+> `logs_enabled=true`, `log_max_bytes=5242880`, `log_backups=2` and
+> `lazy_load=false`. (`hoody_kit` is also sent but is harmless — the server
+> re-derives it and ignores whatever the client supplies.) The server faithfully
+> preserves what it never receives — but it does receive these nine, so it
+> overwrites them.
+>
+> If the program depends on any non-default value (a custom `priority`,
+> `boot: true`, `lazy_load: true`), **restate it in the same command**, or make
+> the edit through the SDK or HTTP surface, which send only the fields you
+> actually provide.
 ```bash
 # `programs edit` requires --name/--command/--user (PUT-style replacement); snapshot first then re-pass:
 P=$(hoody --container "$C" daemon programs get "$ID" -o json | jq '.program')
@@ -282,10 +300,10 @@ hoody --container "$C" daemon programs start "$ID"
 | `hoody daemon ephemeral status` |  | read | Get ephemeral program status | `daemon.quickStart.getStatus` | `hoody daemon ephemeral status abc-123` |
 | `hoody daemon ephemeral stop` |  | write | Stop ephemeral program | `daemon.quickStart.stop` | `hoody daemon ephemeral stop abc-123` |
 | `hoody daemon health` |  | read | Service health check | `daemon.health.check` | `hoody daemon health` |
-| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.add` | `hoody daemon programs create --id 10 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param=--port --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
+| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.add` | `hoody daemon programs create --id 10 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param <port_param> --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
 | `hoody daemon programs delete` | rm, remove | destructive | Remove a program | `daemon.programs.remove` | `hoody daemon programs delete abc-123` |
 | `hoody daemon programs disable` |  | write | Disable a program | `daemon.control.disable` | `hoody daemon programs disable abc-123` |
-| `hoody daemon programs edit` |  | write | Edit a program | `daemon.programs.edit` | `hoody daemon programs edit abc-123 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param=--port --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
+| `hoody daemon programs edit` |  | write | Edit a program | `daemon.programs.edit` | `hoody daemon programs edit abc-123 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param <port_param> --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
 | `hoody daemon programs enable` |  | write | Enable a program | `daemon.control.enable` | `hoody daemon programs enable abc-123` |
 | `hoody daemon programs get` |  | read | Get a specific program | `daemon.programs.get` | `hoody daemon programs get abc-123` |
 | `hoody daemon programs list` |  | read | List all programs | `daemon.programs.listIterator` | `hoody daemon programs list --port 8080 --port-from 10 --port-to 10` |

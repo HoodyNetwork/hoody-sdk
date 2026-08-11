@@ -1,8 +1,8 @@
-> _**SDK skill (basic)** · ~17,196 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill (basic)** · ~17,317 tokens · hoody-sdk v1.0.0-beta.13_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 
-Typed client, 1000+ methods, 19 namespaces. Node, Bun, browser. Built-in retries, error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
+Typed client, 1000+ methods, 20 namespaces. Node, Bun, browser. Built-in retries, error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
 
 ## What is Hoody
 
@@ -225,6 +225,7 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 | `daemon` | `daemon-1` | `https://{P}-{C}-daemon-1.{N}.containers.hoody.com` |
 | `display` | `display-<N>` (multi) | `https://{P}-{C}-display-1.{N}.containers.hoody.com` (`display-1`, `-2`, …) |
 | (no SDK namespace — registered program) | `desktop-<N>` | `https://{P}-{C}-desktop-1.{N}.containers.hoody.com?desktop_env=xfce` — opens a full XFCE/MATE desktop in the browser (see § Desktop alias) |
+| `egress` | `egress-1` | `https://{P}-{C}-egress-1.{N}.containers.hoody.com` — outbound HTTP proxy (CONNECT + absolute-URI forwarding); every `egress-<n>` index reaches the same single process, but proxy permissions evaluate per index |
 | `exec` | `exec-1`; script by PATH | `https://{P}-{C}-exec-1.{N}.containers.hoody.com/{script}` (a script under `scripts/{sub}/` is ALSO reachable at the `{sub}.…-exec-1.…` subdomain) |
 | `files` | `files-1` | `https://{P}-{C}-files-1.{N}.containers.hoody.com` |
 | `notes` | `notes-1` | `https://{P}-{C}-notes-1.{N}.containers.hoody.com` |
@@ -395,7 +396,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 |---|---|
 | `container_id` | 24-char hex id of the target container — required. |
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Globally unique per server. |
-| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
+| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `egress`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). is also accepted by the validator but is deliberately NOT listed: it is derived from `display` and internal — reach it through `display`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
 | `target_path` | Optional path appended to inner request (`/api/v1` or `/index.php?debug=1`). |
 | `allow_path_override` | Defaults to `true`. If `true`, callers can append path segments after the alias hostname; if `false`, only `target_path` is reachable. |
@@ -1023,6 +1024,7 @@ SSE methods (`watch.streams.streamSse`, `exec.logs.stream`, `proxyLogs.logs.stre
 - [`curl`](https://hoody.com/SKILLS/SKILL-SDK/curl.md) — full HTTP client gateway + REST-as-GET-URL bridge
 - [`daemon`](https://hoody.com/SKILLS/SKILL-SDK/daemon.md) — supervisord program lifecycle (start any program; logs always retained)
 - [`display`](https://hoody.com/SKILLS/SKILL-SDK/display.md) — programmatic GUI desktops with screenshots, input, and windows
+- [`egress`](https://hoody.com/SKILLS/SKILL-SDK/egress.md) — the container's outbound HTTP proxy
 - [`exec`](https://hoody.com/SKILLS/SKILL-SDK/exec.md) — micro-services: any script or API as an instant HTTP endpoint
 - [`files`](https://hoody.com/SKILLS/SKILL-SDK/files.md) — container filesystem over HTTP, with automatic Git-like change history
 - [`notes`](https://hoody.com/SKILLS/SKILL-SDK/notes.md) — Collaborative notebooks, hierarchical nodes, documents, databases

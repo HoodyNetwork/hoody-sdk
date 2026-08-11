@@ -2,7 +2,7 @@
 name: "hoody"
 description: "Hoody: run code, processes, GUIs, browsers, databases, cron jobs and HTTP services on real cloud computers the user owns, and operate their Hoody account — containers, files across 60+ storage providers, secrets, proxies, billing, notifications. Use when a task needs a real computer in the cloud, or any operation against the user's own tenant. Abstain for pre-sales, compliance, support/status, third-party SSO, and generic programming help."
 ---
-> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~11,446 tokens · hoody-sdk v1.0.0-beta.12_
+> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~11,480 tokens · hoody-sdk v1.0.0-beta.13_
 
 # Hoody Agent Skill — pick a surface (SDK / HTTP / CLI)
 
@@ -26,7 +26,7 @@ Reach for Hoody whenever the work needs a **real computer in the cloud** or an o
 |---|---|
 | Writing code — a TypeScript / JavaScript service, script, or browser app | **SDK** — typed, retries, async iterators, auto re-auth |
 | Writing code in another language (Python, Rust, Go, …) | **HTTP** — bearer token + `curl`/your stdlib client |
-| In a terminal — an agent with a shell tool or a human at a prompt; shell scripts, Makefiles, CI, `ssh` | **CLI** — `hoody …` one-liners, `-o json` for piping (preinstalled in every container; zero-install `npx https://cli.hoody.com`) |
+| In a terminal — an agent with a shell tool or a human at a prompt; shell scripts, Makefiles, CI, `ssh` | **CLI** — `hoody …` one-liners, `-o json` for piping (preinstalled in every container; zero-install `npx hoody-sdk`) |
 | No `hoody` CLI and can't install one — or pseudo-scripting a few one-off calls | **HTTP** — anything that can send a request works; `curl` + the snippets below are the whole toolchain |
 | Need to **host** a handler at a GET-able URL (webhook target) | **`exec` kit's auto-mount** — `exec.scripts.write` makes any handler reachable at the bare exec kit URL; see §7. (To **call** an arbitrary API from a URL-only client, use the `curl` GET-bridge — § Driving Hoody from a URL-only client, near the end) |
 
@@ -62,7 +62,7 @@ curl -s "$A/api/v1/users/auth/me" -H "Authorization: Bearer $TOKEN"
 
 ```bash
 curl -fsSL https://install.hoody.com | sh   # macOS/Linux; PowerShell: iwr https://install.hoody.com/install.ps1 -UseB | iex
-# Zero-install alternative: npx https://cli.hoody.com --help   (also bunx / pnpm dlx)
+# Zero-install alternative: npx hoody-sdk --help   (also bunx / pnpm dlx)
 hoody login --username <user> --password <pass>   # bare `hoody login` is interactive; `--web` runs the device flow
 hoody auth profile current        # current user
 hoody config set baseUrl https://api.hoody.com    # override default
@@ -309,9 +309,8 @@ await box.exec.scripts.write({
   path: 'build.js',
   content: 'module.exports = (req, res) => res.json({ ok: true, ts: Date.now() });\n',
 });
-// 2. Trigger via the SDK accessor — single-segment path only.
-//    (The accessor URL-encodes `/` to %2F, so multi-segment routes like `api/build`
-//     must be hit via fetch on the bare kit URL — see option below.)
+// 2. Trigger via the SDK accessor — multi-segment paths work: `api/build` is sent
+//    as `api/build`, not `api%2Fbuild`. (`.` and `..` segments are rejected.)
 const r = await box.exec.execution.execute('build');  // r.data → { ok: true, ts: … }
 // Or fetch the bare URL — exec kit accepts the URL itself as bearer (works for any path depth):
 const r2 = await fetch(`https://${c.project_id}-${c.id}-exec-1.${c.server_name}.containers.hoody.com/build`);
@@ -606,7 +605,7 @@ Accepted GET params: `url`, `method`, **`data`** (raw body), **`json`** (JSON bo
 
 ### Per-mode
 
-| Mode | Basic skill (start here) | FULL skill (basic + 19 namespaces) | Use when |
+| Mode | Basic skill (start here) | FULL skill (basic + 20 namespaces) | Use when |
 |---|---|---|---|
 | SDK | [SKILL-SDK.md](https://hoody.com/SKILLS/SKILL-SDK.md) | [SKILL-SDK-FULL.md](https://hoody.com/SKILLS/SKILL-SDK-FULL.md) | TS/JS service or browser app |
 | HTTP | [SKILL-HTTP.md](https://hoody.com/SKILLS/SKILL-HTTP.md) | [SKILL-HTTP-FULL.md](https://hoody.com/SKILLS/SKILL-HTTP-FULL.md) | Any other language; raw `curl` |
@@ -614,7 +613,7 @@ Accepted GET params: `url`, `method`, **`data`** (raw body), **`json`** (JSON bo
 
 ### Per-namespace deep-dives
 
-19 namespaces × 3 modes = 57 sub-skills. Each row below maps one namespace to its three mode-specific files; pick the column matching your runtime. Auto-generated from the per-namespace notes.
+20 namespaces × 3 modes = 60 sub-skills. Each row below maps one namespace to its three mode-specific files; pick the column matching your runtime. Auto-generated from the per-namespace notes.
 
 **Still can't route a task?** Fetch the routing index **<https://hoody.com/SKILLS/INDEX.md>** (~7.5k tokens) — per-namespace ops lists plus routing hints for ambiguous cases (`tunnel` vs `api`, `daemon` vs `terminal` vs `exec`, `watch` vs `proxyLogs`, …). And when even the per-namespace skill runs out, the **machine-readable spec is the last rung**: `GET https://api.hoody.com/openapi.json` (full control plane + kits; YAML at `/openapi.yaml`), or a single kit's spec at `https://{P}-{C}-{kit}-1.{N}.containers.hoody.com/api/v1/{kit}/openapi.json`.
 
@@ -628,6 +627,7 @@ Accepted GET params: `url`, `method`, **`data`** (raw body), **`json`** (JSON bo
 | `curl` | full HTTP client gateway + REST-as-GET-URL bridge | [SDK](https://hoody.com/SKILLS/SKILL-SDK/curl.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/curl.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/curl.md) |
 | `daemon` | supervisord program lifecycle (start any program; logs always retained) | [SDK](https://hoody.com/SKILLS/SKILL-SDK/daemon.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/daemon.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/daemon.md) |
 | `display` | programmatic GUI desktops with screenshots, input, and windows | [SDK](https://hoody.com/SKILLS/SKILL-SDK/display.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/display.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/display.md) |
+| `egress` | the container's outbound HTTP proxy | [SDK](https://hoody.com/SKILLS/SKILL-SDK/egress.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/egress.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/egress.md) |
 | `exec` | micro-services: any script or API as an instant HTTP endpoint | [SDK](https://hoody.com/SKILLS/SKILL-SDK/exec.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/exec.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/exec.md) |
 | `files` | container filesystem over HTTP, with automatic Git-like change history | [SDK](https://hoody.com/SKILLS/SKILL-SDK/files.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/files.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/files.md) |
 | `notes` | Collaborative notebooks, hierarchical nodes, documents, databases | [SDK](https://hoody.com/SKILLS/SKILL-SDK/notes.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/notes.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/notes.md) |

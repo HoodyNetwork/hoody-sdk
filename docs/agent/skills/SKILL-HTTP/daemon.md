@@ -1,4 +1,4 @@
-> _**HTTP skill · `daemon` namespace** · ~7,341 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `daemon` namespace** · ~7,402 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `daemon` — supervisord program lifecycle (start any program; logs always retained)
 
@@ -244,7 +244,7 @@ curl -sX POST "$KIT/api/v1/daemon/programs/reset"
 ```
 ### 7. Patch only the env vars on a running program
 
-**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `POST /api/v1/daemon/programs/edit/{id}` is a partial merge — fields you don't pass are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
+**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `POST /api/v1/daemon/programs/edit/{id}` is a partial merge **on the server** — fields absent from the request body are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
 
 ```bash
 KIT="https://${P}-${C}-daemon-1.${N}.containers.hoody.com"
@@ -379,7 +379,7 @@ curl -sX POST "$KIT/api/v1/daemon/programs/$ID/start" \
 **Param notes:**
 
 - `port` — Filter to specific port instance (for port-range programs only)
-- `include_stats` — Include resource stats (CPU, memory, process tree) for running programs. Adds a "stats" field with pid, started_at, cpu_percent, memory_rss_bytes, process_count, and per-process breakdown.
+- `include_stats` — Include resource stats (CPU, memory, process tree) for running programs. WHERE the stats land depends on the program: a standard program gets a top-level `stats`; a port-range program gets one `stats` per instance, on the instance itself (`instance.stats`, or `instances[].stats`), never at the top level. Each carries pid, started_at, cpu_percent, memory_rss_bytes, process_count and a per-process breakdown.
 - `type` — Log stream: stdout or stderr
 - `lines` — Number of lines to return from end of file
 - `port` — Port number (required for port-range programs)
@@ -387,5 +387,5 @@ curl -sX POST "$KIT/api/v1/daemon/programs/$ID/start" \
 
 ### Body schemas
 
-- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, port_range: { start*: int, end*: int }, port_param: string="--port", lazy_load: bool=false, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null, webhooks: { enabled: bool, urls: string[], events: string | string[], headers: object, timeout: int, retry: int }|null }`
+- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, port_range: { start*: int, end*: int }, port_param: string, lazy_load: bool=false, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null, webhooks: { enabled: bool, urls: string[], events: string | string[], headers: object, timeout: int, retry: int }|null }`
 - `daemon_EphemeralProgramInput` — `{ command*: string, user*: string, name: string, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, environment: { [key: string]: string }, priority: int=999, delay_seconds: int=0, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, ttl: int, wait: bool=false, timeout: int=30, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null }`

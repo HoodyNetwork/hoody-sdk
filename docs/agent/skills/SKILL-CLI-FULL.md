@@ -1,4 +1,4 @@
-> _**CLI skill (FULL — basic + all 19 namespaces)** · ~153,064 tokens · hoody-sdk v1.0.0-beta.12_
+> _**CLI skill (FULL — basic + all 20 namespaces)** · ~158,244 tokens · hoody-sdk v1.0.0-beta.13_
 
 # CLI mode — `hoody` command
 
@@ -42,7 +42,7 @@ Inside the SSH session: `hoody --help`, `hoody login`, `hoody projects list`, et
 ### One-shot run via npx (no install)
 
 ```bash
-npx https://cli.hoody.com               # also: bunx, pnpm dlx, yarn dlx
+npx hoody-sdk                           # also: bunx, pnpm dlx, yarn dlx
 ```
 
 ### Install — Linux / macOS
@@ -72,7 +72,7 @@ hoody login --username alex --password 'secret'
 ```
 
 - `--username` is the primary login flag; the CLI accepts `--email` as an alternative for email-based login. (The CLI itself does NOT pre-validate `--username` with a regex — server-side `loginSchema` enforces the alphanumeric/underscore/hyphen pattern.)
-- `--password` is required by `auth login` (no interactive prompt fallback). For scripted use, supply via the global `-p/--password` flag or `HOODY_PASSWORD` env var. Token cached at `~/.hoody/config.json`.
+- `--password` is required by `auth login` (no interactive prompt fallback) and the flag must actually be passed — it is a commander `requiredOption`, checked at parse time, so exporting `HOODY_PASSWORD` alone fails with `error: required option '--password <password>' not specified`. For scripted use read the env var into the flag: `--password "$HOODY_PASSWORD"`. Token cached at `~/.hoody/config.json`.
 - Default base URL `https://api.hoody.com` (help text and runtime fallback). Override: `--base-url <url>` (CLI flag is kebab-case) or `hoody config set baseUrl <url>` (config key is camelCase).
 
 ## Config and profiles
@@ -273,6 +273,7 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 | `daemon` | `daemon-1` | `https://{P}-{C}-daemon-1.{N}.containers.hoody.com` |
 | `display` | `display-<N>` (multi) | `https://{P}-{C}-display-1.{N}.containers.hoody.com` (`display-1`, `-2`, …) |
 | (no SDK namespace — registered program) | `desktop-<N>` | `https://{P}-{C}-desktop-1.{N}.containers.hoody.com?desktop_env=xfce` — opens a full XFCE/MATE desktop in the browser (see § Desktop alias) |
+| `egress` | `egress-1` | `https://{P}-{C}-egress-1.{N}.containers.hoody.com` — outbound HTTP proxy (CONNECT + absolute-URI forwarding); every `egress-<n>` index reaches the same single process, but proxy permissions evaluate per index |
 | `exec` | `exec-1`; script by PATH | `https://{P}-{C}-exec-1.{N}.containers.hoody.com/{script}` (a script under `scripts/{sub}/` is ALSO reachable at the `{sub}.…-exec-1.…` subdomain) |
 | `files` | `files-1` | `https://{P}-{C}-files-1.{N}.containers.hoody.com` |
 | `notes` | `notes-1` | `https://{P}-{C}-notes-1.{N}.containers.hoody.com` |
@@ -443,7 +444,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 |---|---|
 | `container_id` | 24-char hex id of the target container — required. |
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Globally unique per server. |
-| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
+| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `egress`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). is also accepted by the validator but is deliberately NOT listed: it is derived from `display` and internal — reach it through `display`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
 | `target_path` | Optional path appended to inner request (`/api/v1` or `/index.php?debug=1`). |
 | `allow_path_override` | Defaults to `true`. If `true`, callers can append path segments after the alias hostname; if `false`, only `target_path` is reachable. |
@@ -935,6 +936,7 @@ Fetch manifest (`--domain`/`~/.config/hoody/domain`/`HOODY_DOMAIN`); **minisign-
 - [`curl`](https://hoody.com/SKILLS/SKILL-CLI/curl.md) — full HTTP client gateway + REST-as-GET-URL bridge
 - [`daemon`](https://hoody.com/SKILLS/SKILL-CLI/daemon.md) — supervisord program lifecycle (start any program; logs always retained)
 - [`display`](https://hoody.com/SKILLS/SKILL-CLI/display.md) — programmatic GUI desktops with screenshots, input, and windows
+- [`egress`](https://hoody.com/SKILLS/SKILL-CLI/egress.md) — the container's outbound HTTP proxy
 - [`exec`](https://hoody.com/SKILLS/SKILL-CLI/exec.md) — micro-services: any script or API as an instant HTTP endpoint
 - [`files`](https://hoody.com/SKILLS/SKILL-CLI/files.md) — container filesystem over HTTP, with automatic Git-like change history
 - [`notes`](https://hoody.com/SKILLS/SKILL-CLI/notes.md) — Collaborative notebooks, hierarchical nodes, documents, databases
@@ -1033,7 +1035,8 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 - The bare `hoody agent` verb is a **hand-written TUI launcher** (`cli/agent-command.ts`), distinct from this generated HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface.
 - Source of truth is the `hoody-agent-d` gateway's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit URL is itself the credential; no HTTP bearer header is required.
 - The proxy service slug is `agent` and the kit URL host carries the index segment (`-agent-{index}`); resolve it via `getKitUrl('agent', container)` rather than hand-building.
-- `hoody agent sessions prompt-sync` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (Stream the turn with `hoody agent prompt "<task>" -c <id>` — the user-facing launcher reads the daemon's SSE for you; the generated `prompt-stream` subcommand is the raw, hidden form.)For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy on `hoody agent sessions prompt-stream` / `hoody agent sessions prompt-sync` to auto-approve confirm gates for the life of the turn (off by default) — HTTP: `?policy=auto_approve` (or the `X-Hoody-Gate-Policy: auto_approve` header); SDK: `policy: 'auto_approve'` in the prompt options; the generated CLI: `--policy auto_approve`. Note this only answers **confirm** gates, never questions. (`hoody agent prompt` takes `-y/--yes` as the shorthand for `?policy=auto_approve`; the bare TUI launcher has no such flag.)- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `hoody agent sessions create` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks toggle` / `hoody agent hooks disable-all` — plus `hoody agent hooks begin-write`, and the side-effecting `hoody agent hooks test` / `hoody agent hooks ack-trust`, all require a live `session_id` — `hoody agent hooks ack-trust` clears the per-session hook-trust prompt (the execution-trust probe `hoody agent hooks list` reports), the gate that must be acknowledged before any hook command is allowed to fire, mirroring `hoody agent skills trust` for skills; `hoody agent hooks reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `hoody agent hooks begin-write` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks toggle` / `hoody agent hooks disable-all` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `hoody agent hooks upsert` persists a command that fires on lifecycle events and `hoody agent hooks test` executes one immediately. The human-only confirmation gate lives only on the model-facing tool path, not on these RPCs, and the gateway HTTP edge has no app-level admin gate — the same access that authorizes any agent-kit call authorizes these too, with nothing extra, so gating this surface is the caller's/proxy's responsibility.
+- `hoody agent sessions prompt-sync` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (Stream the turn with `hoody agent prompt "<task>" -c <id>` — the user-facing launcher reads the daemon's SSE for you; the generated `prompt-stream` subcommand is the raw, hidden form.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy on `hoody agent sessions prompt-stream` / `hoody agent sessions prompt-sync` to auto-approve confirm gates for the life of the turn (off by default) — HTTP: `?policy=auto_approve` (or the `X-Hoody-Gate-Policy: auto_approve` header); SDK: `policy: 'auto_approve'` in the prompt options; the generated CLI: `--policy auto_approve`. Note this only answers **confirm** gates, never questions. (`hoody agent prompt` takes `-y/--yes` as the shorthand for `?policy=auto_approve`; the bare TUI launcher has no such flag.)
+- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `hoody agent sessions create` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks toggle` / `hoody agent hooks disable-all` — plus `hoody agent hooks begin-write`, and the side-effecting `hoody agent hooks test` / `hoody agent hooks ack-trust`, all require a live `session_id` — `hoody agent hooks ack-trust` clears the per-session hook-trust prompt (the execution-trust probe `hoody agent hooks list` reports), the gate that must be acknowledged before any hook command is allowed to fire, mirroring `hoody agent skills trust` for skills; `hoody agent hooks reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `hoody agent hooks begin-write` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `hoody agent hooks upsert` / `hoody agent hooks delete` / `hoody agent hooks toggle` / `hoody agent hooks disable-all` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `hoody agent hooks upsert` persists a command that fires on lifecycle events and `hoody agent hooks test` executes one immediately. The human-only confirmation gate lives only on the model-facing tool path, not on these RPCs, and the gateway HTTP edge has no app-level admin gate — the same access that authorizes any agent-kit call authorizes these too, with nothing extra, so gating this surface is the caller's/proxy's responsibility.
 - **Credential VALUES are never returned by the MCP surface.** `hoody agent mcp list` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. To change a secret you must supply its real value; to leave one alone, omit the field — `hoody agent mcp upsert` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `hoody agent mcp set-enabled` flips only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
 
 ## Common errors
@@ -1105,7 +1108,7 @@ Reads first: `hoody agent mcp list` (`{ session_id }`) returns the EFFECTIVE mer
 | `hoody agent loops update` |  | write | Update a loop | `agent.loops.updateLoop` | `hoody agent loops update --id abc-123 --loop-id abc-123 --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --paused --expires-in <expires_in> --max-cost-usd 10 --max-wall-ms 100` |
 | `hoody agent mcp begin-write` |  | write | Mint the single-use nonce every MCP write requires | `agent.mcp.beginMCPWrite` | `hoody agent mcp begin-write --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --op upsert --scope user` |
 | `hoody agent mcp delete` |  | write | Delete an MCP server (needs a begin-write nonce + expect-hash) | `agent.mcp.deleteMCPServer` | `hoody agent mcp delete --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --nonce <nonce> --scope user --name my-resource --expect-hash <expect_hash>` |
-| `hoody agent mcp import` |  | write | Import MCP servers from a Claude/Cursor/VS Code config (needs a begin-write nonce + expect-hash) | `agent.mcp.importMCPServers` | `hoody agent mcp import --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --nonce <nonce> --scope user --document <document> --servers <servers> --replace --expect-hash <expect_hash>` |
+| `hoody agent mcp import` |  | write | Import MCP servers from a Claude/Cursor/VS Code config (needs a begin-write nonce + expect-hash) | `agent.mcp.importMCPServers` | `hoody agent mcp import --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --nonce <nonce> --scope user --document <document> --replace --expect-hash <expect_hash>` |
 | `hoody agent mcp list` |  | read | List configured MCP servers with live connection state | `agent.mcp.listMCPServers` | `hoody agent mcp list --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm>` |
 | `hoody agent mcp parse` |  | read | Preview what a config document would import (writes nothing) | `agent.mcp.parseMCPImport` | `hoody agent mcp parse --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --document <document>` |
 | `hoody agent mcp probe` |  | write | Try a candidate MCP server config without saving it (human-only) | `agent.mcp.probeMCPServer` | `hoody agent mcp probe --x-hoody-cwd <x_hoody_cwd> --x-hoody-config-dir <x_hoody_config_dir> --x-hoody-container <x_hoody_container> --x-hoody-realm <x_hoody_realm> --session-id abc-123 --server srv-abc` |
@@ -1363,7 +1366,7 @@ Project-scope analogues live under `hoody projects proxy *`.
 11. `hoody servers extend`
 12. `hoody servers exec`
 
-Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands.
+Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands. ONE exception worth reading before you call it: the notification inbox is NOT uniform CRUD. `hoody inbox list` needs `resources.read_account` on the token (403 without it — the external_customer, dev_team, finance_team and read_only templates all deny it, as do all tokens minted before 2026-06-30), and `hoody inbox mark` / `hoody inbox mark-all` refuse EVERY auth token regardless of permissions, because acknowledging is how the record of an account event is dismissed. Use `hoody inbox list-public` as the no-auth fallback.
 
 ## Quirks & gotchas
 
@@ -1543,7 +1546,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
-| `hoody inbox list` |  | read | Get all notifications for the authenticated user | `api.notifications.listIterator` | `hoody inbox list` |
+| `hoody inbox list` |  | read | Get all notifications for the authenticated user | `api.notifications.listIterator` | `hoody inbox list --page 1 --limit 20 --unread-only --read-only --before <before>` |
 | `hoody inbox list-public` |  | read | Get all public notifications | `api.notifications.listPublicIterator` | `hoody inbox list-public` |
 | `hoody inbox mark` |  | write | Mark a notification as read | `api.notifications.markRead` | `hoody inbox mark abc-123` |
 | `hoody inbox mark-all` |  | write | Mark all notifications as read | `api.notifications.markAllRead` | `hoody inbox mark-all` |
@@ -1674,7 +1677,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `hoody storage incoming list-all` |  | read | Get all incoming shares | `api.storageShares.listIncomingGlobalIterator` | `hoody storage incoming list-all --realm-id abc-123` |
 | `hoody storage incoming toggle-mount` |  | action | Toggle incoming share mount | `api.storageShares.toggleIncomingMount` | `hoody storage incoming toggle-mount --share-id abc-123 --mount` |
 | `hoody storage list` | ls | read | List storage shares | `api.storageShares.listIterator` | `hoody storage list --target-type container --label my-label --status active --realm-id abc-123` |
-| `hoody storage list-all` |  | read | List storage shares across all realms (privileged scope) | `api.storageShares.listGlobalIterator` | `hoody storage list-all --realm-id abc-123` |
+| `hoody storage list-all` |  | read | List all storage shares you have created, across all your containers | `api.storageShares.listGlobalIterator` | `hoody storage list-all --realm-id abc-123` |
 | `hoody storage update` | edit | write | Update storage share | `api.storageShares.update` | `hoody storage update --share-id abc-123 --mode readonly --alias my-resource --label my-label --description "My description" --enabled --expires-at 1750000000` |
 
 ### `hoody users` (4) — User management
@@ -2079,7 +2082,7 @@ Form-POST the password to the **child instance** root `/login` (see Example 7) �
 - 3 mount prefixes; use `/api/v1/code`.
 - `hoody code vs` persists `folder`/`workspace` as the last-opened workspace in the instance's user-data dir; `ew=true` wipes.
 - `hoody code auth mint-key` idempotent.
-- `hoody code extensions install` / `hoody code extensions list` are declared in the kit OpenAPI (and surfaced by the generated SDK/CLI) but the current kit does NOT implement them — no extensions router is mounted anywhere; requests fall through (child: vscode catch-all SPA/302; `code-1`: orchestrator plain-text 404). Pre-install via the child launch flags (`--install-extension`, `--install-builtin-extension`, `--preload-builtin-extensions-dir`) or in-editor.
+- `hoody code extensions install` / `hoody code extensions list` are declared in the kit OpenAPI (and surfaced by the generated SDK/CLI) but the current kit does NOT implement them — no extensions router is mounted anywhere, so requests fall through and the call fails rather than installing or listing anything. Pre-install via the child launch flags (`--install-extension`, `--install-builtin-extension`, `--preload-builtin-extensions-dir`) or in-editor.
 - `/proxy/:port` and `/absproxy/:port` are mounted at the **child instance root** (`{P}-{C}-http-<60000+id>.{N}` subdomain), NOT under `/api/v1/code` and NOT at the public `code-1` root — the orchestrator has no proxy routes. Use `https://{P}-{C}-http-60001.{N}.containers.hoody.com/proxy/{port}/...` (or `/absproxy/{port}/...`).
 - `/proxy/:port/...` rewrites `req.base` so the upstream sees `/<rest>`; `/absproxy/:port/...` keeps the full `/absproxy/:port/...` prefix verbatim — use `absproxy` for APIs/WS where the upstream cares about its own base path.
 - `hoody code check-update` (the generated accessor — the `update.*` service does not exist) queries GitHub releases. NOTE: the generated path is `/api/v1/code/update/check`, but `/update` is mounted on the **child instance** root only — the generated call and the public `code-1` root both miss it (orchestrator has no `/update` route). Call `https://{P}-{C}-http-<60000+id>.{N}…/update/check` directly. The route returns `{ checked, latest, current, isLatest }`, but the generated TS type `CodeHealthCheckUpdateResponse` (from the OpenAPI spec) mis-declares `{ current, latest, updateAvailable }` and drops `checked` — read `.isLatest`/`.checked` from the raw JSON, not `.updateAvailable`. `?force=true` bypasses the 24 h cache (kit-level only — not exposed via the generated SDK or CLI surfaces; reachable only by raw HTTP to `/update/check?force=true`).
@@ -2136,7 +2139,7 @@ The `extension` query value MUST match `^[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+$` — `pub
 
 ### 3. Install a custom VSIX programmatically
 
-**Goal:** push an internal extension (`.vsix`) into the container's VS Code. ⚠ **`hoody code extensions install` is spec-only** — the current kit mounts no extensions router, so the documented `POST /api/v1/code/extensions/install` never reaches a handler (`code-1`: orchestrator plain-text 404; child: vscode catch-all SPA/302). What actually works:
+**Goal:** push an internal extension (`.vsix`) into the container's VS Code. ⚠ **`hoody code extensions install` is spec-only** — the current kit mounts no extensions router, so the documented `POST /api/v1/code/extensions/install` never reaches a handler and the call fails. What actually works:
 
 - **At child boot (launch flags):** `--install-extension <id-or-vsix-path>`, `--install-builtin-extension <vsix-path>`, or drop VSIXes in the preload dir consumed by `--preload-builtin-extensions-dir` (the platform passes `/hoody/storage/hoody-code/extensions` by default).
 - **In-editor:** Extensions view → `…` menu → "Install from VSIX…" (the VSIX must already be on the container filesystem — push it via the `files` namespace).
@@ -2205,7 +2208,7 @@ hoody --container "$C" code health -o json | jq -r .status   # → ok (orchestra
 # verify on disk instead via the terminal namespace:
 #   ls /hoody/storage/hoody-code/data/1/extensions
 ```
-⚠ On the **child instance**, `/api/v1/code/health` resets the idle-shutdown heartbeat — only `/healthz` (kit-internal, not surfaced through the public path) is excluded; hitting it on a cron keeps the child hot. The orchestrator's `code-1` health endpoint does not touch child heartbeats.
+⚠ On the **child instance**, `/api/v1/code/health` resets the idle-shutdown heartbeat, so hitting it on a cron keeps the child hot. The orchestrator's `code-1` health endpoint does not touch child heartbeats.
 
 ### 9. Logout + verify the session cookie is revoked
 
@@ -3119,8 +3122,26 @@ hoody --container "$C" daemon programs reset
 ```
 ### 7. Patch only the env vars on a running program
 
-**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `hoody daemon programs edit` is a partial merge — fields you don't pass are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
+**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `hoody daemon programs edit` is a partial merge **on the server** — fields absent from the request body are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
 
+> ⚠️ **On the CLI, "don't pass it" is not the same as "it isn't sent."** Note
+> first that `programs edit` requires `--name`, `--command` and `--user` even
+> when you are changing something else — it reuses the create schema — so the
+> smallest real edit is those three plus the field you actually want. On top of
+> that, the generated CLI materialises every schema default into the request, so
+> that command still transmits ten more fields you never gave it.
+> **Nine of them overwrite stored state**: `enabled=true`, `boot=false`,
+> `delay_seconds=0`, `autorestart=unexpected`, `priority=999`,
+> `logs_enabled=true`, `log_max_bytes=5242880`, `log_backups=2` and
+> `lazy_load=false`. (`hoody_kit` is also sent but is harmless — the server
+> re-derives it and ignores whatever the client supplies.) The server faithfully
+> preserves what it never receives — but it does receive these nine, so it
+> overwrites them.
+>
+> If the program depends on any non-default value (a custom `priority`,
+> `boot: true`, `lazy_load: true`), **restate it in the same command**, or make
+> the edit through the SDK or HTTP surface, which send only the fields you
+> actually provide.
 ```bash
 # `programs edit` requires --name/--command/--user (PUT-style replacement); snapshot first then re-pass:
 P=$(hoody --container "$C" daemon programs get "$ID" -o json | jq '.program')
@@ -3182,10 +3203,10 @@ hoody --container "$C" daemon programs start "$ID"
 | `hoody daemon ephemeral status` |  | read | Get ephemeral program status | `daemon.quickStart.getStatus` | `hoody daemon ephemeral status abc-123` |
 | `hoody daemon ephemeral stop` |  | write | Stop ephemeral program | `daemon.quickStart.stop` | `hoody daemon ephemeral stop abc-123` |
 | `hoody daemon health` |  | read | Service health check | `daemon.health.check` | `hoody daemon health` |
-| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.add` | `hoody daemon programs create --id 10 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param=--port --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
+| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.add` | `hoody daemon programs create --id 10 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param <port_param> --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
 | `hoody daemon programs delete` | rm, remove | destructive | Remove a program | `daemon.programs.remove` | `hoody daemon programs delete abc-123` |
 | `hoody daemon programs disable` |  | write | Disable a program | `daemon.control.disable` | `hoody daemon programs disable abc-123` |
-| `hoody daemon programs edit` |  | write | Edit a program | `daemon.programs.edit` | `hoody daemon programs edit abc-123 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param=--port --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
+| `hoody daemon programs edit` |  | write | Edit a program | `daemon.programs.edit` | `hoody daemon programs edit abc-123 --name my-resource --description "My description" --command "ls -la" --user alice --enabled --boot --delay-seconds 0 --autorestart true --directory /home/user/src --priority 999 --stdout-logfile <stdout_logfile> --stderr-logfile <stderr_logfile> --logs-enabled --log-max-bytes 5242880 --log-backups 2 --environment <key=value> --hoody-kit --port-range-start <port_range.start> --port-range-end <port_range.end> --port-param <port_param> --lazy-load --display :0 --terminal-id 10 --terminal-shell bash --terminal-interactive --webhooks-enabled --webhooks-urls <webhooks.urls> --webhooks-events <webhooks.events> --webhooks-headers <key=value> --webhooks-timeout <webhooks.timeout> --webhooks-retry <webhooks.retry>` |
 | `hoody daemon programs enable` |  | write | Enable a program | `daemon.control.enable` | `hoody daemon programs enable abc-123` |
 | `hoody daemon programs get` |  | read | Get a specific program | `daemon.programs.get` | `hoody daemon programs get abc-123` |
 | `hoody daemon programs list` |  | read | List all programs | `daemon.programs.listIterator` | `hoody daemon programs list --port 8080 --port-from 10 --port-to 10` |
@@ -3475,6 +3496,157 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 | `hoody display windows raise` |  | write | Raise a window to the top | `display.input.windowRaise` | `hoody display windows raise --display-id 10 --window-id 100` |
 | `hoody display windows resize` |  | write | Resize a window | `display.input.windowResize` | `hoody display windows resize --display-id 10 --window-id 100 --width 10 --height 10 --sync --use-hints` |
 | `hoody display windows search` |  | write | Search for windows by pattern | `display.input.windowSearch` | `hoody display windows search --display-id 10 --pattern "TODO" --name --class --classname --only-visible` |
+
+
+---
+
+<!-- ===== namespace: egress ===== -->
+
+# `egress` — the container's outbound HTTP proxy
+
+## Purpose
+
+**Mental model: a proxy the standard container provision already runs, whose exit IP you choose at runtime.** Point any HTTP client at the container's egress URL and the request leaves through the container. Configure an *upstream* and the same URL routes through that instead, so the exit IP changes without touching the client.
+
+It answers on the container's own host at the `egress` service slug, so on a normally-provisioned container there is nothing to install, start, or configure first — registration happens at provision time, not on demand, and Prerequisites has the one precondition and a one-call check. Indexed forms reach the same single process and share one upstream setting — the index is not a second proxy. What the index does change is proxy permissions, which are evaluated per service index, so `egress-1` and `egress-2` can carry different credentials while exiting through the same address. Be aware of a contradiction in the sources: the SDK's own service registry (`lib/kit-catalog.ts`, `cli/index.ts`) declares egress as carrying no instance index, while the edge parser accepts indexed forms and the OpenAPI server template includes one. The edge behaviour above is what actually happens.
+
+It handles `CONNECT` tunnelling for HTTPS (never seeing inside the TLS session) and absolute-URI forwarding for plain HTTP.
+
+## When to use
+
+Use it when something inside a container needs to make outbound HTTP requests through a controllable exit: giving a scraper a specific egress IP, routing container traffic through a third-party SOCKS5 or HTTP proxy, or exposing a proxy endpoint to a client that only accepts a host and port. Use `hoody egress upstream set` to chain, `hoody egress upstream get` to inspect, and `hoody egress upstream clear` to go back to the container's own IP.
+
+Use `hoody egress local` when the exit should be the operator's own machine rather than a rented proxy; see Quirks.
+
+## When NOT to use
+
+Do not use it as a general ingress path: any request whose target begins with `/` and is not one of the management routes returns 404 and is never forwarded, so it cannot be repurposed as a reverse proxy. (`OPTIONS` is the one exception, answered 204 before routing.) Do not reach for it to expose a local service to the internet — that is the `tunnel` namespace. Do not expect request hooks to apply; egress is on the hook-rejected list.
+
+## Prerequisites
+
+A running container whose provision registered egress — the overwhelmingly common case, not something to arrange. Provisioning registers egress on a new container by default, and containers created before egress existed are backfilled over time, so the gaps to expect are a container whose host has it turned off and one that has not been backfilled yet. No kit program needs enabling first — where registered, hoody-egress is eager (`boot: true`, `lazy_load: false`, unlike lazily-loaded siblings such as `pipe` or `run`), so the endpoint answers as soon as the container is up. To confirm before relying on it, probe the unauthenticated health route: `hoody --container <id> egress health` printing the standard health blob confirms egress is live; an error does not establish that it is absent. A failed probe cannot separate an unregistered kit from an overloaded or unreachable one: the server checks its connection cap before reading the request, so it can answer 503 while alive, and an edge or transport failure looks the same from outside. Registration can also be read from the always-present daemon kit: look for a `hoody-egress` entry in `hoody daemon programs list`. Setting an upstream needs nothing beyond the container URL and whatever proxy permissions guard it.
+
+A local exit (`hoody egress local`) needs more: the container's hoody-tunnel kit must be running, because the exit is wired as a tunnel PULL bind onto the container's loopback, and the CLI must be logged in (`hoody login`), because the tunnel WebSocket authenticates with your account token even though the plain upstream commands need none. If the tunnel kit is down, startup fails before the container is touched.
+
+## Capability URL
+
+The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server}.containers.hoody.com` — see `SKILL-CLI.md § Proxy URLs` for the routing rules — and it is a capability URL: the project and container identifiers in the hostname *are* the credential, and hoody-egress performs no authentication of its own. An open egress endpoint is therefore an open proxy — anyone holding the URL can send traffic through it, consuming the server's bandwidth and attributed to its exit IP. Set proxy permissions on the `egress` service before sharing it or configuring an upstream.
+
+## Common workflows
+
+**Inspect the current setting.** `hoody egress upstream get` reports whether an upstream is enabled, its scheme, host and port, the config path, and an `auth` boolean. When no upstream is enabled the object carries only `enabled` and `config_path`; scheme, host, port, and `auth` appear only while one is set. Credentials are never returned, by design, so a read cannot be used to recover a secret someone else configured.
+
+**Point traffic somewhere else.** `hoody egress upstream set <url>` takes the proxy URL as its one required argument — e.g. `hoody egress upstream set socks5h://user:pass@host:1080` — and sends it as the request body; it does not read stdin. Four schemes are accepted: `socks5h` sends the destination hostname upstream for resolution there, `socks5` resolves locally and sends an address, and `http` / `https` chain through an HTTP proxy using `CONNECT`, the latter with TLS to the upstream. Prefer `socks5h` when the point of the exercise is to avoid leaking destination lookups.
+
+**Go back to the container's own IP.** `hoody egress upstream clear` (alias `disable`). There is no empty-body form here: `set` requires its URL argument and rejects an empty value, so `clear` is the only way back. Check with `hoody egress upstream get`.
+
+**Confirm where traffic exits.** Request `https://ip.hoody.com` through the proxy; it reports the address it saw, which is the container's or the upstream's once one is set.
+
+## Quirks & gotchas
+
+- **Teardown deletes, it does not restore.** Clearing removes the upstream, and the kit never returns credentials — a read reports scheme, host, port and an `auth` flag only — so an authenticated upstream that some other tool configured cannot be put back unless whoever configured it still holds the full URL. An unauthenticated one can be rebuilt from a read taken before the clear.
+- **The setting is a file, and it is reloaded, not restarted.** It is written to `/hoody/storage/hoody-egress/config/upstream_proxy.txt` with mode `0600` through an atomic temp-file rename, and picked up within about a second. Deleting the file disables the upstream only if the watcher has already seen it on disk; a file that never existed is deliberately ignored, so it cannot override an upstream handed to the process as a URL at startup. (A clear does not delete the file — it rewrites it with the URL line removed.)
+- **The body is small and strictly framed.** A missing `Content-Length` is 411, and a *declared* `Content-Length` over 4096 is 413 — the check is on the header, before the body is read. This is not a channel for anything but a URL.
+- **Health answers almost any method.** The health route matches on path alone, so every method except `OPTIONS` reaches it; `OPTIONS` is answered 204 with CORS headers before routing, which is what makes browser preflight work against the management API.
+- **A local exit makes the operator's machine the exit** (`hoody egress local`). It binds a loopback port inside the container over hoody-tunnel, points the upstream at it, and terminates SOCKS5 on the operator's side, so requests leave from the machine the CLI is running on. Nothing listens on that machine; every socket it opens is outbound. Destinations are gated to public IPv4 by default, every resolved A record is authorised, and the pinned address is what gets dialled, so DNS rebinding cannot redirect a connection after approval.
+- **A local exit refuses to clobber an existing upstream.** If the container already has one enabled, `hoody egress local` fails with `local exit: this container already has an upstream (<scheme>://<host>:<port>)` instead of replacing it, because teardown clears the upstream and the kit never returns credentials, so an authenticated upstream it replaced could not be put back automatically. Clear a stale one first with `hoody egress upstream clear`, or pass `--replace-upstream` to take the container over knowingly; when that exit stops, the container goes back to its own IP, not to the proxy it displaced.
+- **A dead loopback port breaks every request.** If a local exit dies without clearing the upstream, the container keeps pointing at a port that no longer answers and every request through its egress fails until the upstream is cleared. Recover with `hoody --container <id> egress upstream clear`.
+- **The URL — credentials included — is a command-line argument.** `hoody egress upstream set` has no stdin, file, or environment form; `--input` is rejected for this command. The full URL therefore lands in shell history and is visible in `ps` while the command runs. On a shared machine, set the upstream from code (`hoody egress upstream set`) or with a raw HTTP `PUT` whose body is read from a mode-`0600` file instead.
+- **Browsers need a PAC file, not the manual proxy fields.** The connection to the proxy is itself TLS, so the manual host-and-port fields open a plaintext connection that the edge refuses with 400. A PAC file returning `HTTPS host:443` works in both Chrome and Firefox.
+
+## Common errors
+
+Errors come from two surfaces that answer differently. The management surface always sends a body: `text/plain` for every error except the 404, which is JSON, and every body ends with a trailing newline, so match on prefix or substring rather than equality. Framing and forwarding errors send no response body and no `Content-Type`; the status line still arrives with headers, always including `Vary: Origin` and `Connection: close`.
+
+**Management surface** (path-form requests: `/api/v1/egress/upstream` and the route catch-all):
+
+- 400 — three causes with three `text/plain` bodies: `Invalid upstream URL` when the value does not parse or its scheme is not one of the four, `Failed to read body` when the read fails or times out, and `Body must be UTF-8`. The OpenAPI 400 description names the same three bodies; it is documentation, not additional wire text.
+- 404 — a path-form target that is not a management route, and the one JSON error: `{"error":"not found"}` with `Content-Type: application/json`. It is never forwarded, so it means the request was addressed to the proxy rather than through it.
+- 405 — `Method Not Allowed` for any verb on the upstream route other than `GET`, `PUT`, `POST`, or `DELETE`. `OPTIONS` never reaches it; it is answered 204 before routing.
+- 411 — `Missing Content-Length` on a set request.
+- 413 — `Body too large` when the declared `Content-Length` exceeds 4096 bytes.
+- 500 — `Failed to write config` when persisting the upstream file fails, on set and clear alike. The in-memory upstream is swapped only after a successful write, so after a 500 the previous setting still applies.
+
+**Proxy data path and request framing** (no response body):
+
+- 400 — an oversized or truncated header block, a bad request line, an invalid `CONNECT` authority, or a non-`CONNECT` target that is neither absolute-form `http://` nor asterisk-form `*`. An `https://` URL sent without `CONNECT` lands here. Asterisk-form is the one non-absolute target that forwards: `*` with a `Host` header is sent to the authority the header names; without one it is a 400. Header lines themselves never trigger it: a line with no colon is silently skipped, not rejected.
+- 408 — request headers not completed within the read timeout.
+- 502 — the outbound connection failed: destination unreachable, the chained upstream refused or timed out, or no valid response came back. It is also the answer when the client's own request body breaks mid-forward: a malformed chunk size or chunk ending fails inside the forwarding path, and the outer handler reports every forwarding failure as 502, so a bad client body reads the same as a dead upstream. A 502 is not always a standalone response either: after the `CONNECT` 200 has been sent, or after a forwarded response has started, a relay failure appends the 502 to the bytes already written. With an upstream set, a 502 on every request usually means the upstream itself is dead; see the dead-loopback quirk.
+- 503 — the concurrent-connection cap is reached.
+
+## Related namespaces
+
+`tunnel` for the opposite direction (exposing a local service through the container). `proxyPermissionsContainer` for gating the endpoint, which matters more here than almost anywhere else because the URL is the only credential. `proxyAliases` to hand out a hostname that does not carry the container id. `api` for container firewall rules, whose `firewall/egress` routes govern packet filtering and are unrelated to this service despite the shared word.
+
+## Examples
+
+Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. The egress capability URL carries no instance index — `https://{P}-{C}-egress.{N}.containers.hoody.com` — though indexed forms reach the same process (see § Purpose).
+
+### 1. Send a request through the proxy — confirm the container is the exit
+
+**Goal:** prove the endpoint routes traffic and see the IP the destination sees. The connection to the proxy is itself TLS, so the proxy address carries an `https://` scheme. `CONNECT` tunnels HTTPS; plain HTTP rides absolute-form forwarding.
+
+```bash
+hoody --container "$C" egress health               # kit alive?
+# There is no CLI verb that proxies a request — none is needed. The endpoint
+# speaks the standard proxy protocol, so curl/git/pip/npm take the URL directly:
+EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+curl -x "$EGRESS:443" https://ip.hoody.com | jq -r '.data.ip'
+```
+`ip.hoody.com` reports the address it saw the request come from, so it doubles as the before/after check for every recipe below. Browsers cannot use their manual proxy fields — plaintext to a TLS port is refused with 400; use a PAC file returning `HTTPS host:443` (see Quirks).
+
+### 2. Set an upstream, read it back, clear it
+
+**Goal:** change the exit IP without touching the client. Four schemes are accepted (`socks5h`, `socks5`, `http`, `https`); prefer `socks5h` when the upstream should also resolve DNS. Set and clear both answer `200` with the current status blob, so the response doubles as the read-back.
+
+```bash
+hoody --container "$C" egress upstream set 'socks5h://user:pass@203.0.113.10:1080'
+hoody --container "$C" egress upstream get -o json
+# {"enabled":true,"scheme":"socks5h","host":"203.0.113.10","port":1080,"auth":true,...}
+hoody --container "$C" egress upstream clear       # alias: disable — the only way
+                                                   # back; `set` rejects an empty URL
+```
+The setting lands in the config file atomically and is picked up within about a second (see Quirks). Re-run the exit check from #1: the reported address flips to the upstream's, and back after the clear. `auth: true` is the only trace of the credentials — they are never returned.
+
+### 3. Make your own machine the exit — a local exit
+
+**Goal:** turn the container's egress URL into a proxy whose traffic leaves from the machine you are sitting at. Needs the container's tunnel kit running; nothing listens on your machine (see Quirks).
+
+```bash
+hoody login                              # the tunnel WebSocket authenticates with your account token
+hoody --container "$C" egress local
+#   Proxy URL:     https://P-C-egress.N.containers.hoody.com
+#   Exit IP:       203.0.113.42 (SG)  confirmed
+# Ctrl+C tears it down: the upstream is cleared and the container is back on its own IP.
+```
+The SDK path needs an authenticated client constructed with an explicit `baseURL` (see Prerequisites). While the exit runs, treat `proxyUrl` like a password: anyone holding it relays through your connection.
+
+### 4. The takeover guard, and the deliberate override
+
+**Goal:** understand why a local exit refuses to start, and take a container over knowingly. Teardown deletes the upstream and credentials can never be read back, so silently replacing a third-party proxy would destroy it (see Quirks).
+
+```bash
+hoody --container "$C" egress local
+# Failed to start local exit: local exit: this container already has an upstream
+# (socks5h://203.0.113.10:1080). Stopping this exit would clear it, and its
+# credentials cannot be read back to restore it. Clear it first, or pass
+# replaceExistingUpstream/--replace-upstream to take it over.
+
+hoody --container "$C" egress local --replace-upstream    # take it over knowingly
+```
+The check-then-set is not atomic — the guard protects against accidents, not races. When an exit started with the override stops, the container returns to its own IP, not to the proxy it displaced.
+
+## Reference
+
+### `hoody egress` (5) — Container egress proxy — outbound HTTP/CONNECT with an optional upstream
+
+| Command | Aliases | Category | Summary | SDK Link | Example |
+|---------|---------|----------|---------|----------|---------|
+| `hoody egress health` |  | read | Egress service health | `egress.healthCheck` | `hoody egress health` |
+| `hoody egress local` |  | action | Publish this machine's IP as the container's HTTPS proxy exit (long-running, Ctrl+C to stop) |  | `hoody egress local` |
+| `hoody egress upstream clear` | disable | destructive | Stop chaining through an upstream; egress goes direct | `egress.disableUpstream` | `hoody egress upstream clear` |
+| `hoody egress upstream get` | show | read | Show the upstream proxy the container chains through | `egress.getUpstream` | `hoody egress upstream get` |
+| `hoody egress upstream set` |  | action | Route the container's egress through an upstream proxy | `egress.setUpstream` | `hoody egress upstream set https://example.com` |
 
 
 ---
@@ -4723,7 +4895,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
 - WS only with `Upgrade`; else SSE+15 s heartbeat. WS: per-IP caps, origin allow-list, drops after 2 missed pongs.
 - `hoody notifications clear-dismissed`=DELETE, `hoody notifications dismiss`=POST, same path.
-- **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `hoody inbox *` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated.
+- **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `hoody inbox *` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated — and its credential rules are NOT the kit's: reading requires the auth token to hold `resources.read_account` (403 without it), and BOTH acknowledge routes refuse every auth token outright, needing a first-party account login.
 - The CLI uses `namespace: 'notifications'`, which routes through `normalizeKitProgram` to the kit slug `n` and builds `https://{P}-{C}-n-{N}.{server}.containers.hoody.com/api/v1/notifications/...` — `hoody --container <C> notifications {list|dismiss|icon|trigger}` reaches the kit correctly.
 - `notifications stream` mapping has no `cli_stream` flag — the generated CLI buffers SSE events forever instead of streaming. Use SDK `hoody notifications stream` (returns a WebSocket wrapper, not void) or hit `/api/v1/notifications/stream` directly with `EventSource`/`fetch` for live feeds.
 - `hoody notifications stream` returns a `Promise<NotificationsConnectNotificationStreamWebSocket>` wrapper. Wire callbacks first (`wrapper.onNotification(cb)` / `onHeartbeat(cb)` / `onDisconnect(cb)` / `onError(cb)`), then `await wrapper.connect()`. Close with `wrapper.close()`. There is NO `onMessage`/`onClose` — those names are wrong. `displays` is typed optional in the TS signature but is required at runtime — the SDK throws `ValidationError('displays is required')` if omitted, so always pass it.
@@ -6386,7 +6558,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 The `tunnel` namespace covers only the **observability + admin** surface — `hoody tunnel health`, `hoody tunnel list`, `hoody tunnel sessions list`, `hoody tunnel bindings list`, `hoody tunnel metrics`, `hoody tunnel sessions kill`. The data plane (open / pull) is a long-running WebSocket driver that lives in a separate package; it is intentionally out of scope here, so these 7 examples assume *somebody else* (a teammate's tunnel expose/pull session, your CI machine's tunnel session, a test rig) is currently holding the tunnel. You're the operator: inspecting it, scraping metrics, killing it. Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first.
 
-Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
+The admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
 
 ### 1. Health probe — kit alive, FD budget not exhausted
 

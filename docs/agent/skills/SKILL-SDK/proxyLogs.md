@@ -1,4 +1,4 @@
-> _**SDK skill · `proxyLogs` namespace** · ~4,397 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `proxyLogs` namespace** · ~4,411 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `proxyLogs` — Per-container request/response/event log query, stats, and SSE tail
 
@@ -234,7 +234,7 @@ client.proxyLogs.logs.getStats()
 #### `list` — Query centralized logs
 
 ```typescript
-client.proxyLogs.logs.list(limit?: integer, offset?: integer, projectId?: string, containerId?: string, serviceName?: string, level?: string, includeRequestBody?: boolean, includeResponseBody?: boolean, last?: integer, afterId?: integer, cursor?: string, kind?: string, method?: string, source?: string)
+client.proxyLogs.logs.list(options?: { limit?: integer; offset?: integer; projectId?: string; containerId?: string; serviceName?: string; level?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; cursor?: string; kind?: string; method?: string; source?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -262,7 +262,7 @@ client.proxyLogs.logs.list(limit?: integer, offset?: integer, projectId?: string
 #### `listAll` — Query centralized logs (collect all pages)
 
 ```typescript
-client.proxyLogs.logs.listAll(limit?: integer, offset?: integer, projectId?: string, containerId?: string, serviceName?: string, level?: string, includeRequestBody?: boolean, includeResponseBody?: boolean, last?: integer, afterId?: integer, cursor?: string, kind?: string, method?: string, source?: string)
+client.proxyLogs.logs.listAll(options?: { limit?: integer; offset?: integer; projectId?: string; containerId?: string; serviceName?: string; level?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; cursor?: string; kind?: string; method?: string; source?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -290,7 +290,7 @@ client.proxyLogs.logs.listAll(limit?: integer, offset?: integer, projectId?: str
 #### `listIterator` — Query centralized logs (async iterator)
 
 ```typescript
-client.proxyLogs.logs.listIterator(limit?: integer, offset?: integer, projectId?: string, containerId?: string, serviceName?: string, level?: string, includeRequestBody?: boolean, includeResponseBody?: boolean, last?: integer, afterId?: integer, cursor?: string, kind?: string, method?: string, source?: string)
+client.proxyLogs.logs.listIterator(options?: { limit?: integer; offset?: integer; projectId?: string; containerId?: string; serviceName?: string; level?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; cursor?: string; kind?: string; method?: string; source?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -318,7 +318,7 @@ client.proxyLogs.logs.listIterator(limit?: integer, offset?: integer, projectId?
 #### `streamLogs` — Live-tail logs over Server-Sent Events (v8 SSE contract)
 
 ```typescript
-client.proxyLogs.logs.streamLogs(projectId?: string, containerId?: string, kind?: string, level?: string, Last-Event-ID?: string)
+client.proxyLogs.logs.streamLogs(options?: { projectId?: string; containerId?: string; kind?: string; level?: string; Last-Event-ID?: string })
 ```
 
 | Parameter | Type | In | Required | Description |

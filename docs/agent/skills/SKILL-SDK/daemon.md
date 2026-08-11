@@ -1,4 +1,4 @@
-> _**SDK skill · `daemon` namespace** · ~9,489 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `daemon` namespace** · ~9,571 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `daemon` — supervisord program lifecycle (start any program; logs always retained)
 
@@ -233,7 +233,7 @@ await client.daemon.programs.reset();
 ```
 ### 7. Patch only the env vars on a running program
 
-**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `programs.edit` is a partial merge — fields you don't pass are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
+**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `programs.edit` is a partial merge **on the server** — fields absent from the request body are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
 
 ```typescript
 // programs.edit takes ProgramInput — name/command/user are required (PUT-style replacement).
@@ -423,7 +423,7 @@ client.daemon.programs.get(id: integer)
 #### `list` — List all programs
 
 ```typescript
-client.daemon.programs.list(hoody_kit?: string, lazy_load?: string, enabled?: string, boot?: string, port?: integer, port_from?: integer, port_to?: integer, include_status?: string, include_stats?: string)
+client.daemon.programs.list(options?: { hoody_kit?: string; lazy_load?: string; enabled?: string; boot?: string; port?: integer; port_from?: integer; port_to?: integer; include_status?: string; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -446,7 +446,7 @@ client.daemon.programs.list(hoody_kit?: string, lazy_load?: string, enabled?: st
 #### `listAll` — List all programs (collect all pages)
 
 ```typescript
-client.daemon.programs.listAll(hoody_kit?: string, lazy_load?: string, enabled?: string, boot?: string, port?: integer, port_from?: integer, port_to?: integer, include_status?: string, include_stats?: string)
+client.daemon.programs.listAll(options?: { hoody_kit?: string; lazy_load?: string; enabled?: string; boot?: string; port?: integer; port_from?: integer; port_to?: integer; include_status?: string; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -469,7 +469,7 @@ client.daemon.programs.listAll(hoody_kit?: string, lazy_load?: string, enabled?:
 #### `listIterator` — List all programs (async iterator)
 
 ```typescript
-client.daemon.programs.listIterator(hoody_kit?: string, lazy_load?: string, enabled?: string, boot?: string, port?: integer, port_from?: integer, port_to?: integer, include_status?: string, include_stats?: string)
+client.daemon.programs.listIterator(options?: { hoody_kit?: string; lazy_load?: string; enabled?: string; boot?: string; port?: integer; port_from?: integer; port_to?: integer; include_status?: string; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -520,7 +520,7 @@ client.daemon.programs.reset()
 #### `getEphemeralLogs` — Get ephemeral program logs
 
 ```typescript
-client.daemon.quickStart.getEphemeralLogs(id: string, type?: string, lines?: integer)
+client.daemon.quickStart.getEphemeralLogs(id: string, options?: { type?: string; lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -617,14 +617,14 @@ client.daemon.quickStart.stop(id: string)
 #### `get` — Get specific program status
 
 ```typescript
-client.daemon.status.get(id: integer, port?: integer, include_stats?: string)
+client.daemon.status.get(id: integer, options?: { port?: integer; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `integer` | path | Yes | Unique numeric identifier of the program |
 | `port` | `integer` | query | No | Filter to specific port instance (for port-range programs only) |
-| `include_stats` | `string` | query | No | Include resource stats (CPU, memory, process tree) for running programs. Adds a "stats" field with pid, started_at, cpu_percent, memory_rss_bytes, process_count, and per-process breakdown. |
+| `include_stats` | `string` | query | No | Include resource stats (CPU, memory, process tree) for running programs. WHERE the stats land depends on the program: a standard program gets a top-level `stats`; a port-range program gets one `stats` per instance, on the instance itself (`instance.stats`, or `instances[].stats`), never at the top level. Each carries pid, started_at, cpu_percent, memory_rss_bytes, process_count and a per-process breakdown. |
 
 **Returns:** `daemon_StatusResponse`  |  **HTTP:** `GET /api/v1/daemon/status/{id}`
 **CLI:** `hoody daemon programs status`
@@ -645,7 +645,7 @@ client.daemon.status.getAll()
 #### `getLogs` — Get program logs
 
 ```typescript
-client.daemon.status.getLogs(id: integer, type?: string, lines?: integer, port?: integer)
+client.daemon.status.getLogs(id: integer, options?: { type?: string; lines?: integer; port?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -661,6 +661,6 @@ client.daemon.status.getLogs(id: integer, type?: string, lines?: integer, port?:
 
 ### Body schemas
 
-- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, port_range: { start*: int, end*: int }, port_param: string="--port", lazy_load: bool=false, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null, webhooks: { enabled: bool, urls: string[], events: string | string[], headers: object, timeout: int, retry: int }|null }`
+- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, port_range: { start*: int, end*: int }, port_param: string, lazy_load: bool=false, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null, webhooks: { enabled: bool, urls: string[], events: string | string[], headers: object, timeout: int, retry: int }|null }`
 - `daemon_EphemeralProgramInput` — `{ command*: string, user*: string, name: string, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, environment: { [key: string]: string }, priority: int=999, delay_seconds: int=0, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, ttl: int, wait: bool=false, timeout: int=30, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null }`
 

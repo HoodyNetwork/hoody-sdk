@@ -1,4 +1,4 @@
-> _**SDK skill · `curl` namespace** · ~9,068 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `curl` namespace** · ~9,124 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `curl` — full HTTP client gateway + REST-as-GET-URL bridge
 
@@ -363,7 +363,7 @@ client.curl.execute(data: curl_CurlRequest)
 #### `executeCurlRequestGet` — Execute simple HTTP request via query parameters
 
 ```typescript
-client.curl.executeCurlRequestGet(url: string, method?: string, response?: string, mode?: string, session_id?: string, follow_redirects?: boolean, timeout?: integer, user_agent?: string, referer?: string, bearer_token?: string, save?: boolean, save_path?: string, insecure?: boolean, compressed?: boolean, job_name?: string, data?: string, json?: string, header?: array, data_base64?: string)
+client.curl.executeCurlRequestGet(options?: { url?: string; method?: string; response?: string; mode?: string; session_id?: string; follow_redirects?: boolean; timeout?: integer; user_agent?: string; referer?: string; bearer_token?: string; save?: boolean; save_path?: string; insecure?: boolean; compressed?: boolean; job_name?: string; data?: string; json?: string; header?: array; data_base64?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -398,7 +398,7 @@ client.curl.executeCurlRequestGet(url: string, method?: string, response?: strin
 #### `sseJobEvents` — Subscribe to job events over Server-Sent Events
 
 ```typescript
-client.curl.events.sseJobEvents(job_id?: string)
+client.curl.events.sseJobEvents(options?: { job_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -412,7 +412,7 @@ client.curl.events.sseJobEvents(job_id?: string)
 #### `streamWs` — Subscribe to job events over WebSocket
 
 ```typescript
-client.curl.events.streamWs(job_id?: string)
+client.curl.events.streamWs(options?: { job_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -427,7 +427,7 @@ client.curl.events.streamWs(job_id?: string)
 #### `wsRequestChannel` — Execute cURL requests over a WebSocket channel
 
 ```typescript
-client.curl.events.wsRequestChannel(max_concurrent?: integer, max_concurrent_streams?: integer, max_pool?: integer, max_queue?: integer, max_frame_bytes?: integer, max_request_bytes?: integer, chunk_bytes?: integer, stream_timeout_secs?: integer, idle_timeout_secs?: integer, max_outbound_messages?: integer)
+client.curl.events.wsRequestChannel(options?: { max_concurrent?: integer; max_concurrent_streams?: integer; max_pool?: integer; max_queue?: integer; max_frame_bytes?: integer; max_request_bytes?: integer; chunk_bytes?: integer; stream_timeout_secs?: integer; idle_timeout_secs?: integer; max_outbound_messages?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -510,7 +510,7 @@ client.curl.jobs.getResult(id: string)
 #### `list` — List all async jobs
 
 ```typescript
-client.curl.jobs.list(page?: integer, limit?: integer)
+client.curl.jobs.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -526,7 +526,7 @@ client.curl.jobs.list(page?: integer, limit?: integer)
 #### `listAll` — List all async jobs (collect all pages)
 
 ```typescript
-client.curl.jobs.listAll(page?: integer, limit?: integer)
+client.curl.jobs.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -542,7 +542,7 @@ client.curl.jobs.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all async jobs (async iterator)
 
 ```typescript
-client.curl.jobs.listIterator(page?: integer, limit?: integer)
+client.curl.jobs.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -618,7 +618,7 @@ client.curl.schedules.get(id: string)
 #### `list` — List all scheduled jobs
 
 ```typescript
-client.curl.schedules.list(page?: integer, limit?: integer)
+client.curl.schedules.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -634,7 +634,7 @@ client.curl.schedules.list(page?: integer, limit?: integer)
 #### `listAll` — List all scheduled jobs (collect all pages)
 
 ```typescript
-client.curl.schedules.listAll(page?: integer, limit?: integer)
+client.curl.schedules.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -650,7 +650,7 @@ client.curl.schedules.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all scheduled jobs (async iterator)
 
 ```typescript
-client.curl.schedules.listIterator(page?: integer, limit?: integer)
+client.curl.schedules.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -729,7 +729,7 @@ client.curl.sessions.getCookies(id: string)
 #### `list` — List all cookie sessions
 
 ```typescript
-client.curl.sessions.list(page?: integer, limit?: integer)
+client.curl.sessions.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -745,7 +745,7 @@ client.curl.sessions.list(page?: integer, limit?: integer)
 #### `listAll` — List all cookie sessions (collect all pages)
 
 ```typescript
-client.curl.sessions.listAll(page?: integer, limit?: integer)
+client.curl.sessions.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -761,7 +761,7 @@ client.curl.sessions.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all cookie sessions (async iterator)
 
 ```typescript
-client.curl.sessions.listIterator(page?: integer, limit?: integer)
+client.curl.sessions.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -809,7 +809,7 @@ client.curl.storage.getFile(path: string)
 #### `list` — List all saved downloads
 
 ```typescript
-client.curl.storage.list(page?: integer, limit?: integer)
+client.curl.storage.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -825,7 +825,7 @@ client.curl.storage.list(page?: integer, limit?: integer)
 #### `listAll` — List all saved downloads (collect all pages)
 
 ```typescript
-client.curl.storage.listAll(page?: integer, limit?: integer)
+client.curl.storage.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -841,7 +841,7 @@ client.curl.storage.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all saved downloads (async iterator)
 
 ```typescript
-client.curl.storage.listIterator(page?: integer, limit?: integer)
+client.curl.storage.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |

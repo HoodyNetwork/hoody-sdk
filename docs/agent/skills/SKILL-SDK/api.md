@@ -1,4 +1,4 @@
-> _**SDK skill · `api` namespace** · ~45,493 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `api` namespace** · ~46,837 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -128,7 +128,7 @@ Project-scope analogues live under `proxyPermissionsProject.*`.
 11. `client.api.rentals.extend`
 12. `client.api.serverCommands.execute`
 
-Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands.
+Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands. ONE exception worth reading before you call it: the notification inbox is NOT uniform CRUD. `notifications.list` needs `resources.read_account` on the token (403 without it — the external_customer, dev_team, finance_team and read_only templates all deny it, as do all tokens minted before 2026-06-30), and `markRead` / `markAllRead` refuse EVERY auth token regardless of permissions, because acknowledging is how the record of an account event is dismissed. Use `notifications.listPublic` as the no-auth fallback.
 
 ## Quirks & gotchas
 
@@ -189,7 +189,7 @@ client.api.activity.getStats()
 #### `list` — Get activity logs
 
 ```typescript
-client.api.activity.list(page?: integer, limit?: integer, start_date?: string, end_date?: string, errors_only?: string, min_status?: integer, max_status?: integer, method?: string, realm_id?: string)
+client.api.activity.list(options?: { page?: integer; limit?: integer; start_date?: string; end_date?: string; errors_only?: string; min_status?: integer; max_status?: integer; method?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -212,7 +212,7 @@ client.api.activity.list(page?: integer, limit?: integer, start_date?: string, e
 #### `listAll` — Get activity logs (collect all pages)
 
 ```typescript
-client.api.activity.listAll(page?: integer, limit?: integer, start_date?: string, end_date?: string, errors_only?: string, min_status?: integer, max_status?: integer, method?: string, realm_id?: string)
+client.api.activity.listAll(options?: { page?: integer; limit?: integer; start_date?: string; end_date?: string; errors_only?: string; min_status?: integer; max_status?: integer; method?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -235,7 +235,7 @@ client.api.activity.listAll(page?: integer, limit?: integer, start_date?: string
 #### `listIterator` — Get activity logs (async iterator)
 
 ```typescript
-client.api.activity.listIterator(page?: integer, limit?: integer, start_date?: string, end_date?: string, errors_only?: string, min_status?: integer, max_status?: integer, method?: string, realm_id?: string)
+client.api.activity.listIterator(options?: { page?: integer; limit?: integer; start_date?: string; end_date?: string; errors_only?: string; min_status?: integer; max_status?: integer; method?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -555,7 +555,7 @@ client.api.authentication.getOAuthConfig()
 #### `githubOAuthCallback` — GitHub OAuth callback
 
 ```typescript
-client.api.authentication.githubOAuthCallback(code?: string, state: string, error?: string, error_description?: string, error_uri?: string)
+client.api.authentication.githubOAuthCallback(options?: { code?: string; state?: string; error?: string; error_description?: string; error_uri?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -574,7 +574,7 @@ client.api.authentication.githubOAuthCallback(code?: string, state: string, erro
 #### `githubOAuthRedirect` — Redirect to GitHub OAuth
 
 ```typescript
-client.api.authentication.githubOAuthRedirect(client?: string, intent?: string, redirect_uri: string, code_challenge: string, invite_code?: string)
+client.api.authentication.githubOAuthRedirect(options?: { client?: string; intent?: string; redirect_uri?: string; code_challenge?: string; invite_code?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -593,7 +593,7 @@ client.api.authentication.githubOAuthRedirect(client?: string, intent?: string, 
 #### `googleOAuthCallback` — Google OAuth callback
 
 ```typescript
-client.api.authentication.googleOAuthCallback(code?: string, state: string, error?: string, error_description?: string, error_uri?: string)
+client.api.authentication.googleOAuthCallback(options?: { code?: string; state?: string; error?: string; error_description?: string; error_uri?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -612,7 +612,7 @@ client.api.authentication.googleOAuthCallback(code?: string, state: string, erro
 #### `googleOAuthRedirect` — Redirect to Google OAuth
 
 ```typescript
-client.api.authentication.googleOAuthRedirect(client?: string, redirect_uri: string, code_challenge: string, invite_code?: string)
+client.api.authentication.googleOAuthRedirect(options?: { client?: string; redirect_uri?: string; code_challenge?: string; invite_code?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -684,7 +684,7 @@ client.api.authentication.oauthCancelIntent()
 #### `oauthDeviceAuthorize` — Start the device-leg OAuth (cookie + ticket gated)
 
 ```typescript
-client.api.authentication.oauthDeviceAuthorize(ticket: string, provider: string)
+client.api.authentication.oauthDeviceAuthorize(options?: { ticket?: string; provider?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -811,7 +811,7 @@ client.api.authentication.oauthLaunchInitiate(data: object)
 #### `oauthLaunchStart` — Start OAuth popup-handoff via single-use ticket
 
 ```typescript
-client.api.authentication.oauthLaunchStart(ticket: string)
+client.api.authentication.oauthLaunchStart(options?: { ticket?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1012,7 +1012,7 @@ client.api.containers.deleteSnapshot(id: string, name: string)
 #### `get` — Get a container by ID
 
 ```typescript
-client.api.containers.get(runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, id: string)
+client.api.containers.get(id: string, options?: { runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1060,7 +1060,7 @@ client.api.containers.getStats(id: string)
 #### `getStatusLogs` — Get status logs for a container
 
 ```typescript
-client.api.containers.getStatusLogs(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.containers.getStatusLogs(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1079,7 +1079,7 @@ client.api.containers.getStatusLogs(page?: number, limit?: number, sort_by?: str
 #### `list` — Get all containers
 
 ```typescript
-client.api.containers.list(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_expired?: string, include_deleting?: string)
+client.api.containers.list(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_expired?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1104,7 +1104,7 @@ client.api.containers.list(page?: number, limit?: number, sort_by?: string, sort
 #### `listAll` — Get all containers (collect all pages)
 
 ```typescript
-client.api.containers.listAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_expired?: string, include_deleting?: string)
+client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_expired?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1129,7 +1129,7 @@ client.api.containers.listAll(page?: number, limit?: number, sort_by?: string, s
 #### `listByProject` — Get all containers for a project
 
 ```typescript
-client.api.containers.listByProject(page?: number, limit?: number, sort_by?: string, sort_order?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_deleting?: string, id: string)
+client.api.containers.listByProject(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1153,7 +1153,7 @@ client.api.containers.listByProject(page?: number, limit?: number, sort_by?: str
 #### `listByProjectAll` — Get all containers for a project (collect all pages)
 
 ```typescript
-client.api.containers.listByProjectAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_deleting?: string, id: string)
+client.api.containers.listByProjectAll(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1177,7 +1177,7 @@ client.api.containers.listByProjectAll(page?: number, limit?: number, sort_by?: 
 #### `listByProjectIterator` — Get all containers for a project (async iterator)
 
 ```typescript
-client.api.containers.listByProjectIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_deleting?: string, id: string)
+client.api.containers.listByProjectIterator(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1201,7 +1201,7 @@ client.api.containers.listByProjectIterator(page?: number, limit?: number, sort_
 #### `listIterator` — Get all containers (async iterator)
 
 ```typescript
-client.api.containers.listIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_expired?: string, include_deleting?: string)
+client.api.containers.listIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_expired?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1571,7 +1571,7 @@ client.api.events.get(id: string)
 #### `getStats` — Get event statistics
 
 ```typescript
-client.api.events.getStats(start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.getStats(options?: { start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1588,7 +1588,7 @@ client.api.events.getStats(start_date?: string, end_date?: string, realm_id?: st
 #### `list` — List event history
 
 ```typescript
-client.api.events.list(limit?: integer, offset?: integer, sort_by?: string, sort_order?: string, event_type?: string, resource_type?: string, resource_id?: string, project_id?: string, container_id?: string, start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.list(options?: { limit?: integer; offset?: integer; sort_by?: string; sort_order?: string; event_type?: string; resource_type?: string; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1614,7 +1614,7 @@ client.api.events.list(limit?: integer, offset?: integer, sort_by?: string, sort
 #### `listAll` — List event history (collect all pages)
 
 ```typescript
-client.api.events.listAll(limit?: integer, offset?: integer, sort_by?: string, sort_order?: string, event_type?: string, resource_type?: string, resource_id?: string, project_id?: string, container_id?: string, start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.listAll(options?: { limit?: integer; offset?: integer; sort_by?: string; sort_order?: string; event_type?: string; resource_type?: string; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1640,7 +1640,7 @@ client.api.events.listAll(limit?: integer, offset?: integer, sort_by?: string, s
 #### `listIterator` — List event history (async iterator)
 
 ```typescript
-client.api.events.listIterator(limit?: integer, offset?: integer, sort_by?: string, sort_order?: string, event_type?: string, resource_type?: string, resource_id?: string, project_id?: string, container_id?: string, start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.listIterator(options?: { limit?: integer; offset?: integer; sort_by?: string; sort_order?: string; event_type?: string; resource_type?: string; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1883,7 +1883,7 @@ client.api.images.importFree(id: string)
 #### `list` — List user images
 
 ```typescript
-client.api.images.list(page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.list(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1901,7 +1901,7 @@ client.api.images.list(page?: integer, limit?: integer, sort_by?: string, sort_o
 #### `listAll` — List user images (collect all pages)
 
 ```typescript
-client.api.images.listAll(page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listAll(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1919,7 +1919,7 @@ client.api.images.listAll(page?: integer, limit?: integer, sort_by?: string, sor
 #### `listIterator` — List user images (async iterator)
 
 ```typescript
-client.api.images.listIterator(page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listIterator(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1937,7 +1937,7 @@ client.api.images.listIterator(page?: integer, limit?: integer, sort_by?: string
 #### `listPublic` — List public images
 
 ```typescript
-client.api.images.listPublic(os?: string, architecture?: string, min_price?: number, max_price?: number, min_rating?: number, max_rating?: number, search?: string, page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listPublic(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1947,7 +1947,7 @@ client.api.images.listPublic(os?: string, architecture?: string, min_price?: num
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | query | No | Minimum average rating filter - filters images with rating >= this value (0-5 stars) |
-| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating <= this value (0-5 stars) |
+| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | query | No | Search term to filter images by name, description, or tags |
 | `page` | `integer` | query | No | Page number for pagination - starts from 1 |
 | `limit` | `integer` | query | No | Number of images to return per page - maximum 100 items |
@@ -1962,7 +1962,7 @@ client.api.images.listPublic(os?: string, architecture?: string, min_price?: num
 #### `listPublicAll` — List public images (collect all pages)
 
 ```typescript
-client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: number, max_price?: number, min_rating?: number, max_rating?: number, search?: string, page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listPublicAll(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1972,7 +1972,7 @@ client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: 
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | query | No | Minimum average rating filter - filters images with rating >= this value (0-5 stars) |
-| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating <= this value (0-5 stars) |
+| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | query | No | Search term to filter images by name, description, or tags |
 | `page` | `integer` | query | No | Page number for pagination - starts from 1 |
 | `limit` | `integer` | query | No | Number of images to return per page - maximum 100 items |
@@ -1987,7 +1987,7 @@ client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: 
 #### `listPublicIterator` — List public images (async iterator)
 
 ```typescript
-client.api.images.listPublicIterator(os?: string, architecture?: string, min_price?: number, max_price?: number, min_rating?: number, max_rating?: number, search?: string, page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listPublicIterator(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1997,7 +1997,7 @@ client.api.images.listPublicIterator(os?: string, architecture?: string, min_pri
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | query | No | Minimum average rating filter - filters images with rating >= this value (0-5 stars) |
-| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating <= this value (0-5 stars) |
+| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | query | No | Search term to filter images by name, description, or tags |
 | `page` | `integer` | query | No | Page number for pagination - starts from 1 |
 | `limit` | `integer` | query | No | Number of images to return per page - maximum 100 items |
@@ -2065,35 +2065,69 @@ client.api.meta.getSocialStats()
 
 ---
 
-### `client.api.notifications` (8) — Notifications
+### `client.api.notifications` (9) — Notifications
 
-#### `list` — Get all notifications for the authenticated user
+#### `getUserNotificationSummary` — Unread notification count and newest position
 
 ```typescript
-client.api.notifications.list()
+client.api.notifications.getUserNotificationSummary()
 ```
+
+**Returns:** `any`  |  **HTTP:** `GET /api/v1/notifications/summary`
+
+---
+
+#### `list` — List notifications for the authenticated user
+
+```typescript
+client.api.notifications.list(options?: { page?: integer; limit?: integer; unread_only?: boolean; read_only?: boolean; before?: string })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `integer` | query | No | Rows per page (max 100). |
+| `unread_only` | `boolean` | query | No | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | query | No | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | query | No | Keyset cursor from a previous response's pagination.next_cursor ("<created_at>,<id>"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/notifications/`
 **CLI:** `hoody inbox list`
 
 ---
 
-#### `listAll` — Get all notifications for the authenticated user (collect all pages)
+#### `listAll` — List notifications for the authenticated user (collect all pages)
 
 ```typescript
-client.api.notifications.listAll()
+client.api.notifications.listAll(options?: { page?: integer; limit?: integer; unread_only?: boolean; read_only?: boolean; before?: string })
 ```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `integer` | query | No | Rows per page (max 100). |
+| `unread_only` | `boolean` | query | No | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | query | No | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | query | No | Keyset cursor from a previous response's pagination.next_cursor ("<created_at>,<id>"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `any[]`  |  **HTTP:** `GET /api/v1/notifications/`
 **CLI:** `hoody inbox list`
 
 ---
 
-#### `listIterator` — Get all notifications for the authenticated user (async iterator)
+#### `listIterator` — List notifications for the authenticated user (async iterator)
 
 ```typescript
-client.api.notifications.listIterator()
+client.api.notifications.listIterator(options?: { page?: integer; limit?: integer; unread_only?: boolean; read_only?: boolean; before?: string })
 ```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `integer` | query | No | Rows per page (max 100). |
+| `unread_only` | `boolean` | query | No | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | query | No | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | query | No | Keyset cursor from a previous response's pagination.next_cursor ("<created_at>,<id>"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `AsyncIterableIterator<any>`  |  **HTTP:** `GET /api/v1/notifications/`
 **CLI:** `hoody inbox list`
@@ -2397,7 +2431,7 @@ client.api.projects.create(data: object)
 #### `delete` — Delete project
 
 ```typescript
-client.api.projects.delete(include_deleted_items?: boolean, id: string)
+client.api.projects.delete(id: string, options?: { include_deleted_items?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2413,7 +2447,7 @@ client.api.projects.delete(include_deleted_items?: boolean, id: string)
 #### `get` — Get project by ID
 
 ```typescript
-client.api.projects.get(include_permissions?: boolean, id: string)
+client.api.projects.get(id: string, options?: { include_permissions?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2444,7 +2478,7 @@ client.api.projects.getStats(id: string)
 #### `list` — List all projects
 
 ```typescript
-client.api.projects.list(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string)
+client.api.projects.list(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2463,7 +2497,7 @@ client.api.projects.list(page?: number, limit?: number, sort_by?: string, sort_o
 #### `listAll` — List all projects (collect all pages)
 
 ```typescript
-client.api.projects.listAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string)
+client.api.projects.listAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2482,7 +2516,7 @@ client.api.projects.listAll(page?: number, limit?: number, sort_by?: string, sor
 #### `listIterator` — List all projects (async iterator)
 
 ```typescript
-client.api.projects.listIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string)
+client.api.projects.listIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2501,7 +2535,7 @@ client.api.projects.listIterator(page?: number, limit?: number, sort_by?: string
 #### `listPermissions` — List project permissions
 
 ```typescript
-client.api.projects.listPermissions(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.projects.listPermissions(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2520,7 +2554,7 @@ client.api.projects.listPermissions(page?: number, limit?: number, sort_by?: str
 #### `listPermissionsAll` — List project permissions (collect all pages)
 
 ```typescript
-client.api.projects.listPermissionsAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.projects.listPermissionsAll(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2539,7 +2573,7 @@ client.api.projects.listPermissionsAll(page?: number, limit?: number, sort_by?: 
 #### `listPermissionsIterator` — List project permissions (async iterator)
 
 ```typescript
-client.api.projects.listPermissionsIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.projects.listPermissionsIterator(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2660,7 +2694,7 @@ client.api.proxyAliases.get(id: string)
 #### `list` — List proxy aliases
 
 ```typescript
-client.api.proxyAliases.list(project_id?: string, container_id?: string, realm_id?: string, enabled?: string, expired?: string)
+client.api.proxyAliases.list(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: string; expired?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2679,7 +2713,7 @@ client.api.proxyAliases.list(project_id?: string, container_id?: string, realm_i
 #### `listAll` — List proxy aliases (collect all pages)
 
 ```typescript
-client.api.proxyAliases.listAll(project_id?: string, container_id?: string, realm_id?: string, enabled?: string, expired?: string)
+client.api.proxyAliases.listAll(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: string; expired?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2698,7 +2732,7 @@ client.api.proxyAliases.listAll(project_id?: string, container_id?: string, real
 #### `listIterator` — List proxy aliases (async iterator)
 
 ```typescript
-client.api.proxyAliases.listIterator(project_id?: string, container_id?: string, realm_id?: string, enabled?: string, expired?: string)
+client.api.proxyAliases.listIterator(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: string; expired?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2816,7 +2850,7 @@ client.api.proxyDiscovery.listContainerProxyServices(id: string)
 #### `updateContainerProxySettings` — Update container proxy root settings
 
 ```typescript
-client.api.proxyDiscovery.updateContainerProxySettings(id: string, if-match?: string, data: object)
+client.api.proxyDiscovery.updateContainerProxySettings(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2837,7 +2871,7 @@ client.api.proxyDiscovery.updateContainerProxySettings(id: string, if-match?: st
 #### `addContainerProxyHook` — Append or insert a new hook
 
 ```typescript
-client.api.proxyHooks.addContainerProxyHook(id: string, service: string, if-match?: string, data: object)
+client.api.proxyHooks.addContainerProxyHook(id: string, service: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2857,7 +2891,7 @@ client.api.proxyHooks.addContainerProxyHook(id: string, service: string, if-matc
 #### `clearContainerProxyServiceHooks` — Clear all hooks for a service
 
 ```typescript
-client.api.proxyHooks.clearContainerProxyServiceHooks(id: string, service: string, if-match?: string)
+client.api.proxyHooks.clearContainerProxyServiceHooks(id: string, service: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2922,7 +2956,7 @@ client.api.proxyHooks.listContainerProxyServiceHooks(id: string, service: string
 #### `moveContainerProxyHook` — Move a hook to a new position
 
 ```typescript
-client.api.proxyHooks.moveContainerProxyHook(id: string, service: string, hookId: string, if-match?: string, data: object)
+client.api.proxyHooks.moveContainerProxyHook(id: string, service: string, hookId: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2943,7 +2977,7 @@ client.api.proxyHooks.moveContainerProxyHook(id: string, service: string, hookId
 #### `removeContainerProxyHook` — Remove a hook
 
 ```typescript
-client.api.proxyHooks.removeContainerProxyHook(id: string, service: string, hookId: string, if-match?: string)
+client.api.proxyHooks.removeContainerProxyHook(id: string, service: string, hookId: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2961,7 +2995,7 @@ client.api.proxyHooks.removeContainerProxyHook(id: string, service: string, hook
 #### `updateContainerProxyHook` — Replace a hook in place
 
 ```typescript
-client.api.proxyHooks.updateContainerProxyHook(id: string, service: string, hookId: string, if-match?: string, data: object)
+client.api.proxyHooks.updateContainerProxyHook(id: string, service: string, hookId: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2984,7 +3018,7 @@ client.api.proxyHooks.updateContainerProxyHook(id: string, service: string, hook
 #### `delete` — Delete container proxy permissions
 
 ```typescript
-client.api.proxyPermissionsContainer.delete(id: string, if-match?: string)
+client.api.proxyPermissionsContainer.delete(id: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3015,7 +3049,7 @@ client.api.proxyPermissionsContainer.get(id: string)
 #### `removeAuthGroup` — Remove container authentication group
 
 ```typescript
-client.api.proxyPermissionsContainer.removeAuthGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsContainer.removeAuthGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3032,7 +3066,7 @@ client.api.proxyPermissionsContainer.removeAuthGroup(id: string, groupName: stri
 #### `removeGroup` — Remove all program permissions for a container group
 
 ```typescript
-client.api.proxyPermissionsContainer.removeGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsContainer.removeGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3049,7 +3083,7 @@ client.api.proxyPermissionsContainer.removeGroup(id: string, groupName: string, 
 #### `removeProgram` — Remove a single program permission for a container group
 
 ```typescript
-client.api.proxyPermissionsContainer.removeProgram(id: string, groupName: string, program: string, if-match?: string)
+client.api.proxyPermissionsContainer.removeProgram(id: string, groupName: string, program: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3067,7 +3101,7 @@ client.api.proxyPermissionsContainer.removeProgram(id: string, groupName: string
 #### `replace` — Replace container proxy permissions JSON
 
 ```typescript
-client.api.proxyPermissionsContainer.replace(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.replace(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3086,7 +3120,7 @@ client.api.proxyPermissionsContainer.replace(id: string, if-match?: string, data
 #### `setGroup` — Set container group program permission
 
 ```typescript
-client.api.proxyPermissionsContainer.setGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3106,7 +3140,7 @@ client.api.proxyPermissionsContainer.setGroup(id: string, groupName: string, if-
 #### `setIpGroup` — Set IP authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setIpGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setIpGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3126,7 +3160,7 @@ client.api.proxyPermissionsContainer.setIpGroup(id: string, groupName: string, i
 #### `setJwtGroup` — Set JWT authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setJwtGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setJwtGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3146,7 +3180,7 @@ client.api.proxyPermissionsContainer.setJwtGroup(id: string, groupName: string, 
 #### `setPasswordGroup` — Set password authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setPasswordGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setPasswordGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3166,7 +3200,7 @@ client.api.proxyPermissionsContainer.setPasswordGroup(id: string, groupName: str
 #### `setTokenGroup` — Set token authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setTokenGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setTokenGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3186,7 +3220,7 @@ client.api.proxyPermissionsContainer.setTokenGroup(id: string, groupName: string
 #### `updateDefault` — Update container default proxy permission policy
 
 ```typescript
-client.api.proxyPermissionsContainer.updateDefault(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.updateDefault(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3205,7 +3239,7 @@ client.api.proxyPermissionsContainer.updateDefault(id: string, if-match?: string
 #### `updateState` — Update container proxy enable state
 
 ```typescript
-client.api.proxyPermissionsContainer.updateState(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.updateState(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3226,7 +3260,7 @@ client.api.proxyPermissionsContainer.updateState(id: string, if-match?: string, 
 #### `delete` — Delete project proxy permissions
 
 ```typescript
-client.api.proxyPermissionsProject.delete(id: string, if-match?: string)
+client.api.proxyPermissionsProject.delete(id: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3257,7 +3291,7 @@ client.api.proxyPermissionsProject.get(id: string)
 #### `removeAuthGroup` — Remove project authentication group
 
 ```typescript
-client.api.proxyPermissionsProject.removeAuthGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsProject.removeAuthGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3274,7 +3308,7 @@ client.api.proxyPermissionsProject.removeAuthGroup(id: string, groupName: string
 #### `removeGroup` — Remove all program permissions for a project group
 
 ```typescript
-client.api.proxyPermissionsProject.removeGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsProject.removeGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3291,7 +3325,7 @@ client.api.proxyPermissionsProject.removeGroup(id: string, groupName: string, if
 #### `removeProgram` — Remove a single program permission for a project group
 
 ```typescript
-client.api.proxyPermissionsProject.removeProgram(id: string, groupName: string, program: string, if-match?: string)
+client.api.proxyPermissionsProject.removeProgram(id: string, groupName: string, program: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3309,7 +3343,7 @@ client.api.proxyPermissionsProject.removeProgram(id: string, groupName: string, 
 #### `replace` — Replace project proxy permissions JSON
 
 ```typescript
-client.api.proxyPermissionsProject.replace(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.replace(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3328,7 +3362,7 @@ client.api.proxyPermissionsProject.replace(id: string, if-match?: string, data: 
 #### `setGroup` — Set project group program permission
 
 ```typescript
-client.api.proxyPermissionsProject.setGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3348,7 +3382,7 @@ client.api.proxyPermissionsProject.setGroup(id: string, groupName: string, if-ma
 #### `setIpGroup` — Set IP authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setIpGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setIpGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3368,7 +3402,7 @@ client.api.proxyPermissionsProject.setIpGroup(id: string, groupName: string, if-
 #### `setJwtGroup` — Set JWT authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setJwtGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setJwtGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3388,7 +3422,7 @@ client.api.proxyPermissionsProject.setJwtGroup(id: string, groupName: string, if
 #### `setPasswordGroup` — Set password authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setPasswordGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setPasswordGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3408,7 +3442,7 @@ client.api.proxyPermissionsProject.setPasswordGroup(id: string, groupName: strin
 #### `setTokenGroup` — Set token authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setTokenGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setTokenGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3428,7 +3462,7 @@ client.api.proxyPermissionsProject.setTokenGroup(id: string, groupName: string, 
 #### `updateDefault` — Update project default proxy permission policy
 
 ```typescript
-client.api.proxyPermissionsProject.updateDefault(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.updateDefault(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3447,7 +3481,7 @@ client.api.proxyPermissionsProject.updateDefault(id: string, if-match?: string, 
 #### `updateState` — Update project proxy enable state
 
 ```typescript
-client.api.proxyPermissionsProject.updateState(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.updateState(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3468,7 +3502,7 @@ client.api.proxyPermissionsProject.updateState(id: string, if-match?: string, da
 #### `list` — List your realm IDs
 
 ```typescript
-client.api.realms.list(include_usage?: boolean)
+client.api.realms.list(options?: { include_usage?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3571,7 +3605,7 @@ client.api.serverCommands.execute(serverId: string, data: object)
 #### `list` — Get available commands
 
 ```typescript
-client.api.serverCommands.list(category?: string, risk_level?: string, serverId: string)
+client.api.serverCommands.list(serverId: string, options?: { category?: string; risk_level?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3588,7 +3622,7 @@ client.api.serverCommands.list(category?: string, risk_level?: string, serverId:
 #### `listAll` — Get available commands (collect all pages)
 
 ```typescript
-client.api.serverCommands.listAll(category?: string, risk_level?: string, serverId: string)
+client.api.serverCommands.listAll(serverId: string, options?: { category?: string; risk_level?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3605,7 +3639,7 @@ client.api.serverCommands.listAll(category?: string, risk_level?: string, server
 #### `listIterator` — Get available commands (async iterator)
 
 ```typescript
-client.api.serverCommands.listIterator(category?: string, risk_level?: string, serverId: string)
+client.api.serverCommands.listIterator(serverId: string, options?: { category?: string; risk_level?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3624,7 +3658,7 @@ client.api.serverCommands.listIterator(category?: string, risk_level?: string, s
 #### `browse` — Browse rental marketplace
 
 ```typescript
-client.api.serverRental.browse(country?: string, region?: string, max_price_per_day?: number, available_durations?: array, min_cpu_cores?: number, min_cpu_score?: number, cpu_score_type?: string, min_ram_gb?: number, ram_types?: array, min_total_storage_gb?: number, disk_types?: array, min_bandwidth_mbps?: number, min_traffic_tb?: number, unlimited_traffic_only?: boolean, category?: string, featured_only?: boolean)
+client.api.serverRental.browse(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: array; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: string; min_ram_gb?: number; ram_types?: array; min_total_storage_gb?: number; disk_types?: array; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: string; featured_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3654,7 +3688,7 @@ client.api.serverRental.browse(country?: string, region?: string, max_price_per_
 #### `browseAll` — Browse rental marketplace (collect all pages)
 
 ```typescript
-client.api.serverRental.browseAll(country?: string, region?: string, max_price_per_day?: number, available_durations?: array, min_cpu_cores?: number, min_cpu_score?: number, cpu_score_type?: string, min_ram_gb?: number, ram_types?: array, min_total_storage_gb?: number, disk_types?: array, min_bandwidth_mbps?: number, min_traffic_tb?: number, unlimited_traffic_only?: boolean, category?: string, featured_only?: boolean)
+client.api.serverRental.browseAll(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: array; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: string; min_ram_gb?: number; ram_types?: array; min_total_storage_gb?: number; disk_types?: array; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: string; featured_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3684,7 +3718,7 @@ client.api.serverRental.browseAll(country?: string, region?: string, max_price_p
 #### `browseIterator` — Browse rental marketplace (async iterator)
 
 ```typescript
-client.api.serverRental.browseIterator(country?: string, region?: string, max_price_per_day?: number, available_durations?: array, min_cpu_cores?: number, min_cpu_score?: number, cpu_score_type?: string, min_ram_gb?: number, ram_types?: array, min_total_storage_gb?: number, disk_types?: array, min_bandwidth_mbps?: number, min_traffic_tb?: number, unlimited_traffic_only?: boolean, category?: string, featured_only?: boolean)
+client.api.serverRental.browseIterator(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: array; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: string; min_ram_gb?: number; ram_types?: array; min_total_storage_gb?: number; disk_types?: array; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: string; featured_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3804,7 +3838,7 @@ client.api.serverRental.listIterator()
 #### `listMyReservations` — Your reservations
 
 ```typescript
-client.api.serverRental.listMyReservations(limit?: integer, offset?: integer)
+client.api.serverRental.listMyReservations(options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3915,7 +3949,7 @@ client.api.storageShares.get(id: string, shareId: string)
 #### `list` — List storage shares
 
 ```typescript
-client.api.storageShares.list(target_type?: string, label?: string, status?: string, enabled?: string, include_expired?: string, realm_id?: string, id: string)
+client.api.storageShares.list(id: string, options?: { target_type?: string; label?: string; status?: string; enabled?: string; include_expired?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3936,7 +3970,7 @@ client.api.storageShares.list(target_type?: string, label?: string, status?: str
 #### `listAll` — List storage shares (collect all pages)
 
 ```typescript
-client.api.storageShares.listAll(target_type?: string, label?: string, status?: string, enabled?: string, include_expired?: string, realm_id?: string, id: string)
+client.api.storageShares.listAll(id: string, options?: { target_type?: string; label?: string; status?: string; enabled?: string; include_expired?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3957,7 +3991,7 @@ client.api.storageShares.listAll(target_type?: string, label?: string, status?: 
 #### `listGlobal` — List all your storage shares
 
 ```typescript
-client.api.storageShares.listGlobal(realm_id?: string)
+client.api.storageShares.listGlobal(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3972,7 +4006,7 @@ client.api.storageShares.listGlobal(realm_id?: string)
 #### `listGlobalAll` — List all your storage shares (collect all pages)
 
 ```typescript
-client.api.storageShares.listGlobalAll(realm_id?: string)
+client.api.storageShares.listGlobalAll(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3987,7 +4021,7 @@ client.api.storageShares.listGlobalAll(realm_id?: string)
 #### `listGlobalIterator` — List all your storage shares (async iterator)
 
 ```typescript
-client.api.storageShares.listGlobalIterator(realm_id?: string)
+client.api.storageShares.listGlobalIterator(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4017,7 +4051,7 @@ client.api.storageShares.listIncoming(id: string)
 #### `listIncomingGlobal` — Get all incoming shares
 
 ```typescript
-client.api.storageShares.listIncomingGlobal(realm_id?: string)
+client.api.storageShares.listIncomingGlobal(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4032,7 +4066,7 @@ client.api.storageShares.listIncomingGlobal(realm_id?: string)
 #### `listIncomingGlobalAll` — Get all incoming shares (collect all pages)
 
 ```typescript
-client.api.storageShares.listIncomingGlobalAll(realm_id?: string)
+client.api.storageShares.listIncomingGlobalAll(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4047,7 +4081,7 @@ client.api.storageShares.listIncomingGlobalAll(realm_id?: string)
 #### `listIncomingGlobalIterator` — Get all incoming shares (async iterator)
 
 ```typescript
-client.api.storageShares.listIncomingGlobalIterator(realm_id?: string)
+client.api.storageShares.listIncomingGlobalIterator(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4062,7 +4096,7 @@ client.api.storageShares.listIncomingGlobalIterator(realm_id?: string)
 #### `listIterator` — List storage shares (async iterator)
 
 ```typescript
-client.api.storageShares.listIterator(target_type?: string, label?: string, status?: string, enabled?: string, include_expired?: string, realm_id?: string, id: string)
+client.api.storageShares.listIterator(id: string, options?: { target_type?: string; label?: string; status?: string; enabled?: string; include_expired?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4263,7 +4297,7 @@ client.api.users.getFreeTierStatus()
 #### `getSecurityHistory` — Get your account security history
 
 ```typescript
-client.api.users.getSecurityHistory(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+client.api.users.getSecurityHistory(options?: { page?: integer; limit?: integer; include_failed?: boolean; include_security?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4280,7 +4314,7 @@ client.api.users.getSecurityHistory(page?: integer, limit?: integer, include_fai
 #### `getSecurityHistoryAll` — Get your account security history (collect all pages)
 
 ```typescript
-client.api.users.getSecurityHistoryAll(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+client.api.users.getSecurityHistoryAll(options?: { page?: integer; limit?: integer; include_failed?: boolean; include_security?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4297,7 +4331,7 @@ client.api.users.getSecurityHistoryAll(page?: integer, limit?: integer, include_
 #### `getSecurityHistoryIterator` — Get your account security history (async iterator)
 
 ```typescript
-client.api.users.getSecurityHistoryIterator(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+client.api.users.getSecurityHistoryIterator(options?: { page?: integer; limit?: integer; include_failed?: boolean; include_security?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4397,7 +4431,7 @@ client.api.utilities.getIpInfo()
 #### `clear` — Clear entire vault
 
 ```typescript
-client.api.vault.clear(realm_id?: string)
+client.api.vault.clear(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4412,7 +4446,7 @@ client.api.vault.clear(realm_id?: string)
 #### `delete` — Delete vault key
 
 ```typescript
-client.api.vault.delete(realm_id?: string, key: string)
+client.api.vault.delete(key: string, options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4428,7 +4462,7 @@ client.api.vault.delete(realm_id?: string, key: string)
 #### `get` — Get vault key
 
 ```typescript
-client.api.vault.get(realm_id?: string, key: string)
+client.api.vault.get(key: string, options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4444,7 +4478,7 @@ client.api.vault.get(realm_id?: string, key: string)
 #### `getStats` — Get vault statistics
 
 ```typescript
-client.api.vault.getStats(realm_id?: string)
+client.api.vault.getStats(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4459,7 +4493,7 @@ client.api.vault.getStats(realm_id?: string)
 #### `list` — List vault keys
 
 ```typescript
-client.api.vault.list(realm_id?: string)
+client.api.vault.list(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4474,7 +4508,7 @@ client.api.vault.list(realm_id?: string)
 #### `listAll` — List vault keys (collect all pages)
 
 ```typescript
-client.api.vault.listAll(realm_id?: string)
+client.api.vault.listAll(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4489,7 +4523,7 @@ client.api.vault.listAll(realm_id?: string)
 #### `listIterator` — List vault keys (async iterator)
 
 ```typescript
-client.api.vault.listIterator(realm_id?: string)
+client.api.vault.listIterator(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4504,7 +4538,7 @@ client.api.vault.listIterator(realm_id?: string)
 #### `set` — Set vault key
 
 ```typescript
-client.api.vault.set(realm_id?: string, key: string, data: object)
+client.api.vault.set(key: string, data: object, options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4789,7 +4823,7 @@ client.api.wallet.getTransaction(id: string)
 #### `listAiFeeHistory` — Get AI credit fee history
 
 ```typescript
-client.api.wallet.listAiFeeHistory(page?: number, limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listAiFeeHistory(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4807,7 +4841,7 @@ client.api.wallet.listAiFeeHistory(page?: number, limit?: number, sort_by?: stri
 #### `listAiFeeHistoryAll` — Get AI credit fee history (collect all pages)
 
 ```typescript
-client.api.wallet.listAiFeeHistoryAll(page?: number, limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listAiFeeHistoryAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4825,7 +4859,7 @@ client.api.wallet.listAiFeeHistoryAll(page?: number, limit?: number, sort_by?: s
 #### `listAiFeeHistoryIterator` — Get AI credit fee history (async iterator)
 
 ```typescript
-client.api.wallet.listAiFeeHistoryIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listAiFeeHistoryIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4843,7 +4877,7 @@ client.api.wallet.listAiFeeHistoryIterator(page?: number, limit?: number, sort_b
 #### `listCryptoPaymentIntents` — List crypto payment intents
 
 ```typescript
-client.api.wallet.listCryptoPaymentIntents(limit?: integer, offset?: integer)
+client.api.wallet.listCryptoPaymentIntents(options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4858,7 +4892,7 @@ client.api.wallet.listCryptoPaymentIntents(limit?: integer, offset?: integer)
 #### `listInvoices` — Get all invoices
 
 ```typescript
-client.api.wallet.listInvoices(page?: integer, limit?: integer, sort_by?: string, sort_order?: string, filter?: string)
+client.api.wallet.listInvoices(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4877,7 +4911,7 @@ client.api.wallet.listInvoices(page?: integer, limit?: integer, sort_by?: string
 #### `listInvoicesAll` — Get all invoices (collect all pages)
 
 ```typescript
-client.api.wallet.listInvoicesAll(page?: integer, limit?: integer, sort_by?: string, sort_order?: string, filter?: string)
+client.api.wallet.listInvoicesAll(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4896,7 +4930,7 @@ client.api.wallet.listInvoicesAll(page?: integer, limit?: integer, sort_by?: str
 #### `listInvoicesIterator` — Get all invoices (async iterator)
 
 ```typescript
-client.api.wallet.listInvoicesIterator(page?: integer, limit?: integer, sort_by?: string, sort_order?: string, filter?: string)
+client.api.wallet.listInvoicesIterator(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4948,7 +4982,7 @@ client.api.wallet.listPaymentMethodsIterator()
 #### `listStripePaymentIntents` — List card payment intents
 
 ```typescript
-client.api.wallet.listStripePaymentIntents(limit?: integer, offset?: integer)
+client.api.wallet.listStripePaymentIntents(options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4963,7 +4997,7 @@ client.api.wallet.listStripePaymentIntents(limit?: integer, offset?: integer)
 #### `listTransactions` — List transactions
 
 ```typescript
-client.api.wallet.listTransactions(limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listTransactions(options?: { limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4980,7 +5014,7 @@ client.api.wallet.listTransactions(limit?: number, sort_by?: string, sort_order?
 #### `listTransactionsAll` — List transactions (collect all pages)
 
 ```typescript
-client.api.wallet.listTransactionsAll(limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listTransactionsAll(options?: { limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4997,7 +5031,7 @@ client.api.wallet.listTransactionsAll(limit?: number, sort_by?: string, sort_ord
 #### `listTransactionsIterator` — List transactions (async iterator)
 
 ```typescript
-client.api.wallet.listTransactionsIterator(limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listTransactionsIterator(options?: { limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |

@@ -1,4 +1,4 @@
-> _**CLI skill · `notes` namespace** · ~8,947 tokens · hoody-sdk v1.0.0-beta.12_
+> _**CLI skill · `notes` namespace** · ~8,947 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 

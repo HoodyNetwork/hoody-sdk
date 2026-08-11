@@ -1,4 +1,4 @@
-> _**HTTP skill (basic)** · ~15,795 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill (basic)** · ~16,228 tokens · hoody-sdk v1.0.0-beta.13_
 
 # HTTP mode — drive Hoody with curl
 
@@ -45,7 +45,7 @@ Bare `body*` rows are spelled out under the same service in a **Body shapes** bl
 ## Auth
 
 - Control plane: header starts with `Bearer ` (one space, capital B). Kit URL: none.
-- Login: `POST /api/v1/users/auth/login` with `{ username, password }` — field **`token`**.
+- Login: `POST /api/v1/users/auth/login` with `{ username, password }` **or** `{ email, password }` — field **`token`**. Only `password` is required; `username` must match `^[a-zA-Z0-9_-]+$` (3–50 chars), so an email address authenticates **only** through the `email` field — sending one as `username` returns `422 Validation failed`. Every Hoody account is created with an email, so `email` is the common path.
 - Long-lived: `POST /api/v1/auth/tokens`.
 
 ## Response envelope
@@ -67,7 +67,7 @@ Errors: `{ "statusCode": 401, "error": "...", "message": "..." }`. Codes: § Ref
 
 § Core ops cheat-sheet covers: auth (signup/login/2FA/refresh/long-lived); projects + containers (list/create/start, kit-URL resolution); exec, terminal; files r/w/append; browser screenshot; display click-at; sqlite KV; watch SSE; tunnels; snapshot/restore; vault; wallet.
 
-Per-namespace recipes in `SKILL-HTTP/<ns>.md`: `agent api browser code cron curl daemon display exec files notes notifications pipe proxyLogs run sqlite terminal tunnel watch`.
+Per-namespace recipes in `SKILL-HTTP/<ns>.md`: `agent api browser code cron curl daemon display egress exec files notes notifications pipe proxyLogs run sqlite terminal tunnel watch`.
 
 ---
 
@@ -218,6 +218,7 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 | `daemon` | `daemon-1` | `https://{P}-{C}-daemon-1.{N}.containers.hoody.com` |
 | `display` | `display-<N>` (multi) | `https://{P}-{C}-display-1.{N}.containers.hoody.com` (`display-1`, `-2`, …) |
 | (no SDK namespace — registered program) | `desktop-<N>` | `https://{P}-{C}-desktop-1.{N}.containers.hoody.com?desktop_env=xfce` — opens a full XFCE/MATE desktop in the browser (see § Desktop alias) |
+| `egress` | `egress-1` | `https://{P}-{C}-egress-1.{N}.containers.hoody.com` — outbound HTTP proxy (CONNECT + absolute-URI forwarding); every `egress-<n>` index reaches the same single process, but proxy permissions evaluate per index |
 | `exec` | `exec-1`; script by PATH | `https://{P}-{C}-exec-1.{N}.containers.hoody.com/{script}` (a script under `scripts/{sub}/` is ALSO reachable at the `{sub}.…-exec-1.…` subdomain) |
 | `files` | `files-1` | `https://{P}-{C}-files-1.{N}.containers.hoody.com` |
 | `notes` | `notes-1` | `https://{P}-{C}-notes-1.{N}.containers.hoody.com` |
@@ -388,7 +389,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 |---|---|
 | `container_id` | 24-char hex id of the target container — required. |
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Globally unique per server. |
-| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
+| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `egress`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). is also accepted by the validator but is deliberately NOT listed: it is derived from `display` and internal — reach it through `display`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
 | `target_path` | Optional path appended to inner request (`/api/v1` or `/index.php?debug=1`). |
 | `allow_path_override` | Defaults to `true`. If `true`, callers can append path segments after the alias hostname; if `false`, only `target_path` is reachable. |
@@ -679,8 +680,11 @@ curl -X POST $A/auth/verify-email -d '{"token":"{64-char-token}"}'
 
 ### 2. Login (+ 2FA branch) — returns `{data:{token,refreshToken,expires_in}}`; 2FA branch returns `{data:{requires_2fa:true,temp_token}}`
 ```bash
+# Body takes EITHER {email,password} OR {username,password}; only password is required.
+# `username` must match ^[a-zA-Z0-9_-]+$ — an email sent as `username` returns 422.
 TOKEN=$(curl -X POST $A/users/auth/login \
-  -d '{"username":"alex","password":"<your-password>"}' | jq -r '.data.token')
+  -d '{"email":"you@example.com","password":"<your-password>"}' | jq -r '.data.token')
+# username form: -d '{"username":"alex","password":"<your-password>"}'
 curl -X POST $A/users/auth/2fa/verify \
   -d '{"temp_token":"{tt}","code":"123456"}'
 ```
@@ -703,7 +707,7 @@ curl $A/projects/ | jq '.data.projects[]|{id,alias}'
 curl -X POST $A/projects/ -d '{"alias":"x"}'
 ```
 
-### 6. List + create containers — `server_id` from `$A/rentals`; defaults = 19 kits+runtimes
+### 6. List + create containers — `server_id` from `$A/rentals`; `hoody_kit`/`dev_kit` default true
 ```bash
 curl $A/projects/{P}/containers | jq '.data.containers[]|{id,name,status,server_name}'
 curl -X POST $A/projects/{P}/containers \
@@ -823,7 +827,7 @@ Kit URLs (`*.containers.hoody.com`) use per-kit shapes.
 
 ## Pagination
 
-`?page=N&limit=M`. Shared fallback: `page=1`, `limit=20`, hard cap `limit ≤ 200`. Many routes set their own per-route default (10/50/100, e.g. project schemas, container routes). Ordering is per-route via `[[sortBy, sortOrder]]` — there is no global stable-sort guarantee. No cursor. Iterate until `page > totalPages`.
+`?page=N&limit=M`. Shared fallback: `page=1`, `limit=20`. **Use `limit ≤ 100` unless a route documents more.** Each route's own schema caps `limit` and is validated *before* any handler runs, and the common list routes (projects, containers) declare `maximum: 100` — so `limit=200` returns `422 Validation failed: /limit must be <= 100`. The 200 figure is only the internal helper clamp, which request validation never reaches; a few admin routes do declare 200. Routes also set their own defaults (10/50/100). Ordering is per-route via `[[sortBy, sortOrder]]` — there is no global stable-sort guarantee. **The `sort_order` query param is an enum of exactly `asc` | `desc` (default `desc`) on all 11 routes that expose it — spelling it `descending` returns `422 Validation failed: /sort_order must be equal to one of the allowed values`.** `sort_by` is a per-route enum, so read the route's own parameter list for its allowed fields. No cursor. Iterate until `page > totalPages`.
 
 ```json
 {"data":{"projects":[],"pagination":{"total":451,"page":1,"limit":100,"totalPages":5}}}   /* `projects` / `containers` / route-specific resource key (NOT a literal `<r>`) */
@@ -871,6 +875,7 @@ curl -sS --data-binary @body.json "$URL"   # file body
 - [`curl`](https://hoody.com/SKILLS/SKILL-HTTP/curl.md) — full HTTP client gateway + REST-as-GET-URL bridge
 - [`daemon`](https://hoody.com/SKILLS/SKILL-HTTP/daemon.md) — supervisord program lifecycle (start any program; logs always retained)
 - [`display`](https://hoody.com/SKILLS/SKILL-HTTP/display.md) — programmatic GUI desktops with screenshots, input, and windows
+- [`egress`](https://hoody.com/SKILLS/SKILL-HTTP/egress.md) — the container's outbound HTTP proxy
 - [`exec`](https://hoody.com/SKILLS/SKILL-HTTP/exec.md) — micro-services: any script or API as an instant HTTP endpoint
 - [`files`](https://hoody.com/SKILLS/SKILL-HTTP/files.md) — container filesystem over HTTP, with automatic Git-like change history
 - [`notes`](https://hoody.com/SKILLS/SKILL-HTTP/notes.md) — Collaborative notebooks, hierarchical nodes, documents, databases

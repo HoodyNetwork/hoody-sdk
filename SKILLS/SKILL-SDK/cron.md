@@ -1,4 +1,4 @@
-> _**SDK skill · `cron` namespace** · ~4,899 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `cron` namespace** · ~4,920 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `cron` — managed crontab entries per system user
 
@@ -301,7 +301,7 @@ client.cron.crontab.get(user: string)
 #### `listGlobal` — List All Crontabs
 
 ```typescript
-client.cron.crontab.listGlobal(page?: integer, limit?: integer)
+client.cron.crontab.listGlobal(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -317,7 +317,7 @@ client.cron.crontab.listGlobal(page?: integer, limit?: integer)
 #### `listGlobalAll` — List All Crontabs (collect all pages)
 
 ```typescript
-client.cron.crontab.listGlobalAll(page?: integer, limit?: integer)
+client.cron.crontab.listGlobalAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -333,7 +333,7 @@ client.cron.crontab.listGlobalAll(page?: integer, limit?: integer)
 #### `listGlobalIterator` — List All Crontabs (async iterator)
 
 ```typescript
-client.cron.crontab.listGlobalIterator(page?: integer, limit?: integer)
+client.cron.crontab.listGlobalIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -415,7 +415,7 @@ client.cron.entries.get(user: string, id: string)
 #### `list` — List Entries
 
 ```typescript
-client.cron.entries.list(user: string, page?: integer, limit?: integer)
+client.cron.entries.list(user: string, options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -432,7 +432,7 @@ client.cron.entries.list(user: string, page?: integer, limit?: integer)
 #### `listAll` — List Entries (collect all pages)
 
 ```typescript
-client.cron.entries.listAll(user: string, page?: integer, limit?: integer)
+client.cron.entries.listAll(user: string, options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -449,7 +449,7 @@ client.cron.entries.listAll(user: string, page?: integer, limit?: integer)
 #### `listIterator` — List Entries (async iterator)
 
 ```typescript
-client.cron.entries.listIterator(user: string, page?: integer, limit?: integer)
+client.cron.entries.listIterator(user: string, options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |

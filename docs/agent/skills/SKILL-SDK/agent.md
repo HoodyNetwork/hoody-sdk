@@ -1,4 +1,4 @@
-> _**SDK skill · `agent` namespace** · ~97,415 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `agent` namespace** · ~98,184 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `agent` — In-container AI coding agent over HTTP
 
@@ -81,7 +81,8 @@ Reads first: `client.agent.mcp.listMCPServers` (`{ session_id }`) returns the EF
 - The bare `hoody agent` verb is a **hand-written TUI launcher** (`cli/agent-command.ts`), distinct from this generated HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface.
 - Source of truth is the `hoody-agent-d` gateway's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit URL is itself the credential; no HTTP bearer header is required.
 - The proxy service slug is `agent` and the kit URL host carries the index segment (`-agent-{index}`); resolve it via `getKitUrl('agent', container)` rather than hand-building.
-- `promptSync` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `promptStream` accessor returns a WebSocket client that does NOT match the daemon's SSE wire format — use the supported `streamAgentPrompt` helper exported from the SDK, which POSTs `prompt:stream` and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.)For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy on `promptStream` / `promptSync` to auto-approve confirm gates for the life of the turn (off by default) — HTTP: `?policy=auto_approve` (or the `X-Hoody-Gate-Policy: auto_approve` header); SDK: `policy: 'auto_approve'` in the prompt options; the generated CLI: `--policy auto_approve`. Note this only answers **confirm** gates, never questions. - Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `createSession` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — plus `beginHookWrite`, and the side-effecting `testHook` / `ackHookTrust`, all require a live `session_id` — `ackHookTrust` clears the per-session hook-trust prompt (the execution-trust probe `listHooks` reports), the gate that must be acknowledged before any hook command is allowed to fire, mirroring `trustSkill` for skills; `reloadHooks` accepts one only to also return the reloaded summary) AND nonce-guarded: call `client.agent.hooks.beginHookWrite` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `upsertHook` persists a command that fires on lifecycle events and `testHook` executes one immediately. The human-only confirmation gate lives only on the model-facing tool path, not on these RPCs, and the gateway HTTP edge has no app-level admin gate — the same access that authorizes any agent-kit call authorizes these too, with nothing extra, so gating this surface is the caller's/proxy's responsibility.
+- `promptSync` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `promptStream` accessor returns a WebSocket client that does NOT match the daemon's SSE wire format — use the supported `streamAgentPrompt` helper exported from the SDK, which POSTs `prompt:stream` and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy on `promptStream` / `promptSync` to auto-approve confirm gates for the life of the turn (off by default) — HTTP: `?policy=auto_approve` (or the `X-Hoody-Gate-Policy: auto_approve` header); SDK: `policy: 'auto_approve'` in the prompt options; the generated CLI: `--policy auto_approve`. Note this only answers **confirm** gates, never questions. 
+- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `createSession` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — plus `beginHookWrite`, and the side-effecting `testHook` / `ackHookTrust`, all require a live `session_id` — `ackHookTrust` clears the per-session hook-trust prompt (the execution-trust probe `listHooks` reports), the gate that must be acknowledged before any hook command is allowed to fire, mirroring `trustSkill` for skills; `reloadHooks` accepts one only to also return the reloaded summary) AND nonce-guarded: call `client.agent.hooks.beginHookWrite` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `upsertHook` persists a command that fires on lifecycle events and `testHook` executes one immediately. The human-only confirmation gate lives only on the model-facing tool path, not on these RPCs, and the gateway HTTP edge has no app-level admin gate — the same access that authorizes any agent-kit call authorizes these too, with nothing extra, so gating this surface is the caller's/proxy's responsibility.
 - **Credential VALUES are never returned by the MCP surface.** `listMCPServers` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. To change a secret you must supply its real value; to leave one alone, omit the field — `upsertMCPServer` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `setMCPServerEnabled` flips only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
 
 ## Common errors
@@ -109,7 +110,7 @@ Reads first: `client.agent.mcp.listMCPServers` (`{ session_id }`) returns the EF
 #### `exportLogs` — Export logs as a downloadable file.
 
 ```typescript
-client.agent.exportLogs(source?: string, min_level?: string, comp?: string, session_id?: string, text?: string, since?: string, until?: string, event?: string, tool?: string, model?: string, status?: string, method?: string, min_status?: integer, max_status?: integer, errors_only?: boolean, event_type?: string, resource_type?: string, container?: string, kind?: string, host?: string, since_seq?: integer, limit?: integer, format?: string, filename?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.exportLogs(options?: { source?: string; min_level?: string; comp?: string; session_id?: string; text?: string; since?: string; until?: string; event?: string; tool?: string; model?: string; status?: string; method?: string; min_status?: integer; max_status?: integer; errors_only?: boolean; event_type?: string; resource_type?: string; container?: string; kind?: string; host?: string; since_seq?: integer; limit?: integer; format?: string; filename?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -153,7 +154,7 @@ client.agent.exportLogs(source?: string, min_level?: string, comp?: string, sess
 #### `copyAgent` — Copy a chat agent.
 
 ```typescript
-client.agent.agents.copyAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.copyAgent(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -176,7 +177,7 @@ client.agent.agents.copyAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config
 #### `createAgent` — Create a chat-agent definition.
 
 ```typescript
-client.agent.agents.createAgent(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.createAgent(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -198,7 +199,7 @@ client.agent.agents.createAgent(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `deleteAgent` — Delete a custom chat agent.
 
 ```typescript
-client.agent.agents.deleteAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.deleteAgent(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -218,7 +219,7 @@ client.agent.agents.deleteAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `getAgentSource` — Read a chat agent's source.
 
 ```typescript
-client.agent.agents.getAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.getAgentSource(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -238,7 +239,7 @@ client.agent.agents.getAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `listAgents` — List chat-agent definitions.
 
 ```typescript
-client.agent.agents.listAgents(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.listAgents(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -259,7 +260,7 @@ client.agent.agents.listAgents(page?: integer, limit?: integer, X-Hoody-Cwd?: st
 #### `listAgentsAll` — List chat-agent definitions. (collect all pages)
 
 ```typescript
-client.agent.agents.listAgentsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.listAgentsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -280,7 +281,7 @@ client.agent.agents.listAgentsAll(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listAgentsIterator` — List chat-agent definitions. (async iterator)
 
 ```typescript
-client.agent.agents.listAgentsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.listAgentsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -301,7 +302,7 @@ client.agent.agents.listAgentsIterator(page?: integer, limit?: integer, X-Hoody-
 #### `putAgentSource` — Write a chat agent's source.
 
 ```typescript
-client.agent.agents.putAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.putAgentSource(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -324,7 +325,7 @@ client.agent.agents.putAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `renameAgent` — Rename a chat agent.
 
 ```typescript
-client.agent.agents.renameAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.renameAgent(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -347,7 +348,7 @@ client.agent.agents.renameAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `resetAgentToShipped` — Reset an agent to its shipped default.
 
 ```typescript
-client.agent.agents.resetAgentToShipped(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.resetAgentToShipped(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -367,7 +368,7 @@ client.agent.agents.resetAgentToShipped(name: string, X-Hoody-Cwd?: string, X-Ho
 #### `setAgentModel` — Set an agent's model.
 
 ```typescript
-client.agent.agents.setAgentModel(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.setAgentModel(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -390,7 +391,7 @@ client.agent.agents.setAgentModel(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `setAgentTools` — Set an agent's tool allow-list.
 
 ```typescript
-client.agent.agents.setAgentTools(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.setAgentTools(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -403,7 +404,7 @@ client.agent.agents.setAgentTools(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ tools: any[] }`
+**Body:** `{ tools: string[] }`
 
 **Returns:** `any`  |  **HTTP:** `PATCH /api/v1/agent/agents/{name}/tools`
 **CLI:** `hoody agent agents set-tools`
@@ -413,7 +414,7 @@ client.agent.agents.setAgentTools(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `setAgentTurns` — Set an agent's max-turns.
 
 ```typescript
-client.agent.agents.setAgentTurns(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.setAgentTurns(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -436,7 +437,7 @@ client.agent.agents.setAgentTurns(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `toggleAgentTool` — Toggle a single tool for an agent.
 
 ```typescript
-client.agent.agents.toggleAgentTool(name: string, tool: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.toggleAgentTool(name: string, tool: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -460,7 +461,7 @@ client.agent.agents.toggleAgentTool(name: string, tool: string, X-Hoody-Cwd?: st
 #### `listContainers` — List containers in a realm (for binding).
 
 ```typescript
-client.agent.discovery.listContainers(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listContainers(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -481,7 +482,7 @@ client.agent.discovery.listContainers(page?: integer, limit?: integer, X-Hoody-C
 #### `listContainersAll` — List containers in a realm (for binding). (collect all pages)
 
 ```typescript
-client.agent.discovery.listContainersAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listContainersAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -502,7 +503,7 @@ client.agent.discovery.listContainersAll(page?: integer, limit?: integer, X-Hood
 #### `listContainersIterator` — List containers in a realm (for binding). (async iterator)
 
 ```typescript
-client.agent.discovery.listContainersIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listContainersIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -523,7 +524,7 @@ client.agent.discovery.listContainersIterator(page?: integer, limit?: integer, X
 #### `listRealms` — List realms (for binding).
 
 ```typescript
-client.agent.discovery.listRealms(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listRealms(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -544,7 +545,7 @@ client.agent.discovery.listRealms(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listRealmsAll` — List realms (for binding). (collect all pages)
 
 ```typescript
-client.agent.discovery.listRealmsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listRealmsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -565,7 +566,7 @@ client.agent.discovery.listRealmsAll(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listRealmsIterator` — List realms (for binding). (async iterator)
 
 ```typescript
-client.agent.discovery.listRealmsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listRealmsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -588,7 +589,7 @@ client.agent.discovery.listRealmsIterator(page?: integer, limit?: integer, X-Hoo
 #### `githubAuthStatus` — GitHub auth status.
 
 ```typescript
-client.agent.github.githubAuthStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubAuthStatus(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -607,7 +608,7 @@ client.agent.github.githubAuthStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `githubBranches` — List GitHub branches.
 
 ```typescript
-client.agent.github.githubBranches(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubBranches(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -626,7 +627,7 @@ client.agent.github.githubBranches(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `githubClone` — Clone a GitHub repository.
 
 ```typescript
-client.agent.github.githubClone(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.github.githubClone(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -648,7 +649,7 @@ client.agent.github.githubClone(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `githubCommit` — Stage all and commit.
 
 ```typescript
-client.agent.github.githubCommit(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubCommit(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -670,7 +671,7 @@ client.agent.github.githubCommit(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `githubLogin` — Start a GitHub device-flow login (or add a PAT).
 
 ```typescript
-client.agent.github.githubLogin(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.github.githubLogin(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -692,7 +693,7 @@ client.agent.github.githubLogin(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `githubLoginPoll` — Poll a GitHub device-flow login to completion.
 
 ```typescript
-client.agent.github.githubLoginPoll(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubLoginPoll(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -714,7 +715,7 @@ client.agent.github.githubLoginPoll(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `githubLogout` — Remove a linked GitHub account.
 
 ```typescript
-client.agent.github.githubLogout(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubLogout(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -735,7 +736,7 @@ client.agent.github.githubLogout(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `githubPullRequest` — Open a pull request.
 
 ```typescript
-client.agent.github.githubPullRequest(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubPullRequest(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -757,7 +758,7 @@ client.agent.github.githubPullRequest(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?:
 #### `githubRepos` — List GitHub repos.
 
 ```typescript
-client.agent.github.githubRepos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubRepos(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -776,7 +777,7 @@ client.agent.github.githubRepos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `githubSetActiveAccount` — Switch the active GitHub account.
 
 ```typescript
-client.agent.github.githubSetActiveAccount(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubSetActiveAccount(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -797,7 +798,7 @@ client.agent.github.githubSetActiveAccount(X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `githubStatus` — GitHub working-tree status.
 
 ```typescript
-client.agent.github.githubStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubStatus(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -816,7 +817,7 @@ client.agent.github.githubStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `githubSync` — Sync (fetch → pull → push).
 
 ```typescript
-client.agent.github.githubSync(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.github.githubSync(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -840,7 +841,7 @@ client.agent.github.githubSync(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `createHeadlessRun` — Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.createHeadlessRun(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.headless.createHeadlessRun(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -864,7 +865,7 @@ client.agent.headless.createHeadlessRun(X-Hoody-Cwd?: string, X-Hoody-Config-Dir
 #### `bootstrapHoodyToken` — Bootstrap the Hoody platform credential (install-if-absent).
 
 ```typescript
-client.agent.hoody.bootstrapHoodyToken(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hoody.bootstrapHoodyToken(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -887,7 +888,7 @@ client.agent.hoody.bootstrapHoodyToken(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `ackHookTrust` — Acknowledge hook trust.
 
 ```typescript
-client.agent.hooks.ackHookTrust(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.ackHookTrust(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -907,7 +908,7 @@ client.agent.hooks.ackHookTrust(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `beginHookWrite` — Begin a hook write (nonce).
 
 ```typescript
-client.agent.hooks.beginHookWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.beginHookWrite(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -929,7 +930,7 @@ client.agent.hooks.beginHookWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 #### `deleteHook` — Delete a hook.
 
 ```typescript
-client.agent.hooks.deleteHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.deleteHook(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -951,7 +952,7 @@ client.agent.hooks.deleteHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `disableAllHooks` — Disable all hooks.
 
 ```typescript
-client.agent.hooks.disableAllHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.disableAllHooks(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -973,7 +974,7 @@ client.agent.hooks.disableAllHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `listHooks` — List hooks.
 
 ```typescript
-client.agent.hooks.listHooks(session_id?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.listHooks(data?: object, options?: { session_id?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -996,7 +997,7 @@ client.agent.hooks.listHooks(session_id?: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `reloadHooks` — Reload hooks from disk.
 
 ```typescript
-client.agent.hooks.reloadHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.reloadHooks(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1016,7 +1017,7 @@ client.agent.hooks.reloadHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `testHook` — Test-fire a hook.
 
 ```typescript
-client.agent.hooks.testHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.testHook(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1036,7 +1037,7 @@ client.agent.hooks.testHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X
 #### `toggleHook` — Toggle a hook.
 
 ```typescript
-client.agent.hooks.toggleHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.toggleHook(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1058,7 +1059,7 @@ client.agent.hooks.toggleHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `upsertHook` — Upsert a hook.
 
 ```typescript
-client.agent.hooks.upsertHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.upsertHook(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1082,7 +1083,7 @@ client.agent.hooks.upsertHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `deleteJob` — Cancel a pending/running job, or delete a finished record.
 
 ```typescript
-client.agent.jobs.deleteJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.jobs.deleteJob(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1102,7 +1103,7 @@ client.agent.jobs.deleteJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir
 #### `getJob` — Get an async job's status.
 
 ```typescript
-client.agent.jobs.getJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.jobs.getJob(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1122,7 +1123,7 @@ client.agent.jobs.getJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `getJobResult` — Get an async job's result.
 
 ```typescript
-client.agent.jobs.getJobResult(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.jobs.getJobResult(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1144,7 +1145,7 @@ client.agent.jobs.getJobResult(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `logsSources` — Log sources.
 
 ```typescript
-client.agent.logs.logsSources(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.logsSources(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1163,7 +1164,7 @@ client.agent.logs.logsSources(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `logsStats` — Log statistics.
 
 ```typescript
-client.agent.logs.logsStats(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.logsStats(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1182,7 +1183,7 @@ client.agent.logs.logsStats(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X
 #### `queryLogs` — Query logs.
 
 ```typescript
-client.agent.logs.queryLogs(source?: string, level?: string, host?: string, since?: string, until?: string, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.queryLogs(options?: { source?: string; level?: string; host?: string; since?: string; until?: string; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1207,7 +1208,7 @@ client.agent.logs.queryLogs(source?: string, level?: string, host?: string, sinc
 #### `readLogEntry` — Read a log entry.
 
 ```typescript
-client.agent.logs.readLogEntry(ref: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.readLogEntry(ref: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1227,7 +1228,7 @@ client.agent.logs.readLogEntry(ref: string, X-Hoody-Cwd?: string, X-Hoody-Config
 #### `streamLogs` — Stream the log tail (SSE).
 
 ```typescript
-client.agent.logs.streamLogs(source?: string, level?: string, host?: string, since_seq?: integer, limit?: integer, Last-Event-ID?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.streamLogs(options?: { source?: string; level?: string; host?: string; since_seq?: integer; limit?: integer; Last-Event-ID?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1254,7 +1255,7 @@ client.agent.logs.streamLogs(source?: string, level?: string, host?: string, sin
 #### `createLoop` — Create a loop.
 
 ```typescript
-client.agent.loops.createLoop(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.loops.createLoop(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1277,7 +1278,7 @@ client.agent.loops.createLoop(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 #### `deleteLoop` — Delete a loop.
 
 ```typescript
-client.agent.loops.deleteLoop(id: string, loopId: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.loops.deleteLoop(id: string, loopId: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1299,7 +1300,7 @@ client.agent.loops.deleteLoop(id: string, loopId: string, X-Hoody-Cwd?: string, 
 #### `listLoops` — List a session's loops.
 
 ```typescript
-client.agent.loops.listLoops(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.loops.listLoops(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1321,7 +1322,7 @@ client.agent.loops.listLoops(id: string, page?: integer, limit?: integer, X-Hood
 #### `listLoopsAll` — List a session's loops. (collect all pages)
 
 ```typescript
-client.agent.loops.listLoopsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.loops.listLoopsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1343,7 +1344,7 @@ client.agent.loops.listLoopsAll(id: string, page?: integer, limit?: integer, X-H
 #### `listLoopsIterator` — List a session's loops. (async iterator)
 
 ```typescript
-client.agent.loops.listLoopsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.loops.listLoopsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1365,7 +1366,7 @@ client.agent.loops.listLoopsIterator(id: string, page?: integer, limit?: integer
 #### `runLoopNow` — Run a loop immediately.
 
 ```typescript
-client.agent.loops.runLoopNow(id: string, loopId: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.loops.runLoopNow(id: string, loopId: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1387,7 +1388,7 @@ client.agent.loops.runLoopNow(id: string, loopId: string, X-Hoody-Cwd?: string, 
 #### `updateLoop` — Update a loop.
 
 ```typescript
-client.agent.loops.updateLoop(id: string, loopId: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.loops.updateLoop(id: string, loopId: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1413,7 +1414,7 @@ client.agent.loops.updateLoop(id: string, loopId: string, X-Hoody-Cwd?: string, 
 #### `beginMCPWrite` — Begin an MCP config write.
 
 ```typescript
-client.agent.mcp.beginMCPWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.beginMCPWrite(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1435,7 +1436,7 @@ client.agent.mcp.beginMCPWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `deleteMCPServer` — Delete an MCP server.
 
 ```typescript
-client.agent.mcp.deleteMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.deleteMCPServer(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1457,7 +1458,7 @@ client.agent.mcp.deleteMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `importMCPServers` — Import MCP servers from another tool's config.
 
 ```typescript
-client.agent.mcp.importMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.importMCPServers(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1469,7 +1470,7 @@ client.agent.mcp.importMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", document: string, servers: any[], replace: bool, expect_hash*: string }`
+**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", document: string, servers: object[], replace: bool, expect_hash*: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/mcp/import`
 **CLI:** `hoody agent mcp import`
@@ -1479,7 +1480,7 @@ client.agent.mcp.importMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 #### `listMCPServers` — List configured MCP servers.
 
 ```typescript
-client.agent.mcp.listMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.mcp.listMCPServers(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1498,7 +1499,7 @@ client.agent.mcp.listMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `parseMCPImport` — Preview an MCP config import.
 
 ```typescript
-client.agent.mcp.parseMCPImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.parseMCPImport(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1520,7 +1521,7 @@ client.agent.mcp.parseMCPImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `probeMCPServer` — Probe an MCP server without saving it.
 
 ```typescript
-client.agent.mcp.probeMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.probeMCPServer(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1542,7 +1543,7 @@ client.agent.mcp.probeMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `reconnectMCP` — Reload MCP config and reconnect.
 
 ```typescript
-client.agent.mcp.reconnectMCP(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.reconnectMCP(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1564,7 +1565,7 @@ client.agent.mcp.reconnectMCP(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `setMCPServerEnabled` — Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.setMCPServerEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.setMCPServerEnabled(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1586,7 +1587,7 @@ client.agent.mcp.setMCPServerEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `upsertMCPServer` — Create or update an MCP server.
 
 ```typescript
-client.agent.mcp.upsertMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.upsertMCPServer(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1610,7 +1611,7 @@ client.agent.mcp.upsertMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `consolidateMemory` — Trigger a memory consolidation pass (human-only).
 
 ```typescript
-client.agent.memory.consolidateMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.memory.consolidateMemory(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1632,7 +1633,7 @@ client.agent.memory.consolidateMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?:
 #### `deleteMemoryItem` — Delete a memory item.
 
 ```typescript
-client.agent.memory.deleteMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.memory.deleteMemoryItem(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1654,7 +1655,7 @@ client.agent.memory.deleteMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `editMemoryItem` — Edit a memory item.
 
 ```typescript
-client.agent.memory.editMemoryItem(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.editMemoryItem(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1677,7 +1678,7 @@ client.agent.memory.editMemoryItem(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `flushMemory` — Flush the memory store.
 
 ```typescript
-client.agent.memory.flushMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.flushMemory(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1697,7 +1698,7 @@ client.agent.memory.flushMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `getMemoryGraph` — Read a project's memory relation graph.
 
 ```typescript
-client.agent.memory.getMemoryGraph(project?: string, node_type?: string, limit?: integer, offset?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.getMemoryGraph(options?: { project?: string; node_type?: string; limit?: integer; offset?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1720,7 +1721,7 @@ client.agent.memory.getMemoryGraph(project?: string, node_type?: string, limit?:
 #### `getMemoryItem` — Read a memory item.
 
 ```typescript
-client.agent.memory.getMemoryItem(id: string, project?: string, kind?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.getMemoryItem(id: string, options?: { project?: string; kind?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1742,7 +1743,7 @@ client.agent.memory.getMemoryItem(id: string, project?: string, kind?: string, X
 #### `listMemoryItems` — List memory items.
 
 ```typescript
-client.agent.memory.listMemoryItems(project?: string, kind?: string, type?: string, query?: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryItems(options?: { project?: string; kind?: string; type?: string; query?: string; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1767,7 +1768,7 @@ client.agent.memory.listMemoryItems(project?: string, kind?: string, type?: stri
 #### `listMemoryItemsAll` — List memory items. (collect all pages)
 
 ```typescript
-client.agent.memory.listMemoryItemsAll(project?: string, kind?: string, type?: string, query?: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryItemsAll(options?: { project?: string; kind?: string; type?: string; query?: string; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1792,7 +1793,7 @@ client.agent.memory.listMemoryItemsAll(project?: string, kind?: string, type?: s
 #### `listMemoryItemsIterator` — List memory items. (async iterator)
 
 ```typescript
-client.agent.memory.listMemoryItemsIterator(project?: string, kind?: string, type?: string, query?: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryItemsIterator(options?: { project?: string; kind?: string; type?: string; query?: string; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1817,7 +1818,7 @@ client.agent.memory.listMemoryItemsIterator(project?: string, kind?: string, typ
 #### `listMemoryProjects` — List memory projects.
 
 ```typescript
-client.agent.memory.listMemoryProjects(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryProjects(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1838,7 +1839,7 @@ client.agent.memory.listMemoryProjects(page?: integer, limit?: integer, X-Hoody-
 #### `listMemoryProjectsAll` — List memory projects. (collect all pages)
 
 ```typescript
-client.agent.memory.listMemoryProjectsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryProjectsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1859,7 +1860,7 @@ client.agent.memory.listMemoryProjectsAll(page?: integer, limit?: integer, X-Hoo
 #### `listMemoryProjectsIterator` — List memory projects. (async iterator)
 
 ```typescript
-client.agent.memory.listMemoryProjectsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryProjectsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1880,7 +1881,7 @@ client.agent.memory.listMemoryProjectsIterator(page?: integer, limit?: integer, 
 #### `saveMemoryItem` — Save a memory item.
 
 ```typescript
-client.agent.memory.saveMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.memory.saveMemoryItem(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1902,7 +1903,7 @@ client.agent.memory.saveMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `searchMemory` — Search memory (hybrid recall).
 
 ```typescript
-client.agent.memory.searchMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.searchMemory(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1914,7 +1915,7 @@ client.agent.memory.searchMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ project: string, query: string, limit: int, kinds: any[], skip_graph: bool }`
+**Body:** `{ project: string, query: string, limit: int, kinds: string[], skip_graph: bool }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/memory/search`
 **CLI:** `hoody agent memory search`
@@ -1924,7 +1925,7 @@ client.agent.memory.searchMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `setMemoryEnabled` — Toggle memory capture.
 
 ```typescript
-client.agent.memory.setMemoryEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.setMemoryEnabled(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1948,7 +1949,7 @@ client.agent.memory.setMemoryEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `addProviderAccount` — Add an OAuth account to a provider's pool.
 
 ```typescript
-client.agent.models.addProviderAccount(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.models.addProviderAccount(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1969,7 +1970,7 @@ client.agent.models.addProviderAccount(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `deleteProviderAPIKey` — Delete a provider API key.
 
 ```typescript
-client.agent.models.deleteProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.deleteProviderAPIKey(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1989,7 +1990,7 @@ client.agent.models.deleteProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoo
 #### `getModel` — Get a model by spec.
 
 ```typescript
-client.agent.models.getModel(spec: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.getModel(spec: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2009,7 +2010,7 @@ client.agent.models.getModel(spec: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `getProvider` — Get a provider.
 
 ```typescript
-client.agent.models.getProvider(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.getProvider(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2029,7 +2030,7 @@ client.agent.models.getProvider(id: string, X-Hoody-Cwd?: string, X-Hoody-Config
 #### `getProviderAuth` — Get a provider's auth status.
 
 ```typescript
-client.agent.models.getProviderAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.getProviderAuth(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2049,7 +2050,7 @@ client.agent.models.getProviderAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `listModels` — List models.
 
 ```typescript
-client.agent.models.listModels(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listModels(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2070,7 +2071,7 @@ client.agent.models.listModels(page?: integer, limit?: integer, X-Hoody-Cwd?: st
 #### `listModelsAll` — List models. (collect all pages)
 
 ```typescript
-client.agent.models.listModelsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listModelsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2091,7 +2092,7 @@ client.agent.models.listModelsAll(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listModelsIterator` — List models. (async iterator)
 
 ```typescript
-client.agent.models.listModelsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listModelsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2112,7 +2113,7 @@ client.agent.models.listModelsIterator(page?: integer, limit?: integer, X-Hoody-
 #### `listProviderAccounts` — List a provider's OAuth account pool.
 
 ```typescript
-client.agent.models.listProviderAccounts(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviderAccounts(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2134,7 +2135,7 @@ client.agent.models.listProviderAccounts(id: string, page?: integer, limit?: int
 #### `listProviderAccountsAll` — List a provider's OAuth account pool. (collect all pages)
 
 ```typescript
-client.agent.models.listProviderAccountsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviderAccountsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2156,7 +2157,7 @@ client.agent.models.listProviderAccountsAll(id: string, page?: integer, limit?: 
 #### `listProviderAccountsIterator` — List a provider's OAuth account pool. (async iterator)
 
 ```typescript
-client.agent.models.listProviderAccountsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviderAccountsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2178,7 +2179,7 @@ client.agent.models.listProviderAccountsIterator(id: string, page?: integer, lim
 #### `listProviders` — List LLM providers.
 
 ```typescript
-client.agent.models.listProviders(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviders(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2199,7 +2200,7 @@ client.agent.models.listProviders(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listProvidersAll` — List LLM providers. (collect all pages)
 
 ```typescript
-client.agent.models.listProvidersAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProvidersAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2220,7 +2221,7 @@ client.agent.models.listProvidersAll(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listProvidersIterator` — List LLM providers. (async iterator)
 
 ```typescript
-client.agent.models.listProvidersIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProvidersIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2241,7 +2242,7 @@ client.agent.models.listProvidersIterator(page?: integer, limit?: integer, X-Hoo
 #### `logoutProviderOAuth` — Remove a provider's OAuth login.
 
 ```typescript
-client.agent.models.logoutProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.logoutProviderOAuth(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2261,7 +2262,7 @@ client.agent.models.logoutProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hood
 #### `pollProviderOAuth` — Poll a provider OAuth login.
 
 ```typescript
-client.agent.models.pollProviderOAuth(id: string, job: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.pollProviderOAuth(id: string, job: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2282,7 +2283,7 @@ client.agent.models.pollProviderOAuth(id: string, job: string, X-Hoody-Cwd?: str
 #### `removeProviderAccount` — Remove a pooled OAuth account.
 
 ```typescript
-client.agent.models.removeProviderAccount(id: string, key: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.removeProviderAccount(id: string, key: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2303,7 +2304,7 @@ client.agent.models.removeProviderAccount(id: string, key: string, X-Hoody-Cwd?:
 #### `setProviderAPIKey` — Store a provider API key.
 
 ```typescript
-client.agent.models.setProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.models.setProviderAPIKey(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2326,7 +2327,7 @@ client.agent.models.setProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `setProviderAccountActive` — Make a pooled OAuth account active.
 
 ```typescript
-client.agent.models.setProviderAccountActive(id: string, key: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.models.setProviderAccountActive(id: string, key: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2348,7 +2349,7 @@ client.agent.models.setProviderAccountActive(id: string, key: string, X-Hoody-Cw
 #### `setProviderDefault` — Set a provider's default credential method.
 
 ```typescript
-client.agent.models.setProviderDefault(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.models.setProviderDefault(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2371,7 +2372,7 @@ client.agent.models.setProviderDefault(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `startProviderOAuth` — Start a provider OAuth login.
 
 ```typescript
-client.agent.models.startProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.models.startProviderOAuth(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2394,7 +2395,7 @@ client.agent.models.startProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `submitProviderOAuthCode` — Submit a provider OAuth authorization code.
 
 ```typescript
-client.agent.models.submitProviderOAuthCode(id: string, job: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.models.submitProviderOAuthCode(id: string, job: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2420,7 +2421,7 @@ client.agent.models.submitProviderOAuthCode(id: string, job: string, X-Hoody-Cwd
 #### `answerAssist` — Propose answers for a parked question (helper model).
 
 ```typescript
-client.agent.sessions.answerAssist(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.answerAssist(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2443,7 +2444,7 @@ client.agent.sessions.answerAssist(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `answerQuestion` — Answer a parked question gate.
 
 ```typescript
-client.agent.sessions.answerQuestion(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.answerQuestion(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2466,7 +2467,7 @@ client.agent.sessions.answerQuestion(id: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `cancelSession` — Cancel the active turn (Esc).
 
 ```typescript
-client.agent.sessions.cancelSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.cancelSession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2486,7 +2487,7 @@ client.agent.sessions.cancelSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `closeSession` — Close the session (teardown).
 
 ```typescript
-client.agent.sessions.closeSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.closeSession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2506,7 +2507,7 @@ client.agent.sessions.closeSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `confirmGate` — Answer a parked confirm gate.
 
 ```typescript
-client.agent.sessions.confirmGate(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.confirmGate(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2529,7 +2530,7 @@ client.agent.sessions.confirmGate(id: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `createSession` — Create, fork, or attach a session.
 
 ```typescript
-client.agent.sessions.createSession(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.createSession(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2551,7 +2552,7 @@ client.agent.sessions.createSession(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `deleteSession` — Close (and optionally hard-delete) a session.
 
 ```typescript
-client.agent.sessions.deleteSession(id: string, hard?: boolean, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.deleteSession(id: string, options?: { hard?: boolean; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2572,7 +2573,7 @@ client.agent.sessions.deleteSession(id: string, hard?: boolean, X-Hoody-Cwd?: st
 #### `getSession` — Get a session summary.
 
 ```typescript
-client.agent.sessions.getSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.getSession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2592,7 +2593,7 @@ client.agent.sessions.getSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Confi
 #### `getSessionTranscript` — Read a session's transcript without attaching.
 
 ```typescript
-client.agent.sessions.getSessionTranscript(id: string, after_turn?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.getSessionTranscript(id: string, options?: { after_turn?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2612,7 +2613,7 @@ client.agent.sessions.getSessionTranscript(id: string, after_turn?: integer, X-H
 #### `listSessionCwds` — List distinct session working directories.
 
 ```typescript
-client.agent.sessions.listSessionCwds(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessionCwds(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2631,7 +2632,7 @@ client.agent.sessions.listSessionCwds(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?:
 #### `listSessions` — List sessions.
 
 ```typescript
-client.agent.sessions.listSessions(include_system?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessions(options?: { include_system?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2653,7 +2654,7 @@ client.agent.sessions.listSessions(include_system?: boolean, page?: integer, lim
 #### `listSessionsAll` — List sessions. (collect all pages)
 
 ```typescript
-client.agent.sessions.listSessionsAll(include_system?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessionsAll(options?: { include_system?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2675,7 +2676,7 @@ client.agent.sessions.listSessionsAll(include_system?: boolean, page?: integer, 
 #### `listSessionsIterator` — List sessions. (async iterator)
 
 ```typescript
-client.agent.sessions.listSessionsIterator(include_system?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessionsIterator(options?: { include_system?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2697,7 +2698,7 @@ client.agent.sessions.listSessionsIterator(include_system?: boolean, page?: inte
 #### `postSessionMessage` — Dispatch a turn (fire-and-observe).
 
 ```typescript
-client.agent.sessions.postSessionMessage(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.postSessionMessage(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2720,7 +2721,7 @@ client.agent.sessions.postSessionMessage(id: string, X-Hoody-Cwd?: string, X-Hoo
 #### `postWorkflowMessage` — Send a message to a running workflow.
 
 ```typescript
-client.agent.sessions.postWorkflowMessage(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.postWorkflowMessage(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2743,7 +2744,7 @@ client.agent.sessions.postWorkflowMessage(id: string, X-Hoody-Cwd?: string, X-Ho
 #### `promptStream` — Dispatch a turn and stream the response.
 
 ```typescript
-client.agent.sessions.promptStream(id: string, policy?: string, X-Hoody-Gate-Policy?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.promptStream(id: string, data?: object, options?: { policy?: string; X-Hoody-Gate-Policy?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2768,7 +2769,7 @@ client.agent.sessions.promptStream(id: string, policy?: string, X-Hoody-Gate-Pol
 #### `promptSync` — Dispatch a turn and block to completion.
 
 ```typescript
-client.agent.sessions.promptSync(id: string, policy?: string, X-Hoody-Gate-Policy?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.promptSync(id: string, data?: object, options?: { policy?: string; X-Hoody-Gate-Policy?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2793,7 +2794,7 @@ client.agent.sessions.promptSync(id: string, policy?: string, X-Hoody-Gate-Polic
 #### `replaySession` — Replay a live session's buffered events.
 
 ```typescript
-client.agent.sessions.replaySession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.replaySession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2813,7 +2814,7 @@ client.agent.sessions.replaySession(id: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `setSessionAgent` — Switch the chat agent.
 
 ```typescript
-client.agent.sessions.setSessionAgent(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionAgent(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2836,7 +2837,7 @@ client.agent.sessions.setSessionAgent(id: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `setSessionAutoReply` — Arm/disarm the auto-reply loop.
 
 ```typescript
-client.agent.sessions.setSessionAutoReply(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionAutoReply(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2859,7 +2860,7 @@ client.agent.sessions.setSessionAutoReply(id: string, X-Hoody-Cwd?: string, X-Ho
 #### `setSessionAutoReplyWrites` — Flip the auto-reply write opt-in.
 
 ```typescript
-client.agent.sessions.setSessionAutoReplyWrites(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionAutoReplyWrites(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2882,7 +2883,7 @@ client.agent.sessions.setSessionAutoReplyWrites(id: string, X-Hoody-Cwd?: string
 #### `setSessionEffort` — Set reasoning effort.
 
 ```typescript
-client.agent.sessions.setSessionEffort(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionEffort(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2905,7 +2906,7 @@ client.agent.sessions.setSessionEffort(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `setSessionHoodyEnv` — Toggle Hoody shell-env injection.
 
 ```typescript
-client.agent.sessions.setSessionHoodyEnv(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionHoodyEnv(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2928,7 +2929,7 @@ client.agent.sessions.setSessionHoodyEnv(id: string, X-Hoody-Cwd?: string, X-Hoo
 #### `setSessionModel` — Switch the session model.
 
 ```typescript
-client.agent.sessions.setSessionModel(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.sessions.setSessionModel(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2951,7 +2952,7 @@ client.agent.sessions.setSessionModel(id: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `setSessionVerbosity` — Set response verbosity.
 
 ```typescript
-client.agent.sessions.setSessionVerbosity(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionVerbosity(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2974,7 +2975,7 @@ client.agent.sessions.setSessionVerbosity(id: string, X-Hoody-Cwd?: string, X-Ho
 #### `streamSession` — Attach to a session's event stream (WebSocket / SSE).
 
 ```typescript
-client.agent.sessions.streamSession(id: string, since?: integer, Last-Event-ID?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.streamSession(id: string, options?: { since?: integer; Last-Event-ID?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2996,7 +2997,7 @@ client.agent.sessions.streamSession(id: string, since?: integer, Last-Event-ID?:
 #### `trimSession` — Trim session history to a turn index.
 
 ```typescript
-client.agent.sessions.trimSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.trimSession(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3021,7 +3022,7 @@ client.agent.sessions.trimSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `deleteFusion` — Delete a fusion composite.
 
 ```typescript
-client.agent.settings.deleteFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.deleteFusion(slug: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3041,7 +3042,7 @@ client.agent.settings.deleteFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `getACPStatus` — Get BYOA ACP backend status.
 
 ```typescript
-client.agent.settings.getACPStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.getACPStatus(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3060,7 +3061,7 @@ client.agent.settings.getACPStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `getSettings` — Get settings.
 
 ```typescript
-client.agent.settings.getSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.getSettings(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3079,7 +3080,7 @@ client.agent.settings.getSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 #### `listFusion` — List fusion composites.
 
 ```typescript
-client.agent.settings.listFusion(include_invalid?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.listFusion(options?: { include_invalid?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3101,7 +3102,7 @@ client.agent.settings.listFusion(include_invalid?: boolean, page?: integer, limi
 #### `listFusionAll` — List fusion composites. (collect all pages)
 
 ```typescript
-client.agent.settings.listFusionAll(include_invalid?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.listFusionAll(options?: { include_invalid?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3123,7 +3124,7 @@ client.agent.settings.listFusionAll(include_invalid?: boolean, page?: integer, l
 #### `listFusionIterator` — List fusion composites. (async iterator)
 
 ```typescript
-client.agent.settings.listFusionIterator(include_invalid?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.listFusionIterator(options?: { include_invalid?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3145,7 +3146,7 @@ client.agent.settings.listFusionIterator(include_invalid?: boolean, page?: integ
 #### `patchSettings` — Patch settings.
 
 ```typescript
-client.agent.settings.patchSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.settings.patchSettings(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3167,7 +3168,7 @@ client.agent.settings.patchSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `setACPAgentModel` — Set a BYOA backend's default model and effort.
 
 ```typescript
-client.agent.settings.setACPAgentModel(agent: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.settings.setACPAgentModel(agent: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3189,7 +3190,7 @@ client.agent.settings.setACPAgentModel(agent: string, X-Hoody-Cwd?: string, X-Ho
 #### `setACPEnabled` — Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.settings.setACPEnabled(agent: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.settings.setACPEnabled(agent: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3211,7 +3212,7 @@ client.agent.settings.setACPEnabled(agent: string, X-Hoody-Cwd?: string, X-Hoody
 #### `setACPSecret` — Store an ACP per-agent secret value.
 
 ```typescript
-client.agent.settings.setACPSecret(agent: string, key: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.settings.setACPSecret(agent: string, key: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3235,7 +3236,7 @@ client.agent.settings.setACPSecret(agent: string, key: string, X-Hoody-Cwd?: str
 #### `upsertFusion` — Create or update a fusion composite.
 
 ```typescript
-client.agent.settings.upsertFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.settings.upsertFusion(slug: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3260,7 +3261,7 @@ client.agent.settings.upsertFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `applySkillImport` — Apply a skill import.
 
 ```typescript
-client.agent.skills.applySkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.skills.applySkillImport(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3280,7 +3281,7 @@ client.agent.skills.applySkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `clearSkillHubCache` — Clear the skill hub cache.
 
 ```typescript
-client.agent.skills.clearSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.clearSkillHubCache(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3299,7 +3300,7 @@ client.agent.skills.clearSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `createSkill` — Create a skill.
 
 ```typescript
-client.agent.skills.createSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.createSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3321,7 +3322,7 @@ client.agent.skills.createSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `deleteSkill` — Delete a skill.
 
 ```typescript
-client.agent.skills.deleteSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.deleteSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3343,7 +3344,7 @@ client.agent.skills.deleteSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `getSkillHubCache` — Skill hub cache stats.
 
 ```typescript
-client.agent.skills.getSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.getSkillHubCache(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3362,7 +3363,7 @@ client.agent.skills.getSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `getSkillSource` — Read a skill's source.
 
 ```typescript
-client.agent.skills.getSkillSource(root_dir?: string, rel_dir?: string, root?: string, rel?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.getSkillSource(options?: { root_dir?: string; rel_dir?: string; root?: string; rel?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3385,7 +3386,7 @@ client.agent.skills.getSkillSource(root_dir?: string, rel_dir?: string, root?: s
 #### `installSkillHub` — Install a hub skill.
 
 ```typescript
-client.agent.skills.installSkillHub(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.installSkillHub(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3407,7 +3408,7 @@ client.agent.skills.installSkillHub(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `listSkills` — List skills.
 
 ```typescript
-client.agent.skills.listSkills(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.listSkills(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3428,7 +3429,7 @@ client.agent.skills.listSkills(page?: integer, limit?: integer, X-Hoody-Cwd?: st
 #### `listSkillsAll` — List skills. (collect all pages)
 
 ```typescript
-client.agent.skills.listSkillsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.listSkillsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3449,7 +3450,7 @@ client.agent.skills.listSkillsAll(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listSkillsIterator` — List skills. (async iterator)
 
 ```typescript
-client.agent.skills.listSkillsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.listSkillsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3470,7 +3471,7 @@ client.agent.skills.listSkillsIterator(page?: integer, limit?: integer, X-Hoody-
 #### `previewSkillHub` — Preview a hub skill.
 
 ```typescript
-client.agent.skills.previewSkillHub(id?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.previewSkillHub(options?: { id?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3490,7 +3491,7 @@ client.agent.skills.previewSkillHub(id?: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `putSkillSource` — Write a skill's source.
 
 ```typescript
-client.agent.skills.putSkillSource(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.putSkillSource(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3512,7 +3513,7 @@ client.agent.skills.putSkillSource(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `renameSkill` — Rename a skill.
 
 ```typescript
-client.agent.skills.renameSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.renameSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3534,7 +3535,7 @@ client.agent.skills.renameSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `scanSkillImport` — Scan for importable skills.
 
 ```typescript
-client.agent.skills.scanSkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.scanSkillImport(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3553,7 +3554,7 @@ client.agent.skills.scanSkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `searchSkillHub` — Search the skill hub.
 
 ```typescript
-client.agent.skills.searchSkillHub(q?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.searchSkillHub(options?: { q?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3573,7 +3574,7 @@ client.agent.skills.searchSkillHub(q?: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `toggleSkill` — Enable/disable a skill.
 
 ```typescript
-client.agent.skills.toggleSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.toggleSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3595,7 +3596,7 @@ client.agent.skills.toggleSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `trustSkill` — Set a skill's trust state.
 
 ```typescript
-client.agent.skills.trustSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.trustSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3619,7 +3620,7 @@ client.agent.skills.trustSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `getStatistics` — Cross-session statistics.
 
 ```typescript
-client.agent.statistics.getStatistics(scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.statistics.getStatistics(options?: { scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3639,7 +3640,7 @@ client.agent.statistics.getStatistics(scope?: string, X-Hoody-Cwd?: string, X-Ho
 #### `usageByAccount` — Usage rollup by account.
 
 ```typescript
-client.agent.statistics.usageByAccount(since?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.statistics.usageByAccount(options?: { since?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3659,7 +3660,7 @@ client.agent.statistics.usageByAccount(since?: integer, X-Hoody-Cwd?: string, X-
 #### `usageByModel` — Usage rollup by model.
 
 ```typescript
-client.agent.statistics.usageByModel(since?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.statistics.usageByModel(options?: { since?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3738,7 +3739,7 @@ client.agent.system.openapiYAML()
 #### `cancelAllTasks` — Cancel all background tasks.
 
 ```typescript
-client.agent.tasks.cancelAllTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.cancelAllTasks(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3758,7 +3759,7 @@ client.agent.tasks.cancelAllTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `cancelTask` — Cancel a background task.
 
 ```typescript
-client.agent.tasks.cancelTask(id: string, tid: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.cancelTask(id: string, tid: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3779,7 +3780,7 @@ client.agent.tasks.cancelTask(id: string, tid: string, X-Hoody-Cwd?: string, X-H
 #### `listTasks` — Request the session's task snapshot.
 
 ```typescript
-client.agent.tasks.listTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.listTasks(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3799,7 +3800,7 @@ client.agent.tasks.listTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Di
 #### `requestTaskTranscript` — Request a task's transcript (upsert-poll).
 
 ```typescript
-client.agent.tasks.requestTaskTranscript(id: string, tid: string, after_seq?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.requestTaskTranscript(id: string, tid: string, options?: { after_seq?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3823,7 +3824,7 @@ client.agent.tasks.requestTaskTranscript(id: string, tid: string, after_seq?: in
 #### `approveTodoProposal` — Approve a todo proposal.
 
 ```typescript
-client.agent.todos.approveTodoProposal(id: string, pid: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.approveTodoProposal(id: string, pid: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3845,7 +3846,7 @@ client.agent.todos.approveTodoProposal(id: string, pid: string, X-Hoody-Cwd?: st
 #### `archiveTodo` — Archive a todo.
 
 ```typescript
-client.agent.todos.archiveTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.archiveTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3868,7 +3869,7 @@ client.agent.todos.archiveTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `cancelTodoRun` — Cancel a todo's run.
 
 ```typescript
-client.agent.todos.cancelTodoRun(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.cancelTodoRun(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3889,7 +3890,7 @@ client.agent.todos.cancelTodoRun(id: string, X-Hoody-Cwd?: string, X-Hoody-Confi
 #### `claimTodo` — Claim a todo.
 
 ```typescript
-client.agent.todos.claimTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.claimTodo(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3912,7 +3913,7 @@ client.agent.todos.claimTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Di
 #### `createTodo` — File a todo.
 
 ```typescript
-client.agent.todos.createTodo(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.createTodo(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3924,7 +3925,7 @@ client.agent.todos.createTodo(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ title*: string, body: string, priority: int, tags: any[], cwd: string }`
+**Body:** `{ title*: string, body: string, priority: int, tags: string[], cwd: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/todos`
 **CLI:** `hoody agent todos create`
@@ -3934,7 +3935,7 @@ client.agent.todos.createTodo(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `denyTodoProposal` — Deny a todo proposal.
 
 ```typescript
-client.agent.todos.denyTodoProposal(id: string, pid: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.denyTodoProposal(id: string, pid: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3956,7 +3957,7 @@ client.agent.todos.denyTodoProposal(id: string, pid: string, X-Hoody-Cwd?: strin
 #### `getTodo` — Read a todo.
 
 ```typescript
-client.agent.todos.getTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.todos.getTodo(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3976,7 +3977,7 @@ client.agent.todos.getTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `getTodosRevision` — Get the todos store revision.
 
 ```typescript
-client.agent.todos.getTodosRevision(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.todos.getTodosRevision(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3995,7 +3996,7 @@ client.agent.todos.getTodosRevision(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `listTodos` — List todos.
 
 ```typescript
-client.agent.todos.listTodos(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.listTodos(data?: object, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4009,7 +4010,7 @@ client.agent.todos.listTodos(page?: integer, limit?: integer, X-Hoody-Cwd?: stri
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ states: any[], tags: any[], query: string, open_only: bool, all: bool }`
+**Body:** `{ states: string[], tags: string[], query: string, open_only: bool, all: bool }`
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/agent/todos`
 **CLI:** `hoody agent todos list`
@@ -4019,7 +4020,7 @@ client.agent.todos.listTodos(page?: integer, limit?: integer, X-Hoody-Cwd?: stri
 #### `listTodosAll` — List todos. (collect all pages)
 
 ```typescript
-client.agent.todos.listTodosAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.listTodosAll(data?: object, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4033,7 +4034,7 @@ client.agent.todos.listTodosAll(page?: integer, limit?: integer, X-Hoody-Cwd?: s
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ states: any[], tags: any[], query: string, open_only: bool, all: bool }`
+**Body:** `{ states: string[], tags: string[], query: string, open_only: bool, all: bool }`
 
 **Returns:** `any[]`  |  **HTTP:** `GET /api/v1/agent/todos`
 **CLI:** `hoody agent todos list`
@@ -4043,7 +4044,7 @@ client.agent.todos.listTodosAll(page?: integer, limit?: integer, X-Hoody-Cwd?: s
 #### `listTodosIterator` — List todos. (async iterator)
 
 ```typescript
-client.agent.todos.listTodosIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.listTodosIterator(data?: object, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4057,7 +4058,7 @@ client.agent.todos.listTodosIterator(page?: integer, limit?: integer, X-Hoody-Cw
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ states: any[], tags: any[], query: string, open_only: bool, all: bool }`
+**Body:** `{ states: string[], tags: string[], query: string, open_only: bool, all: bool }`
 
 **Returns:** `AsyncIterableIterator<any>`  |  **HTTP:** `GET /api/v1/agent/todos`
 **CLI:** `hoody agent todos list`
@@ -4067,7 +4068,7 @@ client.agent.todos.listTodosIterator(page?: integer, limit?: integer, X-Hoody-Cw
 #### `messageTodo` — Comment + run an orchestrator turn.
 
 ```typescript
-client.agent.todos.messageTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.messageTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4090,7 +4091,7 @@ client.agent.todos.messageTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `postTodoComment` — Comment on a todo.
 
 ```typescript
-client.agent.todos.postTodoComment(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.postTodoComment(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4113,7 +4114,7 @@ client.agent.todos.postTodoComment(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `purgeTodos` — Purge archived todos.
 
 ```typescript
-client.agent.todos.purgeTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.purgeTodos(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4133,7 +4134,7 @@ client.agent.todos.purgeTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `releaseTodo` — Release a todo.
 
 ```typescript
-client.agent.todos.releaseTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.releaseTodo(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4154,7 +4155,7 @@ client.agent.todos.releaseTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `runTodo` — Run a todo's orchestrator.
 
 ```typescript
-client.agent.todos.runTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.runTodo(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4175,7 +4176,7 @@ client.agent.todos.runTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `snoozeTodo` — Snooze a todo.
 
 ```typescript
-client.agent.todos.snoozeTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.snoozeTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4198,7 +4199,7 @@ client.agent.todos.snoozeTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 #### `triageTodos` — Run an LLM triage pass.
 
 ```typescript
-client.agent.todos.triageTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.triageTodos(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4218,7 +4219,7 @@ client.agent.todos.triageTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `updateTodo` — Update a todo (CAS).
 
 ```typescript
-client.agent.todos.updateTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.updateTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4231,7 +4232,7 @@ client.agent.todos.updateTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ revision*: int, title: string, body: string, state: string, priority: int, rank: int, tags: any[], cwd: string }`
+**Body:** `{ revision*: int, title: string, body: string, state: string, priority: int, rank: int, tags: string[], cwd: string }`
 
 **Returns:** `any`  |  **HTTP:** `PATCH /api/v1/agent/todos/{id}`
 **CLI:** `hoody agent todos update`
@@ -4243,7 +4244,7 @@ client.agent.todos.updateTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 #### `getTool` — Get one tool schema.
 
 ```typescript
-client.agent.tools.getTool(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.getTool(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4263,7 +4264,7 @@ client.agent.tools.getTool(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Di
 #### `listReadOnlyTools` — List the read-only tool subset.
 
 ```typescript
-client.agent.tools.listReadOnlyTools(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listReadOnlyTools(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4284,7 +4285,7 @@ client.agent.tools.listReadOnlyTools(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listReadOnlyToolsAll` — List the read-only tool subset. (collect all pages)
 
 ```typescript
-client.agent.tools.listReadOnlyToolsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listReadOnlyToolsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4305,7 +4306,7 @@ client.agent.tools.listReadOnlyToolsAll(page?: integer, limit?: integer, X-Hoody
 #### `listReadOnlyToolsIterator` — List the read-only tool subset. (async iterator)
 
 ```typescript
-client.agent.tools.listReadOnlyToolsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listReadOnlyToolsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4326,7 +4327,7 @@ client.agent.tools.listReadOnlyToolsIterator(page?: integer, limit?: integer, X-
 #### `listSessionMCPTools` — List a session's MCP tools.
 
 ```typescript
-client.agent.tools.listSessionMCPTools(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionMCPTools(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4348,7 +4349,7 @@ client.agent.tools.listSessionMCPTools(id: string, page?: integer, limit?: integ
 #### `listSessionMCPToolsAll` — List a session's MCP tools. (collect all pages)
 
 ```typescript
-client.agent.tools.listSessionMCPToolsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionMCPToolsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4370,7 +4371,7 @@ client.agent.tools.listSessionMCPToolsAll(id: string, page?: integer, limit?: in
 #### `listSessionMCPToolsIterator` — List a session's MCP tools. (async iterator)
 
 ```typescript
-client.agent.tools.listSessionMCPToolsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionMCPToolsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4392,7 +4393,7 @@ client.agent.tools.listSessionMCPToolsIterator(id: string, page?: integer, limit
 #### `listSessionTools` — List a session's effective tool set.
 
 ```typescript
-client.agent.tools.listSessionTools(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionTools(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4414,7 +4415,7 @@ client.agent.tools.listSessionTools(id: string, page?: integer, limit?: integer,
 #### `listSessionToolsAll` — List a session's effective tool set. (collect all pages)
 
 ```typescript
-client.agent.tools.listSessionToolsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionToolsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4436,7 +4437,7 @@ client.agent.tools.listSessionToolsAll(id: string, page?: integer, limit?: integ
 #### `listSessionToolsIterator` — List a session's effective tool set. (async iterator)
 
 ```typescript
-client.agent.tools.listSessionToolsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionToolsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4458,7 +4459,7 @@ client.agent.tools.listSessionToolsIterator(id: string, page?: integer, limit?: 
 #### `listTools` — List the tool catalogue.
 
 ```typescript
-client.agent.tools.listTools(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listTools(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4479,7 +4480,7 @@ client.agent.tools.listTools(page?: integer, limit?: integer, X-Hoody-Cwd?: stri
 #### `listToolsAll` — List the tool catalogue. (collect all pages)
 
 ```typescript
-client.agent.tools.listToolsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listToolsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4500,7 +4501,7 @@ client.agent.tools.listToolsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: s
 #### `listToolsIterator` — List the tool catalogue. (async iterator)
 
 ```typescript
-client.agent.tools.listToolsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listToolsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4521,7 +4522,7 @@ client.agent.tools.listToolsIterator(page?: integer, limit?: integer, X-Hoody-Cw
 #### `runSessionTool` — Run a tool inside a live session (gated).
 
 ```typescript
-client.agent.tools.runSessionTool(id: string, name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.runSessionTool(id: string, name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4547,7 +4548,7 @@ client.agent.tools.runSessionTool(id: string, name: string, confirm?: boolean, c
 #### `runTool` — Run a tool (sessionless, gated).
 
 ```typescript
-client.agent.tools.runTool(name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Tool-Mode?: string, X-Hoody-Dir-Scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.runTool(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Tool-Mode?: string; X-Hoody-Dir-Scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4574,7 +4575,7 @@ client.agent.tools.runTool(name: string, confirm?: boolean, confirm_token?: stri
 #### `runToolAsync` — Run a tool asynchronously (sessionless, gated).
 
 ```typescript
-client.agent.tools.runToolAsync(name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Tool-Mode?: string, X-Hoody-Dir-Scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.runToolAsync(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Tool-Mode?: string; X-Hoody-Dir-Scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4601,7 +4602,7 @@ client.agent.tools.runToolAsync(name: string, confirm?: boolean, confirm_token?:
 #### `streamTool` — Run a tool with a streamed result (sessionless, gated).
 
 ```typescript
-client.agent.tools.streamTool(name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Tool-Mode?: string, X-Hoody-Dir-Scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.streamTool(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Tool-Mode?: string; X-Hoody-Dir-Scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4630,7 +4631,7 @@ client.agent.tools.streamTool(name: string, confirm?: boolean, confirm_token?: s
 #### `cancelWorkflowRun` — Cancel a workflow run.
 
 ```typescript
-client.agent.workflows.cancelWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.cancelWorkflowRun(run_id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4650,7 +4651,7 @@ client.agent.workflows.cancelWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X
 #### `deleteWorkflow` — Delete a workflow definition.
 
 ```typescript
-client.agent.workflows.deleteWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.deleteWorkflow(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4670,7 +4671,7 @@ client.agent.workflows.deleteWorkflow(name: string, X-Hoody-Cwd?: string, X-Hood
 #### `getWorkflow` — Read one workflow definition.
 
 ```typescript
-client.agent.workflows.getWorkflow(name: string, include_revision?: boolean, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.getWorkflow(name: string, options?: { include_revision?: boolean; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4691,7 +4692,7 @@ client.agent.workflows.getWorkflow(name: string, include_revision?: boolean, X-H
 #### `getWorkflowRun` — Get one workflow run by id.
 
 ```typescript
-client.agent.workflows.getWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.getWorkflowRun(run_id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4711,7 +4712,7 @@ client.agent.workflows.getWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Ho
 #### `hideWorkflow` — Hide or un-hide a workflow.
 
 ```typescript
-client.agent.workflows.hideWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.workflows.hideWorkflow(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4734,7 +4735,7 @@ client.agent.workflows.hideWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `listWorkflowRuns` — Snapshot in-flight and recent workflow runs.
 
 ```typescript
-client.agent.workflows.listWorkflowRuns(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowRuns(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4755,7 +4756,7 @@ client.agent.workflows.listWorkflowRuns(page?: integer, limit?: integer, X-Hoody
 #### `listWorkflowRunsAll` — Snapshot in-flight and recent workflow runs. (collect all pages)
 
 ```typescript
-client.agent.workflows.listWorkflowRunsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowRunsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4776,7 +4777,7 @@ client.agent.workflows.listWorkflowRunsAll(page?: integer, limit?: integer, X-Ho
 #### `listWorkflowRunsIterator` — Snapshot in-flight and recent workflow runs. (async iterator)
 
 ```typescript
-client.agent.workflows.listWorkflowRunsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowRunsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4797,7 +4798,7 @@ client.agent.workflows.listWorkflowRunsIterator(page?: integer, limit?: integer,
 #### `listWorkflows` — List workflow definitions.
 
 ```typescript
-client.agent.workflows.listWorkflows(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflows(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4818,7 +4819,7 @@ client.agent.workflows.listWorkflows(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listWorkflowsAll` — List workflow definitions. (collect all pages)
 
 ```typescript
-client.agent.workflows.listWorkflowsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4839,7 +4840,7 @@ client.agent.workflows.listWorkflowsAll(page?: integer, limit?: integer, X-Hoody
 #### `listWorkflowsIterator` — List workflow definitions. (async iterator)
 
 ```typescript
-client.agent.workflows.listWorkflowsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4860,7 +4861,7 @@ client.agent.workflows.listWorkflowsIterator(page?: integer, limit?: integer, X-
 #### `putWorkflow` — Create or replace a workflow definition.
 
 ```typescript
-client.agent.workflows.putWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.workflows.putWorkflow(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4883,7 +4884,7 @@ client.agent.workflows.putWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `resumeWorkflowRun` — Resume a failed or cancelled workflow run.
 
 ```typescript
-client.agent.workflows.resumeWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.workflows.resumeWorkflowRun(run_id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4905,7 +4906,7 @@ client.agent.workflows.resumeWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X
 #### `runSessionWorkflow` — Run a workflow onto an existing session.
 
 ```typescript
-client.agent.workflows.runSessionWorkflow(id: string, name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.workflows.runSessionWorkflow(id: string, name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |

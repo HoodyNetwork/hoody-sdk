@@ -1,4 +1,4 @@
-> _**SDK skill · `pipe` namespace** · ~5,294 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `pipe` namespace** · ~5,318 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `pipe` — Zero-storage streaming HTTP transfers
 
@@ -341,7 +341,7 @@ client.pipe.corsPreflight(path: string)
 #### `receive` — Receive data from a pipe
 
 ```typescript
-client.pipe.receive(path: string, n?: integer, download?: string, filename?: string, video?: string, progress?: string)
+client.pipe.receive(path: string, options?: { n?: integer; download?: string; filename?: string; video?: string; progress?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -360,13 +360,14 @@ client.pipe.receive(path: string, n?: integer, download?: string, filename?: str
 #### `send` — Send data to a pipe
 
 ```typescript
-client.pipe.send(path: string, n?: integer)
+client.pipe.send(path: string, data?: string, options?: { n?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Unique pipe path name. Must not be a reserved path (`/`, `/help`, `/noscript`, `/favicon.ico`, `/robots.txt`).  Examples: `myfile`, `transfer123`, `secret.png`, `logs/today` |
 | `n` | `integer` | query | No | Number of receivers to wait for before starting the transfer. All receivers get identical copies of the data (fan-out). Must be a positive integer, max 256. |
+| `data` | `string` | body | No |  |
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/pipe/{path}`
 
@@ -387,7 +388,7 @@ client.pipe.ui.getIndex()
 #### `getNoScript` — No-JavaScript upload page
 
 ```typescript
-client.pipe.ui.getNoScript(path?: string, mode?: string)
+client.pipe.ui.getNoScript(options?: { path?: string; mode?: string })
 ```
 
 | Parameter | Type | In | Required | Description |

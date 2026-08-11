@@ -1,4 +1,4 @@
-> _**HTTP skill · `api` namespace** · ~22,990 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `api` namespace** · ~23,441 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -128,7 +128,7 @@ Project-scope analogues live under `* /api/v1/projects/{id}/proxy/permissions*`.
 11. `POST /api/v1/rentals/{id}/extend`
 12. `POST /api/v1/servers/{serverId}/execute-command`
 
-Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands.
+Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands. ONE exception worth reading before you call it: the notification inbox is NOT uniform CRUD. `GET /api/v1/notifications/` needs `resources.read_account` on the token (403 without it — the external_customer, dev_team, finance_team and read_only templates all deny it, as do all tokens minted before 2026-06-30), and `PUT /api/v1/notifications/{id}/read` / `PUT /api/v1/notifications/read-all` refuse EVERY auth token regardless of permissions, because acknowledging is how the record of an account event is dismissed. Use `GET /api/v1/notifications/public` as the no-auth fallback.
 
 ## Quirks & gotchas
 
@@ -405,7 +405,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `ai` — Whether AI features are enabled (default: true)
   - `ssh_public_key` — SSH public key for container access. SSH public keys must be unique per container (one container per key). If not provided, will inherit from project defaults.
   - `comment` — Optional comment for the container (max 16000 characters)
-  - `hoody_kit` — Enable all Hoody Kit features (extra-apt-sources, basic-packages, hoody-daemon, sudo-env, remove-snapd, webview, user, hoody-ai, ttyd)
+  - `hoody_kit` — Enable all Hoody Kit features (extra-apt-sources, apt-proxy, basic-packages, dev-packages, extra-shells, hoody-daemon, sudo-env, remove-snapd, webview, desktop, user, ttyd, vm-packages). vm-packages is the hoody-vm QEMU runtime (~185 MiB); running VMs additionally needs the separate kvm grant.
   - `dev_kit` — Enable dev_kit development tools in the container. Defaults to true when hoody_kit is true, false when hoody_kit is false (unless explicitly set). Cannot be updated after creation.
   - `kvm` — Enable /dev/kvm passthrough (run full VMs inside the container) at creation. Available on rented / dedicated (bare-metal) servers ONLY — never free tier — and rejected (403) on a free server. Defaults to false. Can also be toggled later via PUT /containers/{id}/kvm on a stopped container.
   - `autostart` — Whether the container should start automatically on host boot (default: true)
@@ -569,7 +569,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - `min_price` — Minimum price filter for paid images - 0 includes free images
 - `max_price` — Maximum price filter for paid images - useful for budget constraints
 - `min_rating` — Minimum average rating filter - filters images with rating >= this value (0-5 stars)
-- `max_rating` — Maximum average rating filter - filters images with rating <= this value (0-5 stars)
+- `max_rating` — Maximum average rating filter - filters images with rating at most this value (0-5 stars)
 - `search` — Search term to filter images by name, description, or tags
 - `sort_by` — Field to sort images by - name, date added, price, or average rating
 
@@ -585,14 +585,23 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `GET /api/v1/meta/public-key` | Get Hoody API Signing Public Key |  |
 | `GET /api/v1/meta/social-stats` | Get Hoody Social Counters |  |
 
-### `notifications` (4) — Notifications
+### `notifications` (5) — Notifications
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/notifications/` | Get all notifications for the authenticated user |  |
+| `GET /api/v1/notifications/summary` | Unread notification count and newest position |  |
+| `GET /api/v1/notifications/` | List notifications for the authenticated user | `?page` `?limit` `?unread_only` `?read_only` `?before` |
 | `GET /api/v1/notifications/public` | Get all public notifications |  |
 | `PUT /api/v1/notifications/read-all` | Mark all notifications as read |  |
 | `PUT /api/v1/notifications/{id}/read` | Mark a notification as read |  |
+
+**Param notes:**
+
+- `page` — Page number (offset paging). Ignored when `before` is supplied.
+- `limit` — Rows per page (max 100).
+- `unread_only` — Return only notifications the user has not read. Mutually exclusive with read_only.
+- `read_only` — Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page).
+- `before` — Keyset cursor from a previous response's pagination.next_cursor ("<created_at>,<id>"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read.
 
 ### `poolInvitations` (3) — Pool Invitations
 
@@ -959,7 +968,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `max_charge_cents` — Ceiling on the TOTAL debit (rental price + one-time setup fee), in integer cents. REQUIRED for every paid rental. Omitting it returns 409 CHARGE_CONFIRMATION_REQUIRED, or 409 SETUP_FEE_CONFIRMATION_REQUIRED when the server also carries a one-time fee. It is NOT optional for fee-less servers: the fe…
 - `POST /api/v1/offers/{id}/reserve` body — `{ days*: number, max_charge_cents: number, idempotency_key*: string, pool_id: string }`
   - `days` — Must be one of the offer's pricing_rules keys.
-  - `max_charge_cents` — Ceiling on the TOTAL debit (rent + one-time setup fee). Required whenever a setup fee applies.
+  - `max_charge_cents` — Ceiling on the TOTAL debit (rent + any one-time setup fee). REQUIRED for every paid reservation, not only ones carrying a setup fee. Compute it as pricing_rules[days] plus setup_fee_rules[days] when that key is present, else setup_fee_cents — a present override wins even when it is 0. If you get a…
   - `idempotency_key` — Caller-generated. Replaying it returns the original reservation, unpaid twice.
   - `pool_id` — Must be a pool you own. Defaults to your default pool.
 

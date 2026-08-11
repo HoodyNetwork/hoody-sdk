@@ -1,4 +1,4 @@
-> _**SDK skill · `notes` namespace** · ~15,697 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `notes` namespace** · ~15,753 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 
@@ -511,7 +511,7 @@ client.notes.comments.create(notebookId: string, nodeId: string, data: object)
 #### `delete` — Delete a comment
 
 ```typescript
-client.notes.comments.delete(expectedVersion?: integer, notebookId: string, nodeId: string, commentId: string)
+client.notes.comments.delete(notebookId: string, nodeId: string, commentId: string, options?: { expectedVersion?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -549,7 +549,7 @@ client.notes.comments.edit(notebookId: string, nodeId: string, commentId: string
 #### `list` — List comments
 
 ```typescript
-client.notes.comments.list(limit?: integer, offset?: integer, cursor?: string, notebookId: string, nodeId: string)
+client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer; cursor?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -568,7 +568,7 @@ client.notes.comments.list(limit?: integer, offset?: integer, cursor?: string, n
 #### `listAnchors` — List comment anchors
 
 ```typescript
-client.notes.comments.listAnchors(limit?: integer, offset?: integer, cursor?: string, notebookId: string, nodeId: string)
+client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer; cursor?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -681,7 +681,7 @@ client.notes.databases.get(notebookId: string, databaseId: string, recordId: str
 #### `list` — List database records
 
 ```typescript
-client.notes.databases.list(filters?: string, sorts?: string, page?: integer, count?: integer, notebookId: string, databaseId: string)
+client.notes.databases.list(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: integer; count?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -701,7 +701,7 @@ client.notes.databases.list(filters?: string, sorts?: string, page?: integer, co
 #### `listAll` — List database records (collect all pages)
 
 ```typescript
-client.notes.databases.listAll(filters?: string, sorts?: string, page?: integer, count?: integer, notebookId: string, databaseId: string)
+client.notes.databases.listAll(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: integer; count?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -721,7 +721,7 @@ client.notes.databases.listAll(filters?: string, sorts?: string, page?: integer,
 #### `listIterator` — List database records (async iterator)
 
 ```typescript
-client.notes.databases.listIterator(filters?: string, sorts?: string, page?: integer, count?: integer, notebookId: string, databaseId: string)
+client.notes.databases.listIterator(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: integer; count?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -741,7 +741,7 @@ client.notes.databases.listIterator(filters?: string, sorts?: string, page?: int
 #### `search` — Search database records
 
 ```typescript
-client.notes.databases.search(q?: string, exclude?: string, notebookId: string, databaseId: string)
+client.notes.databases.search(notebookId: string, databaseId: string, options?: { q?: string; exclude?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -781,7 +781,7 @@ client.notes.databases.update(notebookId: string, databaseId: string, recordId: 
 #### `appendDocument` — Append blocks to a document
 
 ```typescript
-client.notes.documents.appendDocument(notebookId: string, nodeId: string, X-Idempotency-Key?: string, data: object)
+client.notes.documents.appendDocument(notebookId: string, nodeId: string, data: object, options?: { X-Idempotency-Key?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -818,7 +818,7 @@ client.notes.documents.createExportTicket(notebookId: string, nodeId: string, da
 #### `exportBlockSvg` — Export drawing block as SVG
 
 ```typescript
-client.notes.documents.exportBlockSvg(bg?: string, scale?: number, notebookId: string, nodeId: string, blockId: string)
+client.notes.documents.exportBlockSvg(notebookId: string, nodeId: string, blockId: string, options?: { bg?: string; scale?: number })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -836,7 +836,7 @@ client.notes.documents.exportBlockSvg(bg?: string, scale?: number, notebookId: s
 #### `get` — Get document content
 
 ```typescript
-client.notes.documents.get(blockIds?: string, lines?: string, output?: string, includeComments?: string, ticket?: string, notebookId: string, nodeId: string)
+client.notes.documents.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: string; includeComments?: string; ticket?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -913,7 +913,7 @@ client.notes.files.download(fileId: string, notebookId: string)
 #### `list` — List all uploaded files
 
 ```typescript
-client.notes.files.list(limit?: integer, offset?: integer, notebookId: string)
+client.notes.files.list(notebookId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -930,7 +930,7 @@ client.notes.files.list(limit?: integer, offset?: integer, notebookId: string)
 #### `listAll` — List all uploaded files (collect all pages)
 
 ```typescript
-client.notes.files.listAll(limit?: integer, offset?: integer, notebookId: string)
+client.notes.files.listAll(notebookId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -947,7 +947,7 @@ client.notes.files.listAll(limit?: integer, offset?: integer, notebookId: string
 #### `listIterator` — List all uploaded files (async iterator)
 
 ```typescript
-client.notes.files.listIterator(limit?: integer, offset?: integer, notebookId: string)
+client.notes.files.listIterator(notebookId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1174,7 +1174,7 @@ client.notes.nodes.getByAlias(notebookId: string, alias: string)
 #### `list` — List nodes
 
 ```typescript
-client.notes.nodes.list(type?: string, parentId?: string, rootId?: string, limit?: integer, offset?: integer, notebookId: string)
+client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1194,7 +1194,7 @@ client.notes.nodes.list(type?: string, parentId?: string, rootId?: string, limit
 #### `listChildren` — List child nodes
 
 ```typescript
-client.notes.nodes.listChildren(limit?: integer, offset?: integer, notebookId: string, nodeId: string)
+client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1479,7 +1479,7 @@ client.notes.versions.get(notebookId: string, nodeId: string, versionId: string)
 #### `list` — List document versions
 
 ```typescript
-client.notes.versions.list(limit?: integer, offset?: integer, notebookId: string, nodeId: string)
+client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |

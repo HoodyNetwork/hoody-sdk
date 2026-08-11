@@ -1,4 +1,4 @@
-> _**SDK skill · `files` namespace** · ~30,097 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `files` namespace** · ~30,340 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 
@@ -340,7 +340,7 @@ const r = await client.files.journal.query({ path: '/home/user/files-examples-cl
 #### `downloadAsZip` — Download directory as ZIP
 
 ```typescript
-client.files.archives.downloadAsZip(directory: string, zip: string)
+client.files.archives.downloadAsZip(directory: string, options?: { zip?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -356,7 +356,7 @@ client.files.archives.downloadAsZip(directory: string, zip: string)
 #### `extract` — Extract archive
 
 ```typescript
-client.files.archives.extract(archive: string, extract: string, dest?: string)
+client.files.archives.extract(archive: string, options?: { extract?: string; dest?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -373,7 +373,7 @@ client.files.archives.extract(archive: string, extract: string, dest?: string)
 #### `extractFile` — Extract file from archive
 
 ```typescript
-client.files.archives.extractFile(archive: string, extract: string, dest?: string)
+client.files.archives.extractFile(archive: string, options?: { extract?: string; dest?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -390,7 +390,7 @@ client.files.archives.extractFile(archive: string, extract: string, dest?: strin
 #### `getHistory` — Extraction history
 
 ```typescript
-client.files.archives.getHistory(extraction_history: string)
+client.files.archives.getHistory(options?: { extraction_history?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -405,7 +405,7 @@ client.files.archives.getHistory(extraction_history: string)
 #### `listActive` — List active extractions
 
 ```typescript
-client.files.archives.listActive(extractions: string)
+client.files.archives.listActive(options?: { extractions?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -431,7 +431,7 @@ client.files.archives.listGlobal()
 #### `preview` — Preview archive contents or read file
 
 ```typescript
-client.files.archives.preview(archive: string, preview?: string, contents?: string)
+client.files.archives.preview(archive: string, options?: { preview?: string; contents?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -448,7 +448,7 @@ client.files.archives.preview(archive: string, preview?: string, contents?: stri
 #### `viewFile` — View file from archive
 
 ```typescript
-client.files.archives.viewFile(archive: string, preview: string)
+client.files.archives.viewFile(archive: string, options?: { preview?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1642,7 +1642,7 @@ client.files.directories.create(path: string)
 #### `fetch` — Download file from remote URL
 
 ```typescript
-client.files.downloads.fetch(directory: string, download: string, filename?: string, timeout?: integer)
+client.files.downloads.fetch(directory: string, options?: { download?: string; filename?: string; timeout?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1660,7 +1660,7 @@ client.files.downloads.fetch(directory: string, download: string, filename?: str
 #### `getHistory` — Download history
 
 ```typescript
-client.files.downloads.getHistory(download_history: string)
+client.files.downloads.getHistory(options?: { download_history?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1675,7 +1675,7 @@ client.files.downloads.getHistory(download_history: string)
 #### `listActive` — List active downloads
 
 ```typescript
-client.files.downloads.listActive(directory: string, downloads: string)
+client.files.downloads.listActive(directory: string, options?: { downloads?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1704,13 +1704,14 @@ client.files.downloads.listGlobal()
 #### `append` — Append data to file
 
 ```typescript
-client.files.append(path: string, owner?: string)
+client.files.append(path: string, data: object, options?: { owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | File path |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) when this append creates a new file. Requires --allow-chown + allowlist; refuses root. Absent → server default. |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `files_AppendResponse`  |  **HTTP:** `PUT /api/v1/files/append/{path}`
 **CLI:** `hoody files append`
@@ -1720,7 +1721,7 @@ client.files.append(path: string, owner?: string)
 #### `chmod` — Change file permissions
 
 ```typescript
-client.files.chmod(path: string, chmod: string)
+client.files.chmod(path: string, options?: { chmod?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1736,7 +1737,7 @@ client.files.chmod(path: string, chmod: string)
 #### `chown` — Change file ownership
 
 ```typescript
-client.files.chown(path: string, chown: string)
+client.files.chown(path: string, options?: { chown?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1752,7 +1753,7 @@ client.files.chown(path: string, chown: string)
 #### `copy` — Copy file or directory
 
 ```typescript
-client.files.copy(path: string, copy_to: string, overwrite?: string, owner?: string)
+client.files.copy(path: string, options?: { copy_to?: string; overwrite?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1770,7 +1771,7 @@ client.files.copy(path: string, copy_to: string, overwrite?: string, owner?: str
 #### `delete` — Delete file or directory
 
 ```typescript
-client.files.delete(path: string, backend?: string)
+client.files.delete(path: string, options?: { backend?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1801,7 +1802,7 @@ client.files.deleteRecursive(path: string)
 #### `get` — List directory or download file
 
 ```typescript
-client.files.get(path: string, backend?: string, hash?: string, sha256?: string, base64?: string, preview?: string, contents?: string, stat?: string, thumbnail?: string, grep?: string, ignore_case?: boolean, fixed_string?: boolean, glob?: string, context?: integer, max_count?: integer, max_matches?: integer, max_depth?: integer, max_filesize?: integer, timeout?: integer, no_ignore?: boolean, max_results?: integer, max_files_scanned?: integer, sort?: string, order?: string, lines?: string, history?: string, at?: string, revision?: integer, diff?: string, from_seq?: integer, from_ts?: string, to_seq?: integer, to_ts?: string, after_id?: integer, limit?: integer, zip?: string)
+client.files.get(path: string, options?: { backend?: string; hash?: string; sha256?: string; base64?: string; preview?: string; contents?: string; stat?: string; thumbnail?: string; grep?: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: integer; max_count?: integer; max_matches?: integer; max_depth?: integer; max_filesize?: integer; timeout?: integer; no_ignore?: boolean; max_results?: integer; max_files_scanned?: integer; sort?: string; order?: string; lines?: string; history?: string; at?: string; revision?: integer; diff?: string; from_seq?: integer; from_ts?: string; to_seq?: integer; to_ts?: string; after_id?: integer; limit?: integer; zip?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1851,7 +1852,7 @@ client.files.get(path: string, backend?: string, hash?: string, sha256?: string,
 #### `getMetadata` — Get file metadata
 
 ```typescript
-client.files.getMetadata(path: string, history?: string, at?: string, revision?: integer, diff?: string, from_seq?: integer, from_ts?: string, to_seq?: integer, to_ts?: string, after_id?: integer, limit?: integer)
+client.files.getMetadata(path: string, options?: { history?: string; at?: string; revision?: integer; diff?: string; from_seq?: integer; from_ts?: string; to_seq?: integer; to_ts?: string; after_id?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1876,7 +1877,7 @@ client.files.getMetadata(path: string, history?: string, at?: string, revision?:
 #### `glob` — Find files by glob pattern
 
 ```typescript
-client.files.glob(path: string, pattern: string, max_results?: integer, max_depth?: integer, max_files_scanned?: integer, timeout?: integer, no_ignore?: boolean, sort?: string, order?: string)
+client.files.glob(path: string, options?: { pattern?: string; max_results?: integer; max_depth?: integer; max_files_scanned?: integer; timeout?: integer; no_ignore?: boolean; sort?: string; order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1899,7 +1900,7 @@ client.files.glob(path: string, pattern: string, max_results?: integer, max_dept
 #### `grep` — Search file contents (grep)
 
 ```typescript
-client.files.grep(path: string, pattern: string, ignore_case?: boolean, fixed_string?: boolean, glob?: string, context?: integer, max_count?: integer, max_matches?: integer, max_depth?: integer, max_filesize?: integer, timeout?: integer, no_ignore?: boolean)
+client.files.grep(path: string, options?: { pattern?: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: integer; max_count?: integer; max_matches?: integer; max_depth?: integer; max_filesize?: integer; timeout?: integer; no_ignore?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1925,7 +1926,7 @@ client.files.grep(path: string, pattern: string, ignore_case?: boolean, fixed_st
 #### `listDirectory` — List directory contents or download file
 
 ```typescript
-client.files.listDirectory(path: string, json?: string, simple?: string, sort?: string, order?: string, hash?: string, sha256?: string, base64?: string, edit?: string, view?: string, download?: string, content-type?: string, history?: string, at?: string, revision?: integer, diff?: string, from_seq?: integer, from_ts?: string, to_seq?: integer, to_ts?: string, after_id?: integer, limit?: integer)
+client.files.listDirectory(path: string, options?: { json?: string; simple?: string; sort?: string; order?: string; hash?: string; sha256?: string; base64?: string; edit?: string; view?: string; download?: string; content-type?: string; history?: string; at?: string; revision?: integer; diff?: string; from_seq?: integer; from_ts?: string; to_seq?: integer; to_ts?: string; after_id?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1961,7 +1962,7 @@ client.files.listDirectory(path: string, json?: string, simple?: string, sort?: 
 #### `move` — Move file or directory
 
 ```typescript
-client.files.move(path: string, move_to: string, owner?: string)
+client.files.move(path: string, options?: { move_to?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1978,7 +1979,7 @@ client.files.move(path: string, move_to: string, owner?: string)
 #### `operate` — File operations (mkdir, extract, download, move, copy)
 
 ```typescript
-client.files.operate(path: string, backend?: string, mkdir?: string, extract?: string, dest?: string, download_from?: string, move_to?: string, copy_to?: string, overwrite?: string, owner?: string)
+client.files.operate(path: string, options?: { backend?: string; mkdir?: string; extract?: string; dest?: string; download_from?: string; move_to?: string; copy_to?: string; overwrite?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2002,7 +2003,7 @@ client.files.operate(path: string, backend?: string, mkdir?: string, extract?: s
 #### `patch` — File operations
 
 ```typescript
-client.files.patch(path: string, X-Update-Range?: string, data?: object)
+client.files.patch(path: string, data?: object, options?: { X-Update-Range?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2021,7 +2022,7 @@ client.files.patch(path: string, X-Update-Range?: string, data?: object)
 #### `patchApi` — Modify file properties or move/rename
 
 ```typescript
-client.files.patchApi(path: string, backend?: string, owner?: string, chmod?: string, chown?: string, data?: object)
+client.files.patchApi(path: string, data?: object, options?: { backend?: string; owner?: string; chmod?: string; chown?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2043,7 +2044,7 @@ client.files.patchApi(path: string, backend?: string, owner?: string, chmod?: st
 #### `put` — Upload or append file
 
 ```typescript
-client.files.put(path: string, backend?: string, append?: string, owner?: string)
+client.files.put(path: string, data: object, options?: { backend?: string; append?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2052,6 +2053,7 @@ client.files.put(path: string, backend?: string, append?: string, owner?: string
 | `backend` | `string` | query | No | Backend ID for remote upload |
 | `append` | `string` | query | No | Append body to end of existing file (create if missing) instead of overwriting |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires --allow-chown + --allowed-create-owners; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `files_AppendResponse`  |  **HTTP:** `PUT /api/v1/files/{path}`
 **CLI:** `hoody files put`
@@ -2076,7 +2078,7 @@ client.files.realpath(path: string)
 #### `search` — Search directory
 
 ```typescript
-client.files.search(directory: string, q: string, json?: string)
+client.files.search(directory: string, options?: { q?: string; json?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2108,7 +2110,7 @@ client.files.stat(path: string)
 #### `touch` — Touch file (create or update mtime)
 
 ```typescript
-client.files.touch(path: string, touch: string)
+client.files.touch(path: string, options?: { touch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2124,12 +2126,13 @@ client.files.touch(path: string, touch: string)
 #### `upload` — Upload file
 
 ```typescript
-client.files.upload(path: string)
+client.files.upload(path: string, data: object)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Destination file path |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `any`  |  **HTTP:** `PUT /{path}`
 **CLI:** `hoody files upload`
@@ -2141,7 +2144,7 @@ client.files.upload(path: string)
 #### `access` — Access file via FTP
 
 ```typescript
-client.files.ftp.access(path: string, type: string, server: string, user?: string, pass?: string, ftp_secure?: boolean, ftp_passive?: boolean)
+client.files.ftp.access(path: string, options?: { type?: string; server?: string; user?: string; pass?: string; ftp_secure?: boolean; ftp_passive?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2164,7 +2167,7 @@ client.files.ftp.access(path: string, type: string, server: string, user?: strin
 #### `fetch` — Fetch file from Git repository
 
 ```typescript
-client.files.git.fetch(path: string, type: string, url: string, ref?: string, pass?: string)
+client.files.git.fetch(path: string, options?: { type?: string; url?: string; ref?: string; pass?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2198,7 +2201,7 @@ client.files.health.check()
 #### `process` — Process and convert images
 
 ```typescript
-client.files.images.process(image: string, thumbnail: string, format?: string, size?: string, width?: integer, height?: integer, resize?: string, quality?: string, q?: integer, blur?: number, grayscale?: string, bg?: string)
+client.files.images.process(image: string, options?: { thumbnail?: string; format?: string; size?: string; width?: integer; height?: integer; resize?: string; quality?: string; q?: integer; blur?: number; grayscale?: string; bg?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2248,7 +2251,7 @@ client.files.journal.getStats()
 #### `query` — Query journal entries
 
 ```typescript
-client.files.journal.query(path?: string, op?: string, since?: string, limit?: integer, after_id?: integer)
+client.files.journal.query(options?: { path?: string; op?: string; since?: string; limit?: integer; after_id?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2301,7 +2304,7 @@ client.files.mounts.getDetails(id: string)
 #### `list` — List all mounts
 
 ```typescript
-client.files.mounts.list(label?: string)
+client.files.mounts.list(options?: { label?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2351,7 +2354,7 @@ client.files.mounts.update(id: string, data: object)
 #### `access` — Access file from S3
 
 ```typescript
-client.files.s3.access(path: string, type: string, server: string, s3_bucket: string, s3_region: string, user?: string, pass?: string, s3_endpoint?: string)
+client.files.s3.access(path: string, options?: { type?: string; server?: string; s3_bucket?: string; s3_region?: string; user?: string; pass?: string; s3_endpoint?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2375,7 +2378,7 @@ client.files.s3.access(path: string, type: string, server: string, s3_bucket: st
 #### `access` — Access file via SSH/SFTP
 
 ```typescript
-client.files.ssh.access(path: string, type: string, server: string, user: string, pass?: string, key?: string, passphrase?: string)
+client.files.ssh.access(path: string, options?: { type?: string; server?: string; user?: string; pass?: string; key?: string; passphrase?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2396,7 +2399,7 @@ client.files.ssh.access(path: string, type: string, server: string, user: string
 #### `upload` — Upload file via SSH/SFTP
 
 ```typescript
-client.files.ssh.upload(path: string, server: string, user: string, pass?: string, key?: string, passphrase?: string)
+client.files.ssh.upload(path: string, data: object, options?: { server?: string; user?: string; pass?: string; key?: string; passphrase?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2407,6 +2410,7 @@ client.files.ssh.upload(path: string, server: string, user: string, pass?: strin
 | `pass` | `string` | query | No | Password (base64 encoded) |
 | `key` | `string` | query | No | Private key PEM (base64 encoded) |
 | `passphrase` | `string` | query | No | Key passphrase (base64 encoded) |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `any`  |  **HTTP:** `PUT /{path}?type=ssh`
 **CLI:** `hoody files access ssh-upload`
@@ -2431,7 +2435,7 @@ client.files.system.getApiVersion()
 #### `access` — Access file via WebDAV
 
 ```typescript
-client.files.webdav.access(path: string, type: string, server: string, user?: string, pass?: string, webdav_path?: string)
+client.files.webdav.access(path: string, options?: { type?: string; server?: string; user?: string; pass?: string; webdav_path?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2451,7 +2455,7 @@ client.files.webdav.access(path: string, type: string, server: string, user?: st
 #### `copyResource` — Copy file or directory
 
 ```typescript
-client.files.webdav.copyResource(path: string, Destination: string, Depth?: string)
+client.files.webdav.copyResource(path: string, options?: { Destination?: string; Depth?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2482,13 +2486,14 @@ client.files.webdav.getOptions(path: string)
 #### `lockResource` — Lock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.lockResource(path: string, Depth?: string)
+client.files.webdav.lockResource(path: string, data?: object, options?: { Depth?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `string` | header | No |  |
+| `data` | `object` | body | No |  |
 
 **Returns:** `any`  |  **HTTP:** `LOCK /{path}`
 
@@ -2497,7 +2502,7 @@ client.files.webdav.lockResource(path: string, Depth?: string)
 #### `moveResource` — Move or rename file/directory
 
 ```typescript
-client.files.webdav.moveResource(path: string, Destination: string)
+client.files.webdav.moveResource(path: string, options?: { Destination?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2512,13 +2517,14 @@ client.files.webdav.moveResource(path: string, Destination: string)
 #### `propfindResource` — Get WebDAV properties
 
 ```typescript
-client.files.webdav.propfindResource(path: string, Depth?: string)
+client.files.webdav.propfindResource(path: string, data?: object, options?: { Depth?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `string` | header | No | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
+| `data` | `object` | body | No |  |
 
 **Returns:** `void`  |  **HTTP:** `PROPFIND /{path}`
 
@@ -2527,12 +2533,13 @@ client.files.webdav.propfindResource(path: string, Depth?: string)
 #### `proppatchResource` — Update WebDAV properties
 
 ```typescript
-client.files.webdav.proppatchResource(path: string)
+client.files.webdav.proppatchResource(path: string, data?: object)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
+| `data` | `object` | body | No |  |
 
 **Returns:** `void`  |  **HTTP:** `PROPPATCH /{path}`
 
@@ -2541,7 +2548,7 @@ client.files.webdav.proppatchResource(path: string)
 #### `unlockResource` — Unlock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.unlockResource(path: string, Lock-Token: string)
+client.files.webdav.unlockResource(path: string, options?: { Lock-Token?: string })
 ```
 
 | Parameter | Type | In | Required | Description |

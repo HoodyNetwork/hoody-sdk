@@ -1,8 +1,8 @@
-> _**SDK skill (FULL — basic + all 19 namespaces)** · ~336,695 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill (FULL — basic + all 20 namespaces)** · ~348,278 tokens · hoody-sdk v1.0.0-beta.13_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 
-Typed client, 1000+ methods, 19 namespaces. Node, Bun, browser. Built-in retries, error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
+Typed client, 1000+ methods, 20 namespaces. Node, Bun, browser. Built-in retries, error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
 
 ## What is Hoody
 
@@ -225,6 +225,7 @@ Throughout: `{P}` = `projectId` (24-hex), `{C}` = `containerId` (24-hex), `{N}` 
 | `daemon` | `daemon-1` | `https://{P}-{C}-daemon-1.{N}.containers.hoody.com` |
 | `display` | `display-<N>` (multi) | `https://{P}-{C}-display-1.{N}.containers.hoody.com` (`display-1`, `-2`, …) |
 | (no SDK namespace — registered program) | `desktop-<N>` | `https://{P}-{C}-desktop-1.{N}.containers.hoody.com?desktop_env=xfce` — opens a full XFCE/MATE desktop in the browser (see § Desktop alias) |
+| `egress` | `egress-1` | `https://{P}-{C}-egress-1.{N}.containers.hoody.com` — outbound HTTP proxy (CONNECT + absolute-URI forwarding); every `egress-<n>` index reaches the same single process, but proxy permissions evaluate per index |
 | `exec` | `exec-1`; script by PATH | `https://{P}-{C}-exec-1.{N}.containers.hoody.com/{script}` (a script under `scripts/{sub}/` is ALSO reachable at the `{sub}.…-exec-1.…` subdomain) |
 | `files` | `files-1` | `https://{P}-{C}-files-1.{N}.containers.hoody.com` |
 | `notes` | `notes-1` | `https://{P}-{C}-notes-1.{N}.containers.hoody.com` |
@@ -395,7 +396,7 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 |---|---|
 | `container_id` | 24-char hex id of the target container — required. |
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Globally unique per server. |
-| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
+| `program` | Which kit/protocol to route to. Server validates against `container-programs.json`. Valid names: `http`, `https`, `agent`, `browser`, `cdp`, `cli`, `code`, `cron`, `curl`, `daemon`, `desktop`, `display`, `egress`, `exec`, `files`, `notes`, `notifications`, `pipe`, `proxy`, `run`, `sqlite`, `ssh`, `terminal`, `tunnel`, `watch`, `workspaces` — plus every declared alias of those. Note `proxy` (NOT `proxyLogs`) and `run` (NOT `app`). is also accepted by the validator but is deliberately NOT listed: it is derived from `display` and internal — reach it through `display`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
 | `target_path` | Optional path appended to inner request (`/api/v1` or `/index.php?debug=1`). |
 | `allow_path_override` | Defaults to `true`. If `true`, callers can append path segments after the alias hostname; if `false`, only `target_path` is reachable. |
@@ -1023,6 +1024,7 @@ SSE methods (`watch.streams.streamSse`, `exec.logs.stream`, `proxyLogs.logs.stre
 - [`curl`](https://hoody.com/SKILLS/SKILL-SDK/curl.md) — full HTTP client gateway + REST-as-GET-URL bridge
 - [`daemon`](https://hoody.com/SKILLS/SKILL-SDK/daemon.md) — supervisord program lifecycle (start any program; logs always retained)
 - [`display`](https://hoody.com/SKILLS/SKILL-SDK/display.md) — programmatic GUI desktops with screenshots, input, and windows
+- [`egress`](https://hoody.com/SKILLS/SKILL-SDK/egress.md) — the container's outbound HTTP proxy
 - [`exec`](https://hoody.com/SKILLS/SKILL-SDK/exec.md) — micro-services: any script or API as an instant HTTP endpoint
 - [`files`](https://hoody.com/SKILLS/SKILL-SDK/files.md) — container filesystem over HTTP, with automatic Git-like change history
 - [`notes`](https://hoody.com/SKILLS/SKILL-SDK/notes.md) — Collaborative notebooks, hierarchical nodes, documents, databases
@@ -1121,7 +1123,8 @@ Reads first: `client.agent.mcp.listMCPServers` (`{ session_id }`) returns the EF
 - The bare `hoody agent` verb is a **hand-written TUI launcher** (`cli/agent-command.ts`), distinct from this generated HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface.
 - Source of truth is the `hoody-agent-d` gateway's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit URL is itself the credential; no HTTP bearer header is required.
 - The proxy service slug is `agent` and the kit URL host carries the index segment (`-agent-{index}`); resolve it via `getKitUrl('agent', container)` rather than hand-building.
-- `promptSync` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `promptStream` accessor returns a WebSocket client that does NOT match the daemon's SSE wire format — use the supported `streamAgentPrompt` helper exported from the SDK, which POSTs `prompt:stream` and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.)For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy on `promptStream` / `promptSync` to auto-approve confirm gates for the life of the turn (off by default) — HTTP: `?policy=auto_approve` (or the `X-Hoody-Gate-Policy: auto_approve` header); SDK: `policy: 'auto_approve'` in the prompt options; the generated CLI: `--policy auto_approve`. Note this only answers **confirm** gates, never questions. - Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `createSession` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — plus `beginHookWrite`, and the side-effecting `testHook` / `ackHookTrust`, all require a live `session_id` — `ackHookTrust` clears the per-session hook-trust prompt (the execution-trust probe `listHooks` reports), the gate that must be acknowledged before any hook command is allowed to fire, mirroring `trustSkill` for skills; `reloadHooks` accepts one only to also return the reloaded summary) AND nonce-guarded: call `client.agent.hooks.beginHookWrite` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `upsertHook` persists a command that fires on lifecycle events and `testHook` executes one immediately. The human-only confirmation gate lives only on the model-facing tool path, not on these RPCs, and the gateway HTTP edge has no app-level admin gate — the same access that authorizes any agent-kit call authorizes these too, with nothing extra, so gating this surface is the caller's/proxy's responsibility.
+- `promptSync` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `promptStream` accessor returns a WebSocket client that does NOT match the daemon's SSE wire format — use the supported `streamAgentPrompt` helper exported from the SDK, which POSTs `prompt:stream` and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy on `promptStream` / `promptSync` to auto-approve confirm gates for the life of the turn (off by default) — HTTP: `?policy=auto_approve` (or the `X-Hoody-Gate-Policy: auto_approve` header); SDK: `policy: 'auto_approve'` in the prompt options; the generated CLI: `--policy auto_approve`. Note this only answers **confirm** gates, never questions. 
+- Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `createSession` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — plus `beginHookWrite`, and the side-effecting `testHook` / `ackHookTrust`, all require a live `session_id` — `ackHookTrust` clears the per-session hook-trust prompt (the execution-trust probe `listHooks` reports), the gate that must be acknowledged before any hook command is allowed to fire, mirroring `trustSkill` for skills; `reloadHooks` accepts one only to also return the reloaded summary) AND nonce-guarded: call `client.agent.hooks.beginHookWrite` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `upsertHook` / `deleteHook` / `toggleHook` / `disableAllHooks` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `upsertHook` persists a command that fires on lifecycle events and `testHook` executes one immediately. The human-only confirmation gate lives only on the model-facing tool path, not on these RPCs, and the gateway HTTP edge has no app-level admin gate — the same access that authorizes any agent-kit call authorizes these too, with nothing extra, so gating this surface is the caller's/proxy's responsibility.
 - **Credential VALUES are never returned by the MCP surface.** `listMCPServers` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. To change a secret you must supply its real value; to leave one alone, omit the field — `upsertMCPServer` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `setMCPServerEnabled` flips only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
 
 ## Common errors
@@ -1149,7 +1152,7 @@ Reads first: `client.agent.mcp.listMCPServers` (`{ session_id }`) returns the EF
 #### `exportLogs` — Export logs as a downloadable file.
 
 ```typescript
-client.agent.exportLogs(source?: string, min_level?: string, comp?: string, session_id?: string, text?: string, since?: string, until?: string, event?: string, tool?: string, model?: string, status?: string, method?: string, min_status?: integer, max_status?: integer, errors_only?: boolean, event_type?: string, resource_type?: string, container?: string, kind?: string, host?: string, since_seq?: integer, limit?: integer, format?: string, filename?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.exportLogs(options?: { source?: string; min_level?: string; comp?: string; session_id?: string; text?: string; since?: string; until?: string; event?: string; tool?: string; model?: string; status?: string; method?: string; min_status?: integer; max_status?: integer; errors_only?: boolean; event_type?: string; resource_type?: string; container?: string; kind?: string; host?: string; since_seq?: integer; limit?: integer; format?: string; filename?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1193,7 +1196,7 @@ client.agent.exportLogs(source?: string, min_level?: string, comp?: string, sess
 #### `copyAgent` — Copy a chat agent.
 
 ```typescript
-client.agent.agents.copyAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.copyAgent(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1216,7 +1219,7 @@ client.agent.agents.copyAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config
 #### `createAgent` — Create a chat-agent definition.
 
 ```typescript
-client.agent.agents.createAgent(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.createAgent(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1238,7 +1241,7 @@ client.agent.agents.createAgent(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `deleteAgent` — Delete a custom chat agent.
 
 ```typescript
-client.agent.agents.deleteAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.deleteAgent(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1258,7 +1261,7 @@ client.agent.agents.deleteAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `getAgentSource` — Read a chat agent's source.
 
 ```typescript
-client.agent.agents.getAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.getAgentSource(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1278,7 +1281,7 @@ client.agent.agents.getAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `listAgents` — List chat-agent definitions.
 
 ```typescript
-client.agent.agents.listAgents(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.listAgents(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1299,7 +1302,7 @@ client.agent.agents.listAgents(page?: integer, limit?: integer, X-Hoody-Cwd?: st
 #### `listAgentsAll` — List chat-agent definitions. (collect all pages)
 
 ```typescript
-client.agent.agents.listAgentsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.listAgentsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1320,7 +1323,7 @@ client.agent.agents.listAgentsAll(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listAgentsIterator` — List chat-agent definitions. (async iterator)
 
 ```typescript
-client.agent.agents.listAgentsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.listAgentsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1341,7 +1344,7 @@ client.agent.agents.listAgentsIterator(page?: integer, limit?: integer, X-Hoody-
 #### `putAgentSource` — Write a chat agent's source.
 
 ```typescript
-client.agent.agents.putAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.putAgentSource(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1364,7 +1367,7 @@ client.agent.agents.putAgentSource(name: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `renameAgent` — Rename a chat agent.
 
 ```typescript
-client.agent.agents.renameAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.agents.renameAgent(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1387,7 +1390,7 @@ client.agent.agents.renameAgent(name: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `resetAgentToShipped` — Reset an agent to its shipped default.
 
 ```typescript
-client.agent.agents.resetAgentToShipped(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.agents.resetAgentToShipped(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1407,7 +1410,7 @@ client.agent.agents.resetAgentToShipped(name: string, X-Hoody-Cwd?: string, X-Ho
 #### `setAgentModel` — Set an agent's model.
 
 ```typescript
-client.agent.agents.setAgentModel(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.setAgentModel(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1430,7 +1433,7 @@ client.agent.agents.setAgentModel(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `setAgentTools` — Set an agent's tool allow-list.
 
 ```typescript
-client.agent.agents.setAgentTools(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.setAgentTools(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1443,7 +1446,7 @@ client.agent.agents.setAgentTools(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ tools: any[] }`
+**Body:** `{ tools: string[] }`
 
 **Returns:** `any`  |  **HTTP:** `PATCH /api/v1/agent/agents/{name}/tools`
 **CLI:** `hoody agent agents set-tools`
@@ -1453,7 +1456,7 @@ client.agent.agents.setAgentTools(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `setAgentTurns` — Set an agent's max-turns.
 
 ```typescript
-client.agent.agents.setAgentTurns(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.setAgentTurns(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1476,7 +1479,7 @@ client.agent.agents.setAgentTurns(name: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `toggleAgentTool` — Toggle a single tool for an agent.
 
 ```typescript
-client.agent.agents.toggleAgentTool(name: string, tool: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.agents.toggleAgentTool(name: string, tool: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1500,7 +1503,7 @@ client.agent.agents.toggleAgentTool(name: string, tool: string, X-Hoody-Cwd?: st
 #### `listContainers` — List containers in a realm (for binding).
 
 ```typescript
-client.agent.discovery.listContainers(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listContainers(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1521,7 +1524,7 @@ client.agent.discovery.listContainers(page?: integer, limit?: integer, X-Hoody-C
 #### `listContainersAll` — List containers in a realm (for binding). (collect all pages)
 
 ```typescript
-client.agent.discovery.listContainersAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listContainersAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1542,7 +1545,7 @@ client.agent.discovery.listContainersAll(page?: integer, limit?: integer, X-Hood
 #### `listContainersIterator` — List containers in a realm (for binding). (async iterator)
 
 ```typescript
-client.agent.discovery.listContainersIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listContainersIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1563,7 +1566,7 @@ client.agent.discovery.listContainersIterator(page?: integer, limit?: integer, X
 #### `listRealms` — List realms (for binding).
 
 ```typescript
-client.agent.discovery.listRealms(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listRealms(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1584,7 +1587,7 @@ client.agent.discovery.listRealms(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listRealmsAll` — List realms (for binding). (collect all pages)
 
 ```typescript
-client.agent.discovery.listRealmsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listRealmsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1605,7 +1608,7 @@ client.agent.discovery.listRealmsAll(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listRealmsIterator` — List realms (for binding). (async iterator)
 
 ```typescript
-client.agent.discovery.listRealmsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.discovery.listRealmsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1628,7 +1631,7 @@ client.agent.discovery.listRealmsIterator(page?: integer, limit?: integer, X-Hoo
 #### `githubAuthStatus` — GitHub auth status.
 
 ```typescript
-client.agent.github.githubAuthStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubAuthStatus(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1647,7 +1650,7 @@ client.agent.github.githubAuthStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `githubBranches` — List GitHub branches.
 
 ```typescript
-client.agent.github.githubBranches(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubBranches(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1666,7 +1669,7 @@ client.agent.github.githubBranches(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `githubClone` — Clone a GitHub repository.
 
 ```typescript
-client.agent.github.githubClone(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.github.githubClone(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1688,7 +1691,7 @@ client.agent.github.githubClone(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `githubCommit` — Stage all and commit.
 
 ```typescript
-client.agent.github.githubCommit(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubCommit(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1710,7 +1713,7 @@ client.agent.github.githubCommit(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `githubLogin` — Start a GitHub device-flow login (or add a PAT).
 
 ```typescript
-client.agent.github.githubLogin(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.github.githubLogin(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1732,7 +1735,7 @@ client.agent.github.githubLogin(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `githubLoginPoll` — Poll a GitHub device-flow login to completion.
 
 ```typescript
-client.agent.github.githubLoginPoll(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubLoginPoll(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1754,7 +1757,7 @@ client.agent.github.githubLoginPoll(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `githubLogout` — Remove a linked GitHub account.
 
 ```typescript
-client.agent.github.githubLogout(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubLogout(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1775,7 +1778,7 @@ client.agent.github.githubLogout(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `githubPullRequest` — Open a pull request.
 
 ```typescript
-client.agent.github.githubPullRequest(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubPullRequest(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1797,7 +1800,7 @@ client.agent.github.githubPullRequest(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?:
 #### `githubRepos` — List GitHub repos.
 
 ```typescript
-client.agent.github.githubRepos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubRepos(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1816,7 +1819,7 @@ client.agent.github.githubRepos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `githubSetActiveAccount` — Switch the active GitHub account.
 
 ```typescript
-client.agent.github.githubSetActiveAccount(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.github.githubSetActiveAccount(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1837,7 +1840,7 @@ client.agent.github.githubSetActiveAccount(X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `githubStatus` — GitHub working-tree status.
 
 ```typescript
-client.agent.github.githubStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.github.githubStatus(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1856,7 +1859,7 @@ client.agent.github.githubStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `githubSync` — Sync (fetch → pull → push).
 
 ```typescript
-client.agent.github.githubSync(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.github.githubSync(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1880,7 +1883,7 @@ client.agent.github.githubSync(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `createHeadlessRun` — Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.createHeadlessRun(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.headless.createHeadlessRun(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1904,7 +1907,7 @@ client.agent.headless.createHeadlessRun(X-Hoody-Cwd?: string, X-Hoody-Config-Dir
 #### `bootstrapHoodyToken` — Bootstrap the Hoody platform credential (install-if-absent).
 
 ```typescript
-client.agent.hoody.bootstrapHoodyToken(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hoody.bootstrapHoodyToken(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1927,7 +1930,7 @@ client.agent.hoody.bootstrapHoodyToken(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `ackHookTrust` — Acknowledge hook trust.
 
 ```typescript
-client.agent.hooks.ackHookTrust(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.ackHookTrust(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1947,7 +1950,7 @@ client.agent.hooks.ackHookTrust(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `beginHookWrite` — Begin a hook write (nonce).
 
 ```typescript
-client.agent.hooks.beginHookWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.beginHookWrite(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1969,7 +1972,7 @@ client.agent.hooks.beginHookWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 #### `deleteHook` — Delete a hook.
 
 ```typescript
-client.agent.hooks.deleteHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.deleteHook(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1991,7 +1994,7 @@ client.agent.hooks.deleteHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `disableAllHooks` — Disable all hooks.
 
 ```typescript
-client.agent.hooks.disableAllHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.disableAllHooks(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2013,7 +2016,7 @@ client.agent.hooks.disableAllHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `listHooks` — List hooks.
 
 ```typescript
-client.agent.hooks.listHooks(session_id?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.listHooks(data?: object, options?: { session_id?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2036,7 +2039,7 @@ client.agent.hooks.listHooks(session_id?: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `reloadHooks` — Reload hooks from disk.
 
 ```typescript
-client.agent.hooks.reloadHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.reloadHooks(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2056,7 +2059,7 @@ client.agent.hooks.reloadHooks(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `testHook` — Test-fire a hook.
 
 ```typescript
-client.agent.hooks.testHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.hooks.testHook(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2076,7 +2079,7 @@ client.agent.hooks.testHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X
 #### `toggleHook` — Toggle a hook.
 
 ```typescript
-client.agent.hooks.toggleHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.toggleHook(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2098,7 +2101,7 @@ client.agent.hooks.toggleHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `upsertHook` — Upsert a hook.
 
 ```typescript
-client.agent.hooks.upsertHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.hooks.upsertHook(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2122,7 +2125,7 @@ client.agent.hooks.upsertHook(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `deleteJob` — Cancel a pending/running job, or delete a finished record.
 
 ```typescript
-client.agent.jobs.deleteJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.jobs.deleteJob(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2142,7 +2145,7 @@ client.agent.jobs.deleteJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir
 #### `getJob` — Get an async job's status.
 
 ```typescript
-client.agent.jobs.getJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.jobs.getJob(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2162,7 +2165,7 @@ client.agent.jobs.getJob(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `getJobResult` — Get an async job's result.
 
 ```typescript
-client.agent.jobs.getJobResult(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.jobs.getJobResult(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2184,7 +2187,7 @@ client.agent.jobs.getJobResult(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `logsSources` — Log sources.
 
 ```typescript
-client.agent.logs.logsSources(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.logsSources(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2203,7 +2206,7 @@ client.agent.logs.logsSources(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `logsStats` — Log statistics.
 
 ```typescript
-client.agent.logs.logsStats(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.logsStats(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2222,7 +2225,7 @@ client.agent.logs.logsStats(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X
 #### `queryLogs` — Query logs.
 
 ```typescript
-client.agent.logs.queryLogs(source?: string, level?: string, host?: string, since?: string, until?: string, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.queryLogs(options?: { source?: string; level?: string; host?: string; since?: string; until?: string; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2247,7 +2250,7 @@ client.agent.logs.queryLogs(source?: string, level?: string, host?: string, sinc
 #### `readLogEntry` — Read a log entry.
 
 ```typescript
-client.agent.logs.readLogEntry(ref: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.readLogEntry(ref: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2267,7 +2270,7 @@ client.agent.logs.readLogEntry(ref: string, X-Hoody-Cwd?: string, X-Hoody-Config
 #### `streamLogs` — Stream the log tail (SSE).
 
 ```typescript
-client.agent.logs.streamLogs(source?: string, level?: string, host?: string, since_seq?: integer, limit?: integer, Last-Event-ID?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.logs.streamLogs(options?: { source?: string; level?: string; host?: string; since_seq?: integer; limit?: integer; Last-Event-ID?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2294,7 +2297,7 @@ client.agent.logs.streamLogs(source?: string, level?: string, host?: string, sin
 #### `createLoop` — Create a loop.
 
 ```typescript
-client.agent.loops.createLoop(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.loops.createLoop(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2317,7 +2320,7 @@ client.agent.loops.createLoop(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 #### `deleteLoop` — Delete a loop.
 
 ```typescript
-client.agent.loops.deleteLoop(id: string, loopId: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.loops.deleteLoop(id: string, loopId: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2339,7 +2342,7 @@ client.agent.loops.deleteLoop(id: string, loopId: string, X-Hoody-Cwd?: string, 
 #### `listLoops` — List a session's loops.
 
 ```typescript
-client.agent.loops.listLoops(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.loops.listLoops(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2361,7 +2364,7 @@ client.agent.loops.listLoops(id: string, page?: integer, limit?: integer, X-Hood
 #### `listLoopsAll` — List a session's loops. (collect all pages)
 
 ```typescript
-client.agent.loops.listLoopsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.loops.listLoopsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2383,7 +2386,7 @@ client.agent.loops.listLoopsAll(id: string, page?: integer, limit?: integer, X-H
 #### `listLoopsIterator` — List a session's loops. (async iterator)
 
 ```typescript
-client.agent.loops.listLoopsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.loops.listLoopsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2405,7 +2408,7 @@ client.agent.loops.listLoopsIterator(id: string, page?: integer, limit?: integer
 #### `runLoopNow` — Run a loop immediately.
 
 ```typescript
-client.agent.loops.runLoopNow(id: string, loopId: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.loops.runLoopNow(id: string, loopId: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2427,7 +2430,7 @@ client.agent.loops.runLoopNow(id: string, loopId: string, X-Hoody-Cwd?: string, 
 #### `updateLoop` — Update a loop.
 
 ```typescript
-client.agent.loops.updateLoop(id: string, loopId: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.loops.updateLoop(id: string, loopId: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2453,7 +2456,7 @@ client.agent.loops.updateLoop(id: string, loopId: string, X-Hoody-Cwd?: string, 
 #### `beginMCPWrite` — Begin an MCP config write.
 
 ```typescript
-client.agent.mcp.beginMCPWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.beginMCPWrite(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2475,7 +2478,7 @@ client.agent.mcp.beginMCPWrite(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `deleteMCPServer` — Delete an MCP server.
 
 ```typescript
-client.agent.mcp.deleteMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.deleteMCPServer(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2497,7 +2500,7 @@ client.agent.mcp.deleteMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `importMCPServers` — Import MCP servers from another tool's config.
 
 ```typescript
-client.agent.mcp.importMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.importMCPServers(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2509,7 +2512,7 @@ client.agent.mcp.importMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", document: string, servers: any[], replace: bool, expect_hash*: string }`
+**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", document: string, servers: object[], replace: bool, expect_hash*: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/mcp/import`
 **CLI:** `hoody agent mcp import`
@@ -2519,7 +2522,7 @@ client.agent.mcp.importMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 #### `listMCPServers` — List configured MCP servers.
 
 ```typescript
-client.agent.mcp.listMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.mcp.listMCPServers(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2538,7 +2541,7 @@ client.agent.mcp.listMCPServers(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `parseMCPImport` — Preview an MCP config import.
 
 ```typescript
-client.agent.mcp.parseMCPImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.parseMCPImport(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2560,7 +2563,7 @@ client.agent.mcp.parseMCPImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `probeMCPServer` — Probe an MCP server without saving it.
 
 ```typescript
-client.agent.mcp.probeMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.probeMCPServer(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2582,7 +2585,7 @@ client.agent.mcp.probeMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `reconnectMCP` — Reload MCP config and reconnect.
 
 ```typescript
-client.agent.mcp.reconnectMCP(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.reconnectMCP(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2604,7 +2607,7 @@ client.agent.mcp.reconnectMCP(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `setMCPServerEnabled` — Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.setMCPServerEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.setMCPServerEnabled(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2626,7 +2629,7 @@ client.agent.mcp.setMCPServerEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `upsertMCPServer` — Create or update an MCP server.
 
 ```typescript
-client.agent.mcp.upsertMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.mcp.upsertMCPServer(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2650,7 +2653,7 @@ client.agent.mcp.upsertMCPServer(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `consolidateMemory` — Trigger a memory consolidation pass (human-only).
 
 ```typescript
-client.agent.memory.consolidateMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.memory.consolidateMemory(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2672,7 +2675,7 @@ client.agent.memory.consolidateMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?:
 #### `deleteMemoryItem` — Delete a memory item.
 
 ```typescript
-client.agent.memory.deleteMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.memory.deleteMemoryItem(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2694,7 +2697,7 @@ client.agent.memory.deleteMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `editMemoryItem` — Edit a memory item.
 
 ```typescript
-client.agent.memory.editMemoryItem(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.editMemoryItem(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2717,7 +2720,7 @@ client.agent.memory.editMemoryItem(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `flushMemory` — Flush the memory store.
 
 ```typescript
-client.agent.memory.flushMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.flushMemory(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2737,7 +2740,7 @@ client.agent.memory.flushMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `getMemoryGraph` — Read a project's memory relation graph.
 
 ```typescript
-client.agent.memory.getMemoryGraph(project?: string, node_type?: string, limit?: integer, offset?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.getMemoryGraph(options?: { project?: string; node_type?: string; limit?: integer; offset?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2760,7 +2763,7 @@ client.agent.memory.getMemoryGraph(project?: string, node_type?: string, limit?:
 #### `getMemoryItem` — Read a memory item.
 
 ```typescript
-client.agent.memory.getMemoryItem(id: string, project?: string, kind?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.getMemoryItem(id: string, options?: { project?: string; kind?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2782,7 +2785,7 @@ client.agent.memory.getMemoryItem(id: string, project?: string, kind?: string, X
 #### `listMemoryItems` — List memory items.
 
 ```typescript
-client.agent.memory.listMemoryItems(project?: string, kind?: string, type?: string, query?: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryItems(options?: { project?: string; kind?: string; type?: string; query?: string; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2807,7 +2810,7 @@ client.agent.memory.listMemoryItems(project?: string, kind?: string, type?: stri
 #### `listMemoryItemsAll` — List memory items. (collect all pages)
 
 ```typescript
-client.agent.memory.listMemoryItemsAll(project?: string, kind?: string, type?: string, query?: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryItemsAll(options?: { project?: string; kind?: string; type?: string; query?: string; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2832,7 +2835,7 @@ client.agent.memory.listMemoryItemsAll(project?: string, kind?: string, type?: s
 #### `listMemoryItemsIterator` — List memory items. (async iterator)
 
 ```typescript
-client.agent.memory.listMemoryItemsIterator(project?: string, kind?: string, type?: string, query?: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryItemsIterator(options?: { project?: string; kind?: string; type?: string; query?: string; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2857,7 +2860,7 @@ client.agent.memory.listMemoryItemsIterator(project?: string, kind?: string, typ
 #### `listMemoryProjects` — List memory projects.
 
 ```typescript
-client.agent.memory.listMemoryProjects(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryProjects(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2878,7 +2881,7 @@ client.agent.memory.listMemoryProjects(page?: integer, limit?: integer, X-Hoody-
 #### `listMemoryProjectsAll` — List memory projects. (collect all pages)
 
 ```typescript
-client.agent.memory.listMemoryProjectsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryProjectsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2899,7 +2902,7 @@ client.agent.memory.listMemoryProjectsAll(page?: integer, limit?: integer, X-Hoo
 #### `listMemoryProjectsIterator` — List memory projects. (async iterator)
 
 ```typescript
-client.agent.memory.listMemoryProjectsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.memory.listMemoryProjectsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2920,7 +2923,7 @@ client.agent.memory.listMemoryProjectsIterator(page?: integer, limit?: integer, 
 #### `saveMemoryItem` — Save a memory item.
 
 ```typescript
-client.agent.memory.saveMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.memory.saveMemoryItem(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2942,7 +2945,7 @@ client.agent.memory.saveMemoryItem(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `searchMemory` — Search memory (hybrid recall).
 
 ```typescript
-client.agent.memory.searchMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.searchMemory(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2954,7 +2957,7 @@ client.agent.memory.searchMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ project: string, query: string, limit: int, kinds: any[], skip_graph: bool }`
+**Body:** `{ project: string, query: string, limit: int, kinds: string[], skip_graph: bool }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/memory/search`
 **CLI:** `hoody agent memory search`
@@ -2964,7 +2967,7 @@ client.agent.memory.searchMemory(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: stri
 #### `setMemoryEnabled` — Toggle memory capture.
 
 ```typescript
-client.agent.memory.setMemoryEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.memory.setMemoryEnabled(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2988,7 +2991,7 @@ client.agent.memory.setMemoryEnabled(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `addProviderAccount` — Add an OAuth account to a provider's pool.
 
 ```typescript
-client.agent.models.addProviderAccount(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.models.addProviderAccount(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3009,7 +3012,7 @@ client.agent.models.addProviderAccount(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `deleteProviderAPIKey` — Delete a provider API key.
 
 ```typescript
-client.agent.models.deleteProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.deleteProviderAPIKey(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3029,7 +3032,7 @@ client.agent.models.deleteProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoo
 #### `getModel` — Get a model by spec.
 
 ```typescript
-client.agent.models.getModel(spec: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.getModel(spec: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3049,7 +3052,7 @@ client.agent.models.getModel(spec: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `getProvider` — Get a provider.
 
 ```typescript
-client.agent.models.getProvider(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.getProvider(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3069,7 +3072,7 @@ client.agent.models.getProvider(id: string, X-Hoody-Cwd?: string, X-Hoody-Config
 #### `getProviderAuth` — Get a provider's auth status.
 
 ```typescript
-client.agent.models.getProviderAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.getProviderAuth(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3089,7 +3092,7 @@ client.agent.models.getProviderAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `listModels` — List models.
 
 ```typescript
-client.agent.models.listModels(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listModels(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3110,7 +3113,7 @@ client.agent.models.listModels(page?: integer, limit?: integer, X-Hoody-Cwd?: st
 #### `listModelsAll` — List models. (collect all pages)
 
 ```typescript
-client.agent.models.listModelsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listModelsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3131,7 +3134,7 @@ client.agent.models.listModelsAll(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listModelsIterator` — List models. (async iterator)
 
 ```typescript
-client.agent.models.listModelsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listModelsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3152,7 +3155,7 @@ client.agent.models.listModelsIterator(page?: integer, limit?: integer, X-Hoody-
 #### `listProviderAccounts` — List a provider's OAuth account pool.
 
 ```typescript
-client.agent.models.listProviderAccounts(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviderAccounts(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3174,7 +3177,7 @@ client.agent.models.listProviderAccounts(id: string, page?: integer, limit?: int
 #### `listProviderAccountsAll` — List a provider's OAuth account pool. (collect all pages)
 
 ```typescript
-client.agent.models.listProviderAccountsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviderAccountsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3196,7 +3199,7 @@ client.agent.models.listProviderAccountsAll(id: string, page?: integer, limit?: 
 #### `listProviderAccountsIterator` — List a provider's OAuth account pool. (async iterator)
 
 ```typescript
-client.agent.models.listProviderAccountsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviderAccountsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3218,7 +3221,7 @@ client.agent.models.listProviderAccountsIterator(id: string, page?: integer, lim
 #### `listProviders` — List LLM providers.
 
 ```typescript
-client.agent.models.listProviders(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProviders(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3239,7 +3242,7 @@ client.agent.models.listProviders(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listProvidersAll` — List LLM providers. (collect all pages)
 
 ```typescript
-client.agent.models.listProvidersAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProvidersAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3260,7 +3263,7 @@ client.agent.models.listProvidersAll(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listProvidersIterator` — List LLM providers. (async iterator)
 
 ```typescript
-client.agent.models.listProvidersIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.listProvidersIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3281,7 +3284,7 @@ client.agent.models.listProvidersIterator(page?: integer, limit?: integer, X-Hoo
 #### `logoutProviderOAuth` — Remove a provider's OAuth login.
 
 ```typescript
-client.agent.models.logoutProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.logoutProviderOAuth(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3301,7 +3304,7 @@ client.agent.models.logoutProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hood
 #### `pollProviderOAuth` — Poll a provider OAuth login.
 
 ```typescript
-client.agent.models.pollProviderOAuth(id: string, job: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.pollProviderOAuth(id: string, job: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3322,7 +3325,7 @@ client.agent.models.pollProviderOAuth(id: string, job: string, X-Hoody-Cwd?: str
 #### `removeProviderAccount` — Remove a pooled OAuth account.
 
 ```typescript
-client.agent.models.removeProviderAccount(id: string, key: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.models.removeProviderAccount(id: string, key: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3343,7 +3346,7 @@ client.agent.models.removeProviderAccount(id: string, key: string, X-Hoody-Cwd?:
 #### `setProviderAPIKey` — Store a provider API key.
 
 ```typescript
-client.agent.models.setProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.models.setProviderAPIKey(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3366,7 +3369,7 @@ client.agent.models.setProviderAPIKey(id: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `setProviderAccountActive` — Make a pooled OAuth account active.
 
 ```typescript
-client.agent.models.setProviderAccountActive(id: string, key: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.models.setProviderAccountActive(id: string, key: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3388,7 +3391,7 @@ client.agent.models.setProviderAccountActive(id: string, key: string, X-Hoody-Cw
 #### `setProviderDefault` — Set a provider's default credential method.
 
 ```typescript
-client.agent.models.setProviderDefault(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.models.setProviderDefault(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3411,7 +3414,7 @@ client.agent.models.setProviderDefault(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `startProviderOAuth` — Start a provider OAuth login.
 
 ```typescript
-client.agent.models.startProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.models.startProviderOAuth(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3434,7 +3437,7 @@ client.agent.models.startProviderOAuth(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `submitProviderOAuthCode` — Submit a provider OAuth authorization code.
 
 ```typescript
-client.agent.models.submitProviderOAuthCode(id: string, job: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.models.submitProviderOAuthCode(id: string, job: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3460,7 +3463,7 @@ client.agent.models.submitProviderOAuthCode(id: string, job: string, X-Hoody-Cwd
 #### `answerAssist` — Propose answers for a parked question (helper model).
 
 ```typescript
-client.agent.sessions.answerAssist(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.answerAssist(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3483,7 +3486,7 @@ client.agent.sessions.answerAssist(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `answerQuestion` — Answer a parked question gate.
 
 ```typescript
-client.agent.sessions.answerQuestion(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.answerQuestion(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3506,7 +3509,7 @@ client.agent.sessions.answerQuestion(id: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `cancelSession` — Cancel the active turn (Esc).
 
 ```typescript
-client.agent.sessions.cancelSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.cancelSession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3526,7 +3529,7 @@ client.agent.sessions.cancelSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `closeSession` — Close the session (teardown).
 
 ```typescript
-client.agent.sessions.closeSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.closeSession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3546,7 +3549,7 @@ client.agent.sessions.closeSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `confirmGate` — Answer a parked confirm gate.
 
 ```typescript
-client.agent.sessions.confirmGate(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.confirmGate(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3569,7 +3572,7 @@ client.agent.sessions.confirmGate(id: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `createSession` — Create, fork, or attach a session.
 
 ```typescript
-client.agent.sessions.createSession(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.createSession(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3591,7 +3594,7 @@ client.agent.sessions.createSession(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `deleteSession` — Close (and optionally hard-delete) a session.
 
 ```typescript
-client.agent.sessions.deleteSession(id: string, hard?: boolean, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.deleteSession(id: string, options?: { hard?: boolean; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3612,7 +3615,7 @@ client.agent.sessions.deleteSession(id: string, hard?: boolean, X-Hoody-Cwd?: st
 #### `getSession` — Get a session summary.
 
 ```typescript
-client.agent.sessions.getSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.getSession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3632,7 +3635,7 @@ client.agent.sessions.getSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Confi
 #### `getSessionTranscript` — Read a session's transcript without attaching.
 
 ```typescript
-client.agent.sessions.getSessionTranscript(id: string, after_turn?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.getSessionTranscript(id: string, options?: { after_turn?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3652,7 +3655,7 @@ client.agent.sessions.getSessionTranscript(id: string, after_turn?: integer, X-H
 #### `listSessionCwds` — List distinct session working directories.
 
 ```typescript
-client.agent.sessions.listSessionCwds(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessionCwds(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3671,7 +3674,7 @@ client.agent.sessions.listSessionCwds(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?:
 #### `listSessions` — List sessions.
 
 ```typescript
-client.agent.sessions.listSessions(include_system?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessions(options?: { include_system?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3693,7 +3696,7 @@ client.agent.sessions.listSessions(include_system?: boolean, page?: integer, lim
 #### `listSessionsAll` — List sessions. (collect all pages)
 
 ```typescript
-client.agent.sessions.listSessionsAll(include_system?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessionsAll(options?: { include_system?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3715,7 +3718,7 @@ client.agent.sessions.listSessionsAll(include_system?: boolean, page?: integer, 
 #### `listSessionsIterator` — List sessions. (async iterator)
 
 ```typescript
-client.agent.sessions.listSessionsIterator(include_system?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.listSessionsIterator(options?: { include_system?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3737,7 +3740,7 @@ client.agent.sessions.listSessionsIterator(include_system?: boolean, page?: inte
 #### `postSessionMessage` — Dispatch a turn (fire-and-observe).
 
 ```typescript
-client.agent.sessions.postSessionMessage(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.postSessionMessage(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3760,7 +3763,7 @@ client.agent.sessions.postSessionMessage(id: string, X-Hoody-Cwd?: string, X-Hoo
 #### `postWorkflowMessage` — Send a message to a running workflow.
 
 ```typescript
-client.agent.sessions.postWorkflowMessage(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.postWorkflowMessage(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3783,7 +3786,7 @@ client.agent.sessions.postWorkflowMessage(id: string, X-Hoody-Cwd?: string, X-Ho
 #### `promptStream` — Dispatch a turn and stream the response.
 
 ```typescript
-client.agent.sessions.promptStream(id: string, policy?: string, X-Hoody-Gate-Policy?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.promptStream(id: string, data?: object, options?: { policy?: string; X-Hoody-Gate-Policy?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3808,7 +3811,7 @@ client.agent.sessions.promptStream(id: string, policy?: string, X-Hoody-Gate-Pol
 #### `promptSync` — Dispatch a turn and block to completion.
 
 ```typescript
-client.agent.sessions.promptSync(id: string, policy?: string, X-Hoody-Gate-Policy?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.promptSync(id: string, data?: object, options?: { policy?: string; X-Hoody-Gate-Policy?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3833,7 +3836,7 @@ client.agent.sessions.promptSync(id: string, policy?: string, X-Hoody-Gate-Polic
 #### `replaySession` — Replay a live session's buffered events.
 
 ```typescript
-client.agent.sessions.replaySession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.replaySession(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3853,7 +3856,7 @@ client.agent.sessions.replaySession(id: string, X-Hoody-Cwd?: string, X-Hoody-Co
 #### `setSessionAgent` — Switch the chat agent.
 
 ```typescript
-client.agent.sessions.setSessionAgent(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionAgent(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3876,7 +3879,7 @@ client.agent.sessions.setSessionAgent(id: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `setSessionAutoReply` — Arm/disarm the auto-reply loop.
 
 ```typescript
-client.agent.sessions.setSessionAutoReply(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionAutoReply(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3899,7 +3902,7 @@ client.agent.sessions.setSessionAutoReply(id: string, X-Hoody-Cwd?: string, X-Ho
 #### `setSessionAutoReplyWrites` — Flip the auto-reply write opt-in.
 
 ```typescript
-client.agent.sessions.setSessionAutoReplyWrites(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionAutoReplyWrites(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3922,7 +3925,7 @@ client.agent.sessions.setSessionAutoReplyWrites(id: string, X-Hoody-Cwd?: string
 #### `setSessionEffort` — Set reasoning effort.
 
 ```typescript
-client.agent.sessions.setSessionEffort(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionEffort(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3945,7 +3948,7 @@ client.agent.sessions.setSessionEffort(id: string, X-Hoody-Cwd?: string, X-Hoody
 #### `setSessionHoodyEnv` — Toggle Hoody shell-env injection.
 
 ```typescript
-client.agent.sessions.setSessionHoodyEnv(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionHoodyEnv(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3968,7 +3971,7 @@ client.agent.sessions.setSessionHoodyEnv(id: string, X-Hoody-Cwd?: string, X-Hoo
 #### `setSessionModel` — Switch the session model.
 
 ```typescript
-client.agent.sessions.setSessionModel(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.sessions.setSessionModel(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3991,7 +3994,7 @@ client.agent.sessions.setSessionModel(id: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `setSessionVerbosity` — Set response verbosity.
 
 ```typescript
-client.agent.sessions.setSessionVerbosity(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.setSessionVerbosity(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4014,7 +4017,7 @@ client.agent.sessions.setSessionVerbosity(id: string, X-Hoody-Cwd?: string, X-Ho
 #### `streamSession` — Attach to a session's event stream (WebSocket / SSE).
 
 ```typescript
-client.agent.sessions.streamSession(id: string, since?: integer, Last-Event-ID?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.sessions.streamSession(id: string, options?: { since?: integer; Last-Event-ID?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4036,7 +4039,7 @@ client.agent.sessions.streamSession(id: string, since?: integer, Last-Event-ID?:
 #### `trimSession` — Trim session history to a turn index.
 
 ```typescript
-client.agent.sessions.trimSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.sessions.trimSession(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4061,7 +4064,7 @@ client.agent.sessions.trimSession(id: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `deleteFusion` — Delete a fusion composite.
 
 ```typescript
-client.agent.settings.deleteFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.deleteFusion(slug: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4081,7 +4084,7 @@ client.agent.settings.deleteFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `getACPStatus` — Get BYOA ACP backend status.
 
 ```typescript
-client.agent.settings.getACPStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.getACPStatus(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4100,7 +4103,7 @@ client.agent.settings.getACPStatus(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `getSettings` — Get settings.
 
 ```typescript
-client.agent.settings.getSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.getSettings(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4119,7 +4122,7 @@ client.agent.settings.getSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: str
 #### `listFusion` — List fusion composites.
 
 ```typescript
-client.agent.settings.listFusion(include_invalid?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.listFusion(options?: { include_invalid?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4141,7 +4144,7 @@ client.agent.settings.listFusion(include_invalid?: boolean, page?: integer, limi
 #### `listFusionAll` — List fusion composites. (collect all pages)
 
 ```typescript
-client.agent.settings.listFusionAll(include_invalid?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.listFusionAll(options?: { include_invalid?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4163,7 +4166,7 @@ client.agent.settings.listFusionAll(include_invalid?: boolean, page?: integer, l
 #### `listFusionIterator` — List fusion composites. (async iterator)
 
 ```typescript
-client.agent.settings.listFusionIterator(include_invalid?: boolean, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.settings.listFusionIterator(options?: { include_invalid?: boolean; page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4185,7 +4188,7 @@ client.agent.settings.listFusionIterator(include_invalid?: boolean, page?: integ
 #### `patchSettings` — Patch settings.
 
 ```typescript
-client.agent.settings.patchSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.settings.patchSettings(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4207,7 +4210,7 @@ client.agent.settings.patchSettings(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `setACPAgentModel` — Set a BYOA backend's default model and effort.
 
 ```typescript
-client.agent.settings.setACPAgentModel(agent: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.settings.setACPAgentModel(agent: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4229,7 +4232,7 @@ client.agent.settings.setACPAgentModel(agent: string, X-Hoody-Cwd?: string, X-Ho
 #### `setACPEnabled` — Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.settings.setACPEnabled(agent: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.settings.setACPEnabled(agent: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4251,7 +4254,7 @@ client.agent.settings.setACPEnabled(agent: string, X-Hoody-Cwd?: string, X-Hoody
 #### `setACPSecret` — Store an ACP per-agent secret value.
 
 ```typescript
-client.agent.settings.setACPSecret(agent: string, key: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.settings.setACPSecret(agent: string, key: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4275,7 +4278,7 @@ client.agent.settings.setACPSecret(agent: string, key: string, X-Hoody-Cwd?: str
 #### `upsertFusion` — Create or update a fusion composite.
 
 ```typescript
-client.agent.settings.upsertFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.settings.upsertFusion(slug: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4300,7 +4303,7 @@ client.agent.settings.upsertFusion(slug: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `applySkillImport` — Apply a skill import.
 
 ```typescript
-client.agent.skills.applySkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.skills.applySkillImport(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4320,7 +4323,7 @@ client.agent.skills.applySkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `clearSkillHubCache` — Clear the skill hub cache.
 
 ```typescript
-client.agent.skills.clearSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.clearSkillHubCache(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4339,7 +4342,7 @@ client.agent.skills.clearSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `createSkill` — Create a skill.
 
 ```typescript
-client.agent.skills.createSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.createSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4361,7 +4364,7 @@ client.agent.skills.createSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `deleteSkill` — Delete a skill.
 
 ```typescript
-client.agent.skills.deleteSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.deleteSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4383,7 +4386,7 @@ client.agent.skills.deleteSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `getSkillHubCache` — Skill hub cache stats.
 
 ```typescript
-client.agent.skills.getSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.getSkillHubCache(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4402,7 +4405,7 @@ client.agent.skills.getSkillHubCache(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: 
 #### `getSkillSource` — Read a skill's source.
 
 ```typescript
-client.agent.skills.getSkillSource(root_dir?: string, rel_dir?: string, root?: string, rel?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.getSkillSource(options?: { root_dir?: string; rel_dir?: string; root?: string; rel?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4425,7 +4428,7 @@ client.agent.skills.getSkillSource(root_dir?: string, rel_dir?: string, root?: s
 #### `installSkillHub` — Install a hub skill.
 
 ```typescript
-client.agent.skills.installSkillHub(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.installSkillHub(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4447,7 +4450,7 @@ client.agent.skills.installSkillHub(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `listSkills` — List skills.
 
 ```typescript
-client.agent.skills.listSkills(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.listSkills(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4468,7 +4471,7 @@ client.agent.skills.listSkills(page?: integer, limit?: integer, X-Hoody-Cwd?: st
 #### `listSkillsAll` — List skills. (collect all pages)
 
 ```typescript
-client.agent.skills.listSkillsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.listSkillsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4489,7 +4492,7 @@ client.agent.skills.listSkillsAll(page?: integer, limit?: integer, X-Hoody-Cwd?:
 #### `listSkillsIterator` — List skills. (async iterator)
 
 ```typescript
-client.agent.skills.listSkillsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.listSkillsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4510,7 +4513,7 @@ client.agent.skills.listSkillsIterator(page?: integer, limit?: integer, X-Hoody-
 #### `previewSkillHub` — Preview a hub skill.
 
 ```typescript
-client.agent.skills.previewSkillHub(id?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.previewSkillHub(options?: { id?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4530,7 +4533,7 @@ client.agent.skills.previewSkillHub(id?: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `putSkillSource` — Write a skill's source.
 
 ```typescript
-client.agent.skills.putSkillSource(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.putSkillSource(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4552,7 +4555,7 @@ client.agent.skills.putSkillSource(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: st
 #### `renameSkill` — Rename a skill.
 
 ```typescript
-client.agent.skills.renameSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.renameSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4574,7 +4577,7 @@ client.agent.skills.renameSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `scanSkillImport` — Scan for importable skills.
 
 ```typescript
-client.agent.skills.scanSkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.scanSkillImport(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4593,7 +4596,7 @@ client.agent.skills.scanSkillImport(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `searchSkillHub` — Search the skill hub.
 
 ```typescript
-client.agent.skills.searchSkillHub(q?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.skills.searchSkillHub(options?: { q?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4613,7 +4616,7 @@ client.agent.skills.searchSkillHub(q?: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `toggleSkill` — Enable/disable a skill.
 
 ```typescript
-client.agent.skills.toggleSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.toggleSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4635,7 +4638,7 @@ client.agent.skills.toggleSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: strin
 #### `trustSkill` — Set a skill's trust state.
 
 ```typescript
-client.agent.skills.trustSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.skills.trustSkill(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4659,7 +4662,7 @@ client.agent.skills.trustSkill(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `getStatistics` — Cross-session statistics.
 
 ```typescript
-client.agent.statistics.getStatistics(scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.statistics.getStatistics(options?: { scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4679,7 +4682,7 @@ client.agent.statistics.getStatistics(scope?: string, X-Hoody-Cwd?: string, X-Ho
 #### `usageByAccount` — Usage rollup by account.
 
 ```typescript
-client.agent.statistics.usageByAccount(since?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.statistics.usageByAccount(options?: { since?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4699,7 +4702,7 @@ client.agent.statistics.usageByAccount(since?: integer, X-Hoody-Cwd?: string, X-
 #### `usageByModel` — Usage rollup by model.
 
 ```typescript
-client.agent.statistics.usageByModel(since?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.statistics.usageByModel(options?: { since?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4778,7 +4781,7 @@ client.agent.system.openapiYAML()
 #### `cancelAllTasks` — Cancel all background tasks.
 
 ```typescript
-client.agent.tasks.cancelAllTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.cancelAllTasks(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4798,7 +4801,7 @@ client.agent.tasks.cancelAllTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Conf
 #### `cancelTask` — Cancel a background task.
 
 ```typescript
-client.agent.tasks.cancelTask(id: string, tid: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.cancelTask(id: string, tid: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4819,7 +4822,7 @@ client.agent.tasks.cancelTask(id: string, tid: string, X-Hoody-Cwd?: string, X-H
 #### `listTasks` — Request the session's task snapshot.
 
 ```typescript
-client.agent.tasks.listTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.listTasks(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4839,7 +4842,7 @@ client.agent.tasks.listTasks(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Di
 #### `requestTaskTranscript` — Request a task's transcript (upsert-poll).
 
 ```typescript
-client.agent.tasks.requestTaskTranscript(id: string, tid: string, after_seq?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tasks.requestTaskTranscript(id: string, tid: string, options?: { after_seq?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4863,7 +4866,7 @@ client.agent.tasks.requestTaskTranscript(id: string, tid: string, after_seq?: in
 #### `approveTodoProposal` — Approve a todo proposal.
 
 ```typescript
-client.agent.todos.approveTodoProposal(id: string, pid: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.approveTodoProposal(id: string, pid: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4885,7 +4888,7 @@ client.agent.todos.approveTodoProposal(id: string, pid: string, X-Hoody-Cwd?: st
 #### `archiveTodo` — Archive a todo.
 
 ```typescript
-client.agent.todos.archiveTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.archiveTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4908,7 +4911,7 @@ client.agent.todos.archiveTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `cancelTodoRun` — Cancel a todo's run.
 
 ```typescript
-client.agent.todos.cancelTodoRun(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.cancelTodoRun(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4929,7 +4932,7 @@ client.agent.todos.cancelTodoRun(id: string, X-Hoody-Cwd?: string, X-Hoody-Confi
 #### `claimTodo` — Claim a todo.
 
 ```typescript
-client.agent.todos.claimTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.claimTodo(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4952,7 +4955,7 @@ client.agent.todos.claimTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Di
 #### `createTodo` — File a todo.
 
 ```typescript
-client.agent.todos.createTodo(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.createTodo(data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4964,7 +4967,7 @@ client.agent.todos.createTodo(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ title*: string, body: string, priority: int, tags: any[], cwd: string }`
+**Body:** `{ title*: string, body: string, priority: int, tags: string[], cwd: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/todos`
 **CLI:** `hoody agent todos create`
@@ -4974,7 +4977,7 @@ client.agent.todos.createTodo(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `denyTodoProposal` — Deny a todo proposal.
 
 ```typescript
-client.agent.todos.denyTodoProposal(id: string, pid: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.denyTodoProposal(id: string, pid: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -4996,7 +4999,7 @@ client.agent.todos.denyTodoProposal(id: string, pid: string, X-Hoody-Cwd?: strin
 #### `getTodo` — Read a todo.
 
 ```typescript
-client.agent.todos.getTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.todos.getTodo(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5016,7 +5019,7 @@ client.agent.todos.getTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `getTodosRevision` — Get the todos store revision.
 
 ```typescript
-client.agent.todos.getTodosRevision(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.todos.getTodosRevision(options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5035,7 +5038,7 @@ client.agent.todos.getTodosRevision(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: s
 #### `listTodos` — List todos.
 
 ```typescript
-client.agent.todos.listTodos(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.listTodos(data?: object, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5049,7 +5052,7 @@ client.agent.todos.listTodos(page?: integer, limit?: integer, X-Hoody-Cwd?: stri
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ states: any[], tags: any[], query: string, open_only: bool, all: bool }`
+**Body:** `{ states: string[], tags: string[], query: string, open_only: bool, all: bool }`
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/agent/todos`
 **CLI:** `hoody agent todos list`
@@ -5059,7 +5062,7 @@ client.agent.todos.listTodos(page?: integer, limit?: integer, X-Hoody-Cwd?: stri
 #### `listTodosAll` — List todos. (collect all pages)
 
 ```typescript
-client.agent.todos.listTodosAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.listTodosAll(data?: object, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5073,7 +5076,7 @@ client.agent.todos.listTodosAll(page?: integer, limit?: integer, X-Hoody-Cwd?: s
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ states: any[], tags: any[], query: string, open_only: bool, all: bool }`
+**Body:** `{ states: string[], tags: string[], query: string, open_only: bool, all: bool }`
 
 **Returns:** `any[]`  |  **HTTP:** `GET /api/v1/agent/todos`
 **CLI:** `hoody agent todos list`
@@ -5083,7 +5086,7 @@ client.agent.todos.listTodosAll(page?: integer, limit?: integer, X-Hoody-Cwd?: s
 #### `listTodosIterator` — List todos. (async iterator)
 
 ```typescript
-client.agent.todos.listTodosIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.listTodosIterator(data?: object, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5097,7 +5100,7 @@ client.agent.todos.listTodosIterator(page?: integer, limit?: integer, X-Hoody-Cw
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | No |  |
 
-**Body:** `{ states: any[], tags: any[], query: string, open_only: bool, all: bool }`
+**Body:** `{ states: string[], tags: string[], query: string, open_only: bool, all: bool }`
 
 **Returns:** `AsyncIterableIterator<any>`  |  **HTTP:** `GET /api/v1/agent/todos`
 **CLI:** `hoody agent todos list`
@@ -5107,7 +5110,7 @@ client.agent.todos.listTodosIterator(page?: integer, limit?: integer, X-Hoody-Cw
 #### `messageTodo` — Comment + run an orchestrator turn.
 
 ```typescript
-client.agent.todos.messageTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.messageTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5130,7 +5133,7 @@ client.agent.todos.messageTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `postTodoComment` — Comment on a todo.
 
 ```typescript
-client.agent.todos.postTodoComment(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.postTodoComment(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5153,7 +5156,7 @@ client.agent.todos.postTodoComment(id: string, X-Hoody-Cwd?: string, X-Hoody-Con
 #### `purgeTodos` — Purge archived todos.
 
 ```typescript
-client.agent.todos.purgeTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.purgeTodos(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5173,7 +5176,7 @@ client.agent.todos.purgeTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string,
 #### `releaseTodo` — Release a todo.
 
 ```typescript
-client.agent.todos.releaseTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.releaseTodo(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5194,7 +5197,7 @@ client.agent.todos.releaseTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-
 #### `runTodo` — Run a todo's orchestrator.
 
 ```typescript
-client.agent.todos.runTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.runTodo(id: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5215,7 +5218,7 @@ client.agent.todos.runTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?
 #### `snoozeTodo` — Snooze a todo.
 
 ```typescript
-client.agent.todos.snoozeTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.snoozeTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5238,7 +5241,7 @@ client.agent.todos.snoozeTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 #### `triageTodos` — Run an LLM triage pass.
 
 ```typescript
-client.agent.todos.triageTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.todos.triageTodos(data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5258,7 +5261,7 @@ client.agent.todos.triageTodos(X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string
 #### `updateTodo` — Update a todo (CAS).
 
 ```typescript
-client.agent.todos.updateTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.todos.updateTodo(id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5271,7 +5274,7 @@ client.agent.todos.updateTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ revision*: int, title: string, body: string, state: string, priority: int, rank: int, tags: any[], cwd: string }`
+**Body:** `{ revision*: int, title: string, body: string, state: string, priority: int, rank: int, tags: string[], cwd: string }`
 
 **Returns:** `any`  |  **HTTP:** `PATCH /api/v1/agent/todos/{id}`
 **CLI:** `hoody agent todos update`
@@ -5283,7 +5286,7 @@ client.agent.todos.updateTodo(id: string, X-Hoody-Cwd?: string, X-Hoody-Config-D
 #### `getTool` — Get one tool schema.
 
 ```typescript
-client.agent.tools.getTool(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.getTool(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5303,7 +5306,7 @@ client.agent.tools.getTool(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Di
 #### `listReadOnlyTools` — List the read-only tool subset.
 
 ```typescript
-client.agent.tools.listReadOnlyTools(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listReadOnlyTools(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5324,7 +5327,7 @@ client.agent.tools.listReadOnlyTools(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listReadOnlyToolsAll` — List the read-only tool subset. (collect all pages)
 
 ```typescript
-client.agent.tools.listReadOnlyToolsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listReadOnlyToolsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5345,7 +5348,7 @@ client.agent.tools.listReadOnlyToolsAll(page?: integer, limit?: integer, X-Hoody
 #### `listReadOnlyToolsIterator` — List the read-only tool subset. (async iterator)
 
 ```typescript
-client.agent.tools.listReadOnlyToolsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listReadOnlyToolsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5366,7 +5369,7 @@ client.agent.tools.listReadOnlyToolsIterator(page?: integer, limit?: integer, X-
 #### `listSessionMCPTools` — List a session's MCP tools.
 
 ```typescript
-client.agent.tools.listSessionMCPTools(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionMCPTools(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5388,7 +5391,7 @@ client.agent.tools.listSessionMCPTools(id: string, page?: integer, limit?: integ
 #### `listSessionMCPToolsAll` — List a session's MCP tools. (collect all pages)
 
 ```typescript
-client.agent.tools.listSessionMCPToolsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionMCPToolsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5410,7 +5413,7 @@ client.agent.tools.listSessionMCPToolsAll(id: string, page?: integer, limit?: in
 #### `listSessionMCPToolsIterator` — List a session's MCP tools. (async iterator)
 
 ```typescript
-client.agent.tools.listSessionMCPToolsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionMCPToolsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5432,7 +5435,7 @@ client.agent.tools.listSessionMCPToolsIterator(id: string, page?: integer, limit
 #### `listSessionTools` — List a session's effective tool set.
 
 ```typescript
-client.agent.tools.listSessionTools(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionTools(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5454,7 +5457,7 @@ client.agent.tools.listSessionTools(id: string, page?: integer, limit?: integer,
 #### `listSessionToolsAll` — List a session's effective tool set. (collect all pages)
 
 ```typescript
-client.agent.tools.listSessionToolsAll(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionToolsAll(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5476,7 +5479,7 @@ client.agent.tools.listSessionToolsAll(id: string, page?: integer, limit?: integ
 #### `listSessionToolsIterator` — List a session's effective tool set. (async iterator)
 
 ```typescript
-client.agent.tools.listSessionToolsIterator(id: string, page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listSessionToolsIterator(id: string, options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5498,7 +5501,7 @@ client.agent.tools.listSessionToolsIterator(id: string, page?: integer, limit?: 
 #### `listTools` — List the tool catalogue.
 
 ```typescript
-client.agent.tools.listTools(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listTools(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5519,7 +5522,7 @@ client.agent.tools.listTools(page?: integer, limit?: integer, X-Hoody-Cwd?: stri
 #### `listToolsAll` — List the tool catalogue. (collect all pages)
 
 ```typescript
-client.agent.tools.listToolsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listToolsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5540,7 +5543,7 @@ client.agent.tools.listToolsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: s
 #### `listToolsIterator` — List the tool catalogue. (async iterator)
 
 ```typescript
-client.agent.tools.listToolsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.tools.listToolsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5561,7 +5564,7 @@ client.agent.tools.listToolsIterator(page?: integer, limit?: integer, X-Hoody-Cw
 #### `runSessionTool` — Run a tool inside a live session (gated).
 
 ```typescript
-client.agent.tools.runSessionTool(id: string, name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.runSessionTool(id: string, name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5587,7 +5590,7 @@ client.agent.tools.runSessionTool(id: string, name: string, confirm?: boolean, c
 #### `runTool` — Run a tool (sessionless, gated).
 
 ```typescript
-client.agent.tools.runTool(name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Tool-Mode?: string, X-Hoody-Dir-Scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.runTool(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Tool-Mode?: string; X-Hoody-Dir-Scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5614,7 +5617,7 @@ client.agent.tools.runTool(name: string, confirm?: boolean, confirm_token?: stri
 #### `runToolAsync` — Run a tool asynchronously (sessionless, gated).
 
 ```typescript
-client.agent.tools.runToolAsync(name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Tool-Mode?: string, X-Hoody-Dir-Scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.runToolAsync(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Tool-Mode?: string; X-Hoody-Dir-Scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5641,7 +5644,7 @@ client.agent.tools.runToolAsync(name: string, confirm?: boolean, confirm_token?:
 #### `streamTool` — Run a tool with a streamed result (sessionless, gated).
 
 ```typescript
-client.agent.tools.streamTool(name: string, confirm?: boolean, confirm_token?: string, X-Hoody-Tool-Mode?: string, X-Hoody-Dir-Scope?: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.tools.streamTool(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; X-Hoody-Tool-Mode?: string; X-Hoody-Dir-Scope?: string; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5670,7 +5673,7 @@ client.agent.tools.streamTool(name: string, confirm?: boolean, confirm_token?: s
 #### `cancelWorkflowRun` — Cancel a workflow run.
 
 ```typescript
-client.agent.workflows.cancelWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.cancelWorkflowRun(run_id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5690,7 +5693,7 @@ client.agent.workflows.cancelWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X
 #### `deleteWorkflow` — Delete a workflow definition.
 
 ```typescript
-client.agent.workflows.deleteWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.deleteWorkflow(name: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5710,7 +5713,7 @@ client.agent.workflows.deleteWorkflow(name: string, X-Hoody-Cwd?: string, X-Hood
 #### `getWorkflow` — Read one workflow definition.
 
 ```typescript
-client.agent.workflows.getWorkflow(name: string, include_revision?: boolean, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.getWorkflow(name: string, options?: { include_revision?: boolean; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5731,7 +5734,7 @@ client.agent.workflows.getWorkflow(name: string, include_revision?: boolean, X-H
 #### `getWorkflowRun` — Get one workflow run by id.
 
 ```typescript
-client.agent.workflows.getWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.getWorkflowRun(run_id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5751,7 +5754,7 @@ client.agent.workflows.getWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Ho
 #### `hideWorkflow` — Hide or un-hide a workflow.
 
 ```typescript
-client.agent.workflows.hideWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.workflows.hideWorkflow(name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5774,7 +5777,7 @@ client.agent.workflows.hideWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-
 #### `listWorkflowRuns` — Snapshot in-flight and recent workflow runs.
 
 ```typescript
-client.agent.workflows.listWorkflowRuns(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowRuns(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5795,7 +5798,7 @@ client.agent.workflows.listWorkflowRuns(page?: integer, limit?: integer, X-Hoody
 #### `listWorkflowRunsAll` — Snapshot in-flight and recent workflow runs. (collect all pages)
 
 ```typescript
-client.agent.workflows.listWorkflowRunsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowRunsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5816,7 +5819,7 @@ client.agent.workflows.listWorkflowRunsAll(page?: integer, limit?: integer, X-Ho
 #### `listWorkflowRunsIterator` — Snapshot in-flight and recent workflow runs. (async iterator)
 
 ```typescript
-client.agent.workflows.listWorkflowRunsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowRunsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5837,7 +5840,7 @@ client.agent.workflows.listWorkflowRunsIterator(page?: integer, limit?: integer,
 #### `listWorkflows` — List workflow definitions.
 
 ```typescript
-client.agent.workflows.listWorkflows(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflows(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5858,7 +5861,7 @@ client.agent.workflows.listWorkflows(page?: integer, limit?: integer, X-Hoody-Cw
 #### `listWorkflowsAll` — List workflow definitions. (collect all pages)
 
 ```typescript
-client.agent.workflows.listWorkflowsAll(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowsAll(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5879,7 +5882,7 @@ client.agent.workflows.listWorkflowsAll(page?: integer, limit?: integer, X-Hoody
 #### `listWorkflowsIterator` — List workflow definitions. (async iterator)
 
 ```typescript
-client.agent.workflows.listWorkflowsIterator(page?: integer, limit?: integer, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string)
+client.agent.workflows.listWorkflowsIterator(options?: { page?: integer; limit?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5900,7 +5903,7 @@ client.agent.workflows.listWorkflowsIterator(page?: integer, limit?: integer, X-
 #### `putWorkflow` — Create or replace a workflow definition.
 
 ```typescript
-client.agent.workflows.putWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.workflows.putWorkflow(name: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5923,7 +5926,7 @@ client.agent.workflows.putWorkflow(name: string, X-Hoody-Cwd?: string, X-Hoody-C
 #### `resumeWorkflowRun` — Resume a failed or cancelled workflow run.
 
 ```typescript
-client.agent.workflows.resumeWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data: object)
+client.agent.workflows.resumeWorkflowRun(run_id: string, data: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5945,7 +5948,7 @@ client.agent.workflows.resumeWorkflowRun(run_id: string, X-Hoody-Cwd?: string, X
 #### `runSessionWorkflow` — Run a workflow onto an existing session.
 
 ```typescript
-client.agent.workflows.runSessionWorkflow(id: string, name: string, X-Hoody-Cwd?: string, X-Hoody-Config-Dir?: string, X-Hoody-Container?: string, X-Hoody-Realm?: string, realm?: string, data?: object)
+client.agent.workflows.runSessionWorkflow(id: string, name: string, data?: object, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6097,7 +6100,7 @@ Project-scope analogues live under `proxyPermissionsProject.*`.
 11. `client.api.rentals.extend`
 12. `client.api.serverCommands.execute`
 
-Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands.
+Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands. ONE exception worth reading before you call it: the notification inbox is NOT uniform CRUD. `notifications.list` needs `resources.read_account` on the token (403 without it — the external_customer, dev_team, finance_team and read_only templates all deny it, as do all tokens minted before 2026-06-30), and `markRead` / `markAllRead` refuse EVERY auth token regardless of permissions, because acknowledging is how the record of an account event is dismissed. Use `notifications.listPublic` as the no-auth fallback.
 
 ## Quirks & gotchas
 
@@ -6158,7 +6161,7 @@ client.api.activity.getStats()
 #### `list` — Get activity logs
 
 ```typescript
-client.api.activity.list(page?: integer, limit?: integer, start_date?: string, end_date?: string, errors_only?: string, min_status?: integer, max_status?: integer, method?: string, realm_id?: string)
+client.api.activity.list(options?: { page?: integer; limit?: integer; start_date?: string; end_date?: string; errors_only?: string; min_status?: integer; max_status?: integer; method?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6181,7 +6184,7 @@ client.api.activity.list(page?: integer, limit?: integer, start_date?: string, e
 #### `listAll` — Get activity logs (collect all pages)
 
 ```typescript
-client.api.activity.listAll(page?: integer, limit?: integer, start_date?: string, end_date?: string, errors_only?: string, min_status?: integer, max_status?: integer, method?: string, realm_id?: string)
+client.api.activity.listAll(options?: { page?: integer; limit?: integer; start_date?: string; end_date?: string; errors_only?: string; min_status?: integer; max_status?: integer; method?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6204,7 +6207,7 @@ client.api.activity.listAll(page?: integer, limit?: integer, start_date?: string
 #### `listIterator` — Get activity logs (async iterator)
 
 ```typescript
-client.api.activity.listIterator(page?: integer, limit?: integer, start_date?: string, end_date?: string, errors_only?: string, min_status?: integer, max_status?: integer, method?: string, realm_id?: string)
+client.api.activity.listIterator(options?: { page?: integer; limit?: integer; start_date?: string; end_date?: string; errors_only?: string; min_status?: integer; max_status?: integer; method?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6524,7 +6527,7 @@ client.api.authentication.getOAuthConfig()
 #### `githubOAuthCallback` — GitHub OAuth callback
 
 ```typescript
-client.api.authentication.githubOAuthCallback(code?: string, state: string, error?: string, error_description?: string, error_uri?: string)
+client.api.authentication.githubOAuthCallback(options?: { code?: string; state?: string; error?: string; error_description?: string; error_uri?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6543,7 +6546,7 @@ client.api.authentication.githubOAuthCallback(code?: string, state: string, erro
 #### `githubOAuthRedirect` — Redirect to GitHub OAuth
 
 ```typescript
-client.api.authentication.githubOAuthRedirect(client?: string, intent?: string, redirect_uri: string, code_challenge: string, invite_code?: string)
+client.api.authentication.githubOAuthRedirect(options?: { client?: string; intent?: string; redirect_uri?: string; code_challenge?: string; invite_code?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6562,7 +6565,7 @@ client.api.authentication.githubOAuthRedirect(client?: string, intent?: string, 
 #### `googleOAuthCallback` — Google OAuth callback
 
 ```typescript
-client.api.authentication.googleOAuthCallback(code?: string, state: string, error?: string, error_description?: string, error_uri?: string)
+client.api.authentication.googleOAuthCallback(options?: { code?: string; state?: string; error?: string; error_description?: string; error_uri?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6581,7 +6584,7 @@ client.api.authentication.googleOAuthCallback(code?: string, state: string, erro
 #### `googleOAuthRedirect` — Redirect to Google OAuth
 
 ```typescript
-client.api.authentication.googleOAuthRedirect(client?: string, redirect_uri: string, code_challenge: string, invite_code?: string)
+client.api.authentication.googleOAuthRedirect(options?: { client?: string; redirect_uri?: string; code_challenge?: string; invite_code?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6653,7 +6656,7 @@ client.api.authentication.oauthCancelIntent()
 #### `oauthDeviceAuthorize` — Start the device-leg OAuth (cookie + ticket gated)
 
 ```typescript
-client.api.authentication.oauthDeviceAuthorize(ticket: string, provider: string)
+client.api.authentication.oauthDeviceAuthorize(options?: { ticket?: string; provider?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6780,7 +6783,7 @@ client.api.authentication.oauthLaunchInitiate(data: object)
 #### `oauthLaunchStart` — Start OAuth popup-handoff via single-use ticket
 
 ```typescript
-client.api.authentication.oauthLaunchStart(ticket: string)
+client.api.authentication.oauthLaunchStart(options?: { ticket?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -6981,7 +6984,7 @@ client.api.containers.deleteSnapshot(id: string, name: string)
 #### `get` — Get a container by ID
 
 ```typescript
-client.api.containers.get(runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, id: string)
+client.api.containers.get(id: string, options?: { runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7029,7 +7032,7 @@ client.api.containers.getStats(id: string)
 #### `getStatusLogs` — Get status logs for a container
 
 ```typescript
-client.api.containers.getStatusLogs(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.containers.getStatusLogs(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7048,7 +7051,7 @@ client.api.containers.getStatusLogs(page?: number, limit?: number, sort_by?: str
 #### `list` — Get all containers
 
 ```typescript
-client.api.containers.list(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_expired?: string, include_deleting?: string)
+client.api.containers.list(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_expired?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7073,7 +7076,7 @@ client.api.containers.list(page?: number, limit?: number, sort_by?: string, sort
 #### `listAll` — Get all containers (collect all pages)
 
 ```typescript
-client.api.containers.listAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_expired?: string, include_deleting?: string)
+client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_expired?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7098,7 +7101,7 @@ client.api.containers.listAll(page?: number, limit?: number, sort_by?: string, s
 #### `listByProject` — Get all containers for a project
 
 ```typescript
-client.api.containers.listByProject(page?: number, limit?: number, sort_by?: string, sort_order?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_deleting?: string, id: string)
+client.api.containers.listByProject(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7122,7 +7125,7 @@ client.api.containers.listByProject(page?: number, limit?: number, sort_by?: str
 #### `listByProjectAll` — Get all containers for a project (collect all pages)
 
 ```typescript
-client.api.containers.listByProjectAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_deleting?: string, id: string)
+client.api.containers.listByProjectAll(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7146,7 +7149,7 @@ client.api.containers.listByProjectAll(page?: number, limit?: number, sort_by?: 
 #### `listByProjectIterator` — Get all containers for a project (async iterator)
 
 ```typescript
-client.api.containers.listByProjectIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_deleting?: string, id: string)
+client.api.containers.listByProjectIterator(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7170,7 +7173,7 @@ client.api.containers.listByProjectIterator(page?: number, limit?: number, sort_
 #### `listIterator` — Get all containers (async iterator)
 
 ```typescript
-client.api.containers.listIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string, runtime?: string, include_proxy_domains?: string, include_proxy_permissions?: string, include_prespawn?: string, include_expired?: string, include_deleting?: string)
+client.api.containers.listIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string; runtime?: string; include_proxy_domains?: string; include_proxy_permissions?: string; include_prespawn?: string; include_expired?: string; include_deleting?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7540,7 +7543,7 @@ client.api.events.get(id: string)
 #### `getStats` — Get event statistics
 
 ```typescript
-client.api.events.getStats(start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.getStats(options?: { start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7557,7 +7560,7 @@ client.api.events.getStats(start_date?: string, end_date?: string, realm_id?: st
 #### `list` — List event history
 
 ```typescript
-client.api.events.list(limit?: integer, offset?: integer, sort_by?: string, sort_order?: string, event_type?: string, resource_type?: string, resource_id?: string, project_id?: string, container_id?: string, start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.list(options?: { limit?: integer; offset?: integer; sort_by?: string; sort_order?: string; event_type?: string; resource_type?: string; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7583,7 +7586,7 @@ client.api.events.list(limit?: integer, offset?: integer, sort_by?: string, sort
 #### `listAll` — List event history (collect all pages)
 
 ```typescript
-client.api.events.listAll(limit?: integer, offset?: integer, sort_by?: string, sort_order?: string, event_type?: string, resource_type?: string, resource_id?: string, project_id?: string, container_id?: string, start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.listAll(options?: { limit?: integer; offset?: integer; sort_by?: string; sort_order?: string; event_type?: string; resource_type?: string; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7609,7 +7612,7 @@ client.api.events.listAll(limit?: integer, offset?: integer, sort_by?: string, s
 #### `listIterator` — List event history (async iterator)
 
 ```typescript
-client.api.events.listIterator(limit?: integer, offset?: integer, sort_by?: string, sort_order?: string, event_type?: string, resource_type?: string, resource_id?: string, project_id?: string, container_id?: string, start_date?: string, end_date?: string, realm_id?: string)
+client.api.events.listIterator(options?: { limit?: integer; offset?: integer; sort_by?: string; sort_order?: string; event_type?: string; resource_type?: string; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7852,7 +7855,7 @@ client.api.images.importFree(id: string)
 #### `list` — List user images
 
 ```typescript
-client.api.images.list(page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.list(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7870,7 +7873,7 @@ client.api.images.list(page?: integer, limit?: integer, sort_by?: string, sort_o
 #### `listAll` — List user images (collect all pages)
 
 ```typescript
-client.api.images.listAll(page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listAll(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7888,7 +7891,7 @@ client.api.images.listAll(page?: integer, limit?: integer, sort_by?: string, sor
 #### `listIterator` — List user images (async iterator)
 
 ```typescript
-client.api.images.listIterator(page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listIterator(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7906,7 +7909,7 @@ client.api.images.listIterator(page?: integer, limit?: integer, sort_by?: string
 #### `listPublic` — List public images
 
 ```typescript
-client.api.images.listPublic(os?: string, architecture?: string, min_price?: number, max_price?: number, min_rating?: number, max_rating?: number, search?: string, page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listPublic(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7916,7 +7919,7 @@ client.api.images.listPublic(os?: string, architecture?: string, min_price?: num
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | query | No | Minimum average rating filter - filters images with rating >= this value (0-5 stars) |
-| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating <= this value (0-5 stars) |
+| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | query | No | Search term to filter images by name, description, or tags |
 | `page` | `integer` | query | No | Page number for pagination - starts from 1 |
 | `limit` | `integer` | query | No | Number of images to return per page - maximum 100 items |
@@ -7931,7 +7934,7 @@ client.api.images.listPublic(os?: string, architecture?: string, min_price?: num
 #### `listPublicAll` — List public images (collect all pages)
 
 ```typescript
-client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: number, max_price?: number, min_rating?: number, max_rating?: number, search?: string, page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listPublicAll(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7941,7 +7944,7 @@ client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: 
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | query | No | Minimum average rating filter - filters images with rating >= this value (0-5 stars) |
-| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating <= this value (0-5 stars) |
+| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | query | No | Search term to filter images by name, description, or tags |
 | `page` | `integer` | query | No | Page number for pagination - starts from 1 |
 | `limit` | `integer` | query | No | Number of images to return per page - maximum 100 items |
@@ -7956,7 +7959,7 @@ client.api.images.listPublicAll(os?: string, architecture?: string, min_price?: 
 #### `listPublicIterator` — List public images (async iterator)
 
 ```typescript
-client.api.images.listPublicIterator(os?: string, architecture?: string, min_price?: number, max_price?: number, min_rating?: number, max_rating?: number, search?: string, page?: integer, limit?: integer, sort_by?: string, sort_order?: string)
+client.api.images.listPublicIterator(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: integer; limit?: integer; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7966,7 +7969,7 @@ client.api.images.listPublicIterator(os?: string, architecture?: string, min_pri
 | `min_price` | `number` | query | No | Minimum price filter for paid images - 0 includes free images |
 | `max_price` | `number` | query | No | Maximum price filter for paid images - useful for budget constraints |
 | `min_rating` | `number` | query | No | Minimum average rating filter - filters images with rating >= this value (0-5 stars) |
-| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating <= this value (0-5 stars) |
+| `max_rating` | `number` | query | No | Maximum average rating filter - filters images with rating at most this value (0-5 stars) |
 | `search` | `string` | query | No | Search term to filter images by name, description, or tags |
 | `page` | `integer` | query | No | Page number for pagination - starts from 1 |
 | `limit` | `integer` | query | No | Number of images to return per page - maximum 100 items |
@@ -8034,35 +8037,69 @@ client.api.meta.getSocialStats()
 
 ---
 
-### `client.api.notifications` (8) — Notifications
+### `client.api.notifications` (9) — Notifications
 
-#### `list` — Get all notifications for the authenticated user
+#### `getUserNotificationSummary` — Unread notification count and newest position
 
 ```typescript
-client.api.notifications.list()
+client.api.notifications.getUserNotificationSummary()
 ```
+
+**Returns:** `any`  |  **HTTP:** `GET /api/v1/notifications/summary`
+
+---
+
+#### `list` — List notifications for the authenticated user
+
+```typescript
+client.api.notifications.list(options?: { page?: integer; limit?: integer; unread_only?: boolean; read_only?: boolean; before?: string })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `integer` | query | No | Rows per page (max 100). |
+| `unread_only` | `boolean` | query | No | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | query | No | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | query | No | Keyset cursor from a previous response's pagination.next_cursor ("<created_at>,<id>"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/notifications/`
 **CLI:** `hoody inbox list`
 
 ---
 
-#### `listAll` — Get all notifications for the authenticated user (collect all pages)
+#### `listAll` — List notifications for the authenticated user (collect all pages)
 
 ```typescript
-client.api.notifications.listAll()
+client.api.notifications.listAll(options?: { page?: integer; limit?: integer; unread_only?: boolean; read_only?: boolean; before?: string })
 ```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `integer` | query | No | Rows per page (max 100). |
+| `unread_only` | `boolean` | query | No | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | query | No | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | query | No | Keyset cursor from a previous response's pagination.next_cursor ("<created_at>,<id>"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `any[]`  |  **HTTP:** `GET /api/v1/notifications/`
 **CLI:** `hoody inbox list`
 
 ---
 
-#### `listIterator` — Get all notifications for the authenticated user (async iterator)
+#### `listIterator` — List notifications for the authenticated user (async iterator)
 
 ```typescript
-client.api.notifications.listIterator()
+client.api.notifications.listIterator(options?: { page?: integer; limit?: integer; unread_only?: boolean; read_only?: boolean; before?: string })
 ```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `page` | `integer` | query | No | Page number (offset paging). Ignored when `before` is supplied. |
+| `limit` | `integer` | query | No | Rows per page (max 100). |
+| `unread_only` | `boolean` | query | No | Return only notifications the user has not read. Mutually exclusive with read_only. |
+| `read_only` | `boolean` | query | No | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
+| `before` | `string` | query | No | Keyset cursor from a previous response's pagination.next_cursor ("<created_at>,<id>"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
 
 **Returns:** `AsyncIterableIterator<any>`  |  **HTTP:** `GET /api/v1/notifications/`
 **CLI:** `hoody inbox list`
@@ -8366,7 +8403,7 @@ client.api.projects.create(data: object)
 #### `delete` — Delete project
 
 ```typescript
-client.api.projects.delete(include_deleted_items?: boolean, id: string)
+client.api.projects.delete(id: string, options?: { include_deleted_items?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8382,7 +8419,7 @@ client.api.projects.delete(include_deleted_items?: boolean, id: string)
 #### `get` — Get project by ID
 
 ```typescript
-client.api.projects.get(include_permissions?: boolean, id: string)
+client.api.projects.get(id: string, options?: { include_permissions?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8413,7 +8450,7 @@ client.api.projects.getStats(id: string)
 #### `list` — List all projects
 
 ```typescript
-client.api.projects.list(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string)
+client.api.projects.list(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8432,7 +8469,7 @@ client.api.projects.list(page?: number, limit?: number, sort_by?: string, sort_o
 #### `listAll` — List all projects (collect all pages)
 
 ```typescript
-client.api.projects.listAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string)
+client.api.projects.listAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8451,7 +8488,7 @@ client.api.projects.listAll(page?: number, limit?: number, sort_by?: string, sor
 #### `listIterator` — List all projects (async iterator)
 
 ```typescript
-client.api.projects.listIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, realm_id?: string)
+client.api.projects.listIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8470,7 +8507,7 @@ client.api.projects.listIterator(page?: number, limit?: number, sort_by?: string
 #### `listPermissions` — List project permissions
 
 ```typescript
-client.api.projects.listPermissions(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.projects.listPermissions(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8489,7 +8526,7 @@ client.api.projects.listPermissions(page?: number, limit?: number, sort_by?: str
 #### `listPermissionsAll` — List project permissions (collect all pages)
 
 ```typescript
-client.api.projects.listPermissionsAll(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.projects.listPermissionsAll(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8508,7 +8545,7 @@ client.api.projects.listPermissionsAll(page?: number, limit?: number, sort_by?: 
 #### `listPermissionsIterator` — List project permissions (async iterator)
 
 ```typescript
-client.api.projects.listPermissionsIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string, id: string)
+client.api.projects.listPermissionsIterator(id: string, options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8629,7 +8666,7 @@ client.api.proxyAliases.get(id: string)
 #### `list` — List proxy aliases
 
 ```typescript
-client.api.proxyAliases.list(project_id?: string, container_id?: string, realm_id?: string, enabled?: string, expired?: string)
+client.api.proxyAliases.list(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: string; expired?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8648,7 +8685,7 @@ client.api.proxyAliases.list(project_id?: string, container_id?: string, realm_i
 #### `listAll` — List proxy aliases (collect all pages)
 
 ```typescript
-client.api.proxyAliases.listAll(project_id?: string, container_id?: string, realm_id?: string, enabled?: string, expired?: string)
+client.api.proxyAliases.listAll(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: string; expired?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8667,7 +8704,7 @@ client.api.proxyAliases.listAll(project_id?: string, container_id?: string, real
 #### `listIterator` — List proxy aliases (async iterator)
 
 ```typescript
-client.api.proxyAliases.listIterator(project_id?: string, container_id?: string, realm_id?: string, enabled?: string, expired?: string)
+client.api.proxyAliases.listIterator(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: string; expired?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8785,7 +8822,7 @@ client.api.proxyDiscovery.listContainerProxyServices(id: string)
 #### `updateContainerProxySettings` — Update container proxy root settings
 
 ```typescript
-client.api.proxyDiscovery.updateContainerProxySettings(id: string, if-match?: string, data: object)
+client.api.proxyDiscovery.updateContainerProxySettings(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8806,7 +8843,7 @@ client.api.proxyDiscovery.updateContainerProxySettings(id: string, if-match?: st
 #### `addContainerProxyHook` — Append or insert a new hook
 
 ```typescript
-client.api.proxyHooks.addContainerProxyHook(id: string, service: string, if-match?: string, data: object)
+client.api.proxyHooks.addContainerProxyHook(id: string, service: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8826,7 +8863,7 @@ client.api.proxyHooks.addContainerProxyHook(id: string, service: string, if-matc
 #### `clearContainerProxyServiceHooks` — Clear all hooks for a service
 
 ```typescript
-client.api.proxyHooks.clearContainerProxyServiceHooks(id: string, service: string, if-match?: string)
+client.api.proxyHooks.clearContainerProxyServiceHooks(id: string, service: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8891,7 +8928,7 @@ client.api.proxyHooks.listContainerProxyServiceHooks(id: string, service: string
 #### `moveContainerProxyHook` — Move a hook to a new position
 
 ```typescript
-client.api.proxyHooks.moveContainerProxyHook(id: string, service: string, hookId: string, if-match?: string, data: object)
+client.api.proxyHooks.moveContainerProxyHook(id: string, service: string, hookId: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8912,7 +8949,7 @@ client.api.proxyHooks.moveContainerProxyHook(id: string, service: string, hookId
 #### `removeContainerProxyHook` — Remove a hook
 
 ```typescript
-client.api.proxyHooks.removeContainerProxyHook(id: string, service: string, hookId: string, if-match?: string)
+client.api.proxyHooks.removeContainerProxyHook(id: string, service: string, hookId: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8930,7 +8967,7 @@ client.api.proxyHooks.removeContainerProxyHook(id: string, service: string, hook
 #### `updateContainerProxyHook` — Replace a hook in place
 
 ```typescript
-client.api.proxyHooks.updateContainerProxyHook(id: string, service: string, hookId: string, if-match?: string, data: object)
+client.api.proxyHooks.updateContainerProxyHook(id: string, service: string, hookId: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8953,7 +8990,7 @@ client.api.proxyHooks.updateContainerProxyHook(id: string, service: string, hook
 #### `delete` — Delete container proxy permissions
 
 ```typescript
-client.api.proxyPermissionsContainer.delete(id: string, if-match?: string)
+client.api.proxyPermissionsContainer.delete(id: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -8984,7 +9021,7 @@ client.api.proxyPermissionsContainer.get(id: string)
 #### `removeAuthGroup` — Remove container authentication group
 
 ```typescript
-client.api.proxyPermissionsContainer.removeAuthGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsContainer.removeAuthGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9001,7 +9038,7 @@ client.api.proxyPermissionsContainer.removeAuthGroup(id: string, groupName: stri
 #### `removeGroup` — Remove all program permissions for a container group
 
 ```typescript
-client.api.proxyPermissionsContainer.removeGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsContainer.removeGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9018,7 +9055,7 @@ client.api.proxyPermissionsContainer.removeGroup(id: string, groupName: string, 
 #### `removeProgram` — Remove a single program permission for a container group
 
 ```typescript
-client.api.proxyPermissionsContainer.removeProgram(id: string, groupName: string, program: string, if-match?: string)
+client.api.proxyPermissionsContainer.removeProgram(id: string, groupName: string, program: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9036,7 +9073,7 @@ client.api.proxyPermissionsContainer.removeProgram(id: string, groupName: string
 #### `replace` — Replace container proxy permissions JSON
 
 ```typescript
-client.api.proxyPermissionsContainer.replace(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.replace(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9055,7 +9092,7 @@ client.api.proxyPermissionsContainer.replace(id: string, if-match?: string, data
 #### `setGroup` — Set container group program permission
 
 ```typescript
-client.api.proxyPermissionsContainer.setGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9075,7 +9112,7 @@ client.api.proxyPermissionsContainer.setGroup(id: string, groupName: string, if-
 #### `setIpGroup` — Set IP authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setIpGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setIpGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9095,7 +9132,7 @@ client.api.proxyPermissionsContainer.setIpGroup(id: string, groupName: string, i
 #### `setJwtGroup` — Set JWT authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setJwtGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setJwtGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9115,7 +9152,7 @@ client.api.proxyPermissionsContainer.setJwtGroup(id: string, groupName: string, 
 #### `setPasswordGroup` — Set password authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setPasswordGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setPasswordGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9135,7 +9172,7 @@ client.api.proxyPermissionsContainer.setPasswordGroup(id: string, groupName: str
 #### `setTokenGroup` — Set token authentication group (container)
 
 ```typescript
-client.api.proxyPermissionsContainer.setTokenGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.setTokenGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9155,7 +9192,7 @@ client.api.proxyPermissionsContainer.setTokenGroup(id: string, groupName: string
 #### `updateDefault` — Update container default proxy permission policy
 
 ```typescript
-client.api.proxyPermissionsContainer.updateDefault(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.updateDefault(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9174,7 +9211,7 @@ client.api.proxyPermissionsContainer.updateDefault(id: string, if-match?: string
 #### `updateState` — Update container proxy enable state
 
 ```typescript
-client.api.proxyPermissionsContainer.updateState(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsContainer.updateState(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9195,7 +9232,7 @@ client.api.proxyPermissionsContainer.updateState(id: string, if-match?: string, 
 #### `delete` — Delete project proxy permissions
 
 ```typescript
-client.api.proxyPermissionsProject.delete(id: string, if-match?: string)
+client.api.proxyPermissionsProject.delete(id: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9226,7 +9263,7 @@ client.api.proxyPermissionsProject.get(id: string)
 #### `removeAuthGroup` — Remove project authentication group
 
 ```typescript
-client.api.proxyPermissionsProject.removeAuthGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsProject.removeAuthGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9243,7 +9280,7 @@ client.api.proxyPermissionsProject.removeAuthGroup(id: string, groupName: string
 #### `removeGroup` — Remove all program permissions for a project group
 
 ```typescript
-client.api.proxyPermissionsProject.removeGroup(id: string, groupName: string, if-match?: string)
+client.api.proxyPermissionsProject.removeGroup(id: string, groupName: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9260,7 +9297,7 @@ client.api.proxyPermissionsProject.removeGroup(id: string, groupName: string, if
 #### `removeProgram` — Remove a single program permission for a project group
 
 ```typescript
-client.api.proxyPermissionsProject.removeProgram(id: string, groupName: string, program: string, if-match?: string)
+client.api.proxyPermissionsProject.removeProgram(id: string, groupName: string, program: string, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9278,7 +9315,7 @@ client.api.proxyPermissionsProject.removeProgram(id: string, groupName: string, 
 #### `replace` — Replace project proxy permissions JSON
 
 ```typescript
-client.api.proxyPermissionsProject.replace(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.replace(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9297,7 +9334,7 @@ client.api.proxyPermissionsProject.replace(id: string, if-match?: string, data: 
 #### `setGroup` — Set project group program permission
 
 ```typescript
-client.api.proxyPermissionsProject.setGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9317,7 +9354,7 @@ client.api.proxyPermissionsProject.setGroup(id: string, groupName: string, if-ma
 #### `setIpGroup` — Set IP authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setIpGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setIpGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9337,7 +9374,7 @@ client.api.proxyPermissionsProject.setIpGroup(id: string, groupName: string, if-
 #### `setJwtGroup` — Set JWT authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setJwtGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setJwtGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9357,7 +9394,7 @@ client.api.proxyPermissionsProject.setJwtGroup(id: string, groupName: string, if
 #### `setPasswordGroup` — Set password authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setPasswordGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setPasswordGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9377,7 +9414,7 @@ client.api.proxyPermissionsProject.setPasswordGroup(id: string, groupName: strin
 #### `setTokenGroup` — Set token authentication group (project)
 
 ```typescript
-client.api.proxyPermissionsProject.setTokenGroup(id: string, groupName: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.setTokenGroup(id: string, groupName: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9397,7 +9434,7 @@ client.api.proxyPermissionsProject.setTokenGroup(id: string, groupName: string, 
 #### `updateDefault` — Update project default proxy permission policy
 
 ```typescript
-client.api.proxyPermissionsProject.updateDefault(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.updateDefault(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9416,7 +9453,7 @@ client.api.proxyPermissionsProject.updateDefault(id: string, if-match?: string, 
 #### `updateState` — Update project proxy enable state
 
 ```typescript
-client.api.proxyPermissionsProject.updateState(id: string, if-match?: string, data: object)
+client.api.proxyPermissionsProject.updateState(id: string, data: object, options?: { if-match?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9437,7 +9474,7 @@ client.api.proxyPermissionsProject.updateState(id: string, if-match?: string, da
 #### `list` — List your realm IDs
 
 ```typescript
-client.api.realms.list(include_usage?: boolean)
+client.api.realms.list(options?: { include_usage?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9540,7 +9577,7 @@ client.api.serverCommands.execute(serverId: string, data: object)
 #### `list` — Get available commands
 
 ```typescript
-client.api.serverCommands.list(category?: string, risk_level?: string, serverId: string)
+client.api.serverCommands.list(serverId: string, options?: { category?: string; risk_level?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9557,7 +9594,7 @@ client.api.serverCommands.list(category?: string, risk_level?: string, serverId:
 #### `listAll` — Get available commands (collect all pages)
 
 ```typescript
-client.api.serverCommands.listAll(category?: string, risk_level?: string, serverId: string)
+client.api.serverCommands.listAll(serverId: string, options?: { category?: string; risk_level?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9574,7 +9611,7 @@ client.api.serverCommands.listAll(category?: string, risk_level?: string, server
 #### `listIterator` — Get available commands (async iterator)
 
 ```typescript
-client.api.serverCommands.listIterator(category?: string, risk_level?: string, serverId: string)
+client.api.serverCommands.listIterator(serverId: string, options?: { category?: string; risk_level?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9593,7 +9630,7 @@ client.api.serverCommands.listIterator(category?: string, risk_level?: string, s
 #### `browse` — Browse rental marketplace
 
 ```typescript
-client.api.serverRental.browse(country?: string, region?: string, max_price_per_day?: number, available_durations?: array, min_cpu_cores?: number, min_cpu_score?: number, cpu_score_type?: string, min_ram_gb?: number, ram_types?: array, min_total_storage_gb?: number, disk_types?: array, min_bandwidth_mbps?: number, min_traffic_tb?: number, unlimited_traffic_only?: boolean, category?: string, featured_only?: boolean)
+client.api.serverRental.browse(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: array; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: string; min_ram_gb?: number; ram_types?: array; min_total_storage_gb?: number; disk_types?: array; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: string; featured_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9623,7 +9660,7 @@ client.api.serverRental.browse(country?: string, region?: string, max_price_per_
 #### `browseAll` — Browse rental marketplace (collect all pages)
 
 ```typescript
-client.api.serverRental.browseAll(country?: string, region?: string, max_price_per_day?: number, available_durations?: array, min_cpu_cores?: number, min_cpu_score?: number, cpu_score_type?: string, min_ram_gb?: number, ram_types?: array, min_total_storage_gb?: number, disk_types?: array, min_bandwidth_mbps?: number, min_traffic_tb?: number, unlimited_traffic_only?: boolean, category?: string, featured_only?: boolean)
+client.api.serverRental.browseAll(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: array; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: string; min_ram_gb?: number; ram_types?: array; min_total_storage_gb?: number; disk_types?: array; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: string; featured_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9653,7 +9690,7 @@ client.api.serverRental.browseAll(country?: string, region?: string, max_price_p
 #### `browseIterator` — Browse rental marketplace (async iterator)
 
 ```typescript
-client.api.serverRental.browseIterator(country?: string, region?: string, max_price_per_day?: number, available_durations?: array, min_cpu_cores?: number, min_cpu_score?: number, cpu_score_type?: string, min_ram_gb?: number, ram_types?: array, min_total_storage_gb?: number, disk_types?: array, min_bandwidth_mbps?: number, min_traffic_tb?: number, unlimited_traffic_only?: boolean, category?: string, featured_only?: boolean)
+client.api.serverRental.browseIterator(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: array; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: string; min_ram_gb?: number; ram_types?: array; min_total_storage_gb?: number; disk_types?: array; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: string; featured_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9773,7 +9810,7 @@ client.api.serverRental.listIterator()
 #### `listMyReservations` — Your reservations
 
 ```typescript
-client.api.serverRental.listMyReservations(limit?: integer, offset?: integer)
+client.api.serverRental.listMyReservations(options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9884,7 +9921,7 @@ client.api.storageShares.get(id: string, shareId: string)
 #### `list` — List storage shares
 
 ```typescript
-client.api.storageShares.list(target_type?: string, label?: string, status?: string, enabled?: string, include_expired?: string, realm_id?: string, id: string)
+client.api.storageShares.list(id: string, options?: { target_type?: string; label?: string; status?: string; enabled?: string; include_expired?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9905,7 +9942,7 @@ client.api.storageShares.list(target_type?: string, label?: string, status?: str
 #### `listAll` — List storage shares (collect all pages)
 
 ```typescript
-client.api.storageShares.listAll(target_type?: string, label?: string, status?: string, enabled?: string, include_expired?: string, realm_id?: string, id: string)
+client.api.storageShares.listAll(id: string, options?: { target_type?: string; label?: string; status?: string; enabled?: string; include_expired?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9926,7 +9963,7 @@ client.api.storageShares.listAll(target_type?: string, label?: string, status?: 
 #### `listGlobal` — List all your storage shares
 
 ```typescript
-client.api.storageShares.listGlobal(realm_id?: string)
+client.api.storageShares.listGlobal(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9941,7 +9978,7 @@ client.api.storageShares.listGlobal(realm_id?: string)
 #### `listGlobalAll` — List all your storage shares (collect all pages)
 
 ```typescript
-client.api.storageShares.listGlobalAll(realm_id?: string)
+client.api.storageShares.listGlobalAll(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9956,7 +9993,7 @@ client.api.storageShares.listGlobalAll(realm_id?: string)
 #### `listGlobalIterator` — List all your storage shares (async iterator)
 
 ```typescript
-client.api.storageShares.listGlobalIterator(realm_id?: string)
+client.api.storageShares.listGlobalIterator(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -9986,7 +10023,7 @@ client.api.storageShares.listIncoming(id: string)
 #### `listIncomingGlobal` — Get all incoming shares
 
 ```typescript
-client.api.storageShares.listIncomingGlobal(realm_id?: string)
+client.api.storageShares.listIncomingGlobal(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10001,7 +10038,7 @@ client.api.storageShares.listIncomingGlobal(realm_id?: string)
 #### `listIncomingGlobalAll` — Get all incoming shares (collect all pages)
 
 ```typescript
-client.api.storageShares.listIncomingGlobalAll(realm_id?: string)
+client.api.storageShares.listIncomingGlobalAll(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10016,7 +10053,7 @@ client.api.storageShares.listIncomingGlobalAll(realm_id?: string)
 #### `listIncomingGlobalIterator` — Get all incoming shares (async iterator)
 
 ```typescript
-client.api.storageShares.listIncomingGlobalIterator(realm_id?: string)
+client.api.storageShares.listIncomingGlobalIterator(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10031,7 +10068,7 @@ client.api.storageShares.listIncomingGlobalIterator(realm_id?: string)
 #### `listIterator` — List storage shares (async iterator)
 
 ```typescript
-client.api.storageShares.listIterator(target_type?: string, label?: string, status?: string, enabled?: string, include_expired?: string, realm_id?: string, id: string)
+client.api.storageShares.listIterator(id: string, options?: { target_type?: string; label?: string; status?: string; enabled?: string; include_expired?: string; realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10232,7 +10269,7 @@ client.api.users.getFreeTierStatus()
 #### `getSecurityHistory` — Get your account security history
 
 ```typescript
-client.api.users.getSecurityHistory(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+client.api.users.getSecurityHistory(options?: { page?: integer; limit?: integer; include_failed?: boolean; include_security?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10249,7 +10286,7 @@ client.api.users.getSecurityHistory(page?: integer, limit?: integer, include_fai
 #### `getSecurityHistoryAll` — Get your account security history (collect all pages)
 
 ```typescript
-client.api.users.getSecurityHistoryAll(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+client.api.users.getSecurityHistoryAll(options?: { page?: integer; limit?: integer; include_failed?: boolean; include_security?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10266,7 +10303,7 @@ client.api.users.getSecurityHistoryAll(page?: integer, limit?: integer, include_
 #### `getSecurityHistoryIterator` — Get your account security history (async iterator)
 
 ```typescript
-client.api.users.getSecurityHistoryIterator(page?: integer, limit?: integer, include_failed?: boolean, include_security?: boolean)
+client.api.users.getSecurityHistoryIterator(options?: { page?: integer; limit?: integer; include_failed?: boolean; include_security?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10366,7 +10403,7 @@ client.api.utilities.getIpInfo()
 #### `clear` — Clear entire vault
 
 ```typescript
-client.api.vault.clear(realm_id?: string)
+client.api.vault.clear(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10381,7 +10418,7 @@ client.api.vault.clear(realm_id?: string)
 #### `delete` — Delete vault key
 
 ```typescript
-client.api.vault.delete(realm_id?: string, key: string)
+client.api.vault.delete(key: string, options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10397,7 +10434,7 @@ client.api.vault.delete(realm_id?: string, key: string)
 #### `get` — Get vault key
 
 ```typescript
-client.api.vault.get(realm_id?: string, key: string)
+client.api.vault.get(key: string, options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10413,7 +10450,7 @@ client.api.vault.get(realm_id?: string, key: string)
 #### `getStats` — Get vault statistics
 
 ```typescript
-client.api.vault.getStats(realm_id?: string)
+client.api.vault.getStats(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10428,7 +10465,7 @@ client.api.vault.getStats(realm_id?: string)
 #### `list` — List vault keys
 
 ```typescript
-client.api.vault.list(realm_id?: string)
+client.api.vault.list(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10443,7 +10480,7 @@ client.api.vault.list(realm_id?: string)
 #### `listAll` — List vault keys (collect all pages)
 
 ```typescript
-client.api.vault.listAll(realm_id?: string)
+client.api.vault.listAll(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10458,7 +10495,7 @@ client.api.vault.listAll(realm_id?: string)
 #### `listIterator` — List vault keys (async iterator)
 
 ```typescript
-client.api.vault.listIterator(realm_id?: string)
+client.api.vault.listIterator(options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10473,7 +10510,7 @@ client.api.vault.listIterator(realm_id?: string)
 #### `set` — Set vault key
 
 ```typescript
-client.api.vault.set(realm_id?: string, key: string, data: object)
+client.api.vault.set(key: string, data: object, options?: { realm_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10758,7 +10795,7 @@ client.api.wallet.getTransaction(id: string)
 #### `listAiFeeHistory` — Get AI credit fee history
 
 ```typescript
-client.api.wallet.listAiFeeHistory(page?: number, limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listAiFeeHistory(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10776,7 +10813,7 @@ client.api.wallet.listAiFeeHistory(page?: number, limit?: number, sort_by?: stri
 #### `listAiFeeHistoryAll` — Get AI credit fee history (collect all pages)
 
 ```typescript
-client.api.wallet.listAiFeeHistoryAll(page?: number, limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listAiFeeHistoryAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10794,7 +10831,7 @@ client.api.wallet.listAiFeeHistoryAll(page?: number, limit?: number, sort_by?: s
 #### `listAiFeeHistoryIterator` — Get AI credit fee history (async iterator)
 
 ```typescript
-client.api.wallet.listAiFeeHistoryIterator(page?: number, limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listAiFeeHistoryIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10812,7 +10849,7 @@ client.api.wallet.listAiFeeHistoryIterator(page?: number, limit?: number, sort_b
 #### `listCryptoPaymentIntents` — List crypto payment intents
 
 ```typescript
-client.api.wallet.listCryptoPaymentIntents(limit?: integer, offset?: integer)
+client.api.wallet.listCryptoPaymentIntents(options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10827,7 +10864,7 @@ client.api.wallet.listCryptoPaymentIntents(limit?: integer, offset?: integer)
 #### `listInvoices` — Get all invoices
 
 ```typescript
-client.api.wallet.listInvoices(page?: integer, limit?: integer, sort_by?: string, sort_order?: string, filter?: string)
+client.api.wallet.listInvoices(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10846,7 +10883,7 @@ client.api.wallet.listInvoices(page?: integer, limit?: integer, sort_by?: string
 #### `listInvoicesAll` — Get all invoices (collect all pages)
 
 ```typescript
-client.api.wallet.listInvoicesAll(page?: integer, limit?: integer, sort_by?: string, sort_order?: string, filter?: string)
+client.api.wallet.listInvoicesAll(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10865,7 +10902,7 @@ client.api.wallet.listInvoicesAll(page?: integer, limit?: integer, sort_by?: str
 #### `listInvoicesIterator` — Get all invoices (async iterator)
 
 ```typescript
-client.api.wallet.listInvoicesIterator(page?: integer, limit?: integer, sort_by?: string, sort_order?: string, filter?: string)
+client.api.wallet.listInvoicesIterator(options?: { page?: integer; limit?: integer; sort_by?: string; sort_order?: string; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10917,7 +10954,7 @@ client.api.wallet.listPaymentMethodsIterator()
 #### `listStripePaymentIntents` — List card payment intents
 
 ```typescript
-client.api.wallet.listStripePaymentIntents(limit?: integer, offset?: integer)
+client.api.wallet.listStripePaymentIntents(options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10932,7 +10969,7 @@ client.api.wallet.listStripePaymentIntents(limit?: integer, offset?: integer)
 #### `listTransactions` — List transactions
 
 ```typescript
-client.api.wallet.listTransactions(limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listTransactions(options?: { limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10949,7 +10986,7 @@ client.api.wallet.listTransactions(limit?: number, sort_by?: string, sort_order?
 #### `listTransactionsAll` — List transactions (collect all pages)
 
 ```typescript
-client.api.wallet.listTransactionsAll(limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listTransactionsAll(options?: { limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -10966,7 +11003,7 @@ client.api.wallet.listTransactionsAll(limit?: number, sort_by?: string, sort_ord
 #### `listTransactionsIterator` — List transactions (async iterator)
 
 ```typescript
-client.api.wallet.listTransactionsIterator(limit?: number, sort_by?: string, sort_order?: string)
+client.api.wallet.listTransactionsIterator(options?: { limit?: number; sort_by?: string; sort_order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11305,13 +11342,13 @@ A `404 Instance not found` from `stop` means it was already gone — safe to ign
 #### `clear` — Clear all cookies
 
 ```typescript
-client.browser.cookies.clear(browser_id: string, start?: boolean)
+client.browser.cookies.clear(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `DELETE /cookies`
 **CLI:** `hoody browser cookies clear`
@@ -11321,13 +11358,13 @@ client.browser.cookies.clear(browser_id: string, start?: boolean)
 #### `get` — Get cookies
 
 ```typescript
-client.browser.cookies.get(browser_id: string, start?: boolean, url?: string)
+client.browser.cookies.get(options?: { browser_id?: string; start?: boolean; url?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | Filter cookies by URL |
 
 **Returns:** `any`  |  **HTTP:** `GET /cookies`
@@ -11338,13 +11375,13 @@ client.browser.cookies.get(browser_id: string, start?: boolean, url?: string)
 #### `set` — Set cookies
 
 ```typescript
-client.browser.cookies.set(browser_id: string, start?: boolean, data: object)
+client.browser.cookies.set(data: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | Yes |  |
 
 **Body:** `{ cookies*: { name*: string, value*: string, url*: string, domain: string, path: string, httpOnly: bool, secure: bool }[] }`
@@ -11359,14 +11396,14 @@ client.browser.cookies.set(browser_id: string, start?: boolean, data: object)
 #### `getConsoleLogs` — Get console logs
 
 ```typescript
-client.browser.debugging.getConsoleLogs(browser_id: string, tabId?: integer, start?: boolean, type?: string, since?: string, clear?: boolean)
+client.browser.debugging.getConsoleLogs(options?: { browser_id?: string; tabId?: integer; start?: boolean; type?: string; since?: string; clear?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `type` | `string` | query | No | Filter by message type (log, error, warning, info, etc.) |
 | `since` | `string` | query | No | Only return logs after this ISO timestamp |
 | `clear` | `boolean` | query | No | Clear the buffer after reading |
@@ -11379,14 +11416,14 @@ client.browser.debugging.getConsoleLogs(browser_id: string, tabId?: integer, sta
 #### `getNetworkLogs` — Get network logs
 
 ```typescript
-client.browser.debugging.getNetworkLogs(browser_id: string, tabId?: integer, start?: boolean, since?: string, clear?: boolean)
+client.browser.debugging.getNetworkLogs(options?: { browser_id?: string; tabId?: integer; start?: boolean; since?: string; clear?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `since` | `string` | query | No | Only return logs after this ISO timestamp |
 | `clear` | `boolean` | query | No | Clear the buffer after reading |
 
@@ -11444,7 +11481,7 @@ client.browser.health.getOpenApiYaml()
 #### `clear` — Delete browsing history
 
 ```typescript
-client.browser.history.clear(before?: string, browser_id?: string)
+client.browser.history.clear(options?: { before?: string; browser_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11460,7 +11497,7 @@ client.browser.history.clear(before?: string, browser_id?: string)
 #### `list` — Query browsing history
 
 ```typescript
-client.browser.history.list(since?: string, domain?: string, browser_id?: string, limit?: integer, offset?: integer)
+client.browser.history.list(options?: { since?: string; domain?: string; browser_id?: string; limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11481,7 +11518,7 @@ client.browser.history.list(since?: string, domain?: string, browser_id?: string
 #### `restart` — Restart browser instance
 
 ```typescript
-client.browser.instances.restart(browser_id: string, chromiumVersion?: string, fingerprintId?: string, useRemoteDebuggingPort?: boolean, remoteDebuggingPort?: integer, remoteDebuggingAddress?: string, extensions?: string, extensionsDir?: string, extensionsStoreIds?: string, proxyServer?: string, proxyUsername?: string, proxyPassword?: string, proxyBypass?: string, enableQuic?: boolean, enableDnsOverHttps?: boolean, dnsOverHttpsUrl?: string, display?: string, showBrowser?: boolean, sessionName?: string, timezoneId?: string, locale?: string, userAgent?: string, viewport?: string, noViewport?: boolean, geolocation?: string, launchArguments?: array, browser?: string, firefoxVersion?: string, firefoxExecutablePath?: string, showDevtools?: boolean, userProfile?: object, stealth?: boolean, iframe?: boolean, iframe_url?: string, maximize_new_windows?: boolean)
+client.browser.instances.restart(options?: { browser_id?: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: integer; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; launchArguments?: array; browser?: string; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: object; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11530,7 +11567,7 @@ client.browser.instances.restart(browser_id: string, chromiumVersion?: string, f
 #### `start` — Create or retrieve browser instance
 
 ```typescript
-client.browser.instances.start(browser_id: string, chromiumVersion?: string, fingerprintId?: string, useRemoteDebuggingPort?: boolean, remoteDebuggingPort?: integer, remoteDebuggingAddress?: string, extensions?: string, extensionsDir?: string, extensionsStoreIds?: string, proxyServer?: string, proxyUsername?: string, proxyPassword?: string, proxyBypass?: string, enableQuic?: boolean, enableDnsOverHttps?: boolean, dnsOverHttpsUrl?: string, display?: string, showBrowser?: boolean, sessionName?: string, timezoneId?: string, locale?: string, userAgent?: string, viewport?: string, noViewport?: boolean, geolocation?: string, stealth?: boolean, iframe?: boolean, iframe_url?: string, maximize_new_windows?: boolean)
+client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: integer; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11573,7 +11610,7 @@ client.browser.instances.start(browser_id: string, chromiumVersion?: string, fin
 #### `stop` — Stop browser instance
 
 ```typescript
-client.browser.instances.stop(browser_id: string)
+client.browser.instances.stop(options?: { browser_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11590,13 +11627,13 @@ client.browser.instances.stop(browser_id: string)
 #### `browse` — Navigate to URL
 
 ```typescript
-client.browser.interaction.browse(browser_id: string, start?: boolean, url?: string, tabId?: integer, active?: boolean, onlyIfNotExists?: boolean, ignoreGetParameters?: boolean)
+client.browser.interaction.browse(options?: { browser_id?: string; start?: boolean; url?: string; tabId?: integer; active?: boolean; onlyIfNotExists?: boolean; ignoreGetParameters?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | The URL to navigate to |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
 | `active` | `boolean` | query | No | Make the tab active (focused) after navigation |
@@ -11611,13 +11648,13 @@ client.browser.interaction.browse(browser_id: string, start?: boolean, url?: str
 #### `browsePost` — Navigate to URL (POST)
 
 ```typescript
-client.browser.interaction.browsePost(browser_id: string, start?: boolean, data: object)
+client.browser.interaction.browsePost(data: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | Yes |  |
 
 **Body:** `{ url*: string, tabId: int, active: bool=true, onlyIfNotExists: bool=false, ignoreGetParameters: bool=false }`
@@ -11630,13 +11667,13 @@ client.browser.interaction.browsePost(browser_id: string, start?: boolean, data:
 #### `evalGet` — Execute JavaScript
 
 ```typescript
-client.browser.interaction.evalGet(browser_id: string, start?: boolean, script: string)
+client.browser.interaction.evalGet(options?: { browser_id?: string; start?: boolean; script?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `script` | `string` | query | Yes | JavaScript code to execute (can be base64 encoded) |
 
 **Returns:** `any`  |  **HTTP:** `GET /eval`
@@ -11647,13 +11684,13 @@ client.browser.interaction.evalGet(browser_id: string, start?: boolean, script: 
 #### `evalPost` — Execute JavaScript (POST)
 
 ```typescript
-client.browser.interaction.evalPost(browser_id: string, start?: boolean, data: object)
+client.browser.interaction.evalPost(data: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | Yes |  |
 
 **Body:** `{ script: string }`
@@ -11666,13 +11703,13 @@ client.browser.interaction.evalPost(browser_id: string, start?: boolean, data: o
 #### `takeScreenshot` — Capture browser screenshot
 
 ```typescript
-client.browser.interaction.takeScreenshot(browser_id: string, start?: boolean, url?: string, tabId?: integer, onlyIfNotExists?: boolean, ignoreGetParameters?: boolean, format?: string, quality?: integer, fullPage?: boolean)
+client.browser.interaction.takeScreenshot(options?: { browser_id?: string; start?: boolean; url?: string; tabId?: integer; onlyIfNotExists?: boolean; ignoreGetParameters?: boolean; format?: string; quality?: integer; fullPage?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | The URL to navigate to |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
 | `onlyIfNotExists` | `boolean` | query | No | Only create a new tab if no tab with the same URL exists |
@@ -11691,13 +11728,13 @@ client.browser.interaction.takeScreenshot(browser_id: string, start?: boolean, u
 #### `closeTab` — Close a browser tab
 
 ```typescript
-client.browser.introspection.closeTab(browser_id: string, start?: boolean, data?: object)
+client.browser.introspection.closeTab(data?: object, options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `data` | `object` | body | No |  |
 
 **Body:** `{ tabId: int }`
@@ -11710,13 +11747,13 @@ client.browser.introspection.closeTab(browser_id: string, start?: boolean, data?
 #### `getDevtoolsUrl` — Get DevTools URLs
 
 ```typescript
-client.browser.introspection.getDevtoolsUrl(browser_id: string, start?: boolean)
+client.browser.introspection.getDevtoolsUrl(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /devtools-url`
 **CLI:** `hoody browser devtools`
@@ -11726,13 +11763,13 @@ client.browser.introspection.getDevtoolsUrl(browser_id: string, start?: boolean)
 #### `getMetadata` — Get instance metadata
 
 ```typescript
-client.browser.introspection.getMetadata(browser_id: string, start?: boolean)
+client.browser.introspection.getMetadata(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `browser_BrowserMetadata`  |  **HTTP:** `GET /metadata`
 **CLI:** `hoody browser info`
@@ -11742,7 +11779,7 @@ client.browser.introspection.getMetadata(browser_id: string, start?: boolean)
 #### `getViewport` — Get the current viewport policy
 
 ```typescript
-client.browser.introspection.getViewport(browser_host?: string, browser_port?: integer)
+client.browser.introspection.getViewport(options?: { browser_host?: string; browser_port?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11757,13 +11794,13 @@ client.browser.introspection.getViewport(browser_host?: string, browser_port?: i
 #### `listTabs` — List browser tabs
 
 ```typescript
-client.browser.introspection.listTabs(browser_id: string, start?: boolean)
+client.browser.introspection.listTabs(options?: { browser_id?: string; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /tabs`
 **CLI:** `hoody browser tabs list`
@@ -11773,7 +11810,7 @@ client.browser.introspection.listTabs(browser_id: string, start?: boolean)
 #### `setViewport` — Change the viewport at runtime
 
 ```typescript
-client.browser.introspection.setViewport(browser_host?: string, browser_port?: integer, data: object)
+client.browser.introspection.setViewport(data: object, options?: { browser_host?: string; browser_port?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11791,7 +11828,7 @@ client.browser.introspection.setViewport(browser_host?: string, browser_port?: i
 #### `shutdown` — Shutdown browser instance
 
 ```typescript
-client.browser.introspection.shutdown(browser_id: string)
+client.browser.introspection.shutdown(options?: { browser_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -11808,14 +11845,14 @@ client.browser.introspection.shutdown(browser_id: string)
 #### `exportPdf` — Export page as PDF
 
 ```typescript
-client.browser.page.exportPdf(browser_id: string, tabId?: integer, start?: boolean, url?: string, format?: string, landscape?: boolean, printBackground?: boolean, margin?: string)
+client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: integer; start?: boolean; url?: string; format?: string; landscape?: boolean; printBackground?: boolean; margin?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 | `url` | `string` | query | No | Optional URL to navigate to before generating the PDF |
 | `format` | `string` | query | No | Paper format (e.g. A4, Letter) |
 | `landscape` | `boolean` | query | No | Use landscape orientation |
@@ -11830,14 +11867,14 @@ client.browser.page.exportPdf(browser_id: string, tabId?: integer, start?: boole
 #### `getHtml` — Get page HTML
 
 ```typescript
-client.browser.page.getHtml(browser_id: string, tabId?: integer, start?: boolean)
+client.browser.page.getHtml(options?: { browser_id?: string; tabId?: integer; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /html`
 **CLI:** `hoody browser html`
@@ -11847,14 +11884,14 @@ client.browser.page.getHtml(browser_id: string, tabId?: integer, start?: boolean
 #### `getText` — Get page text
 
 ```typescript
-client.browser.page.getText(browser_id: string, tabId?: integer, start?: boolean)
+client.browser.page.getText(options?: { browser_id?: string; tabId?: integer; start?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `browser_id` | `string` | query | Yes | Unique identifier for the browser instance (0-based index) |
 | `tabId` | `integer` | query | No | The ID of the tab to interact with |
-| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. |
+| `start` | `boolean` | query | No | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance.  Deliberately declares NO schema default: omitting this parameter is not equivalent to sending `true`. The server branches on HOODY_DISABLE_AUTO_START (`DISABLE ? start === 'true': start !== 'false'`), so an ABSENT value means "auto-start unless the operator disabled it" while an explicit `true` means "start even though the operator disabled it". A declared `default: true` is therefore not a description of the server's behaviour, and any client that materialises schema defaults into the request sends the operator-override on every call — the Hoody CLI did exactly that until 2026-08-10. (The TypeScript SDK does not materialise query defaults and was unaffected.) 17 operations $ref this parameter; 16 reach the auto-start logic, while getDevtoolsUrl returns 404 before it and ignores the value. |
 
 **Returns:** `any`  |  **HTTP:** `GET /text`
 **CLI:** `hoody browser text`
@@ -11944,7 +11981,7 @@ Form-POST the password to the **child instance** root `/login` (see Example 7) �
 - 3 mount prefixes; use `/api/v1/code`.
 - `getVSCode` persists `folder`/`workspace` as the last-opened workspace in the instance's user-data dir; `ew=true` wipes.
 - `mintKey` idempotent.
-- `extensions.install` / `extensions.list` are declared in the kit OpenAPI (and surfaced by the generated SDK/CLI) but the current kit does NOT implement them — no extensions router is mounted anywhere; requests fall through (child: vscode catch-all SPA/302; `code-1`: orchestrator plain-text 404). Pre-install via the child launch flags (`--install-extension`, `--install-builtin-extension`, `--preload-builtin-extensions-dir`) or in-editor.
+- `extensions.install` / `extensions.list` are declared in the kit OpenAPI (and surfaced by the generated SDK/CLI) but the current kit does NOT implement them — no extensions router is mounted anywhere, so requests fall through and the call fails rather than installing or listing anything. Pre-install via the child launch flags (`--install-extension`, `--install-builtin-extension`, `--preload-builtin-extensions-dir`) or in-editor.
 - `/proxy/:port` and `/absproxy/:port` are mounted at the **child instance root** (`{P}-{C}-http-<60000+id>.{N}` subdomain), NOT under `/api/v1/code` and NOT at the public `code-1` root — the orchestrator has no proxy routes. Use `https://{P}-{C}-http-60001.{N}.containers.hoody.com/proxy/{port}/...` (or `/absproxy/{port}/...`).
 - `/proxy/:port/...` rewrites `req.base` so the upstream sees `/<rest>`; `/absproxy/:port/...` keeps the full `/absproxy/:port/...` prefix verbatim — use `absproxy` for APIs/WS where the upstream cares about its own base path.
 - `health.checkUpdate` (the generated accessor — the `update.*` service does not exist) queries GitHub releases. NOTE: the generated path is `/api/v1/code/update/check`, but `/update` is mounted on the **child instance** root only — the generated call and the public `code-1` root both miss it (orchestrator has no `/update` route). Call `https://{P}-{C}-http-<60000+id>.{N}…/update/check` directly. The route returns `{ checked, latest, current, isLatest }`, but the generated TS type `CodeHealthCheckUpdateResponse` (from the OpenAPI spec) mis-declares `{ current, latest, updateAvailable }` and drops `checked` — read `.isLatest`/`.checked` from the raw JSON, not `.updateAvailable`. `?force=true` bypasses the 24 h cache (kit-level only — not exposed via the generated SDK or CLI surfaces; reachable only by raw HTTP to `/update/check?force=true`).
@@ -11998,7 +12035,7 @@ The `extension` query value MUST match `^[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+$` — `pub
 
 ### 3. Install a custom VSIX programmatically
 
-**Goal:** push an internal extension (`.vsix`) into the container's VS Code. ⚠ **`extensions.install` is spec-only** — the current kit mounts no extensions router, so the documented `POST /api/v1/code/extensions/install` never reaches a handler (`code-1`: orchestrator plain-text 404; child: vscode catch-all SPA/302). What actually works:
+**Goal:** push an internal extension (`.vsix`) into the container's VS Code. ⚠ **`extensions.install` is spec-only** — the current kit mounts no extensions router, so the documented `POST /api/v1/code/extensions/install` never reaches a handler and the call fails. What actually works:
 
 - **At child boot (launch flags):** `--install-extension <id-or-vsix-path>`, `--install-builtin-extension <vsix-path>`, or drop VSIXes in the preload dir consumed by `--preload-builtin-extensions-dir` (the platform passes `/hoody/storage/hoody-code/extensions` by default).
 - **In-editor:** Extensions view → `…` menu → "Install from VSIX…" (the VSIX must already be on the container filesystem — push it via the `files` namespace).
@@ -12076,7 +12113,7 @@ if (health.status !== 'ok') throw new Error('kit unhealthy');  // orchestrator e
 // verify on disk (e.g. via the terminal namespace):
 //   ls /hoody/storage/hoody-code/data/1/extensions
 ```
-⚠ On the **child instance**, `/api/v1/code/health` resets the idle-shutdown heartbeat — only `/healthz` (kit-internal, not surfaced through the public path) is excluded; hitting it on a cron keeps the child hot. The orchestrator's `code-1` health endpoint does not touch child heartbeats.
+⚠ On the **child instance**, `/api/v1/code/health` resets the idle-shutdown heartbeat, so hitting it on a cron keeps the child hot. The orchestrator's `code-1` health endpoint does not touch child heartbeats.
 
 ### 9. Logout + verify the session cookie is revoked
 
@@ -12123,7 +12160,7 @@ The same iframe pattern works for **every** Hoody kit (`files`, `terminal`, `dis
 #### `getLoginPage` — Get login page
 
 ```typescript
-client.code.auth.getLoginPage(to?: string)
+client.code.auth.getLoginPage(options?: { to?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -12138,12 +12175,13 @@ client.code.auth.getLoginPage(to?: string)
 #### `login` — Submit login credentials
 
 ```typescript
-client.code.auth.login(to?: string)
+client.code.auth.login(data: object, options?: { to?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `to` | `string` | query | No | URL to redirect to after successful login |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/code/login`
 **CLI:** `hoody code auth submit`
@@ -12351,7 +12389,7 @@ client.code.vscode.getManifest()
 #### `getVSCode` — Get VS Code web interface
 
 ```typescript
-client.code.vscode.getVSCode(folder?: string, workspace?: string, extension?: string, ew?: boolean, locale?: string)
+client.code.vscode.getVSCode(options?: { folder?: string; workspace?: string; extension?: string; ew?: boolean; locale?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -12682,7 +12720,7 @@ client.cron.crontab.get(user: string)
 #### `listGlobal` — List All Crontabs
 
 ```typescript
-client.cron.crontab.listGlobal(page?: integer, limit?: integer)
+client.cron.crontab.listGlobal(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -12698,7 +12736,7 @@ client.cron.crontab.listGlobal(page?: integer, limit?: integer)
 #### `listGlobalAll` — List All Crontabs (collect all pages)
 
 ```typescript
-client.cron.crontab.listGlobalAll(page?: integer, limit?: integer)
+client.cron.crontab.listGlobalAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -12714,7 +12752,7 @@ client.cron.crontab.listGlobalAll(page?: integer, limit?: integer)
 #### `listGlobalIterator` — List All Crontabs (async iterator)
 
 ```typescript
-client.cron.crontab.listGlobalIterator(page?: integer, limit?: integer)
+client.cron.crontab.listGlobalIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -12796,7 +12834,7 @@ client.cron.entries.get(user: string, id: string)
 #### `list` — List Entries
 
 ```typescript
-client.cron.entries.list(user: string, page?: integer, limit?: integer)
+client.cron.entries.list(user: string, options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -12813,7 +12851,7 @@ client.cron.entries.list(user: string, page?: integer, limit?: integer)
 #### `listAll` — List Entries (collect all pages)
 
 ```typescript
-client.cron.entries.listAll(user: string, page?: integer, limit?: integer)
+client.cron.entries.listAll(user: string, options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -12830,7 +12868,7 @@ client.cron.entries.listAll(user: string, page?: integer, limit?: integer)
 #### `listIterator` — List Entries (async iterator)
 
 ```typescript
-client.cron.entries.listIterator(user: string, page?: integer, limit?: integer)
+client.cron.entries.listIterator(user: string, options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13269,7 +13307,7 @@ client.curl.execute(data: curl_CurlRequest)
 #### `executeCurlRequestGet` — Execute simple HTTP request via query parameters
 
 ```typescript
-client.curl.executeCurlRequestGet(url: string, method?: string, response?: string, mode?: string, session_id?: string, follow_redirects?: boolean, timeout?: integer, user_agent?: string, referer?: string, bearer_token?: string, save?: boolean, save_path?: string, insecure?: boolean, compressed?: boolean, job_name?: string, data?: string, json?: string, header?: array, data_base64?: string)
+client.curl.executeCurlRequestGet(options?: { url?: string; method?: string; response?: string; mode?: string; session_id?: string; follow_redirects?: boolean; timeout?: integer; user_agent?: string; referer?: string; bearer_token?: string; save?: boolean; save_path?: string; insecure?: boolean; compressed?: boolean; job_name?: string; data?: string; json?: string; header?: array; data_base64?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13304,7 +13342,7 @@ client.curl.executeCurlRequestGet(url: string, method?: string, response?: strin
 #### `sseJobEvents` — Subscribe to job events over Server-Sent Events
 
 ```typescript
-client.curl.events.sseJobEvents(job_id?: string)
+client.curl.events.sseJobEvents(options?: { job_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13318,7 +13356,7 @@ client.curl.events.sseJobEvents(job_id?: string)
 #### `streamWs` — Subscribe to job events over WebSocket
 
 ```typescript
-client.curl.events.streamWs(job_id?: string)
+client.curl.events.streamWs(options?: { job_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13333,7 +13371,7 @@ client.curl.events.streamWs(job_id?: string)
 #### `wsRequestChannel` — Execute cURL requests over a WebSocket channel
 
 ```typescript
-client.curl.events.wsRequestChannel(max_concurrent?: integer, max_concurrent_streams?: integer, max_pool?: integer, max_queue?: integer, max_frame_bytes?: integer, max_request_bytes?: integer, chunk_bytes?: integer, stream_timeout_secs?: integer, idle_timeout_secs?: integer, max_outbound_messages?: integer)
+client.curl.events.wsRequestChannel(options?: { max_concurrent?: integer; max_concurrent_streams?: integer; max_pool?: integer; max_queue?: integer; max_frame_bytes?: integer; max_request_bytes?: integer; chunk_bytes?: integer; stream_timeout_secs?: integer; idle_timeout_secs?: integer; max_outbound_messages?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13416,7 +13454,7 @@ client.curl.jobs.getResult(id: string)
 #### `list` — List all async jobs
 
 ```typescript
-client.curl.jobs.list(page?: integer, limit?: integer)
+client.curl.jobs.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13432,7 +13470,7 @@ client.curl.jobs.list(page?: integer, limit?: integer)
 #### `listAll` — List all async jobs (collect all pages)
 
 ```typescript
-client.curl.jobs.listAll(page?: integer, limit?: integer)
+client.curl.jobs.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13448,7 +13486,7 @@ client.curl.jobs.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all async jobs (async iterator)
 
 ```typescript
-client.curl.jobs.listIterator(page?: integer, limit?: integer)
+client.curl.jobs.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13524,7 +13562,7 @@ client.curl.schedules.get(id: string)
 #### `list` — List all scheduled jobs
 
 ```typescript
-client.curl.schedules.list(page?: integer, limit?: integer)
+client.curl.schedules.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13540,7 +13578,7 @@ client.curl.schedules.list(page?: integer, limit?: integer)
 #### `listAll` — List all scheduled jobs (collect all pages)
 
 ```typescript
-client.curl.schedules.listAll(page?: integer, limit?: integer)
+client.curl.schedules.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13556,7 +13594,7 @@ client.curl.schedules.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all scheduled jobs (async iterator)
 
 ```typescript
-client.curl.schedules.listIterator(page?: integer, limit?: integer)
+client.curl.schedules.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13635,7 +13673,7 @@ client.curl.sessions.getCookies(id: string)
 #### `list` — List all cookie sessions
 
 ```typescript
-client.curl.sessions.list(page?: integer, limit?: integer)
+client.curl.sessions.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13651,7 +13689,7 @@ client.curl.sessions.list(page?: integer, limit?: integer)
 #### `listAll` — List all cookie sessions (collect all pages)
 
 ```typescript
-client.curl.sessions.listAll(page?: integer, limit?: integer)
+client.curl.sessions.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13667,7 +13705,7 @@ client.curl.sessions.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all cookie sessions (async iterator)
 
 ```typescript
-client.curl.sessions.listIterator(page?: integer, limit?: integer)
+client.curl.sessions.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13715,7 +13753,7 @@ client.curl.storage.getFile(path: string)
 #### `list` — List all saved downloads
 
 ```typescript
-client.curl.storage.list(page?: integer, limit?: integer)
+client.curl.storage.list(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13731,7 +13769,7 @@ client.curl.storage.list(page?: integer, limit?: integer)
 #### `listAll` — List all saved downloads (collect all pages)
 
 ```typescript
-client.curl.storage.listAll(page?: integer, limit?: integer)
+client.curl.storage.listAll(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -13747,7 +13785,7 @@ client.curl.storage.listAll(page?: integer, limit?: integer)
 #### `listIterator` — List all saved downloads (async iterator)
 
 ```typescript
-client.curl.storage.listIterator(page?: integer, limit?: integer)
+client.curl.storage.listIterator(options?: { page?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14004,7 +14042,7 @@ await client.daemon.programs.reset();
 ```
 ### 7. Patch only the env vars on a running program
 
-**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `programs.edit` is a partial merge — fields you don't pass are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
+**Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `programs.edit` is a partial merge **on the server** — fields absent from the request body are preserved (live-verified — the response shows merged `environment` plus all original fields intact).
 
 ```typescript
 // programs.edit takes ProgramInput — name/command/user are required (PUT-style replacement).
@@ -14194,7 +14232,7 @@ client.daemon.programs.get(id: integer)
 #### `list` — List all programs
 
 ```typescript
-client.daemon.programs.list(hoody_kit?: string, lazy_load?: string, enabled?: string, boot?: string, port?: integer, port_from?: integer, port_to?: integer, include_status?: string, include_stats?: string)
+client.daemon.programs.list(options?: { hoody_kit?: string; lazy_load?: string; enabled?: string; boot?: string; port?: integer; port_from?: integer; port_to?: integer; include_status?: string; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14217,7 +14255,7 @@ client.daemon.programs.list(hoody_kit?: string, lazy_load?: string, enabled?: st
 #### `listAll` — List all programs (collect all pages)
 
 ```typescript
-client.daemon.programs.listAll(hoody_kit?: string, lazy_load?: string, enabled?: string, boot?: string, port?: integer, port_from?: integer, port_to?: integer, include_status?: string, include_stats?: string)
+client.daemon.programs.listAll(options?: { hoody_kit?: string; lazy_load?: string; enabled?: string; boot?: string; port?: integer; port_from?: integer; port_to?: integer; include_status?: string; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14240,7 +14278,7 @@ client.daemon.programs.listAll(hoody_kit?: string, lazy_load?: string, enabled?:
 #### `listIterator` — List all programs (async iterator)
 
 ```typescript
-client.daemon.programs.listIterator(hoody_kit?: string, lazy_load?: string, enabled?: string, boot?: string, port?: integer, port_from?: integer, port_to?: integer, include_status?: string, include_stats?: string)
+client.daemon.programs.listIterator(options?: { hoody_kit?: string; lazy_load?: string; enabled?: string; boot?: string; port?: integer; port_from?: integer; port_to?: integer; include_status?: string; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14291,7 +14329,7 @@ client.daemon.programs.reset()
 #### `getEphemeralLogs` — Get ephemeral program logs
 
 ```typescript
-client.daemon.quickStart.getEphemeralLogs(id: string, type?: string, lines?: integer)
+client.daemon.quickStart.getEphemeralLogs(id: string, options?: { type?: string; lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14388,14 +14426,14 @@ client.daemon.quickStart.stop(id: string)
 #### `get` — Get specific program status
 
 ```typescript
-client.daemon.status.get(id: integer, port?: integer, include_stats?: string)
+client.daemon.status.get(id: integer, options?: { port?: integer; include_stats?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `integer` | path | Yes | Unique numeric identifier of the program |
 | `port` | `integer` | query | No | Filter to specific port instance (for port-range programs only) |
-| `include_stats` | `string` | query | No | Include resource stats (CPU, memory, process tree) for running programs. Adds a "stats" field with pid, started_at, cpu_percent, memory_rss_bytes, process_count, and per-process breakdown. |
+| `include_stats` | `string` | query | No | Include resource stats (CPU, memory, process tree) for running programs. WHERE the stats land depends on the program: a standard program gets a top-level `stats`; a port-range program gets one `stats` per instance, on the instance itself (`instance.stats`, or `instances[].stats`), never at the top level. Each carries pid, started_at, cpu_percent, memory_rss_bytes, process_count and a per-process breakdown. |
 
 **Returns:** `daemon_StatusResponse`  |  **HTTP:** `GET /api/v1/daemon/status/{id}`
 **CLI:** `hoody daemon programs status`
@@ -14416,7 +14454,7 @@ client.daemon.status.getAll()
 #### `getLogs` — Get program logs
 
 ```typescript
-client.daemon.status.getLogs(id: integer, type?: string, lines?: integer, port?: integer)
+client.daemon.status.getLogs(id: integer, options?: { type?: string; lines?: integer; port?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14432,7 +14470,7 @@ client.daemon.status.getLogs(id: integer, type?: string, lines?: integer, port?:
 
 ### Body schemas
 
-- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, port_range: { start*: int, end*: int }, port_param: string="--port", lazy_load: bool=false, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null, webhooks: { enabled: bool, urls: string[], events: string | string[], headers: object, timeout: int, retry: int }|null }`
+- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, port_range: { start*: int, end*: int }, port_param: string, lazy_load: bool=false, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null, webhooks: { enabled: bool, urls: string[], events: string | string[], headers: object, timeout: int, retry: int }|null }`
 - `daemon_EphemeralProgramInput` — `{ command*: string, user*: string, name: string, autorestart: "true" | "false" | "unexpected"="unexpected", directory: string, environment: { [key: string]: string }, priority: int=999, delay_seconds: int=0, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, ttl: int, wait: bool=false, timeout: int=30, display: string|null, terminal_id: int, terminal_shell: "bash" | "zsh" | "fish" | "sh" | "tmux"|null, terminal_interactive: bool|null }`
 
 
@@ -14689,7 +14727,7 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 #### `accessClient` — Access the HTML5 Display client interface
 
 ```typescript
-client.display.accessClient(displayId?: integer, decorations?: boolean, toolbar?: boolean, menu?: boolean, maximize_new_windows?: boolean, readonly?: boolean, dark_mode?: boolean, node?: string, project_id?: string, container_id?: string, url_display_id?: string, ssl?: boolean, webtransport?: boolean, path?: string, action?: string, display?: string, encoding?: string, offscreen?: boolean, bandwidth_limit?: integer, override_width?: string, override_height?: string, vrefresh?: integer, suspend_inactive_tab?: boolean, sound?: boolean, audio_codec?: string, keyboard?: boolean, keyboard_layout?: string, swap_keys?: boolean, clipboard?: boolean, clipboard_preferred_format?: string, clipboard_poll?: boolean, printing?: boolean, file_transfer?: boolean, video?: boolean, mediasource_video?: boolean, open_url?: boolean, notification_server_url?: string, web_notifications?: boolean, display_notifications?: boolean, notification_connection_type?: string, sharing?: boolean, steal?: boolean, reconnect?: boolean, floating_menu?: boolean, clock?: boolean, scroll_reverse_y?: string, scroll_reverse_x?: boolean, title_show_hoody?: boolean, title_show_display_id?: boolean, app?: string, remote_logging?: boolean, insecure?: boolean, debug_main?: boolean, debug_keyboard?: boolean, debug_geometry?: boolean, debug_mouse?: boolean, debug_clipboard?: boolean, debug_draw?: boolean, debug_audio?: boolean, debug_network?: boolean, debug_file?: boolean)
+client.display.accessClient(options?: { displayId?: integer; decorations?: boolean; toolbar?: boolean; menu?: boolean; maximize_new_windows?: boolean; readonly?: boolean; dark_mode?: boolean; node?: string; project_id?: string; container_id?: string; url_display_id?: string; ssl?: boolean; webtransport?: boolean; path?: string; action?: string; display?: string; encoding?: string; offscreen?: boolean; bandwidth_limit?: integer; override_width?: string; override_height?: string; vrefresh?: integer; suspend_inactive_tab?: boolean; sound?: boolean; audio_codec?: string; keyboard?: boolean; keyboard_layout?: string; swap_keys?: boolean; clipboard?: boolean; clipboard_preferred_format?: string; clipboard_poll?: boolean; printing?: boolean; file_transfer?: boolean; video?: boolean; mediasource_video?: boolean; open_url?: boolean; notification_server_url?: string; web_notifications?: boolean; display_notifications?: boolean; notification_connection_type?: string; sharing?: boolean; steal?: boolean; reconnect?: boolean; floating_menu?: boolean; clock?: boolean; scroll_reverse_y?: string; scroll_reverse_x?: boolean; title_show_hoody?: boolean; title_show_display_id?: boolean; app?: string; remote_logging?: boolean; insecure?: boolean; debug_main?: boolean; debug_keyboard?: boolean; debug_geometry?: boolean; debug_mouse?: boolean; debug_clipboard?: boolean; debug_draw?: boolean; debug_audio?: boolean; debug_network?: boolean; debug_file?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14764,7 +14802,7 @@ client.display.accessClient(displayId?: integer, decorations?: boolean, toolbar?
 #### `getClipboard` — Read clipboard text
 
 ```typescript
-client.display.getClipboard(displayId?: integer, selection?: string)
+client.display.getClipboard(options?: { displayId?: integer; selection?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14780,7 +14818,7 @@ client.display.getClipboard(displayId?: integer, selection?: string)
 #### `getInformation` — Get display information and screenshots
 
 ```typescript
-client.display.getInformation(displayId?: integer)
+client.display.getInformation(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14795,7 +14833,7 @@ client.display.getInformation(displayId?: integer)
 #### `getWindowProperties` — Get extended properties for a window
 
 ```typescript
-client.display.getWindowProperties(displayId?: integer, windowId: string)
+client.display.getWindowProperties(windowId: string, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14811,7 +14849,7 @@ client.display.getWindowProperties(displayId?: integer, windowId: string)
 #### `listScreenshots` — List all available screenshots
 
 ```typescript
-client.display.listScreenshots(displayId?: integer)
+client.display.listScreenshots(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14826,7 +14864,7 @@ client.display.listScreenshots(displayId?: integer)
 #### `listWindows` — List windows on the current display
 
 ```typescript
-client.display.listWindows(displayId?: integer, onlyVisible?: boolean)
+client.display.listWindows(options?: { displayId?: integer; onlyVisible?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14842,7 +14880,7 @@ client.display.listWindows(displayId?: integer, onlyVisible?: boolean)
 #### `setClipboard` — Write clipboard text
 
 ```typescript
-client.display.setClipboard(displayId?: integer, data: display_ClipboardWriteBody)
+client.display.setClipboard(data: display_ClipboardWriteBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14873,7 +14911,7 @@ client.display.health.check()
 #### `act` — Execute one action with optional screenshot
 
 ```typescript
-client.display.input.act(displayId?: integer, data: display_ActBody)
+client.display.input.act(data: display_ActBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14889,7 +14927,7 @@ client.display.input.act(displayId?: integer, data: display_ActBody)
 #### `batch` — Execute a sequence of actions
 
 ```typescript
-client.display.input.batch(displayId?: integer, data: display_BatchBody)
+client.display.input.batch(data: display_BatchBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14905,7 +14943,7 @@ client.display.input.batch(displayId?: integer, data: display_BatchBody)
 #### `clickAt` — Move cursor and click
 
 ```typescript
-client.display.input.clickAt(displayId?: integer, data: display_ClickAtBody)
+client.display.input.clickAt(data: display_ClickAtBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14921,7 +14959,7 @@ client.display.input.clickAt(displayId?: integer, data: display_ClickAtBody)
 #### `drag` — Drag from one position to another
 
 ```typescript
-client.display.input.drag(displayId?: integer, data: display_DragBody)
+client.display.input.drag(data: display_DragBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14937,7 +14975,7 @@ client.display.input.drag(displayId?: integer, data: display_DragBody)
 #### `geometry` — Get display dimensions
 
 ```typescript
-client.display.input.geometry(displayId?: integer)
+client.display.input.geometry(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14952,7 +14990,7 @@ client.display.input.geometry(displayId?: integer)
 #### `keyboardKey` — Press key combinations
 
 ```typescript
-client.display.input.keyboardKey(displayId?: integer, data: display_KeyboardKeyBody)
+client.display.input.keyboardKey(data: display_KeyboardKeyBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14968,7 +15006,7 @@ client.display.input.keyboardKey(displayId?: integer, data: display_KeyboardKeyB
 #### `keyboardKeyDown` — Hold a key down
 
 ```typescript
-client.display.input.keyboardKeyDown(displayId?: integer, data: display_KeyboardKeyDownBody)
+client.display.input.keyboardKeyDown(data: display_KeyboardKeyDownBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -14984,7 +15022,7 @@ client.display.input.keyboardKeyDown(displayId?: integer, data: display_Keyboard
 #### `keyboardKeyUp` — Release a held key
 
 ```typescript
-client.display.input.keyboardKeyUp(displayId?: integer, data: object)
+client.display.input.keyboardKeyUp(data: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15002,7 +15040,7 @@ client.display.input.keyboardKeyUp(displayId?: integer, data: object)
 #### `keyboardType` — Type a string of text
 
 ```typescript
-client.display.input.keyboardType(displayId?: integer, data: display_KeyboardTypeBody)
+client.display.input.keyboardType(data: display_KeyboardTypeBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15018,7 +15056,7 @@ client.display.input.keyboardType(displayId?: integer, data: display_KeyboardTyp
 #### `mouseClick` — Click a mouse button
 
 ```typescript
-client.display.input.mouseClick(displayId?: integer, data?: display_MouseClickBody)
+client.display.input.mouseClick(data?: display_MouseClickBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15034,7 +15072,7 @@ client.display.input.mouseClick(displayId?: integer, data?: display_MouseClickBo
 #### `mouseDoubleClick` — Double-click a mouse button
 
 ```typescript
-client.display.input.mouseDoubleClick(displayId?: integer, data?: object)
+client.display.input.mouseDoubleClick(data?: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15052,7 +15090,7 @@ client.display.input.mouseDoubleClick(displayId?: integer, data?: object)
 #### `mouseDown` — Press and hold a mouse button
 
 ```typescript
-client.display.input.mouseDown(displayId?: integer, data?: object)
+client.display.input.mouseDown(data?: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15070,7 +15108,7 @@ client.display.input.mouseDown(displayId?: integer, data?: object)
 #### `mouseLocation` — Get cursor position
 
 ```typescript
-client.display.input.mouseLocation(displayId?: integer)
+client.display.input.mouseLocation(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15085,7 +15123,7 @@ client.display.input.mouseLocation(displayId?: integer)
 #### `mouseMove` — Move cursor to absolute position
 
 ```typescript
-client.display.input.mouseMove(displayId?: integer, data: display_MouseMoveBody)
+client.display.input.mouseMove(data: display_MouseMoveBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15101,7 +15139,7 @@ client.display.input.mouseMove(displayId?: integer, data: display_MouseMoveBody)
 #### `mouseMoveRelative` — Move cursor by offset
 
 ```typescript
-client.display.input.mouseMoveRelative(displayId?: integer, data: object)
+client.display.input.mouseMoveRelative(data: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15119,7 +15157,7 @@ client.display.input.mouseMoveRelative(displayId?: integer, data: object)
 #### `mouseScroll` — Scroll in a direction
 
 ```typescript
-client.display.input.mouseScroll(displayId?: integer, data: display_MouseScrollBody)
+client.display.input.mouseScroll(data: display_MouseScrollBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15135,7 +15173,7 @@ client.display.input.mouseScroll(displayId?: integer, data: display_MouseScrollB
 #### `mouseUp` — Release a mouse button
 
 ```typescript
-client.display.input.mouseUp(displayId?: integer, data?: object)
+client.display.input.mouseUp(data?: object, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15153,7 +15191,7 @@ client.display.input.mouseUp(displayId?: integer, data?: object)
 #### `reset` — Emergency release all inputs
 
 ```typescript
-client.display.input.reset(displayId?: integer)
+client.display.input.reset(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15168,7 +15206,7 @@ client.display.input.reset(displayId?: integer)
 #### `select` — Select a range via click + shift-click
 
 ```typescript
-client.display.input.select(displayId?: integer, data: display_SelectBody)
+client.display.input.select(data: display_SelectBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15184,7 +15222,7 @@ client.display.input.select(displayId?: integer, data: display_SelectBody)
 #### `typeAt` — Move, click, and type in one operation
 
 ```typescript
-client.display.input.typeAt(displayId?: integer, data: display_TypeAtBody)
+client.display.input.typeAt(data: display_TypeAtBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15200,7 +15238,7 @@ client.display.input.typeAt(displayId?: integer, data: display_TypeAtBody)
 #### `wait` — Wait for a duration with optional screenshot
 
 ```typescript
-client.display.input.wait(displayId?: integer, data: display_WaitBody)
+client.display.input.wait(data: display_WaitBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15216,7 +15254,7 @@ client.display.input.wait(displayId?: integer, data: display_WaitBody)
 #### `windowActive` — Get the active window ID
 
 ```typescript
-client.display.input.windowActive(displayId?: integer)
+client.display.input.windowActive(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15231,7 +15269,7 @@ client.display.input.windowActive(displayId?: integer)
 #### `windowClose` — Close a window
 
 ```typescript
-client.display.input.windowClose(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowClose(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15247,7 +15285,7 @@ client.display.input.windowClose(displayId?: integer, data: display_WindowIdBody
 #### `windowFocus` — Focus/activate a window
 
 ```typescript
-client.display.input.windowFocus(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowFocus(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15263,7 +15301,7 @@ client.display.input.windowFocus(displayId?: integer, data: display_WindowIdBody
 #### `windowGeometry` — Get window position and size
 
 ```typescript
-client.display.input.windowGeometry(displayId?: integer, windowId: string)
+client.display.input.windowGeometry(windowId: string, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15279,7 +15317,7 @@ client.display.input.windowGeometry(displayId?: integer, windowId: string)
 #### `windowMinimize` — Minimize a window
 
 ```typescript
-client.display.input.windowMinimize(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowMinimize(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15295,7 +15333,7 @@ client.display.input.windowMinimize(displayId?: integer, data: display_WindowIdB
 #### `windowMove` — Move a window
 
 ```typescript
-client.display.input.windowMove(displayId?: integer, data: display_WindowMoveBody)
+client.display.input.windowMove(data: display_WindowMoveBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15311,7 +15349,7 @@ client.display.input.windowMove(displayId?: integer, data: display_WindowMoveBod
 #### `windowName` — Get window title
 
 ```typescript
-client.display.input.windowName(displayId?: integer, windowId: string)
+client.display.input.windowName(windowId: string, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15327,7 +15365,7 @@ client.display.input.windowName(displayId?: integer, windowId: string)
 #### `windowRaise` — Raise a window to the top
 
 ```typescript
-client.display.input.windowRaise(displayId?: integer, data: display_WindowIdBody)
+client.display.input.windowRaise(data: display_WindowIdBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15343,7 +15381,7 @@ client.display.input.windowRaise(displayId?: integer, data: display_WindowIdBody
 #### `windowResize` — Resize a window
 
 ```typescript
-client.display.input.windowResize(displayId?: integer, data: display_WindowResizeBody)
+client.display.input.windowResize(data: display_WindowResizeBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15359,7 +15397,7 @@ client.display.input.windowResize(displayId?: integer, data: display_WindowResiz
 #### `windowSearch` — Search for windows by pattern
 
 ```typescript
-client.display.input.windowSearch(displayId?: integer, data: display_WindowSearchBody)
+client.display.input.windowSearch(data: display_WindowSearchBody, options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15377,7 +15415,7 @@ client.display.input.windowSearch(displayId?: integer, data: display_WindowSearc
 #### `capture` — Capture a new screenshot
 
 ```typescript
-client.display.screenshots.capture(base64?: boolean, displayId?: integer)
+client.display.screenshots.capture(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15393,7 +15431,7 @@ client.display.screenshots.capture(base64?: boolean, displayId?: integer)
 #### `captureMetadata` — Capture screenshot and return metadata only
 
 ```typescript
-client.display.screenshots.captureMetadata(displayId?: integer)
+client.display.screenshots.captureMetadata(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15408,7 +15446,7 @@ client.display.screenshots.captureMetadata(displayId?: integer)
 #### `getByTimestamp` — Retrieve a specific screenshot by timestamp
 
 ```typescript
-client.display.screenshots.getByTimestamp(timestamp: string, base64?: boolean, displayId?: integer)
+client.display.screenshots.getByTimestamp(timestamp: string, options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15425,7 +15463,7 @@ client.display.screenshots.getByTimestamp(timestamp: string, base64?: boolean, d
 #### `getLatest` — Retrieve the most recent screenshot
 
 ```typescript
-client.display.screenshots.getLatest(base64?: boolean, displayId?: integer)
+client.display.screenshots.getLatest(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15441,7 +15479,7 @@ client.display.screenshots.getLatest(base64?: boolean, displayId?: integer)
 #### `getLatestMetadata` — Get metadata for the most recent screenshot
 
 ```typescript
-client.display.screenshots.getLatestMetadata(displayId?: integer)
+client.display.screenshots.getLatestMetadata(options?: { displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15458,7 +15496,7 @@ client.display.screenshots.getLatestMetadata(displayId?: integer)
 #### `capture` — Capture a new screenshot thumbnail
 
 ```typescript
-client.display.thumbnails.capture(base64?: boolean, displayId?: integer)
+client.display.thumbnails.capture(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15474,7 +15512,7 @@ client.display.thumbnails.capture(base64?: boolean, displayId?: integer)
 #### `getByTimestamp` — Retrieve a specific thumbnail by timestamp
 
 ```typescript
-client.display.thumbnails.getByTimestamp(timestamp: string, base64?: boolean, displayId?: integer)
+client.display.thumbnails.getByTimestamp(timestamp: string, options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15491,7 +15529,7 @@ client.display.thumbnails.getByTimestamp(timestamp: string, base64?: boolean, di
 #### `getLatest` — Retrieve the most recent thumbnail
 
 ```typescript
-client.display.thumbnails.getLatest(base64?: boolean, displayId?: integer)
+client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15523,6 +15561,218 @@ client.display.thumbnails.getLatest(base64?: boolean, displayId?: integer)
 - `display_ActBody` — `{ action*: string, params: object, screenshot: bool=true, screenshotDelay: int=100, screenshotRegion: string }`
 - `display_WaitBody` — `{ ms*: int, screenshot: bool=false }`
 - `display_BatchBody` — `{ actions*: { action*: string, params: object }[] }`
+
+
+---
+
+<!-- ===== namespace: egress ===== -->
+
+# `egress` — the container's outbound HTTP proxy
+
+## Purpose
+
+**Mental model: a proxy the standard container provision already runs, whose exit IP you choose at runtime.** Point any HTTP client at the container's egress URL and the request leaves through the container. Configure an *upstream* and the same URL routes through that instead, so the exit IP changes without touching the client.
+
+It answers on the container's own host at the `egress` service slug, so on a normally-provisioned container there is nothing to install, start, or configure first — registration happens at provision time, not on demand, and Prerequisites has the one precondition and a one-call check. Indexed forms reach the same single process and share one upstream setting — the index is not a second proxy. What the index does change is proxy permissions, which are evaluated per service index, so `egress-1` and `egress-2` can carry different credentials while exiting through the same address. Be aware of a contradiction in the sources: the SDK's own service registry (`lib/kit-catalog.ts`, `cli/index.ts`) declares egress as carrying no instance index, while the edge parser accepts indexed forms and the OpenAPI server template includes one. The edge behaviour above is what actually happens.
+
+It handles `CONNECT` tunnelling for HTTPS (never seeing inside the TLS session) and absolute-URI forwarding for plain HTTP.
+
+## When to use
+
+Use it when something inside a container needs to make outbound HTTP requests through a controllable exit: giving a scraper a specific egress IP, routing container traffic through a third-party SOCKS5 or HTTP proxy, or exposing a proxy endpoint to a client that only accepts a host and port. Use `client.egress.setUpstream` to chain, `client.egress.getUpstream` to inspect, and `client.egress.disableUpstream` to go back to the container's own IP.
+
+Use `startLocalExit` when the exit should be the machine your process runs on rather than a rented proxy; see Quirks. It is exported from the package root (`import { startLocalExit } from 'hoody-sdk'`), not from the `hoody-sdk/egress` subpath, which carries only the generated service.
+
+## When NOT to use
+
+Do not use it as a general ingress path: any request whose target begins with `/` and is not one of the management routes returns 404 and is never forwarded, so it cannot be repurposed as a reverse proxy. (`OPTIONS` is the one exception, answered 204 before routing.) Do not reach for it to expose a local service to the internet — that is the `tunnel` namespace. Do not expect request hooks to apply; egress is on the hook-rejected list.
+
+## Prerequisites
+
+A running container whose provision registered egress — the overwhelmingly common case, not something to arrange. Provisioning registers egress on a new container by default, and containers created before egress existed are backfilled over time, so the gaps to expect are a container whose host has it turned off and one that has not been backfilled yet. No kit program needs enabling first — where registered, hoody-egress is eager (`boot: true`, `lazy_load: false`, unlike lazily-loaded siblings such as `pipe` or `run`), so the endpoint answers as soon as the container is up. To confirm before relying on it, probe the unauthenticated health route: `client.egress.healthCheck()` resolving with the standard health blob confirms egress is live; a rejection does not establish that it is absent. A failed probe cannot separate an unregistered kit from an overloaded or unreachable one: the server checks its connection cap before reading the request, so it can answer 503 while alive, and an edge or transport failure looks the same from outside. Registration can also be read from the always-present daemon kit: look for a `hoody-egress` entry in `client.daemon.programs.list()`. Setting an upstream needs nothing beyond the container URL and whatever proxy permissions guard it.
+
+A local exit (`startLocalExit`) needs more: the container's hoody-tunnel kit must be running, because the exit is wired as a tunnel PULL bind onto the container's loopback. The client must be authenticated and constructed with an explicit `baseURL` (`new HoodyClient({ baseURL, token })`); every URL in the chain is derived from it, and the call throws rather than guess a realm. Pass a container record that carries its project id and server name, which `containers.get` returns. If the tunnel kit is down, startup fails before the container is touched.
+
+## Capability URL
+
+The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server}.containers.hoody.com` — see `SKILL-SDK.md § Proxy URLs` for the routing rules — and it is a capability URL: the project and container identifiers in the hostname *are* the credential, and hoody-egress performs no authentication of its own. An open egress endpoint is therefore an open proxy — anyone holding the URL can send traffic through it, consuming the server's bandwidth and attributed to its exit IP. Set proxy permissions on the `egress` service before sharing it or configuring an upstream.
+
+## Common workflows
+
+**Inspect the current setting.** `client.egress.getUpstream` reports whether an upstream is enabled, its scheme, host and port, the config path, and an `auth` boolean. When no upstream is enabled the object carries only `enabled` and `config_path`; scheme, host, port, and `auth` appear only while one is set. Credentials are never returned, by design, so a read cannot be used to recover a secret someone else configured.
+
+**Point traffic somewhere else.** `client.egress.setUpstream` takes the proxy URL as a plain string and sends it as a `text/plain` body; the kit uses the first non-blank, non-`#` line. Four schemes are accepted: `socks5h` sends the destination hostname upstream for resolution there, `socks5` resolves locally and sends an address, and `http` / `https` chain through an HTTP proxy using `CONNECT`, the latter with TLS to the upstream. Prefer `socks5h` when the point of the exercise is to avoid leaking destination lookups.
+
+**Go back to the container's own IP.** `client.egress.disableUpstream`, or equivalently `setUpstream` with an empty string — the kit treats a body with no URL line as a disable. Check with `client.egress.getUpstream`.
+
+**Confirm where traffic exits.** Request `https://ip.hoody.com` through the proxy; it reports the address it saw, which is the container's or the upstream's once one is set.
+
+## Quirks & gotchas
+
+- **Teardown deletes, it does not restore.** Clearing removes the upstream, and the kit never returns credentials — a read reports scheme, host, port and an `auth` flag only — so an authenticated upstream that some other tool configured cannot be put back unless whoever configured it still holds the full URL. An unauthenticated one can be rebuilt from a read taken before the clear.
+- **The setting is a file, and it is reloaded, not restarted.** It is written to `/hoody/storage/hoody-egress/config/upstream_proxy.txt` with mode `0600` through an atomic temp-file rename, and picked up within about a second. Deleting the file disables the upstream only if the watcher has already seen it on disk; a file that never existed is deliberately ignored, so it cannot override an upstream handed to the process as a URL at startup. (A clear does not delete the file — it rewrites it with the URL line removed.)
+- **The body is small and strictly framed.** A missing `Content-Length` is 411, and a *declared* `Content-Length` over 4096 is 413 — the check is on the header, before the body is read. This is not a channel for anything but a URL.
+- **Health answers almost any method.** The health route matches on path alone, so every method except `OPTIONS` reaches it; `OPTIONS` is answered 204 with CORS headers before routing, which is what makes browser preflight work against the management API.
+- **A local exit makes your machine the exit** (`startLocalExit`, imported from the package root: `import { startLocalExit } from 'hoody-sdk'`, not from `hoody-sdk/egress`). It binds a loopback port inside the container over hoody-tunnel, points the upstream at it, and terminates SOCKS5 in your process, so requests leave from the machine the SDK process runs on and the exit lives only as long as that process. Nothing listens on that machine; every socket it opens is outbound. Destinations are gated to public IPv4 by default, every resolved A record is authorised, and the pinned address is what gets dialled, so DNS rebinding cannot redirect a connection after approval.
+- **A local exit refuses to clobber an existing upstream.** If the container already has one enabled, `startLocalExit` throws `local exit: this container already has an upstream (<scheme>://<host>:<port>)` instead of replacing it, because teardown clears the upstream and the kit never returns credentials, so an authenticated upstream it replaced could not be put back automatically. Clear a stale one first, or pass `replaceExistingUpstream: true` to take the container over knowingly; when that exit stops, the container goes back to its own IP, not to the proxy it displaced.
+- **A dead loopback port breaks every request.** If a local exit dies without clearing the upstream, the container keeps pointing at a port that no longer answers and every request through its egress fails until the upstream is cleared. `stop()` clears it on shutdown, and when the tunnel drops on its own the handle clears it and reports the outcome through `onSessionLost`; after a hard crash, recover with `client.egress.disableUpstream` or `hoody --container <id> egress upstream clear`.
+- **Browsers need a PAC file, not the manual proxy fields.** The connection to the proxy is itself TLS, so the manual host-and-port fields open a plaintext connection that the edge refuses with 400. A PAC file returning `HTTPS host:443` works in both Chrome and Firefox.
+
+## Common errors
+
+Errors come from two surfaces that answer differently. The management surface always sends a body: `text/plain` for every error except the 404, which is JSON, and every body ends with a trailing newline, so match on prefix or substring rather than equality. Framing and forwarding errors send no response body and no `Content-Type`; the status line still arrives with headers, always including `Vary: Origin` and `Connection: close`.
+
+**Management surface** (path-form requests: `/api/v1/egress/upstream` and the route catch-all):
+
+- 400 — three causes with three `text/plain` bodies: `Invalid upstream URL` when the value does not parse or its scheme is not one of the four, `Failed to read body` when the read fails or times out, and `Body must be UTF-8`. The OpenAPI 400 description names the same three bodies; it is documentation, not additional wire text.
+- 404 — a path-form target that is not a management route, and the one JSON error: `{"error":"not found"}` with `Content-Type: application/json`. It is never forwarded, so it means the request was addressed to the proxy rather than through it.
+- 405 — `Method Not Allowed` for any verb on the upstream route other than `GET`, `PUT`, `POST`, or `DELETE`. `OPTIONS` never reaches it; it is answered 204 before routing.
+- 411 — `Missing Content-Length` on a set request.
+- 413 — `Body too large` when the declared `Content-Length` exceeds 4096 bytes.
+- 500 — `Failed to write config` when persisting the upstream file fails, on set and clear alike. The in-memory upstream is swapped only after a successful write, so after a 500 the previous setting still applies.
+
+**Proxy data path and request framing** (no response body):
+
+- 400 — an oversized or truncated header block, a bad request line, an invalid `CONNECT` authority, or a non-`CONNECT` target that is neither absolute-form `http://` nor asterisk-form `*`. An `https://` URL sent without `CONNECT` lands here. Asterisk-form is the one non-absolute target that forwards: `*` with a `Host` header is sent to the authority the header names; without one it is a 400. Header lines themselves never trigger it: a line with no colon is silently skipped, not rejected.
+- 408 — request headers not completed within the read timeout.
+- 502 — the outbound connection failed: destination unreachable, the chained upstream refused or timed out, or no valid response came back. It is also the answer when the client's own request body breaks mid-forward: a malformed chunk size or chunk ending fails inside the forwarding path, and the outer handler reports every forwarding failure as 502, so a bad client body reads the same as a dead upstream. A 502 is not always a standalone response either: after the `CONNECT` 200 has been sent, or after a forwarded response has started, a relay failure appends the 502 to the bytes already written. With an upstream set, a 502 on every request usually means the upstream itself is dead; see the dead-loopback quirk.
+- 503 — the concurrent-connection cap is reached.
+
+## Related namespaces
+
+`tunnel` for the opposite direction (exposing a local service through the container). `proxyPermissionsContainer` for gating the endpoint, which matters more here than almost anywhere else because the URL is the only credential. `proxyAliases` to hand out a hostname that does not carry the container id. `api` for container firewall rules, whose `firewall/egress` routes govern packet filtering and are unrelated to this service despite the shared word.
+
+## Examples
+
+Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first. The egress capability URL carries no instance index — `https://{P}-{C}-egress.{N}.containers.hoody.com` — though indexed forms reach the same process (see § Purpose).
+
+### 1. Send a request through the proxy — confirm the container is the exit
+
+**Goal:** prove the endpoint routes traffic and see the IP the destination sees. The connection to the proxy is itself TLS, so the proxy address carries an `https://` scheme. `CONNECT` tunnels HTTPS; plain HTTP rides absolute-form forwarding.
+
+```typescript
+await client.egress.healthCheck();   // rejects if egress isn't live on this container
+const proxyUrl = `https://${P}-${C}-egress.${N}.containers.hoody.com`;
+// The generated namespace MANAGES the proxy; it does not send requests through
+// it. Hand proxyUrl to any proxy-capable HTTP client (curl -x, an https_proxy
+// env var, a browser via PAC).
+```
+`ip.hoody.com` reports the address it saw the request come from, so it doubles as the before/after check for every recipe below. Browsers cannot use their manual proxy fields — plaintext to a TLS port is refused with 400; use a PAC file returning `HTTPS host:443` (see Quirks).
+
+### 2. Set an upstream, read it back, clear it
+
+**Goal:** change the exit IP without touching the client. Four schemes are accepted (`socks5h`, `socks5`, `http`, `https`); prefer `socks5h` when the upstream should also resolve DNS. Set and clear both answer `200` with the current status blob, so the response doubles as the read-back.
+
+```typescript
+await client.egress.setUpstream('socks5h://user:pass@203.0.113.10:1080');
+const s = (await client.egress.getUpstream()).data!;
+// { enabled: true, scheme: 'socks5h', host: '203.0.113.10', port: 1080,
+//   auth: true, config_path: '/hoody/storage/hoody-egress/config/upstream_proxy.txt' }
+await client.egress.disableUpstream();   // or setUpstream('') — a body with no URL line disables
+```
+The setting lands in the config file atomically and is picked up within about a second (see Quirks). Re-run the exit check from #1: the reported address flips to the upstream's, and back after the clear. `auth: true` is the only trace of the credentials — they are never returned.
+
+### 3. Make your own machine the exit — a local exit
+
+**Goal:** turn the container's egress URL into a proxy whose traffic leaves from the machine you are sitting at. Needs the container's tunnel kit running; nothing listens on your machine (see Quirks).
+
+```typescript
+// Import from the package ROOT — `hoody-sdk/egress` carries only the generated
+// management service; the local-exit helper lives in the main entrypoint.
+import { HoodyClient, startLocalExit } from 'hoody-sdk';
+
+const client = new HoodyClient({ baseURL: 'https://api.hoody.com', token });
+const { data } = await client.api.containers.get(C);  // carries project id + server name
+
+const exit = await startLocalExit({ client, container: data });
+console.log(exit.proxyUrl);              // https://P-C-egress.N.containers.hoody.com
+console.log(exit.verification?.exitIp);  // this machine's public IP, confirmed via ip.hoody.com
+await exit.stop();                       // clears the upstream, closes the tunnel
+```
+The SDK path needs an authenticated client constructed with an explicit `baseURL` (see Prerequisites). While the exit runs, treat `proxyUrl` like a password: anyone holding it relays through your connection.
+
+### 4. The takeover guard, and the deliberate override
+
+**Goal:** understand why a local exit refuses to start, and take a container over knowingly. Teardown deletes the upstream and credentials can never be read back, so silently replacing a third-party proxy would destroy it (see Quirks).
+
+```typescript
+try {
+  await startLocalExit({ client, container });
+} catch (e) {
+  // Error: local exit: this container already has an upstream (socks5h://203.0.113.10:1080).
+  // Stopping this exit would clear it, and its credentials cannot be read back to
+  // restore it. Clear it first, or pass replaceExistingUpstream/--replace-upstream
+  // to take it over.
+}
+const exit = await startLocalExit({ client, container, replaceExistingUpstream: true });
+```
+The check-then-set is not atomic — the guard protects against accidents, not races. When an exit started with the override stops, the container returns to its own IP, not to the proxy it displaced.
+
+## Reference
+
+**Accessor:** `client.egress`  |  **Import:** `import * as egress from 'hoody-sdk/egress'`
+
+### `client.egress` (5) — egress
+
+#### `disableUpstream` — Disable upstream
+
+```typescript
+client.egress.disableUpstream()
+```
+
+**Returns:** `egress_UpstreamStatus`  |  **HTTP:** `DELETE /api/v1/egress/upstream`
+**CLI:** `hoody egress upstream clear`
+
+---
+
+#### `getUpstream` — Get upstream status
+
+```typescript
+client.egress.getUpstream()
+```
+
+**Returns:** `egress_UpstreamStatus`  |  **HTTP:** `GET /api/v1/egress/upstream`
+**CLI:** `hoody egress upstream get`
+
+---
+
+#### `healthCheck` — Service health check
+
+```typescript
+client.egress.healthCheck()
+```
+
+**Returns:** `egress_HealthResponse`  |  **HTTP:** `GET /api/v1/egress/health`
+**CLI:** `hoody egress health`
+
+---
+
+#### `setUpstream` — Set upstream
+
+```typescript
+client.egress.setUpstream(data: string)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `data` | `string` | body | Yes |  |
+
+**Returns:** `egress_UpstreamStatus`  |  **HTTP:** `PUT /api/v1/egress/upstream`
+**CLI:** `hoody egress upstream set`
+
+---
+
+#### `setUpstreamPost` — Set upstream
+
+```typescript
+client.egress.setUpstreamPost(data: string)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `data` | `string` | body | Yes |  |
+
+**Returns:** `egress_UpstreamStatus`  |  **HTTP:** `POST /api/v1/egress/upstream`
 
 
 ---
@@ -15973,7 +16223,7 @@ client.exec.ids.list()
 #### `clear` — Clear Logs
 
 ```typescript
-client.exec.logs.clear(file?: string, type?: string, olderThanDays?: string, confirm?: string)
+client.exec.logs.clear(options?: { file?: string; type?: string; olderThanDays?: string; confirm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -15991,7 +16241,7 @@ client.exec.logs.clear(file?: string, type?: string, olderThanDays?: string, con
 #### `list` — List Logs
 
 ```typescript
-client.exec.logs.list(type?: string, limit?: string)
+client.exec.logs.list(options?: { type?: string; limit?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16031,7 +16281,7 @@ client.exec.logs.search(data?: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | No |  |
 
-**Body:** `{ query: string, regex: string, files: any[], limit: int=1000, caseSensitive: bool=false }`
+**Body:** `{ query: string, regex: string, files: string[], limit: int=1000, caseSensitive: bool=false }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/exec/logs/search`
 **CLI:** `hoody exec logs search`
@@ -16041,7 +16291,7 @@ client.exec.logs.search(data?: object)
 #### `stream` — Stream Logs
 
 ```typescript
-client.exec.logs.stream(file: string, follow?: string)
+client.exec.logs.stream(options?: { file?: string; follow?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16087,7 +16337,7 @@ client.exec.magic.getSchema()
 #### `read` — Read Magic Comments
 
 ```typescript
-client.exec.magic.read(path: string)
+client.exec.magic.read(options?: { path?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16158,7 +16408,7 @@ client.exec.monitor.getStats()
 #### `listMonitorScripts` — List Monitor Scripts
 
 ```typescript
-client.exec.monitor.listMonitorScripts(limit?: integer, sort?: string)
+client.exec.monitor.listMonitorScripts(options?: { limit?: integer; sort?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16201,7 +16451,7 @@ client.exec.openapi.generate(data: object)
 #### `listScripts` — List User Scripts
 
 ```typescript
-client.exec.openapi.listScripts(directory?: string, dir?: string, subdomain?: string, execId?: string)
+client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; subdomain?: string; execId?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16234,7 +16484,7 @@ client.exec.openapi.merge(data: object)
 #### `serve` — Serve Generated Spec
 
 ```typescript
-client.exec.openapi.serve(dir?: string, directory?: string, format?: string, subdomain?: string, execId?: string)
+client.exec.openapi.serve(options?: { dir?: string; directory?: string; format?: string; subdomain?: string; execId?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16253,7 +16503,7 @@ client.exec.openapi.serve(dir?: string, directory?: string, format?: string, sub
 #### `serveSchema` — Serve Schema File
 
 ```typescript
-client.exec.openapi.serveSchema(file?: string, path?: string)
+client.exec.openapi.serveSchema(options?: { file?: string; path?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16325,7 +16575,7 @@ client.exec.package.install(data?: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | No |  |
 
-**Body:** `{ packages: any[], dev: bool=false, save: bool=true, force: bool=false }`
+**Body:** `{ packages: string[], dev: bool=false, save: bool=true, force: bool=false }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/exec/package/install`
 **CLI:** `hoody exec packages install`
@@ -16342,7 +16592,7 @@ client.exec.package.pinVersions(data?: object)
 |-----------|------|------|----------|-------------|
 | `data` | `object` | body | No |  |
 
-**Body:** `{ packages: any[] }`
+**Body:** `{ packages: string[] }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/exec/package/pin`
 **CLI:** `hoody exec packages pin`
@@ -16459,7 +16709,7 @@ client.exec.schedules.reloadSchedules(data?: object)
 #### `scheduleHistory` — Schedule History
 
 ```typescript
-client.exec.schedules.scheduleHistory(scriptPath?: string, since?: string, limit?: integer, includeRotated?: boolean)
+client.exec.schedules.scheduleHistory(options?: { scriptPath?: string; since?: string; limit?: integer; includeRotated?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16496,7 +16746,7 @@ client.exec.schedules.triggerSchedule(data: object)
 #### `delete` — Delete Script
 
 ```typescript
-client.exec.scripts.delete(path: string, confirm?: string, execId?: string, exec_id?: string, subdomain?: string)
+client.exec.scripts.delete(options?: { path?: string; confirm?: string; execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16515,7 +16765,7 @@ client.exec.scripts.delete(path: string, confirm?: string, execId?: string, exec
 #### `getTree` — Get Script Tree
 
 ```typescript
-client.exec.scripts.getTree(execId?: string, exec_id?: string, subdomain?: string, data?: object)
+client.exec.scripts.getTree(data?: object, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16535,7 +16785,7 @@ client.exec.scripts.getTree(execId?: string, exec_id?: string, subdomain?: strin
 #### `list` — List Scripts
 
 ```typescript
-client.exec.scripts.list(dir?: string, filter?: string, metadata?: string, label?: string, tags?: string, mode?: string, enabled?: string, websocket?: string, recursive?: string, include_comments?: string, execId?: string, exec_id?: string, subdomain?: string)
+client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: string; label?: string; tags?: string; mode?: string; enabled?: string; websocket?: string; recursive?: string; include_comments?: string; execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16562,7 +16812,7 @@ client.exec.scripts.list(dir?: string, filter?: string, metadata?: string, label
 #### `move` — Move Script
 
 ```typescript
-client.exec.scripts.move(execId?: string, exec_id?: string, subdomain?: string, data: object)
+client.exec.scripts.move(data: object, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16582,7 +16832,7 @@ client.exec.scripts.move(execId?: string, exec_id?: string, subdomain?: string, 
 #### `read` — Read Script
 
 ```typescript
-client.exec.scripts.read(path: string, execId?: string, exec_id?: string, subdomain?: string)
+client.exec.scripts.read(options?: { path?: string; execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16600,7 +16850,7 @@ client.exec.scripts.read(path: string, execId?: string, exec_id?: string, subdom
 #### `write` — Write Script
 
 ```typescript
-client.exec.scripts.write(execId?: string, exec_id?: string, subdomain?: string, data: object)
+client.exec.scripts.write(data: object, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16629,7 +16879,7 @@ client.exec.sdk.delete(id: string)
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Id parameter |
 
-**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/sdk/:id`
+**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/sdk/{id}`
 **CLI:** `hoody exec sdks delete`
 
 ---
@@ -16644,7 +16894,7 @@ client.exec.sdk.get(id: string)
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Id parameter |
 
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/exec/sdk/:id`
+**Returns:** `any`  |  **HTTP:** `GET /api/v1/exec/sdk/{id}`
 **CLI:** `hoody exec sdks get`
 
 ---
@@ -16807,7 +17057,7 @@ client.exec.templates.deleteCustom(name: string)
 |-----------|------|------|----------|-------------|
 | `name` | `string` | path | Yes | Name parameter |
 
-**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/templates/delete-custom/:name`
+**Returns:** `any`  |  **HTTP:** `DELETE /api/v1/exec/templates/delete-custom/{name}`
 **CLI:** `hoody exec templates delete`
 
 ---
@@ -16832,7 +17082,7 @@ client.exec.templates.generate(data: object)
 #### `list` — List Templates
 
 ```typescript
-client.exec.templates.list(category?: string, includeBuiltin?: boolean, includeCustom?: boolean)
+client.exec.templates.list(options?: { category?: string; includeBuiltin?: boolean; includeCustom?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16849,7 +17099,7 @@ client.exec.templates.list(category?: string, includeBuiltin?: boolean, includeC
 #### `preview` — Preview Template
 
 ```typescript
-client.exec.templates.preview(name: string, variables?: string)
+client.exec.templates.preview(options?: { name?: string; variables?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -16875,7 +17125,7 @@ client.exec.templates.updateCustom(name: string, data?: object)
 
 **Body:** `{ code: string, metadata: object }`
 
-**Returns:** `any`  |  **HTTP:** `PUT /api/v1/exec/templates/update-custom/:name`
+**Returns:** `any`  |  **HTTP:** `PUT /api/v1/exec/templates/update-custom/{name}`
 **CLI:** `hoody exec templates update`
 
 ---
@@ -17327,7 +17577,7 @@ const r = await client.files.journal.query({ path: '/home/user/files-examples-cl
 #### `downloadAsZip` — Download directory as ZIP
 
 ```typescript
-client.files.archives.downloadAsZip(directory: string, zip: string)
+client.files.archives.downloadAsZip(directory: string, options?: { zip?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -17343,7 +17593,7 @@ client.files.archives.downloadAsZip(directory: string, zip: string)
 #### `extract` — Extract archive
 
 ```typescript
-client.files.archives.extract(archive: string, extract: string, dest?: string)
+client.files.archives.extract(archive: string, options?: { extract?: string; dest?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -17360,7 +17610,7 @@ client.files.archives.extract(archive: string, extract: string, dest?: string)
 #### `extractFile` — Extract file from archive
 
 ```typescript
-client.files.archives.extractFile(archive: string, extract: string, dest?: string)
+client.files.archives.extractFile(archive: string, options?: { extract?: string; dest?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -17377,7 +17627,7 @@ client.files.archives.extractFile(archive: string, extract: string, dest?: strin
 #### `getHistory` — Extraction history
 
 ```typescript
-client.files.archives.getHistory(extraction_history: string)
+client.files.archives.getHistory(options?: { extraction_history?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -17392,7 +17642,7 @@ client.files.archives.getHistory(extraction_history: string)
 #### `listActive` — List active extractions
 
 ```typescript
-client.files.archives.listActive(extractions: string)
+client.files.archives.listActive(options?: { extractions?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -17418,7 +17668,7 @@ client.files.archives.listGlobal()
 #### `preview` — Preview archive contents or read file
 
 ```typescript
-client.files.archives.preview(archive: string, preview?: string, contents?: string)
+client.files.archives.preview(archive: string, options?: { preview?: string; contents?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -17435,7 +17685,7 @@ client.files.archives.preview(archive: string, preview?: string, contents?: stri
 #### `viewFile` — View file from archive
 
 ```typescript
-client.files.archives.viewFile(archive: string, preview: string)
+client.files.archives.viewFile(archive: string, options?: { preview?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18629,7 +18879,7 @@ client.files.directories.create(path: string)
 #### `fetch` — Download file from remote URL
 
 ```typescript
-client.files.downloads.fetch(directory: string, download: string, filename?: string, timeout?: integer)
+client.files.downloads.fetch(directory: string, options?: { download?: string; filename?: string; timeout?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18647,7 +18897,7 @@ client.files.downloads.fetch(directory: string, download: string, filename?: str
 #### `getHistory` — Download history
 
 ```typescript
-client.files.downloads.getHistory(download_history: string)
+client.files.downloads.getHistory(options?: { download_history?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18662,7 +18912,7 @@ client.files.downloads.getHistory(download_history: string)
 #### `listActive` — List active downloads
 
 ```typescript
-client.files.downloads.listActive(directory: string, downloads: string)
+client.files.downloads.listActive(directory: string, options?: { downloads?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18691,13 +18941,14 @@ client.files.downloads.listGlobal()
 #### `append` — Append data to file
 
 ```typescript
-client.files.append(path: string, owner?: string)
+client.files.append(path: string, data: object, options?: { owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | File path |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) when this append creates a new file. Requires --allow-chown + allowlist; refuses root. Absent → server default. |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `files_AppendResponse`  |  **HTTP:** `PUT /api/v1/files/append/{path}`
 **CLI:** `hoody files append`
@@ -18707,7 +18958,7 @@ client.files.append(path: string, owner?: string)
 #### `chmod` — Change file permissions
 
 ```typescript
-client.files.chmod(path: string, chmod: string)
+client.files.chmod(path: string, options?: { chmod?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18723,7 +18974,7 @@ client.files.chmod(path: string, chmod: string)
 #### `chown` — Change file ownership
 
 ```typescript
-client.files.chown(path: string, chown: string)
+client.files.chown(path: string, options?: { chown?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18739,7 +18990,7 @@ client.files.chown(path: string, chown: string)
 #### `copy` — Copy file or directory
 
 ```typescript
-client.files.copy(path: string, copy_to: string, overwrite?: string, owner?: string)
+client.files.copy(path: string, options?: { copy_to?: string; overwrite?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18757,7 +19008,7 @@ client.files.copy(path: string, copy_to: string, overwrite?: string, owner?: str
 #### `delete` — Delete file or directory
 
 ```typescript
-client.files.delete(path: string, backend?: string)
+client.files.delete(path: string, options?: { backend?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18788,7 +19039,7 @@ client.files.deleteRecursive(path: string)
 #### `get` — List directory or download file
 
 ```typescript
-client.files.get(path: string, backend?: string, hash?: string, sha256?: string, base64?: string, preview?: string, contents?: string, stat?: string, thumbnail?: string, grep?: string, ignore_case?: boolean, fixed_string?: boolean, glob?: string, context?: integer, max_count?: integer, max_matches?: integer, max_depth?: integer, max_filesize?: integer, timeout?: integer, no_ignore?: boolean, max_results?: integer, max_files_scanned?: integer, sort?: string, order?: string, lines?: string, history?: string, at?: string, revision?: integer, diff?: string, from_seq?: integer, from_ts?: string, to_seq?: integer, to_ts?: string, after_id?: integer, limit?: integer, zip?: string)
+client.files.get(path: string, options?: { backend?: string; hash?: string; sha256?: string; base64?: string; preview?: string; contents?: string; stat?: string; thumbnail?: string; grep?: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: integer; max_count?: integer; max_matches?: integer; max_depth?: integer; max_filesize?: integer; timeout?: integer; no_ignore?: boolean; max_results?: integer; max_files_scanned?: integer; sort?: string; order?: string; lines?: string; history?: string; at?: string; revision?: integer; diff?: string; from_seq?: integer; from_ts?: string; to_seq?: integer; to_ts?: string; after_id?: integer; limit?: integer; zip?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18838,7 +19089,7 @@ client.files.get(path: string, backend?: string, hash?: string, sha256?: string,
 #### `getMetadata` — Get file metadata
 
 ```typescript
-client.files.getMetadata(path: string, history?: string, at?: string, revision?: integer, diff?: string, from_seq?: integer, from_ts?: string, to_seq?: integer, to_ts?: string, after_id?: integer, limit?: integer)
+client.files.getMetadata(path: string, options?: { history?: string; at?: string; revision?: integer; diff?: string; from_seq?: integer; from_ts?: string; to_seq?: integer; to_ts?: string; after_id?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18863,7 +19114,7 @@ client.files.getMetadata(path: string, history?: string, at?: string, revision?:
 #### `glob` — Find files by glob pattern
 
 ```typescript
-client.files.glob(path: string, pattern: string, max_results?: integer, max_depth?: integer, max_files_scanned?: integer, timeout?: integer, no_ignore?: boolean, sort?: string, order?: string)
+client.files.glob(path: string, options?: { pattern?: string; max_results?: integer; max_depth?: integer; max_files_scanned?: integer; timeout?: integer; no_ignore?: boolean; sort?: string; order?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18886,7 +19137,7 @@ client.files.glob(path: string, pattern: string, max_results?: integer, max_dept
 #### `grep` — Search file contents (grep)
 
 ```typescript
-client.files.grep(path: string, pattern: string, ignore_case?: boolean, fixed_string?: boolean, glob?: string, context?: integer, max_count?: integer, max_matches?: integer, max_depth?: integer, max_filesize?: integer, timeout?: integer, no_ignore?: boolean)
+client.files.grep(path: string, options?: { pattern?: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: integer; max_count?: integer; max_matches?: integer; max_depth?: integer; max_filesize?: integer; timeout?: integer; no_ignore?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18912,7 +19163,7 @@ client.files.grep(path: string, pattern: string, ignore_case?: boolean, fixed_st
 #### `listDirectory` — List directory contents or download file
 
 ```typescript
-client.files.listDirectory(path: string, json?: string, simple?: string, sort?: string, order?: string, hash?: string, sha256?: string, base64?: string, edit?: string, view?: string, download?: string, content-type?: string, history?: string, at?: string, revision?: integer, diff?: string, from_seq?: integer, from_ts?: string, to_seq?: integer, to_ts?: string, after_id?: integer, limit?: integer)
+client.files.listDirectory(path: string, options?: { json?: string; simple?: string; sort?: string; order?: string; hash?: string; sha256?: string; base64?: string; edit?: string; view?: string; download?: string; content-type?: string; history?: string; at?: string; revision?: integer; diff?: string; from_seq?: integer; from_ts?: string; to_seq?: integer; to_ts?: string; after_id?: integer; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18948,7 +19199,7 @@ client.files.listDirectory(path: string, json?: string, simple?: string, sort?: 
 #### `move` — Move file or directory
 
 ```typescript
-client.files.move(path: string, move_to: string, owner?: string)
+client.files.move(path: string, options?: { move_to?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18965,7 +19216,7 @@ client.files.move(path: string, move_to: string, owner?: string)
 #### `operate` — File operations (mkdir, extract, download, move, copy)
 
 ```typescript
-client.files.operate(path: string, backend?: string, mkdir?: string, extract?: string, dest?: string, download_from?: string, move_to?: string, copy_to?: string, overwrite?: string, owner?: string)
+client.files.operate(path: string, options?: { backend?: string; mkdir?: string; extract?: string; dest?: string; download_from?: string; move_to?: string; copy_to?: string; overwrite?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -18989,7 +19240,7 @@ client.files.operate(path: string, backend?: string, mkdir?: string, extract?: s
 #### `patch` — File operations
 
 ```typescript
-client.files.patch(path: string, X-Update-Range?: string, data?: object)
+client.files.patch(path: string, data?: object, options?: { X-Update-Range?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19008,7 +19259,7 @@ client.files.patch(path: string, X-Update-Range?: string, data?: object)
 #### `patchApi` — Modify file properties or move/rename
 
 ```typescript
-client.files.patchApi(path: string, backend?: string, owner?: string, chmod?: string, chown?: string, data?: object)
+client.files.patchApi(path: string, data?: object, options?: { backend?: string; owner?: string; chmod?: string; chown?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19030,7 +19281,7 @@ client.files.patchApi(path: string, backend?: string, owner?: string, chmod?: st
 #### `put` — Upload or append file
 
 ```typescript
-client.files.put(path: string, backend?: string, append?: string, owner?: string)
+client.files.put(path: string, data: object, options?: { backend?: string; append?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19039,6 +19290,7 @@ client.files.put(path: string, backend?: string, append?: string, owner?: string
 | `backend` | `string` | query | No | Backend ID for remote upload |
 | `append` | `string` | query | No | Append body to end of existing file (create if missing) instead of overwriting |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires --allow-chown + --allowed-create-owners; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `files_AppendResponse`  |  **HTTP:** `PUT /api/v1/files/{path}`
 **CLI:** `hoody files put`
@@ -19063,7 +19315,7 @@ client.files.realpath(path: string)
 #### `search` — Search directory
 
 ```typescript
-client.files.search(directory: string, q: string, json?: string)
+client.files.search(directory: string, options?: { q?: string; json?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19095,7 +19347,7 @@ client.files.stat(path: string)
 #### `touch` — Touch file (create or update mtime)
 
 ```typescript
-client.files.touch(path: string, touch: string)
+client.files.touch(path: string, options?: { touch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19111,12 +19363,13 @@ client.files.touch(path: string, touch: string)
 #### `upload` — Upload file
 
 ```typescript
-client.files.upload(path: string)
+client.files.upload(path: string, data: object)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Destination file path |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `any`  |  **HTTP:** `PUT /{path}`
 **CLI:** `hoody files upload`
@@ -19128,7 +19381,7 @@ client.files.upload(path: string)
 #### `access` — Access file via FTP
 
 ```typescript
-client.files.ftp.access(path: string, type: string, server: string, user?: string, pass?: string, ftp_secure?: boolean, ftp_passive?: boolean)
+client.files.ftp.access(path: string, options?: { type?: string; server?: string; user?: string; pass?: string; ftp_secure?: boolean; ftp_passive?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19151,7 +19404,7 @@ client.files.ftp.access(path: string, type: string, server: string, user?: strin
 #### `fetch` — Fetch file from Git repository
 
 ```typescript
-client.files.git.fetch(path: string, type: string, url: string, ref?: string, pass?: string)
+client.files.git.fetch(path: string, options?: { type?: string; url?: string; ref?: string; pass?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19185,7 +19438,7 @@ client.files.health.check()
 #### `process` — Process and convert images
 
 ```typescript
-client.files.images.process(image: string, thumbnail: string, format?: string, size?: string, width?: integer, height?: integer, resize?: string, quality?: string, q?: integer, blur?: number, grayscale?: string, bg?: string)
+client.files.images.process(image: string, options?: { thumbnail?: string; format?: string; size?: string; width?: integer; height?: integer; resize?: string; quality?: string; q?: integer; blur?: number; grayscale?: string; bg?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19235,7 +19488,7 @@ client.files.journal.getStats()
 #### `query` — Query journal entries
 
 ```typescript
-client.files.journal.query(path?: string, op?: string, since?: string, limit?: integer, after_id?: integer)
+client.files.journal.query(options?: { path?: string; op?: string; since?: string; limit?: integer; after_id?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19288,7 +19541,7 @@ client.files.mounts.getDetails(id: string)
 #### `list` — List all mounts
 
 ```typescript
-client.files.mounts.list(label?: string)
+client.files.mounts.list(options?: { label?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19338,7 +19591,7 @@ client.files.mounts.update(id: string, data: object)
 #### `access` — Access file from S3
 
 ```typescript
-client.files.s3.access(path: string, type: string, server: string, s3_bucket: string, s3_region: string, user?: string, pass?: string, s3_endpoint?: string)
+client.files.s3.access(path: string, options?: { type?: string; server?: string; s3_bucket?: string; s3_region?: string; user?: string; pass?: string; s3_endpoint?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19362,7 +19615,7 @@ client.files.s3.access(path: string, type: string, server: string, s3_bucket: st
 #### `access` — Access file via SSH/SFTP
 
 ```typescript
-client.files.ssh.access(path: string, type: string, server: string, user: string, pass?: string, key?: string, passphrase?: string)
+client.files.ssh.access(path: string, options?: { type?: string; server?: string; user?: string; pass?: string; key?: string; passphrase?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19383,7 +19636,7 @@ client.files.ssh.access(path: string, type: string, server: string, user: string
 #### `upload` — Upload file via SSH/SFTP
 
 ```typescript
-client.files.ssh.upload(path: string, server: string, user: string, pass?: string, key?: string, passphrase?: string)
+client.files.ssh.upload(path: string, data: object, options?: { server?: string; user?: string; pass?: string; key?: string; passphrase?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19394,6 +19647,7 @@ client.files.ssh.upload(path: string, server: string, user: string, pass?: strin
 | `pass` | `string` | query | No | Password (base64 encoded) |
 | `key` | `string` | query | No | Private key PEM (base64 encoded) |
 | `passphrase` | `string` | query | No | Key passphrase (base64 encoded) |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `any`  |  **HTTP:** `PUT /{path}?type=ssh`
 **CLI:** `hoody files access ssh-upload`
@@ -19418,7 +19672,7 @@ client.files.system.getApiVersion()
 #### `access` — Access file via WebDAV
 
 ```typescript
-client.files.webdav.access(path: string, type: string, server: string, user?: string, pass?: string, webdav_path?: string)
+client.files.webdav.access(path: string, options?: { type?: string; server?: string; user?: string; pass?: string; webdav_path?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19438,7 +19692,7 @@ client.files.webdav.access(path: string, type: string, server: string, user?: st
 #### `copyResource` — Copy file or directory
 
 ```typescript
-client.files.webdav.copyResource(path: string, Destination: string, Depth?: string)
+client.files.webdav.copyResource(path: string, options?: { Destination?: string; Depth?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19469,13 +19723,14 @@ client.files.webdav.getOptions(path: string)
 #### `lockResource` — Lock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.lockResource(path: string, Depth?: string)
+client.files.webdav.lockResource(path: string, data?: object, options?: { Depth?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `string` | header | No |  |
+| `data` | `object` | body | No |  |
 
 **Returns:** `any`  |  **HTTP:** `LOCK /{path}`
 
@@ -19484,7 +19739,7 @@ client.files.webdav.lockResource(path: string, Depth?: string)
 #### `moveResource` — Move or rename file/directory
 
 ```typescript
-client.files.webdav.moveResource(path: string, Destination: string)
+client.files.webdav.moveResource(path: string, options?: { Destination?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -19499,13 +19754,14 @@ client.files.webdav.moveResource(path: string, Destination: string)
 #### `propfindResource` — Get WebDAV properties
 
 ```typescript
-client.files.webdav.propfindResource(path: string, Depth?: string)
+client.files.webdav.propfindResource(path: string, data?: object, options?: { Depth?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `string` | header | No | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
+| `data` | `object` | body | No |  |
 
 **Returns:** `void`  |  **HTTP:** `PROPFIND /{path}`
 
@@ -19514,12 +19770,13 @@ client.files.webdav.propfindResource(path: string, Depth?: string)
 #### `proppatchResource` — Update WebDAV properties
 
 ```typescript
-client.files.webdav.proppatchResource(path: string)
+client.files.webdav.proppatchResource(path: string, data?: object)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
+| `data` | `object` | body | No |  |
 
 **Returns:** `void`  |  **HTTP:** `PROPPATCH /{path}`
 
@@ -19528,7 +19785,7 @@ client.files.webdav.proppatchResource(path: string)
 #### `unlockResource` — Unlock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.unlockResource(path: string, Lock-Token: string)
+client.files.webdav.unlockResource(path: string, options?: { Lock-Token?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20062,7 +20319,7 @@ client.notes.comments.create(notebookId: string, nodeId: string, data: object)
 #### `delete` — Delete a comment
 
 ```typescript
-client.notes.comments.delete(expectedVersion?: integer, notebookId: string, nodeId: string, commentId: string)
+client.notes.comments.delete(notebookId: string, nodeId: string, commentId: string, options?: { expectedVersion?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20100,7 +20357,7 @@ client.notes.comments.edit(notebookId: string, nodeId: string, commentId: string
 #### `list` — List comments
 
 ```typescript
-client.notes.comments.list(limit?: integer, offset?: integer, cursor?: string, notebookId: string, nodeId: string)
+client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer; cursor?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20119,7 +20376,7 @@ client.notes.comments.list(limit?: integer, offset?: integer, cursor?: string, n
 #### `listAnchors` — List comment anchors
 
 ```typescript
-client.notes.comments.listAnchors(limit?: integer, offset?: integer, cursor?: string, notebookId: string, nodeId: string)
+client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer; cursor?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20232,7 +20489,7 @@ client.notes.databases.get(notebookId: string, databaseId: string, recordId: str
 #### `list` — List database records
 
 ```typescript
-client.notes.databases.list(filters?: string, sorts?: string, page?: integer, count?: integer, notebookId: string, databaseId: string)
+client.notes.databases.list(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: integer; count?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20252,7 +20509,7 @@ client.notes.databases.list(filters?: string, sorts?: string, page?: integer, co
 #### `listAll` — List database records (collect all pages)
 
 ```typescript
-client.notes.databases.listAll(filters?: string, sorts?: string, page?: integer, count?: integer, notebookId: string, databaseId: string)
+client.notes.databases.listAll(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: integer; count?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20272,7 +20529,7 @@ client.notes.databases.listAll(filters?: string, sorts?: string, page?: integer,
 #### `listIterator` — List database records (async iterator)
 
 ```typescript
-client.notes.databases.listIterator(filters?: string, sorts?: string, page?: integer, count?: integer, notebookId: string, databaseId: string)
+client.notes.databases.listIterator(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: integer; count?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20292,7 +20549,7 @@ client.notes.databases.listIterator(filters?: string, sorts?: string, page?: int
 #### `search` — Search database records
 
 ```typescript
-client.notes.databases.search(q?: string, exclude?: string, notebookId: string, databaseId: string)
+client.notes.databases.search(notebookId: string, databaseId: string, options?: { q?: string; exclude?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20332,7 +20589,7 @@ client.notes.databases.update(notebookId: string, databaseId: string, recordId: 
 #### `appendDocument` — Append blocks to a document
 
 ```typescript
-client.notes.documents.appendDocument(notebookId: string, nodeId: string, X-Idempotency-Key?: string, data: object)
+client.notes.documents.appendDocument(notebookId: string, nodeId: string, data: object, options?: { X-Idempotency-Key?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20369,7 +20626,7 @@ client.notes.documents.createExportTicket(notebookId: string, nodeId: string, da
 #### `exportBlockSvg` — Export drawing block as SVG
 
 ```typescript
-client.notes.documents.exportBlockSvg(bg?: string, scale?: number, notebookId: string, nodeId: string, blockId: string)
+client.notes.documents.exportBlockSvg(notebookId: string, nodeId: string, blockId: string, options?: { bg?: string; scale?: number })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20387,7 +20644,7 @@ client.notes.documents.exportBlockSvg(bg?: string, scale?: number, notebookId: s
 #### `get` — Get document content
 
 ```typescript
-client.notes.documents.get(blockIds?: string, lines?: string, output?: string, includeComments?: string, ticket?: string, notebookId: string, nodeId: string)
+client.notes.documents.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: string; includeComments?: string; ticket?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20464,7 +20721,7 @@ client.notes.files.download(fileId: string, notebookId: string)
 #### `list` — List all uploaded files
 
 ```typescript
-client.notes.files.list(limit?: integer, offset?: integer, notebookId: string)
+client.notes.files.list(notebookId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20481,7 +20738,7 @@ client.notes.files.list(limit?: integer, offset?: integer, notebookId: string)
 #### `listAll` — List all uploaded files (collect all pages)
 
 ```typescript
-client.notes.files.listAll(limit?: integer, offset?: integer, notebookId: string)
+client.notes.files.listAll(notebookId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20498,7 +20755,7 @@ client.notes.files.listAll(limit?: integer, offset?: integer, notebookId: string
 #### `listIterator` — List all uploaded files (async iterator)
 
 ```typescript
-client.notes.files.listIterator(limit?: integer, offset?: integer, notebookId: string)
+client.notes.files.listIterator(notebookId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20725,7 +20982,7 @@ client.notes.nodes.getByAlias(notebookId: string, alias: string)
 #### `list` — List nodes
 
 ```typescript
-client.notes.nodes.list(type?: string, parentId?: string, rootId?: string, limit?: integer, offset?: integer, notebookId: string)
+client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -20745,7 +21002,7 @@ client.notes.nodes.list(type?: string, parentId?: string, rootId?: string, limit
 #### `listChildren` — List child nodes
 
 ```typescript
-client.notes.nodes.listChildren(limit?: integer, offset?: integer, notebookId: string, nodeId: string)
+client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21030,7 +21287,7 @@ client.notes.versions.get(notebookId: string, nodeId: string, versionId: string)
 #### `list` — List document versions
 
 ```typescript
-client.notes.versions.list(limit?: integer, offset?: integer, notebookId: string, nodeId: string)
+client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: integer; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21138,7 +21395,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
 - WS only with `Upgrade`; else SSE+15 s heartbeat. WS: per-IP caps, origin allow-list, drops after 2 missed pongs.
 - `clearDismissed`=DELETE, `dismiss`=POST, same path.
-- **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `client.api.notifications.*` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated.
+- **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `client.api.notifications.*` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated — and its credential rules are NOT the kit's: reading requires the auth token to hold `resources.read_account` (403 without it), and BOTH acknowledge routes refuse every auth token outright, needing a first-party account login.
 - The CLI uses `namespace: 'notifications'`, which routes through `normalizeKitProgram` to the kit slug `n` and builds `https://{P}-{C}-n-{N}.{server}.containers.hoody.com/api/v1/notifications/...` — `hoody --container <C> notifications {list|dismiss|icon|trigger}` reaches the kit correctly.
 - `notifications stream` mapping has no `cli_stream` flag — the generated CLI buffers SSE events forever instead of streaming. Use SDK `connectStream` (returns a WebSocket wrapper, not void) or hit `/api/v1/notifications/stream` directly with `EventSource`/`fetch` for live feeds.
 - `connectStream` returns a `Promise<NotificationsConnectNotificationStreamWebSocket>` wrapper. Wire callbacks first (`wrapper.onNotification(cb)` / `onHeartbeat(cb)` / `onDisconnect(cb)` / `onError(cb)`), then `await wrapper.connect()`. Close with `wrapper.close()`. There is NO `onMessage`/`onClose` — those names are wrong. `displays` is typed optional in the TS signature but is required at runtime — the SDK throws `ValidationError('displays is required')` if omitted, so always pass it.
@@ -21362,7 +21619,7 @@ client.notifications.icons.get(iconId: string)
 #### `clearDismissed` — Clear dismissed notifications
 
 ```typescript
-client.notifications.clearDismissed(displayId?: string)
+client.notifications.clearDismissed(options?: { displayId?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21377,7 +21634,7 @@ client.notifications.clearDismissed(displayId?: string)
 #### `connectStream` — Real-time notification stream via WebSocket
 
 ```typescript
-client.notifications.connectStream(displays: string)
+client.notifications.connectStream(options?: { displays?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21409,7 +21666,7 @@ client.notifications.dismiss(data: object)
 #### `list` — Get notifications for specified display(s)
 
 ```typescript
-client.notifications.list(display: string, limit?: integer, since?: integer, username?: string, session?: string)
+client.notifications.list(display: string, options?: { limit?: integer; since?: integer; username?: string; session?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21428,7 +21685,7 @@ client.notifications.list(display: string, limit?: integer, since?: integer, use
 #### `listAll` — Get notifications for specified display(s) (collect all pages)
 
 ```typescript
-client.notifications.listAll(display: string, limit?: integer, since?: integer, username?: string, session?: string)
+client.notifications.listAll(display: string, options?: { limit?: integer; since?: integer; username?: string; session?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21447,7 +21704,7 @@ client.notifications.listAll(display: string, limit?: integer, since?: integer, 
 #### `listIterator` — Get notifications for specified display(s) (async iterator)
 
 ```typescript
-client.notifications.listIterator(display: string, limit?: integer, since?: integer, username?: string, session?: string)
+client.notifications.listIterator(display: string, options?: { limit?: integer; since?: integer; username?: string; session?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21829,7 +22086,7 @@ client.pipe.corsPreflight(path: string)
 #### `receive` — Receive data from a pipe
 
 ```typescript
-client.pipe.receive(path: string, n?: integer, download?: string, filename?: string, video?: string, progress?: string)
+client.pipe.receive(path: string, options?: { n?: integer; download?: string; filename?: string; video?: string; progress?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21848,13 +22105,14 @@ client.pipe.receive(path: string, n?: integer, download?: string, filename?: str
 #### `send` — Send data to a pipe
 
 ```typescript
-client.pipe.send(path: string, n?: integer)
+client.pipe.send(path: string, data?: string, options?: { n?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Unique pipe path name. Must not be a reserved path (`/`, `/help`, `/noscript`, `/favicon.ico`, `/robots.txt`).  Examples: `myfile`, `transfer123`, `secret.png`, `logs/today` |
 | `n` | `integer` | query | No | Number of receivers to wait for before starting the transfer. All receivers get identical copies of the data (fan-out). Must be a positive integer, max 256. |
+| `data` | `string` | body | No |  |
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/pipe/{path}`
 
@@ -21875,7 +22133,7 @@ client.pipe.ui.getIndex()
 #### `getNoScript` — No-JavaScript upload page
 
 ```typescript
-client.pipe.ui.getNoScript(path?: string, mode?: string)
+client.pipe.ui.getNoScript(options?: { path?: string; mode?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22124,7 +22382,7 @@ client.proxyLogs.logs.getStats()
 #### `list` — Query centralized logs
 
 ```typescript
-client.proxyLogs.logs.list(limit?: integer, offset?: integer, projectId?: string, containerId?: string, serviceName?: string, level?: string, includeRequestBody?: boolean, includeResponseBody?: boolean, last?: integer, afterId?: integer, cursor?: string, kind?: string, method?: string, source?: string)
+client.proxyLogs.logs.list(options?: { limit?: integer; offset?: integer; projectId?: string; containerId?: string; serviceName?: string; level?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; cursor?: string; kind?: string; method?: string; source?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22152,7 +22410,7 @@ client.proxyLogs.logs.list(limit?: integer, offset?: integer, projectId?: string
 #### `listAll` — Query centralized logs (collect all pages)
 
 ```typescript
-client.proxyLogs.logs.listAll(limit?: integer, offset?: integer, projectId?: string, containerId?: string, serviceName?: string, level?: string, includeRequestBody?: boolean, includeResponseBody?: boolean, last?: integer, afterId?: integer, cursor?: string, kind?: string, method?: string, source?: string)
+client.proxyLogs.logs.listAll(options?: { limit?: integer; offset?: integer; projectId?: string; containerId?: string; serviceName?: string; level?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; cursor?: string; kind?: string; method?: string; source?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22180,7 +22438,7 @@ client.proxyLogs.logs.listAll(limit?: integer, offset?: integer, projectId?: str
 #### `listIterator` — Query centralized logs (async iterator)
 
 ```typescript
-client.proxyLogs.logs.listIterator(limit?: integer, offset?: integer, projectId?: string, containerId?: string, serviceName?: string, level?: string, includeRequestBody?: boolean, includeResponseBody?: boolean, last?: integer, afterId?: integer, cursor?: string, kind?: string, method?: string, source?: string)
+client.proxyLogs.logs.listIterator(options?: { limit?: integer; offset?: integer; projectId?: string; containerId?: string; serviceName?: string; level?: string; includeRequestBody?: boolean; includeResponseBody?: boolean; last?: integer; afterId?: integer; cursor?: string; kind?: string; method?: string; source?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22208,7 +22466,7 @@ client.proxyLogs.logs.listIterator(limit?: integer, offset?: integer, projectId?
 #### `streamLogs` — Live-tail logs over Server-Sent Events (v8 SSE contract)
 
 ```typescript
-client.proxyLogs.logs.streamLogs(projectId?: string, containerId?: string, kind?: string, level?: string, Last-Event-ID?: string)
+client.proxyLogs.logs.streamLogs(options?: { projectId?: string; containerId?: string; kind?: string; level?: string; Last-Event-ID?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22579,7 +22837,7 @@ client.run.jobs.createSearchJob(data: run_Selector)
 #### `getJobStatus` — Get job status
 
 ```typescript
-client.run.jobs.getJobStatus(job_id: string, wait?: string, timeout_ms?: integer)
+client.run.jobs.getJobStatus(job_id: string, options?: { wait?: string; timeout_ms?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22803,7 +23061,7 @@ client.run.resolve(data: run_Selector)
 #### `resolveGet` — Resolve an application and return exact shell command
 
 ```typescript
-client.run.resolveGet(app: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, pick?: string, pick_index?: integer, candidate_id?: string, set_id?: string, terminal_id?: integer, display?: string, origin?: string, dry_run?: boolean, print_curl?: string, format?: string, limit?: integer)
+client.run.resolveGet(options?: { app?: string; os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; terminal_id?: integer; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22855,7 +23113,7 @@ client.run.runBatch(data: run_BatchRequest)
 #### `runPathBased` — Path-based resolve (positional or key-value)
 
 ```typescript
-client.run.runPathBased(rest: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, pick?: string, pick_index?: integer, candidate_id?: string, set_id?: string, terminal_id?: integer, display?: string, origin?: string, dry_run?: boolean, print_curl?: string, format?: string, limit?: integer)
+client.run.runPathBased(rest: string, options?: { os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; terminal_id?: integer; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22893,7 +23151,7 @@ client.run.runPathBased(rest: string, os?: string, source?: array, kind?: string
 #### `runTerminalAnchored` — Terminal-anchored path-based resolve
 
 ```typescript
-client.run.runTerminalAnchored(terminal_id: integer, rest: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, pick?: string, pick_index?: integer, candidate_id?: string, set_id?: string, display?: string, origin?: string, dry_run?: boolean, print_curl?: string, format?: string, limit?: integer)
+client.run.runTerminalAnchored(terminal_id: integer, rest: string, options?: { os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -22931,7 +23189,7 @@ client.run.runTerminalAnchored(terminal_id: integer, rest: string, os?: string, 
 #### `searchCandidates` — Search for app candidates
 
 ```typescript
-client.run.searchCandidates(app: string, os?: string, source?: array, kind?: string, arch?: string, tags?: array, profile?: string, channel?: string, version?: string, variant?: string, publisher?: string, repo?: string, release?: string, asset?: string, limit?: integer)
+client.run.searchCandidates(options?: { app?: string; os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23462,7 +23720,7 @@ await client.files.delete(db);
 #### `create` — Create new SQLite database
 
 ```typescript
-client.sqlite.database.create(path: string, init_kv?: boolean, kv_table?: string)
+client.sqlite.database.create(options?: { path?: string; init_kv?: boolean; kv_table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23479,7 +23737,7 @@ client.sqlite.database.create(path: string, init_kv?: boolean, kv_table?: string
 #### `executeTransaction` — Execute SQL transaction
 
 ```typescript
-client.sqlite.database.executeTransaction(db: string, create_db_if_missing?: boolean, data: sqlite_main.request)
+client.sqlite.database.executeTransaction(data: sqlite_main.request, options?: { db?: string; create_db_if_missing?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23542,7 +23800,7 @@ client.sqlite.health.getHealthCache()
 #### `clear` — Clear query history
 
 ```typescript
-client.sqlite.history.clear(db: string)
+client.sqlite.history.clear(options?: { db?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23557,7 +23815,7 @@ client.sqlite.history.clear(db: string)
 #### `deleteEntry` — Delete history entry
 
 ```typescript
-client.sqlite.history.deleteEntry(index: integer, db: string)
+client.sqlite.history.deleteEntry(index: integer, options?: { db?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23573,7 +23831,7 @@ client.sqlite.history.deleteEntry(index: integer, db: string)
 #### `getStats` — Get history statistics
 
 ```typescript
-client.sqlite.history.getStats(db: string)
+client.sqlite.history.getStats(options?: { db?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23588,7 +23846,7 @@ client.sqlite.history.getStats(db: string)
 #### `list` — Get query history
 
 ```typescript
-client.sqlite.history.list(db: string, limit?: integer)
+client.sqlite.history.list(options?: { db?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23606,7 +23864,7 @@ client.sqlite.history.list(db: string, limit?: integer)
 #### `batchDelete` — Batch delete multiple keys
 
 ```typescript
-client.sqlite.kvStore.batchDelete(db: string, table?: string, data: sqlite_main.kvBatchDeleteRequest)
+client.sqlite.kvStore.batchDelete(data: sqlite_main.kvBatchDeleteRequest, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23623,7 +23881,7 @@ client.sqlite.kvStore.batchDelete(db: string, table?: string, data: sqlite_main.
 #### `batchGet` — Batch get multiple keys
 
 ```typescript
-client.sqlite.kvStore.batchGet(db: string, table?: string, data: sqlite_main.kvBatchGetRequest)
+client.sqlite.kvStore.batchGet(data: sqlite_main.kvBatchGetRequest, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23640,7 +23898,7 @@ client.sqlite.kvStore.batchGet(db: string, table?: string, data: sqlite_main.kvB
 #### `batchSet` — Batch set multiple keys
 
 ```typescript
-client.sqlite.kvStore.batchSet(db: string, table?: string, data: sqlite_main.kvBatchSetRequest)
+client.sqlite.kvStore.batchSet(data: sqlite_main.kvBatchSetRequest, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23657,7 +23915,7 @@ client.sqlite.kvStore.batchSet(db: string, table?: string, data: sqlite_main.kvB
 #### `compareSnapshots` — Compare table snapshots
 
 ```typescript
-client.sqlite.kvStore.compareSnapshots(db: string, table?: string, from: integer, to: integer, keys?: string)
+client.sqlite.kvStore.compareSnapshots(options?: { db?: string; table?: string; from?: integer; to?: integer; keys?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23676,7 +23934,7 @@ client.sqlite.kvStore.compareSnapshots(db: string, table?: string, from: integer
 #### `decr` — Atomic decrement
 
 ```typescript
-client.sqlite.kvStore.decr(key: string, db: string, table?: string, delta?: integer, path?: string, history?: boolean)
+client.sqlite.kvStore.decr(key: string, options?: { db?: string; table?: string; delta?: integer; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23696,7 +23954,7 @@ client.sqlite.kvStore.decr(key: string, db: string, table?: string, delta?: inte
 #### `delete` — Delete key
 
 ```typescript
-client.sqlite.kvStore.delete(key: string, db: string, table?: string, history?: boolean)
+client.sqlite.kvStore.delete(key: string, options?: { db?: string; table?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23714,7 +23972,7 @@ client.sqlite.kvStore.delete(key: string, db: string, table?: string, history?: 
 #### `exists` — Check if key exists
 
 ```typescript
-client.sqlite.kvStore.exists(key: string, db: string, table?: string)
+client.sqlite.kvStore.exists(key: string, options?: { db?: string; table?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23731,7 +23989,7 @@ client.sqlite.kvStore.exists(key: string, db: string, table?: string)
 #### `get` — Get value by key
 
 ```typescript
-client.sqlite.kvStore.get(key: string, db: string, table?: string, path?: string, at_timestamp?: integer, rebuild?: boolean)
+client.sqlite.kvStore.get(key: string, options?: { db?: string; table?: string; path?: string; at_timestamp?: integer; rebuild?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23751,7 +24009,7 @@ client.sqlite.kvStore.get(key: string, db: string, table?: string, path?: string
 #### `getHistory` — Get key operation history
 
 ```typescript
-client.sqlite.kvStore.getHistory(key: string, db: string, table?: string, limit?: integer)
+client.sqlite.kvStore.getHistory(key: string, options?: { db?: string; table?: string; limit?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23769,7 +24027,7 @@ client.sqlite.kvStore.getHistory(key: string, db: string, table?: string, limit?
 #### `getSnapshot` — Get key snapshot at operation
 
 ```typescript
-client.sqlite.kvStore.getSnapshot(key: string, db: string, table?: string, op_number: integer)
+client.sqlite.kvStore.getSnapshot(key: string, options?: { db?: string; table?: string; op_number?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23787,7 +24045,7 @@ client.sqlite.kvStore.getSnapshot(key: string, db: string, table?: string, op_nu
 #### `getTableSnapshot` — Get table snapshot at timestamp
 
 ```typescript
-client.sqlite.kvStore.getTableSnapshot(db: string, table?: string, timestamp: integer, limit?: integer, prefix?: string)
+client.sqlite.kvStore.getTableSnapshot(options?: { db?: string; table?: string; timestamp?: integer; limit?: integer; prefix?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23806,7 +24064,7 @@ client.sqlite.kvStore.getTableSnapshot(db: string, table?: string, timestamp: in
 #### `incr` — Atomic increment
 
 ```typescript
-client.sqlite.kvStore.incr(key: string, db: string, table?: string, delta?: integer, path?: string, history?: boolean)
+client.sqlite.kvStore.incr(key: string, options?: { db?: string; table?: string; delta?: integer; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23826,7 +24084,7 @@ client.sqlite.kvStore.incr(key: string, db: string, table?: string, delta?: inte
 #### `list` — List keys
 
 ```typescript
-client.sqlite.kvStore.list(db: string, table?: string, prefix?: string, limit?: integer, offset?: integer, at_timestamp?: integer)
+client.sqlite.kvStore.list(options?: { db?: string; table?: string; prefix?: string; limit?: integer; offset?: integer; at_timestamp?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23846,7 +24104,7 @@ client.sqlite.kvStore.list(db: string, table?: string, prefix?: string, limit?: 
 #### `listAll` — List keys (collect all pages)
 
 ```typescript
-client.sqlite.kvStore.listAll(db: string, table?: string, prefix?: string, limit?: integer, offset?: integer, at_timestamp?: integer)
+client.sqlite.kvStore.listAll(options?: { db?: string; table?: string; prefix?: string; limit?: integer; offset?: integer; at_timestamp?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23866,7 +24124,7 @@ client.sqlite.kvStore.listAll(db: string, table?: string, prefix?: string, limit
 #### `listIterator` — List keys (async iterator)
 
 ```typescript
-client.sqlite.kvStore.listIterator(db: string, table?: string, prefix?: string, limit?: integer, offset?: integer, at_timestamp?: integer)
+client.sqlite.kvStore.listIterator(options?: { db?: string; table?: string; prefix?: string; limit?: integer; offset?: integer; at_timestamp?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23886,7 +24144,7 @@ client.sqlite.kvStore.listIterator(db: string, table?: string, prefix?: string, 
 #### `pop` — Remove from array end
 
 ```typescript
-client.sqlite.kvStore.pop(key: string, db: string, table?: string, path?: string, history?: boolean)
+client.sqlite.kvStore.pop(key: string, options?: { db?: string; table?: string; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23905,7 +24163,7 @@ client.sqlite.kvStore.pop(key: string, db: string, table?: string, path?: string
 #### `push` — Append to array
 
 ```typescript
-client.sqlite.kvStore.push(key: string, db: string, table?: string, path?: string, history?: boolean, data: object)
+client.sqlite.kvStore.push(key: string, data: object, options?: { db?: string; table?: string; path?: string; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23925,7 +24183,7 @@ client.sqlite.kvStore.push(key: string, db: string, table?: string, path?: strin
 #### `removeElement` — Remove array element
 
 ```typescript
-client.sqlite.kvStore.removeElement(key: string, db: string, table?: string, path?: string, index?: integer, history?: boolean, data: object)
+client.sqlite.kvStore.removeElement(key: string, data: object, options?: { db?: string; table?: string; path?: string; index?: integer; history?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23946,7 +24204,7 @@ client.sqlite.kvStore.removeElement(key: string, db: string, table?: string, pat
 #### `rollback` — Rollback key operations
 
 ```typescript
-client.sqlite.kvStore.rollback(key: string, db: string, table?: string, steps?: integer)
+client.sqlite.kvStore.rollback(key: string, options?: { db?: string; table?: string; steps?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23964,7 +24222,7 @@ client.sqlite.kvStore.rollback(key: string, db: string, table?: string, steps?: 
 #### `rollbackTable` — Rollback entire table
 
 ```typescript
-client.sqlite.kvStore.rollbackTable(db: string, table?: string, to_timestamp: integer, dry_run?: boolean, confirm?: string, data: sqlite_main.kvTableRollbackRequest)
+client.sqlite.kvStore.rollbackTable(data: sqlite_main.kvTableRollbackRequest, options?: { db?: string; table?: string; to_timestamp?: integer; dry_run?: boolean; confirm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23984,7 +24242,7 @@ client.sqlite.kvStore.rollbackTable(db: string, table?: string, to_timestamp: in
 #### `set` — Set value for key
 
 ```typescript
-client.sqlite.kvStore.set(key: string, db: string, table?: string, path?: string, ttl?: integer, if_match?: string, history?: boolean, create_db_if_missing?: boolean, data: string)
+client.sqlite.kvStore.set(key: string, data: string, options?: { db?: string; table?: string; path?: string; ttl?: integer; if_match?: string; history?: boolean; create_db_if_missing?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24011,7 +24269,7 @@ client.sqlite.kvStore.set(key: string, db: string, table?: string, path?: string
 #### `executeShareable` — Execute shareable SQL query
 
 ```typescript
-client.sqlite.query.executeShareable(db: string, sql: string)
+client.sqlite.query.executeShareable(options?: { db?: string; sql?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24029,7 +24287,7 @@ client.sqlite.query.executeShareable(db: string, sql: string)
 #### `runMaintenance` — Run a database maintenance operation
 
 ```typescript
-client.sqlite.sql.runMaintenance(db: string, timeout?: integer, data: object)
+client.sqlite.sql.runMaintenance(data: object, options?: { db?: string; timeout?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24405,7 +24663,7 @@ client.terminal.docs.getYaml()
 #### `execute` — Execute command in terminal session
 
 ```typescript
-client.terminal.execution.execute(terminal_id?: string, ephemeral?: boolean, defer_pid?: integer, defer_start_time_ticks?: string, defer_timeout_ms?: integer, defer_poll_ms?: integer, reset?: boolean, cwd?: string, cwd_auto_create?: boolean, shell?: string, user?: string, cmd?: string, env?: string, skip_display_wait?: boolean, display_wait_timeout?: integer, display?: string, ssh_host?: string, ssh_user?: string, ssh_port?: string, ssh_password?: string, socks5_host?: string, socks5_port?: string, socks5_user?: string, ssh_key?: string, socks5_pass?: string, data: object)
+client.terminal.execution.execute(data: object, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: integer; defer_start_time_ticks?: string; defer_timeout_ms?: integer; defer_poll_ms?: integer; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; skip_display_wait?: boolean; display_wait_timeout?: integer; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24477,7 +24735,7 @@ client.terminal.health.check()
 #### `captureScreenshot` — Capture terminal screenshot
 
 ```typescript
-client.terminal.sessions.captureScreenshot(terminal_id: string, format?: string, foreground?: string, background?: string, fontsize?: integer, save?: boolean)
+client.terminal.sessions.captureScreenshot(options?: { terminal_id?: string; format?: string; foreground?: string; background?: string; fontsize?: integer; save?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24497,7 +24755,7 @@ client.terminal.sessions.captureScreenshot(terminal_id: string, format?: string,
 #### `connectWebSocket` — WebSocket terminal connection
 
 ```typescript
-client.terminal.sessions.connectWebSocket(terminal_id?: string, readonly?: boolean, cwd?: string, cwd_auto_create?: boolean, shell?: string, user?: string, cmd?: string, env?: string, display?: string, pid?: integer, ssh_host?: string, ssh_user?: string, ssh_port?: string, ssh_password?: string, socks5_host?: string, socks5_port?: string)
+client.terminal.sessions.connectWebSocket(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; display?: string; pid?: integer; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24559,7 +24817,7 @@ client.terminal.sessions.delete(terminal_id: string)
 #### `getRawOutput` — Get raw terminal output
 
 ```typescript
-client.terminal.sessions.getRawOutput(terminal_id?: string, format?: string, tail?: integer)
+client.terminal.sessions.getRawOutput(options?: { terminal_id?: string; format?: string; tail?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24576,7 +24834,7 @@ client.terminal.sessions.getRawOutput(terminal_id?: string, format?: string, tai
 #### `list` — List all terminal sessions
 
 ```typescript
-client.terminal.sessions.list(history_limit?: integer, history_lines?: integer)
+client.terminal.sessions.list(options?: { history_limit?: integer; history_lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24592,7 +24850,7 @@ client.terminal.sessions.list(history_limit?: integer, history_lines?: integer)
 #### `listAll` — List all terminal sessions (collect all pages)
 
 ```typescript
-client.terminal.sessions.listAll(history_limit?: integer, history_lines?: integer)
+client.terminal.sessions.listAll(options?: { history_limit?: integer; history_lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24653,7 +24911,7 @@ client.terminal.sessions.listHistoryIterator(terminal_id: string)
 #### `listIterator` — List all terminal sessions (async iterator)
 
 ```typescript
-client.terminal.sessions.listIterator(history_limit?: integer, history_lines?: integer)
+client.terminal.sessions.listIterator(options?: { history_limit?: integer; history_lines?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24735,7 +24993,7 @@ client.terminal.system.getResources()
 #### `listPorts` — List all listening network ports
 
 ```typescript
-client.terminal.system.listPorts(protocol?: string, user?: string, port?: integer, ip?: string, skip_program?: string, http_only?: boolean, hoody_only?: boolean)
+client.terminal.system.listPorts(options?: { protocol?: string; user?: string; port?: integer; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24756,7 +25014,7 @@ client.terminal.system.listPorts(protocol?: string, user?: string, port?: intege
 #### `listPortsAll` — List all listening network ports (collect all pages)
 
 ```typescript
-client.terminal.system.listPortsAll(protocol?: string, user?: string, port?: integer, ip?: string, skip_program?: string, http_only?: boolean, hoody_only?: boolean)
+client.terminal.system.listPortsAll(options?: { protocol?: string; user?: string; port?: integer; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24777,7 +25035,7 @@ client.terminal.system.listPortsAll(protocol?: string, user?: string, port?: int
 #### `listPortsIterator` — List all listening network ports (async iterator)
 
 ```typescript
-client.terminal.system.listPortsIterator(protocol?: string, user?: string, port?: integer, ip?: string, skip_program?: string, http_only?: boolean, hoody_only?: boolean)
+client.terminal.system.listPortsIterator(options?: { protocol?: string; user?: string; port?: integer; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24798,7 +25056,7 @@ client.terminal.system.listPortsIterator(protocol?: string, user?: string, port?
 #### `listProcesses` — List all system processes
 
 ```typescript
-client.terminal.system.listProcesses(sort?: string, limit?: integer, filter?: string)
+client.terminal.system.listProcesses(options?: { sort?: string; limit?: integer; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24815,7 +25073,7 @@ client.terminal.system.listProcesses(sort?: string, limit?: integer, filter?: st
 #### `listProcessesAll` — List all system processes (collect all pages)
 
 ```typescript
-client.terminal.system.listProcessesAll(sort?: string, limit?: integer, filter?: string)
+client.terminal.system.listProcessesAll(options?: { sort?: string; limit?: integer; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24832,7 +25090,7 @@ client.terminal.system.listProcessesAll(sort?: string, limit?: integer, filter?:
 #### `listProcessesIterator` — List all system processes (async iterator)
 
 ```typescript
-client.terminal.system.listProcessesIterator(sort?: string, limit?: integer, filter?: string)
+client.terminal.system.listProcessesIterator(options?: { sort?: string; limit?: integer; filter?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24849,7 +25107,7 @@ client.terminal.system.listProcessesIterator(sort?: string, limit?: integer, fil
 #### `reboot` — Reboot the system
 
 ```typescript
-client.terminal.system.reboot(delay?: integer)
+client.terminal.system.reboot(options?: { delay?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24881,7 +25139,7 @@ client.terminal.system.sendSignal(data: object)
 #### `shutdown` — Shutdown the system
 
 ```typescript
-client.terminal.system.shutdown(delay?: integer)
+client.terminal.system.shutdown(options?: { delay?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24932,7 +25190,7 @@ client.terminal.abort(command_id: string, data?: object)
 #### `write` — Write input to terminal
 
 ```typescript
-client.terminal.write(terminal_id: string, data?: object)
+client.terminal.write(data?: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24952,7 +25210,7 @@ client.terminal.write(terminal_id: string, data?: object)
 #### `findInTerminal` — Search terminal screen with regex
 
 ```typescript
-client.terminal.terminalAutomation.findInTerminal(terminal_id: string, pattern: string, scope?: string, limit?: integer, case_insensitive?: boolean, scroll_offset?: integer)
+client.terminal.terminalAutomation.findInTerminal(options?: { terminal_id?: string; pattern?: string; scope?: string; limit?: integer; case_insensitive?: boolean; scroll_offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -24998,7 +25256,7 @@ client.terminal.terminalAutomation.getSessionAutomationState(terminal_id: string
 #### `getTerminalSnapshot` — Get rendered terminal snapshot
 
 ```typescript
-client.terminal.terminalAutomation.getTerminalSnapshot(terminal_id: string, include_colors?: boolean, include_highlights?: boolean, scroll_offset?: integer)
+client.terminal.terminalAutomation.getTerminalSnapshot(options?: { terminal_id?: string; include_colors?: boolean; include_highlights?: boolean; scroll_offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25027,7 +25285,7 @@ client.terminal.terminalAutomation.listSupportedKeys()
 #### `pasteTerminalText` — Paste text into terminal
 
 ```typescript
-client.terminal.terminalAutomation.pasteTerminalText(terminal_id: string, data: object)
+client.terminal.terminalAutomation.pasteTerminalText(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25045,7 +25303,7 @@ client.terminal.terminalAutomation.pasteTerminalText(terminal_id: string, data: 
 #### `pressTerminalKeys` — Send named key presses to terminal
 
 ```typescript
-client.terminal.terminalAutomation.pressTerminalKeys(terminal_id: string, data: object)
+client.terminal.terminalAutomation.pressTerminalKeys(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25053,7 +25311,7 @@ client.terminal.terminalAutomation.pressTerminalKeys(terminal_id: string, data: 
 | `terminal_id` | `string` | query | Yes | Terminal session ID |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ keys: any[], key: string }`
+**Body:** `{ keys: string[], key: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/press`
 **CLI:** `hoody terminal sessions press`
@@ -25063,7 +25321,7 @@ client.terminal.terminalAutomation.pressTerminalKeys(terminal_id: string, data: 
 #### `sendTerminalMouseEvents` — Send cell-based mouse events to terminal
 
 ```typescript
-client.terminal.terminalAutomation.sendTerminalMouseEvents(terminal_id: string, data: object)
+client.terminal.terminalAutomation.sendTerminalMouseEvents(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25080,7 +25338,7 @@ client.terminal.terminalAutomation.sendTerminalMouseEvents(terminal_id: string, 
 #### `waitForTerminal` — Wait for terminal condition
 
 ```typescript
-client.terminal.terminalAutomation.waitForTerminal(terminal_id: string, data: object)
+client.terminal.terminalAutomation.waitForTerminal(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25100,7 +25358,7 @@ client.terminal.terminalAutomation.waitForTerminal(terminal_id: string, data: ob
 #### `beginTerminalDrop` — Begin a drag-and-drop staging transaction
 
 ```typescript
-client.terminal.terminalDragAndDrop.beginTerminalDrop(terminal_id: string)
+client.terminal.terminalDragAndDrop.beginTerminalDrop(options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25114,7 +25372,7 @@ client.terminal.terminalDragAndDrop.beginTerminalDrop(terminal_id: string)
 #### `commitTerminalDrop` — Finalize a drop and inject the OSC frame
 
 ```typescript
-client.terminal.terminalDragAndDrop.commitTerminalDrop(terminal_id: string, drop: string, token: string, data: object)
+client.terminal.terminalDragAndDrop.commitTerminalDrop(data: object, options?: { terminal_id?: string; drop?: string; token?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25124,7 +25382,7 @@ client.terminal.terminalDragAndDrop.commitTerminalDrop(terminal_id: string, drop
 | `token` | `string` | query | Yes | Drop token from /drop-begin |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ ctx*: string, r: int, c: int, cr: string, items*: any[] }`
+**Body:** `{ ctx*: string, r: int, c: int, cr: string, items*: object[] }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/drop-commit`
 
@@ -25133,7 +25391,7 @@ client.terminal.terminalDragAndDrop.commitTerminalDrop(terminal_id: string, drop
 #### `oneShotTerminalDrop` — One-shot drop (begin + stage + commit)
 
 ```typescript
-client.terminal.terminalDragAndDrop.oneShotTerminalDrop(terminal_id: string, data: object)
+client.terminal.terminalDragAndDrop.oneShotTerminalDrop(data: object, options?: { terminal_id?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25141,7 +25399,7 @@ client.terminal.terminalDragAndDrop.oneShotTerminalDrop(terminal_id: string, dat
 | `terminal_id` | `string` | query | Yes | Terminal session ID (numeric 1-65535) |
 | `data` | `object` | body | Yes |  |
 
-**Body:** `{ ctx*: string, r: int, c: int, items*: any[] }`
+**Body:** `{ ctx*: string, r: int, c: int, items*: object[] }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/drop`
 
@@ -25150,7 +25408,7 @@ client.terminal.terminalDragAndDrop.oneShotTerminalDrop(terminal_id: string, dat
 #### `uploadTerminalDropSlice` — Upload a raw file slice into a drop
 
 ```typescript
-client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(terminal_id: string, drop: string, token: string, path: string, offset: integer)
+client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(data: object, options?: { terminal_id?: string; drop?: string; token?: string; path?: string; offset?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25160,6 +25418,7 @@ client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(terminal_id: string,
 | `token` | `string` | query | Yes | Drop token from /drop-begin |
 | `path` | `string` | query | Yes | Sanitized relative path of the staged file (no `..`, not absolute) |
 | `offset` | `integer` | query | Yes | Byte offset to write at (must equal the current staged size) |
+| `data` | `object` | body | Yes |  |
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/terminal/upload`
 
@@ -25188,7 +25447,7 @@ client.terminal.terminalState.postTerminalState(data?: object)
 #### `get` — Get web terminal interface
 
 ```typescript
-client.terminal.web.get(terminal_id?: string, cwd?: string, cwd_auto_create?: boolean, shell?: string, user?: string, cmd?: string, readonly?: boolean, title?: string, fontSize?: integer, backgroundColor?: string, panel?: string, panel-visible?: boolean, panel-position?: string, panel-width?: string, panel-resizable?: boolean, hide-toolbar?: boolean, ssh_host?: string, ssh_user?: string, ssh_port?: string, ssh_password?: string, socks5_host?: string, socks5_port?: string, socks5_user?: string, socks5_pass?: string, desktop?: boolean, desktop_env?: string, redirect?: string, redirect_delay?: integer, arg?: string, welcome?: boolean, debug?: boolean, reset?: boolean, pid?: integer, env?: string, display?: string, env_inject?: boolean, startup_script?: string, ssh_key?: string, panel-height?: string)
+client.terminal.web.get(options?: { terminal_id?: string; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; readonly?: boolean; title?: string; fontSize?: integer; backgroundColor?: string; panel?: string; panel-visible?: boolean; panel-position?: string; panel-width?: string; panel-resizable?: boolean; hide-toolbar?: boolean; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; desktop?: boolean; desktop_env?: string; redirect?: string; redirect_delay?: integer; arg?: string; welcome?: boolean; debug?: boolean; reset?: boolean; pid?: integer; env?: string; display?: string; env_inject?: boolean; startup_script?: string; ssh_key?: string; panel-height?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25344,7 +25603,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 The `tunnel` namespace covers only the **observability + admin** surface — `health.check`, `listTunnels`, `listSessions`, `listBindings`, `getMetrics`, `killSession`. The data plane (open / pull) is a long-running WebSocket driver that lives in a separate package; it is intentionally out of scope here, so these 7 examples assume *somebody else* (a teammate's tunnel expose/pull session, your CI machine's tunnel session, a test rig) is currently holding the tunnel. You're the operator: inspecting it, scraping metrics, killing it. Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first.
 
-Read-only steps were live-attempted against the test container; on this deployment the tunnel kit process was not running on that container at the moment of writing (502); the admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
+The admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
 
 ### 1. Health probe — kit alive, FD budget not exhausted
 
@@ -25490,7 +25749,7 @@ client.tunnel.getMetrics()
 #### `killSession` — Terminate an active tunnel session
 
 ```typescript
-client.tunnel.killSession(session_id: string, grace_ms?: integer)
+client.tunnel.killSession(session_id: string, options?: { grace_ms?: integer })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -25820,16 +26079,16 @@ client.watch.health.check()
 #### `listEvents` — List Watcher Events
 
 ```typescript
-client.watch.streams.listEvents(id: string, since_id?: integer|null, since_timestamp?: string|null, page?: integer|null, limit?: integer|null)
+client.watch.streams.listEvents(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null; page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_EventHistoryResponse`  |  **HTTP:** `GET /watchers/{id}/events`
 **CLI:** `hoody watch events list`
@@ -25839,16 +26098,16 @@ client.watch.streams.listEvents(id: string, since_id?: integer|null, since_times
 #### `listEventsAll` — List Watcher Events (collect all pages)
 
 ```typescript
-client.watch.streams.listEventsAll(id: string, since_id?: integer|null, since_timestamp?: string|null, page?: integer|null, limit?: integer|null)
+client.watch.streams.listEventsAll(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null; page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_EventHistoryResponse[]`  |  **HTTP:** `GET /watchers/{id}/events`
 **CLI:** `hoody watch events list`
@@ -25858,16 +26117,16 @@ client.watch.streams.listEventsAll(id: string, since_id?: integer|null, since_ti
 #### `listEventsIterator` — List Watcher Events (async iterator)
 
 ```typescript
-client.watch.streams.listEventsIterator(id: string, since_id?: integer|null, since_timestamp?: string|null, page?: integer|null, limit?: integer|null)
+client.watch.streams.listEventsIterator(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null; page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `AsyncIterableIterator<watch_EventHistoryResponse>`  |  **HTTP:** `GET /watchers/{id}/events`
 **CLI:** `hoody watch events list`
@@ -25877,14 +26136,14 @@ client.watch.streams.listEventsIterator(id: string, since_id?: integer|null, sin
 #### `streamSse` — Stream Watcher Events Sse
 
 ```typescript
-client.watch.streams.streamSse(id: string, since_id?: integer|null, since_timestamp?: string|null)
+client.watch.streams.streamSse(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
 
 **Returns:** `any`  |  **HTTP:** `GET /watchers/{id}/events/sse`
 **CLI:** `hoody watch events stream`
@@ -25894,14 +26153,14 @@ client.watch.streams.streamSse(id: string, since_id?: integer|null, since_timest
 #### `streamWs` — Stream Watcher Events Ws
 
 ```typescript
-client.watch.streams.streamWs(id: string, since_id?: integer|null, since_timestamp?: string|null)
+client.watch.streams.streamWs(id: string, options?: { since_id?: integer|null; since_timestamp?: string|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Watcher id |
-| `since_id` | `integer|null` | query | No | Replay events strictly after this event id. |
-| `since_timestamp` | `string|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `since_id` | `integer\|null` | query | No | Replay events strictly after this event id. |
+| `since_timestamp` | `string\|null` | query | No | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
 
 **Returns:** `void`  |  **HTTP:** `GET /watchers/{id}/events/ws`
 
@@ -25979,13 +26238,13 @@ client.watch.watchers.get(id: string)
 #### `list` — List Watchers
 
 ```typescript
-client.watch.watchers.list(page?: integer|null, limit?: integer|null)
+client.watch.watchers.list(options?: { page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_WatcherListResponse`  |  **HTTP:** `GET /watchers`
 **CLI:** `hoody watch list`
@@ -25995,13 +26254,13 @@ client.watch.watchers.list(page?: integer|null, limit?: integer|null)
 #### `listAll` — List Watchers (collect all pages)
 
 ```typescript
-client.watch.watchers.listAll(page?: integer|null, limit?: integer|null)
+client.watch.watchers.listAll(options?: { page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `watch_WatcherListResponse[]`  |  **HTTP:** `GET /watchers`
 **CLI:** `hoody watch list`
@@ -26011,13 +26270,13 @@ client.watch.watchers.listAll(page?: integer|null, limit?: integer|null)
 #### `listIterator` — List Watchers (async iterator)
 
 ```typescript
-client.watch.watchers.listIterator(page?: integer|null, limit?: integer|null)
+client.watch.watchers.listIterator(options?: { page?: integer|null; limit?: integer|null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `integer|null` | query | No | Page number (1-based). |
-| `limit` | `integer|null` | query | No | Items per page (1-200). |
+| `page` | `integer\|null` | query | No | Page number (1-based). |
+| `limit` | `integer\|null` | query | No | Items per page (1-200). |
 
 **Returns:** `AsyncIterableIterator<watch_WatcherListResponse>`  |  **HTTP:** `GET /watchers`
 **CLI:** `hoody watch list`

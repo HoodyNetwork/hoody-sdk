@@ -1,4 +1,4 @@
-> _**HTTP skill · `pipe` namespace** · ~4,906 tokens · hoody-sdk v1.0.0-beta.12_
+> _**HTTP skill · `pipe` namespace** · ~4,910 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `pipe` — Zero-storage streaming HTTP transfers
 
@@ -338,7 +338,7 @@ grep -iE '^x-hoody-pipe|^x-piping' /tmp/h
 |--------|---------|--------|
 | `OPTIONS /api/v1/pipe/{path}` | CORS preflight |  |
 | `GET /api/v1/pipe/{path}` | Receive data from a pipe | `?n` `?download` `?filename` `?video` `?progress` |
-| `POST /api/v1/pipe/{path}` | Send data to a pipe | `?n` |
+| `POST /api/v1/pipe/{path}` | Send data to a pipe | `?n` `body:string` |
 
 **Param notes:**
 

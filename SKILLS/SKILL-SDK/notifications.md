@@ -1,4 +1,4 @@
-> _**SDK skill · `notifications` namespace** · ~6,182 tokens · hoody-sdk v1.0.0-beta.12_
+> _**SDK skill · `notifications` namespace** · ~6,256 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `notifications` — Trigger and consume desktop notifications inside a container
 
@@ -73,7 +73,7 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
 - WS only with `Upgrade`; else SSE+15 s heartbeat. WS: per-IP caps, origin allow-list, drops after 2 missed pongs.
 - `clearDismissed`=DELETE, `dismiss`=POST, same path.
-- **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `client.api.notifications.*` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated.
+- **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `client.api.notifications.*` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated — and its credential rules are NOT the kit's: reading requires the auth token to hold `resources.read_account` (403 without it), and BOTH acknowledge routes refuse every auth token outright, needing a first-party account login.
 - The CLI uses `namespace: 'notifications'`, which routes through `normalizeKitProgram` to the kit slug `n` and builds `https://{P}-{C}-n-{N}.{server}.containers.hoody.com/api/v1/notifications/...` — `hoody --container <C> notifications {list|dismiss|icon|trigger}` reaches the kit correctly.
 - `notifications stream` mapping has no `cli_stream` flag — the generated CLI buffers SSE events forever instead of streaming. Use SDK `connectStream` (returns a WebSocket wrapper, not void) or hit `/api/v1/notifications/stream` directly with `EventSource`/`fetch` for live feeds.
 - `connectStream` returns a `Promise<NotificationsConnectNotificationStreamWebSocket>` wrapper. Wire callbacks first (`wrapper.onNotification(cb)` / `onHeartbeat(cb)` / `onDisconnect(cb)` / `onError(cb)`), then `await wrapper.connect()`. Close with `wrapper.close()`. There is NO `onMessage`/`onClose` — those names are wrong. `displays` is typed optional in the TS signature but is required at runtime — the SDK throws `ValidationError('displays is required')` if omitted, so always pass it.
@@ -297,7 +297,7 @@ client.notifications.icons.get(iconId: string)
 #### `clearDismissed` — Clear dismissed notifications
 
 ```typescript
-client.notifications.clearDismissed(displayId?: string)
+client.notifications.clearDismissed(options?: { displayId?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -312,7 +312,7 @@ client.notifications.clearDismissed(displayId?: string)
 #### `connectStream` — Real-time notification stream via WebSocket
 
 ```typescript
-client.notifications.connectStream(displays: string)
+client.notifications.connectStream(options?: { displays?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -344,7 +344,7 @@ client.notifications.dismiss(data: object)
 #### `list` — Get notifications for specified display(s)
 
 ```typescript
-client.notifications.list(display: string, limit?: integer, since?: integer, username?: string, session?: string)
+client.notifications.list(display: string, options?: { limit?: integer; since?: integer; username?: string; session?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -363,7 +363,7 @@ client.notifications.list(display: string, limit?: integer, since?: integer, use
 #### `listAll` — Get notifications for specified display(s) (collect all pages)
 
 ```typescript
-client.notifications.listAll(display: string, limit?: integer, since?: integer, username?: string, session?: string)
+client.notifications.listAll(display: string, options?: { limit?: integer; since?: integer; username?: string; session?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -382,7 +382,7 @@ client.notifications.listAll(display: string, limit?: integer, since?: integer, 
 #### `listIterator` — Get notifications for specified display(s) (async iterator)
 
 ```typescript
-client.notifications.listIterator(display: string, limit?: integer, since?: integer, username?: string, session?: string)
+client.notifications.listIterator(display: string, options?: { limit?: integer; since?: integer; username?: string; session?: string })
 ```
 
 | Parameter | Type | In | Required | Description |

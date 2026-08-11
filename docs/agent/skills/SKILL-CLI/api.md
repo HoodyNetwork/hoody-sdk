@@ -1,4 +1,4 @@
-> _**CLI skill · `api` namespace** · ~14,350 tokens · hoody-sdk v1.0.0-beta.12_
+> _**CLI skill · `api` namespace** · ~14,501 tokens · hoody-sdk v1.0.0-beta.13_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -128,7 +128,7 @@ Project-scope analogues live under `hoody projects proxy *`.
 11. `hoody servers extend`
 12. `hoody servers exec`
 
-Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands.
+Vault, pools (+ pool members + pool invitations), notifications/events/activity inbox are pure CRUD — see the auto-generated Reference for method signatures, services and the corresponding endpoints / commands. ONE exception worth reading before you call it: the notification inbox is NOT uniform CRUD. `hoody inbox list` needs `resources.read_account` on the token (403 without it — the external_customer, dev_team, finance_team and read_only templates all deny it, as do all tokens minted before 2026-06-30), and `hoody inbox mark` / `hoody inbox mark-all` refuse EVERY auth token regardless of permissions, because acknowledging is how the record of an account event is dismissed. Use `hoody inbox list-public` as the no-auth fallback.
 
 ## Quirks & gotchas
 
@@ -308,7 +308,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
-| `hoody inbox list` |  | read | Get all notifications for the authenticated user | `api.notifications.listIterator` | `hoody inbox list` |
+| `hoody inbox list` |  | read | Get all notifications for the authenticated user | `api.notifications.listIterator` | `hoody inbox list --page 1 --limit 20 --unread-only --read-only --before <before>` |
 | `hoody inbox list-public` |  | read | Get all public notifications | `api.notifications.listPublicIterator` | `hoody inbox list-public` |
 | `hoody inbox mark` |  | write | Mark a notification as read | `api.notifications.markRead` | `hoody inbox mark abc-123` |
 | `hoody inbox mark-all` |  | write | Mark all notifications as read | `api.notifications.markAllRead` | `hoody inbox mark-all` |
@@ -439,7 +439,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 | `hoody storage incoming list-all` |  | read | Get all incoming shares | `api.storageShares.listIncomingGlobalIterator` | `hoody storage incoming list-all --realm-id abc-123` |
 | `hoody storage incoming toggle-mount` |  | action | Toggle incoming share mount | `api.storageShares.toggleIncomingMount` | `hoody storage incoming toggle-mount --share-id abc-123 --mount` |
 | `hoody storage list` | ls | read | List storage shares | `api.storageShares.listIterator` | `hoody storage list --target-type container --label my-label --status active --realm-id abc-123` |
-| `hoody storage list-all` |  | read | List storage shares across all realms (privileged scope) | `api.storageShares.listGlobalIterator` | `hoody storage list-all --realm-id abc-123` |
+| `hoody storage list-all` |  | read | List all storage shares you have created, across all your containers | `api.storageShares.listGlobalIterator` | `hoody storage list-all --realm-id abc-123` |
 | `hoody storage update` | edit | write | Update storage share | `api.storageShares.update` | `hoody storage update --share-id abc-123 --mode readonly --alias my-resource --label my-label --description "My description" --enabled --expires-at 1750000000` |
 
 ### `hoody users` (4) — User management
