@@ -4,6 +4,48 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.13] — 2026-08-11
+
+### Added
+
+- **Publish a container's HTTPS proxy and exit from your own machine.** `hoody egress local <container>` turns the container's egress URL into an ordinary HTTPS proxy whose exit IP is the machine running the command. A request arrives at `https://<project>-<container>-egress.<server>.containers.hoody.com`, the container's egress proxy chains it to a SOCKS5 port on container loopback, that port is a tunnel-kit bind, and the CLI terminates SOCKS5 and dials the destination locally. Nothing listens on your machine: the only local sockets are outbound, one WebSocket to the kit and one TCP connection per proxied request.
+
+  Destinations are authorized before the dial rather than after. The command resolves the hostname, checks every address the lookup returned, and connects to the address it approved, so a public name with a private A record cannot reach your LAN and a second lookup cannot swap the target after approval. Ports 80 and 443 are allowed by default; `--allow-ports` widens that and takes `*` for any port. Private, loopback, link-local and reserved addresses are refused unless you pass `--allow-private`, which turns off all of those checks at once, including the one covering `169.254.169.254`. Once the chain is wired the exit IP is confirmed through `ip.hoody.com`, which `--no-verify` skips.
+
+  The container URL is the credential here as everywhere else, so anyone holding it can relay traffic through your connection. Set proxy permissions before sharing it. `--alias <name>` and `--auto-alias` publish it behind a proxy alias so the URL carries no container ID.
+
+  The SDK exposes the whole command as `startLocalExit()`, and the layers under it separately, because each is usable on its own: `tunnelSocks5()` binds a SOCKS5 port over a tunnel session, `handleSocks5Stream()` runs RFC 1928 over any stream you hand it, and `resolveAndAuthorizeDestination()` is the destination gate. CONNECT is the only SOCKS5 command implemented. BIND, UDP ASSOCIATE and IPv6 destinations are refused.
+
+- **`hoody egress` reads and sets the container's upstream proxy.** `egress health` reports the service. `egress upstream get` shows the upstream a container currently chains through, `egress upstream set <url>` routes it through one, and `egress upstream clear` sends it out direct again.
+
+- **Poll for new notifications without downloading any.** `api.notifications.getUserNotificationSummary()` returns the unread count and the position of the newest notification and nothing else, so a client can check for activity cheaply and fetch the list only once something has moved. An auth token needs `resources.read_account` to call it and gets a 403 without, the same as the list endpoint, because a count and a newest-timestamp on their own still report when an account is active.
+
+### Fixed
+
+- **A `.` or `..` in a path handed to the files, pipe or exec helpers no longer redirects the request.** These helpers interpolate your path into a route, and the separators have to survive that, so a relative segment was resolved by the URL parser before the request was ever sent. Against the files helpers a path beginning `../../` climbed out of `/api/v1/files/` and landed on an unrelated route, and it went out with your token attached. The kit rejects those segments itself, but that check never ran: the traversal happened while the URL was being built, so the request reached a different endpoint and the file-path validator was never consulted.
+
+  A whole segment equal to `.` or `..` is now refused by the files helpers, the pipe path builders in both the Node and browser entry points, the exec base-path assertion, and the agent client. The check runs after percent-decoding, since `%2e%2e` normalizes identically. Names that merely contain dots are untouched, so `.env`, `a.b` and `..hidden` still work. The exec assertion already refused `..` but accepted a bare `.`, which URL normalization removes, retargeting the request the same way.
+
+- **Tunnel streams opened on a secondary WebSocket are handled.** A v2 session opens more than one socket and the kit may deliver a stream-open frame on any of them. The handler was attached to the first socket only, so those streams were dropped silently.
+
+- **`hoody ai-fix` resolves its own defaults.** The built-in Hoody AI gateway authorizes by network position rather than by key, so the profile runs without one, and the resolver's missing-key rule then rejected the exact configuration the shipped CLI uses.
+
+- **An agent turn no longer fails on a deployment with response signing disabled.** The client mints a container claim for parity with the other kits, and a deployment answering `503 SIGNING_NOT_CONFIGURED` made that mint fatal. It is best-effort now, and the turn proceeds on the container URL, which is what the agent kit authorizes on in any case.
+
+### Changed
+
+- **The supported Node versions move to 22.23.0 and 24.18.0.** The package declared `>=22.19.0`; it now declares `>=22.23.0 <23 || >=24.18.0`, so an older runtime is refused at install. Those two are the first releases on their respective lines to bundle a patched undici, and the tunnel client runs on Node's built-in WebSocket, which is where earlier releases are exposed to CVE-2026-12151. The field constrains Node only: Bun and the browser build are unchanged, and the browser build has no runtime requirement of its own.
+
+- **The events subscribe payload drops four fields the server never read.** `action`, `event_types`, `resource_id` and `resource_type` are gone from the exported type. The action is the Socket.IO event name rather than a field, so a subscribe is `socket.emit('subscribe', payload)`; and subscribing joins a delivery room rather than selecting event types. The server broadcasts every type to the rooms a connection holds, so filtering by type belongs on the client, which is what the per-type handlers on `EventsClient` already do. Anyone who hand-rolled a subscribe from the exported type was sending names the server ignores, and got silence with no error.
+
+- **The container egress endpoint's URL segment is `egress`, not `proxy`.** The hostname a container's outbound proxy answers on is now `<project>-<container>-egress.<server>.containers.hoody.com`, where it used to be `<project>-<container>-proxy.<server>.containers.hoody.com`.
+
+  The rename belongs to the proxy rather than to this SDK. Its service table lists the service as `egress`, and the `proxy` and `p` aliases it used to accept are gone, so a hostname carrying the old segment does not route to the egress proxy at all. The SDK's catalog had not followed: `getKitCatalogEntries()` returned a slug of `proxy` and a `-proxy.` URL sample, so anything built from that entry pointed at a name nothing answers to. It returns the `egress` segment now.
+
+  Only the service segment moves. The project and container IDs and the server are unchanged, so a stored URL can be repaired by replacing that one label.
+
+- **Hoody AI's built-in defaults point at `ai.hoody.com` and the free model.** The endpoint default was `ai.hoody.com`, and the model default was a paid catalog id that an account with no AI credit is refused outright.
+
 ## [1.0.0-beta.12] — 2026-08-06
 
 > Supersedes 1.0.0-beta.11, which was published briefly on 2026-08-05 and withdrawn. Everything it contained is in this release; nothing was dropped.
