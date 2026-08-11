@@ -115,7 +115,7 @@ Container lifecycle lives under `hoody.api.containers.*`: `manage(id, 'start' | 
 
 4. **Everything is a structural URL.** Container services use `https://{projectId}-{containerId}-{segment}.{server}.containers.hoody.com`. Build SDK URLs with `hoody.getKitUrl(service, container, index?)`, never string concatenation; it handles slug remaps and raw-port routes. Passing `{ local: true }` instead returns `https://localhost.{containersDomain}/{serviceSegment}`, which needs no container identity but only resolves from inside that container — use it for in-container cron jobs and scripts.
 
-5. **The container URL is the credential.** Open Kit services need no account bearer token: possession of the full structural URL grants access. Treat container ids and URLs like passwords. Before exposing one, use `hoody.api.proxyPermissionsContainer.replace(...)` for access rules, `hoody.api.proxyAliases.create(...)` to hide ids behind an alias, and a DNS CNAME for your own domain. The agent kit is claim-gated and requires a signed container claim.
+5. **The container URL is the credential.** Open Kit services need no account bearer token: possession of the full structural URL grants access. Treat container ids and URLs like passwords. Before exposing one, use `hoody.api.proxyPermissionsContainer.replace(...)` for access rules, `hoody.api.proxyAliases.create(...)` to hide ids behind an alias, and a DNS CNAME for your own domain. Every built-in kit works this way, `agent` included.
 
 ---
 
@@ -303,7 +303,7 @@ notifications → n
 proxyLogs     → logs
 ```
 
-Open kits need no account token because the URL is the credential. The agent kit requires a signed claim minted by `POST /api/v1/containers/{id}/authorize`. Kits protected by proxy rules use those rules' credentials. Never send an account-wide bearer token to a container URL.
+Open kits need no account token because the URL is the credential, and that includes `agent`. Kits protected by proxy rules use those rules' credentials. `POST /api/v1/containers/{id}/authorize` mints a signed container claim, an optional portable credential your own in-container programs can verify offline against `GET /api/v1/meta/public-key`; no built-in kit asks for it. Never send an account-wide bearer token to a container URL.
 
 ### Exec scripts over HTTP
 
@@ -429,24 +429,12 @@ hoody screenshot browser --path ./browser.png
 
 The URL is the capability; gate it before showing it to users.
 
-### 4. The built-in agent (claim-gated)
+### 4. The built-in agent
 
-Bare `withContainer(container)` makes `box.agent.*` return `401 CLAIM_REQUIRED`. Mint and attach a signed claim:
+`box.agent.*` needs no auth of its own. A bare `withContainer(container)` reaches it, on the same terms as `files` or `terminal`: the container URL is the credential.
 
 ```typescript
-const mintKitAuth = async () => {
-  const { data: authz } = await hoody.api.containers.authorize(container.id);
-  return {
-    type: 'containerClaim' as const,
-    claim: JSON.stringify(authz!.container_claim),
-    token: (await hoody.getAuthToken())!,
-  };
-};
-
-const box = await hoody.withContainer(container, {
-  kitAuth: await mintKitAuth(),
-  onKitAuthExpired: mintKitAuth,
-});
+const box = await hoody.withContainer(container);
 
 const created = await box.agent.sessions.createSession();
 const sessionId = (created.data!.session_id ?? created.data!.id) as string;
@@ -455,7 +443,7 @@ const turn = await box.agent.sessions.promptSync(sessionId, {
 });
 ```
 
-`authorize()` returns `container_claim` as an object; stringify it. It does not return the bearer token; obtain that with `getAuthToken()`.
+Pass `kitAuth` only for a container you have put a permission rule on, with the credential that rule's auth group expects.
 
 ```typescript
 import { streamAgentPrompt } from 'hoody-sdk';
@@ -561,7 +549,7 @@ const project = await hoody.api.projects.create({
 });
 
 const created = await hoody.api.authTokens.create({
-  alias: 'Customer: Acme',
+  alias: 'Customer Acme',
   permission_template: 'external_customer',
   realm_ids: [realmId],
   allow_no_realm: false,
@@ -583,7 +571,7 @@ A realm-scoped client sees only resources tagged with that realm. CLI uses globa
 
 **1 — No stdout from `box.terminal.execution.execute()`.** It returns immediately with `command_id`; poll `box.terminal.execution.getResult(command_id)`. Use `box.execute(cmd)` to wait for output or `hoody shell <container-id> -- <cmd>` in a shell.
 
-**2 — `401 CLAIM_REQUIRED` from `box.agent.*`.** Attach the claim from [recipe 4](#4-the-built-in-agent-claim-gated), or let `streamAgentPrompt` do it. Stringify the `container_claim` object; obtain the bearer token through `getAuthToken()`.
+**2 — `box.agent.sessions.promptStream()` is not the streaming path.** It returns a WebSocket client whose protocol differs from the agent daemon's SSE stream. Use the package-root `streamAgentPrompt` helper from [recipe 4](#4-the-built-in-agent) instead.
 
 **3 — Request types are not exported.** Derive the body from the method:
 
@@ -611,7 +599,7 @@ proxyLogs     → logs
 
 Always use `getKitUrl()`. Raw ports use `hoody.getKitUrl('http', container, { port: 8080 })`, producing `http-8080`. `ssh` and `proxy` are unindexed; the default service index is `1`.
 
-**6 — Cross-origin `Authorization` is stripped.** The SDK removes the account header when targeting a container host or other origin. Open kits need no token; agent needs its claim; proxy-protected kits use their configured credentials.
+**6 — Cross-origin `Authorization` is stripped.** The SDK removes the account header when targeting a container host or other origin. Open kits need no token, `agent` included; proxy-protected kits use their configured credentials.
 
 **7 — Realms scope by routing.** Per call, use `{ _realm: realmId }` in an account-method options bag; for the whole client, use `hoody.withRealm(realmId)`; CLI uses `--realm <id>`. `_realm` is a host-scope override. `realm_id` is an ordinary query parameter only where declared.
 
@@ -697,7 +685,7 @@ If a snippet disagrees with generated signatures or references, generated source
 | WebSocket-multiplexed fetch | `createCurlFetch`; `box.curlChannel()` supplies its channel |
 | Terminal, agent, tunnel, signing, and redaction helpers | `lib/` |
 
-SDK namespaces are one account scope (`hoody.api`) plus 18 container scopes:
+SDK namespaces are one account scope (`hoody.api`) plus 19 container scopes:
 
 ```text
 terminal · files · browser · display · code · exec · daemon · cron

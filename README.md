@@ -34,7 +34,7 @@ TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers 
 | **Batteries included** | Create a container with the Kit (`hoody_kit: true`) and the full service layer is available at stable HTTPS URLs: shell, files, cloud browser, GUI desktop, databases, cron, tunnels, and a built-in AI agent, each starting on demand with the first call. |
 | **Who it's for** | Cloud IDEs, AI-agent platforms, browser-automation pipelines, remote-desktop products, and education: anything that needs a real Linux environment on demand without running the infrastructure. |
 | **The economics** | Flat-rate bare metal: a dedicated machine, marketplace-priced from ~$30/month, with no per-container fee or usage meter. Run dev through prod for every project on one box. [How ↓](#bare-metal-underneath) |
-| **The surface** | 19 namespaces · <!-- ref:sdk-methods -->1095<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->835<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
+| **The surface** | 20 namespaces · <!-- ref:sdk-methods -->1104<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->840<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
 
 **Prefer references?** Nearly the whole surface fits in three lists: [CLI commands](./docs/reference/CLI-COMMANDS.md) · [SDK methods](./docs/reference/SDK-METHODS.md) · [HTTP endpoints](./docs/reference/HTTP-METHODS.md). The HTTP list maps every endpoint to its SDK method and to a CLI command wherever one exists.
 
@@ -90,6 +90,7 @@ Each URL below is a building block, already running and wired together when the 
 | `curl` | Outbound HTTP jobs | Fetches and webhooks that run from inside the container; no worker queue. |
 | `pipe` | Streaming channels | Pub/sub and byte streams between clients; no message broker to run. |
 | `tunnel` | Reverse tunnels | Publish localhost or a container port to a public URL; no ngrok. |
+| `egress` | An outbound proxy | Route a client's traffic out through the container, or through an upstream you choose; no proxy server to deploy. |
 | `n` | Push notifications | Deliver alerts out of the container; no notification service to wire up. |
 
 The grammar stays the same; bump the `{index}` for a second terminal or display ([full anatomy](#anatomy-of-a-hoody-url)). Nothing needs wiring first: no SSH keys, VNC ports, SFTP daemon, reverse-proxy config, or certificates. Every URL is HTTPS, with HTTP/2 and HTTP/3 negotiated automatically. Destroy the container and its URLs disappear with it. Because they are ordinary URLs, sharing one shares the resource, making the URL itself the credential ([why that's the default, and how to gate it ↓](#containers-are-open-by-default)).
@@ -148,22 +149,16 @@ const drive = await mount({
 // ./hoody-drive now *is* the container's home directory. drive.unmount() when you're done.
 ```
 
-The box also includes an AI agent. It is the one claim-gated kit, so authorize the container before creating sessions and sending prompts:
+The box also includes an AI agent, on the same `box` client and the same container URL as every other kit:
 
 ```typescript
-// Mint a signed, time-limited claim for the agent kit and attach it:
-const { data: authz } = await hoody.api.containers.authorize(container.id);
-const agentBox = await hoody.withContainer(container, {
-  kitAuth: { type: 'containerClaim', claim: JSON.stringify(authz!.container_claim), token: (await hoody.getAuthToken())! },
-});
-
 // Optional — bring your own model key (stored 0600 inside the container):
-await agentBox.agent.models.setProviderAPIKey('anthropic', { api_key: process.env.ANTHROPIC_KEY! });
+await box.agent.models.setProviderAPIKey('anthropic', { api_key: process.env.ANTHROPIC_KEY! });
 
-// Create a session, prompt it, block until the turn completes. The agent runs *on* the machine it edits.
-const sess      = (await agentBox.agent.sessions.createSession()).data!;
+// Create a session and prompt it. The agent runs *on* the machine it edits.
+const sess      = (await box.agent.sessions.createSession()).data!;
 const sessionId = (sess.session_id ?? sess.id) as string;
-await agentBox.agent.sessions.promptSync(sessionId, {
+await box.agent.sessions.promptSync(sessionId, {
   text: 'Clone github.com/you/app, run the tests, and fix the first failure.',
 });
 ```
@@ -180,7 +175,9 @@ console.log(hoody.getKitUrl('http', container, { port: 8080 }));                
 
 ## Installation
 
-> **Requires** Node.js >= 22.19.0 or Bun; the browser build has no runtime requirement.
+> **Requires** Node.js >= 22.23.0 (or >= 24.18.0 on the 24 line) or Bun; the browser build has no runtime requirement.
+> Those are the first releases on each line to bundle a patched undici: the tunnel client uses Node's built-in
+> WebSocket, and earlier releases carry a version affected by CVE-2026-12151.
 
 ```bash
 npm install hoody-sdk@beta
@@ -191,14 +188,14 @@ bun add hoody-sdk@beta
 Browser (IIFE global, exposes `window.HoodySDK`) — pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.12/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.13/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.12/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.13/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -216,7 +213,9 @@ import { HoodyClient } from 'hoody-sdk';
 
 // Every Hoody account is created with an email, so sign in by email and adopt
 // the returned token. (Have a username instead? `HoodyClient.authenticate(url,
-// { username, password })` is the one-line form — see Authentication below.)
+// { username, password })` is the one-line form — see Authentication below.
+// On a 2FA account login returns a `temp_token` and no `token`; Authentication
+// below shows how to finish the challenge.)
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
 const { data: auth } = await hoody.api.authentication.login({
   email: process.env.HOODY_EMAIL!,
@@ -325,7 +324,7 @@ Beyond the indexed services in [Namespaces](#namespaces), raw container ports ar
 
 ### Containers are open by default
 
-A newly created Hoody Kit container exposes **most** services at the URL above with **no authentication of their own**. Anyone who knows the full subdomain can use the file API, open a shell, or drive the display. The one built-in exception is the `agent` kit, which is always claim-gated; see [The built-in agent](#the-built-in-agent). **The container URL, specifically its `projectId`/`containerId` pair, is the access capability.** Treat it like a database password and keep it out of public tweets, shared Slack channels, and screenshots.
+A newly created Hoody Kit container exposes **every Kit service in [Namespaces](#namespaces)** on its own subdomain with **no authentication of their own**. Anyone who knows the full subdomain can use the file API, open a shell, drive the display, or prompt the AI agent. **The container URL, specifically its `projectId`/`containerId` pair, is the access capability.** Treat it like a database password and keep it out of public tweets, shared Slack channels, and screenshots.
 
 The capability is hard to guess: a request must name the exact `projectId`–`containerId` pair, no directory listing or discovery endpoint can enumerate either, and the wildcard certificate on `*.containers.hoody.com` keeps container hostnames out of public Certificate Transparency logs. It can still leak through DNS lookups, TLS SNI, browser history, and `Referer` headers, so on-path observers and logs can learn it over time. Possession of the URL *is* the grant: sharing it shares the resource, while revoking the container removes the URL. If an incidental observer must not reach a service, use one of the layers below instead of relying on the ID staying secret.
 
@@ -333,12 +332,12 @@ Hoody is permissionless by default, so the first call from a notebook, CLI, or d
 
 | Layer                        | What it does                                                                  | Set via                                  |
 |------------------------------|-------------------------------------------------------------------------------|------------------------------------------|
-| Permission rules             | Gate each service by **auth group** (IP / JWT / password / token) with a default allow-or-deny policy; add per-service **hooks** to match on path or method | `hoody.api.proxyPermissionsContainer.replace(containerId, {...})` / Workspaces (Hoody's web UI) / an SDK-driven agent |
+| Permission rules             | Gate each service by **auth group** (IP / JWT / password / token / Hoody identity) with a default allow-or-deny policy; add per-service **hooks** to match on path or method | `hoody.api.proxyPermissionsContainer.replace(...)` (needs `ifMatch`, like [hooks](#hooks--run-a-script-on-any-request-a-man-in-the-middle-for-your-own-containers)) / Workspaces (Hoody's web UI) / an SDK-driven agent |
 | Realm-scoped API tokens      | Hand out API tokens fenced to a *realm* (a tenant label) so a token only ever sees its own resources on `api.hoody.com` — expiring, IP-pinnable ([walkthrough](#give-your-own-users-their-own-hoody-api)) | `hoody.api.authTokens.create(...)`       |
 | Aliases                      | Hide IDs entirely behind a custom subdomain ([how-to](#aliases-and-custom-domains)) | `hoody.api.proxyAliases.create(...)`     |
 | Custom domains               | Front the alias with your own domain (CNAME), Hoody auto-issues TLS ([how-to](#custom-domains-via-cname)) | A DNS CNAME to the alias hostname |
 
-You can keep one service public, require a token on another, and pin a third to one IP. [`hoody chat`](#hoody-chat--built-in-ai-assistant) can produce the exact command ("lock this container so only 203.0.113.0/24 can reach it, and only until Friday"), or an agent can apply the same primitives through the SDK. [Security model](#security-model) explains how the pieces fit together.
+You can keep one service public, require a token on another, and pin a third to one IP. [`hoody chat`](#hoody-chat--ask-hoody-about-hoody) can produce the exact command ("lock this container so only 203.0.113.0/24 can reach it, and only until Friday"), or an agent can apply the same primitives through the SDK. [Security model](#security-model) explains how the pieces fit together.
 
 ### Bare metal underneath
 
@@ -352,8 +351,15 @@ The same client manages the whole chain:
 // Browse the bare-metal marketplace — filter by geography, specs, price:
 const offers = await hoody.api.serverRental.browse({ min_ram_gb: 64, country: 'DE' });
 
-// Rent one at its flat rate (rental_days must be a duration the offer supports)…
-const rented = await hoody.api.serverRental.rent(offers.data![0]!.id, { rental_days: 30 });
+// Rent one at its flat rate. `rental_days` must be a duration the offer supports, and every
+// paid rental must confirm a ceiling on the total debit or the call is refused with
+// 409 CHARGE_CONFIRMATION_REQUIRED. Read the total from the offer's own pricing:
+const offer = offers.data![0]!;
+const tier  = (offer.pricing!.price_tiers! as Record<string, { total_first_payment: string }>)['30']!;
+const rented = await hoody.api.serverRental.rent(offer.id, {
+  rental_days: 30,
+  max_charge_cents: Math.round(Number(tier.total_first_payment) * 100),  // price + one-time setup fee, in cents
+});
 
 // …and it's a `server_id` you can fill with containers, as in the Quickstart.
 console.log(rented.data!.rental!.server_id);
@@ -361,7 +367,7 @@ console.log(rented.data!.rental!.server_id);
 
 For production:
 
-- **Renewal** — machines you already rent are managed under `hoody.api.rentals` (a sibling of `serverRental`): `hoody.api.rentals.extend(rentalId, { additional_days })` renews one without touching what's on it (extend before `rental_end`; the machine, its containers, and their data are what you're renting).
+- **Renewal** — machines you already rent are managed under `hoody.api.rentals` (a sibling of `serverRental`): `hoody.api.rentals.extend(rentalId, { expected_rental_end, additional_days })` renews one without touching what's on it. `expected_rental_end` is the rental's current `rental_end` exactly as the API returned it, so a retried request is refused instead of charging twice; add `max_charge_cents` unless the rental still carries frozen renewal pricing. Extend before `rental_end`: the machine, its containers, and their data are what you're renting.
 - **Durability** — the RAM-backed mount every container gets at `/ramdisk` (on by default) survives container restarts but is **wiped if the physical host reboots**, so keep durable state on the regular disk-backed filesystem and use `hoody.api.containers.createSnapshot(...)` as your undo button.
 - **Data path** — because Hoody's reverse proxy itself runs as a container on *your* server, requests to your containers terminate on hardware you rent rather than transiting middleboxes in Hoody's own infrastructure: the control plane sees management operations and the metadata you send it (names, environment variables, token grants), not the request and response bytes flowing through your container services.
 
@@ -434,7 +440,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.12/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.13/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
@@ -455,7 +461,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 
 The `prompt(...)` login is for the demo. In production, give the page a short-lived, realm-scoped token minted by your control plane (see [Authentication](#authentication)). The query string uses the [GUI recipe's](#stream-any-gui-app-as-a-url) one-shot shortcut.
 
-This works because the Hoody API supports CORS and uses bearer tokens rather than cookies. The static page calls `api.hoody.com` directly, then reaches Kit capability URLs the same way. For most kits, the URL itself is the credential ([why that's the default](#containers-are-open-by-default)); the agent kit always adds a container claim. For a service you have locked down, the SDK attaches configured proxy-auth headers to `box.*` requests. A bare iframe `src` cannot carry those headers, so front gated embeds with an [alias + permission rules](#aliases-and-custom-domains). **No proxy server on your side:** the page talks to Hoody's edge, which routes to the container. Keep provisioning, billing, abuse controls, and customer-scoped token minting in code you control. Calls to container services (shell, file, Chromium, desktop) go directly from wherever your code runs.
+This works because the Hoody API supports CORS and uses bearer tokens rather than cookies. The static page calls `api.hoody.com` directly, then reaches Kit capability URLs the same way. For every kit, the URL itself is the credential ([why that's the default](#containers-are-open-by-default)). For a service you have locked down, the SDK attaches configured proxy-auth headers to `box.*` requests. A bare iframe `src` cannot carry those headers, so front gated embeds with an [alias + permission rules](#aliases-and-custom-domains). **No proxy server on your side:** the page talks to Hoody's edge, which routes to the container. Keep provisioning, billing, abuse controls, and customer-scoped token minting in code you control. Calls to container services (shell, file, Chromium, desktop) go directly from wherever your code runs.
 
 ### Run Claude Code (or any CLI agent) and drive it over HTTP
 
@@ -469,7 +475,7 @@ const logs = await box.daemon.quickStart.getEphemeralLogs(
 );
 ```
 
-The agent runs as a supervised process you can tail, restart, and stop over HTTP. Its binary must be on the container's `PATH`: install Claude Code with `apt install` / `npm i -g`, or use a dev-kit image that already includes it. The config sync below copies local settings and credentials, not the binary. The same recipe works for `aider`, `codex`, `goose`, or anything available through `apt install`.
+The agent runs as a supervised process you can tail, poll for status, and stop over HTTP; a quick-start program is ephemeral, so `stop` removes it rather than parking it for a restart. Its binary must be on the container's `PATH`: install Claude Code with `apt install` / `npm i -g`, or use a dev-kit image that already includes it. The config sync below copies local settings and credentials, not the binary. The same recipe works for `aider`, `codex`, `goose`, or anything available through `apt install`.
 
 Two upgrades when this becomes a product:
 
@@ -487,7 +493,7 @@ await box.daemon.programs.add({
 });
 ```
 
-`box.daemon.control.start/stop/enable/disable` and `box.daemon.status.getLogs(id)` then manage restart policies and log tailing without an SSH session. (`box.syncAgentConfigs([...])` batches several tools; `box.listAgentConfigTools()` lists the registry.)
+`box.daemon.control.start/stop/enable/disable` and `box.daemon.status.getLogs(id)` then manage running state and log tailing without an SSH session; the restart policy itself is the program's own `autorestart` field (`'true'`, `'false'`, or `'unexpected'` for crashes only), set on `programs.add` and changed later with `programs.edit`. (`box.syncAgentConfigs([...])` batches several tools; `box.listAgentConfigTools()` lists the registry.)
 
 ### Give an LLM a real bash terminal
 
@@ -514,7 +520,7 @@ The [opener](#everything-is-a-url) launched Firefox with two calls: `box.termina
 ></iframe>
 ```
 
-> **Embedding is sharing.** The iframe `src` above contains the container's capability URL — anyone who can view the page can read it from the DOM, and on an open container it unlocks every URL-bearer service (`files`, `terminal`, …), not just the display (the agent kit still needs its own claim). Embedding for yourself is fine; embedding for your users means fronting it with an [alias](#aliases-and-custom-domains) plus [permission rules](#containers-are-open-by-default) first.
+> **Embedding is sharing.** The iframe `src` above contains the container's capability URL — anyone who can view the page can read it from the DOM, and on an open container it unlocks every URL-bearer service (`files`, `terminal`, `agent`, …), not just the display. Embedding for yourself is fine; embedding for your users means fronting it with an [alias](#aliases-and-custom-domains) plus [permission rules](#containers-are-open-by-default) first.
 
 The same pattern works for any X11 application: Firefox, GIMP, Blender, a custom Electron app, IDE, retro game, scientific app, or full desktop environment. Its URL can be streamed to phones, embedded, shared, bookmarked, or given to an AI agent that drives it through `box.display.*`:
 
@@ -587,23 +593,10 @@ When the deployment is configured to issue a public URL, EXPOSE makes a local HT
 
 Every Hoody Kit container ships an agent. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->222<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the SDK's largest container-scoped namespace.
 
-The agent is the one kit that needs more than the URL: it is **claim-gated**, so the
-first agent call after a bare `withContainer(container)` returns `401 CLAIM_REQUIRED`.
-Setup takes one call: authorize the container and attach the claim. Because the claim
-is time-limited, pass an `onKitAuthExpired` callback to refresh it, or let
-`streamAgentPrompt` (below) mint it once per call:
-
-```typescript
-// Mint a signed, time-limited claim for the agent kit and hand it to the client.
-const { data: authz } = await hoody.api.containers.authorize(container.id);
-const box = await hoody.withContainer(container, {
-  kitAuth: {
-    type: 'containerClaim',
-    claim: JSON.stringify(authz!.container_claim),
-    token: (await hoody.getAuthToken())!,
-  },
-});
-```
+The agent kit takes the same auth as the rest: none of its own. A bare
+`withContainer(container)` can list models, create a session, and prompt it, because
+the container URL is the credential ([what that means](#containers-are-open-by-default)).
+Gate it the way you gate any other service, with a permission rule on `agent`.
 
 Sessions are created once, then prompted turn by turn:
 
@@ -613,17 +606,20 @@ Sessions are created once, then prompted turn by turn:
 const created = await box.agent.sessions.createSession();
 const sessionId = (created.data!.session_id ?? created.data!.id) as string;
 
-// Prompt it synchronously (blocks until the turn completes):
+// Prompt it synchronously. This blocks until the turn finishes, or returns a
+// pending_gate the moment the turn parks on a confirmation or a question:
 const turn = await box.agent.sessions.promptSync(sessionId, {
   text: 'Run the test suite and fix the first failure you find.',
 });
 ```
 
+A parked turn waits for `box.agent.sessions.confirmGate()` or `answerQuestion()`. For unattended runs, pass `{ policy: 'auto_approve' }` as `promptSync`'s third argument to auto-answer confirmation gates for that turn; questions still park, so arm `setSessionAutoReply` if nothing will be there to answer them.
+
 The model behind a session is per-container configuration: provider API keys, OAuth sign-ins, and the default model live under `box.agent.models.*` (`setProviderAPIKey`, `startProviderOAuth`, `setProviderDefault`, `listModels`).
 
 The agent includes its runtime; you supply provider access. Point it at existing provider keys or OAuth accounts (OpenAI, Anthropic/Claude, and more), or run Claude Code / Codex / Gemini *inside* the container after syncing local credentials in one call: `await box.syncAgentConfig('claude', { only: 'credentials' })`. Either way, it runs **on the machine it's editing**, with nothing to install locally and no context to ship.
 
-For streaming on Node.js or Bun, use the package-root `streamAgentPrompt` helper. It POSTs the turn, parses the daemon's SSE stream, and returns text deltas, a turn-event stream, and a `done` promise. It also mints Kit auth through `hoody.api.containers.authorize()`. Consume the event stream promptly: buffering begins only when you iterate it, although `done`'s `text` always contains the full accumulated output:
+For streaming on Node.js or Bun, use the package-root `streamAgentPrompt` helper. It POSTs the turn, parses the daemon's SSE stream, and returns text deltas, a turn-event stream, and a `done` promise. It also mints a container claim through `hoody.api.containers.authorize()` and sends it with the turn when that call succeeds. Nothing in the agent kit checks that claim, and no proxy permission group accepts one (they match password, JWT, IP, token, or Hoody identity), so a deployment where the mint fails loses nothing: the turn runs on the bare URL. Consume the event stream promptly: buffering begins only when you iterate it, although `done`'s `text` always contains the full accumulated output:
 
 ```typescript
 import { streamAgentPrompt } from 'hoody-sdk';
@@ -644,7 +640,7 @@ Beyond prompting, the namespace covers recurring loops with hard budgets and one
 
 ### Everything else in the box
 
-The box also includes filesystem watchers streaming over SSE/WebSocket (`box.watch`), collaborative docs and notebooks (`box.notes`), outbound HTTP jobs with cookie sessions and scheduling (`box.curl`), streaming transfer channels (`box.pipe`), the Hoody Run app resolver (`box.run`), desktop and mobile notifications (`box.notifications`), VS Code Server (`box.code`), and reverse-proxy access logs (`box.proxyLogs`). See [Namespaces](#namespaces) for the full map.
+The box also includes filesystem watchers streaming over SSE/WebSocket (`box.watch`), collaborative docs and notebooks (`box.notes`), outbound HTTP jobs with cookie sessions and scheduling (`box.curl`), streaming transfer channels (`box.pipe`), the Hoody Run app resolver (`box.run`), desktop notifications on a container display (`box.notifications`), VS Code Server (`box.code`), and reverse-proxy access logs (`box.proxyLogs`). See [Namespaces](#namespaces) for the full map.
 
 ### Fork a machine instantly
 
@@ -672,7 +668,7 @@ const box = await hoody.withContainer(container);
 await box.execute('git clone ...');
 const files = await box.files.listDirectory('/workspace');
 await box.execute('git apply /workspace/patch.diff');
-// Run a CLI agent in a sandbox and stream its output over HTTP:
+// Run a CLI agent in a sandbox; read its output with quickStart.getEphemeralLogs():
 await box.daemon.quickStart.launch({ user: 'user', command: 'aider --message "review the diff"' });
 ```
 
@@ -734,7 +730,7 @@ const { data: acmeBox } = await hoody.api.containers.create(project.data!.id, {
 
 // 3. Issue the customer a realm-scoped token.
 const created = await hoody.api.authTokens.create({
-  alias: 'Customer: Acme Corp',
+  alias: 'Customer Acme Corp',    // letters, digits, spaces, underscore and hyphen only
   permission_template: 'external_customer',
   realm_ids: [realmId],
   allow_no_realm: false,          // must use realm-scoped URL
@@ -817,7 +813,7 @@ CNAME  api.example.com  →  team-dashboard.node-example-1.containers.hoody.com
 
 On the first request to `https://api.example.com`, Hoody's reverse proxy issues a TLS certificate on demand. That request may return a `503` with `Retry-After` while ACME issuance runs. Once issuance completes, the proxy forwards requests to the alias's container. Combine this with edge permission rules and realm-scoped API tokens for tenant isolation.
 
-There is **no limit on how many domains you point in**. Use a different CNAME per service, customer, or environment, targeting the same or different containers. Each follows its target's [permission rules](#containers-are-open-by-default): control is per *target*, not hostname. Domains pointing to different containers or services can expose different things, but domains sharing a target also share its rules; a hostname cannot gate that target independently (see the alias note above). Your app receives each visitor's **real client IP** as `client_ip`, rather than in an `X-Forwarded-For` header, so geolocation, rate-limiting, and abuse rules work as they would on a dedicated server.
+There is **no limit on how many domains you point in**. Use a different CNAME per service, customer, or environment, targeting the same or different containers. Each follows its target's [permission rules](#containers-are-open-by-default): control is per *target*, not hostname. Domains pointing to different containers or services can expose different things, but domains sharing a target also share its rules; a hostname cannot gate that target independently (see the alias note above). Your app receives each visitor's **real client IP** as the connection's own peer address (`remoteAddress` in Node.js, `REMOTE_ADDR` in PHP, `$remote_addr` in nginx), because netfilter hooks in the host kernel preserve the original client connection: there is no `X-Forwarded-For` to parse, though the edge still sets one alongside `X-Real-IP`. A dropped `exec` script reads the same value as `metadata.clientIp`. Geolocation, rate-limiting, and abuse rules work as they would on a dedicated server.
 
 Unlike default container subdomains ([kept out of CT logs by the wildcard certificate](#containers-are-open-by-default)), a custom domain gets its own certificate, so its hostname **will** appear in public CT logs. Name it accordingly.
 
@@ -878,14 +874,14 @@ Hooks operate on HTTP requests, first match wins, with up to 8 per service and a
 
 ## Security model
 
-Hoody's security model uses few primitives and explicit edges. A cross-zone call carries either a scoped bearer token or, for open containers, the capability URL itself (see [Containers are open by default](#containers-are-open-by-default)). Ambient identity authorizes nothing.
+Hoody's security model uses few primitives and explicit edges. A cross-zone call carries either a scoped bearer token or, for open containers, the capability URL itself (see [Containers are open by default](#containers-are-open-by-default)); a gated container adds whatever credential its permission rule's auth group expects. Ambient identity authorizes nothing.
 
 ### Trust zones
 
 | Zone                                  | What it is                                                                | Trusts                                                                                | Does **not** trust                                                              |
 |---------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
 | **Your machine** (laptop, server, CI) | Holds your bearer token in env, config, or memory                         | The control plane it points `baseURL` at                                              | Anything served *by* a container — that's untrusted code talking back            |
-| **Control plane** (`api.hoody.com`)   | Account, billing, container provisioning, realms, tokens                  | A bearer token after a successful `/auth/login` or token-validate                     | Container file systems, processes, or anything inside `*.containers.hoody.com`    |
+| **Control plane** (`api.hoody.com`)   | Account, billing, container provisioning, realms, tokens                  | A bearer token, issued by `/api/v1/users/auth/login` and re-checked on `/api/v1/users/auth/me` | Container file systems, processes, or anything inside `*.containers.hoody.com`    |
 | **Your container**                    | A real Linux box running your code or a customer's                        | Whatever code you put in it                                                           | The control plane back. No automatic identity flows back the other way           |
 | **A user's browser tab**              | Static page calling `api.hoody.com` directly                              | The token you put in `localStorage` / memory                                          | Cross-origin requests — the SDK strips `Authorization` once a request resolves to a host that is neither your `baseURL` host nor a subdomain of it |
 | **Another container** (someone else's, or another of yours) | Equally a real Linux box                                | Nothing about your container                                                          | Anything about your container — no shared identity, no shared file system        |
@@ -896,7 +892,7 @@ The third row is important: **the control plane never gives a container access t
 
 Inside any Hoody container, the `hoody` binary is on every user's `$PATH` from a read-only plugin mount under `/hoody/plugins`. It is the same CLI as on your laptop, including `hoody chat` and `hoody containers list`, and talks to the same Hoody API.
 
-The first authenticated call returns 401 until **you** provide a token. There is no auto-login for "the user who owns this container"; otherwise, any code inside it (your scripts, an `npm install` post-install hook, a misbehaving dependency, or a compromised shell) could call the API as you and act on your *other* containers, billing, and realms.
+The first authenticated call fails until **you** provide a token: with no credentials at all the CLI stops locally with `No authentication credentials found`, and a stale token gets a 401 from the API. There is no auto-login for "the user who owns this container"; otherwise, any code inside it (your scripts, an `npm install` post-install hook, a misbehaving dependency, or a compromised shell) could call the API as you and act on your *other* containers, billing, and realms.
 
 So Hoody draws the trust line at the container boundary. Authenticate the in-container CLI explicitly, with the *narrowest* token that works:
 
@@ -919,7 +915,7 @@ Mint the in-container token with a narrow permission template (`external_custome
 | Bearer token + open CORS       | `api.hoody.com`       | Your identity. The SDK keeps `Authorization` only for your `baseURL` host and its subdomains (e.g. a realm subdomain) — it's stripped for any other host and on cross-origin redirects, so your API token never reaches a `*.containers.hoody.com` Kit URL |
 | Realm scoping                  | Control plane         | A token only sees resources tagged with one of its `realm_ids`; other resources aren't "forbidden", they don't exist |
 | Container-ID-as-capability     | Reverse proxy         | The default access right is "knows the `(project, container)` tuple". Treat container IDs as confidential          |
-| Permission rules               | Reverse proxy         | Per-container auth groups (IP / JWT / password / token) with a default allow-or-deny policy, plus per-service hooks for path / method logic |
+| Permission rules               | Reverse proxy         | Per-container auth groups (IP / JWT / password / token / Hoody identity) with a default allow-or-deny policy, plus per-service hooks for path / method logic |
 | Aliases & custom domains       | Reverse proxy + DNS   | Hide IDs behind your own domain; revoke by toggling `enabled=false`                                              |
 | Local lock                     | Your laptop           | Encrypts CLI credentials at rest with XChaCha20-Poly1305, using key material derived from your password with argon2id |
 | Automatic redaction            | The SDK               | Request `Authorization`, `Cookie`, `?token=…`, and body secret fields scrubbed before any error reaches your `catch` block ([full spec](#error-handling)) |
@@ -943,7 +939,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 
 ## Namespaces
 
-19 namespaces, <!-- ref:sdk-methods -->1095<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
+20 namespaces, <!-- ref:sdk-methods -->1104<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
 
 <details>
 <summary>The full namespace map — scope, coverage, and a one-liner you'd actually call</summary>
@@ -962,10 +958,11 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 | `watch`           | Container | Filesystem watchers, event streams                                                     | `box.watch.watchers.create({ paths: ['/workspace'] })`                     |
 | `sqlite`          | Container | SQL queries, KV store, query history                                                    | `box.sqlite.query.executeShareable({ db: 'app', sql })`                    |
 | `curl`            | Container | Outbound HTTP with scheduling, sessions, cookie persistence                             | `box.curl.execute({ url, method: 'GET' })`                                 |
+| `egress`          | Container | Outbound HTTP/CONNECT proxy; set a `socks5h`/`socks5`/`http`/`https` upstream to change the container's exit IP | `box.egress.setUpstream('socks5h://user:pass@host:1080')`                  |
 | `pipe`            | Container | HTTP streaming channels for real-time data flow                                         | `box.pipe.send(path, body)`                                                |
 | `run`             | Container | Hoody Run — resolve apps to shell commands across package sources (system-path, nixpkgs, pkgx, AppImage, OCI), profiles, recipes | `box.run.resolve({ app: 'firefox' })`                                      |
 | `notes`           | Container | Collaborative docs, notebooks, comments, versioning, embedded DBs                       | `box.notes.notebooks.create({ name: 'plans' })`                            |
-| `notifications`   | Container | Desktop and mobile push notifications, real-time stream                                | `box.notifications.notify.trigger({ summary, body, display: '0' })`        |
+| `notifications`   | Container | Desktop notifications on a container display (`notify-send`), real-time stream          | `box.notifications.notify.trigger({ summary, body, display: '0' })`        |
 | `tunnel`          | Container | Reverse tunnels — publish HTTP/WebSocket to a public URL, or pull TCP onto container-loopback ([recipe](#reverse-tunnel-localhost-to-a-public-url)) | `box.tunnel.listSessions()`                                                |
 | `proxyLogs`       | Container | Reverse-proxy access logs and stats                                                     | `box.proxyLogs.logs.list()`                                                |
 | `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->222<!-- /ref:agent-sdk-methods --> methods) — sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.promptSync(id, { text })`                              |
@@ -977,7 +974,7 @@ Useful hand-written helpers: `box.*` entries are client methods; the rest are pa
 <details>
 <summary>streamAgentPrompt, curl multiplexing, tunnel helpers, vault crypto, signature verify, events</summary>
 
-- **`streamAgentPrompt`** — the supported path for streaming agent turns ([recipe](#the-built-in-agent)).
+- **`streamAgentPrompt`** (Node.js/Bun) — the supported path for streaming agent turns ([recipe](#the-built-in-agent)).
 - **`box.curlChannel()` + `createCurlFetch`** — a `fetch()`-compatible function that multiplexes many concurrent HTTP requests, SSE included, over one WebSocket.
 - **`box.syncAgentConfig(tool)`** (Node.js/Bun) — push local CLI-agent config into a Kit container ([recipe](#run-claude-code-or-any-cli-agent-and-drive-it-over-http)).
 - **`tunnelExpose` / `tunnelPull`** (Node.js or Bun) and **`tunnelServe`** (Bun only) — reverse-tunnel helpers ([recipe](#reverse-tunnel-localhost-to-a-public-url)); `TunnelSession` carries the low-level session / bind / frame primitives.
@@ -1002,8 +999,8 @@ try {
   await box.files.get('/nonexistent');
 } catch (err) {
   if (isApiError(err)) {
-    console.error(err.status);    // HTTP status code
-    console.error(err.code);      // server-supplied error code (string)
+    console.error(err.status);    // HTTP status code, or 0 for a transport, timeout, or parse failure
+    console.error(err.code);      // error code, may be undefined: server-supplied on HTTP errors, 'ABORTED' / 'PARSE_ERROR' from the client
     console.error(err.response);  // parsed server body (ApiErrorResponseDetails | unknown — plain text on non-JSON errors)
     console.error(err.request);   // { method, url, headers, body, query } — secrets redacted
 
@@ -1012,7 +1009,7 @@ try {
 }
 ```
 
-- **`ApiError`** — thrown on HTTP 4xx/5xx. Same class across browser, Node.js, and CLI.
+- **`ApiError`** — thrown on HTTP 4xx/5xx, and on transport, timeout, and parse failures with `status: 0`. Same class across browser, Node.js, and CLI.
 - **`ValidationError`** — client-side input validation (missing required args, bad enum / range / pattern) before the request goes out; TypeScript handles most body-shape checking.
 - **`VaultCryptoError`** — thrown by `decrypt` / `parseEnvelope` with a `.kind` discriminator (`'invalid-envelope'`, `'unsupported-version'`, `'invalid-kdf'`, `'decrypt-failed'`). The underlying backend error is preserved via `.cause`.
 - **`isApiError()` / `isRetryableApiError()`** — type guards that work across module boundaries.
@@ -1129,7 +1126,7 @@ hoody login -u alice -p "$HOODY_PASSWORD"    # supplies credentials up front (ad
 hoody signup                                 # create an account, verify, and land logged in
 ```
 
-`--web` uses the RFC 8628 device flow with PKCE. The CLI prints a short code and URL, opens a browser when possible, then completes login after approval. Browser opening is suppressed by `--no-browser`, `--print-token`, a machine-readable output mode, or a non-interactive session. `hoody auth login` / `hoody auth signup` remain flag-only scripting primitives with the global `-o`; `hoody auth login` also takes `--print-token` (`hoody auth signup` does not — use the top-level `hoody signup` for that). `hoody login` adds the interactive method menu, browser/device flow, and secure password prompt.
+`--web` uses an RFC-8628-inspired device flow with RFC 7636 PKCE. The device grant is deliberately not standards-compliant: no `client_id`/`grant_type`, and a fixed 5s poll interval after `slow_down`. The CLI prints a short code and URL, opens a browser when possible, then completes login after approval. Browser opening is suppressed by `--no-browser`, `--print-token`, a machine-readable output mode, or a non-interactive session. `hoody auth login` / `hoody auth signup` remain flag-only scripting primitives with the global `-o`; `hoody auth login` also takes `--print-token` (`hoody auth signup` does not — use the top-level `hoody signup` for that). `hoody login` adds the interactive method menu, browser/device flow, and secure password prompt.
 
 Or install the SDK package globally for the `hoody` command:
 
@@ -1216,10 +1213,10 @@ Privacy model and data-retention details: [Chat privacy](./docs/reference/guides
 
 ## API reference
 
-- [SDK method reference](./docs/reference/SDK-METHODS.md) — full method listings for all 19 namespaces, plus the main client helpers
+- [SDK method reference](./docs/reference/SDK-METHODS.md) — full method listings for all 20 namespaces, plus the main client helpers
 - [Per-namespace docs](./docs/reference/namespaces/_INDEX.md)
 - [CLI commands](./docs/reference/CLI-COMMANDS.md)
-- [HTTP endpoint map](./docs/reference/HTTP-METHODS.md) — every HTTP method + path ↔ its SDK method, and its CLI command where one exists
+- [HTTP endpoint map](./docs/reference/HTTP-METHODS.md) — every SDK-backed HTTP method + path ↔ its SDK method, and its CLI command where one exists
 - OpenAPI spec — ships in the package as JSON and YAML: `import spec from 'hoody-sdk/openapi.json' with { type: 'json' }`, or `require.resolve('hoody-sdk/openapi.yaml')` and parse with any YAML library
 - [Changelog](./CHANGELOG.md)
 
