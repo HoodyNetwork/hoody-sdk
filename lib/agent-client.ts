@@ -9,11 +9,16 @@
  * POSTs the turn, reads the SSE body, unwraps the gatedEvent envelope, and
  * exposes the assistant text deltas + every turn event + a `done` promise.
  *
- * Auth: the platform Bearer is stripped on cross-origin kit URLs, so this mints
- * a container claim via the public `client.api.containers.authorize()` and
- * sends `X-Hoody-Container-Claim` + `X-Hoody-Token` (mirroring the kit handshake
- * in lib/proxy-auth-middleware.ts / lib/terminal-client.ts). Pass an explicit
- * `auth` to override (e.g. when a deployment proxy-injects).
+ * Auth: the agent kit takes no auth of its own — the container URL is the
+ * credential, as it is for every other kit. No proxy permission group verifies
+ * a container claim either (the group types are password / jwt / ip / token /
+ * hoody-identity). This still mints one via `client.api.containers.authorize()`
+ * and sends `X-Hoody-Container-Claim` + `X-Hoody-Token` when it succeeds, for
+ * parity with the kit handshake in lib/proxy-auth-middleware.ts /
+ * lib/terminal-client.ts and for any container program of your own that checks
+ * it, but the mint is BEST-EFFORT: where it fails (e.g. a deployment with
+ * response signing disabled answers `503 SIGNING_NOT_CONFIGURED`) the turn runs
+ * on the bare URL instead of failing. Pass an explicit `auth` to override.
  *
  * Runtime-agnostic: uses global `fetch` + `ReadableStream` + the SSE parser in
  * lib/pipe-stream.ts (Node 18+/Bun/browser), same as the tunnel/pipe helpers.
@@ -21,6 +26,41 @@
 import type { HoodyClient, ContainerLike } from '../generated/client.js';
 import { parseSseStream } from './pipe-stream.js';
 import { ApiError } from '../generated/errors.js';
+
+/**
+ * Encode a single URL path segment, REFUSING a relative one.
+ *
+ * `encodeURIComponent` alone is not sufficient here. It escapes `/`, which stops
+ * a multi-segment walk — but dots are unreserved, so `encodeURIComponent('..')`
+ * is `'..'` and the value survives intact. Measured against the URL this module
+ * builds:
+ *
+ *     sessionId 'abc'    -> /api/v1/agent/sessions/abc/prompt:stream
+ *     sessionId '..'     -> /api/v1/agent/prompt:stream      <- session segment GONE
+ *     sessionId '../..'  -> contained (the '/' is escaped)
+ *
+ * So only the single-segment form escapes, and it drops the session out of the
+ * path entirely. Same defect the SDK's whole-value path branch and the CLI's
+ * `encodeWholePathParam` already reject; this module cannot import either (it is
+ * lib/, they are cli/ and generator-emitted), so the rule is inlined.
+ *
+ * Checked after percent-decoding, since `%2e%2e` normalises identically.
+ */
+function encodeSegment(value: string, label: string): string {
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    // Malformed escape cannot decode to a dot segment.
+  }
+  if (value === '.' || value === '..' || decoded === '.' || decoded === '..') {
+    throw new Error(
+      `Invalid ${label}: "${value}" is a relative path segment. ` +
+        'Relative segments are not allowed because they change which endpoint is called.',
+    );
+  }
+  return encodeURIComponent(value);
+}
 
 /** Terminal events that END a turn. `stream_done` is NOT terminal — it only
  *  marks end-of-text; tool calls (and the real `agent_done`) follow it. */
@@ -66,7 +106,9 @@ export interface StreamAgentPromptArgs {
   policy?: 'auto_approve';
   /** Kit service index (the agent daemon is a singleton at 1). */
   serviceIndex?: number;
-  /** Explicit kit auth; if omitted, a container claim is minted via authorize(). */
+  /** Explicit kit auth. If omitted, a container claim is minted via authorize()
+   *  on a best-effort basis; the agent kit does not require one, so a failed
+   *  mint falls through to the bare kit URL. */
   auth?: AgentPromptKitAuth;
   /** Abort the in-flight turn. */
   signal?: AbortSignal;
@@ -100,6 +142,34 @@ async function mintKitAuth(client: HoodyClient, container: ContainerLike): Promi
   };
 }
 
+/** Best-effort variant of `mintKitAuth`.
+ *
+ *  The agent kit answers on the bare container URL — it verifies no claim — so a
+ *  failed mint must NOT sink the turn. The mint can fail for reasons that say
+ *  nothing about the caller's access: `503 SIGNING_NOT_CONFIGURED` on a
+ *  deployment with no Ed25519 signing key, or an auth token whose permission set
+ *  excludes `containers.read`. Both used to throw here and abort a prompt the
+ *  kit would have accepted unauthenticated.
+ *
+ *  Only the mint is forgiven. A missing `container.id` is a caller bug, not a
+ *  deployment condition, so it is checked BEFORE the try and still throws —
+ *  swallowing it would trade a precise error for a confusing one from
+ *  `getKitUrl()` two lines later.
+ *
+ *  A real access failure still surfaces: the prompt POST itself returns the
+ *  proxy's 401/403 when a permission rule guards the service. */
+async function mintKitAuthBestEffort(
+  client: HoodyClient,
+  container: ContainerLike,
+): Promise<AgentPromptKitAuth | undefined> {
+  if (!container?.id) throw new Error('streamAgentPrompt: container.id is required');
+  try {
+    return await mintKitAuth(client, container);
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Dispatch a streaming prompt turn against an existing agent session and return
  * a handle over the SSE event stream. Create the session first via
@@ -112,10 +182,10 @@ export async function streamAgentPrompt(
   const { container, sessionId, text } = args;
   if (!sessionId) throw new Error('streamAgentPrompt: sessionId is required');
 
-  const auth = args.auth ?? (await mintKitAuth(client, container));
+  const auth = args.auth ?? (await mintKitAuthBestEffort(client, container));
   const base = client.getKitUrl('agent', container, args.serviceIndex ?? 1);
   const qs = args.policy ? `?policy=${encodeURIComponent(args.policy)}` : '';
-  const url = `${base}/api/v1/agent/sessions/${encodeURIComponent(sessionId)}/prompt:stream${qs}`;
+  const url = `${base}/api/v1/agent/sessions/${encodeSegment(sessionId, 'sessionId')}/prompt:stream${qs}`;
 
   // Internal abort so cancel() can tear down the fetch independently of the
   // caller-supplied signal. `cancelled` lets the read loop treat the resulting
@@ -131,9 +201,11 @@ export async function streamAgentPrompt(
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'text/event-stream',
-    'X-Hoody-Container-Claim': auth.claim,
-    'X-Hoody-Token': auth.token,
   };
+  if (auth) {
+    headers['X-Hoody-Container-Claim'] = auth.claim;
+    headers['X-Hoody-Token'] = auth.token;
+  }
   if (args.policy === 'auto_approve') headers['X-Hoody-Gate-Policy'] = 'auto_approve';
 
   const body: Record<string, unknown> = { text };
@@ -309,13 +381,16 @@ export async function streamAgentPrompt(
 
   const cancel = async (): Promise<void> => {
     cancelled = true;
-    // POST the cancel on the same kit URL + claim headers (parity with the
-    // prompt POST — reuse the minted claim rather than re-resolving auth).
+    // POST the cancel on the same kit URL + the SAME headers the prompt used
+    // (reuse the minted claim rather than re-resolving auth; when the mint was
+    // skipped or failed, cancel goes bare exactly like the prompt did).
     try {
-      const cancelUrl = `${base}/api/v1/agent/sessions/${encodeURIComponent(sessionId)}/cancel`;
+      const cancelUrl = `${base}/api/v1/agent/sessions/${encodeSegment(sessionId, 'sessionId')}/cancel`;
       await fetch(cancelUrl, {
         method: 'POST',
-        headers: { 'X-Hoody-Container-Claim': auth.claim, 'X-Hoody-Token': auth.token },
+        headers: auth
+          ? { 'X-Hoody-Container-Claim': auth.claim, 'X-Hoody-Token': auth.token }
+          : {},
       });
     } catch { /* best-effort */ }
     ac.abort();

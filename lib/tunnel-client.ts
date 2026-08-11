@@ -141,31 +141,38 @@ export async function pull(opts: PullOptions): Promise<TunnelHandle> {
     // aren't dropped by the default onmessage handler (which has no
     // stream handlers registered at that point). See expose() for the
     // race explanation.
-    const origWs = (session as any).ws as WebSocket;
-    origWs.onmessage = (event: MessageEvent) => {
-      const data = new Uint8Array(event.data as ArrayBuffer);
-      let result;
-      try { result = decodeFrames(data); } catch { return; }
-      for (const frame of result.frames) {
-        if (frame.header.frameType === FrameType.StreamOpen) {
-          // Guard JSON.parse on peer-controlled STREAM_OPEN payload. Without
-          // this, malformed JSON would throw synchronously and kill the
-          // onmessage handler for the rest of the session.
-          let payload: any;
-          try {
-            payload = JSON.parse(new TextDecoder().decode(frame.payload));
-          } catch {
-            (session as any).resetStream?.(frame.header.streamId);
-            continue;
+    // Attach to EVERY WebSocket, not just the primary. A v2 session opens
+    // secondary sockets and the kit may deliver STREAM_OPEN on any of them; a
+    // primary-only interceptor silently drops those streams, because the default
+    // handler has no stream handler registered for a kit-initiated id. expose()
+    // already does this via setupAutoForwarding -> getAllWebSockets().
+    for (const ws of session.getAllWebSockets()) {
+      if (!ws) continue;
+      ws.onmessage = (event: MessageEvent) => {
+        const data = new Uint8Array(event.data as ArrayBuffer);
+        let result;
+        try { result = decodeFrames(data); } catch { return; }
+        for (const frame of result.frames) {
+          if (frame.header.frameType === FrameType.StreamOpen) {
+            // Guard JSON.parse on peer-controlled STREAM_OPEN payload. Without
+            // this, malformed JSON would throw synchronously and kill the
+            // onmessage handler for the rest of the session.
+            let payload: any;
+            try {
+              payload = JSON.parse(new TextDecoder().decode(frame.payload));
+            } catch {
+              (session as any).resetStream?.(frame.header.streamId);
+              continue;
+            }
+            if (payload.kind === "tcp") {
+              handleTcpStream(session, frame.header.streamId, opts.to);
+              continue;
+            }
           }
-          if (payload.kind === "tcp") {
-            handleTcpStream(session, frame.header.streamId, opts.to);
-            continue;
-          }
+          (session as any).dispatchFrame(frame, ws);
         }
-        (session as any).dispatchFrame(frame, origWs);
-      }
-    };
+      };
+    }
     const bind = await session.bind({
       kind: "tcp",
       mode: "pull",

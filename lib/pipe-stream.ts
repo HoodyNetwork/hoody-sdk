@@ -145,13 +145,58 @@ export class PipeReceiveEmptyBodyError extends Error {
 // ---------------------------------------------------------------------------
 
 /**
+ * A path segment a URL parser resolves as "stay here" / "go up".
+ *
+ * Checked AFTER percent-decoding, because `%2e%2e` decodes to `..` and WHATWG
+ * `URL` normalises it exactly like the literal form — rejecting only the literal
+ * spelling leaves the encoded bypass open.
+ */
+function isPipeDotSegment(segment: string): boolean {
+  if (segment === '.' || segment === '..') return true;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {
+    // Malformed escape cannot decode to a dot segment, so it is not one.
+    return false;
+  }
+  return decoded === '.' || decoded === '..';
+}
+
+/**
  * Encode a pipe path that may contain `/` separators. Each segment is
  * percent-encoded individually; literal `/` is preserved as a separator
  * (the server's router treats `/api/v1/pipe/<rest>` segment-wise).
+ *
+ * Preserving separators means a caller-supplied value can introduce new path
+ * segments, so `.` and `..` are REFUSED rather than interpolated. Without that,
+ * a pipe path walks straight out of its own route — measured:
+ *
+ *     getUrl('../../x')      ->  /api/v1/pipe/../../x      ->  /api/x
+ *     getUrl('..')           ->  /api/v1/pipe/..           ->  /api/v1/
+ *     getUrl('a/../../b')    ->                            ->  /api/v1/b
+ *
+ * and the request still carries the caller's bearer token. `validatePipePath`
+ * does NOT cover this — it checks only length and a reserved-name set.
+ *
+ * Keep this rule identical to `PipeMediaClient.getUrl` in pipe-media.ts, which
+ * inlines it because importing from this module pulls node:net/fs into the
+ * browser bundle.
  */
 export function encodePipePath(path: string): string {
   if (!path) return '';
-  return path.split('/').map(encodeURIComponent).join('/');
+  return path
+    .split('/')
+    .map(segment => {
+      if (isPipeDotSegment(segment)) {
+        throw new Error(
+          `Invalid pipe path: "${path}" contains a "${segment}" path segment. ` +
+            'Relative segments are not allowed because they change which endpoint is called.',
+        );
+      }
+      return encodeURIComponent(segment);
+    })
+    .join('/');
 }
 
 /** Strict client-side path validation — fail before wire round-trip. */
@@ -167,6 +212,18 @@ export function validatePipePath(path: string): void {
   const normalized = path.startsWith('/') ? path : '/' + path;
   if (reserved.has(normalized)) {
     throw new Error(`pipe path "${path}" is reserved by the server; choose a different path`);
+  }
+  // Relative segments change WHICH endpoint is called, so a path carrying one is
+  // never valid. Checked here as well as in encodePipePath: this function is the
+  // documented "strict validation" entry point and callers reasonably expect it to
+  // be the thing that catches a bad path, but it used to pass `../../admin`
+  // untouched — length and reserved-name checks cannot see a traversal.
+  for (const segment of path.split('/')) {
+    if (isPipeDotSegment(segment)) {
+      throw new Error(
+        `pipe path "${path}" contains a "${segment}" path segment; relative segments are not allowed`,
+      );
+    }
   }
 }
 

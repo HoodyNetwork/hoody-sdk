@@ -1034,6 +1034,32 @@ export class TunnelSession {
     }
   }
 
+  /**
+   * Send RESET and release the stream's local state.
+   *
+   * The mirror of `sendEof`. Sending a raw RESET frame closes the stream on the
+   * wire but leaves this side's CreditGate allocated, so every locally refused
+   * stream (bad auth, denied destination, timeout) permanently grew
+   * `streamCredit` for the life of the session, and a reused stream id would
+   * inherit the stale gate.
+   */
+  sendReset(streamId: number, reason: string) {
+    const reasonBytes = new TextEncoder().encode(reason);
+    const payload = new Uint8Array(2 + reasonBytes.length);
+    new DataView(payload.buffer).setUint16(0, 0x0006 /* RefusedStream */, false);
+    payload.set(reasonBytes, 2);
+    this.sendFrame({
+      header: { frameType: FrameType.Reset, streamId, length: payload.length },
+      payload,
+    });
+    this.markStreamClosed(streamId);
+    const gate = this.streamCredit.get(streamId);
+    if (gate) {
+      gate.close(new Error(`stream ${streamId} reset locally`));
+      this.streamCredit.delete(streamId);
+    }
+  }
+
   async close() {
     // Bump generation so any in-flight HELLO_OK / JOIN_OK handler from
     // a connect() that's still mid-handshake no-ops rather than writing

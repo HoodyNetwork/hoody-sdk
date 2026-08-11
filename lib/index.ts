@@ -389,6 +389,53 @@ export {
   destroyAllLocalAgents as destroyAllTunnelLocalAgents,
 } from './tunnel-http-pump.js';
 
+// -- Local exit proxy (publish a container's HTTPS proxy, exit from this machine) --
+// `startLocalExit` is the one-call entry point the CLI uses. The layers
+// below it are exported too, because the pieces are independently useful: the
+// SOCKS5 machine runs on any transport implementing `Socks5Stream`, and the
+// destination gate is the same authorization used by every outbound dial.
+export {
+  startLocalExit,
+  fetchThroughProxy,
+  LocalExitStartupError,
+} from './local-exit.js';
+export type {
+  LocalExitOptions,
+  LocalExitHandle,
+  LocalExitVerification,
+  LocalExitTeardownReport,
+  LocalExitContainerLike,
+} from './local-exit.js';
+export { tunnelSocks5 } from './tunnel-socks5.js';
+export type {
+  TunnelSocks5Options,
+  TunnelSocks5Handle,
+} from './tunnel-socks5.js';
+export {
+  handleSocks5Stream,
+  createServerState as createSocks5ServerState,
+} from './socks5-server.js';
+export type {
+  Socks5Stream,
+  Socks5Credentials,
+  Socks5ServerOptions,
+  Socks5ServerState,
+  Socks5ConnectEvent,
+  Socks5DenyReason,
+} from './socks5-server.js';
+export {
+  resolveAndAuthorize as resolveAndAuthorizeDestination,
+  isPrivateAddress,
+  clearDnsCache as clearDestinationDnsCache,
+  DestinationDeniedError,
+} from './net-destination-policy.js';
+export type {
+  DestinationPolicy,
+  ResolvedDestination,
+  DenyReason as DestinationDenyReason,
+  DnsLookup as DestinationDnsLookup,
+} from './net-destination-policy.js';
+
 // -- curl-channel (WebSocket-multiplexed fetch over Hoody curl kit) --
 // Vendored from the upstream Hoody curl client. Public surface is `client.curlChannel()`;
 // the lower-level `CurlChannel` / `createCurlFetch` are re-exported for
