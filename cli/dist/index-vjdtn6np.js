@@ -1,0 +1,2 @@
+function w(v,j){try{let f=new URL(v).hostname;if(!f)return`${j}.hoody.com`;if(f.startsWith(`${j}.`))return f;let k=/^[a-f0-9]{24}\.api\./i;if(k.test(f))return f.replace(k,`${j}.`);if(f.startsWith("api."))return`${j}.${f.slice(4)}`;let q=f.replace(".api.",`.${j}.`);if(q!==f)return q;if(f==="localhost"||/^\d+\.\d+\.\d+\.\d+$/.test(f)||f.startsWith("["))return`${j}.hoody.com`;return`${j}.${f}`}catch{return`${j}.hoody.com`}}
+export{w as n};
