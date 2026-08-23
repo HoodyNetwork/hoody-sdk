@@ -222,6 +222,24 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     aliases: ['note'],
   },
   {
+    // Missing entirely until 2026-08-12. `hoody run` shipped, `getKitUrl('run')`
+    // built the right URL (it resolves through the namespace list, not this
+    // catalog), and the slug table documented `run-1` — but `hoody kits list`
+    // never showed it, because that command is the one consumer that reads the
+    // catalog. The kit was renamed `app` -> `run` on 2026-07-31; no `app` alias
+    // is carried, the old name is gone.
+    slug: 'run',
+    kind: 'named',
+    description: 'Hoody Run — resolve an app to the exact shell command that launches it, across package sources.',
+    serviceSegmentPattern: 'run-{index}',
+    urlTemplateSample: 'https://{projectId}-{containerId}-run-{index}.{server}.containers.hoody.com',
+    supportsIndex: true,
+    defaultIndex: 1,
+    minIndex: 1,
+    maxIndex: 9999,
+    sdkNamespace: 'run',
+  },
+  {
     slug: 'logs',
     kind: 'named',
     description: 'Proxy logs routing, query, config, and maintenance APIs.',
@@ -271,7 +289,13 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
   {
     slug: 'egress',
     kind: 'special',
-    description: 'Container egress proxy endpoint (no instance index).',
+    // `supportsIndex: false` describes the DEFAULT URL shape, not what the edge
+    // accepts. Measured on misty-robin-517-sg 2026-08-11: `egress`, `egress-1`,
+    // `egress-2` and `egress-7` all answer 200 from pid 436 and all proxy
+    // CONNECT to the same exit IP, so the index selects a permission scope on
+    // one process rather than an instance. Keep the sample unsuffixed: four
+    // layers are pinned to it by tests/unit/egress-url-parity.test.ts.
+    description: 'Container egress proxy endpoint. The default URL carries no index; the edge normalizes a missing index to 1, and an explicit egress-<n> selects a permission scope on the same single process.',
     serviceSegmentPattern: 'egress',
     urlTemplateSample: 'https://{projectId}-{containerId}-egress.{server}.containers.hoody.com',
     supportsIndex: false,

@@ -214,7 +214,11 @@ function resolveClientBaseUrl(client: any): string {
       'Every container URL is derived from it, so it cannot be guessed.',
     );
   }
-  if (!host || host === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')) {
+  // `localhost.` (trailing root dot) and `foo.localhost` resolve to loopback
+  // just as `localhost` does, and an exact-match check let them through to
+  // derive `containers.localhost.` / `containers.foo.localhost`.
+  const loopbackName = host === 'localhost' || host === 'localhost.' || /(^|\.)localhost\.?$/i.test(host);
+  if (!host || loopbackName || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')) {
     throw new Error(
       `local exit: no container realm can be derived from baseURL host "${host}". ` +
       'Point the client at the API hostname for your realm (for example ' +
@@ -249,10 +253,26 @@ const LOCAL_EXIT_HOST = '127.0.0.1';
  * (and so leaving dead ports set on every container) if the payload ever loses
  * a field.
  *
- * This narrows the window; it does not close it. The read and the delete are
- * two calls, so an exit that takes the container over in between is still
- * clobbered. Closing that needs a conditional clear in the kit — an
- * If-Match-style ownership token — which is a kit change, not an SDK one.
+ * This narrows the window; it does not close it. Two gaps remain, both needing
+ * a kit change rather than an SDK one:
+ *
+ *   - The read and the delete are two calls, so an exit that takes the
+ *     container over in between is still clobbered.
+ *   - A replacement that matches on ALL FOUR visible fields is indistinguishable
+ *     from ours, because the kit reports `auth` as a bare boolean and never any
+ *     credential identity.
+ *
+ * The second one is narrower than it sounds, and worth stating precisely: two
+ * LIVE exits cannot collide on a loopback port at all. The tunnel does a real
+ * `TcpListener::bind`, and an occupied port fails with PORT_IN_USE rather than
+ * being shared (hoody-tunnel/src/bind/pull.rs:44-55). It takes a stale handle:
+ * this exit's listener must already be gone, the port must have been reused by
+ * a new exit, and only then does a late teardown on the old handle see an
+ * identical status object. `upstreamConfirmedGone` removes that specific
+ * sequence; what remains needs an atomic compare-and-delete in the kit, keyed
+ * on anything that survives the round trip (an owner token, a credential hash,
+ * an ETag) — the SDK cannot supply it, since every discriminator it writes is
+ * collapsed to `auth: true` on the way back.
  */
 function upstreamIsForeign(owned: any, containerPort: number): boolean {
   if (owned?.enabled !== true) return false;
@@ -336,6 +356,12 @@ export async function startLocalExit(
 
   const tunnelWs =
     `wss://${projectId}-${container.id}-tunnel-1.${server}.${domain}/api/v1/tunnel/connect`;
+  // Unsuffixed, matching `getKitUrl('egress', …)`, the CLI's getKitBaseUrl and
+  // the docs. The edge normalizes a missing index to 1, so this IS index 1 —
+  // including for proxy permissions, which are evaluated per index. Emitting
+  // `-egress-1` here instead would route identically but break the four-layer
+  // parity that tests/unit/egress-url-parity.test.ts exists to hold, after a
+  // rename once already split the SDK from the CLI and docs.
   const egressBase = `https://${projectId}-${container.id}-egress.${server}.${domain}`;
 
   const token: string = await client.getAuthToken();
@@ -474,6 +500,23 @@ export async function startLocalExit(
      * over. The IIFE below is also detached with `void`, so an async listener
      * that rejects would otherwise surface as an unhandled rejection.
      */
+    /**
+     * Set once a teardown path has CONFIRMED (by read-back) that this exit's
+     * upstream is gone.
+     *
+     * Without it, the session-lost path could clear and verify the upstream,
+     * the container's tunnel could then release the loopback port, a NEW exit
+     * could bind that same port and install its own upstream — and a later
+     * `stop()` on this stale handle would read a status object identical to the
+     * one it wrote (same scheme, host, port, and `auth: true`, because the kit
+     * never returns credentials) and delete the newcomer's.
+     *
+     * This is the one leg of that sequence the SDK can remove on its own: a
+     * handle that already knows its own upstream is gone has nothing left to
+     * clear, so it must not issue another delete no matter what it reads.
+     */
+    let upstreamConfirmedGone = false;
+
     const notifySessionLost = (info: { upstreamCleared: boolean }) => {
       try {
         void Promise.resolve(opts.onSessionLost?.(info)).catch(() => { /* listener's problem */ });
@@ -510,6 +553,7 @@ export async function startLocalExit(
           try {
             const confirmed: any = unwrap(await box.egress.getUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
             ok = confirmed?.enabled === false;
+            if (ok) upstreamConfirmedGone = true;
           } catch { ok = false; }
         }
         if (!ok) {
@@ -532,6 +576,22 @@ export async function startLocalExit(
         upstreamCleared: false, upstreamVerified: false, upstreamHandedOver: false,
         tunnelClosed: false, aliasRemoved: false, errors: [...errors],
       };
+
+      // Nothing of ours is left to clear. Re-reading here and comparing would
+      // not save us: after the port is released and reused, a new exit's status
+      // object is byte-identical to what this handle wrote, so the comparison
+      // says "mine" and the delete lands on the newcomer.
+      if (upstreamConfirmedGone) {
+        report.upstreamCleared = true;
+        report.upstreamVerified = true;
+        if (aliasId) {
+          try { await client.api.proxyAliases.delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS }); report.aliasRemoved = true; aliasId = undefined; }
+          catch (e) { report.errors.push({ step: 'removeAlias', message: String((e as Error).message) }); }
+        }
+        try { await tunnel?.close(); report.tunnelClosed = true; }
+        catch (e) { report.errors.push({ step: 'closeTunnel', message: String((e as Error).message) }); }
+        return report;
+      }
 
       // Do not clear an upstream that is no longer ours.
       //
@@ -589,6 +649,9 @@ export async function startLocalExit(
       try {
         const after: any = unwrap(await box.egress.getUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
         report.upstreamVerified = after?.enabled === false;
+        // Latch it: a retried stop() on this handle has nothing left to clear,
+        // and by then the port may belong to a different exit.
+        if (report.upstreamVerified) upstreamConfirmedGone = true;
         if (!report.upstreamVerified) {
           report.errors.push({ step: 'verifyUpstream', message: `still ${JSON.stringify(after)}` });
         }
