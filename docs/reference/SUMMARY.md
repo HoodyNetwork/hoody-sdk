@@ -1,8 +1,8 @@
 # Hoody SDK — Reference Documentation
 
-**Version:** 1.0.0-beta.13
+**Version:** 1.0.0-beta.14
 **SDK Methods:** 1104
-**CLI Commands:** 840
+**CLI Commands:** 847
 **Namespaces:** 20
 
 ---
@@ -10,7 +10,7 @@
 ## Quick Links
 
 - [SDK Method Reference](SDK-METHODS.md) — flat list of all 1104 methods
-- [CLI Command Reference](CLI-COMMANDS.md) — flat list of 840 commands (plus the hand-written `hoody pipe` streaming group)
+- [CLI Command Reference](CLI-COMMANDS.md) — flat list of 847 commands (plus the hand-written `hoody pipe` streaming group)
 - [HTTP Endpoint Reference](HTTP-METHODS.md) — every HTTP method + path, with its SDK method and CLI command
 - [Namespace Index](namespaces/_INDEX.md) — deep dives per namespace
 
@@ -20,7 +20,7 @@
 
 | Namespace | SDK Methods | CLI Commands | Services | Deep Dive |
 |-----------|-------------|--------------|----------|-----------|
-| `agent` | 222 | 176 | 22 | [agent.md](namespaces/agent.md) |
+| `agent` | 222 | 183 | 22 | [agent.md](namespaces/agent.md) |
 | `api` | 294 | 201 | 31 | [api.md](namespaces/api.md) |
 | `browser` | 29 | 25 | 8 | [browser.md](namespaces/browser.md) |
 | `code` | 19 | 16 | 6 | [code.md](namespaces/code.md) |
@@ -42,7 +42,7 @@
 | `watch` | 14 | 7 | 4 | [watch.md](namespaces/watch.md) |
 
 > The **CLI Commands** column counts only commands aligned to an SDK namespace.
-> It is a subset of the **840** headline total, which also includes
+> It is a subset of the **847** headline total, which also includes
 > non-namespace command groups (containers, projects, …) and top-level
 > utilities (`login`, `chat`, `open`, …). See
 > [CLI-COMMANDS.md](CLI-COMMANDS.md) for the complete flat list.
@@ -55,8 +55,8 @@ Parity across the published surface, counted over OpenAPI **operations**:
 
 | Metric | Count |
 |--------|-------|
-| Matched (SDK method + CLI command) | 802 |
-| SDK-only (no CLI command) | 166 |
+| Matched (SDK method + CLI command) | 809 |
+| SDK-only (no CLI command) | 159 |
 | CLI-only (no SDK method) | 12 |
 
 SDK-only operations are mostly spec/health, WebDAV, and other transport-level
@@ -68,7 +68,7 @@ configuration commands (`hoody proxy logs export`, `… db vacuum`,
 > These figures count OpenAPI **operations**, so they intentionally do not
 > reconcile with the headline totals above: the 1104 SDK methods expand
 > pagination helpers — `list`/`listAll`/`listIterator` — over fewer underlying
-> operations, and the 840 rendered CLI commands merge auth-type variants.
+> operations, and the 847 rendered CLI commands merge auth-type variants.
 > Top-level CLI utilities such as `login` and `config` are not counted here —
 > they are not OpenAPI operations. The full endpoint-by-endpoint mapping is in
 > [HTTP-METHODS.md](HTTP-METHODS.md).

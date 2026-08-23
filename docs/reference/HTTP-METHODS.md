@@ -1,6 +1,6 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.13
+**Version:** 1.0.0-beta.14
 **Total endpoints:** 968
 **Namespaces:** 20
 
@@ -21,8 +21,8 @@ Grouped by SDK namespace, sorted by path.
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
 | GET | `/api/v1/agent/acp/agents` | `agent.settings.getACPStatus` | `hoody agent settings get-acp-status` | Get BYOA ACP backend status. |
-| PUT | `/api/v1/agent/acp/agents/{agent}/enabled` | `agent.settings.setACPEnabled` | — | Enable or disable a BYOA ACP backend. |
-| PUT | `/api/v1/agent/acp/agents/{agent}/model` | `agent.settings.setACPAgentModel` | — | Set a BYOA backend's default model and effort. |
+| PUT | `/api/v1/agent/acp/agents/{agent}/enabled` | `agent.settings.setACPEnabled` | `hoody agent settings set-acp-enabled` | Enable or disable a BYOA ACP backend. |
+| PUT | `/api/v1/agent/acp/agents/{agent}/model` | `agent.settings.setACPAgentModel` | `hoody agent settings set-acp-agent-model` | Set a BYOA backend's default model and effort. |
 | PUT | `/api/v1/agent/acp/agents/{agent}/secrets/{key}` | `agent.settings.setACPSecret` | `hoody agent settings set-acp-secret` | Store an ACP per-agent secret value. |
 | GET | `/api/v1/agent/agents` | `agent.agents.listAgents` | `hoody agent agents list` | List chat-agent definitions. |
 | POST | `/api/v1/agent/agents` | `agent.agents.createAgent` | `hoody agent agents create` | Create a chat-agent definition. |
@@ -38,10 +38,10 @@ Grouped by SDK namespace, sorted by path.
 | PATCH | `/api/v1/agent/agents/{name}/turns` | `agent.agents.setAgentTurns` | `hoody agent agents set-turns` | Set an agent's max-turns. |
 | GET | `/api/v1/agent/containers` | `agent.discovery.listContainers` | `hoody agent discovery list-containers` | List containers in a realm (for binding). |
 | GET | `/api/v1/agent/docs` | `agent.system.docs` | `hoody agent system docs` | API documentation UI. |
-| POST | `/api/v1/agent/github/auth/active` | `agent.github.githubSetActiveAccount` | — | Switch the active GitHub account. |
+| POST | `/api/v1/agent/github/auth/active` | `agent.github.githubSetActiveAccount` | `hoody agent github set-active-account` | Switch the active GitHub account. |
 | POST | `/api/v1/agent/github/auth/login` | `agent.github.githubLogin` | `hoody agent github login` | Start a GitHub device-flow login (or add a PAT). |
 | POST | `/api/v1/agent/github/auth/login/poll` | `agent.github.githubLoginPoll` | `hoody agent github login-poll` | Poll a GitHub device-flow login to completion. |
-| POST | `/api/v1/agent/github/auth/logout` | `agent.github.githubLogout` | — | Remove a linked GitHub account. |
+| POST | `/api/v1/agent/github/auth/logout` | `agent.github.githubLogout` | `hoody agent github logout` | Remove a linked GitHub account. |
 | GET | `/api/v1/agent/github/auth/status` | `agent.github.githubAuthStatus` | `hoody agent github auth-status` | GitHub auth status. |
 | GET | `/api/v1/agent/github/branches` | `agent.github.githubBranches` | `hoody agent github branches` | List GitHub branches. |
 | POST | `/api/v1/agent/github/clone` | `agent.github.githubClone` | `hoody agent github clone` | Clone a GitHub repository. |
@@ -67,7 +67,7 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/agent/jobs/{id}/result` | `agent.jobs.getJobResult` | `hoody agent jobs get-result` | Get an async job's result. |
 | GET | `/api/v1/agent/logs` | `agent.logs.queryLogs` | `hoody agent logs query-logs` | Query logs. |
 | GET | `/api/v1/agent/logs/entries/{ref}` | `agent.logs.readLogEntry` | `hoody agent logs read-log-entry` | Read a log entry. |
-| GET | `/api/v1/agent/logs/export` | `agent.exportLogs` | — | Export logs as a downloadable file. |
+| GET | `/api/v1/agent/logs/export` | `agent.exportLogs` | `hoody agent logs export` | Export logs as a downloadable file. |
 | GET | `/api/v1/agent/logs/sources` | `agent.logs.logsSources` | `hoody agent logs logs-sources` | Log sources. |
 | GET | `/api/v1/agent/logs/stats` | `agent.logs.logsStats` | `hoody agent logs logs-stats` | Log statistics. |
 | GET | `/api/v1/agent/logs/stream` | `agent.logs.streamLogs` | — | Stream the log tail (SSE). |
@@ -136,14 +136,14 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/api/v1/agent/sessions/{id}/prompt:sync` | `agent.sessions.promptSync` | `hoody agent sessions prompt-sync` | Dispatch a turn and block to completion. |
 | GET | `/api/v1/agent/sessions/{id}/replay` | `agent.sessions.replaySession` | `hoody agent sessions replay` | Replay a live session's buffered events. |
 | GET | `/api/v1/agent/sessions/{id}/stream` | `agent.sessions.streamSession` | — | Attach to a session's event stream (WebSocket / SSE). |
-| GET | `/api/v1/agent/sessions/{id}/tasks` | `agent.tasks.listTasks` | `hoody agent tasks list` | Request the session's task snapshot. |
+| GET | `/api/v1/agent/sessions/{id}/tasks` | `agent.tasks.listTasks` | `hoody agent tasks list` | List a session's background tasks. |
 | POST | `/api/v1/agent/sessions/{id}/tasks/{tid}/cancel` | `agent.tasks.cancelTask` | `hoody agent tasks cancel` | Cancel a background task. |
-| GET | `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | `agent.tasks.requestTaskTranscript` | `hoody agent tasks request-transcript` | Request a task's transcript (upsert-poll). |
+| GET | `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | `agent.tasks.getTaskTranscript` | `hoody agent tasks transcript` | Read a background task's transcript. |
 | POST | `/api/v1/agent/sessions/{id}/tasks/cancel` | `agent.tasks.cancelAllTasks` | `hoody agent tasks cancel-all` | Cancel all background tasks. |
 | GET | `/api/v1/agent/sessions/{id}/tools` | `agent.tools.listSessionTools` | `hoody agent tools list-session` | List a session's effective tool set. |
 | POST | `/api/v1/agent/sessions/{id}/tools/{name}/run` | `agent.tools.runSessionTool` | `hoody agent tools run-session` | Run a tool inside a live session (gated). |
 | GET | `/api/v1/agent/sessions/{id}/tools/mcp` | `agent.tools.listSessionMCPTools` | `hoody agent tools list-session-mcp` | List a session's MCP tools. |
-| GET | `/api/v1/agent/sessions/{id}/transcript` | `agent.sessions.getSessionTranscript` | — | Read a session's transcript without attaching. |
+| GET | `/api/v1/agent/sessions/{id}/transcript` | `agent.sessions.getSessionTranscript` | `hoody agent sessions transcript` | Read a session's transcript without attaching. |
 | POST | `/api/v1/agent/sessions/{id}/trim` | `agent.sessions.trimSession` | `hoody agent sessions trim` | Trim session history to a turn index. |
 | PATCH | `/api/v1/agent/sessions/{id}/verbosity` | `agent.sessions.setSessionVerbosity` | `hoody agent sessions set-verbosity` | Set response verbosity. |
 | POST | `/api/v1/agent/sessions/{id}/workflow/messages` | `agent.sessions.postWorkflowMessage` | `hoody agent sessions post-workflow-message` | Send a message to a running workflow. |
@@ -203,7 +203,7 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/agent/workflows/runs` | `agent.workflows.listWorkflowRuns` | `hoody agent workflows list-runs` | Snapshot in-flight and recent workflow runs. |
 | GET | `/api/v1/agent/workflows/runs/{run_id}` | `agent.workflows.getWorkflowRun` | `hoody agent workflows get-run` | Get one workflow run by id. |
 | POST | `/api/v1/agent/workflows/runs/{run_id}/cancel` | `agent.workflows.cancelWorkflowRun` | `hoody agent workflows cancel-run` | Cancel a workflow run. |
-| POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | `agent.workflows.resumeWorkflowRun` | — | Resume a failed or cancelled workflow run. |
+| POST | `/api/v1/agent/workflows/runs/{run_id}/resume` | `agent.workflows.resumeWorkflowRun` | `hoody agent workflows resume-run` | Resume a failed or cancelled workflow run. |
 
 ---
 

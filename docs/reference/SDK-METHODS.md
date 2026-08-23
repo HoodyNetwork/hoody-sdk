@@ -1,6 +1,6 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.13
+**Version:** 1.0.0-beta.14
 **Total methods:** 1104
 **Namespaces:** 20
 
@@ -272,8 +272,8 @@
 |--------|------|------|---------|
 | `cancelAllTasks` | POST | `/api/v1/agent/sessions/{id}/tasks/cancel` | Cancel all background tasks. |
 | `cancelTask` | POST | `/api/v1/agent/sessions/{id}/tasks/{tid}/cancel` | Cancel a background task. |
-| `listTasks` | GET | `/api/v1/agent/sessions/{id}/tasks` | Request the session's task snapshot. |
-| `requestTaskTranscript` | GET | `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Request a task's transcript (upsert-poll). |
+| `getTaskTranscript` | GET | `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Read a background task's transcript. |
+| `listTasks` | GET | `/api/v1/agent/sessions/{id}/tasks` | List a session's background tasks. |
 
 ### `client.agent.todos`
 

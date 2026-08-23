@@ -1,6 +1,6 @@
 # `tunnel` — 7 methods
 
-**Version:** 1.0.0-beta.13
+**Version:** 1.0.0-beta.14
 **Accessor:** `client.tunnel`
 
 ```typescript

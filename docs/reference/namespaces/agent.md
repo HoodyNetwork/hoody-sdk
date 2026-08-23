@@ -1,6 +1,6 @@
 # `agent` — 222 methods
 
-**Version:** 1.0.0-beta.13
+**Version:** 1.0.0-beta.14
 **Accessor:** `client.agent`
 
 ```typescript
@@ -54,6 +54,8 @@ client.agent.exportLogs(options?: { source?: string; min_level?: string; comp?: 
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
 **Returns:** `ApiResponse<unknown>`
+
+**CLI:** `hoody agent logs export`
 
 ---
 
@@ -749,6 +751,8 @@ client.agent.github.githubLogout(data: AgentGithubLogoutRequest, options?: { rea
 
 **Returns:** `AgentGithubLogoutResponse`
 
+**CLI:** `hoody agent github logout`
+
 ---
 
 ### `githubPullRequest`
@@ -820,6 +824,8 @@ client.agent.github.githubSetActiveAccount(data: AgentGithubSetActiveAccountRequ
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
 **Returns:** `AgentGithubSetActiveAccountResponse`
+
+**CLI:** `hoody agent github set-active-account`
 
 ---
 
@@ -2983,6 +2989,8 @@ client.agent.sessions.getSessionTranscript(id: string, options?: { after_turn?: 
 
 **Returns:** `AgentGetSessionTranscriptResponse`
 
+**CLI:** `hoody agent sessions transcript`
+
 ---
 
 ### `listSessionCwds`
@@ -3661,6 +3669,8 @@ client.agent.settings.setACPAgentModel(agent: string, data?: AgentSetACPAgentMod
 
 **Returns:** `AgentSetACPAgentModelResponse`
 
+**CLI:** `hoody agent settings set-acp-agent-model`
+
 ---
 
 ### `setACPEnabled`
@@ -3684,6 +3694,8 @@ client.agent.settings.setACPEnabled(agent: string, data?: AgentSetACPEnabledRequ
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
 **Returns:** `AgentSetACPEnabledResponse`
+
+**CLI:** `hoody agent settings set-acp-enabled`
 
 ---
 
@@ -4382,11 +4394,38 @@ client.agent.tasks.cancelTask(id: string, tid: string, options?: { realm?: strin
 
 ---
 
+### `getTaskTranscript`
+
+**GET** `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript`
+
+Read a background task's transcript.
+
+```typescript
+client.agent.tasks.getTaskTranscript(id: string, tid: string, options?: { after_seq?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentGetTaskTranscriptResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Path identifier. |
+| `tid` | `string` | Yes | path | Path identifier. |
+| `after_seq` | `number` | No | query | Exclusive int64 upsert-poll cursor: entries with seq strictly greater than it, plus any still-OPEN entry regardless of its seq. Omit for the whole transcript (distinct from 0, which skips a closed seq-0 entry). Negative/non-integer = 400. |
+| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `AgentGetTaskTranscriptResponse`
+
+**CLI:** `hoody agent tasks transcript`
+
+---
+
 ### `listTasks`
 
 **GET** `/api/v1/agent/sessions/{id}/tasks`
 
-Request the session's task snapshot.
+List a session's background tasks.
 
 ```typescript
 client.agent.tasks.listTasks(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentListTasksResponse>
@@ -4404,33 +4443,6 @@ client.agent.tasks.listTasks(id: string, options?: { realm?: string; XHoodyCwd?:
 **Returns:** `AgentListTasksResponse`
 
 **CLI:** `hoody agent tasks list`
-
----
-
-### `requestTaskTranscript`
-
-**GET** `/api/v1/agent/sessions/{id}/tasks/{tid}/transcript`
-
-Request a task's transcript (upsert-poll).
-
-```typescript
-client.agent.tasks.requestTaskTranscript(id: string, tid: string, options?: { after_seq?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string }): Promise<AgentRequestTaskTranscriptResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Path identifier. |
-| `tid` | `string` | Yes | path | Path identifier. |
-| `after_seq` | `number` | No | query | int64 upsert-poll cursor; entries at/below it are re-sent (default 0). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
-| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
-| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-
-**Returns:** `AgentRequestTaskTranscriptResponse`
-
-**CLI:** `hoody agent tasks request-transcript`
 
 ---
 
@@ -5725,6 +5737,8 @@ client.agent.workflows.resumeWorkflowRun(run_id: string, data: AgentResumeWorkfl
 | `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
 **Returns:** `AgentResumeWorkflowRunResponse`
+
+**CLI:** `hoody agent workflows resume-run`
 
 ---
 
