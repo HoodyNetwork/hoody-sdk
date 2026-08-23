@@ -1,4 +1,4 @@
-> _**HTTP skill (FULL — basic + all 20 namespaces)** · ~216,227 tokens · hoody-sdk v1.0.0-beta.13_
+> _**HTTP skill (FULL — basic + all 20 namespaces)** · ~216,641 tokens · hoody-sdk v1.0.0-beta.14_
 
 # HTTP mode — drive Hoody with curl
 
@@ -981,7 +981,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 ## Common errors
 
 - A gate or question left unresolved stalls the turn — a streamed prompt that emitted an `event.confirm_request` (confirm gate) or `event.user_question` (question gate) will not complete until you answer it: `POST /api/v1/agent/sessions/{id}/confirm` for a confirm, `POST /api/v1/agent/sessions/{id}/answer` for a question. For unattended runs, arm `PATCH /api/v1/agent/sessions/{id}/auto-reply` (a self-driving auto-user loop), or pass `policy: "auto_approve"` on the prompt — but `auto_approve` only auto-approves **confirm** gates, never questions; a parked question still stalls until `POST /api/v1/agent/sessions/{id}/answer` (or the auto-reply loop) answers it.
-- `GET /api/v1/agent/sessions/{id}/tasks` and `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` do NOT return data inline — they ask a *live* session to emit its background-subagent snapshot/transcript onto the session's WebSocket/SSE stream (`event.tasks_snapshot` for the snapshot, `event.task_transcript` for the transcript) and return only a JSON ack; you must already be attached via `GET /api/v1/agent/sessions/{id}/stream` to receive the payload. `POST /api/v1/agent/sessions/{id}/tasks/{tid}/cancel` / `POST /api/v1/agent/sessions/{id}/tasks/cancel` stop background tasks mid-turn (server-layer; tasks survive `POST /api/v1/agent/sessions/{id}/cancel` but are not restartable).
+- `GET /api/v1/agent/sessions/{id}/tasks` and `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` return their data INLINE and need no live session and no attached stream. `GET /api/v1/agent/sessions/{id}/tasks` is the UNION of the live task registry and the session's PERSISTED task store (keyed by task id, live winning) — the live registry evicts completed tasks when a new one spawns, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` reads a task that reached a terminal state even for a closed session and after a daemon restart; a task still RUNNING when the daemon died is NOT recoverable and reads 404. Its `source` field is `"live"` or `"store"`, and `complete` reports whether the response reflects a terminal projection DURABLY COMMITTED to that store. `after_seq` is EXCLUSIVE (entries strictly after it, plus any still-open entry); OMITTING it returns the whole transcript, which is distinct from `after_seq=0`. `POST /api/v1/agent/sessions/{id}/tasks/{tid}/cancel` / `POST /api/v1/agent/sessions/{id}/tasks/cancel` still act on a LIVE session and stop background tasks mid-turn (server-layer; tasks survive `POST /api/v1/agent/sessions/{id}/cancel` but are not restartable).
 - `POST /api/v1/agent/memory/consolidate` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — the gateway server-stamps a machine marker and the daemon's non-bypassable gate returns `403 human_only` for every HTTP/SDK/CLI call; it can only be triggered from an interactive human session. Do not call it programmatically.
 - `POST /api/v1/agent/mcp/probe` (POST /mcp/probe) is **human-only and ALWAYS fails over this namespace** — probing STARTS A PROCESS (stdio) or makes an outbound request to a caller-chosen URL (http/sse), so a machine caller may not self-approve it and receives `403 human_only` on every HTTP/SDK/CLI call. The surface still exposes it for completeness, it simply always refuses. The deny list is still enforced on the candidate config before anything is started. Use `POST /api/v1/agent/mcp/parse` for a write-free preview instead; there is no programmatic substitute for the live trial.
 - An MCP write needs BOTH a `nonce` and an `expect_hash` — neither is optional, and a stale hash is a CONFLICT rather than a silent overwrite. `PUT /api/v1/agent/mcp/servers` / `DELETE /api/v1/agent/mcp/servers` / `POST /api/v1/agent/mcp/servers/enable` / `POST /api/v1/agent/mcp/import` each require a fresh single-use `nonce` from `POST /api/v1/agent/mcp/write-intents` minted for that exact op and scope (one minted for a different op or scope fails closed) AND the `mcp_servers` hash you last read, from either `POST /api/v1/agent/mcp/write-intents` or `GET /api/v1/agent/mcp/servers`. A mismatch means someone else edited the layer since you read it — re-read, re-mint, retry; each nonce is good for exactly one write, so a retry always needs a new one. There is no "omit it for the first write" shortcut: writing into a settings file that does not exist yet means passing the empty-array hash.
@@ -1722,8 +1722,8 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 |--------|---------|--------|
 | `POST /api/v1/agent/sessions/{id}/tasks/cancel` | Cancel all background tasks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
 | `POST /api/v1/agent/sessions/{id}/tasks/{tid}/cancel` | Cancel a background task. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/tasks` | Request the session's task snapshot. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
-| `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Request a task's transcript (upsert-poll). | `?after_seq` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
+| `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript` | Read a background task's transcript. | `?after_seq` `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
+| `GET /api/v1/agent/sessions/{id}/tasks` | List a session's background tasks. | `H:X-Hoody-Cwd` `H:X-Hoody-Config-Dir` `H:X-Hoody-Container` `H:X-Hoody-Realm` `?realm` |
 
 **Param notes:**
 
@@ -1732,7 +1732,7 @@ Reads first: `GET /api/v1/agent/mcp/servers` (`{ session_id }`) returns the EFFE
 - `X-Hoody-Container` — Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension.
 - `X-Hoody-Realm` — Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
 - `realm` — Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes.
-- `after_seq` — int64 upsert-poll cursor; entries at/below it are re-sent (default 0).
+- `after_seq` — Exclusive int64 upsert-poll cursor: entries with seq strictly greater than it, plus any still-OPEN entry regardless of its seq. Omit for the whole transcript (distinct from 0, which skips a closed seq-0 entry). Negative/non-integer = 400.
 
 ### `todos` (17) — Container-aware task list management
 
@@ -5655,14 +5655,14 @@ Errors come from two surfaces that answer differently. The management surface al
 
 ## Examples
 
-Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. The egress capability URL carries no instance index — `https://{P}-{C}-egress.{N}.containers.hoody.com` — though indexed forms reach the same process (see § Purpose).
+Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. The endpoint is `https://{P}-{C}-egress-1.{N}.containers.hoody.com`. Every `egress-<n>` index reaches the same single process and shares one upstream, but proxy permissions are evaluated per index, so use the index you granted access on (see § Purpose). The SDK's `getKitUrl` and the URL `startLocalExit` hands back omit the suffix; the edge normalizes a missing index to 1, so `…-egress.…` and `…-egress-1.…` are the same endpoint and the same permission scope.
 
 ### 1. Send a request through the proxy — confirm the container is the exit
 
 **Goal:** prove the endpoint routes traffic and see the IP the destination sees. The connection to the proxy is itself TLS, so the proxy address carries an `https://` scheme. `CONNECT` tunnels HTTPS; plain HTTP rides absolute-form forwarding.
 
 ```bash
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl -sf "$EGRESS/api/v1/egress/health"            # kit alive? (unauthenticated)
 curl -x "$EGRESS:443" https://ip.hoody.com | jq -r '.data.ip'
 # the container's public IP — the upstream's, once one is set (#2)
@@ -5675,7 +5675,7 @@ curl -x "$EGRESS:443" http://example.com/          # plain HTTP works too
 **Goal:** change the exit IP without touching the client. Four schemes are accepted (`socks5h`, `socks5`, `http`, `https`); prefer `socks5h` when the upstream should also resolve DNS. Set and clear both answer `200` with the current status blob, so the response doubles as the read-back.
 
 ```bash
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl -X PUT --data-binary 'socks5h://user:pass@203.0.113.10:1080' \
   "$EGRESS/api/v1/egress/upstream"
 # {"enabled":true,"scheme":"socks5h","host":"203.0.113.10","port":1080,"auth":true,...}
@@ -5691,7 +5691,7 @@ The setting lands in the config file atomically and is picked up within about a 
 
 ```bash
 # A local exit cannot be STARTED over plain HTTP — observe or clear only:
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl "$EGRESS/api/v1/egress/upstream"        # a live local exit reads as socks5h://127.0.0.1:<port>
 curl -X DELETE "$EGRESS/api/v1/egress/upstream"   # recover from one that died uncleanly
 ```
@@ -5702,11 +5702,11 @@ The SDK path needs an authenticated client constructed with an explicit `baseURL
 **Goal:** understand why a local exit refuses to start, and take a container over knowingly. Teardown deletes the upstream and credentials can never be read back, so silently replacing a third-party proxy would destroy it (see Quirks).
 
 ```bash
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl "$EGRESS/api/v1/egress/upstream" | jq .enabled   # true → something already owns the exit
 curl -X DELETE "$EGRESS/api/v1/egress/upstream"       # the explicit-clear alternative
 ```
-The check-then-set is not atomic — the guard protects against accidents, not races. When an exit started with the override stops, the container returns to its own IP, not to the proxy it displaced.
+The check-then-set is not atomic — the guard protects against accidents, not races. Teardown re-reads the upstream and compares scheme, host, port and `auth` before clearing, so it leaves an upstream that is visibly someone else's alone and reports `upstreamHandedOver`; a replacement that matches on all four is indistinguishable from this exit's own, because the kit reports only `auth: true` and never credential identity. That needs a stale handle to reach: two live exits cannot share the container's loopback port, so it takes an exit whose listener is already gone, its port reused by a newer exit, and a late teardown on the old handle. When an exit started with the override stops cleanly, the container returns to its own IP, not to the proxy it displaced.
 
 ## Reference
 

@@ -6,7 +6,7 @@ One file per namespace for the CLI surface. Fetch only the namespaces a task nee
 
 ## Namespaces
 
-- [`agent.md`](agent.md) — CLI skill · `agent` namespace · ~20,415 tokens
+- [`agent.md`](agent.md) — CLI skill · `agent` namespace · ~21,221 tokens
 - [`api.md`](api.md) — CLI skill · `api` namespace · ~14,501 tokens
 - [`browser.md`](browser.md) — CLI skill · `browser` namespace · ~5,762 tokens
 - [`code.md`](code.md) — CLI skill · `code` namespace · ~5,452 tokens
@@ -14,7 +14,7 @@ One file per namespace for the CLI surface. Fetch only the namespaces a task nee
 - [`curl.md`](curl.md) — CLI skill · `curl` namespace · ~5,770 tokens
 - [`daemon.md`](daemon.md) — CLI skill · `daemon` namespace · ~6,720 tokens
 - [`display.md`](display.md) — CLI skill · `display` namespace · ~5,816 tokens
-- [`egress.md`](egress.md) — CLI skill · `egress` namespace · ~4,572 tokens
+- [`egress.md`](egress.md) — CLI skill · `egress` namespace · ~4,821 tokens
 - [`exec.md`](exec.md) — CLI skill · `exec` namespace · ~7,891 tokens
 - [`files.md`](files.md) — CLI skill · `files` namespace · ~15,992 tokens
 - [`notes.md`](notes.md) — CLI skill · `notes` namespace · ~8,947 tokens

@@ -1,4 +1,4 @@
-> _**CLI skill · `egress` namespace** · ~4,572 tokens · hoody-sdk v1.0.0-beta.13_
+> _**CLI skill · `egress` namespace** · ~4,821 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `egress` — the container's outbound HTTP proxy
 
@@ -78,7 +78,7 @@ Errors come from two surfaces that answer differently. The management surface al
 
 ## Examples
 
-Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. The egress capability URL carries no instance index — `https://{P}-{C}-egress.{N}.containers.hoody.com` — though indexed forms reach the same process (see § Purpose).
+Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. The endpoint is `https://{P}-{C}-egress-1.{N}.containers.hoody.com`. Every `egress-<n>` index reaches the same single process and shares one upstream, but proxy permissions are evaluated per index, so use the index you granted access on (see § Purpose). The SDK's `getKitUrl` and the URL `startLocalExit` hands back omit the suffix; the edge normalizes a missing index to 1, so `…-egress.…` and `…-egress-1.…` are the same endpoint and the same permission scope.
 
 ### 1. Send a request through the proxy — confirm the container is the exit
 
@@ -88,7 +88,7 @@ Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers
 hoody --container "$C" egress health               # kit alive?
 # There is no CLI verb that proxies a request — none is needed. The endpoint
 # speaks the standard proxy protocol, so curl/git/pip/npm take the URL directly:
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl -x "$EGRESS:443" https://ip.hoody.com | jq -r '.data.ip'
 ```
 `ip.hoody.com` reports the address it saw the request come from, so it doubles as the before/after check for every recipe below. Browsers cannot use their manual proxy fields — plaintext to a TLS port is refused with 400; use a PAC file returning `HTTPS host:443` (see Quirks).
@@ -113,9 +113,11 @@ The setting lands in the config file atomically and is picked up within about a 
 ```bash
 hoody login                              # the tunnel WebSocket authenticates with your account token
 hoody --container "$C" egress local
-#   Proxy URL:     https://P-C-egress.N.containers.hoody.com
+#   Proxy URL:     https://P-C-egress-1.N.containers.hoody.com
 #   Exit IP:       203.0.113.42 (SG)  confirmed
-# Ctrl+C tears it down: the upstream is cleared and the container is back on its own IP.
+# Ctrl+C tears it down. On a clean teardown the upstream is cleared and the
+# container is back on its own IP; if the clear cannot be verified the CLI says so
+# and leaves the tunnel up, so the container keeps working.
 ```
 The SDK path needs an authenticated client constructed with an explicit `baseURL` (see Prerequisites). While the exit runs, treat `proxyUrl` like a password: anyone holding it relays through your connection.
 
@@ -132,7 +134,7 @@ hoody --container "$C" egress local
 
 hoody --container "$C" egress local --replace-upstream    # take it over knowingly
 ```
-The check-then-set is not atomic — the guard protects against accidents, not races. When an exit started with the override stops, the container returns to its own IP, not to the proxy it displaced.
+The check-then-set is not atomic — the guard protects against accidents, not races. Teardown re-reads the upstream and compares scheme, host, port and `auth` before clearing, so it leaves an upstream that is visibly someone else's alone and reports `upstreamHandedOver`; a replacement that matches on all four is indistinguishable from this exit's own, because the kit reports only `auth: true` and never credential identity. That needs a stale handle to reach: two live exits cannot share the container's loopback port, so it takes an exit whose listener is already gone, its port reused by a newer exit, and a late teardown on the old handle. When an exit started with the override stops cleanly, the container returns to its own IP, not to the proxy it displaced.
 
 ## Reference
 

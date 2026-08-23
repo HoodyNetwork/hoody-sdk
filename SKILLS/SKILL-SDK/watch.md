@@ -1,4 +1,4 @@
-> _**SDK skill · `watch` namespace** · ~5,347 tokens · hoody-sdk v1.0.0-beta.13_
+> _**SDK skill · `watch` namespace** · ~5,347 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `watch` — Linux inotify file-change streams with replay history
 

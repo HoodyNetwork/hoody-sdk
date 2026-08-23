@@ -1,4 +1,4 @@
-> _**HTTP skill (basic)** · ~16,228 tokens · hoody-sdk v1.0.0-beta.13_
+> _**HTTP skill (basic)** · ~16,228 tokens · hoody-sdk v1.0.0-beta.14_
 
 # HTTP mode — drive Hoody with curl
 

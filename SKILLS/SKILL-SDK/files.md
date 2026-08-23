@@ -1,4 +1,4 @@
-> _**SDK skill · `files` namespace** · ~30,340 tokens · hoody-sdk v1.0.0-beta.13_
+> _**SDK skill · `files` namespace** · ~30,340 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 

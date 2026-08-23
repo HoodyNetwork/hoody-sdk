@@ -1,4 +1,4 @@
-> _**SDK skill · `agent` namespace** · ~98,184 tokens · hoody-sdk v1.0.0-beta.13_
+> _**SDK skill · `agent` namespace** · ~98,441 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `agent` — In-container AI coding agent over HTTP
 
@@ -88,7 +88,7 @@ Reads first: `client.agent.mcp.listMCPServers` (`{ session_id }`) returns the EF
 ## Common errors
 
 - A gate or question left unresolved stalls the turn — a streamed prompt that emitted an `event.confirm_request` (confirm gate) or `event.user_question` (question gate) will not complete until you answer it: `confirmGate` for a confirm, `answerQuestion` for a question. For unattended runs, arm `setSessionAutoReply` (a self-driving auto-user loop), or pass `policy: "auto_approve"` on the prompt — but `auto_approve` only auto-approves **confirm** gates, never questions; a parked question still stalls until `answerQuestion` (or the auto-reply loop) answers it.
-- `tasks.listTasks` and `tasks.requestTaskTranscript` do NOT return data inline — they ask a *live* session to emit its background-subagent snapshot/transcript onto the session's WebSocket/SSE stream (`event.tasks_snapshot` for the snapshot, `event.task_transcript` for the transcript) and return only a JSON ack; you must already be attached via `streamSession` to receive the payload. `cancelTask` / `cancelAllTasks` stop background tasks mid-turn (server-layer; tasks survive `cancelSession` but are not restartable).
+- `tasks.listTasks` and `tasks.getTaskTranscript` return their data INLINE and need no live session and no attached stream. `listTasks` is the UNION of the live task registry and the session's PERSISTED task store (keyed by task id, live winning) — the live registry evicts completed tasks when a new one spawns, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `getTaskTranscript` reads a task that reached a terminal state even for a closed session and after a daemon restart; a task still RUNNING when the daemon died is NOT recoverable and reads 404. Its `source` field is `"live"` or `"store"`, and `complete` reports whether the response reflects a terminal projection DURABLY COMMITTED to that store. `after_seq` is EXCLUSIVE (entries strictly after it, plus any still-open entry); OMITTING it returns the whole transcript, which is distinct from `after_seq=0`. `cancelTask` / `cancelAllTasks` still act on a LIVE session and stop background tasks mid-turn (server-layer; tasks survive `cancelSession` but are not restartable).
 - `memory.consolidateMemory` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — the gateway server-stamps a machine marker and the daemon's non-bypassable gate returns `403 human_only` for every HTTP/SDK/CLI call; it can only be triggered from an interactive human session. Do not call it programmatically.
 - `mcp.probeMCPServer` (POST /mcp/probe) is **human-only and ALWAYS fails over this namespace** — probing STARTS A PROCESS (stdio) or makes an outbound request to a caller-chosen URL (http/sse), so a machine caller may not self-approve it and receives `403 human_only` on every HTTP/SDK/CLI call. The surface still exposes it for completeness, it simply always refuses. The deny list is still enforced on the candidate config before anything is started. Use `parseMCPImport` for a write-free preview instead; there is no programmatic substitute for the live trial.
 - An MCP write needs BOTH a `nonce` and an `expect_hash` — neither is optional, and a stale hash is a CONFLICT rather than a silent overwrite. `upsertMCPServer` / `deleteMCPServer` / `setMCPServerEnabled` / `importMCPServers` each require a fresh single-use `nonce` from `beginMCPWrite` minted for that exact op and scope (one minted for a different op or scope fails closed) AND the `mcp_servers` hash you last read, from either `beginMCPWrite` or `listMCPServers`. A mismatch means someone else edited the layer since you read it — re-read, re-mint, retry; each nonce is good for exactly one write, so a retry always needs a new one. There is no "omit it for the first write" shortcut: writing into a settings file that does not exist yet means passing the empty-array hash.
@@ -146,6 +146,7 @@ client.agent.exportLogs(options?: { source?: string; min_level?: string; comp?: 
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/agent/logs/export`
+**CLI:** `hoody agent logs export`
 
 ---
 
@@ -730,6 +731,7 @@ client.agent.github.githubLogout(data: object, options?: { X-Hoody-Cwd?: string;
 **Body:** `{ key*: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/github/auth/logout`
+**CLI:** `hoody agent github logout`
 
 ---
 
@@ -792,6 +794,7 @@ client.agent.github.githubSetActiveAccount(data: object, options?: { X-Hoody-Cwd
 **Body:** `{ key*: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/github/auth/active`
+**CLI:** `hoody agent github set-active-account`
 
 ---
 
@@ -2607,6 +2610,7 @@ client.agent.sessions.getSessionTranscript(id: string, options?: { after_turn?: 
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/agent/sessions/{id}/transcript`
+**CLI:** `hoody agent sessions transcript`
 
 ---
 
@@ -3184,6 +3188,7 @@ client.agent.settings.setACPAgentModel(agent: string, data?: object, options?: {
 **Body:** `{ model: string, effort: string }`
 
 **Returns:** `any`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/model`
+**CLI:** `hoody agent settings set-acp-agent-model`
 
 ---
 
@@ -3206,6 +3211,7 @@ client.agent.settings.setACPEnabled(agent: string, data?: object, options?: { X-
 **Body:** `{ enabled: bool }`
 
 **Returns:** `any`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
+**CLI:** `hoody agent settings set-acp-enabled`
 
 ---
 
@@ -3777,7 +3783,29 @@ client.agent.tasks.cancelTask(id: string, tid: string, options?: { X-Hoody-Cwd?:
 
 ---
 
-#### `listTasks` — Request the session's task snapshot.
+#### `getTaskTranscript` — Read a background task's transcript.
+
+```typescript
+client.agent.tasks.getTaskTranscript(id: string, tid: string, options?: { after_seq?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `string` | path | Yes | Path identifier. |
+| `tid` | `string` | path | Yes | Path identifier. |
+| `after_seq` | `integer` | query | No | Exclusive int64 upsert-poll cursor: entries with seq strictly greater than it, plus any still-OPEN entry regardless of its seq. Omit for the whole transcript (distinct from 0, which skips a closed seq-0 entry). Negative/non-integer = 400. |
+| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
+| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+
+**Returns:** `any`  |  **HTTP:** `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript`
+**CLI:** `hoody agent tasks transcript`
+
+---
+
+#### `listTasks` — List a session's background tasks.
 
 ```typescript
 client.agent.tasks.listTasks(id: string, options?: { X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
@@ -3794,28 +3822,6 @@ client.agent.tasks.listTasks(id: string, options?: { X-Hoody-Cwd?: string; X-Hoo
 
 **Returns:** `any`  |  **HTTP:** `GET /api/v1/agent/sessions/{id}/tasks`
 **CLI:** `hoody agent tasks list`
-
----
-
-#### `requestTaskTranscript` — Request a task's transcript (upsert-poll).
-
-```typescript
-client.agent.tasks.requestTaskTranscript(id: string, tid: string, options?: { after_seq?: integer; X-Hoody-Cwd?: string; X-Hoody-Config-Dir?: string; X-Hoody-Container?: string; X-Hoody-Realm?: string; realm?: string })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `id` | `string` | path | Yes | Path identifier. |
-| `tid` | `string` | path | Yes | Path identifier. |
-| `after_seq` | `integer` | query | No | int64 upsert-poll cursor; entries at/below it are re-sent (default 0). |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the.hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk.hoody install a stateless read/write resolves (HoodyPaths). |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/agent/sessions/{id}/tasks/{tid}/transcript`
-**CLI:** `hoody agent tasks request-transcript`
 
 ---
 
@@ -4900,6 +4906,7 @@ client.agent.workflows.resumeWorkflowRun(run_id: string, data: object, options?:
 **Body:** `{ session_id*: string }`
 
 **Returns:** `any`  |  **HTTP:** `POST /api/v1/agent/workflows/runs/{run_id}/resume`
+**CLI:** `hoody agent workflows resume-run`
 
 ---
 

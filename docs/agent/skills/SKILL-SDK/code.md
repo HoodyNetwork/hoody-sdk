@@ -1,4 +1,4 @@
-> _**SDK skill · `code` namespace** · ~7,050 tokens · hoody-sdk v1.0.0-beta.13_
+> _**SDK skill · `code` namespace** · ~7,050 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `code` — VS Code in the browser, per container
 

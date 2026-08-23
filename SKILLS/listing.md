@@ -25,11 +25,11 @@ curl -O https://hoody.com/SKILLS/HOODY_SKILLS.zip
 ## One surface, in depth
 
 - [`SKILL-HTTP.md`](SKILL-HTTP.md) — HTTP skill (basic) · ~16,228 tokens
-- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL — basic + all 20 namespaces) · ~216,227 tokens
+- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL — basic + all 20 namespaces) · ~216,641 tokens
 - [`SKILL-SDK.md`](SKILL-SDK.md) — SDK skill (basic) · ~17,317 tokens
-- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL — basic + all 20 namespaces) · ~348,278 tokens
+- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL — basic + all 20 namespaces) · ~348,804 tokens
 - [`SKILL-CLI.md`](SKILL-CLI.md) — CLI skill (basic) · ~17,095 tokens
-- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL — basic + all 20 namespaces) · ~158,244 tokens
+- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL — basic + all 20 namespaces) · ~159,299 tokens
 
 ## Per-namespace reference
 

@@ -1,4 +1,4 @@
-> _**HTTP skill · `egress` namespace** · ~3,978 tokens · hoody-sdk v1.0.0-beta.13_
+> _**HTTP skill · `egress` namespace** · ~4,196 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `egress` — the container's outbound HTTP proxy
 
@@ -72,14 +72,14 @@ Errors come from two surfaces that answer differently. The management surface al
 
 ## Examples
 
-Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. The egress capability URL carries no instance index — `https://{P}-{C}-egress.{N}.containers.hoody.com` — though indexed forms reach the same process (see § Purpose).
+Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. The endpoint is `https://{P}-{C}-egress-1.{N}.containers.hoody.com`. Every `egress-<n>` index reaches the same single process and shares one upstream, but proxy permissions are evaluated per index, so use the index you granted access on (see § Purpose). The SDK's `getKitUrl` and the URL `startLocalExit` hands back omit the suffix; the edge normalizes a missing index to 1, so `…-egress.…` and `…-egress-1.…` are the same endpoint and the same permission scope.
 
 ### 1. Send a request through the proxy — confirm the container is the exit
 
 **Goal:** prove the endpoint routes traffic and see the IP the destination sees. The connection to the proxy is itself TLS, so the proxy address carries an `https://` scheme. `CONNECT` tunnels HTTPS; plain HTTP rides absolute-form forwarding.
 
 ```bash
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl -sf "$EGRESS/api/v1/egress/health"            # kit alive? (unauthenticated)
 curl -x "$EGRESS:443" https://ip.hoody.com | jq -r '.data.ip'
 # the container's public IP — the upstream's, once one is set (#2)
@@ -92,7 +92,7 @@ curl -x "$EGRESS:443" http://example.com/          # plain HTTP works too
 **Goal:** change the exit IP without touching the client. Four schemes are accepted (`socks5h`, `socks5`, `http`, `https`); prefer `socks5h` when the upstream should also resolve DNS. Set and clear both answer `200` with the current status blob, so the response doubles as the read-back.
 
 ```bash
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl -X PUT --data-binary 'socks5h://user:pass@203.0.113.10:1080' \
   "$EGRESS/api/v1/egress/upstream"
 # {"enabled":true,"scheme":"socks5h","host":"203.0.113.10","port":1080,"auth":true,...}
@@ -108,7 +108,7 @@ The setting lands in the config file atomically and is picked up within about a 
 
 ```bash
 # A local exit cannot be STARTED over plain HTTP — observe or clear only:
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl "$EGRESS/api/v1/egress/upstream"        # a live local exit reads as socks5h://127.0.0.1:<port>
 curl -X DELETE "$EGRESS/api/v1/egress/upstream"   # recover from one that died uncleanly
 ```
@@ -119,11 +119,11 @@ The SDK path needs an authenticated client constructed with an explicit `baseURL
 **Goal:** understand why a local exit refuses to start, and take a container over knowingly. Teardown deletes the upstream and credentials can never be read back, so silently replacing a third-party proxy would destroy it (see Quirks).
 
 ```bash
-EGRESS="https://${P}-${C}-egress.${N}.containers.hoody.com"
+EGRESS="https://${P}-${C}-egress-1.${N}.containers.hoody.com"
 curl "$EGRESS/api/v1/egress/upstream" | jq .enabled   # true → something already owns the exit
 curl -X DELETE "$EGRESS/api/v1/egress/upstream"       # the explicit-clear alternative
 ```
-The check-then-set is not atomic — the guard protects against accidents, not races. When an exit started with the override stops, the container returns to its own IP, not to the proxy it displaced.
+The check-then-set is not atomic — the guard protects against accidents, not races. Teardown re-reads the upstream and compares scheme, host, port and `auth` before clearing, so it leaves an upstream that is visibly someone else's alone and reports `upstreamHandedOver`; a replacement that matches on all four is indistinguishable from this exit's own, because the kit reports only `auth: true` and never credential identity. That needs a stale handle to reach: two live exits cannot share the container's loopback port, so it takes an exit whose listener is already gone, its port reused by a newer exit, and a late teardown on the old handle. When an exit started with the override stops cleanly, the container returns to its own IP, not to the proxy it displaced.
 
 ## Reference
 

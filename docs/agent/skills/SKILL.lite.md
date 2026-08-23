@@ -1,4 +1,4 @@
-> _**compact tier-0 skill (always-loaded by agents)** · ~4,154 tokens · hoody-sdk v1.0.0-beta.13_
+> _**compact tier-0 skill (always-loaded by agents)** · ~4,154 tokens · hoody-sdk v1.0.0-beta.14_
 
 # Hoody — lightweight agent skill
 

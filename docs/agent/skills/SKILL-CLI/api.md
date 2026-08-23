@@ -1,4 +1,4 @@
-> _**CLI skill · `api` namespace** · ~14,501 tokens · hoody-sdk v1.0.0-beta.13_
+> _**CLI skill · `api` namespace** · ~14,501 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 

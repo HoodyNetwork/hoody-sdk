@@ -1,4 +1,4 @@
-> _**SDK skill (basic)** · ~17,317 tokens · hoody-sdk v1.0.0-beta.13_
+> _**SDK skill (basic)** · ~17,317 tokens · hoody-sdk v1.0.0-beta.14_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 

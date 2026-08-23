@@ -1,4 +1,4 @@
-> _**HTTP skill · `pipe` namespace** · ~4,910 tokens · hoody-sdk v1.0.0-beta.13_
+> _**HTTP skill · `pipe` namespace** · ~4,910 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `pipe` — Zero-storage streaming HTTP transfers
 

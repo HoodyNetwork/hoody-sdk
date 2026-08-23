@@ -1,4 +1,4 @@
-> _**CLI skill · `files` namespace** · ~15,992 tokens · hoody-sdk v1.0.0-beta.13_
+> _**CLI skill · `files` namespace** · ~15,992 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 

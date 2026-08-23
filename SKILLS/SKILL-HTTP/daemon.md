@@ -1,4 +1,4 @@
-> _**HTTP skill · `daemon` namespace** · ~7,402 tokens · hoody-sdk v1.0.0-beta.13_
+> _**HTTP skill · `daemon` namespace** · ~7,402 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `daemon` — supervisord program lifecycle (start any program; logs always retained)
 

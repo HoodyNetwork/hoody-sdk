@@ -1,4 +1,4 @@
-> _**CLI skill (basic)** · ~17,095 tokens · hoody-sdk v1.0.0-beta.13_
+> _**CLI skill (basic)** · ~17,095 tokens · hoody-sdk v1.0.0-beta.14_
 
 # CLI mode — `hoody` command
 

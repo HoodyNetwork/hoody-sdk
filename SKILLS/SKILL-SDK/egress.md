@@ -1,4 +1,4 @@
-> _**SDK skill · `egress` namespace** · ~4,816 tokens · hoody-sdk v1.0.0-beta.13_
+> _**SDK skill · `egress` namespace** · ~5,086 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `egress` — the container's outbound HTTP proxy
 
@@ -77,7 +77,7 @@ Errors come from two surfaces that answer differently. The management surface al
 
 ## Examples
 
-Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first. The egress capability URL carries no instance index — `https://{P}-{C}-egress.{N}.containers.hoody.com` — though indexed forms reach the same process (see § Purpose).
+Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first. The endpoint is `https://{P}-{C}-egress-1.{N}.containers.hoody.com`. Every `egress-<n>` index reaches the same single process and shares one upstream, but proxy permissions are evaluated per index, so use the index you granted access on (see § Purpose). The SDK's `getKitUrl` and the URL `startLocalExit` hands back omit the suffix; the edge normalizes a missing index to 1, so `…-egress.…` and `…-egress-1.…` are the same endpoint and the same permission scope.
 
 ### 1. Send a request through the proxy — confirm the container is the exit
 
@@ -85,7 +85,7 @@ Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` 
 
 ```typescript
 await client.egress.healthCheck();   // rejects if egress isn't live on this container
-const proxyUrl = `https://${P}-${C}-egress.${N}.containers.hoody.com`;
+const proxyUrl = `https://${P}-${C}-egress-1.${N}.containers.hoody.com`;
 // The generated namespace MANAGES the proxy; it does not send requests through
 // it. Hand proxyUrl to any proxy-capable HTTP client (curl -x, an https_proxy
 // env var, a browser via PAC).
@@ -118,9 +118,12 @@ const client = new HoodyClient({ baseURL: 'https://api.hoody.com', token });
 const { data } = await client.api.containers.get(C);  // carries project id + server name
 
 const exit = await startLocalExit({ client, container: data });
-console.log(exit.proxyUrl);              // https://P-C-egress.N.containers.hoody.com
+console.log(exit.proxyUrl);              // https://P-C-egress-1.N.containers.hoody.com
 console.log(exit.verification?.exitIp);  // this machine's public IP, confirmed via ip.hoody.com
-await exit.stop();                       // clears the upstream, closes the tunnel
+const report = await exit.stop();        // clears the upstream, closes the tunnel
+// Check the report: stop() holds the tunnel open and leaves the upstream set if
+// it could not verify the clear, and reports upstreamHandedOver when another
+// exit took the container over in the meantime.
 ```
 The SDK path needs an authenticated client constructed with an explicit `baseURL` (see Prerequisites). While the exit runs, treat `proxyUrl` like a password: anyone holding it relays through your connection.
 
@@ -139,7 +142,7 @@ try {
 }
 const exit = await startLocalExit({ client, container, replaceExistingUpstream: true });
 ```
-The check-then-set is not atomic — the guard protects against accidents, not races. When an exit started with the override stops, the container returns to its own IP, not to the proxy it displaced.
+The check-then-set is not atomic — the guard protects against accidents, not races. Teardown re-reads the upstream and compares scheme, host, port and `auth` before clearing, so it leaves an upstream that is visibly someone else's alone and reports `upstreamHandedOver`; a replacement that matches on all four is indistinguishable from this exit's own, because the kit reports only `auth: true` and never credential identity. That needs a stale handle to reach: two live exits cannot share the container's loopback port, so it takes an exit whose listener is already gone, its port reused by a newer exit, and a late teardown on the old handle. When an exit started with the override stops cleanly, the container returns to its own IP, not to the proxy it displaced.
 
 ## Reference
 

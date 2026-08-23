@@ -1,4 +1,4 @@
-> _**CLI skill · `notifications` namespace** · ~5,051 tokens · hoody-sdk v1.0.0-beta.13_
+> _**CLI skill · `notifications` namespace** · ~5,051 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `notifications` — Trigger and consume desktop notifications inside a container
 

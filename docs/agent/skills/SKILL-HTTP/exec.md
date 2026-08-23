@@ -1,4 +1,4 @@
-> _**HTTP skill · `exec` namespace** · ~9,657 tokens · hoody-sdk v1.0.0-beta.13_
+> _**HTTP skill · `exec` namespace** · ~9,657 tokens · hoody-sdk v1.0.0-beta.14_
 
 # `exec` — micro-services: any script or API as an instant HTTP endpoint
 

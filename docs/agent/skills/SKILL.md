@@ -2,7 +2,7 @@
 name: "hoody"
 description: "Hoody: run code, processes, GUIs, browsers, databases, cron jobs and HTTP services on real cloud computers the user owns, and operate their Hoody account — containers, files across 60+ storage providers, secrets, proxies, billing, notifications. Use when a task needs a real computer in the cloud, or any operation against the user's own tenant. Abstain for pre-sales, compliance, support/status, third-party SSO, and generic programming help."
 ---
-> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~11,480 tokens · hoody-sdk v1.0.0-beta.13_
+> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~11,480 tokens · hoody-sdk v1.0.0-beta.14_
 
 # Hoody Agent Skill — pick a surface (SDK / HTTP / CLI)
 
