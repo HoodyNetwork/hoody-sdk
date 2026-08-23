@@ -138,7 +138,7 @@ The same package also works with bunx and pnpm dlx. Generated commands follow:
 hoody <group> <command> [args] [flags]
 ```
 
-There are 37 generated groups mirroring SDK namespaces—including `containers`, `projects`, `files`, `terminal`, `browser`, `display`, `agent`, `exec`, `daemon`, `cron`, `sqlite`, `tunnel`, `proxy`, `realms`, `servers`, `wallet`, `auth`, and `users`—plus 24 top-level utility commands.
+There are 38 generated groups mirroring SDK namespaces—including `containers`, `projects`, `files`, `terminal`, `browser`, `display`, `agent`, `exec`, `daemon`, `cron`, `db` (aliases `sql`, `sqlite`), `egress`, `tunnel`, `proxy`, `realms`, `servers`, `wallet`, `auth`, and `users`—plus 24 top-level utility commands.
 
 ```text
 SDK:  agent.agents.createAgent
