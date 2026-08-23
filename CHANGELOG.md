@@ -4,6 +4,32 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.14] — 2026-08-23
+
+### Added
+
+- **Seven agent operations that the SDK already exposed now have CLI commands.** `hoody agent sessions transcript`, `hoody agent logs export`, `hoody agent workflows resume-run`, `hoody agent github set-active-account`, `hoody agent github logout`, `hoody agent settings set-acp-enabled` and `hoody agent settings set-acp-agent-model` reach `agent.sessions.getSessionTranscript()`, `agent.exportLogs()`, `agent.workflows.resumeWorkflowRun()`, `agent.github.githubSetActiveAccount()`, `agent.github.githubLogout()`, `agent.settings.setACPEnabled()` and `agent.settings.setACPAgentModel()`. Every one of those methods shipped in beta.13; only the command mapping was missing. The command index goes from 840 to 847.
+
+- **A PULL tunnel binding reports the address it bound.** Binding rows carry `bindAddr`, the loopback address that listener took. Two PULL bindings on different `127.0.0.0/8` addresses can legitimately hold the same port at the same time, so without it the rows were distinguishable only by bind id and gave no way to reach either socket. An EXPOSE binding takes `0.0.0.0` and omits the field.
+
+### Changed
+
+- **`agent.tasks.listTasks()` returns the task list instead of asking for one.** The call used to ask a live session to emit its background-task snapshot and hand back an empty acknowledgement, with the snapshot arriving separately on that session's WebSocket or SSE stream. It now answers inline with `items`, `meta` and `session_live`. Nothing has to be attached and no session has to be live, so the `503` that reported a busy daemon or an exhausted stream-concurrency budget is gone from this endpoint.
+
+  The list is the union of the live task registry and the persisted per-session store, keyed by task id, with the live entry winning where both hold one. The registry evicts a completed task when the next one spawns, so a task can leave memory while its transcript is still on disk; reading only the live side would hide it. `session_live` reports whether a live session backed the read.
+
+- **`agent.tasks.requestTaskTranscript()` is now `agent.tasks.getTaskTranscript()`, and it returns the transcript.** The CLI command moves with it: `hoody agent tasks request-transcript` becomes `hoody agent tasks transcript`. The old call was an acknowledgement whose transcript arrived on the session's stream. The new one answers inline with the entries, the task's own record, and the cursor state.
+
+  Neither an attach nor a live session is needed. A task that reached a terminal state is persisted per session, so its transcript reads back for a dormant session and across a daemon restart. A task still running when the daemon died is not recoverable, because persistence happens at terminal status, and it answers `404`. `source` is `live` or `store` depending on which side served the read. `complete` reports whether the response reflects a terminal projection that is durably committed to the store, so it is false for a task that has just finished but whose write has not landed, and false for a placeholder written by session teardown whose real projection may still arrive.
+
+  `after_seq` is an exclusive upsert-poll cursor: entries whose sequence is strictly greater than it, plus any entry still open regardless of its sequence, since viewers upsert by sequence. Omitting it returns the whole transcript, which is not the same as passing `0` — that value is exclusive and skips a closed entry at sequence 0. It is not the `after_turn` cursor that `getSessionTranscript()` takes, not the gateway's stream sequence, and not a monotonic replay cursor.
+
+### Fixed
+
+- **Stopping a local exit no longer clears an upstream that belongs to a different one.** When a local exit loses its session, the SDK clears the container's upstream and confirms by reading it back. Calling `stop()` on that same handle afterwards used to read the upstream again and delete it if it looked like the one this handle had written, and that comparison cannot tell two exits apart: the kit reports `auth` as a bare boolean and never any credential identity, so a second exit that had since bound the same loopback port produced an identical status object and had its upstream deleted.
+
+  A handle that has already confirmed its own upstream is gone now issues no further delete, whatever it reads. It still closes its tunnel and removes its proxy alias. This only ever affected a stale handle, since two live exits cannot collide on a loopback port at all: the bind is a real listener, and an occupied port fails rather than being shared. Closing the rest of the gap needs an atomic compare-and-delete in the kit, because every discriminator the SDK writes comes back collapsed to `auth: true`.
+
 ## [1.0.0-beta.13] — 2026-08-11
 
 ### Added
