@@ -18924,12 +18924,15 @@ export interface AgentReplaySessionResponse {
     data: Record<string, unknown>;
 }
 /**
- * Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).
+ * The kit list envelope over TaskInfo rows, plus the liveness stamp.
  */
 export interface AgentListTasksResponse {
+    items?: Record<string, unknown>[];
+    meta?: Record<string, unknown>;
+    session_live?: boolean;
     statusCode: number;
     message: string;
-    data: Record<string, unknown>;
+    data: unknown;
 }
 /**
  * Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).
@@ -18948,12 +18951,22 @@ export interface AgentCancelTaskResponse {
     data: Record<string, unknown>;
 }
 /**
- * Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).
+ * The task's transcript slice plus its TaskInfo and the cursor/durability state.
  */
-export interface AgentRequestTaskTranscriptResponse {
+export interface AgentGetTaskTranscriptResponse {
     statusCode: number;
     message: string;
-    data: Record<string, unknown>;
+    data: {
+        session_id?: string;
+        task_id?: string;
+        task?: Record<string, unknown>;
+        entries?: Record<string, unknown>[];
+        trimmed?: boolean;
+        after_seq?: number;
+        complete?: boolean;
+        source?: string;
+        session_live?: boolean;
+    };
 }
 /**
  * Kit list envelope: a page of items plus pagination metadata.
@@ -23354,6 +23367,11 @@ export interface HealthMemory6 {
     heap?: number | null;
 }
 export interface BindingDetail {
+    /** PULL only: the loopback address the listener bound. Port alone does not
+  identify a PULL listener — two sessions can hold the same port on
+  different addresses in `127.0.0.0/8` — so without this two distinct rows
+  would be indistinguishable. `None` for EXPOSE, which binds `0.0.0.0`. */
+    bindAddr?: string | null;
     /** @minimum 0 */
     bindId: number;
     kind: string;
@@ -23657,6 +23675,12 @@ export interface WatcherStats {
     stream_errors: number;
 }
 export interface BindingInfo {
+    /** PULL only: the loopback address this listener bound. Two PULL bindings
+  on different 127/8 addresses can legitimately hold the same port, so
+  without this the rows are indistinguishable by anything but bind id and
+  give no way to reach either socket. Omitted for EXPOSE, which binds
+  `0.0.0.0`. */
+    bindAddr?: string | null;
     /** @minimum 0 */
     bindId: number;
     /** @minimum 0 */
@@ -23665,6 +23689,11 @@ export interface BindingInfo {
     mode: string;
 }
 export interface TunnelBindingView {
+    /** PULL only: the loopback address this listener bound. Two PULL bindings
+  on different 127/8 addresses can legitimately hold the same port, so a
+  port alone no longer identifies the socket. Omitted for EXPOSE, which
+  binds `0.0.0.0`. */
+    bindAddr?: string | null;
     /** @minimum 0 */
     bindId: number;
     /** @minimum 0 */

@@ -1,5 +1,5 @@
 /**
- * Hoody SDK v1.0.0-beta.13
+ * Hoody SDK v1.0.0-beta.14
  * Browser Build (IIFE) - Complete Mono-File
  * Includes: SDK + Socket.IO Client
  *
@@ -88830,9 +88830,9 @@ var HoodySDK = (() => {
       return current;
     }
     /**
-     * Request the session&#x27;s task snapshot.
+     * List a session&#x27;s background tasks.
      *
-     * Asks a live session to emit its background-subagent task snapshot (session.task_list → event.tasks_snapshot). The snapshot arrives on the session's WS/SSE stream, not inline (the daemon has no synchronous task-list response). Background tasks survive session.cancel but are not restartable.
+     * Returns the session's background-subagent task catalog INLINE — no attach, no live session required, and no stream to observe. The catalog is the union of the LIVE registry and the PERSISTED per-session task store, keyed by task id with the live entry winning: the live registry evicts completed tasks at spawn time, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `session_live` reports whether a live session backed this read. A session that is not visible to this caller is a plain 404 (uniform envelope). CONFIG-DIR: X-Hoody-Config-Dir selects the record store. Active-realm-scoped: a per-request realm header is rejected.
      */
     async listTasks(id, options, _templateVars) {
       const { realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
@@ -89093,11 +89093,11 @@ var HoodySDK = (() => {
       return this.http.post(requestUrl, requestData);
     }
     /**
-     * Request a task&#x27;s transcript (upsert-poll).
+     * Read a background task&#x27;s transcript.
      *
-     * Asks a live session to emit a background task's transcript from an after_seq cursor (session.task_transcript → event.task_transcript) and returns a plain JSON ack. The transcript arrives on the session's stream, NOT inline — this endpoint does not stream. after_seq is an int64 UPSERT-POLL cursor (the open entry is re-sent at/below after_seq) — distinct from the gateway's int64 stream seq and the daemon's uint64 log seq; it is NOT a monotonic replay cursor.
+     * Returns a background subagent task's transcript INLINE — entries, the task's TaskInfo, and the cursor state. No attach, no live session required: a task that reached a terminal state is persisted per session, so its transcript is readable for a dormant session and after a daemon restart. A task still RUNNING when the daemon died is NOT recoverable (persistence happens at terminal status) and reads 404. `source` is "live" when served from the live registry and "store" when served from the persisted task store. `complete` reports whether this response reflects a terminal projection DURABLY COMMITTED to that store — it is false for a task that has just finished but whose write has not landed, and false for a placeholder written by session teardown whose real terminal projection may still arrive. after_seq is an int64 UPSERT-POLL cursor, exclusive, EXCEPT that a still-open entry is re-sent even when its seq is at or below the cursor (viewers upsert by seq). OMITTING after_seq returns the whole transcript from the beginning, which is DISTINCT from after_seq=0 — that value is exclusive and skips a closed seq-0 entry. It is not the getSessionTranscript after_turn cursor, not the gateway's stream seq, and not a monotonic replay cursor. Active-realm-scoped: a per-request realm header is rejected.
      */
-    async requestTaskTranscript(id, tid, options, _templateVars) {
+    async getTaskTranscript(id, tid, options, _templateVars) {
       const { after_seq, realm, XHoodyCwd, XHoodyConfigDir, XHoodyContainer, XHoodyRealm, signal, timeoutMs, retries, retryDelayMs, retryOnStatuses, middlewareContext, authRetry, rawResponse, responseType } = options || {};
       if (id === void 0 || id === null) {
         throw new ValidationError("id is required", "id");
@@ -98815,6 +98815,24 @@ var HoodySDK = (() => {
       aliases: ["note"]
     },
     {
+      // Missing entirely until 2026-08-12. `hoody run` shipped, `getKitUrl('run')`
+      // built the right URL (it resolves through the namespace list, not this
+      // catalog), and the slug table documented `run-1` — but `hoody kits list`
+      // never showed it, because that command is the one consumer that reads the
+      // catalog. The kit was renamed `app` -> `run` on 2026-07-31; no `app` alias
+      // is carried, the old name is gone.
+      slug: "run",
+      kind: "named",
+      description: "Hoody Run \u2014 resolve an app to the exact shell command that launches it, across package sources.",
+      serviceSegmentPattern: "run-{index}",
+      urlTemplateSample: "https://{projectId}-{containerId}-run-{index}.{server}.containers.hoody.com",
+      supportsIndex: true,
+      defaultIndex: 1,
+      minIndex: 1,
+      maxIndex: 9999,
+      sdkNamespace: "run"
+    },
+    {
       slug: "logs",
       kind: "named",
       description: "Proxy logs routing, query, config, and maintenance APIs.",
@@ -98864,7 +98882,13 @@ var HoodySDK = (() => {
     {
       slug: "egress",
       kind: "special",
-      description: "Container egress proxy endpoint (no instance index).",
+      // `supportsIndex: false` describes the DEFAULT URL shape, not what the edge
+      // accepts. Measured on misty-robin-517-sg 2026-08-11: `egress`, `egress-1`,
+      // `egress-2` and `egress-7` all answer 200 from pid 436 and all proxy
+      // CONNECT to the same exit IP, so the index selects a permission scope on
+      // one process rather than an instance. Keep the sample unsuffixed: four
+      // layers are pinned to it by tests/unit/egress-url-parity.test.ts.
+      description: "Container egress proxy endpoint. The default URL carries no index; the edge normalizes a missing index to 1, and an explicit egress-<n> selects a permission scope on the same single process.",
       serviceSegmentPattern: "egress",
       urlTemplateSample: "https://{projectId}-{containerId}-egress.{server}.containers.hoody.com",
       supportsIndex: false
