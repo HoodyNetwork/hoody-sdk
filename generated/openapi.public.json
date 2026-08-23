@@ -192375,8 +192375,8 @@
     "/api/v1/agent/sessions/{id}/tasks": {
       "get": {
         "operationId": "agent_listTasks",
-        "summary": "Request the session's task snapshot.",
-        "description": "Asks a live session to emit its background-subagent task snapshot (session.task_list → event.tasks_snapshot). The snapshot arrives on the session's WS/SSE stream, not inline (the daemon has no synchronous task-list response). Background tasks survive session.cancel but are not restartable.",
+        "summary": "List a session's background tasks.",
+        "description": "Returns the session's background-subagent task catalog INLINE — no attach, no live session required, and no stream to observe. The catalog is the union of the LIVE registry and the PERSISTED per-session task store, keyed by task id with the live entry winning: the live registry evicts completed tasks at spawn time, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `session_live` reports whether a live session backed this read. A session that is not visible to this caller is a plain 404 (uniform envelope). CONFIG-DIR: X-Hoody-Config-Dir selects the record store. Active-realm-scoped: a per-request realm header is rejected.",
         "tags": [
           "agent:Tasks"
         ],
@@ -192438,12 +192438,29 @@
         ],
         "responses": {
           "200": {
-            "description": "Snapshot requested; observe tasks_snapshot on the stream.",
+            "description": "Task catalog.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).",
+                  "description": "The kit list envelope over TaskInfo rows, plus the liveness stamp.",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "description": "TaskInfo rows, oldest-first by start time: {id, name, status, kind?, prompt, started_at, updated_at?, tool_calls?, elapsed_ms?, output_preview?, container?, cwd?}. status is one of running|done|failed|cancelled."
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "{total} — the number of rows returned (the catalog is unpaginated)."
+                    },
+                    "session_live": {
+                      "type": "boolean",
+                      "description": "Whether a live session backed this read. False for a dormant or closed session served entirely from the persisted task store."
+                    }
+                  },
                   "additionalProperties": true
                 }
               }
@@ -192673,58 +192690,15 @@
                 }
               }
             ]
-          },
-          "503": {
-            "description": "Service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "description": "Structured error envelope {code, message, details?} returned by every JSON error response (see x-error-codes for the per-code code/message/details examples).",
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "description": "Stable machine-readable error code (the x-error-codes key)."
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Human-readable error message."
-                    },
-                    "details": {
-                      "type": "object",
-                      "description": "Optional structured detail payload (present only for codes that carry it, e.g. gate_parked → details.pending_gate).",
-                      "additionalProperties": true
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "additionalProperties": true
-                }
-              }
-            },
-            "x-error-codes": [
-              {
-                "code": "service_unavailable",
-                "title": "Service unavailable",
-                "description": "The daemon could not service the request (too busy, or a per-client stream concurrency cap was hit).",
-                "resolution": "Honor Retry-After and retry.",
-                "example": {
-                  "code": "service_unavailable",
-                  "message": "service unavailable"
-                }
-              }
-            ]
           }
         },
         "x-related-operations": {
           "next_steps": [
-            "requestTaskTranscript",
+            "getTaskTranscript",
             "cancelTask"
           ],
           "prerequisites": [
-            "streamSession"
+            "listSessions"
           ],
           "see_also": [],
           "suggest": {},
@@ -193543,9 +193517,9 @@
     },
     "/api/v1/agent/sessions/{id}/tasks/{tid}/transcript": {
       "get": {
-        "operationId": "agent_requestTaskTranscript",
-        "summary": "Request a task's transcript (upsert-poll).",
-        "description": "Asks a live session to emit a background task's transcript from an after_seq cursor (session.task_transcript → event.task_transcript) and returns a plain JSON ack. The transcript arrives on the session's stream, NOT inline — this endpoint does not stream. after_seq is an int64 UPSERT-POLL cursor (the open entry is re-sent at/below after_seq) — distinct from the gateway's int64 stream seq and the daemon's uint64 log seq; it is NOT a monotonic replay cursor.",
+        "operationId": "agent_getTaskTranscript",
+        "summary": "Read a background task's transcript.",
+        "description": "Returns a background subagent task's transcript INLINE — entries, the task's TaskInfo, and the cursor state. No attach, no live session required: a task that reached a terminal state is persisted per session, so its transcript is readable for a dormant session and after a daemon restart. A task still RUNNING when the daemon died is NOT recoverable (persistence happens at terminal status) and reads 404. `source` is \"live\" when served from the live registry and \"store\" when served from the persisted task store. `complete` reports whether this response reflects a terminal projection DURABLY COMMITTED to that store — it is false for a task that has just finished but whose write has not landed, and false for a placeholder written by session teardown whose real terminal projection may still arrive. after_seq is an int64 UPSERT-POLL cursor, exclusive, EXCEPT that a still-open entry is re-sent even when its seq is at or below the cursor (viewers upsert by seq). OMITTING after_seq returns the whole transcript from the beginning, which is DISTINCT from after_seq=0 — that value is exclusive and skips a closed seq-0 entry. It is not the getSessionTranscript after_turn cursor, not the gateway's stream seq, and not a monotonic replay cursor. Active-realm-scoped: a per-request realm header is rejected.",
         "tags": [
           "agent:Tasks"
         ],
@@ -193572,7 +193546,7 @@
             "name": "after_seq",
             "in": "query",
             "required": false,
-            "description": "int64 upsert-poll cursor; entries at/below it are re-sent (default 0).",
+            "description": "Exclusive int64 upsert-poll cursor: entries with seq strictly greater than it, plus any still-OPEN entry regardless of its seq. Omit for the whole transcript (distinct from 0, which skips a closed seq-0 entry). Negative/non-integer = 400.",
             "schema": {
               "type": "integer"
             }
@@ -193625,12 +193599,53 @@
         ],
         "responses": {
           "200": {
-            "description": "Transcript requested; observe task_transcript on the stream.",
+            "description": "Task transcript.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "Verbatim daemon reply (free-form object — fields are the forwarded daemon action's own).",
+                  "description": "The task's transcript slice plus its TaskInfo and the cursor/durability state.",
+                  "properties": {
+                    "session_id": {
+                      "type": "string",
+                      "description": "The session the task belongs to."
+                    },
+                    "task_id": {
+                      "type": "string",
+                      "description": "The task id, as supplied in the path."
+                    },
+                    "task": {
+                      "type": "object",
+                      "description": "The task's TaskInfo: {id, name, status, kind?, prompt, started_at, updated_at?, tool_calls?, elapsed_ms?, output_preview?, container?, cwd?}."
+                    },
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "description": "Transcript entries {seq, kind, text?, tool?, is_error?, open?}. kind is one of text|thinking|tool_call|tool_result|usage|note. A seq of -1 is the presentation-only \"…earlier output trimmed…\" marker, present only on a from-the-beginning read."
+                    },
+                    "trimmed": {
+                      "type": "boolean",
+                      "description": "Whether entries were dropped — by the live ring before the snapshot, or by the store's per-task cap."
+                    },
+                    "after_seq": {
+                      "type": "integer",
+                      "description": "The applied cursor, echoed. -1 means the request omitted it (from the beginning)."
+                    },
+                    "complete": {
+                      "type": "boolean",
+                      "description": "Whether this response reflects a terminal projection durably committed to the task store. False for a task that just finished but whose write has not landed, and for a teardown-written placeholder whose real terminal result may still arrive."
+                    },
+                    "source": {
+                      "type": "string",
+                      "description": "\"live\" when served from the live task registry, \"store\" when served from the persisted task store."
+                    },
+                    "session_live": {
+                      "type": "boolean",
+                      "description": "Whether a live session backed this read."
+                    }
+                  },
                   "additionalProperties": true
                 }
               }
@@ -193860,49 +193875,6 @@
                 }
               }
             ]
-          },
-          "503": {
-            "description": "Service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "description": "Structured error envelope {code, message, details?} returned by every JSON error response (see x-error-codes for the per-code code/message/details examples).",
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "description": "Stable machine-readable error code (the x-error-codes key)."
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Human-readable error message."
-                    },
-                    "details": {
-                      "type": "object",
-                      "description": "Optional structured detail payload (present only for codes that carry it, e.g. gate_parked → details.pending_gate).",
-                      "additionalProperties": true
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "additionalProperties": true
-                }
-              }
-            },
-            "x-error-codes": [
-              {
-                "code": "service_unavailable",
-                "title": "Service unavailable",
-                "description": "The daemon could not service the request (too busy, or a per-client stream concurrency cap was hit).",
-                "resolution": "Honor Retry-After and retry.",
-                "example": {
-                  "code": "service_unavailable",
-                  "message": "service unavailable"
-                }
-              }
-            ]
           }
         },
         "x-related-operations": {
@@ -193910,7 +193882,9 @@
           "prerequisites": [
             "listTasks"
           ],
-          "see_also": [],
+          "see_also": [
+            "getSessionTranscript"
+          ],
           "suggest": {},
           "preview": {}
         }
@@ -225416,6 +225390,13 @@
       },
       "tunnel_BindingDetail": {
         "properties": {
+          "bindAddr": {
+            "description": "PULL only: the loopback address the listener bound. Port alone does not\nidentify a PULL listener — two sessions can hold the same port on\ndifferent addresses in `127.0.0.0/8` — so without this two distinct rows\nwould be indistinguishable. `None` for EXPOSE, which binds `0.0.0.0`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "bindId": {
             "format": "int32",
             "minimum": 0,
@@ -225447,6 +225428,13 @@
       },
       "tunnel_BindingInfo": {
         "properties": {
+          "bindAddr": {
+            "description": "PULL only: the loopback address this listener bound. Two PULL bindings\non different 127/8 addresses can legitimately hold the same port, so\nwithout this the rows are indistinguishable by anything but bind id and\ngive no way to reach either socket. Omitted for EXPOSE, which binds\n`0.0.0.0`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "bindId": {
             "format": "int32",
             "minimum": 0,
@@ -225659,6 +225647,13 @@
       },
       "tunnel_TunnelBindingView": {
         "properties": {
+          "bindAddr": {
+            "description": "PULL only: the loopback address this listener bound. Two PULL bindings\non different 127/8 addresses can legitimately hold the same port, so a\nport alone no longer identifies the socket. Omitted for EXPOSE, which\nbinds `0.0.0.0`.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "bindId": {
             "format": "int32",
             "minimum": 0,
