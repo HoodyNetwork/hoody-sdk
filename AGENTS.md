@@ -1,6 +1,6 @@
-# AGENTS.md — Building on Hoody via SDK, CLI, or HTTP
+# AGENTS.md for building on Hoody via SDK, CLI, or HTTP
 
-**Hoody** runs disposable cloud Linux containers—terminal, files, browser, GUI, an AI agent, and more—behind HTTPS endpoints. Use the same capability surface three ways:
+**Hoody** runs disposable cloud Linux containers, each with a terminal, files, a browser, a GUI, an AI agent and more, behind HTTPS endpoints. Use the same capability surface three ways:
 
 - **SDK** for TypeScript/JavaScript apps, automation, libraries, and scripts.
 - **CLI** for terminals, shell sessions, one-offs, pipes, and CI.
@@ -10,11 +10,11 @@ Every generated HTTP endpoint has a typed SDK method and CLI command. The 1:1 ma
 
 You're here to **build on Hoody**, not maintain the SDK or generator. Read the two rules, choose an interface, then jump to a recipe.
 
-**Contents:** [Choose your interface](#choose-your-interface) · [The model in 60 seconds](#the-model-in-60-seconds) · [The five invariants](#the-five-invariants-learn-these-once) · [Running the CLI](#running-the-cli) · [HTTP and curl](#http-and-curl) · [Auth](#auth--three-shapes-one-gotcha) · [Recipes](#recipes-youll-actually-reach-for) · [The traps](#the-traps) · [Errors, retries, redaction](#errors-retries-redaction) · [Look it up fast](#look-it-up-fast) · [Accuracy discipline](#accuracy-discipline--do--dont)
+**Contents:** [Choose your interface](#choose-your-interface) · [The model in 60 seconds](#the-model-in-60-seconds) · [The five invariants](#the-five-invariants-learn-these-once) · [Running the CLI](#running-the-cli) · [HTTP and curl](#http-and-curl) · [Auth](#auth-three-shapes-and-one-gotcha) · [Recipes](#recipes-youll-actually-reach-for) · [The traps](#the-traps) · [Errors, retries, redaction](#errors-retries-redaction) · [Look it up fast](#look-it-up-fast) · [Accuracy discipline](#accuracy-discipline-do-and-dont)
 
-**Rule 1 — Never guess a method, command, field, path, or slug.** Names are specific (`container_image`, not `image`). Inspect generated SDK signatures and use the shipped CLI/HTTP maps. A plausible guess is worse than none.
+**Rule 1. Never guess a method, command, field, path, or slug.** Names are specific (`container_image`, not `image`). Inspect generated SDK signatures and use the shipped CLI/HTTP maps. A plausible guess is worse than none.
 
-**Rule 2 — The payload is always `data`.** Ordinary HTTP and SDK responses use `{ statusCode, message, data }`; read `.data`. CLI `-o json`, `-o yaml`, and `-o raw` unwrap the envelope, so their output is already the `data` shape.
+**Rule 2. The payload is always `data`.** Ordinary HTTP and SDK responses use `{ statusCode, message, data }`; read `.data`. CLI `-o json`, `-o yaml`, and `-o raw` unwrap the envelope, so their output is already the `data` shape.
 
 ---
 
@@ -28,7 +28,9 @@ You're here to **build on Hoody**, not maintain the SDK or generator. Read the t
 
 The SDK also fits scripting; the CLI is the natural terminal interface; HTTP is universal for agents and non-JavaScript systems.
 
-### Rosetta: list your containers three ways
+There is a fourth surface you do not code against, and it is worth knowing exists. The `bot` namespace registers a chat bot against one container (`box.bot.registrations.create`, then `start`) and runs its poll loop, after which a person can drive Hoody from a chat app: the commands they can send are the commands the CLI publishes, each behind a risk gate that requires a tapped or a typed confirmation before a destructive one runs, and each chat user logs in through the bot and acts with their own token. Telegram is the channel implemented today and the surface is written to be chat-app neutral. It is unrelated to `hoody chat`, which answers questions about Hoody at a terminal and controls nothing. Methods: [docs/reference/namespaces/bot.md](./docs/reference/namespaces/bot.md).
+
+### Rosetta, three ways to list your containers
 
 ```typescript
 // SDK
@@ -44,8 +46,7 @@ const containers = (await hoody.api.containers.list()).data?.containers ?? [];
 
 ```bash
 # CLI: -o json unwraps the envelope to the SDK .data shape
-hoody containers ls -o json
-hoody ps -o json # equivalent short form
+hoody containers list -o json
 
 # HTTP
 curl -s -H "Authorization: Bearer $HOODY_TOKEN" \
@@ -60,13 +61,13 @@ These reach the same capability: use the SDK in your app, inspect with the CLI, 
 
 Hoody exposes each container's terminal, files, browser, GUI display, agent, cron, SQLite, tunnels, and other services as HTTPS endpoints. **Everything is a URL.**
 
-- **Account scope** — containers, projects, servers, realms, tokens, billing, and users. HTTP uses `https://api.hoody.com`; SDK calls live under `hoody.api.*`.
-- **Container scope** — one container's Kit services: terminal, files, browser, display, agent, daemon, cron, SQLite, exec, and more. Calls use structural `*.containers.hoody.com` URLs; SDK calls live under `box.*`.
+- **Account scope** covers containers, projects, servers, realms, tokens, billing, and users. HTTP uses `https://api.hoody.com`; SDK calls live under `hoody.api.*`.
+- **Container scope** covers one container's Kit services: terminal, files, browser, display, agent, daemon, cron, SQLite, exec, and more. Calls use structural `*.containers.hoody.com` URLs; SDK calls live under `box.*`.
 
 ```typescript
 import { HoodyClient } from 'hoody-sdk';
 
-const hoody = await HoodyClient.authenticate('https://api.hoody.com', {
+const hoody = await HoodyClient.login('https://api.hoody.com', {
   username,
   password,
 });
@@ -74,7 +75,7 @@ const hoody = await HoodyClient.authenticate('https://api.hoody.com', {
 const containers = (await hoody.api.containers.list()).data?.containers ?? [];
 const container = containers.find(c => c.status === 'running' && c.hoody_kit)!;
 const box = await hoody.withContainer(container);
-const { stdout, exitCode } = await box.execute('uname -a');
+const { stdout, exitCode } = await box.terminal.run('uname -a');
 ```
 
 > **Install:** `npm install hoody-sdk@beta` or `bun add hoody-sdk@beta`. Node ≥ 22.19.0. The browser build omits Node-only helpers such as `tunnel*` and `shell`.
@@ -84,7 +85,7 @@ const { stdout, exitCode } = await box.execute('uname -a');
 No containers yet? A container lives in a project, on a server:
 
 ```typescript
-const serverId = (await hoody.api.serverRental.list()).data![0]!.server_id!;
+const serverId = (await hoody.api.servers.list()).data![0]!.server_id!;
 const project = await hoody.api.projects.create({ alias: 'my-first-project' });
 const { data: container } = await hoody.api.containers.create(project.data!.id, {
   server_id: serverId,
@@ -101,21 +102,21 @@ const box = await hoody.withContainer(container!);
 
 The signature is **`containers.create(projectId, data, options?)`**: `projectId` is positional. `hoody_kit: true` installs the Kit service layer required by `box.*`.
 
-Container lifecycle lives under `hoody.api.containers.*`: `manage(id, 'start' | 'stop' | 'restart')`, `getStats(id)`, `createSnapshot(id, {...})`, `restoreSnapshot(id, name)`, and `delete(id)`.
+Container lifecycle lives under `hoody.api.containers.*`: `start(id)`, `stop(id)`, `restart(id)`, `pause(id)`, `resume(id)`, `getStats(id)`, and `delete(id)`. Snapshots live in their own service: `hoody.api.snapshots.create(id, {...})`, `restore(id, name)`.
 
 ---
 
 ## The five invariants (learn these once)
 
-1. **The envelope.** Ordinary HTTP/SDK requests return `{ statusCode, message, data }`; HTTP reads `.data`, SDK reads `response.data`, and CLI `json`, `yaml`, and `raw` unwrap before printing. The envelope is guaranteed at the *client* boundary, not on every wire: some kits (Hoody Run among them) answer with a flat body and the SDK/CLI normalize it into the envelope, so raw `curl` against those routes sees the bare payload. SDK request failures throw `ApiError`; argument validation throws `ValidationError`, which extends `Error`, not `ApiError`. Streaming and structural helpers—`box.agent.sessions.promptStream()`, `createCurlFetch`, and `EventsClient`—return purpose-built clients or streams (note the generated `watch` and `pipe` methods are ordinary enveloped calls). SDK `rawResponse: true` returns the unwrapped body.
+1. **The envelope.** Ordinary HTTP/SDK requests return `{ statusCode, message, data }`; HTTP reads `.data`, SDK reads `response.data`, and CLI `json`, `yaml`, and `raw` unwrap before printing. The envelope is guaranteed at the *client* boundary, not on every wire: some kits (Hoody Run among them) answer with a flat body and the SDK/CLI normalize it into the envelope, so raw `curl` against those routes sees the bare payload. SDK request failures throw `ApiError`; argument validation throws `ValidationError`, which extends `Error`, not `ApiError`. Streaming and structural helpers (`box.agent.sessions.startTurnAndStream()`, `createCurlFetch`, and `EventsClient`) return purpose-built clients or streams (note the generated `watch` and `pipe` methods are ordinary enveloped calls). SDK `rawResponse: true` returns the unwrapped body.
 
 2. **Parameters stay endpoint-specific.** Most SDK methods end with an options bag containing endpoint query parameters and transport overrides: `retries`, `retryDelayMs`, `retryOnStatuses`, `timeoutMs`, `signal`, `responseType`, and, for account calls, `_realm`. CLI exposes generated arguments/flags; HTTP uses path, query, headers, and JSON body. Check references instead of assuming argument order.
 
 3. **Pagination is contractual.** Paginated SDK list endpoints commonly provide `list()` for one page, `listAll()` for all pages, and `listIterator()` for an async iterable. Not every `list()` paginates; consult the generated CLI command or OpenAPI contract.
 
-4. **Everything is a structural URL.** Container services use `https://{projectId}-{containerId}-{segment}.{server}.containers.hoody.com`. Build SDK URLs with `hoody.getKitUrl(service, container, index?)`, never string concatenation; it handles slug remaps and raw-port routes. Passing `{ local: true }` instead returns `https://localhost.{containersDomain}/{serviceSegment}`, which needs no container identity but only resolves from inside that container — use it for in-container cron jobs and scripts.
+4. **Everything is a structural URL.** Container services use `https://{projectId}-{containerId}-{segment}.{server}.containers.hoody.com`. Build SDK URLs with `hoody.getKitUrl(service, container, index?)`, never string concatenation; it handles slug remaps and raw-port routes. Passing `{ local: true }` instead returns `https://localhost.{containersDomain}/{serviceSegment}`, which needs no container identity but only resolves from inside that container. Use it for in-container cron jobs and scripts.
 
-5. **The container URL is the credential.** Open Kit services need no account bearer token: possession of the full structural URL grants access. Treat container ids and URLs like passwords. Before exposing one, use `hoody.api.proxyPermissionsContainer.replace(...)` for access rules, `hoody.api.proxyAliases.create(...)` to hide ids behind an alias, and a DNS CNAME for your own domain. Every built-in kit works this way, `agent` included.
+5. **The container URL is the credential.** Open Kit services need no account bearer token: possession of the full structural URL grants access. Treat container ids and URLs like passwords. Before exposing one, use `hoody.api.proxy.containerPermissions.set(...)` for access rules, `hoody.api.proxy.aliases.create(...)` to hide ids behind an alias, and a DNS CNAME for your own domain. Every built-in kit works this way, `agent` included.
 
 ---
 
@@ -125,10 +126,10 @@ The `hoody` CLI ships inside `hoody-sdk`. Choose any invocation form:
 
 ```bash
 npx hoody-sdk login
-npx hoody-sdk ps
+npx hoody-sdk containers list
 npm install -g hoody-sdk
 hoody login
-hoody ps
+hoody containers list
 ssh hoody.com # memory-only sandbox; no installation
 ```
 
@@ -138,11 +139,11 @@ The same package also works with bunx and pnpm dlx. Generated commands follow:
 hoody <group> <command> [args] [flags]
 ```
 
-There are 38 generated groups mirroring SDK namespaces—including `containers`, `projects`, `files`, `terminal`, `browser`, `display`, `agent`, `exec`, `daemon`, `cron`, `db` (aliases `sql`, `sqlite`), `egress`, `tunnel`, `proxy`, `realms`, `servers`, `wallet`, `auth`, and `users`—plus 24 top-level utility commands.
+The generated groups mirror the SDK, among them `containers`, `projects`, `files`, `terminal`, `browser`, `display`, `agent`, `exec`, `daemon`, `cron`, `db` (alias `sql`), `egress`, `tunnel`, `proxy`, `bot`, `realms`, `servers`, `wallet`, `auth`, and `users`, plus hand-written top-level commands such as `login`, `signup`, `logout`, `shell`, `open`, `screenshot`, `mount`, `unmount`, `update`, and `completion`.
 
 ```text
-SDK:  agent.agents.createAgent
-CLI:  hoody agent agents create
+SDK:  agent.definitions.create
+CLI:  hoody agent definitions create
 HTTP: POST /api/v1/agent/agents
 ```
 
@@ -151,9 +152,9 @@ See [docs/reference/CLI-COMMANDS.md](./docs/reference/CLI-COMMANDS.md) for every
 ### Output and global flags
 
 ```bash
-hoody containers ls --output table
-hoody containers ls -o json | jq '.containers[]'
-hoody containers ls -o yaml
+hoody containers list --output table
+hoody containers list -o json | jq '.containers[]'
+hoody containers list -o yaml
 ```
 
 Modes: `table`, `json`, `yaml`, `wide`, `raw`. **`json`, `yaml`, and `raw` unwrap the API envelope.**
@@ -180,23 +181,21 @@ Thus `-o json` prints `{"containers":[]}`. `raw` prints string payloads for pipi
 hoody login --email you@example.com
 # --print-token modifies a fresh login; it does not export a stored token
 hoody login --email you@example.com -p --print-token
-hoody logout
+hoody logout          # this device only; --all ends every session of the account
 hoody signup --email you@example.com
 
 # Containers and commands
-hoody ps                            # same as: hoody containers ls
+hoody containers list
 hoody shell <container-id> -- uname -a
 hoody shell <container-id> -- npm test
 # `hoody run` is the Hoody Run app resolver, not a container-exec verb:
 hoody run firefox -c <container-id>          # print the resolved shell command
 hoody run firefox -c <container-id> --open   # launch detached; viewer URL on stdout
 
-# Interactive PTY; hoody sh, hoody pty and hoody ssh are all aliases of hoody shell
-hoody shell <container-id>
-hoody sh <container-id>
-# hoody ssh is NOT an SSH client — it opens a PTY in the container. To bridge to a
-# real SSH server, pass --ssh-host (+ --ssh-user) to ANY form; --ssh-host implies
+# Interactive PTY. `hoody shell` opens a PTY in the container; it is not an SSH client. To
+# bridge to a real SSH server, pass --ssh-host (+ --ssh-user); --ssh-host implies
 # --shell ssh, and --shell ssh without --ssh-host is an error.
+hoody shell <container-id>
 hoody shell <container-id> --ssh-host bastion.example.com --ssh-user admin
 
 # Kit UI: argument is a service slug (a fixed set — `agent` and `run` are NOT in it),
@@ -233,7 +232,6 @@ hoody config set <key> <value>
 hoody chat
 hoody chat Explain this failure
 hoody update
-hoody check-update
 hoody completion bash
 hoody completion zsh
 hoody completion fish
@@ -261,7 +259,7 @@ hoody login --print-token # obtain a bearer token
 const token = await hoody.getAuthToken(); // from an authenticated SDK client
 ```
 
-You can also obtain a login token through the auth API or mint a scoped token with `authTokens.create`.
+You can also obtain a login token through the auth API or mint a scoped token with `auth.tokens.create`.
 
 ### Account API example
 
@@ -321,11 +319,11 @@ curl -s -X POST \
 
 ---
 
-## Auth — three shapes, one gotcha
+## Auth, three shapes and one gotcha
 
 ```typescript
 // Explicit: log in now and return a ready client.
-const hoody = await HoodyClient.authenticate('https://api.hoody.com', {
+const hoody = await HoodyClient.login('https://api.hoody.com', {
   username,
   password,
 });
@@ -349,14 +347,14 @@ const hoody = new HoodyClient({
 ```typescript
 // No account yet
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
-await hoody.api.authentication.signup({ email, password });
+await hoody.api.auth.signup({ email, password });
 ```
 
 ```bash
 hoody login --print-token # feed to the SDK or HTTP Authorization header
 ```
 
-Never ship account credentials or an account-wide token to a browser or untrusted agent. Mint a short-lived, realm-scoped token with `hoody.api.authTokens.create(...)`.
+Never ship account credentials or an account-wide token to a browser or untrusted agent. Mint a short-lived, realm-scoped token with `hoody.api.auth.tokens.create(...)`.
 
 ---
 
@@ -367,14 +365,14 @@ Assume `hoody`, `container`, and `box` from [The model](#the-model-in-60-seconds
 ### 1. Run a command
 
 ```typescript
-const { stdout, stderr, exitCode } = await box.execute('npm test', {
+const { stdout, stderr, exitCode } = await box.terminal.run('npm test', {
   cwd: '/workspace',
   timeout: 30,
 });
 const shell = await box.shell(); // interactive Node/Bun stream
 ```
 
-`box.execute(cmd, opts?)` uses a fresh ephemeral PTY, waits, and returns `{ stdout, stderr, exitCode, timedOut, duration, commandId }`. Options include `cwd`, `timeout` in seconds, `env`, `user`, and `serviceIndex`.
+`box.terminal.run(cmd, opts?)` uses a fresh ephemeral PTY, waits, and returns `{ stdout, stderr, exitCode, timedOut, duration, commandId }`. Options include `cwd`, `timeout` in seconds, `env`, `user`, and `serviceIndex`.
 
 ```bash
 hoody shell <container-id> -- npm test
@@ -384,14 +382,14 @@ hoody shell <container-id>
 ### 2. Files
 
 ```typescript
-const text = await box.files.get('/etc/hostname', { responseType: 'text' });
-await box.files.put('/tmp/in.docx', bytes);
-await box.execute('libreoffice --headless --convert-to pdf --outdir /tmp /tmp/in.docx');
-const pdf = await box.files.get('/tmp/in.pdf', { responseType: 'arrayBuffer' });
-const entries = await box.files.listDirectory('/workspace');
+const text = await box.files.readText('/etc/hostname');      // string, no envelope
+await box.files.upload('/tmp/in.docx', bytes);
+await box.terminal.run('libreoffice --headless --convert-to pdf --outdir /tmp /tmp/in.docx');
+const pdf = await box.files.readBytes('/tmp/in.pdf');        // Uint8Array
+const entries = await box.files.list('/workspace');
 ```
 
-`box.files.get(path, options?)` takes the path first. Set `responseType` explicitly for binary data. Options also support glob, grep, and archive behavior. Confirm `files.put` request shapes in [docs/reference/namespaces/files.md](./docs/reference/namespaces/files.md).
+`box.files.readText` / `readJson` / `readBytes` resolve to the content itself (string, parsed value, `Uint8Array`). `box.files.get(path, options?)` takes the path first and resolves to the `{ statusCode, message, data }` envelope, the content in `.data`; set `responseType` explicitly for binary data. Options also support glob, grep, and archive behavior. Confirm `files.upload` request shapes in [docs/reference/namespaces/files.md](./docs/reference/namespaces/files.md).
 
 ```bash
 hoody mount <container-id>:/data ./data # terminal-oriented access
@@ -402,15 +400,15 @@ Use the CLI/HTTP maps for generated file commands and direct paths.
 ### 3. Headless browser and GUI display
 
 ```typescript
-const shot = await box.browser.interaction.takeScreenshot({
+const shot = await box.browser.page.captureScreenshot({
   browser_id: '1',
   url: 'https://hoody.com',
 });
 
-await box.display.input.clickAt({ x: 100, y: 200 }, { displayId: 1 });
-// box.display.input.* also supports typing, dragging, batching, and window management
+await box.display.input.click({ x: 100, y: 200 }, { displayId: 1 });
+// box.display.input.* also supports typing, dragging, and batching (actMany); box.display.mouse, keyboard and windows hold the device primitives
 
-await box.terminal.execution.execute(
+await box.terminal.commands.run(
   { command: 'firefox https://hoody.com' },
   { terminal_id: '1', display: '1' },
 );
@@ -436,9 +434,9 @@ The URL is the capability; gate it before showing it to users.
 ```typescript
 const box = await hoody.withContainer(container);
 
-const created = await box.agent.sessions.createSession();
+const created = await box.agent.sessions.create();
 const sessionId = (created.data!.session_id ?? created.data!.id) as string;
-const turn = await box.agent.sessions.promptSync(sessionId, {
+const turn = await box.agent.sessions.turns.run(sessionId, {
   text: 'Run the tests and fix the first failure.',
 });
 ```
@@ -459,16 +457,16 @@ for await (const delta of run.text) process.stdout.write(delta);
 const result = await run.done;
 ```
 
-Do not substitute `box.agent.sessions.promptStream()`: it returns a WebSocket client whose protocol differs from the agent daemon's SSE stream.
+Do not substitute `box.agent.sessions.startTurnAndStream()`: it returns a WebSocket client whose protocol differs from the agent daemon's SSE stream.
 
 ```text
-CLI:  hoody agent agents create
+CLI:  hoody agent definitions create
 HTTP: POST /api/v1/agent/agents
 ```
 
 The generated agent surface exists in CLI and HTTP; look up each exact operation before calling it.
 
-### 5. Exec scripts — drop a file, get an endpoint
+### 5. Exec scripts, where a file becomes an endpoint
 
 ```typescript
 await box.exec.scripts.write({
@@ -493,11 +491,11 @@ HTTP: POST https://{projectId}-{containerId}-exec-1.{server}.containers.hoody.co
 ### 6. Daemon, cron, and SQLite
 
 ```typescript
-const launched = await box.daemon.quickStart.launch({
+const launched = await box.daemon.ephemeralPrograms.start({
   user: 'user',
   command: 'claude --print "refactor src/"',
 });
-const logs = await box.daemon.quickStart.getEphemeralLogs(
+const logs = await box.daemon.ephemeralPrograms.getLogs(
   launched.data!.temporary_id,
 );
 
@@ -506,35 +504,32 @@ await box.cron.entries.create('user', {
   command: 'backup.sh',
 });
 
-const rows = await box.sqlite.query.executeShareable({
+const rows = await box.sqlite.sql.queryReadOnly({
   db: 'app',
   sql: btoa('select count(*) from users'),
 });
 ```
 
-`'user'` is the container's default Linux account, unrelated to your Hoody account or `hoody`. A CLI agent such as `claude` must already be on the container `PATH`. `box.syncAgentConfig('claude', { only: 'credentials' })` copies local credentials/configuration, not the binary. Use the command map for exact daemon, cron, and SQLite CLI equivalents.
+`'user'` is the container's default Linux account, unrelated to your Hoody account or `hoody`. A CLI agent such as `claude` must already be on the container `PATH`. `box.agent.importLocalConfig('claude', { only: 'credentials' })` copies local credentials/configuration, not the binary. Use the command map for exact daemon, cron, and SQLite CLI equivalents.
 
 ### 7. Tunnels
 
 Node/Bun only:
 
 ```typescript
-import { tunnelExpose } from 'hoody-sdk';
+const box = await hoody.withContainer(container);
 
-const handle = await tunnelExpose({
-  url:
-    hoody.getKitUrl('tunnel', container).replace(/^https:/, 'wss:') +
-    '/api/v1/tunnel/connect',
-  token: (await hoody.getAuthToken())!,
-  containerPort: 80,
+const handle = await box.tunnel.expose({
+  containerPort: 3000,
   to: { host: '127.0.0.1', port: 3000 },
 });
 
-console.log(handle.publicUrl);
+// Visitors reach it at the container's URL for that port:
+console.log(hoody.getKitUrl('http', container, { port: handle.bind.containerPort }));
 await handle.close();
 ```
 
-`tunnelExpose` connects laptop-to-public; `tunnelPull` connects container-loopback-to-local TCP; `tunnelServe` accepts a fetch handler. `box.tunnel.*` manages tunnel sessions.
+`box.tunnel.expose` connects laptop-to-public; `box.tunnel.pull` connects container-loopback-to-local TCP; `box.tunnel.serve` (Bun) accepts a fetch handler. They build the tunnel URL from the container and send the client's `kitAuth`; the account token is never sent. The other `box.tunnel.*` methods inspect and kill tunnel sessions. Without a scoped client, the package-root `tunnelExpose` / `tunnelPull` / `tunnelServe` take the tunnel WebSocket URL as `url`.
 
 ### 8. Multi-tenancy in three calls
 
@@ -548,7 +543,7 @@ const project = await hoody.api.projects.create({
   realm_ids: [realmId],
 });
 
-const created = await hoody.api.authTokens.create({
+const created = await hoody.api.auth.tokens.create({
   alias: 'Customer Acme',
   permission_template: 'external_customer',
   realm_ids: [realmId],
@@ -565,15 +560,43 @@ const acme = new HoodyClient({
 
 A realm-scoped client sees only resources tagged with that realm. CLI uses global `--realm <id>`.
 
+### 9. React to changes instead of polling
+
+`hoody.events` streams account changes. Wait for the outcome of an action with `waitFor`: the action runs only after the stream has caught up, so its event cannot slip past.
+
+```typescript
+const done = await hoody.events.waitFor(
+  ['container.operation.completed', 'container.operation.failed'],
+  (e) => e.resource_id === containerId,
+  () => hoody.api.containers.restart(containerId),
+  { timeoutMs: 120_000 },
+);
+if (done.type === 'container.operation.failed') throw new Error(`restart failed: ${JSON.stringify(done.data)}`);
+```
+
+```bash
+hoody events stream --type 'container.*' --container-id <id> --format ndjson   # one event per stdout line
+hoody containers wait <id> --state running --timeout 120s                     # exit 0 satisfied, 124 timeout
+```
+
+Rules an agent must hold:
+- An event says something changed. It does not describe current state. After a `gap` state event, re-read with GET.
+- Delivery is at least once. Replays carry `replayed: true`, and the SDK de-duplicates them per subscription.
+- To resume `stream()` after a restart, persist `event.resume_after` and pass it back as `after`. Never persist `event.cursor`: an event recovered from history can arrive after later ones.
+- Logging out, logging in, or changing the token ends the events session. Pending waits reject with `EventsSessionChangedError`.
+- `.operation.completed` means exit code 0. Every other ending is `.failed` with a `reason_code` (`nonzero_exit`, `timeout`, `terminated`, `failed`).
+- Type names are checked. A typo throws `TypeError`; it never becomes a silent handler. `'container.*'` and `'*'` skip the opt-in `activity.logged`.
+- A realm client never receives account-wide events such as billing, notifications and pools. A token receives only the types its read permissions cover, and it gets newly granted permissions only after it reconnects.
+
 ---
 
 ## The traps
 
-**1 — No stdout from `box.terminal.execution.execute()`.** It returns immediately with `command_id`; poll `box.terminal.execution.getResult(command_id)`. Use `box.execute(cmd)` to wait for output or `hoody shell <container-id> -- <cmd>` in a shell.
+**1. No stdout from `box.terminal.commands.run()`.** It returns immediately with `command_id`; poll `box.terminal.commands.get(command_id)`. Use `box.terminal.run(cmd)` to wait for output or `hoody shell <container-id> -- <cmd>` in a shell.
 
-**2 — `box.agent.sessions.promptStream()` is not the streaming path.** It returns a WebSocket client whose protocol differs from the agent daemon's SSE stream. Use the package-root `streamAgentPrompt` helper from [recipe 4](#4-the-built-in-agent) instead.
+**2. `box.agent.sessions.startTurnAndStream()` is not the streaming path.** It returns a WebSocket client whose protocol differs from the agent daemon's SSE stream. Use the package-root `streamAgentPrompt` helper from [recipe 4](#4-the-built-in-agent) instead.
 
-**3 — Request types are not exported.** Derive the body from the method:
+**3. Request types are not exported.** Derive the body from the method:
 
 ```typescript
 type CreateReq = Parameters<HoodyClient['api']['containers']['create']>[1];
@@ -581,16 +604,16 @@ type CreateReq = Parameters<HoodyClient['api']['containers']['create']>[1];
 
 Field names are exact. If TypeScript rejects one, inspect the generated signature instead of using `any`.
 
-**4 — Argument order is not uniform.** Most methods are `(…path, data?, options?)`, but some put template variables before request options:
+**4. Argument order is not uniform.** Most methods are `(…path, data?, options?)`, but some put template variables before request options:
 
 ```typescript
-box.daemon.quickStart.launch(data, _templateVars?, requestOptions?)
+box.daemon.ephemeralPrograms.start(data, _templateVars?, requestOptions?)
 box.cron.entries.create(user, data, _templateVars?, requestOptions?)
 ```
 
 If options seem ignored, inspect the actual signature.
 
-**5 — Two Kit slugs differ from SDK namespaces.**
+**5. Two Kit slugs differ from SDK namespaces,** as the table below shows.
 
 ```text
 notifications → n
@@ -599,11 +622,11 @@ proxyLogs     → logs
 
 Always use `getKitUrl()`. Raw ports use `hoody.getKitUrl('http', container, { port: 8080 })`, producing `http-8080`. `ssh` and `proxy` are unindexed; the default service index is `1`.
 
-**6 — Cross-origin `Authorization` is stripped.** The SDK removes the account header when targeting a container host or other origin. Open kits need no token, `agent` included; proxy-protected kits use their configured credentials.
+**6. Cross-origin `Authorization` is stripped.** The SDK removes the account header when targeting a container host or other origin. Open kits need no token, `agent` included; proxy-protected kits use their configured credentials.
 
-**7 — Realms scope by routing.** Per call, use `{ _realm: realmId }` in an account-method options bag; for the whole client, use `hoody.withRealm(realmId)`; CLI uses `--realm <id>`. `_realm` is a host-scope override. `realm_id` is an ordinary query parameter only where declared.
+**7. Realms scope by routing.** Per call, use `{ _realm: realmId }` in an account-method options bag; for the whole client, use `hoody.withRealm(realmId)`; CLI uses `--realm <id>`. `_realm` is a host-scope override. `realm_id` is an ordinary query parameter only where declared.
 
-**8 — Tokens are shown once.** `authTokens.create(...).data.token` appears only at creation; `list` and `get` omit it. Capture and store it immediately.
+**8. Tokens are shown once.** `auth.tokens.create(...).data.token` appears only at creation; `list` and `get` omit it. Capture and store it immediately.
 
 ---
 
@@ -680,9 +703,9 @@ If a snippet disagrees with generated signatures or references, generated source
 | Request/response fields | `generated/types.ts` |
 | Raw HTTP contract | `generated/openapi.public.json` or `generated/openapi.public.yaml` |
 | Namespace/method counts | [docs/reference/SUMMARY.md](./docs/reference/SUMMARY.md) |
-| Real-time events | `EventsClient`, `EventsManager`, and `hoody.api.events.*` |
+| Real-time events | `hoody.events` (`on`, `waitFor`, `stream`, `bootstrap`); catalog in `lib/events-catalog.json`; `hoody.api.events.*` for REST history |
 | Vault crypto | `encrypt`, `decrypt`, `parseEnvelope` |
-| WebSocket-multiplexed fetch | `createCurlFetch`; `box.curlChannel()` supplies its channel |
+| WebSocket-multiplexed fetch | `createCurlFetch`; `box.curl.channel.connect()` supplies its channel |
 | Terminal, agent, tunnel, signing, and redaction helpers | `lib/` |
 
 SDK namespaces are one account scope (`hoody.api`) plus 19 container scopes:
@@ -695,11 +718,11 @@ proxyLogs · agent
 
 ---
 
-## Accuracy discipline — do / don't
+## Accuracy discipline, do and don't
 
 - **Do** use SDK for programmatic TS/JS work, CLI for terminal work, and HTTP or CLI for agents and other languages.
 - **Do** translate among SDK methods, CLI commands, and paths through the HTTP map.
-- **Do** snapshot before releasing an agent: `hoody.api.containers.createSnapshot(id, {...})`; `restoreSnapshot(id, name)` is the undo.
+- **Do** snapshot before releasing an agent: `hoody.api.snapshots.create(id, {...})`; `hoody.api.snapshots.restore(id, name)` is the undo.
 - **Do** treat container ids, structural URLs, claims, and tokens as secrets.
 - **Do** use `-o json` for CLI automation; it unwraps the envelope and pipes cleanly to `jq`.
 - **Don't** send an account bearer token to a container URL.
