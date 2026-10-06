@@ -1,1 +1,0 @@
-import{v as a,w as b,x as c,y as d,z as e}from"./index-sakdv73n.js";import"./index-5jqgrcja.js";import"./index-vw399t2f.js";import"./index-wfgha7hg.js";export{c as readAcceptFile,e as confirmAcceptance,d as checkAcceptance,b as acceptFilePath,a as BUILTIN_ACCEPTED_ORIGINS};
