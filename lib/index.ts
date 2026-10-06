@@ -10,7 +10,7 @@
  * Subsystem grouping of exports below:
  *
  * -- Core client --
- *   HoodyClient, patchHoodyClientMetrics
+ *   HoodyClient
  *
  * -- Real-time events (Socket.IO) --
  *   EventsClient, EventsManager
@@ -37,8 +37,11 @@
  *   normalizeContainerStatsResponse, normalizeProjectStatsResponse
  *
  * -- Exec helpers (prototype augmentation + dynamic script support) --
- *   patchExecScriptsServicePrototype, patchExecScriptExecutionPrototype,
- *   patchExecDynamicClientPrototype, filterAgentScripts + types
+ *   filterAgentScripts + types (the prototype patches run at import; they are not exported)
+ *
+ * -- Embed URLs for every kit UI (client.embeds) --
+ *   buildEmbedUrl, getEmbedCatalog, listEmbedViews, deriveContainersDomain,
+ *   EmbedValidationError, createEmbeds + types
  *
  * Safe from regeneration — add new custom exports here.
  */
@@ -86,8 +89,11 @@ export {
   parseHoodySignatureFrom,
   verifyHoodySignatureHeader,
   verifyHoodySignatureFrom,
+  verifyHoodySignatureFromContext,
+  hoodySignaturePath,
 } from './signing.js';
 export type {
+  HoodySignatureResponseContext,
   HoodySignatureHeader,
   HoodySignatureHeaderCarrier,
   VerifyHoodySignatureInput,
@@ -95,7 +101,11 @@ export type {
 } from './signing.js';
 export {
   HoodyClient,
-  patchHoodyClientMetrics,
+} from './hoody-client.js';
+export type {
+  DaemonProgramRef,
+  ProgramTerminalAttachOptions,
+  ProgramTerminalAttachment,
 } from './hoody-client.js';
 // Public API surface: errors, config, middleware contract.
 export {
@@ -111,6 +121,21 @@ export type {
   RetryableStatus,
 } from '../generated/errors.js';
 export type { HoodyClientConfig } from '../generated/client.js';
+// Credentials for HoodyClient.login() and client.login(): a username OR an email identifier.
+// Kept on its own line — a test matches the HoodyClientConfig export line verbatim.
+export type { HoodyCredentials } from '../generated/client.js';
+// Session lifecycle: the two-factor challenge HoodyClient.login() raises, the token
+// shape adoptSession() takes, and the enriched realm-scope 403.
+export { TwoFactorRequiredError, isRealmScopeError } from '../generated/client.js';
+export type { HoodySessionTokens, RealmScopeApiError, ContainerLike } from '../generated/client.js';
+// The transport class, for the same parity with the browser entry (which
+// re-exports the whole generated index).
+export { HttpClient } from '../generated/http-client.js';
+export type { HoodyFetch, IEventStream, IStreamEvent, IStreamEventsOptions, IStreamResponse } from '../generated/http-client.js';
+// Every generated request/response/schema type, type-only so it adds nothing
+// at runtime: `import type { DaemonProgramsAddRequest } from 'hoody-sdk'`.
+// Names this entry exports itself take precedence over the star.
+export type * from '../generated/types.js';
 export type {
   IHttpClientConfig,
   IRequestData,
@@ -120,7 +145,7 @@ export type {
   IHttpClientMiddlewareErrorContext,
 } from '../generated/http-client.js';
 export {
-  getKitCatalogEntries,
+  listKits,
 } from './kit-catalog.js';
 export type {
   KitCatalogEntry,
@@ -131,9 +156,6 @@ export {
   normalizeContainerStatsResponse,
   normalizeProjectStatsResponse,
 } from './metrics.js';
-export {
-  patchExecScriptsServicePrototype,
-} from './exec-scripts.js';
 export type {
   ExecDeleteFileOptions,
   ExecListFilesOptions,
@@ -144,25 +166,16 @@ export type {
   ExecWriteJsonFileOptions,
   ExecWriteFileOptions,
 } from './exec-scripts.js';
-export {
-  patchExecScriptExecutionPrototype,
-} from './exec-script-execution.js';
 export type {
   ExecExecutionRequestOptions,
   ExecExecutionTemplateVars,
 } from './exec-script-execution.js';
-export {
-  patchTerminalExecPrototype,
-} from './terminal-exec.js';
 export type {
   TerminalExecOptions,
   TerminalExecResult,
   TerminalShellOptions,
   TerminalShell,
 } from './terminal-exec.js';
-export {
-  patchTerminalSshPrototype,
-} from './terminal-ssh.js';
 export type {
   SshTerminalOptions,
   LocalTerminalOptions,
@@ -188,7 +201,6 @@ export type {
   DiscoverOptions,
 } from './exec-dynamic-discovery.js';
 export {
-  patchExecDynamicClientPrototype,
   clearDiscoveryCache,
 } from './exec-dynamic-client.js';
 export type {
@@ -214,7 +226,6 @@ export {
 
 // -- Screenshot save helpers --
 export {
-  patchScreenshotSavePrototype,
   ScreenshotSaveError,
 } from './screenshot-save.js';
 export type {
@@ -228,10 +239,20 @@ export type {
   TerminalScreenshotCaptureOptions,
 } from './screenshot-save.js';
 
-// -- Files service extensions (classifyFile, getFileUrl, etc.) --
-export {
-  patchFilesServiceExtensions,
-} from './files-service-extensions.js';
+// -- Files service extensions (classifyFile, getFileUrl, readText/readJson/readBytes, etc.) --
+export type { FilesReadOptions } from './files-service-extensions.js';
+
+// -- SQLite SQL helpers (sqlite.sql.query / run) --
+export type {
+  SqliteBindValue,
+  SqliteParams,
+  SqliteSqlRequest,
+  SqliteQueryResult,
+  SqliteRunResult,
+} from './sqlite-helpers.js';
+
+// -- SQLite KV helper (sqlite.kv.read) --
+export type { KvReadOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
 
 // -- Mount module (rclone+WebDAV filesystem mount) --
 export {
@@ -256,12 +277,26 @@ export type {
   ContainerLike as MountContainerLike,
 } from './mount.js';
 
-// -- Code service extensions (embedUrl) --
+// -- Share module (a local folder served into a container) --
 export {
-  patchCodeServiceExtensions,
-} from './code-service-extensions.js';
-export type { EmbedUrlOptions } from './code-service-extensions.js';
-
+  share,
+  listShares,
+  stopShare,
+  ShareError,
+  AmbiguousShareError,
+  UndeliveredWritesError,
+} from './share.js';
+export type {
+  ShareOptions,
+  ShareHandle,
+  ShareTarget,
+  ShareEvent,
+  ShareState,
+  ShareListEntry,
+  ListSharesOptions,
+  StopShareOptions,
+  StopShareResult,
+} from './share.js';
 // -- Notification display helpers --
 export { NotificationDisplayClient } from './notification-display-client.js';
 export type { NotificationDisplayClientConfig } from './notification-display-client.js';
@@ -292,13 +327,70 @@ export { isProxyAuthPolicy } from './proxy-auth.js';
 export type {
   EventServerMessage,
   EventClientMessage,
+  HoodyEvent,
+  PersistedHoodyEvent,
+  EventsStreamGap,
+  HoodyStreamEvent,
+  EphemeralHoodyEvent,
+  EventActor,
+  EventVisibility,
+  EventHistoryItem,
+  EventWireFrame,
+  WelcomeFrame,
+  TickFrame,
+  ErrorFrame,
+  RevokedFrame,
+  ScopeChangedFrame,
+  ServerFrame,
 } from './events-types.js';
 export { ApiConnecteventstreamWebSocket } from './events-types.js';
+export type { EventsClientOptions, EventsOnOptions, EventsWaitOptions, EventsStreamOptions, EventsWaitFilter } from './events-client.js';
+export type { EventFilter, EventsConnectionState, EventsStateEvent, EventsManagerOptions, EventsTransport } from './events-manager.js';
+export {
+  EventsError,
+  EventsAuthError,
+  EventsClosedError,
+  EventsSessionChangedError,
+  EventsTimeoutError,
+  EventsGapError,
+  socketActionFor,
+  historyActionFor,
+} from './events-errors.js';
+export type { EventsGapReason, EventsSocketAction, EventsHistoryAction } from './events-errors.js';
+export { EventIdLru, EventsRecovery } from './events-replay.js';
+export type { EventsHistoryPage, EventsHistoryReader } from './events-replay.js';
+export { EventsSession } from './events-session.js';
+export {
+  EVENT_TYPES,
+  EVENT_CATALOG,
+  isEventType,
+  isEventPattern,
+  isEphemeralEventType,
+  isPersistedEventType,
+  isReservedEventType,
+  expandEventPattern,
+  eventCatalogInfo,
+} from './events-catalog.js';
+export type {
+  EventType,
+  EventPattern,
+  EventTypesMatching,
+  EventPayload,
+  HoodyEventMap,
+  PersistedEventType,
+  EphemeralEventType,
+  ReservedEventType,
+  EventCatalogInfo,
+  ResourceTypeFor,
+  ResourceType as EventResourceType,
+} from './events-catalog.js';
 
 // -- Pipe stream helpers (Node — generic byte-stream send/receive/forward) --
 export {
   PipeStream,
   PipeReceiveEmptyBodyError,
+  PipeIntegrityError,
+  PipeTransferError,
   encodePipePath,
   validatePipePath,
   coerceToReadableStream,
@@ -316,11 +408,15 @@ export type {
   PipeStatusMessage,
   PipeReceiveOptions,
   PipeReceiveResult,
+  PipeStatus,
   PipeProgressEvent,
   PipeForwardTcpOptions,
   PipeForwardTcpResult,
   SseEvent,
 } from './pipe-stream.js';
+// -- Pipe WebSocket relay (?ws): connect() duplex --
+export { PipeWsError, PIPE_WS_MAX_MESSAGE_BYTES } from './pipe-ws.js';
+export type { PipeDuplex, PipeConnectOptions } from './pipe-ws.js';
 
 // -- Tunnel target parsing --
 export {
@@ -334,8 +430,14 @@ export {
   pull as tunnelPull,
   serve as tunnelServe,
   connect as tunnelConnect,
+  tunnelConnectUrl,
   TunnelSession,
 } from './tunnel-client.js';
+export type {
+  ScopedTunnelExposeOptions,
+  ScopedTunnelPullOptions,
+  ScopedTunnelServeOptions,
+} from './tunnel-service-extensions.js';
 export type {
   ExposeOptions as TunnelExposeOptions,
   PullOptions as TunnelPullOptions,
@@ -437,7 +539,7 @@ export type {
 } from './net-destination-policy.js';
 
 // -- curl-channel (WebSocket-multiplexed fetch over Hoody curl kit) --
-// Vendored from the upstream Hoody curl client. Public surface is `client.curlChannel()`;
+// Vendored from the upstream Hoody curl client. Public surface is `client.curl.channel.connect()`;
 // the lower-level `CurlChannel` / `createCurlFetch` are re-exported for
 // callers that want direct control.
 export {
@@ -466,19 +568,110 @@ export type {
 } from './curl-channel-client.js';
 export type { CurlChannelHelperOptions } from './curl-channel-helper.js';
 
+// Helpers the browser entry already exports (index.browser.ts); the Node entry
+// must not be the smaller one.
+export {
+  generateNotesFileId,
+  encodeTusMetadata,
+  NOTES_UPLOAD_CHUNK_BYTES,
+} from './notes-upload.js';
+export type {
+  NotesUploadData,
+  NotesUploadProgress,
+  NotesChunkOptions,
+  NotesUploadFileOptions,
+  NotesUploadResult,
+  NotesUploadFileResult,
+} from './notes-upload.js';
+export { pipeTransportFromClient } from './pipe-transport.js';
+export type { PipeTransport, PipeTransportRequest } from './pipe-transport.js';
+export type { ExecScriptCallOptions, ExecScriptMethod } from './exec-script-execution.js';
+
+// -- Remote control of a live exec script (#674): `exec.connect(url, { token })` --
+export {
+  ExecRemoteError,
+  ExecRemoteTokenError,
+  ExecRemotePermissionError,
+  ExecRemoteThrewError,
+  ExecRemoteTimeoutError,
+  ExecRemoteUnsupportedError,
+  ExecRemoteConnectionError,
+  isExecRemoteError,
+  formatExecRemoteFix,
+  createExecRemoteConnection,
+} from './exec-remote.js';
+export type {
+  ExecRemoteConnect,
+  ExecRemoteConnection,
+  ExecRemoteConnectOptions,
+  ExecRemoteOpOptions,
+  ExecRemoteEvalOptions,
+  ExecRemoteEvalContext,
+  ExecRemoteRunKind,
+  ExecRemoteEventsOptions,
+  ExecRemoteTailLevel,
+  ExecRemoteSendResult,
+  ExecRemoteCallResult,
+  ExecRemoteEvalResult,
+  ExecRemoteLogLine,
+  ExecRemoteCapabilities,
+  ExecRemoteFrame,
+  ExecRemoteFix,
+  ExecRemoteSession,
+  ExecRemoteCloseInfo,
+  ExecRemoteTransport,
+  ExecRemoteRawAnswer,
+} from './exec-remote.js';
+export type { CurlChannelLimits } from './curl-channel-helper.js';
+export { withTokenQueryParam } from './proxy-auth.js';
+
+// -- Embed URLs for every kit UI: `client.embeds.<kit>.<view>(container, opts)` --
+// Same block as the browser entry. `client.embeds` is installed below, never by hoody-client.ts.
+export {
+  buildEmbedUrl,
+  getEmbedCatalog,
+  listEmbedViews,
+  deriveContainersDomain,
+  EmbedValidationError,
+} from './embeds/runtime.js';
+export type {
+  EmbedErrorCode,
+  EmbedParamValue,
+  EmbedQuery,
+  EmbedContainerTarget,
+  EmbedAliasTarget,
+  EmbedTarget,
+  EmbedBuildOptions,
+  EmbedBuildContext,
+} from './embeds/runtime.js';
+export { createEmbeds } from './embeds/attach.js';
+export type { HoodyEmbeds, EmbedTargetArg, EmbedsHost } from './embeds/attach.js';
+export type {
+  EmbedKit,
+  EmbedViewId,
+  EmbedViewParams,
+  EmbedViewQuery,
+  EmbedWrapperOptions,
+  EmbedWrappers,
+  EmbedsCatalog,
+} from '../generated/embeds.generated.js';
+
 // Patch HoodyClient prototype with screenshot-save methods.
 // Must run after all modules are loaded to avoid circular-import TDZ errors.
 import { HoodyClient as _HC } from './hoody-client.js';
 import { patchScreenshotSavePrototype as _patchSS } from './screenshot-save.js';
 import { patchCurlChannelPrototype as _patchCurl } from './curl-channel-helper.js';
 import { patchAgentConfigSyncPrototype as _patchACS } from './agent-config-sync.js';
+import { patchEmbedsPrototype as _patchEmbeds } from './embeds/attach.js';
+import { patchTunnelServiceExtensions as _patchTunnel } from './tunnel-service-extensions.js';
 _patchSS(_HC);
+_patchTunnel();
 _patchCurl();
-_patchACS(_HC);
+_patchACS();
+_patchEmbeds(_HC);
 
 // Agent config sync (Node-only; stubbed for browser in build.config.ts).
 export {
-  patchAgentConfigSyncPrototype,
   AGENT_CONFIG_TOOLS,
   DEFAULT_SYNC_CATEGORIES,
 } from './agent-config-sync.js';

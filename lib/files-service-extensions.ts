@@ -1,12 +1,12 @@
 /**
- * Files service extensions — prototype patches for FilesService, ArchivesService,
- * ImageProcessingService (files namespace) and FilesService (notes namespace).
+ * Files service extensions — prototype patches for FilesService, ImagesService
+ * (files namespace) and FilesService (notes namespace).
  *
  * Architecture:
  *   This module extends the auto-generated service classes with convenience
- *   helpers (classifyFile, getFileUrl, getDirectoryZipUrl, getThumbnailUrl)
- *   and JSON-default overrides (search, listDirectory) without
- *   modifying the generated code.
+ *   helpers (classify, getUrl, getZipUrl, images.getThumbnailUrl, list),
+ *   value readers (readText, readJson, readBytes) and a JSON-default override
+ *   (search) without modifying the generated code.
  *
  *   It uses the same declare-module + prototype-patch pattern as
  *   lib/exec-scripts.ts and lib/terminal-exec.ts.
@@ -19,17 +19,22 @@
  */
 
 import { FilesService } from '../generated/files/files.service.js';
+import { UiService as FilesUiService } from '../generated/files/ui.service.js';
+import type { FilesServiceBase } from '../generated/files/files.service.generated.js';
+import { ValidationError } from '../generated/errors.js';
 import { FilesService as NotesFilesService } from '../generated/notes/files.service.js';
-import { ArchivesService } from '../generated/files/archives.service.js';
-import { ImageProcessingService } from '../generated/files/image-processing.service.js';
+import { ImagesService } from '../generated/files/images.service.js';
+// Notes TUS upload helpers (upload / resumeUpload / uploads.getOffset /
+// uploads.cancel) live in their own module; patched with the rest so every
+// entry that loads the files extensions gets them.
+import { patchNotesUploadExtensions } from './notes-upload.js';
 
 // ---------------------------------------------------------------------------
 // Idempotency guards (Symbol.for survives HMR / duplicate imports)
 // ---------------------------------------------------------------------------
 
 const FILES_PATCH_MARKER = Symbol.for('hoody.sdk.files.service.extensions');
-const ARCHIVES_PATCH_MARKER = Symbol.for('hoody.sdk.archives.service.extensions');
-const IMAGE_PATCH_MARKER = Symbol.for('hoody.sdk.image-processing.service.extensions');
+const IMAGE_PATCH_MARKER = Symbol.for('hoody.sdk.images.service.extensions');
 
 // ---------------------------------------------------------------------------
 // Template variable type (shared)
@@ -42,18 +47,61 @@ type TemplateVars = {
   server?: string;
 };
 
+/**
+ * Options of the file readers: the options of `files.get` (query parameters
+ * such as `revision`, `at` or `lines`, and per-call request options) without
+ * `responseType` / `rawResponse`, which each reader sets itself.
+ */
+export type FilesReadOptions = Omit<
+  NonNullable<Parameters<FilesServiceBase['get']>[1]>,
+  'responseType' | 'rawResponse'
+>;
+
+/** The per-call host overrides of the readers: the third argument of `files.get`. */
+type FilesReadTarget = Parameters<FilesServiceBase['get']>[2];
+
 // ---------------------------------------------------------------------------
 // Module augmentation — files namespace
 // ---------------------------------------------------------------------------
 
 declare module '../generated/files/files.service.js' {
   interface FilesService {
-    classifyFile(filepath: string): 'renderable' | 'binary' | 'text';
-    getFileUrl(
+    classify(filepath: string): 'renderable' | 'binary' | 'text';
+    getUrl(
       absPath: string,
       options?: { download?: '' },
       templateVars?: TemplateVars,
     ): string;
+    /** URL that downloads a directory as a zip (the URL of `zip`, without sending the request). */
+    getZipUrl(directory: string, templateVars?: TemplateVars): string;
+    /**
+     * List a directory as JSON: `files.ui.getPage(path, { json: '' })`. The root HTML listing
+     * stays `files.ui.getPage`.
+     */
+    list(
+      path: string,
+      options?: Omit<NonNullable<Parameters<FilesUiService['getPage']>[1]>, 'json'>,
+      templateVars?: Parameters<FilesUiService['getPage']>[2],
+    ): ReturnType<FilesUiService['getPage']>;
+    /**
+     * Read a file as text (UTF-8). Resolves to the string itself, no
+     * `{ statusCode, message, data }` envelope. A missing file rejects with
+     * the `ApiError` of `get` (`err.status === 404`). `path` names a file:
+     * a directory path answers its listing.
+     */
+    readText(path: string, options?: FilesReadOptions, templateVars?: FilesReadTarget): Promise<string>;
+    /**
+     * Read a file and parse it as JSON. Resolves to the parsed value, no
+     * envelope. The file is fetched as text and parsed here, so its content
+     * is never taken for a response envelope. Content that is not JSON
+     * rejects with a `SyntaxError` naming the path.
+     */
+    readJson<T = unknown>(path: string, options?: FilesReadOptions, templateVars?: FilesReadTarget): Promise<T>;
+    /**
+     * Read a file as bytes. Resolves to a `Uint8Array`, no envelope
+     * (`Buffer.from(bytes)` when Buffer methods are needed).
+     */
+    readBytes(path: string, options?: FilesReadOptions, templateVars?: FilesReadTarget): Promise<Uint8Array>;
   }
 }
 
@@ -61,24 +109,12 @@ declare module '../generated/files/files.service.js' {
 // Module augmentation — notes namespace
 // ---------------------------------------------------------------------------
 
+// Notes gets classify only. getUrl built a files-kit path
+// (`/api/v1/files/{path}`) on the notes host, which has no such route — notes
+// attachments are addressed by notebook + file id (`notes.files.download`).
 declare module '../generated/notes/files.service.js' {
   interface FilesService {
-    classifyFile(filepath: string): 'renderable' | 'binary' | 'text';
-    getFileUrl(
-      absPath: string,
-      options?: { download?: '' },
-      templateVars?: TemplateVars,
-    ): string;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Module augmentation — archives
-// ---------------------------------------------------------------------------
-
-declare module '../generated/files/archives.service.js' {
-  interface ArchivesService {
-    getDirectoryZipUrl(directory: string, templateVars?: TemplateVars): string;
+    classify(filepath: string): 'renderable' | 'binary' | 'text';
   }
 }
 
@@ -86,8 +122,8 @@ declare module '../generated/files/archives.service.js' {
 // Module augmentation — image processing
 // ---------------------------------------------------------------------------
 
-declare module '../generated/files/image-processing.service.js' {
-  interface ImageProcessingService {
+declare module '../generated/files/images.service.js' {
+  interface ImagesService {
     getThumbnailUrl(
       imagePath: string,
       options?: { width?: number; height?: number; format?: string; quality?: string },
@@ -161,7 +197,7 @@ function encodeFilePathSegments(path: string, label: string): string {
   // Drop LEADING empties. The call sites strip exactly ONE separator, so a
   // `//tmp/f.txt` input previously survived as `/tmp/f.txt` here and emitted
   // `/api/v1/files//tmp/f.txt` — hoody-files strips one separator then rejects
-  // the remaining leading one as an absolute path (src/api/files.rs), so it 400'd
+  // the remaining leading one as an absolute path, so it 400'd
   // where the CLI's encoder handled the same value. Interior and trailing empties
   // are preserved: hoody-code proxies on this path and hoody-pipe keys channels by
   // it, so a doubled separator names a DIFFERENT target.
@@ -188,15 +224,108 @@ function encodeFilePathSegments(path: string, label: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Value readers
+// ---------------------------------------------------------------------------
+
+type GetFn = (path: string, options?: Record<string, unknown>, templateVars?: FilesReadTarget) => Promise<unknown>;
+
+/**
+ * `get` with the decoding forced: set AFTER the caller's options, so a
+ * `responseType` or `rawResponse` slipped in (plain JS has no type check)
+ * cannot hand back the envelope or another representation.
+ */
+function getRaw(
+  service: { get: GetFn },
+  method: string,
+  path: unknown,
+  responseType: 'text' | 'arrayBuffer',
+  options: FilesReadOptions | undefined,
+  templateVars: FilesReadTarget,
+): Promise<unknown> {
+  if (typeof path !== 'string' || path === '') {
+    throw new ValidationError(`files.${method}: path must be a non-empty string`, 'path');
+  }
+  return service.get(path, { ...options, responseType, rawResponse: true }, templateVars);
+}
+
+function describeValue(value: unknown): string {
+  if (value === null) return 'null';
+  if (typeof value !== 'object') return typeof value;
+  return (value as object).constructor?.name ?? 'object';
+}
+
+async function getText(
+  service: { get: GetFn },
+  method: string,
+  path: string,
+  options: FilesReadOptions | undefined,
+  templateVars: FilesReadTarget,
+): Promise<string> {
+  const body = await getRaw(service, method, path, 'text', options, templateVars);
+  if (typeof body !== 'string') {
+    throw new TypeError(`files.${method}(${path}): expected the file text, got ${describeValue(body)}`);
+  }
+  return body;
+}
+
+function readText(
+  this: { get: GetFn },
+  path: string,
+  options?: FilesReadOptions,
+  templateVars?: FilesReadTarget,
+): Promise<string> {
+  return getText(this, 'readText', path, options, templateVars);
+}
+
+async function readJson<T = unknown>(
+  this: { get: GetFn },
+  path: string,
+  options?: FilesReadOptions,
+  templateVars?: FilesReadTarget,
+): Promise<T> {
+  const text = await getText(this, 'readJson', path, options, templateVars);
+  try {
+    return JSON.parse(text) as T;
+  } catch (err) {
+    throw new SyntaxError(
+      `files.readJson(${path}): the file is not valid JSON: ${(err as Error).message}`,
+      { cause: err },
+    );
+  }
+}
+
+async function readBytes(
+  this: { get: GetFn },
+  path: string,
+  options?: FilesReadOptions,
+  templateVars?: FilesReadTarget,
+): Promise<Uint8Array> {
+  const body = await getRaw(this, 'readBytes', path, 'arrayBuffer', options, templateVars);
+  // Brand checks, not instanceof: in a hoody-exec script the bytes may come
+  // from another realm than this module's ArrayBuffer.
+  if (Object.prototype.toString.call(body) === '[object ArrayBuffer]') return new Uint8Array(body as ArrayBuffer);
+  // A Buffer or another view (a transport or middleware that answers one):
+  // the same bytes as a plain Uint8Array, so the result type never varies.
+  if (ArrayBuffer.isView(body)) return new Uint8Array(body.buffer, body.byteOffset, body.byteLength);
+  throw new TypeError(`files.readBytes(${path}): expected the file bytes, got ${describeValue(body)}`);
+}
+
+// ---------------------------------------------------------------------------
 // Prototype patching
 // ---------------------------------------------------------------------------
 
-function patchFilesService(proto: any, includeJsonOverrides: boolean): void {
+function patchFilesService(proto: any, includeFilesKitHelpers: boolean): void {
   if (proto[FILES_PATCH_MARKER]) return;
 
-  proto.classifyFile = classifyFile;
+  proto.classify = classifyFile;
 
-  proto.getFileUrl = function (
+  // Files-kit only: the URL and the JSON defaults below name files-kit routes.
+  if (!includeFilesKitHelpers) {
+    proto[FILES_PATCH_MARKER] = true;
+    return;
+  }
+
+  proto.getUrl = function (
     absPath: string,
     options?: { download?: '' },
     templateVars?: TemplateVars,
@@ -211,41 +340,7 @@ function patchFilesService(proto: any, includeJsonOverrides: boolean): void {
     return requestUrl;
   };
 
-  if (includeJsonOverrides) {
-    const origSearch = proto.search;
-    if (typeof origSearch === 'function') {
-      proto.search = function (...args: any[]) {
-        const mutableArgs = [...args];
-        const optionsIndex = 1;
-        const options = (mutableArgs[optionsIndex] ?? {}) as Record<string, unknown>;
-        if (!Object.prototype.hasOwnProperty.call(options, 'json')) {
-          mutableArgs[optionsIndex] = { ...options, json: '' };
-        }
-        return origSearch.apply(this, mutableArgs);
-      };
-    }
-
-    const origList = proto.listDirectory;
-    if (typeof origList === 'function') {
-      proto.listDirectory = function (...args: any[]) {
-        const mutableArgs = [...args];
-        const optionsIndex = 1;
-        const options = (mutableArgs[optionsIndex] ?? {}) as Record<string, unknown>;
-        if (!Object.prototype.hasOwnProperty.call(options, 'json')) {
-          mutableArgs[optionsIndex] = { ...options, json: '' };
-        }
-        return origList.apply(this, mutableArgs);
-      };
-    }
-  }
-
-  proto[FILES_PATCH_MARKER] = true;
-}
-
-function patchArchivesService(proto: any): void {
-  if (proto[ARCHIVES_PATCH_MARKER]) return;
-
-  proto.getDirectoryZipUrl = function (
+  proto.getZipUrl = function (
     directory: string,
     templateVars?: TemplateVars,
   ): string {
@@ -259,10 +354,57 @@ function patchArchivesService(proto: any): void {
     return requestUrl;
   };
 
-  proto[ARCHIVES_PATCH_MARKER] = true;
+  // Inside a HoodyClient `ui` sits on the same `files` object (Object.assign in the client). A
+  // FilesService built on its own (`hoody-sdk/files` subpath) has no `ui`, so `list` builds one from the
+  // service's own transport, kit namespace and URL template, once per service.
+  const standaloneUi = new WeakMap<object, FilesUiService>();
+  proto.list = function (
+    this: { ui?: { getPage: (path: string, options?: Record<string, unknown>, templateVars?: unknown) => unknown } },
+    path: string,
+    options?: Record<string, unknown>,
+    templateVars?: unknown,
+  ) {
+    let ui = this.ui;
+    if (!ui) {
+      let own = standaloneUi.get(this);
+      if (!own) {
+        const self = this as unknown as {
+          http: ConstructorParameters<typeof FilesUiService>[0];
+          _kitNamespace?: string;
+          defaultUrlTemplateVariables?: Record<string, string | number>;
+          urlTemplatePattern?: string;
+        };
+        own = new FilesUiService(self.http, self._kitNamespace, self.defaultUrlTemplateVariables, self.urlTemplatePattern);
+        standaloneUi.set(this, own);
+      }
+      ui = own as unknown as NonNullable<typeof ui>;
+    }
+    return ui.getPage(path, { ...(options ?? {}), json: '' }, templateVars);
+  };
+
+  proto.readText = readText;
+  proto.readJson = readJson;
+  proto.readBytes = readBytes;
+
+  {
+    const origSearch = proto.search;
+    if (typeof origSearch === 'function') {
+      proto.search = function (...args: any[]) {
+        const mutableArgs = [...args];
+        const optionsIndex = 1;
+        const options = (mutableArgs[optionsIndex] ?? {}) as Record<string, unknown>;
+        if (!Object.prototype.hasOwnProperty.call(options, 'json')) {
+          mutableArgs[optionsIndex] = { ...options, json: '' };
+        }
+        return origSearch.apply(this, mutableArgs);
+      };
+    }
+  }
+
+  proto[FILES_PATCH_MARKER] = true;
 }
 
-function patchImageProcessingService(proto: any): void {
+function patchImagesService(proto: any): void {
   if (proto[IMAGE_PATCH_MARKER]) return;
 
   proto.getThumbnailUrl = function (
@@ -293,8 +435,8 @@ function patchImageProcessingService(proto: any): void {
 export function patchFilesServiceExtensions(): void {
   patchFilesService(FilesService.prototype, true);
   patchFilesService(NotesFilesService.prototype, false);
-  patchArchivesService(ArchivesService.prototype);
-  patchImageProcessingService(ImageProcessingService.prototype);
+  patchImagesService(ImagesService.prototype);
+  patchNotesUploadExtensions();
 }
 
 // Auto-run on import (idempotent via Symbol.for guards)

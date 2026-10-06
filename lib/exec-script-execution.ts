@@ -1,104 +1,143 @@
 /**
- * Exec script execution extensions — runtime augmentation of the generated
- * ScriptExecutionService.
+ * Exec script execution extension — runtime augmentation of the generated
+ * ExecService.
  *
  * Architecture pattern: TypeScript "declare module" augmentation + prototype
- * patching. This file:
- *  1. Extends the generated ScriptExecutionService interface with two new
- *     methods (executeTypedGet, executeTypedPost) via `declare module`.
- *  2. Monkey-patches the prototype at module load time so the methods exist
- *     at runtime.
+ * patching. This file replaces the generated GET-only `exec.run(path, ...)` with
+ * `exec.run(path, { method, query, body, headers })`: any method, a query, a
+ * body and headers, through the service's own HttpClient (kitAuth, retries,
+ * middleware, ApiError), with the script path percent-encoded exactly once.
+ * The prototype is patched at module load time so the method exists at runtime.
  *
- * This approach keeps generated code untouched while adding ergonomic,
- * type-safe wrappers. Callers can bind request/response types from companion
- * .schema.json / .openapi.json contracts:
+ * Callers can bind the response type from a companion .schema.json /
+ * .openapi.json contract:
  *
- *   const result = await service.executeTypedPost<MyReqBody, MyResBody>(
- *     '/scripts/my-script', payload
- *   );
+ *   const result = await box.exec.run<MyResBody>('my-script', { method: 'POST', body: payload });
  *   // result is ApiResponse<MyResBody>
  *
- * Generic type safety: TRequest and TResponse flow through the entire call
- * chain — from the caller, through the normalised path, into the underlying
- * generated method, and back as a typed ApiResponse<TResponse>. The `as`
- * casts are safe because the generated methods accept/return `unknown`
- * payloads; the generics merely narrow the type at the call-site.
+ * The `as` casts are safe because the transport answers `unknown` payloads;
+ * the generic merely narrows the type at the call-site.
  */
 
-import { ScriptExecutionService } from '../generated/exec/script-execution.service.js';
+import { ExecService } from '../generated/exec/exec.service.js';
+import type { ExecServiceBase } from '../generated/exec/exec.service.generated.js';
 import type { ApiResponse } from '../generated/types.js';
 import { assertBasePath } from './exec-path-utils.js';
 
-export type ExecExecutionTemplateVars = Parameters<ScriptExecutionService['execute']>[1];
-export type ExecExecutionRequestOptions = Parameters<ScriptExecutionService['execute']>[2];
+export type ExecExecutionTemplateVars = Parameters<ExecServiceBase['__run']>[1];
+/**
+ * Request options accepted by `exec.run`: everything the transport takes
+ * (signal, timeoutMs, retries, middlewareContext, rawResponse, responseType, …)
+ * plus per-request `headers`.
+ */
+export type ExecExecutionRequestOptions = NonNullable<Parameters<ExecServiceBase['__run']>[2]> & {
+  headers?: Record<string, string> | undefined;
+};
 
-declare module '../generated/exec/script-execution.service.js' {
-  interface ScriptExecutionService {
-    executeTypedGet<TResponse = unknown>(
-      path: string,
-      templateVars?: ExecExecutionTemplateVars,
-      requestOptions?: ExecExecutionRequestOptions,
-    ): Promise<ApiResponse<TResponse>>;
+/** HTTP methods a user script can be dispatched with. */
+export type ExecScriptMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-    executeTypedPost<TRequest = Record<string, unknown>, TResponse = unknown>(
+/** Options for `exec.run`. */
+export type ExecScriptCallOptions = ExecExecutionRequestOptions & {
+  /** HTTP method; defaults to GET. */
+  method?: ExecScriptMethod | Lowercase<ExecScriptMethod> | undefined;
+  /** Query parameters, sent as a real query string (never folded into the path). */
+  query?: Record<string, unknown> | undefined;
+  /** Request body (ignored for GET/HEAD). Objects are sent as JSON. */
+  body?: unknown;
+  /** Per-call URL template variables (projectId/containerId/serviceIndex/server). */
+  templateVars?: ExecExecutionTemplateVars;
+};
+
+declare module '../generated/exec/exec.service.js' {
+  interface ExecService {
+    /**
+     * Run a user script with any method, a query, a body and headers, through
+     * the SDK transport (kitAuth, retries, middleware, ApiError).
+     *
+     * `path` is the script path, NOT percent-encoded: each segment is encoded
+     * exactly once here. A leading `/` is optional (`'/health'` = `'health'`).
+     *
+     *   await box.exec.run('search', { query: { q: 'hi' } });
+     *   await box.exec.run('items/42', { method: 'PUT', body: { name: 'x' } });
+     */
+    run<TResponse = unknown>(
       path: string,
-      data?: TRequest,
-      templateVars?: ExecExecutionTemplateVars,
-      requestOptions?: ExecExecutionRequestOptions,
+      options?: ExecScriptCallOptions,
     ): Promise<ApiResponse<TResponse>>;
   }
 }
 
-// Global Symbol used as a once-guard so the prototype patch is idempotent.
-// Symbol.for ensures a single shared key even if the module is loaded multiple times.
-const EXEC_SCRIPT_EXECUTION_PATCH_MARKER = Symbol.for('hoody.sdk.exec.script-execution.patch');
-
-function normalizeScriptPath(path: string, helperName: string): string {
-  return assertBasePath(path, helperName);
+/**
+ * Percent-encode a script path one segment at a time, exactly once.
+ * One leading `/` is accepted and dropped: `/health` is the path as it appears
+ * after the exec origin in a URL, and names the same script as `health`.
+ * The rest is validated (no further leading `/`, no `.`/`..` segments, no
+ * backslash or NUL, including percent-hidden forms).
+ */
+export function encodeExecScriptPath(path: string, helperName: string): string {
+  const trimmed = path.trim();
+  const relative = trimmed.startsWith('/') && !trimmed.startsWith('//') ? trimmed.slice(1) : trimmed;
+  const normalized = assertBasePath(relative, helperName);
+  return normalized.split('/').map((segment) => encodeURIComponent(segment)).join('/');
 }
 
+const REQUEST_OPTION_KEYS = [
+  'signal', 'timeoutMs', 'retries', 'retryDelayMs', 'retryOnStatuses',
+  'middlewareContext', 'authRetry', 'rawResponse', 'responseType', 'headers',
+] as const;
+
+/**
+ * Dispatch one request to an already-encoded script path through the
+ * service's own (namespace-wrapped) HttpClient, so kit credentials,
+ * retries, middleware and ApiError behave as for every generated method.
+ */
+export function dispatchExecScript<TResponse = unknown>(
+  service: ExecService,
+  encodedPath: string,
+  options: ExecScriptCallOptions = {},
+): Promise<ApiResponse<TResponse>> {
+  const method = String(options.method ?? 'GET').toUpperCase();
+  const internals = service as unknown as {
+    buildTemplateUrl: (p: string, v: Record<string, unknown>) => string;
+    http: { request: (method: string, url: string, data: Record<string, unknown>) => Promise<unknown> };
+  };
+  const requestUrl = internals.buildTemplateUrl(
+    `/${encodedPath}`,
+    (options.templateVars ?? {}) as Record<string, unknown>,
+  );
+  const requestData: Record<string, unknown> = {};
+  for (const key of REQUEST_OPTION_KEYS) {
+    if (options[key] !== undefined) requestData[key] = options[key];
+  }
+  if (options.query !== undefined) {
+    const query: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(options.query)) {
+      if (v !== undefined && v !== null) query[k] = v;
+    }
+    if (Object.keys(query).length > 0) requestData.query = query;
+  }
+  if (options.body !== undefined && method !== 'GET' && method !== 'HEAD') {
+    requestData.body = options.body;
+  }
+  return internals.http.request(method, requestUrl, requestData) as Promise<ApiResponse<TResponse>>;
+}
+
+// Global Symbol used as a once-guard so the prototype patch is idempotent.
+// Symbol.for ensures a single shared key even if the module is loaded multiple times.
+const EXEC_SCRIPT_EXECUTION_PATCH_MARKER = Symbol.for('hoody.sdk.exec.run.patch');
+
 export function patchExecScriptExecutionPrototype(): void {
-  const prototype = ScriptExecutionService.prototype as ScriptExecutionService & Record<string | symbol, unknown>;
+  const prototype = ExecService.prototype as unknown as Record<string | symbol, unknown>;
   if (prototype[EXEC_SCRIPT_EXECUTION_PATCH_MARKER]) return;
 
-  prototype.executeTypedGet = function executeTypedGet<TResponse = unknown>(
-    this: ScriptExecutionService,
+  prototype['run'] = async function run<TResponse = unknown>(
+    this: ExecService,
     path: string,
-    templateVars?: ExecExecutionTemplateVars,
-    requestOptions?: ExecExecutionRequestOptions,
+    options?: ExecScriptCallOptions,
   ): Promise<ApiResponse<TResponse>> {
-    const normalizedPath = normalizeScriptPath(path, 'executeTypedGet');
-    return this.execute(normalizedPath, templateVars, requestOptions) as Promise<ApiResponse<TResponse>>;
-  };
-
-  prototype.executeTypedPost = function executeTypedPost<TRequest = Record<string, unknown>, TResponse = unknown>(
-    this: ScriptExecutionService,
-    path: string,
-    data?: TRequest,
-    templateVars?: ExecExecutionTemplateVars,
-    requestOptions?: ExecExecutionRequestOptions,
-  ): Promise<ApiResponse<TResponse>> {
-    const normalizedPath = normalizeScriptPath(path, 'executeTypedPost');
-    // Dispatch through the underlying HTTP client directly rather than
-    // `execute()` (which is GET-only and encodes `data` as a query string)
-    // so the POST method + body actually reach the server. Same pattern as
-    // exec-dynamic-client's callScript for body methods.
-    const builtUrl = (this as unknown as {
-      buildTemplateUrl?: (p: string, v: Record<string, unknown>) => string;
-    }).buildTemplateUrl?.(
-      `/${encodeURI(normalizedPath).replace(/^\//, '')}`,
-      (templateVars ?? {}) as Record<string, unknown>,
-    ) ?? `/${normalizedPath.replace(/^\//, '')}`;
-    const requestUrl = builtUrl.replace('{path}', () => encodeURIComponent(normalizedPath));
-    const requestData: Record<string, unknown> = {};
-    if (data !== undefined && data !== null) requestData.body = data;
-    if (requestOptions && typeof requestOptions === 'object') {
-      const ro = requestOptions as Record<string, unknown>;
-      if (ro.signal) requestData.signal = ro.signal;
-      if (ro.headers) requestData.headers = ro.headers;
-    }
-    const httpAny = (this as unknown as { http: Record<string, (...args: unknown[]) => Promise<unknown>> }).http;
-    return httpAny.post!(requestUrl, requestData) as Promise<ApiResponse<TResponse>>;
+    const encodedPath = encodeExecScriptPath(path, 'run');
+    return dispatchExecScript<TResponse>(this, encodedPath, options ?? {});
   };
 
   prototype[EXEC_SCRIPT_EXECUTION_PATCH_MARKER] = true;

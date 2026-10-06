@@ -317,7 +317,8 @@ export function createAbortError(
 
 // Runtime-agnostic WebSocket transport. Uses the global `WebSocket` in
 // browsers / Deno / Bun / Node ≥21, and dynamically imports the `ws` package
-// in older Node (≥18 < 21) where the global is missing.
+// in older Node (≥18 < 21) where the global is missing, and outside browsers
+// whenever upgrade headers are requested.
 
 /** A value the transport can put on the wire. Strings are JSON control/data
  * frames; binary values are pre-encoded channel binary frames. */
@@ -348,7 +349,32 @@ function preferArrayBuffer(ws: WsLike): void {
   }
 }
 
-export async function openWebSocket(url: string): Promise<WsLike> {
+export async function openWebSocket(
+  url: string,
+  headers?: Record<string, string>,
+): Promise<WsLike> {
+  const isBrowser =
+    typeof (globalThis as { window?: unknown }).window !== "undefined" &&
+    typeof (globalThis as { document?: unknown }).document !== "undefined";
+  if (headers && Object.keys(headers).length > 0 && !isBrowser) {
+    // Upgrade headers need the `ws` package. Never fall back to a
+    // connection without them: the headers usually carry the credential.
+    let mod: {
+      default: new (url: string, protocols: undefined, opts: { headers: Record<string, string> }) => WsLike;
+    };
+    try {
+      mod = (await import(/* @vite-ignore */ "ws")) as typeof mod;
+    } catch (e) {
+      throw new Error(
+        "hoody-sdk: `headers` needs the optional `ws` package " +
+          "(`npm install ws`); refusing to connect without them. Original error: " +
+          (e instanceof Error ? e.message : String(e)),
+      );
+    }
+    const ws = new mod.default(url, undefined, { headers });
+    preferArrayBuffer(ws);
+    return ws;
+  }
   const globalAny = globalThis as unknown as { WebSocket?: new (url: string) => WsLike };
   const Ctor = globalAny.WebSocket;
   if (typeof Ctor === "function") {
@@ -460,6 +486,12 @@ export interface ChannelOptions {
   reconnect?: ReconnectOptions;
   /** Observability hooks. All optional; called inline at the relevant lifecycle point. */
   hooks?: ChannelHooks;
+  /**
+   * Headers for the WebSocket upgrade, sent on every connect and reconnect
+   * (e.g. a kit credential). Node/Bun only: browsers cannot set upgrade
+   * headers, so there the credential belongs in the URL.
+   */
+  headers?: Record<string, string>;
   /**
    * Opt into the binary-frame fast path (default `true`). When enabled the
    * SDK opens the channel with `?binary=1`; if the server advertises
@@ -1216,7 +1248,7 @@ export class CurlChannel {
     if (this.closed) return;
     let ws: WsLike;
     try {
-      ws = await openWebSocket(this.connectUrl);
+      ws = await openWebSocket(this.connectUrl, this.options.headers);
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       this.callHook("onError", err);

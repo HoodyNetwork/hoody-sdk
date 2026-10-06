@@ -3,7 +3,7 @@
  *
  * Architecture:
  *   This module extends the auto-generated ScriptsService with high-level
- *   helpers (readFile, writeMarkdown, readSchemaJson, etc.) without modifying
+ *   helpers (listFiles, readFile, writeFile, deleteFile) without modifying
  *   the generated code. It uses two TypeScript mechanisms:
  *
  *   1. `declare module` augmentation: adds new method signatures to
@@ -12,11 +12,11 @@
  *      is called as a side-effect of importing this module, attaching the
  *      actual implementations to ScriptsService.prototype.
  *
- * Four content-type families:
- *   - Generic files (readFile / writeFile / deleteFile / listFiles)
- *   - Markdown (.md) — auto-appends extension, skips validation
- *   - Schema JSON (.schema.json) — auto-appends extension, parses/serializes JSON
- *   - OpenAPI JSON (.openapi.json) — same as schema JSON with different extension
+ * One action, one name; the content family is an option, `kind`:
+ *   - 'file' (default) — a generic file, path used as given
+ *   - 'markdown' — .md, auto-appends the extension, skips validation
+ *   - 'schema' — .schema.json, auto-appends the extension, parses/serializes JSON
+ *   - 'openapi' — .openapi.json, same as schema with a different extension
  *
  * All path arguments pass through assertBasePath (from exec-path-utils.ts) to
  * prevent directory traversal before reaching the generated service layer.
@@ -43,20 +43,29 @@ type WriteScriptPayload = Parameters<ScriptsService['write']>[0];
 
 export type ExecScriptsTemplateVars = Parameters<ScriptsService['write']>[2];
 export type ExecScriptsRequestOptions = Parameters<ScriptsService['write']>[1];
-export type ExecReadFileOptions = Omit<ReadScriptOptions, 'path'>;
+/** The content family a helper works on: a generic file, markdown, a schema, or an OpenAPI document. */
+export type ExecScriptFileKind = 'file' | 'markdown' | 'schema' | 'openapi';
+/** The kinds whose content is JSON: read parses it, write serializes it. */
+export type ExecScriptJsonKind = 'schema' | 'openapi';
+export type ExecReadFileOptions = Omit<ReadScriptOptions, 'path'> & { kind?: ExecScriptFileKind };
 export type ExecListFilesOptions = Omit<ListScriptsOptions, 'metadata'> & {
   metadata?: boolean | string;
+  kind?: ExecScriptFileKind;
 };
 export type ExecDeleteFileOptions = Omit<DeleteScriptOptions, 'path' | 'confirm'> & {
   confirm?: string | boolean;
+  kind?: ExecScriptFileKind;
 };
 export interface ExecWriteFileOptions {
   createDirs?: boolean;
   validate?: boolean;
+  kind?: 'file' | 'markdown';
 }
-export interface ExecWriteJsonFileOptions extends Omit<ExecWriteFileOptions, 'validate'> {
+export interface ExecWriteJsonFileOptions {
+  createDirs?: boolean;
   pretty?: boolean;
   space?: number;
+  kind: ExecScriptJsonKind;
 }
 export interface ExecReadJsonFileResponse<TContent = Record<string, unknown>>
   extends Omit<ExecScriptsReadResponse, 'data'> {
@@ -70,11 +79,8 @@ export interface ExecReadJsonFileResponse<TContent = Record<string, unknown>>
  * new method signatures. TypeScript merges this declaration with the original
  * interface in scripts.service.js, so callers see the full combined type.
  *
- * The four content-type families each provide list/read/write/delete helpers:
- *   - Generic files: listFiles, readFile, writeFile, deleteFile
- *   - Markdown (.md): listMarkdown, readMarkdown, writeMarkdown, deleteMarkdown
- *   - Schema JSON (.schema.json): listSchemaJson, readSchemaJson, writeSchemaJson, deleteSchemaJson
- *   - OpenAPI JSON (.openapi.json): listOpenApiJson, readOpenApiJson, writeOpenApiJson, deleteOpenApiJson
+ * Four helpers, each taking the content family as `options.kind`:
+ *   listFiles, readFile, writeFile, deleteFile
  *
  * The actual implementations are attached at runtime by patchExecScriptsServicePrototype().
  */
@@ -85,44 +91,16 @@ declare module '../generated/exec/scripts.service.js' {
       templateVars?: ExecScriptsTemplateVars,
     ): Promise<ExecScriptsListResponse>;
 
-    listMarkdown(
-      options?: Omit<ExecListFilesOptions, 'filter'> & { filter?: string },
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsListResponse>;
-
-    listSchemaJson(
-      options?: Omit<ExecListFilesOptions, 'filter'> & { filter?: string },
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsListResponse>;
-
-    listOpenApiJson(
-      options?: Omit<ExecListFilesOptions, 'filter'> & { filter?: string },
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsListResponse>;
-
     readFile(
       path: string,
-      options?: ExecReadFileOptions,
+      options?: ExecReadFileOptions & { kind?: 'file' | 'markdown' },
       templateVars?: ExecScriptsTemplateVars,
     ): Promise<ExecScriptsReadResponse>;
-
-    readMarkdown(
+    readFile<TContent extends Record<string, unknown> = Record<string, unknown>>(
       path: string,
-      options?: ExecReadFileOptions,
+      options: ExecReadFileOptions & { kind: ExecScriptJsonKind },
       templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsReadResponse>;
-
-    readSchemaJson<TSchema extends Record<string, unknown> = Record<string, unknown>>(
-      path: string,
-      options?: ExecReadFileOptions,
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecReadJsonFileResponse<TSchema>>;
-
-    readOpenApiJson<TOpenApi extends Record<string, unknown> = Record<string, unknown>>(
-      path: string,
-      options?: ExecReadFileOptions,
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecReadJsonFileResponse<TOpenApi>>;
+    ): Promise<ExecReadJsonFileResponse<TContent>>;
 
     writeFile(
       path: string,
@@ -131,50 +109,15 @@ declare module '../generated/exec/scripts.service.js' {
       requestOptions?: ExecScriptsRequestOptions,
       templateVars?: ExecScriptsTemplateVars,
     ): Promise<ExecScriptsWriteResponse>;
-
-    writeMarkdown(
+    writeFile<TContent extends Record<string, unknown> = Record<string, unknown>>(
       path: string,
-      content: string,
-      options?: Omit<ExecWriteFileOptions, 'validate'>,
-      requestOptions?: ExecScriptsRequestOptions,
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsWriteResponse>;
-
-    writeSchemaJson<TSchema extends Record<string, unknown> = Record<string, unknown>>(
-      path: string,
-      schema: TSchema,
-      options?: ExecWriteJsonFileOptions,
-      requestOptions?: ExecScriptsRequestOptions,
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsWriteResponse>;
-
-    writeOpenApiJson<TOpenApi extends Record<string, unknown> = Record<string, unknown>>(
-      path: string,
-      openapi: TOpenApi,
-      options?: ExecWriteJsonFileOptions,
+      data: TContent,
+      options: ExecWriteJsonFileOptions,
       requestOptions?: ExecScriptsRequestOptions,
       templateVars?: ExecScriptsTemplateVars,
     ): Promise<ExecScriptsWriteResponse>;
 
     deleteFile(
-      path: string,
-      options?: ExecDeleteFileOptions,
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsDeleteResponse>;
-
-    deleteMarkdown(
-      path: string,
-      options?: ExecDeleteFileOptions,
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsDeleteResponse>;
-
-    deleteSchemaJson(
-      path: string,
-      options?: ExecDeleteFileOptions,
-      templateVars?: ExecScriptsTemplateVars,
-    ): Promise<ExecScriptsDeleteResponse>;
-
-    deleteOpenApiJson(
       path: string,
       options?: ExecDeleteFileOptions,
       templateVars?: ExecScriptsTemplateVars,
@@ -213,6 +156,10 @@ function parseBooleanLike(value: unknown, fallback: boolean): boolean {
  *   - metadata: coerced to boolean (false by default)
  *   - label, tags, mode, enabled, websocket: default to '' (no constraint)
  *   - recursive, include_comments: default to 'false'
+ *
+ * An exhaustive listing (exhaustive true or 'true') gets none of these defaults,
+ * not even the empty dir: the server refuses it with any option that could hide
+ * an entry. The caller's own options are still sent, and still refused.
  */
 function normalizeListScriptsOptions(options: unknown): ListScriptsOptions {
   const source =
@@ -223,15 +170,20 @@ function normalizeListScriptsOptions(options: unknown): ListScriptsOptions {
   const normalized: Record<string, unknown> = {
     ...source,
   };
+  const exhaustive = parseBooleanLike(normalized.exhaustive, false);
 
   if (normalized.dir === undefined || normalized.dir === null) {
-    normalized.dir = '';
+    // A null dir would be sent as the text "null".
+    if (exhaustive) delete normalized.dir;
+    else normalized.dir = '';
   } else if (typeof normalized.dir === 'string') {
     const trimmedDir = normalized.dir.trim();
     normalized.dir = trimmedDir ? assertPath(trimmedDir, 'listFiles') : '';
   } else {
     normalized.dir = '';
   }
+
+  if (exhaustive) return normalized as ListScriptsOptions;
 
   if (
     normalized.filter === undefined
@@ -279,16 +231,24 @@ function normalizePathWithExtension(path: string, extension: string, helperName:
   return `${normalized}${extension}`;
 }
 
-function normalizeMarkdownPath(path: string, helperName: string): string {
-  return normalizePathWithExtension(path, '.md', helperName);
+const KIND_EXTENSION: Record<Exclude<ExecScriptFileKind, 'file'>, string> = {
+  markdown: '.md',
+  schema: '.schema.json',
+  openapi: '.openapi.json',
+};
+
+/** The path a helper sends for a kind: a generic file as given, the others with their extension. */
+function pathForKind(path: string, kind: ExecScriptFileKind | undefined, helperName: string): string {
+  if (kind === undefined || kind === 'file') return assertPath(path, helperName);
+  const extension = KIND_EXTENSION[kind];
+  if (extension === undefined) {
+    throw new Error(`${helperName}: unknown kind ${JSON.stringify(kind)}; expected file, markdown, schema or openapi`);
+  }
+  return normalizePathWithExtension(path, extension, helperName);
 }
 
-function normalizeSchemaJsonPath(path: string, helperName: string): string {
-  return normalizePathWithExtension(path, '.schema.json', helperName);
-}
-
-function normalizeOpenApiJsonPath(path: string, helperName: string): string {
-  return normalizePathWithExtension(path, '.openapi.json', helperName);
+function isJsonKind(kind: ExecScriptFileKind | undefined): kind is ExecScriptJsonKind {
+  return kind === 'schema' || kind === 'openapi';
 }
 
 function normalizeJsonSpace(options?: ExecWriteJsonFileOptions): number {
@@ -398,188 +358,60 @@ export function patchExecScriptsServicePrototype(): void {
     options?: ExecListFilesOptions,
     templateVars?: ExecScriptsTemplateVars,
   ): Promise<ExecScriptsListResponse> {
-    return this.list(options as ListScriptsOptions, templateVars);
+    const { kind, ...rest } = options ?? {};
+    const filter = rest.filter
+      ?? (kind === undefined || kind === 'file' ? undefined : `*${KIND_EXTENSION[kind]}`);
+    return this.list({ ...rest, ...(filter !== undefined ? { filter } : {}) } as ListScriptsOptions, templateVars);
   };
 
-  prototype.listMarkdown = function listMarkdown(
-    this: ScriptsService,
-    options?: Omit<ExecListFilesOptions, 'filter'> & { filter?: string },
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsListResponse> {
-    const normalizedOptions: ExecListFilesOptions = {
-      ...(options || {}),
-      filter: options?.filter ?? '*.md',
-    };
-    return this.list(normalizedOptions as ListScriptsOptions, templateVars);
-  };
-
-  prototype.listSchemaJson = function listSchemaJson(
-    this: ScriptsService,
-    options?: Omit<ExecListFilesOptions, 'filter'> & { filter?: string },
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsListResponse> {
-    return this.listFiles(
-      {
-        ...(options || {}),
-        filter: options?.filter ?? '*.schema.json',
-      },
-      templateVars,
-    );
-  };
-
-  prototype.listOpenApiJson = function listOpenApiJson(
-    this: ScriptsService,
-    options?: Omit<ExecListFilesOptions, 'filter'> & { filter?: string },
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsListResponse> {
-    return this.listFiles(
-      {
-        ...(options || {}),
-        filter: options?.filter ?? '*.openapi.json',
-      },
-      templateVars,
-    );
-  };
-
-  prototype.readFile = function readFile(
+  prototype.readFile = async function readFile(
     this: ScriptsService,
     path: string,
     options?: ExecReadFileOptions,
     templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsReadResponse> {
-    const request: ReadScriptOptions = {
-      ...(options || {}),
-      path: assertPath(path, 'readFile'),
-    };
-    return this.read(request, templateVars);
-  };
-
-  prototype.readMarkdown = function readMarkdown(
-    this: ScriptsService,
-    path: string,
-    options?: ExecReadFileOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsReadResponse> {
-    return this.readFile(normalizeMarkdownPath(path, 'readMarkdown'), options, templateVars);
-  };
-
-  prototype.readSchemaJson = async function readSchemaJson<TSchema extends Record<string, unknown> = Record<string, unknown>>(
-    this: ScriptsService,
-    path: string,
-    options?: ExecReadFileOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecReadJsonFileResponse<TSchema>> {
-    const normalizedPath = normalizeSchemaJsonPath(path, 'readSchemaJson');
-    const response = await this.readFile(normalizedPath, options, templateVars);
-    const parsed = parseJsonContent<TSchema>(response.data?.content, normalizedPath, 'readSchemaJson');
-
-    return {
-      ...response,
-      data: {
-        ...response.data,
-        content: parsed,
-      },
-    };
-  };
-
-  prototype.readOpenApiJson = async function readOpenApiJson<TOpenApi extends Record<string, unknown> = Record<string, unknown>>(
-    this: ScriptsService,
-    path: string,
-    options?: ExecReadFileOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecReadJsonFileResponse<TOpenApi>> {
-    const normalizedPath = normalizeOpenApiJsonPath(path, 'readOpenApiJson');
-    const response = await this.readFile(normalizedPath, options, templateVars);
-    const parsed = parseJsonContent<TOpenApi>(response.data?.content, normalizedPath, 'readOpenApiJson');
-
-    return {
-      ...response,
-      data: {
-        ...response.data,
-        content: parsed,
-      },
-    };
-  };
+  ): Promise<never> {
+    const { kind, ...rest } = options ?? {};
+    const target = pathForKind(path, kind, 'readFile');
+    const response = await this.read({ ...rest, path: target } as ReadScriptOptions, templateVars);
+    if (!isJsonKind(kind)) return response as never;
+    const parsed = parseJsonContent<Record<string, unknown>>(response.data?.content, target, 'readFile');
+    return { ...response, data: { ...response.data, content: parsed } } as never;
+  } as ScriptsService['readFile'];
 
   prototype.writeFile = function writeFile(
     this: ScriptsService,
     path: string,
-    content: string,
-    options?: ExecWriteFileOptions,
+    data: string | Record<string, unknown>,
+    options?: ExecWriteFileOptions | ExecWriteJsonFileOptions,
     requestOptions?: ExecScriptsRequestOptions,
     templateVars?: ExecScriptsTemplateVars,
   ): Promise<ExecScriptsWriteResponse> {
+    const kind = options?.kind;
+    const target = pathForKind(path, kind, 'writeFile');
+    let content: string;
+    if (isJsonKind(kind)) {
+      if (typeof data !== 'object' || data === null) {
+        throw new Error(`writeFile with kind "${kind}" takes an object, not ${typeof data}`);
+      }
+      content = stringifyJson(data, options as ExecWriteJsonFileOptions);
+    } else {
+      if (typeof data !== 'string') {
+        throw new Error(`writeFile with kind "${kind ?? 'file'}" takes a string of content, not ${typeof data}`);
+      }
+      content = data;
+    }
     const payload: Record<string, unknown> = {
-      path: assertPath(path, 'writeFile'),
+      path: target,
       content,
       createDirs: options?.createDirs ?? true,
-      validate: parseBooleanLike(options?.validate, false),
+      // Only a generic file may ask for script validation; every other kind is data.
+      validate: kind === undefined || kind === 'file'
+        ? parseBooleanLike((options as ExecWriteFileOptions | undefined)?.validate, false)
+        : false,
     };
 
     return this.write(payload as unknown as WriteScriptPayload, requestOptions, templateVars);
-  };
-
-  prototype.writeMarkdown = function writeMarkdown(
-    this: ScriptsService,
-    path: string,
-    content: string,
-    options?: Omit<ExecWriteFileOptions, 'validate'>,
-    requestOptions?: ExecScriptsRequestOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsWriteResponse> {
-    return this.writeFile(
-      normalizeMarkdownPath(path, 'writeMarkdown'),
-      content,
-      {
-        createDirs: options?.createDirs ?? true,
-        validate: false,
-      },
-      requestOptions,
-      templateVars,
-    );
-  };
-
-  prototype.writeSchemaJson = function writeSchemaJson<TSchema extends Record<string, unknown> = Record<string, unknown>>(
-    this: ScriptsService,
-    path: string,
-    schema: TSchema,
-    options?: ExecWriteJsonFileOptions,
-    requestOptions?: ExecScriptsRequestOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsWriteResponse> {
-    const normalizedPath = normalizeSchemaJsonPath(path, 'writeSchemaJson');
-    return this.writeFile(
-      normalizedPath,
-      stringifyJson(schema, options),
-      {
-        createDirs: options?.createDirs ?? true,
-        validate: false,
-      },
-      requestOptions,
-      templateVars,
-    );
-  };
-
-  prototype.writeOpenApiJson = function writeOpenApiJson<TOpenApi extends Record<string, unknown> = Record<string, unknown>>(
-    this: ScriptsService,
-    path: string,
-    openapi: TOpenApi,
-    options?: ExecWriteJsonFileOptions,
-    requestOptions?: ExecScriptsRequestOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsWriteResponse> {
-    const normalizedPath = normalizeOpenApiJsonPath(path, 'writeOpenApiJson');
-    return this.writeFile(
-      normalizedPath,
-      stringifyJson(openapi, options),
-      {
-        createDirs: options?.createDirs ?? true,
-        validate: false,
-      },
-      requestOptions,
-      templateVars,
-    );
-  };
+  } as ScriptsService['writeFile'];
 
   prototype.deleteFile = function deleteFile(
     this: ScriptsService,
@@ -587,40 +419,16 @@ export function patchExecScriptsServicePrototype(): void {
     options?: ExecDeleteFileOptions,
     templateVars?: ExecScriptsTemplateVars,
   ): Promise<ExecScriptsDeleteResponse> {
+    const { kind, ...rest } = options ?? {};
     const request: DeleteScriptOptions = {
-      ...(options || {}),
-      path: assertPath(path, 'deleteFile'),
-      confirm: normalizeConfirmQuery(options?.confirm),
+      ...rest,
+      path: pathForKind(path, kind, 'deleteFile'),
+      // The spec admits only "true"; any other value a caller passes is sent as given and the
+      // server refuses it, rather than being silently turned into a confirmation.
+      confirm: normalizeConfirmQuery(options?.confirm) as DeleteScriptOptions['confirm'],
     };
 
     return this.delete(request, templateVars);
-  };
-
-  prototype.deleteMarkdown = function deleteMarkdown(
-    this: ScriptsService,
-    path: string,
-    options?: ExecDeleteFileOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsDeleteResponse> {
-    return this.deleteFile(normalizeMarkdownPath(path, 'deleteMarkdown'), options, templateVars);
-  };
-
-  prototype.deleteSchemaJson = function deleteSchemaJson(
-    this: ScriptsService,
-    path: string,
-    options?: ExecDeleteFileOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsDeleteResponse> {
-    return this.deleteFile(normalizeSchemaJsonPath(path, 'deleteSchemaJson'), options, templateVars);
-  };
-
-  prototype.deleteOpenApiJson = function deleteOpenApiJson(
-    this: ScriptsService,
-    path: string,
-    options?: ExecDeleteFileOptions,
-    templateVars?: ExecScriptsTemplateVars,
-  ): Promise<ExecScriptsDeleteResponse> {
-    return this.deleteFile(normalizeOpenApiJsonPath(path, 'deleteOpenApiJson'), options, templateVars);
   };
 
   prototype[EXEC_SCRIPTS_PATCH_MARKER] = true;

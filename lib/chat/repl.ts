@@ -670,7 +670,7 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     // Use findMatchingSessions (error-on-ambiguous) instead of
     // findSessionById (newest-match-wins). Silent newest-match on an
     // ambiguous prefix could load the wrong session under the user's
-    // nose. Matches the CLI `hoody chat sessions show` contract.
+    // nose. Matches the CLI `hoody chat sessions get` contract.
     //
     // Sanitize user-supplied id before echoing — C0/DEL control chars could
     // otherwise set the terminal title or forge output. Cap matches list at

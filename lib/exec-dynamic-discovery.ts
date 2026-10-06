@@ -1,6 +1,6 @@
 /**
  * Exec Dynamic Discovery — SDK-side runtime discovery of user scripts on exec
- * containers. Fetches the script inventory via `listUserScripts()` and parses
+ * containers. Fetches the script inventory via `openapi.listScripts()` and parses
  * each entry's metadata (HTTP method, parameters, tags) into
  * `DiscoveredScript` objects consumed by SDK callers and agent surfaces.
  *
@@ -11,7 +11,7 @@
  *   - Path traversal prevented via assertBasePath
  */
 
-import type { UserOpenapiService } from '../generated/exec/user-openapi.service.js';
+import type { OpenapiService } from '../generated/exec/openapi.service.js';
 import type { ScriptsService } from '../generated/exec/scripts.service.js';
 import { parseRawScriptEntries, type RawScriptEntry } from './exec-dynamic-parse.js';
 
@@ -222,22 +222,22 @@ export function sanitizeDescription(text: string | undefined): string | undefine
 /**
  * Discover user scripts from an exec container.
  *
- * Calls `listUserScripts()` to get the script inventory, then enriches
+ * Calls `openapi.listScripts()` to get the script inventory, then enriches
  * each entry with schema information where available.
  *
  * For scripts that declare `hasSchema: true` but don't include inline schema,
  * this function loads the companion `.schema.json` via the ScriptsService
  * before delegating to the shared parser. The raw-response adapter in
  * `exec-dynamic-discovery-cli.ts` is the variant used when only the raw
- * `listUserScripts` response is available (no ScriptsService handle) and
+ * `openapi.listScripts` response is available (no ScriptsService handle) and
  * therefore skips this enrichment step.
  */
 export async function discoverScripts(
-  openapiService: UserOpenapiService,
+  openapiService: OpenapiService,
   scriptsService: ScriptsService | undefined,
   options?: DiscoverOptions,
 ): Promise<DiscoveredScript[]> {
-  const templateVars = options?.templateVars as Parameters<UserOpenapiService['listScripts']>[1];
+  const templateVars = options?.templateVars as Parameters<OpenapiService['listScripts']>[1];
 
   // listScripts is not paginated (spec returns a union with inline scripts
   // array); call it directly and extract the array from the response.
@@ -264,8 +264,15 @@ export async function discoverScripts(
       if (!scriptPath) continue;
 
       try {
-        const schemaResponse = await scriptsService.readSchemaJson(
+        // Same endpoint as listScripts above: the caller's templateVars
+        // override (another container / execId) and signal. Without them the
+        // companion schema was read from the service's DEFAULT endpoint — a
+        // different container's file, or none — while the list came from the
+        // override.
+        const schemaResponse = await scriptsService.readFile(
           scriptPath.replace(/\.(ts|js|mjs|cjs)$/i, ''),
+          { kind: 'schema', ...(options?.signal ? { signal: options.signal } : {}) },
+          templateVars as never,
         );
         const content = (schemaResponse as unknown as Record<string, unknown>)?.data;
         const schemaContent = typeof content === 'object' && content !== null

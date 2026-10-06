@@ -4,65 +4,26 @@
  * Architecture:
  *   This module extends HoodyClient with two convenience methods:
  *
- *   - `execute(command, options?)` — run a command and wait for the result
- *     (like child_process.exec). Uses the HTTP execute+poll path via
- *     TerminalExecutionService.
- *
- *   Named `execute` (not `exec`) to avoid collision with the generated
- *   `exec` property which holds the Hoody Exec kit service namespace.
+ *   - `terminal.run(command, options?)` — run a command and wait for the result
+ *     (like child_process.exec). Uses the HTTP run+poll path of
+ *     `terminal.commands`. It lives on the terminal namespace, not at the
+ *     root, so it cannot be mistaken for the Hoody Exec kit (`client.exec`).
  *
  *   - `shell(options?)` — open an interactive PTY session (like opening
  *     a remote terminal). Uses WebSocket duplex stream via TerminalClient.
  *
  *   Both methods require a container-scoped client (via `withContainer()`).
- *   They are attached to HoodyClient.prototype via module augmentation
- *   and runtime prototype patching, following the same pattern as
- *   exec-scripts.ts.
+ *   `shell` is attached to HoodyClient.prototype via module augmentation and
+ *   runtime prototype patching, following the same pattern as exec-scripts.ts;
+ *   `terminal.run` is installed on each client's terminal namespace object
+ *   (`installTerminalRun`), because that object is per instance.
  */
 
 import { Duplex } from 'stream';
 import { HoodyClient } from './hoody-client.js';
 import { TerminalClient, type TerminalClientOptions } from './terminal-client.js';
+import { assertContainerScoped, type TerminalExecOptions, type TerminalExecResult } from './terminal-run.js';
 import { type ProxyAuth, type ProxyAuthPolicy, isProxyAuthPolicy } from './proxy-auth.js';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface TerminalExecOptions {
-  /** Working directory for command execution */
-  cwd?: string;
-  /** Shell to use (bash, zsh, fish, sh) */
-  shell?: string;
-  /** System user to run as */
-  user?: string;
-  /** Timeout in seconds (default: 0 = no timeout) */
-  timeout?: number;
-  /** Environment variables */
-  env?: Record<string, string>;
-  /** AbortSignal for cancellation */
-  signal?: AbortSignal;
-  /** Polling interval in ms (default: 250, min: 100) */
-  pollIntervalMs?: number;
-  /** Terminal service instance index (default: 0 — ephemeral PTY uses terminal-0) */
-  serviceIndex?: number;
-}
-
-export interface TerminalExecResult {
-  /** Standard output */
-  stdout: string;
-  /** Standard error */
-  stderr: string;
-  /** Process exit code (null if unknown) */
-  exitCode: number | null;
-  /** Whether the command timed out */
-  timedOut: boolean;
-  /** Execution duration in milliseconds
-   */
-  duration: number;
-  /** Server-assigned command ID */
-  commandId: string;
-}
 
 export interface TerminalShellOptions {
   /** Working directory */
@@ -119,19 +80,6 @@ export interface TerminalShell extends Duplex {
 declare module './hoody-client.js' {
   interface HoodyClient {
     /**
-     * Execute a command in the container and wait for the result.
-     *
-     * Requires a container-scoped client (call `withContainer()` first).
-     *
-     * @example
-     * ```ts
-     * const scoped = await client.withContainer(container);
-     * const { stdout, exitCode } = await scoped.execute('ls -la');
-     * ```
-     */
-    execute(command: string, options?: TerminalExecOptions): Promise<TerminalExecResult>;
-
-    /**
      * Open an interactive PTY shell session to the container.
      *
      * Returns a Duplex stream that supports `.pipe()`.
@@ -155,24 +103,6 @@ declare module './hoody-client.js' {
 // ---------------------------------------------------------------------------
 
 /**
- * Validate that the client is container-scoped (has terminal urlTemplates).
- */
-function assertContainerScoped(client: any): void {
-  const t = client.urlTemplates?.['terminal'];
-  if (!t) {
-    throw new Error(
-      'execute()/shell() require a container-scoped client. Call withContainer() first.',
-    );
-  }
-  // Validate template completeness to give clear errors early
-  if (!t.projectId || !t.containerId || !t.server) {
-    throw new Error(
-      'Container-scoped client has incomplete terminal URL templates (missing projectId, containerId, or server).',
-    );
-  }
-}
-
-/**
  * Build a WebSocket URL for terminal from urlTemplates directly.
  *
  * We cannot use `getKitUrl('terminal', null, index)` because it throws
@@ -189,256 +119,6 @@ function getTerminalWsUrl(client: any, serviceIndex = 0): string {
       ? client.resolveContainersDomain()
       : 'containers.hoody.com';
   return `wss://${t.projectId}-${t.containerId}-terminal-${serviceIndex}.${t.server}.${domain}`;
-}
-
-/**
- * Sleep with AbortSignal support. Rejects with AbortError if signal fires.
- *
- * FIX: setTimeout captures the resolve callback at bind time.
- * Reassigning the `resolve` variable afterward does nothing — the original
- * reference is still what setTimeout invokes. We wrap the timer callback
- * properly so that removeEventListener is always called on normal completion.
- */
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException('The operation was aborted.', 'AbortError'));
-      return;
-    }
-
-    let onAbort: (() => void) | undefined;
-
-    const timer = setTimeout(() => {
-      // Timer fired normally — clean up abort listener before resolving
-      if (onAbort && signal) {
-        signal.removeEventListener('abort', onAbort);
-      }
-      resolve();
-    }, ms);
-
-    if (signal) {
-      onAbort = () => {
-        clearTimeout(timer);
-        reject(new DOMException('The operation was aborted.', 'AbortError'));
-      };
-      signal.addEventListener('abort', onAbort, { once: true });
-    }
-  });
-}
-
-/** Maximum number of poll iterations before giving up (safety valve).
- * With adaptive backoff (250ms → 500ms → 1000ms), 2400 iterations
- * allows approximately 30-40 minutes of polling. */
-const MAX_POLL_ITERATIONS = 2400;
-
-// ---------------------------------------------------------------------------
-// exec() implementation
-// ---------------------------------------------------------------------------
-
-async function execImpl(
-  this: HoodyClient,
-  command: string,
-  options?: TerminalExecOptions,
-): Promise<TerminalExecResult> {
-  assertContainerScoped(this);
-
-  const {
-    cwd,
-    shell: shellType,
-    user,
-    timeout = 0,
-    env,
-    signal,
-    pollIntervalMs: userPollInterval = 250,
-    serviceIndex = 0,
-  } = options || {};
-
-  const pollInterval = Math.max(100, userPollInterval);
-
-  // Check if already aborted
-  if (signal?.aborted) {
-    throw new DOMException('The operation was aborted.', 'AbortError');
-  }
-
-  // Access the terminal execution service.
-  // In the generated client, kit namespaces (terminal, exec, files, etc.)
-  // are top-level properties, not nested under `api`.
-  const terminalApi = (this as any).terminal ?? (this as any).api?.terminal;
-  if (!terminalApi?.execution) {
-    throw new Error('Terminal execution service not available');
-  }
-
-  // Ephemeral PTY must use terminal-0 in the URL hostname.
-  // The default urlTemplates set serviceIndex=1 (for interactive terminals),
-  // so we always override to 0 for execute().
-  const templateVars = { serviceIndex };
-
-  // Set up abort cleanup BEFORE the executeCommand call so there is no
-  // race window where the signal fires between request completion and
-  // listener registration.
-  //
-  // NOTE: Abort cleanup targets terminal_id '0' which is
-  // the sentinel used with ephemeral=true. Ephemeral sessions auto-generate
-  // a unique terminal ID server-side. The deletion is best-effort and may
-  // not cancel the actual running command. This is a known limitation —
-  // the terminal API does not expose a command-specific cancellation endpoint.
-  // Client-side, the poll loop is immediately stopped by the AbortSignal.
-  let abortCleanup: (() => void) | undefined;
-  if (signal) {
-    const onAbort = () => {
-      // Best-effort remote cleanup — swallow errors
-      try {
-        terminalApi.sessions
-          ?.delete?.('0', templateVars)
-          ?.catch?.(() => {});
-      } catch {
-        // ignore
-      }
-    };
-    signal.addEventListener('abort', onAbort, { once: true });
-    abortCleanup = () => signal.removeEventListener('abort', onAbort);
-  }
-
-  try {
-    // 1. Fire command (wait: false — we poll ourselves)
-    const startTime = Date.now();
-    const executeResponse = await terminalApi.execution.execute(
-      {
-        command,
-        timeout: timeout || undefined,
-        wait: false,
-        cwd: cwd || undefined,
-        env: env || undefined,
-      } as any,
-      {
-        terminal_id: '0',
-        ephemeral: true,
-        skip_display_wait: true,
-        shell: shellType || undefined,
-        user: user || undefined,
-        signal,
-      },
-      templateVars,
-    );
-
-    // Runtime guard: extract command_id from response
-    // FIX: Unify unwrapping — some SDK clients return
-    // Axios-like `{ data: ... }` while fetch-based ones return data directly.
-    const responseData = (executeResponse as any)?.data ?? executeResponse;
-    const commandId: string | undefined =
-      typeof responseData?.command_id === 'string'
-        ? responseData.command_id
-        : typeof responseData?.id === 'string'
-          ? responseData.id
-          : undefined;
-
-    if (!commandId) {
-      throw new Error(
-        'executeCommand did not return a command_id. Response: ' +
-        JSON.stringify(executeResponse),
-      );
-    }
-
-    // 2. Adaptive polling loop
-    // FIX: Grace period measured from AFTER executeCommand
-    // returns, not from startTime which includes the HTTP request latency.
-    const pollStartTime = Date.now();
-    const GRACE_PERIOD_MS = 2000; // tolerate 404 for first 2 seconds of polling
-    let currentInterval = pollInterval;
-    let iterations = 0;
-
-    while (true) {
-      iterations++;
-
-      // FIX: Safety valve — prevent infinite polling on
-      // unknown statuses. Max ~10 minutes of polling.
-      if (iterations > MAX_POLL_ITERATIONS) {
-        throw new Error(
-          `execute() exceeded maximum poll iterations (${MAX_POLL_ITERATIONS}). ` +
-          `Command "${commandId}" may still be running on the server.`,
-        );
-      }
-
-      await sleep(currentInterval, signal);
-
-      const elapsed = Date.now() - startTime;
-      const pollElapsed = Date.now() - pollStartTime;
-
-      // Adaptive backoff
-      if (elapsed > 10_000) {
-        currentInterval = Math.min(1000, pollInterval * 4);
-      } else if (elapsed > 2_000) {
-        currentInterval = Math.min(500, pollInterval * 2);
-      }
-
-      let pollResponse: any;
-      try {
-        pollResponse = await terminalApi.execution.getResult(
-          commandId,
-          templateVars,
-          { signal },
-        );
-      } catch (err: any) {
-        // FIX: Use status code checks only — remove over-broad
-        // message substring matching that could false-positive.
-        const is404 =
-          err?.statusCode === 404 ||
-          err?.status === 404;
-
-        if (is404 && pollElapsed < GRACE_PERIOD_MS) {
-          continue;
-        }
-        throw err;
-      }
-
-      const data = pollResponse?.data ?? pollResponse;
-
-      // Runtime guards on response fields
-      const status: string =
-        typeof data?.status === 'string' ? data.status : '';
-      const stdout: string =
-        typeof data?.stdout === 'string' ? data.stdout : '';
-      const stderr: string =
-        typeof data?.stderr === 'string' ? data.stderr : '';
-      const exitCode: number | null =
-        typeof data?.exit_code === 'number' ? data.exit_code : null;
-      const timedOut: boolean =
-        data?.timed_out === true || status === 'timed_out';
-
-      // Terminal status handling
-      if (status === 'completed' || status === 'failed' || status === 'timed_out') {
-        return {
-          stdout,
-          stderr,
-          exitCode,
-          timedOut,
-          duration: Date.now() - startTime,
-          commandId,
-        };
-      }
-
-      // Known in-progress statuses: keep polling
-      // FIX: Do NOT whitelist empty string — a missing
-      // `status` field (coerced to '') likely means a malformed response,
-      // which should be treated as terminal rather than hanging for 10 min.
-      if (status === 'running' || status === 'pending') {
-        continue;
-      }
-
-      // Unknown terminal status — treat as terminal to avoid infinite loop
-      // Unknown terminal status — treat as terminal to avoid infinite loop
-      return {
-        stdout,
-        stderr,
-        exitCode,
-        timedOut,
-        duration: Date.now() - startTime,
-        commandId,
-      };
-    }
-  } finally {
-    abortCleanup?.();
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -754,7 +434,7 @@ function shellImpl(
 const TERMINAL_EXEC_PATCH_MARKER = Symbol.for('hoody.sdk.terminal.exec.patch');
 
 /**
- * Attach `execute()` and `shell()` to HoodyClient.prototype.
+ * Attach `shell()` to HoodyClient.prototype.
  *
  * Idempotent — safe to call multiple times (guarded by Symbol marker).
  * Called automatically when this module is imported.
@@ -763,11 +443,15 @@ export function patchTerminalExecPrototype(): void {
   const prototype = HoodyClient.prototype as HoodyClient & Record<string | symbol, unknown>;
   if (prototype[TERMINAL_EXEC_PATCH_MARKER]) return;
 
-  prototype.execute = execImpl;
   prototype.shell = shellImpl;
 
   prototype[TERMINAL_EXEC_PATCH_MARKER] = true;
 }
+
+
+// `terminal.run` lives in terminal-run.ts (browser-safe); re-exported so existing imports keep working.
+export { installTerminalRun } from './terminal-run.js';
+export type { TerminalExecOptions, TerminalExecResult } from './terminal-run.js';
 
 // Auto-invoke at import time.
 // When imported via hoody-client.ts there is a circular dependency:

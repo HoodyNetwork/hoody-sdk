@@ -16,6 +16,8 @@
 // Shared Types (duplicated for browser — no Node imports allowed)
 // ═══════════════════════════════════════════════════════════════════
 
+import { ValidationError } from '../generated/errors.js';
+
 // NOTE: We cannot import from './notification-presenter.js' here because
 // that file imports node:child_process. Instead, we duplicate the shared
 // types. The esbuild swap means only ONE of these files is ever bundled.
@@ -29,12 +31,14 @@ export interface ParsedNotification {
     message?: string;
     icon_url?: string;
     has_icon?: boolean;
-    id?: number;
+    /** Always present: the kit serves only notifications with an integer id. */
+    id: number;
     timestamp?: number;
-    display_id?: number;
-    urgency?: 'low' | 'normal' | 'critical';
+    display_id?: number | string;
+    urgency?: 'LOW' | 'NORMAL' | 'CRITICAL';
     category?: string;
-    expire_time?: number;
+    timeout?: number;
+    progress?: number;
   };
   iconUrl: string | undefined;
   displayId: string;
@@ -72,22 +76,29 @@ export function parseNotificationData(
 ): ParsedNotification {
   const raw = (message.data ?? {}) as Record<string, unknown>;
 
+  // The kit serves only notifications with an integer id (hoody-notifications: the spec requires
+  // Notification.id, and history entries without one are dropped by transform_notification). A message
+  // without one is refused, never given an invented id; the WebSocket emitter catches a listener's
+  // throw, so a live stream drops it and goes on.
+  if (typeof raw.id !== 'number' || !Number.isInteger(raw.id)) {
+    throw new ValidationError('notification message has no integer id', 'id');
+  }
   // Build data object conditionally to satisfy exactOptionalPropertyTypes
-  const data: ParsedNotification['data'] = {};
+  const data: ParsedNotification['data'] = { id: raw.id };
   if (typeof raw.appname === 'string') data.appname = raw.appname;
   if (typeof raw.summary === 'string') data.summary = raw.summary;
   if (typeof raw.body === 'string') data.body = raw.body;
   if (typeof raw.message === 'string') data.message = raw.message;
   if (typeof raw.icon_url === 'string') data.icon_url = raw.icon_url;
   if (typeof raw.has_icon === 'boolean') data.has_icon = raw.has_icon;
-  if (typeof raw.id === 'number') data.id = raw.id;
   if (typeof raw.timestamp === 'number') data.timestamp = raw.timestamp;
-  if (typeof raw.display_id === 'number') data.display_id = raw.display_id;
-  if (raw.urgency === 'low' || raw.urgency === 'normal' || raw.urgency === 'critical') {
-    data.urgency = raw.urgency;
-  }
+  if (typeof raw.display_id === 'number' || typeof raw.display_id === 'string') data.display_id = raw.display_id;
+  // The kit sends urgency upper-cased (LOW, NORMAL, CRITICAL); a lower-case value reads the same.
+  const urgency = typeof raw.urgency === 'string' ? raw.urgency.toUpperCase() : undefined;
+  if (urgency === 'LOW' || urgency === 'NORMAL' || urgency === 'CRITICAL') data.urgency = urgency;
   if (typeof raw.category === 'string') data.category = raw.category;
-  if (typeof raw.expire_time === 'number') data.expire_time = raw.expire_time;
+  if (typeof raw.timeout === 'number') data.timeout = raw.timeout;
+  if (typeof raw.progress === 'number') data.progress = raw.progress;
 
   let iconUrl: string | undefined;
   if (data.has_icon && data.icon_url) {
@@ -167,10 +178,10 @@ export function createNotificationPresenter(
       }
 
       const { data } = notification;
-      const title = data.summary ?? data.appname ?? 'Hoody Notification';
+      const title = data.summary || data.appname || 'Hoody Notification';
 
       const options: Record<string, unknown> = {
-        body: data.body ?? data.message ?? '',
+        body: data.body || data.message || '',
         tag: `hoody-${notification.displayId}-${data.id ?? Date.now()}`,
         renotify: true,
       };
@@ -181,7 +192,7 @@ export function createNotificationPresenter(
       }
 
       // Map critical urgency → requireInteraction (notification stays until dismissed)
-      if (data.urgency === 'critical') {
+      if (data.urgency === 'CRITICAL') {
         options.requireInteraction = true;
       }
 

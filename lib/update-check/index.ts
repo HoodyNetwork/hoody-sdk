@@ -8,7 +8,7 @@
  * │                → bake-domains.ts → generated/domains.ts                │
  * │                → bun build --compile                                   │
  * │                                                                        │
- * │   runtime: hoody update / hoody check-update                           │
+ * │   runtime: hoody update                                                │
  * │     → selectDomain (flag → env → config-file → fail-closed)            │
  * │     → lookupTrustedDomain in HOODY_PINNED_DOMAINS (hasOwnProperty)     │
  * │     → fetch https://install.<domain>/channel.json (+ .minisig)         │

@@ -15,6 +15,7 @@
  */
 
 import type { Notification as NotificationData } from '../generated/types.js';
+import { ValidationError } from '../generated/errors.js';
 import type { NotificationServerMessage } from
   '../generated/notifications/notifications_connect-notification-stream.websocket.js';
 import { spawn as cpSpawn, execFileSync } from 'node:child_process';
@@ -26,11 +27,17 @@ export type { NotificationServerMessage };
 // Shared Types (consumed by both Node/Bun and Browser implementations)
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * The fields of a parsed message: `id` always, every other Notification field only when the message
+ * carried it with the right type.
+ */
+export type ParsedNotificationData = Pick<NotificationData, 'id'> & Partial<Omit<NotificationData, 'id'>>;
+
 export interface ParsedNotification {
   /** Original raw WebSocket message */
   raw: NotificationServerMessage;
   /** Typed notification data (runtime-validated, not just cast) */
-  data: NotificationData;
+  data: ParsedNotificationData;
   /** Fully resolved absolute icon URL, or undefined */
   iconUrl: string | undefined;
   /** Display ID from the WebSocket message */
@@ -72,7 +79,8 @@ export interface NotificationPresenter {
  * Parse a raw WebSocket notification message into a typed ParsedNotification.
  *
  * Performs runtime field extraction with type checks — does NOT blindly cast
- * `data: unknown` to NotificationData. Missing fields become `undefined`.
+ * `data: unknown` to ParsedNotificationData. Missing fields become `undefined`, except `id`: a message
+ * without an integer id is refused with a ValidationError (field `id`).
  */
 export function parseNotificationData(
   message: NotificationServerMessage,
@@ -80,23 +88,30 @@ export function parseNotificationData(
 ): ParsedNotification {
   const raw = (message.data ?? {}) as Record<string, unknown>;
 
+  // The kit serves only notifications with an integer id (hoody-notifications: the spec requires
+  // Notification.id, and history entries without one are dropped by transform_notification). A message
+  // without one is refused, never given an invented id; the WebSocket emitter catches a listener's
+  // throw, so a live stream drops it and goes on.
+  if (typeof raw.id !== 'number' || !Number.isInteger(raw.id)) {
+    throw new ValidationError('notification message has no integer id', 'id');
+  }
   // Build data object conditionally to satisfy exactOptionalPropertyTypes
   // (optional properties cannot be explicitly set to undefined)
-  const data: NotificationData = {};
+  const data: ParsedNotificationData = { id: raw.id };
   if (typeof raw.appname === 'string') data.appname = raw.appname;
   if (typeof raw.summary === 'string') data.summary = raw.summary;
   if (typeof raw.body === 'string') data.body = raw.body;
   if (typeof raw.message === 'string') data.message = raw.message;
   if (typeof raw.icon_url === 'string') data.icon_url = raw.icon_url;
   if (typeof raw.has_icon === 'boolean') data.has_icon = raw.has_icon;
-  if (typeof raw.id === 'number') data.id = raw.id;
   if (typeof raw.timestamp === 'number') data.timestamp = raw.timestamp;
-  if (typeof raw.display_id === 'number') data.display_id = raw.display_id;
-  if (raw.urgency === 'low' || raw.urgency === 'normal' || raw.urgency === 'critical') {
-    data.urgency = raw.urgency;
-  }
+  if (typeof raw.display_id === 'number' || typeof raw.display_id === 'string') data.display_id = raw.display_id;
+  // The kit sends urgency upper-cased (LOW, NORMAL, CRITICAL); a lower-case value reads the same.
+  const urgency = typeof raw.urgency === 'string' ? raw.urgency.toUpperCase() : undefined;
+  if (urgency === 'LOW' || urgency === 'NORMAL' || urgency === 'CRITICAL') data.urgency = urgency;
   if (typeof raw.category === 'string') data.category = raw.category;
-  if (typeof raw.expire_time === 'number') data.expire_time = raw.expire_time;
+  if (typeof raw.timeout === 'number') data.timeout = raw.timeout;
+  if (typeof raw.progress === 'number') data.progress = raw.progress;
 
   let iconUrl: string | undefined;
   if (data.has_icon && data.icon_url) {
@@ -200,18 +215,21 @@ function buildArgs(
   showIcons: boolean,
 ): string[] {
   const { data } = notification;
-  const summary = data.summary ?? data.appname ?? 'Hoody Notification';
-  const body = data.body ?? data.message ?? '';
-  const urgency = data.urgency ?? 'normal';
+  // The kit sends an empty string for a field the notification has none of.
+  const summary = data.summary || data.appname || 'Hoody Notification';
+  const body = data.body || data.message || '';
+  const urgency = data.urgency ?? 'NORMAL';
 
   switch (tool) {
     case 'notify-send': {
-      const args: string[] = ['--urgency', urgency];
+      const args: string[] = ['--urgency', urgency.toLowerCase()];
       if (data.appname) args.push('--app-name', data.appname);
       if (data.category) args.push('--category', data.category);
       // libnotify >= 0.7 accepts URLs directly — no temp file needed
       if (showIcons && notification.iconUrl) args.push('--icon', notification.iconUrl);
-      if (data.expire_time) args.push('--expire-time', String(data.expire_time));
+      // `timeout` is -1 for the notification server's default (left to the desktop) and 0 for never
+      // expires, which notify-send takes as `--expire-time 0`.
+      if (data.timeout !== undefined && data.timeout >= 0) args.push('--expire-time', String(data.timeout));
       args.push(summary);
       if (body) args.push(body);
       return args;
@@ -222,7 +240,7 @@ function buildArgs(
       if (body) args.push('-message', body);
       else args.push('-message', ' '); // terminal-notifier requires -message
       if (data.appname) args.push('-subtitle', data.appname);
-      if (urgency === 'critical') args.push('-sound', 'default');
+      if (urgency === 'CRITICAL') args.push('-sound', 'default');
       // Honour showIcons on macOS too. terminal-notifier accepts
       // -contentImage for a custom icon; without this the option was silently
       // no-ops on macOS despite the config being exposed.
@@ -240,7 +258,7 @@ function buildArgs(
       const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
       let script = `display notification "${esc(body)}" with title "${esc(summary)}"`;
       if (data.appname) script += ` subtitle "${esc(data.appname)}"`;
-      if (urgency === 'critical') script += ` sound name "default"`;
+      if (urgency === 'CRITICAL') script += ` sound name "default"`;
       return ['-e', script];
     }
 
@@ -262,7 +280,7 @@ function buildArgs(
         `<text>${escXml(summary)}</text>` +
         (body ? `<text>${escXml(body)}</text>` : '') +
         `</binding></visual>` +
-        (urgency === 'critical' ? `<audio src="ms-winsoundevent:Notification.Default"/>` : '') +
+        (urgency === 'CRITICAL' ? `<audio src="ms-winsoundevent:Notification.Default"/>` : '') +
         `</toast>`;
 
       // Step 2: wrap in PS single-quoted string (only escape single quotes)

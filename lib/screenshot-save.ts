@@ -5,17 +5,18 @@
  *   This module extends HoodyClient with four convenience methods:
  *
  *   - `saveScreenshot(options)` — generic: specify source + options
- *   - `saveDisplayScreenshot(path?, options?)` — capture display + save
- *   - `saveBrowserScreenshot(path?, options?)` — capture browser + save
- *   - `saveTerminalScreenshot(path?, options?)` — capture terminal + save
+ *   - `display.screenshots.save(path?, options?)` — capture display + save
+ *   - `browser.page.saveScreenshot(path?, options?)` — capture browser + save
+ *   - `terminal.sessions.saveScreenshot(path?, options?)` — capture terminal + save
  *
  *   All methods require a container-scoped client (via `withContainer()`).
  *   They compose: capture API call → decode → validate → putFile → chmod.
  *
  *   Data flow:
- *     Display:  captureScreenshot({base64:true}) → Buffer.from(base64)
- *     Browser:  takeScreenshot({format})                → Buffer.from(base64)
- *     Terminal: captureTerminalScreenshot({save:false})  → Buffer.from(arrayBuffer)
+ *     Display:  display.screenshots.capture({base64:true})        → Buffer.from(base64)
+ *     Browser:  browser.page.captureScreenshot({format})        → Buffer.from(base64)
+ *     Terminal: terminal.sessions.captureScreenshot({save:false}) → Buffer.from(arrayBuffer)
+ *     Write:    files.mkdir → files.upload → files.chmod 0600 (files.delete on failure)
  *
  *   Path validation (17 checks):
  *     typeof, mutual exclusivity, raw length, NFKC, '..' pre/post normalize,
@@ -27,6 +28,10 @@
 import { posix as pathPosix } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { HoodyClient } from './hoody-client.js';
+import { ScreenshotsService } from '../generated/display/screenshots.service.js';
+import { PageService } from '../generated/browser/page.service.js';
+import { SessionsService } from '../generated/terminal/sessions.service.js';
+import { ownerOf } from './service-owner.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -439,10 +444,14 @@ function assertContainerScoped(client: HoodyClient): void {
 // Capture implementations
 // ---------------------------------------------------------------------------
 
-async function captureDisplay(client: any, options?: DisplayScreenshotCaptureOptions): Promise<Buffer> {
-  const response = await client.display.screenshots.captureScreenshot({
-    base64: true,
+// The capture/write helpers take the typed HoodyClient, never `any`: every
+// call below is checked against the generated service classes, so a rename in
+// sdk-names.json (captureScreenshot → capture, putFile → upload, …) fails the
+// typecheck instead of turning into a runtime "is not a function".
+async function captureDisplay(client: HoodyClient, options?: DisplayScreenshotCaptureOptions): Promise<Buffer> {
+  const response: any = await client.display.screenshots.capture({
     ...options,
+    base64: true,
   });
   const data = response?.data ?? response;
   const base64String = data?.image?.data;
@@ -457,8 +466,8 @@ async function captureDisplay(client: any, options?: DisplayScreenshotCaptureOpt
   return Buffer.from(base64String, 'base64');
 }
 
-async function captureBrowser(client: any, format: ScreenshotFormat, options?: BrowserScreenshotCaptureOptions): Promise<Buffer> {
-  const response = await client.browser.interaction.takeScreenshot({
+async function captureBrowser(client: HoodyClient, format: ScreenshotFormat, options?: BrowserScreenshotCaptureOptions): Promise<Buffer> {
+  const response: any = await client.browser.page.captureScreenshot({
     ...options,
     format: format === 'jpeg' ? 'jpeg' : 'png',
   });
@@ -523,12 +532,12 @@ function terminalCaptureTemplateVars(client: any, terminalId: string): { service
   return { serviceIndex: Number(terminalId) };
 }
 
-async function captureTerminal(client: any, format: ScreenshotFormat, options?: TerminalScreenshotCaptureOptions): Promise<Buffer> {
+async function captureTerminal(client: HoodyClient, format: ScreenshotFormat, options?: TerminalScreenshotCaptureOptions): Promise<Buffer> {
   const templateVars =
     options?.terminal_id !== undefined && options.terminal_id !== ''
       ? terminalCaptureTemplateVars(client, String(options.terminal_id))
       : undefined;
-  const response = await client.terminal.sessions.captureScreenshot({
+  const response: any = await client.terminal.sessions.captureScreenshot({
     ...options,
     // Wrapper-controlled fields always win (prevent caller override)
     save: false,
@@ -607,25 +616,21 @@ async function saveScreenshotImpl(
   validateMagicBytes(buffer, resolvedFormat);
 
   // 3. Create directory if needed
+  // Typed calls on the generated FilesService (mkdir/upload/chmod/delete): the
+  // old untyped `(this as any).files.putFile` named methods that had been
+  // renamed, so every save failed and the chmod was silently skipped.
+  const filesService = this.files;
   if (needsMkdir) {
     try {
-      const filesService = (this as any).files;
-      if (filesService?.postFileOperation) {
-        await filesService.postFileOperation(mkdirPath, { mkdir: '' });
-      }
+      await filesService.mkdir(mkdirPath);
     } catch {
       // mkdir may fail if dir exists — that's OK
     }
   }
 
   // 4. Write file
-  const filesService = (this as any).files;
-  if (!filesService?.putFile) {
-    throw new ScreenshotSaveError('WRITE_FAILED', 'Files service not available on this client');
-  }
-
   try {
-    await filesService.putFile(resolvedPath, buffer);
+    await filesService.upload(resolvedPath, buffer);
   } catch (err) {
     throw new ScreenshotSaveError('WRITE_FAILED', `Failed to write screenshot: ${(err as Error).message}`, {
       source,
@@ -636,17 +641,13 @@ async function saveScreenshotImpl(
 
   // 5. chmod 0600 (best-effort hardening with rollback)
   try {
-    if (filesService.chmodFile) {
-      await filesService.chmodFile(resolvedPath, { chmod: '0600' });
-    }
+    await filesService.chmod(resolvedPath, { chmod: '0600' });
   } catch (chmodError) {
     // Rollback: delete the file to prevent exposure with wrong permissions
     let deleted = false;
     try {
-      if (filesService.deleteFile) {
-        await filesService.deleteFile(resolvedPath);
-        deleted = true;
-      }
+      await filesService.delete(resolvedPath);
+      deleted = true;
     } catch {
       // Cleanup failed
     }
@@ -681,34 +682,46 @@ declare module './hoody-client.js' {
      * Requires a container-scoped client (call `withContainer()` first).
      */
     saveScreenshot(options: SaveScreenshotOptions): Promise<SaveScreenshotResult>;
+  }
+}
 
+declare module '../generated/display/screenshots.service.js' {
+  interface ScreenshotsService {
     /**
      * Capture a display screenshot and save it to the container filesystem.
      *
      * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
      *               Bare filenames (e.g. "foo.png") are placed in the default directory.
      */
-    saveDisplayScreenshot(
+    save(
       path?: string,
       options?: Omit<SaveScreenshotOptions, 'source' | 'path'>,
     ): Promise<SaveScreenshotResult>;
+  }
+}
 
+declare module '../generated/browser/page.service.js' {
+  interface PageService {
     /**
      * Capture a browser screenshot and save it to the container filesystem.
      *
      * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
      */
-    saveBrowserScreenshot(
+    saveScreenshot(
       path?: string,
       options?: Omit<SaveScreenshotOptions, 'source' | 'path'>,
     ): Promise<SaveScreenshotResult>;
+  }
+}
 
+declare module '../generated/terminal/sessions.service.js' {
+  interface SessionsService {
     /**
      * Capture a terminal screenshot and save it to the container filesystem.
      *
      * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
      */
-    saveTerminalScreenshot(
+    saveScreenshot(
       path?: string,
       options?: Omit<SaveScreenshotOptions, 'source' | 'path'>,
     ): Promise<SaveScreenshotResult>;
@@ -727,35 +740,27 @@ export function patchScreenshotSavePrototype(HoodyClientClass: { prototype: unkn
 
   prototype.saveScreenshot = saveScreenshotImpl;
 
-  prototype.saveDisplayScreenshot = function saveDisplayScreenshot(
-    this: HoodyClient,
-    path?: string,
-    options?: Omit<SaveScreenshotOptions, 'source' | 'path'>,
-  ): Promise<SaveScreenshotResult> {
-    const opts: SaveScreenshotOptions = { ...options, source: 'display' };
-    if (path !== undefined) opts.path = path;
-    return this.saveScreenshot(opts);
+  // The per-kit helpers sit on their own services and reach the client through its owner stamp
+  // (lib/service-owner.ts): the capture and the write both go through the container-scoped client.
+  const onService = (
+    service: { prototype: unknown },
+    name: string,
+    source: SaveScreenshotOptions['source'],
+    label: string,
+  ): void => {
+    (service.prototype as Record<string, unknown>)[name] = function saveFromService(
+      this: object,
+      path?: string,
+      options?: Omit<SaveScreenshotOptions, 'source' | 'path'>,
+    ): Promise<SaveScreenshotResult> {
+      const opts: SaveScreenshotOptions = { ...options, source };
+      if (path !== undefined) opts.path = path;
+      return ownerOf<HoodyClient>(this, label).saveScreenshot(opts);
+    };
   };
-
-  prototype.saveBrowserScreenshot = function saveBrowserScreenshot(
-    this: HoodyClient,
-    path?: string,
-    options?: Omit<SaveScreenshotOptions, 'source' | 'path'>,
-  ): Promise<SaveScreenshotResult> {
-    const opts: SaveScreenshotOptions = { ...options, source: 'browser' };
-    if (path !== undefined) opts.path = path;
-    return this.saveScreenshot(opts);
-  };
-
-  prototype.saveTerminalScreenshot = function saveTerminalScreenshot(
-    this: HoodyClient,
-    path?: string,
-    options?: Omit<SaveScreenshotOptions, 'source' | 'path'>,
-  ): Promise<SaveScreenshotResult> {
-    const opts: SaveScreenshotOptions = { ...options, source: 'terminal' };
-    if (path !== undefined) opts.path = path;
-    return this.saveScreenshot(opts);
-  };
+  onService(ScreenshotsService, 'save', 'display', 'display.screenshots.save');
+  onService(PageService, 'saveScreenshot', 'browser', 'browser.page.saveScreenshot');
+  onService(SessionsService, 'saveScreenshot', 'terminal', 'terminal.sessions.saveScreenshot');
 
   prototype[SCREENSHOT_SAVE_PATCH_MARKER] = true;
 }

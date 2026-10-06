@@ -1,0 +1,195 @@
+{
+  "full": {
+    "actor": {
+      "id": "<id:1>",
+      "kind": "user"
+    },
+    "all_realms": false,
+    "cause_event_id": null,
+    "change_id": "<id:2>",
+    "container_id": "<id:3>",
+    "created_at": "<iso>",
+    "cursor": "<cursor>",
+    "data": {
+      "container": {
+        "ai": false,
+        "autostart": false,
+        "color": null,
+        "comment": null,
+        "container_image": null,
+        "created_at": null,
+        "dev_kit": false,
+        "hoody_kit": false,
+        "id": "<id:3>",
+        "is_default": false,
+        "kvm": false,
+        "name": "new",
+        "prespawn": false,
+        "project_id": "<id:4>",
+        "ramdisk": false,
+        "ramdisk_scope": "container",
+        "server_expired": false,
+        "server_expired_at": null,
+        "server_expired_reason": null,
+        "server_id": null,
+        "source_container_id": null,
+        "status": "running",
+        "updated_at": null
+      },
+      "previous": {
+        "name": "old"
+      }
+    },
+    "ephemeral": false,
+    "event": "container.renamed",
+    "eventId": "<id:5>",
+    "event_type": "container.renamed",
+    "id": "<id:5>",
+    "operation_id": null,
+    "payload": {
+      "container": {
+        "ai": false,
+        "autostart": false,
+        "color": null,
+        "comment": null,
+        "container_image": null,
+        "created_at": null,
+        "dev_kit": false,
+        "hoody_kit": false,
+        "id": "<id:3>",
+        "is_default": false,
+        "kvm": false,
+        "name": "new",
+        "prespawn": false,
+        "project_id": "<id:4>",
+        "ramdisk": false,
+        "ramdisk_scope": "container",
+        "server_expired": false,
+        "server_expired_at": null,
+        "server_expired_reason": null,
+        "server_id": null,
+        "source_container_id": null,
+        "status": "running",
+        "updated_at": null
+      },
+      "previous": {
+        "name": "old"
+      }
+    },
+    "project_id": "<id:6>",
+    "realm_ids": [
+      "<id:7>"
+    ],
+    "resource_id": "<id:3>",
+    "resource_type": "container",
+    "schema_version": 1,
+    "timestamp": "<iso>",
+    "user_id": "<id:1>",
+    "visibility": "full"
+  },
+  "nameless": {
+    "actor": {
+      "kind": "system"
+    },
+    "all_realms": false,
+    "cause_event_id": null,
+    "change_id": "<id:8>",
+    "container_id": "<id:3>",
+    "created_at": "<iso>",
+    "cursor": "<cursor>",
+    "data": {
+      "container": {
+        "id": "<id:3>"
+      },
+      "network": {
+        "id": "<id:9>",
+        "status": "running",
+        "type": "wireguard"
+      }
+    },
+    "ephemeral": false,
+    "event": "container.network.updated",
+    "eventId": "<id:10>",
+    "event_type": "container.network.updated",
+    "id": "<id:10>",
+    "operation_id": null,
+    "payload": {
+      "container": {
+        "id": "<id:3>"
+      },
+      "network": {
+        "id": "<id:9>",
+        "status": "running",
+        "type": "wireguard"
+      }
+    },
+    "project_id": "<id:6>",
+    "realm_ids": [
+      "<id:7>"
+    ],
+    "resource_id": "<id:9>",
+    "resource_type": "container_network",
+    "schema_version": 1,
+    "timestamp": "<iso>",
+    "user_id": "<id:11>",
+    "visibility": "nameless"
+  },
+  "pagination": {
+    "has_more": true,
+    "latest_cursor": "<cursor>",
+    "limit": 1,
+    "next_cursor": "<cursor>",
+    "offset": 0,
+    "total": -1
+  },
+  "removed": {
+    "actor": {
+      "kind": "system"
+    },
+    "all_realms": false,
+    "cause_event_id": null,
+    "change_id": "<id:12>",
+    "container_id": "<id:3>",
+    "created_at": "<iso>",
+    "cursor": "<cursor>",
+    "data": {
+      "changes": [
+        "realm_ids"
+      ],
+      "container": {
+        "id": "<id:3>"
+      },
+      "visibility": "removed"
+    },
+    "ephemeral": false,
+    "event": "container.updated",
+    "eventId": "<id:13>",
+    "event_type": "container.updated",
+    "id": "<id:13>",
+    "operation_id": null,
+    "payload": {
+      "changes": [
+        "realm_ids"
+      ],
+      "container": {
+        "id": "<id:3>"
+      },
+      "visibility": "removed"
+    },
+    "project_id": "<id:6>",
+    "realm_ids": [
+      "<id:7>"
+    ],
+    "resource_id": "<id:3>",
+    "resource_type": "container",
+    "schema_version": 1,
+    "timestamp": "<iso>",
+    "user_id": "<id:1>",
+    "visibility": "removed"
+  },
+  "top": [
+    "data",
+    "message",
+    "statusCode"
+  ]
+}

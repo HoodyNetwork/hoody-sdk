@@ -26,9 +26,11 @@ import { promisify } from 'node:util';
 import { execFile as execFileCb } from 'node:child_process';
 
 import type { ProxyAuth } from './proxy-auth.js';
+import { assertRcloneInstalled, detectRcloneVersion, isVersionAtLeast } from './rclone-local.js';
 import {
   type AliveState,
   type MountStateFile,
+  cacheDirPath,
   checkLiveness,
   claimState,
   computeMountId,
@@ -142,12 +144,18 @@ export async function probeKit(kitUrl: string, auth?: ProxyAuth, timeoutMs = 100
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    // Never follow a redirect: fetch strips only Authorization on a cross-origin hop,
+    // so a kit token under another header name would reach the redirect's target.
     const res = await fetch(kitUrl, {
       method: 'OPTIONS',
       headers,
       signal: controller.signal,
+      redirect: 'manual',
     });
     const dav = res.headers.get('dav') ?? undefined;
+    if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
+      return { ok: false, status: res.status, davHeader: dav, needsAuth: false, detail: `redirect refused (${res.status}): the probe carries the kit credential and is sent only to ${kitUrl}` };
+    }
     if (res.status === 401 || res.status === 403) {
       return { ok: false, status: res.status, davHeader: dav, needsAuth: true, detail: `${res.status} ${res.statusText}` };
     }
@@ -228,6 +236,8 @@ export async function mount(opts: MountOptions): Promise<MountHandle> {
 
   await fs.mkdir(getStateDir(opts.home), { recursive: true, mode: 0o700 });
   const confPath = configFilePath(id, opts.home);
+  const cacheDir = cacheDirPath(id, url, opts.home);
+  await fs.mkdir(cacheDir, { recursive: true, mode: 0o700 });
 
   const record: MountStateFile = {
     id,
@@ -258,6 +268,8 @@ export async function mount(opts: MountOptions): Promise<MountHandle> {
     localPath,
     '--config',
     confPath,
+    '--cache-dir',
+    cacheDir,
     ...(opts.noVfsCache ? [] : ['--vfs-cache-mode', 'writes']),
     ...(opts.readOnly ? ['--read-only'] : []),
     ...headerArgs,
@@ -541,35 +553,6 @@ async function rcloneObscure(rclonePath: string, plaintext: string): Promise<str
   // passed to rclone obscure, which rclone handles fine.
   const { stdout } = await execFile(rclonePath, ['obscure', plaintext], { timeout: 10000 });
   return stdout.trim();
-}
-
-async function detectRcloneVersion(rclonePath: string): Promise<[number, number, number] | null> {
-  try {
-    const { stdout } = await execFile(rclonePath, ['version'], { timeout: 5000 });
-    const m = stdout.match(/rclone v(\d+)\.(\d+)(?:\.(\d+))?/);
-    if (!m) return null;
-    return [Number(m[1]), Number(m[2]), Number(m[3] ?? 0)];
-  } catch {
-    return null;
-  }
-}
-
-async function assertRcloneInstalled(rclonePath: string): Promise<void> {
-  try {
-    await execFile(rclonePath, ['version'], { timeout: 5000 });
-  } catch (err) {
-    void err;
-    throw new Error(
-      `rclone not found at "${rclonePath}". Install rclone from https://rclone.org/install/ ` +
-        '(macOS: brew install rclone; Linux: apt/dnf install rclone; Windows: winget install Rclone.Rclone).',
-    );
-  }
-}
-
-function isVersionAtLeast(v: [number, number, number] | null, target: readonly [number, number]): boolean {
-  if (!v) return false;
-  if (v[0] !== target[0]) return v[0] > target[0];
-  return v[1] >= target[1];
 }
 
 /**

@@ -7,8 +7,9 @@
  */
 
 import type { IHttpClientMiddleware, IHttpClientMiddlewareRequestContext } from '../generated/http-client.js';
-import { type ProxyAuth, type ProxyAuthPolicy, isProxyAuthPolicy, base64Encode } from './proxy-auth.js';
+import { type ProxyAuth, type ProxyAuthPolicy, isProxyAuthPolicy, base64Encode, withTokenQueryParam } from './proxy-auth.js';
 import { deriveSiblingDomain } from './domain-utils.js';
+import { recordCredentialQueryParam, recordCredentialHeader } from './redact.js';
 
 /** Check if a URL matches the base URL's origin and path prefix (including realm subdomains). */
 function isSameOriginAndPath(url: string, baseURL: string): boolean {
@@ -99,35 +100,65 @@ export function createProxyAuthMiddleware(
       }
 
       const headers = { ...ctx.headers };
+      // Every header set below carries the credential. Its name is recorded
+      // (CREDENTIAL_HEADERS_KEY, lib/redact.ts) because an operator can choose
+      // it (kitAuth header: 'X-Access-Pass'), and the secret-header pattern the
+      // HTTP clients confine and redact by cannot know that name: the value
+      // followed a middleware to another origin and stayed plaintext in
+      // ApiError.request.headers.
+      let middlewareContext = ctx.middlewareContext as Record<string, unknown> | undefined;
+      const set = (name: string, value: string): void => {
+        headers[name] = value;
+        middlewareContext = recordCredentialHeader(middlewareContext, name);
+      };
+
+      // A token rule configured with a query parameter reads only that
+      // parameter (proxy matrix.service.ts case 'token': param before
+      // cookie/header). Put the credential in the URL and send no header;
+      // the URL is what HttpClient.prepareUpgrade() hands a WebSocket, so a
+      // browser socket carries it too.
+      //
+      // The parameter name is recorded in middlewareContext
+      // (CREDENTIAL_QUERY_PARAMS_KEY, lib/redact.ts) so the HTTP client can
+      // strip it if a later step moves the request to another origin, and
+      // redact it from ApiError / logs whatever name the operator chose.
+      if (resolvedAuth.type === 'token' && resolvedAuth.param !== undefined) {
+        const nextUrl = withTokenQueryParam(url, { ...resolvedAuth, param: resolvedAuth.param });
+        const middlewareContext = recordCredentialQueryParam(
+          ctx.middlewareContext as Record<string, unknown> | undefined,
+          resolvedAuth.param.trim(),
+        );
+        return { ...ctx, url: nextUrl, middlewareContext };
+      }
 
       switch (resolvedAuth.type) {
         case 'password': {
           const encoded = base64Encode(`${resolvedAuth.username}:${resolvedAuth.password}`);
-          headers['Authorization'] = `Basic ${encoded}`;
+          set('Authorization', `Basic ${encoded}`);
           break;
         }
         case 'jwt': {
           const h = resolvedAuth.header || 'Authorization';
-          headers[h] = h.toLowerCase() === 'authorization'
+          set(h, h.toLowerCase() === 'authorization'
             ? `Bearer ${resolvedAuth.token}`
-            : resolvedAuth.token;
+            : resolvedAuth.token);
           break;
         }
         case 'token': {
           const h = resolvedAuth.header || 'Authorization';
-          headers[h] = h.toLowerCase() === 'authorization'
+          set(h, h.toLowerCase() === 'authorization'
             ? `Bearer ${resolvedAuth.value}`
-            : resolvedAuth.value;
+            : resolvedAuth.value);
           break;
         }
         case 'containerClaim': {
-          headers['X-Hoody-Container-Claim'] = resolvedAuth.claim;
-          headers['X-Hoody-Token'] = resolvedAuth.token;
+          set('X-Hoody-Container-Claim', resolvedAuth.claim);
+          set('X-Hoody-Token', resolvedAuth.token);
           break;
         }
       }
 
-      return { ...ctx, headers };
+      return middlewareContext === undefined ? { ...ctx, headers } : { ...ctx, headers, middlewareContext };
     },
   };
   return middleware as unknown as IHttpClientMiddleware;

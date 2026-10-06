@@ -7,6 +7,7 @@
 import {
   type Frame,
   FrameType,
+  HEADER_SIZE,
 } from "./tunnel-protocol-types.js";
 import {
   encodeFrame,
@@ -15,10 +16,44 @@ import {
   MAX_FRAMES_PER_MESSAGE,
 } from "./tunnel-protocol-codec.js";
 import { CreditGate } from "./tunnel-credit-gate.js";
+import type { ProxyAuth, ProxyAuthPolicy } from "./proxy-auth.js";
+import {
+  kitAuthForNamespace,
+  kitAuthWebSocketParts,
+  openWebSocketWithHeaders,
+} from "./kit-ws-auth.js";
+
+/**
+ * Give a socket a permanent no-op 'error' listener the moment it exists.
+ *
+ * The `ws` package (used when kitAuth needs upgrade headers) is an
+ * EventEmitter: closing a CONNECTING socket emits "WebSocket was closed before
+ * the connection was established" as 'error' on the next tick, and an 'error'
+ * with no listener is an uncaught exception. Sockets abandoned by close() or a
+ * superseding connect() — sometimes before any `onerror` was assigned — used
+ * to crash Node that way. The session's own `onerror` handlers still run; this
+ * listener only guarantees one always exists. Harmless on a DOM WebSocket.
+ */
+function guardSocketErrors(ws: WebSocket): WebSocket {
+  try { ws.addEventListener("error", () => {}); } catch { /* no EventTarget API: nothing to guard */ }
+  return ws;
+}
 
 export interface ConnectOptions {
   url: string;
-  token: string;
+  /**
+   * @deprecated Ignored and never sent. The tunnel kit does not read the
+   * HELLO `auth` field (Hoody Proxy enforces access upstream), and sending
+   * the account token there leaked it to the container. Use `kitAuth`.
+   */
+  token?: string;
+  /**
+   * Kit credential for the proxy's permission rule on the tunnel service,
+   * carried on the WebSocket upgrade: headers in Node / Bun, `?token=` in a
+   * browser (a containerClaim credential is Node-only). A policy selects
+   * `services.tunnel`, then `default`. Never the account token.
+   */
+  kitAuth?: ProxyAuth | ProxyAuthPolicy;
   /** If set, ask the kit to resume this session (HELLO.resume.sessionId). */
   resumeSessionId?: string;
   /**
@@ -83,6 +118,10 @@ export interface BindResult {
 // resolves, so a slow local sink slows down the peer instead of letting
 // Node buffer the bytes in memory.
 type FrameHandler = (frame: Frame) => void | Promise<void>;
+
+/** Receives every frame after the handshake, with the socket that delivered
+ *  it; calls `session.dispatchFrame()` for the frames it does not handle. */
+export type InboundRouter = (frame: Frame, deliveredOn: WebSocket) => void;
 
 /**
  * Tunnel session client.
@@ -157,8 +196,29 @@ export class TunnelSession {
    *  down resources tied to the session lifecycle rather than per-stream
    *  EOF frames, which never fire on an abrupt WS drop. */
   private closeListeners = new Set<() => void>();
+  /** Set by setInboundRouter(). Configuration, not session state: connect()
+   *  and close() keep it. */
+  private inboundRouter: InboundRouter | null = null;
 
   constructor(private options: ConnectOptions) {}
+
+  /**
+   * Route every frame received after HELLO_OK / JOIN_OK, on every socket of
+   * this session, through `router` instead of the default dispatcher.
+   *
+   * Set it before connect() when the kit may open a stream as soon as HELLO_OK
+   * is out, as it does for a resumed session's binds: HELLO_OK and that
+   * STREAM_OPEN can arrive in one read, and both are handled before the code
+   * after `await connect()` runs, so a router installed there drops the request.
+   */
+  setInboundRouter(router: InboundRouter | null): void {
+    this.inboundRouter = router;
+  }
+
+  private routeInbound(frame: Frame, ws: WebSocket) {
+    if (this.inboundRouter) this.inboundRouter(frame, ws);
+    else this.handleFrame(frame, ws);
+  }
 
   /** Register a listener fired exactly once on session close. Returns an
    *  unsubscribe function. Use for resources whose lifecycle is tied to the
@@ -179,6 +239,39 @@ export class TunnelSession {
     return this.lastHello;
   }
 
+  /** Open one tunnel WebSocket with the kit credential on its upgrade. */
+  //  Synchronous when no upgrade header is needed (no kitAuth, or a browser,
+  //  where the credential rides the URL) so the socket exists the moment
+  //  connect() returns its promise, as it always has; async only when the
+  //  `ws` package must be loaded to carry headers.
+  private openSocket(subprotocol: string): WebSocket | Promise<WebSocket> {
+    const parts = kitAuthWebSocketParts(
+      this.options.url,
+      kitAuthForNamespace(this.options.kitAuth, "tunnel"),
+      "tunnel",
+    );
+    if (Object.keys(parts.headers).length === 0) {
+      const ws = new WebSocket(parts.url, subprotocol);
+      ws.binaryType = "arraybuffer";
+      return guardSocketErrors(ws);
+    }
+    return openWebSocketWithHeaders<WebSocket>(parts.url, subprotocol, parts.headers, "tunnel").then((ws) => {
+      ws.binaryType = "arraybuffer";
+      return guardSocketErrors(ws);
+    });
+  }
+
+  /** Resolve an openSocket() result; a supersede during the wait closes it. */
+  private async settleSocket(opened: WebSocket | Promise<WebSocket>, myGeneration: number): Promise<WebSocket> {
+    if (!(opened instanceof Promise)) return opened;
+    const ws = await opened;
+    if (this.connectGeneration !== myGeneration) {
+      try { ws.close(); } catch {}
+      throw new Error("session superseded");
+    }
+    return ws;
+  }
+
   async connect(): Promise<string> {
     const useV2 = (this.options.maxConnections ?? 1) > 1;
     const subprotocol = useV2 ? "hoody-tunnel.v2" : "hoody-tunnel.v1";
@@ -197,9 +290,10 @@ export class TunnelSession {
     // late HELLO_OK / JOIN_OK frames from a stale socket become no-ops.
     const myGeneration = this.connectGeneration;
 
+    const opened = this.openSocket(subprotocol);
+    const ws = opened instanceof Promise ? await this.settleSocket(opened, myGeneration) : opened;
+
     await new Promise<string>((resolve, reject) => {
-      const ws = new WebSocket(this.options.url, subprotocol);
-      ws.binaryType = "arraybuffer";
       // Track the in-progress WS so close() can tear it down before
       // HELLO_OK populates `this.ws`.
       this.connectingWs = ws;
@@ -222,7 +316,8 @@ export class TunnelSession {
       ws.onopen = () => {
         const helloPayload: any = {
           version: helloVersion,
-          auth: { kind: "bearer", token: this.options.token },
+          // No `auth` field: the kit ignores it, and the proxy authenticates
+          // the upgrade (kitAuth above). Never send the account token here.
           capabilities: useV2 ? ["multi-ws"] : [],
         };
         if (this.options.resumeSessionId) {
@@ -314,7 +409,7 @@ export class TunnelSession {
             }
             continue;
           }
-          this.handleFrame(frame, ws);
+          this.routeInbound(frame, ws);
         }
       };
 
@@ -390,9 +485,9 @@ export class TunnelSession {
   }
 
   private async openSecondary(ticket: JoinTicket, myGeneration: number): Promise<void> {
+    const opened = this.openSocket("hoody-tunnel.v2");
+    const ws = opened instanceof Promise ? await this.settleSocket(opened, myGeneration) : opened;
     return new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(this.options.url, "hoody-tunnel.v2");
-      ws.binaryType = "arraybuffer";
       // Track this WS so close() can cancel it if JOIN_OK never arrives.
       this.pendingSecondaries.add(ws);
 
@@ -447,7 +542,7 @@ export class TunnelSession {
               continue;
             }
           }
-          this.handleFrame(frame, ws);
+          this.routeInbound(frame, ws);
         }
       };
 
@@ -461,30 +556,11 @@ export class TunnelSession {
           reject(new Error("secondary WS closed before JOIN_OK"));
         }
         if (this.wsAll[ticket.index] === ws) this.wsAll[ticket.index] = null;
-        // Drop any pending wsBatch entries for this dead WS. The microtask
-        // flush would silently no-op against a closed socket; clearing the
-        // entry releases the Uint8Arrays and prevents map-bloat on long
-        // sessions with secondary churn.
+        // The frames still queued for this socket, and every stream pinned to it, are lost
+        // with it. Dropping the batch entry also keeps the map from growing with churn.
+        const pending = this.wsBatch.get(ws)?.pending ?? [];
         this.wsBatch.delete(ws);
-        // Purge any streams pinned to this closed secondary. Without this
-        // the pin stays in streamWs → sendFrame routes future frames to a
-        // dead WS → bytes are silently dropped while credit has been
-        // consumed. Close their CreditGates so blocked senders error out
-        // instead of hanging, and drop the pin so new sends fall back to
-        // the primary (or are rejected cleanly).
-        const orphanedStreams: number[] = [];
-        for (const [sid, pinned] of this.streamWs) {
-          if (pinned === ws) orphanedStreams.push(sid);
-        }
-        for (const sid of orphanedStreams) {
-          this.streamWs.delete(sid);
-          this.markStreamClosed(sid);
-          const gate = this.streamCredit.get(sid);
-          if (gate) {
-            gate.close(new Error(`stream ${sid} secondary WS closed`));
-            this.streamCredit.delete(sid);
-          }
-        }
+        this.secondaryLost(ws, pending);
       };
     });
   }
@@ -629,6 +705,10 @@ export class TunnelSession {
         // still refills session credit per spec.
         const isDataFrame = frame.header.frameType === FrameType.Data && frame.payload.length > 0;
         const dataLen = isDataFrame ? frame.payload.length : 0;
+        // A refill deferred until the handler settles goes only on the connection the DATA
+        // came on: every connection, resumed or not, starts with a full window, so credit
+        // for an earlier one would raise it past that and the kit would end the new session.
+        const generation = this.connectGeneration;
 
         const handler = this.streamHandlers.get(streamId);
         // Drop the stream-handler entry once the peer sends a terminal frame.
@@ -642,10 +722,12 @@ export class TunnelSession {
               // Defer WINDOW replenishment until local sink has drained.
               (ret as Promise<void>).then(
                 () => {
+                  if (this.connectGeneration !== generation) return;
                   this.sendWindow(streamId, dataLen);
                   this.sendWindow(0, dataLen);
                 },
                 () => {
+                  if (this.connectGeneration !== generation) return;
                   // Handler rejected (e.g. local socket died). Still refill
                   // session window so other streams don't stall; skip the
                   // per-stream refill — the stream is dead or about to be.
@@ -739,9 +821,23 @@ export class TunnelSession {
     this.streamHandlers.set(streamId, handler);
   }
 
-  /** Remove stream handler */
-  offStream(streamId: number) {
+  /**
+   * Remove stream handler. With `handler`, only if it is still the one registered: a
+   * request ending late must not remove a later request's handler for the same ID (a
+   * fresh kit session after a reconnect numbers its streams from 2 again).
+   */
+  offStream(streamId: number, handler?: FrameHandler) {
+    if (handler && this.streamHandlers.get(streamId) !== handler) return;
     this.streamHandlers.delete(streamId);
+  }
+
+  /**
+   * The connection this session is on: it changes with every `connect()` and `close()`.
+   * Something started on one connection does nothing to the next (see tunnel-http-pump's
+   * `streamEnd`).
+   */
+  get generation(): number {
+    return this.connectGeneration;
   }
 
   /** Send a raw frame. v3 batching: frames enqueued in the same event-loop
@@ -758,6 +854,13 @@ export class TunnelSession {
     let target: WebSocket | null = null;
     if (sid !== 0) {
       target = this.streamWs.get(sid) ?? this.ws;
+      // A RESET for a stream whose socket is closing still has to reach the peer: send it
+      // on the primary, as once that socket's close has unpinned the stream.
+      if (frame.header.frameType === FrameType.Reset && target !== this.ws
+          && (!target || target.readyState !== WebSocket.OPEN)) {
+        this.streamWs.delete(sid);
+        target = this.ws;
+      }
     } else {
       target = this.ws;
     }
@@ -773,7 +876,11 @@ export class TunnelSession {
       target.send(encoded);
       return;
     }
+    this.enqueue(target, encoded);
+  }
 
+  /** Add one encoded frame to `target`'s batch, flushed at the end of this tick. */
+  private enqueue(target: WebSocket, encoded: Uint8Array) {
     let batch = this.wsBatch.get(target);
     if (!batch) {
       batch = { pending: [], bytes: 0, scheduled: false };
@@ -788,7 +895,7 @@ export class TunnelSession {
     batch.bytes += encoded.length;
     if (!batch.scheduled) {
       batch.scheduled = true;
-      queueMicrotask(() => this.flushBatch(target!));
+      queueMicrotask(() => this.flushBatch(target));
     }
   }
 
@@ -843,21 +950,29 @@ export class TunnelSession {
     const batch = this.wsBatch.get(ws);
     if (!batch || batch.pending.length === 0) return;
     batch.scheduled = false;
-    // Resolve payload + clear queue BEFORE send so a throw doesn't leave
-    // half-state around for re-entry.
+    // Take the queue BEFORE sending so a throw doesn't leave half-state
+    // around for re-entry.
+    const frames = batch.pending;
+    const bytes = batch.bytes;
+    batch.pending = [];
+    batch.bytes = 0;
+    // A send on a closing socket is dropped without an error: a secondary that started
+    // closing after these frames were queued loses them as surely as one whose send throws.
+    if (ws !== this.ws && ws.readyState !== WebSocket.OPEN) {
+      this.secondaryLost(ws, frames);
+      return;
+    }
     let payload: Uint8Array;
-    if (batch.pending.length === 1) {
-      payload = batch.pending[0]!;
+    if (frames.length === 1) {
+      payload = frames[0]!;
     } else {
-      payload = new Uint8Array(batch.bytes);
+      payload = new Uint8Array(bytes);
       let off = 0;
-      for (const f of batch.pending) {
+      for (const f of frames) {
         payload.set(f, off);
         off += f.length;
       }
     }
-    batch.pending = [];
-    batch.bytes = 0;
     try {
       ws.send(payload);
     } catch (e) {
@@ -867,43 +982,72 @@ export class TunnelSession {
       // the caller saw success for a frame the peer never received.
       //
       //   - Primary dead: entire session is dead → close all gates.
-      //   - Secondary dead: only streams pinned to this shard are
-      //     orphaned. Closing sessionCredit here would wrongly kill
-      //     live streams on the primary. Release session credit for
-      //     unsent DATA bytes (peer will never WINDOW them back).
+      //   - Secondary dead: only its frames and the streams pinned to it are
+      //     lost (secondaryLost). Closing sessionCredit here would wrongly
+      //     kill live streams on the primary.
       const err = e instanceof Error ? e : new Error("ws.send failed");
       if (ws === this.ws) {
         this.sessionCredit?.close(err);
         for (const [, gate] of this.streamCredit) gate.close(err);
       } else {
-        let dataBytes = 0;
-        let off = 0;
-        while (off + 9 <= payload.length) {
-          const frameType = payload[off]!;
-          const length =
-            (payload[off + 5]! << 24) |
-            (payload[off + 6]! << 16) |
-            (payload[off + 7]! << 8) |
-            payload[off + 8]!;
-          if (frameType === FrameType.Data) dataBytes += length;
-          off += 9 + length;
-        }
-        if (dataBytes > 0) this.sessionCredit?.release(dataBytes);
-
-        const orphanedStreams: number[] = [];
-        for (const [sid, pinned] of this.streamWs) {
-          if (pinned === ws) orphanedStreams.push(sid);
-        }
-        for (const sid of orphanedStreams) {
-          this.streamWs.delete(sid);
-          this.markStreamClosed(sid);
-          const gate = this.streamCredit.get(sid);
-          if (gate) {
-            gate.close(err);
-            this.streamCredit.delete(sid);
-          }
-        }
+        this.secondaryLost(ws, frames);
       }
+    }
+  }
+
+  /**
+   * Secondary socket `ws` is gone, or can no longer send `frames` (queued for it). Called
+   * from the flush that finds it closing and from its close, so each part is idempotent.
+   *   - The session credit of the lost DATA comes back: the peer will never WINDOW it.
+   *   - The lost RESETs go on the primary, as at enqueue (sendFrame).
+   *   - Every other stream that lost a frame, or is pinned to `ws`, is reset on the
+   *     primary, and its handler hears that as a RESET: the request aborts its local
+   *     side (freeing its pool slot) and sends nothing more, since neither the rest of a
+   *     body nor an EOF may follow bytes the peer never got.
+   *   - A stream that already ended is left alone: its terminal frame went out (the
+   *     pump's RESET falls back to the primary), and a second one would answer nothing.
+   *     A lost EOF is the exception: that stream has not ended for the peer.
+   */
+  private secondaryLost(ws: WebSocket, frames: Uint8Array[]) {
+    const primary = this.ws && this.ws.readyState === WebSocket.OPEN ? this.ws : null;
+    const rerouted = new Set<number>();
+    const eofLost = new Set<number>();
+    const lost = new Set<number>();
+    let dataBytes = 0;
+    for (const f of frames) {
+      const sid = new DataView(f.buffer, f.byteOffset, f.byteLength).getUint32(1, false);
+      if (f[0] === FrameType.Reset) {
+        rerouted.add(sid);
+        if (primary) this.enqueue(primary, f);
+      } else if (f[0] === FrameType.Data) {
+        dataBytes += f.length - HEADER_SIZE;
+        lost.add(sid);
+      } else if (f[0] === FrameType.Eof) {
+        eofLost.add(sid);
+        lost.add(sid);
+      }
+    }
+    if (dataBytes > 0) this.sessionCredit?.release(dataBytes);
+    for (const [sid, pinned] of this.streamWs) {
+      if (pinned === ws) lost.add(sid);
+    }
+
+    const reason = "secondary connection lost";
+    for (const sid of lost) {
+      this.streamWs.delete(sid);
+      if (rerouted.has(sid)) continue;
+      if (this.closedStreams.has(sid) && !eofLost.has(sid)) continue;
+      this.sendReset(sid, reason);
+      const handler = this.streamHandlers.get(sid);
+      if (!handler) continue;
+      this.streamHandlers.delete(sid);
+      const payload = new Uint8Array(2 + reason.length);
+      new DataView(payload.buffer).setUint16(0, 0x0006 /* RefusedStream */, false);
+      payload.set(new TextEncoder().encode(reason), 2);
+      try {
+        const ret = handler({ header: { frameType: FrameType.Reset, streamId: sid, length: payload.length }, payload });
+        if (ret && typeof (ret as Promise<void>).then === "function") (ret as Promise<void>).catch(() => {});
+      } catch {}
     }
   }
 
@@ -989,10 +1133,19 @@ export class TunnelSession {
     let sessionAcquired = false;
     let streamAcquired = false;
     try {
-      await sessionCredit.acquire(data.length);
+      // Cancelled by the stream's end: a send waiting for session credit gives up its place
+      // once its stream is reset or ended, instead of at the next WINDOW.
+      await sessionCredit.acquire(data.length, streamGate.closedSignal);
       sessionAcquired = true;
       await streamGate.acquire(data.length);
       streamAcquired = true;
+      // The stream can end while this send waits (our RESET or EOF, or the peer's
+      // RESET). An acquire granted before its gate closed does not see the close,
+      // so check again: no DATA follows a stream's end. The gate as well as the
+      // tombstone: the tombstones are bounded, and this one may already be evicted.
+      if (streamGate.isClosed || this.closedStreams.has(streamId)) {
+        throw new Error(`sendData: stream ${streamId} is closed`);
+      }
       this._sendFrameStrict({
         header: { frameType: FrameType.Data, streamId, length: data.length },
         payload: data,
@@ -1052,6 +1205,9 @@ export class TunnelSession {
       header: { frameType: FrameType.Reset, streamId, length: payload.length },
       payload,
     });
+    // Unpin after the RESET is queued (it travels on the pinned socket): the
+    // peer sends no EOF/RESET for a stream we refused, so nothing else would.
+    this.streamWs.delete(streamId);
     this.markStreamClosed(streamId);
     const gate = this.streamCredit.get(streamId);
     if (gate) {

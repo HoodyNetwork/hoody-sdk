@@ -1,0 +1,164 @@
+{
+  "activity_subscribed": {
+    "enabled": true,
+    "timestamp": "<iso>",
+    "type": "activity_subscribed"
+  },
+  "error": {
+    "error": "INVALID_SUBSCRIPTION",
+    "message": "Subscription must be an object with projectId and/or containerId",
+    "timestamp": "<iso>",
+    "type": "error"
+  },
+  "event_full": {
+    "actor": {
+      "id": "<id:1>",
+      "kind": "user"
+    },
+    "all_realms": false,
+    "cause_event_id": null,
+    "change_id": "<id:2>",
+    "container_id": "<id:3>",
+    "cursor": "<cursor>",
+    "data": {
+      "container": {
+        "ai": false,
+        "autostart": false,
+        "color": null,
+        "comment": null,
+        "container_image": null,
+        "created_at": null,
+        "dev_kit": false,
+        "hoody_kit": false,
+        "id": "<id:3>",
+        "is_default": false,
+        "kvm": false,
+        "name": "new",
+        "prespawn": false,
+        "project_id": "<id:4>",
+        "ramdisk": false,
+        "ramdisk_scope": "container",
+        "server_expired": false,
+        "server_expired_at": null,
+        "server_expired_reason": null,
+        "server_id": null,
+        "source_container_id": null,
+        "status": "running",
+        "updated_at": null
+      },
+      "previous": {
+        "name": "old"
+      }
+    },
+    "ephemeral": false,
+    "event": "container.renamed",
+    "eventId": "<id:5>",
+    "operation_id": null,
+    "project_id": "<id:6>",
+    "realm_ids": [
+      "<id:7>"
+    ],
+    "resource_id": "<id:3>",
+    "resource_type": "container",
+    "schema_version": 1,
+    "timestamp": "<iso>",
+    "type": "event",
+    "visibility": "full"
+  },
+  "event_nameless": {
+    "actor": {
+      "kind": "system"
+    },
+    "all_realms": false,
+    "cause_event_id": null,
+    "change_id": "<id:8>",
+    "container_id": "<id:3>",
+    "cursor": "<cursor>",
+    "data": {
+      "container": {
+        "id": "<id:3>"
+      },
+      "network": {
+        "id": "<id:9>",
+        "status": "running",
+        "type": "wireguard"
+      }
+    },
+    "ephemeral": false,
+    "event": "container.network.updated",
+    "eventId": "<id:10>",
+    "operation_id": null,
+    "project_id": "<id:6>",
+    "realm_ids": [
+      "<id:7>"
+    ],
+    "resource_id": "<id:9>",
+    "resource_type": "container_network",
+    "schema_version": 1,
+    "timestamp": "<iso>",
+    "type": "event",
+    "visibility": "nameless"
+  },
+  "event_removed": {
+    "actor": {
+      "kind": "system"
+    },
+    "all_realms": false,
+    "cause_event_id": null,
+    "change_id": "<id:11>",
+    "container_id": "<id:3>",
+    "cursor": "<cursor>",
+    "data": {
+      "changes": [
+        "realm_ids"
+      ],
+      "container": {
+        "id": "<id:3>"
+      },
+      "visibility": "removed"
+    },
+    "ephemeral": false,
+    "event": "container.updated",
+    "eventId": "<id:12>",
+    "operation_id": null,
+    "project_id": "<id:6>",
+    "realm_ids": [
+      "<id:7>"
+    ],
+    "resource_id": "<id:3>",
+    "resource_type": "container",
+    "schema_version": 1,
+    "timestamp": "<iso>",
+    "type": "event",
+    "visibility": "removed"
+  },
+  "pong": {
+    "timestamp": "<iso>",
+    "type": "pong"
+  },
+  "revoked": {
+    "message": "Account banned",
+    "reason": "USER_BANNED",
+    "timestamp": "<iso>",
+    "type": "revoked"
+  },
+  "scope_changed": {
+    "project_id": "<id:6>",
+    "reason": "PROJECT_ACCESS_REVOKED",
+    "type": "scope_changed"
+  },
+  "tick": {
+    "latest_cursor": "<cursor>",
+    "type": "tick"
+  },
+  "welcome": {
+    "boundary_cursor": "<cursor>",
+    "connectionId": "<socket-id>",
+    "latest_cursor": "<cursor>",
+    "realmId": null,
+    "retention_days": 90,
+    "timestamp": "<iso>",
+    "type": "welcome",
+    "userId": "<id:1>"
+  }
+}

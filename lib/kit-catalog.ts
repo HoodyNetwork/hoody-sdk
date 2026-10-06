@@ -46,7 +46,8 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     supportsIndex: true,
     defaultIndex: 1,
     minIndex: 1,
-    maxIndex: 9999,
+    // The index is the session id, which the terminal accepts from 1 to 65535.
+    maxIndex: 65535,
     sdkNamespace: 'terminal',
   },
   {
@@ -70,7 +71,8 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     supportsIndex: true,
     defaultIndex: 1,
     minIndex: 1,
-    maxIndex: 9999,
+    // Each editor instance listens on its own port, so the index stops where that port would pass 65535.
+    maxIndex: 58535,
     sdkNamespace: 'code',
   },
   {
@@ -118,7 +120,9 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     supportsIndex: true,
     defaultIndex: 1,
     minIndex: 1,
-    maxIndex: 9999,
+    // The index is the display number; desktops use high display numbers, so a 9999 cap would refuse
+    // real ones. The bound is where the display's port would pass 65535; the edge refuses above it.
+    maxIndex: 61535,
     sdkNamespace: 'display',
   },
   {
@@ -130,9 +134,10 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     supportsIndex: true,
     defaultIndex: 1,
     minIndex: 1,
-    // Underlying terminal_id is u16; with the proxy's default offset 1600 the
-    // public max is 63935. Custom offsets shift this — the proxy clamps.
-    maxIndex: 63935,
+    // The desktop runs on a terminal session and a display whose numbers and port must stay within
+    // 65535; with the default configuration that allows desktops 1-59935. A host configured for a
+    // narrower range refuses the index above its bound (it never clamps to another desktop).
+    maxIndex: 59935,
   },
   {
     slug: 'exec',
@@ -167,7 +172,8 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     supportsIndex: true,
     defaultIndex: 1,
     minIndex: 1,
-    maxIndex: 9999,
+    // The index is a display number, with the same bound as display.
+    maxIndex: 61535,
     sdkNamespace: 'notifications',
     aliases: ['n'],
   },
@@ -242,7 +248,7 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
   {
     slug: 'logs',
     kind: 'named',
-    description: 'Proxy logs routing, query, config, and maintenance APIs.',
+    description: 'Proxy request/response logs for your container: query, statistics, and live stream.',
     serviceSegmentPattern: 'logs-{index}',
     urlTemplateSample: 'https://{projectId}-{containerId}-logs-{index}.{server}.containers.hoody.com',
     supportsIndex: true,
@@ -274,9 +280,23 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     supportsIndex: true,
     defaultIndex: 1,
     minIndex: 1,
-    maxIndex: 9999,
+    // The agent runs on a terminal session kept below the ephemeral session range; with the default
+    // configuration that allows agents 1-19999, and the edge refuses above it.
+    maxIndex: 19999,
     sdkNamespace: 'agent',
     aliases: [],
+  },
+  {
+    slug: 'bot',
+    kind: 'named',
+    description: 'Chat-channel bot: registrations, manifest and health.',
+    serviceSegmentPattern: 'bot-{index}',
+    urlTemplateSample: 'https://{projectId}-{containerId}-bot-{index}.{server}.containers.hoody.com',
+    supportsIndex: true,
+    defaultIndex: 1,
+    minIndex: 1,
+    maxIndex: 9999,
+    sdkNamespace: 'bot',
   },
   {
     slug: 'ssh',
@@ -290,11 +310,11 @@ const KIT_CATALOG: ReadonlyArray<KitCatalogEntry> = [
     slug: 'egress',
     kind: 'special',
     // `supportsIndex: false` describes the DEFAULT URL shape, not what the edge
-    // accepts. Measured on misty-robin-517-sg 2026-08-11: `egress`, `egress-1`,
-    // `egress-2` and `egress-7` all answer 200 from pid 436 and all proxy
+    // accepts. Measured 2026-08-11: `egress`, `egress-1`,
+    // `egress-2` and `egress-7` all answer 200 from one process and all proxy
     // CONNECT to the same exit IP, so the index selects a permission scope on
-    // one process rather than an instance. Keep the sample unsuffixed: four
-    // layers are pinned to it by tests/unit/egress-url-parity.test.ts.
+    // one process rather than an instance. Keep the sample unsuffixed: the SDK,
+    // the CLI and the docs all use the unsuffixed form.
     description: 'Container egress proxy endpoint. The default URL carries no index; the edge normalizes a missing index to 1, and an explicit egress-<n> selects a permission scope on the same single process.',
     serviceSegmentPattern: 'egress',
     urlTemplateSample: 'https://{projectId}-{containerId}-egress.{server}.containers.hoody.com',
@@ -352,7 +372,7 @@ export interface KitCatalogOptions {
 /**
  * Return a clone of the kit catalog so callers can safely mutate their local copy.
  */
-export function getKitCatalogEntries(options?: KitCatalogOptions): KitCatalogEntry[] {
+export function listKits(options?: KitCatalogOptions): KitCatalogEntry[] {
   const includeDynamic = options?.includeDynamic ?? true;
   const includeSpecial = options?.includeSpecial ?? true;
 

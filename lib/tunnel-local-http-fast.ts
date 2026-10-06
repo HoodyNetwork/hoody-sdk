@@ -11,10 +11,44 @@ export interface FastResponse {
   body: Uint8Array;
 }
 
+/**
+ * Where a streamed response goes as it is parsed: its head once, then each body piece in
+ * order. `body` resolves once the piece is passed on; the pool reads at most
+ * STREAM_HIGH_WATER bytes ahead of it, so a slow consumer slows the local target instead of
+ * filling memory. A streamed response has no MAX_RESPONSE_BYTES cap, and its FastResponse
+ * carries an empty body.
+ */
+export interface ResponseSink {
+  head: (status: number, headers: [string, string][]) => void;
+  body: (chunk: Uint8Array) => Promise<void>;
+  /**
+   * Called once, synchronously, when the response fails after its head (the local socket
+   * ends early or errors, or `body` rejects), before the request rejects. A `body` call in
+   * progress may still be waiting; the sink must not send anything after this.
+   */
+  fail?: (err: Error) => void;
+}
+
 interface Pending {
   resolve: (r: FastResponse) => void;
   reject: (e: Error) => void;
+  sink?: ResponseSink;
+  /** A HEAD request: its response has no body, whatever its Content-Length says. */
+  head?: boolean;
 }
+
+/** The response being streamed to a sink: the pieces not passed on yet, in order. */
+interface Streamed {
+  pending: Pending;
+  chain: Promise<void>;
+  queued: number;
+  paused: boolean;
+  failed: Error | null;
+}
+
+/** Bytes read ahead of a streamed response's sink before the socket is paused, and resumed. */
+const STREAM_HIGH_WATER = 1024 * 1024;
+const STREAM_LOW_WATER = 256 * 1024;
 
 type ParseState = "headers" | "body" | "chunk-size" | "chunk-data" | "chunk-trailer-crlf";
 
@@ -32,6 +66,7 @@ interface PooledSocket {
   closeDelimited: boolean;
   busy: boolean;
   alive: boolean;
+  stream: Streamed | null;
   // Idempotent per-socket FD permit release. Both completeResponse and the
   // socket 'close' handler can fire a release; this closure is attached
   // once in createSocket() and is safe to call from any cleanup path.
@@ -55,6 +90,9 @@ function resolveMaxResponseBytes(): number {
   const n = raw ? Number(raw) : NaN;
   return Number.isFinite(n) && n > 0 ? n : 64 * 1024 * 1024;
 }
+
+/** Largest response header block the fast path accepts, terminator excluded. */
+const MAX_HEADER_BYTES = 64 * 1024;
 
 class TargetPool {
   private idle: PooledSocket[] = [];
@@ -110,21 +148,23 @@ class TargetPool {
 
   private onData(ps: PooledSocket, chunk: Buffer) {
     ps.buffer = Buffer.concat([ps.buffer, chunk]);
-    // Cap unparsed header bytes. Without this, a hostile or broken local
-    // target could stream bytes without ever terminating headers
-    // (CRLFCRLF), growing ps.buffer without bound.
-    const MAX_HEADER_BYTES = 64 * 1024;
-    if (ps.parsing === "headers" && ps.buffer.length > MAX_HEADER_BYTES) {
-      for (const p of ps.inflight) p.reject(new Error("local target: response header block > 64KiB"));
-      ps.inflight = [];
-      ps.alive = false;
-      ps.buffer = Buffer.alloc(0);
-      try { ps.socket.destroy(); } catch {}
-      return;
-    }
     while (true) {
       if (ps.parsing === "headers") {
         const end = ps.buffer.indexOf("\r\n\r\n");
+        // Cap the header block itself. Without this, a hostile or broken local
+        // target could stream bytes without ever terminating headers
+        // (CRLFCRLF), growing ps.buffer without bound. Measured up to the
+        // terminator, never over the whole buffer: one read can carry the
+        // headers and the body after them (Bun's socket hands over far more
+        // than 64 KiB at a time), and those body bytes are not header bytes.
+        if ((end < 0 ? ps.buffer.length : end) > MAX_HEADER_BYTES) {
+          for (const p of ps.inflight) p.reject(new Error("local target: response header block > 64KiB"));
+          ps.inflight = [];
+          ps.alive = false;
+          ps.buffer = Buffer.alloc(0);
+          try { ps.socket.destroy(); } catch {}
+          return;
+        }
         if (end < 0) return;
         const block = ps.buffer.subarray(0, end).toString("utf8");
         const parsed = this.parseHeadersBlock(block);
@@ -139,8 +179,29 @@ class TargetPool {
         ps.currentStatus = parsed.status;
         ps.currentHeaders = parsed.headers;
         ps.bodyChunks = [];
+        const pending = ps.inflight[0];
+        if (pending?.sink) {
+          const st: Streamed = { pending, chain: Promise.resolve(), queued: 0, paused: false, failed: null };
+          ps.stream = st;
+          try {
+            pending.sink.head(parsed.status, parsed.headers);
+          } catch (e) {
+            this.failStream(ps, st, e instanceof Error ? e : new Error(String(e)));
+            return;
+          }
+        }
         ps.buffer = ps.buffer.subarray(end + 4);
         if (!parsed.keepAlive) ps.alive = false;
+        // RFC 9112 §6.3: no body after a HEAD request, a 204 or a 304, even with a
+        // Content-Length or Transfer-Encoding; waiting for one would hang the request.
+        if (pending?.head || parsed.status === 204 || parsed.status === 304) {
+          ps.parsing = "body";
+          ps.bodyRemaining = 0;
+          ps.chunkedEncoding = false;
+          ps.closeDelimited = false;
+          this.completeResponse(ps);
+          continue;
+        }
         if (parsed.chunked) {
           ps.parsing = "chunk-size";
           ps.chunkedEncoding = true;
@@ -164,18 +225,14 @@ class TargetPool {
       } else if (ps.parsing === "body") {
         if (ps.closeDelimited) {
           if (ps.buffer.length === 0) return;
-          if (this.enforceBodyCap(ps, ps.buffer.length)) return;
-          ps.bodyChunks.push(ps.buffer);
-          ps.bodyBytesSoFar += ps.buffer.length;
+          if (this.takeBody(ps, ps.buffer)) return;
           ps.buffer = Buffer.alloc(0);
           return;
         }
         if (ps.bodyRemaining > 0) {
           const take = Math.min(ps.bodyRemaining, ps.buffer.length);
           if (take === 0) return;
-          if (this.enforceBodyCap(ps, take)) return;
-          ps.bodyChunks.push(ps.buffer.subarray(0, take));
-          ps.bodyBytesSoFar += take;
+          if (this.takeBody(ps, ps.buffer.subarray(0, take))) return;
           ps.buffer = ps.buffer.subarray(take);
           ps.bodyRemaining -= take;
         }
@@ -207,9 +264,7 @@ class TargetPool {
         if (ps.bodyRemaining > 0) {
           const take = Math.min(ps.bodyRemaining, ps.buffer.length);
           if (take === 0) return;
-          if (this.enforceBodyCap(ps, take)) return;
-          ps.bodyChunks.push(ps.buffer.subarray(0, take));
-          ps.bodyBytesSoFar += take;
+          if (this.takeBody(ps, ps.buffer.subarray(0, take))) return;
           ps.buffer = ps.buffer.subarray(take);
           ps.bodyRemaining -= take;
         }
@@ -269,7 +324,70 @@ class TargetPool {
     return true;
   }
 
+  /**
+   * Body bytes of the in-flight response: passed to its sink when it streams, else buffered
+   * under MAX_RESPONSE_BYTES. True when the request was refused and the socket torn down.
+   */
+  private takeBody(ps: PooledSocket, bytes: Buffer): boolean {
+    const st = ps.stream;
+    if (!st) {
+      if (this.enforceBodyCap(ps, bytes.length)) return true;
+      ps.bodyChunks.push(bytes);
+      ps.bodyBytesSoFar += bytes.length;
+      return false;
+    }
+    if (st.failed) return true;
+    const n = bytes.length;
+    st.queued += n;
+    if (st.queued > STREAM_HIGH_WATER && !st.paused) {
+      st.paused = true;
+      ps.socket.pause();
+    }
+    st.chain = st.chain
+      .then(async () => {
+        if (st.failed) return;
+        await st.pending.sink!.body(bytes);
+        st.queued -= n;
+        if (st.paused && st.queued <= STREAM_LOW_WATER) {
+          st.paused = false;
+          ps.socket.resume();
+        }
+      })
+      .catch((e) => this.failStream(ps, st, e instanceof Error ? e : new Error(String(e))));
+    return false;
+  }
+
+  /** A streamed response whose sink failed, or whose socket went away mid-body. */
+  private failStream(ps: PooledSocket, st: Streamed, err: Error) {
+    if (st.failed) return;
+    st.failed = err;
+    try { st.pending.sink?.fail?.(err); } catch {}
+    if (ps.stream === st) ps.stream = null;
+    ps.alive = false;
+    const i = ps.inflight.indexOf(st.pending);
+    if (i >= 0) ps.inflight.splice(i, 1);
+    st.pending.reject(err);
+    try { ps.socket.destroy(); } catch {}
+  }
+
   private completeResponse(ps: PooledSocket) {
+    const st = ps.stream;
+    if (st) {
+      // Answered once every piece is passed on; the socket is reused only then.
+      ps.stream = null;
+      const pending = ps.inflight.shift();
+      const response = { status: ps.currentStatus, headers: ps.currentHeaders, body: new Uint8Array(0) };
+      ps.parsing = "headers";
+      ps.bodyChunks = [];
+      ps.bodyBytesSoFar = 0;
+      void st.chain.then(() => {
+        if (st.failed) return;
+        st.failed = new Error("stream finished");
+        pending?.resolve(response);
+        this.afterResponse(ps);
+      });
+      return;
+    }
     const body = ps.bodyChunks.length === 1
       ? new Uint8Array(ps.bodyChunks[0]!)
       : (() => {
@@ -293,6 +411,11 @@ class TargetPool {
     ps.parsing = "headers";
     ps.bodyChunks = [];
     ps.bodyBytesSoFar = 0;
+    this.afterResponse(ps);
+  }
+
+  /** Back to the idle list, or closed, once nothing is in flight on it. */
+  private afterResponse(ps: PooledSocket) {
     if (ps.inflight.length === 0) {
       this.busy.delete(ps);
       ps.busy = false;
@@ -344,12 +467,14 @@ class TargetPool {
         closeDelimited: false,
         busy: true,
         alive: true,
+        stream: null,
         releaseFd,
       };
       socket.on("connect", () => { connected = true; resolve(ps); });
       socket.on("data", (chunk: Buffer) => this.onData(ps, chunk));
       socket.on("error", () => {
         ps.alive = false;
+        if (ps.stream) this.failStream(ps, ps.stream, new Error("socket error"));
         for (const p of ps.inflight) p.reject(new Error("socket error"));
         ps.inflight = [];
         this.busy.delete(ps);
@@ -363,6 +488,7 @@ class TargetPool {
         if (ps.closeDelimited && ps.parsing === "body" && ps.inflight.length > 0) {
           this.completeResponse(ps);
         } else {
+          if (ps.stream) this.failStream(ps, ps.stream, new Error("socket closed"));
           for (const p of ps.inflight) p.reject(new Error("socket closed"));
           ps.inflight = [];
         }
@@ -408,24 +534,70 @@ class TargetPool {
     });
   }
 
+  /**
+   * One body-less request. `signal` aborts it: the request rejects (a streamed response's
+   * sink gets `fail` first), and its socket is destroyed, never reused. An abort is a
+   * failure even where the socket's close would end a response: one delimited by the close.
+   */
   async request(
     method: string,
     path: string,
     headerLines: string,
+    sink?: ResponseSink,
+    signal?: AbortSignal,
   ): Promise<FastResponse> {
     const ps = await this.acquire();
     if (!ps) throw new Error("local pool acquire failed");
+    if (signal?.aborted) {
+      this.abortSocket(ps);
+      throw new Error("local request aborted");
+    }
     return new Promise<FastResponse>((resolve, reject) => {
-      ps.inflight.push({ resolve, reject });
+      const onAbort = () => this.abortRequest(ps, pending);
+      // Settled: the socket may go back to the pool, so a later abort must not reach it.
+      const settle = <T>(fn: (v: T) => void) => (v: T) => {
+        signal?.removeEventListener("abort", onAbort);
+        fn(v);
+      };
+      const pending: Pending = {
+        resolve: settle(resolve),
+        reject: settle(reject),
+        ...(sink ? { sink } : {}),
+        ...(method.toUpperCase() === "HEAD" ? { head: true } : {}),
+      };
+      ps.inflight.push(pending);
+      signal?.addEventListener("abort", onAbort, { once: true });
       const req = `${method} ${path} HTTP/1.1\r\n${headerLines}\r\n`;
       ps.socket.write(req);
     });
+  }
+
+  /** Close a socket for good: its 'close' handler fails what is in flight on it. */
+  private abortSocket(ps: PooledSocket) {
+    ps.alive = false;
+    try { ps.socket.destroy(); } catch {}
+  }
+
+  /** Fail `pending` first, then close its socket, so the close cannot complete it. */
+  private abortRequest(ps: PooledSocket, pending: Pending) {
+    const err = new Error("local request aborted");
+    if (ps.stream?.pending === pending) {
+      this.failStream(ps, ps.stream, err);
+      return;
+    }
+    const i = ps.inflight.indexOf(pending);
+    if (i >= 0) {
+      ps.inflight.splice(i, 1);
+      pending.reject(err);
+    }
+    this.abortSocket(ps);
   }
 
   async requestStreaming(
     method: string,
     path: string,
     headerLines: string,
+    sink?: ResponseSink,
   ): Promise<{
     writeBody: (chunk: Uint8Array) => Promise<void>;
     endBody: () => void;
@@ -437,7 +609,7 @@ class TargetPool {
 
     let responsePromise: Promise<FastResponse>;
     responsePromise = new Promise<FastResponse>((resolve, reject) => {
-      ps.inflight.push({ resolve, reject });
+      ps.inflight.push({ resolve, reject, ...(sink ? { sink } : {}) });
     });
 
     const reqLine = `${method} ${path} HTTP/1.1\r\n${headerLines}Transfer-Encoding: chunked\r\n\r\n`;

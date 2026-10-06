@@ -31,7 +31,7 @@
  * ```
  */
 
-import { Duplex, DuplexOptions } from 'stream';
+import { Duplex, type DuplexOptions } from 'stream';
 import {
     TerminalConnectTerminalWebSocketWebSocket,
     type IWebSocketConnectionOptions,
@@ -53,6 +53,8 @@ export interface TerminalClientOptions extends DuplexOptions {
      * Hoody Proxy sitting in front of the terminal service. Five variants:
      *   - `password` → Authorization: Basic base64(user:pass)
      *   - `jwt` / `token` → Authorization: Bearer <value> (or custom header)
+     *   - `token` with `param` → `?<param>=<value>` on the socket URL, in
+     *     Node and browsers (the proxy rule reads only that parameter)
      *   - `containerClaim` → X-Hoody-Container-Claim + X-Hoody-Token headers
      *   - `ip` → no-op (proxy verifies client IP)
      */
@@ -212,7 +214,7 @@ function assertAgentCmdExclusive(options: TerminalClientOptions): void {
  * TerminalClient — Duplex stream for terminal I/O
  *
  * Implements Node.js Duplex stream interface plus terminal-specific events.
- * Internally delegates wire protocol handling to the typed W3 client.
+ * Internally delegates wire protocol handling to the generated typed WebSocket client.
  */
 export class TerminalClient extends Duplex {
     private client: TerminalConnectTerminalWebSocketWebSocket | null = null;
@@ -480,6 +482,17 @@ export class TerminalClient extends Duplex {
                 } else {
                     headers['Authorization'] = `Basic ${cred}`;
                 }
+            } else if (kitAuth.type === 'token' && kitAuth.param !== undefined) {
+                // A proxy TokenAuth rule with `param` reads ONLY that query
+                // parameter (hoody-containers-reverse-proxy-endpoints
+                // matrix.service.ts case 'token'), in Node and browsers alike:
+                // no header, and not the legacy `?token=` name.
+                if (!urlObj) {
+                    throw new Error('TerminalClient: cannot add the kitAuth token parameter to an unparseable WebSocket URL');
+                }
+                const name = kitAuth.param.trim();
+                if (!name) throw new Error('kitAuth token: `param` must be a non-empty query parameter name');
+                urlObj.searchParams.set(name, kitAuth.value);
             } else if (kitAuth.type === 'jwt' || kitAuth.type === 'token') {
                 const value = kitAuth.type === 'jwt' ? kitAuth.token : kitAuth.value;
                 const hdr = kitAuth.header || 'Authorization';

@@ -1,0 +1,32 @@
+{
+  "EVENTS_CURSOR_EXPIRED": {
+    "data": {
+      "boundary_cursor": "<cursor>",
+      "latest_cursor": "<cursor>",
+      "retention_days": 90
+    },
+    "error": "EVENTS_CURSOR_EXPIRED",
+    "message": "This cursor is older than the retained event history; bootstrap again",
+    "statusCode": 410
+  },
+  "EVENTS_CURSOR_INVALID": {
+    "error": "EVENTS_CURSOR_INVALID",
+    "message": "The `after` cursor is invalid for this account and scope",
+    "statusCode": 400
+  },
+  "EVENTS_HISTORY_RESET": {
+    "data": {
+      "boundary_cursor": "<cursor>",
+      "latest_cursor": "<cursor>",
+      "retention_days": 90
+    },
+    "error": "EVENTS_HISTORY_RESET",
+    "message": "Event history was reset since this cursor was issued; bootstrap again",
+    "statusCode": 410
+  },
+  "EVENTS_QUERY_CONFLICT": {
+    "error": "EVENTS_QUERY_CONFLICT",
+    "message": "`after` cannot be combined with: offset",
+    "statusCode": 400
+  }
+}

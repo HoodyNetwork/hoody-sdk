@@ -4,8 +4,8 @@
  * Runs `patchFilesServiceExtensions()` as a side-effect on module load, then
  * re-exports the raw generated surface. Consumers who import a FilesService
  * directly via the subpath (without instantiating HoodyClient) still receive
- * the extension methods (`classifyFile`, `getFileUrl`, `getDirectoryZipUrl`,
- * `getThumbnailUrl`, JSON-default `searchDirectory`/`listDirectory`, …).
+ * the extension methods (`classify`, `getUrl`, `getZipUrl`, `list`,
+ * `images.getThumbnailUrl`, …).
  *
  * Without this wrapper, `package.json.exports['./files']` would map straight
  * to `generated/files/index.js`, and subpath consumers would silently miss

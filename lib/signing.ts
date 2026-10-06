@@ -368,3 +368,74 @@ export function verifyHoodySignatureFrom(
   }
   return verifyHoodySignatureHeader(parsed, input, options);
 }
+
+/**
+ * What `verifyHoodySignatureFromContext` reads. Structurally the SDK's
+ * response-middleware context (`IHttpClientMiddlewareResponseContext`), so an
+ * `onResponse` middleware passes its context straight in.
+ */
+export interface HoodySignatureResponseContext {
+  /** HTTP method of the request. */
+  method: string;
+  /** The full URL the request was sent to. */
+  url: string;
+  /** The fetch Response: its status and headers are read, never its body. */
+  response: { status: number; headers: Headers | Record<string, unknown> };
+  /**
+   * The exact response bytes. The client fills this only when
+   * `captureRawBody: true` is set on the client config or on the request;
+   * the parsed `data` cannot stand in for it (re-serialising does not
+   * reproduce the signed bytes).
+   */
+  rawBody?: Uint8Array;
+}
+
+/**
+ * The `path` hoody-api signs for a request URL: the request target as the
+ * server received it, path plus query string (Fastify's `request.url`).
+ */
+export function hoodySignaturePath(url: string): string {
+  const parsed = new URL(url, 'http://placeholder.invalid');
+  return `${parsed.pathname}${parsed.search}`;
+}
+
+/**
+ * Verify the `X-Hoody-Signature` of a response from inside SDK response
+ * middleware, with the response bytes the client captured:
+ *
+ * ```ts
+ * const client = new HoodyClient({ baseURL, token, captureRawBody: true,
+ *   middlewares: [{ onResponse(ctx) {
+ *     if (!verifyHoodySignatureFromContext(ctx, publicKey)) throw new Error('bad signature');
+ *     return ctx;
+ *   } }] });
+ * ```
+ *
+ * Returns `false` when the header is absent or malformed or the signature
+ * does not verify (unsigned responses — empty bodies, streams, kit routes —
+ * are therefore `false`). Throws when the context carries no `rawBody`: the
+ * client was not asked to capture it, which is a configuration error, not a
+ * bad signature.
+ */
+export function verifyHoodySignatureFromContext(
+  context: HoodySignatureResponseContext,
+  publicKey: Uint8Array,
+  options: VerifyHoodySignatureOptions = {},
+): boolean {
+  if (!(context.rawBody instanceof Uint8Array)) {
+    throw new Error(
+      'verifyHoodySignatureFromContext: the middleware context has no rawBody; set captureRawBody: true on the client or the request',
+    );
+  }
+  return verifyHoodySignatureFrom(
+    context.response,
+    {
+      method: context.method,
+      statusCode: context.response.status,
+      path: hoodySignaturePath(context.url),
+      body: context.rawBody,
+      publicKey,
+    },
+    options,
+  );
+}

@@ -68,6 +68,21 @@ export function configFilePath(id: string, home?: string): string {
   return join(getStateDir(home), `${id}.conf`);
 }
 
+/**
+ * rclone's VFS cache directory for one mount: keyed by the mount id (the
+ * local path) AND the remote URL. rclone files its cache under the remote's
+ * name and root, which are the same (`hoody:`) for every mount, so a shared
+ * cache would let writes left pending by a crashed mount of one container be
+ * uploaded to whichever container is mounted next. The directory is kept
+ * after unmount, so remounting the same URL at the same path recovers its own
+ * pending writes. rclone expires cached files only while a mount of that cache
+ * runs; nothing removes the directory of a mount that is never made again.
+ */
+export function cacheDirPath(id: string, kitUrl: string, home?: string): string {
+  const key = createHash('sha256').update(`${id}\n${kitUrl}`).digest('hex').slice(0, 16);
+  return join(getStateDir(home), 'cache', key);
+}
+
 async function ensureStateDir(home?: string): Promise<void> {
   await fs.mkdir(getStateDir(home), { recursive: true, mode: 0o700 });
 }

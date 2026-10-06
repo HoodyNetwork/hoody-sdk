@@ -187,7 +187,7 @@ export async function tunnelSocks5(opts: TunnelSocks5Options): Promise<TunnelSoc
             } catch {
               // Peer-controlled JSON: a throw here would kill the message loop
               // for every other stream on this socket.
-              (session as unknown as { resetStream?: (id: number) => void }).resetStream?.(streamId);
+              session.sendReset(streamId, "malformed-stream-open");
               continue;
             }
             if (payload.kind === 'tcp') {
@@ -221,7 +221,7 @@ export async function tunnelSocks5(opts: TunnelSocks5Options): Promise<TunnelSoc
             // it either, because no SOCKS stream is constructed and `state.active`
             // never moves — so `maxConcurrent` is bypassed entirely and the map
             // grows for the life of the tunnel. Mirrors the malformed-JSON arm.
-            (session as unknown as { resetStream?: (id: number) => void }).resetStream?.(streamId);
+            session.sendReset(streamId, "unsupported-stream-kind");
             continue;
           }
           session.dispatchFrame(frame, ws);
