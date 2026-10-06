@@ -22,6 +22,7 @@
  * - run
  * - proxyLogs
  * - agent
+ * - bot
    *
    * @example
    * ```typescript
@@ -48,6 +49,7 @@
  * const runService = new SDK.run.SomeService(); // run
  * const proxyLogsService = new SDK.proxyLogs.SomeService(); // proxyLogs
  * const agentService = new SDK.agent.SomeService(); // agent
+ * const botService = new SDK.bot.SomeService(); // bot
    * ```
    *
    * @packageDocumentation
@@ -73,14 +75,22 @@ export * as egress from './egress/index.js';
 export * as run from './run/index.js';
 export * as proxyLogs from './proxyLogs/index.js';
 export * as agent from './agent/index.js';
+export * as bot from './bot/index.js';
 
 // Export shared runtime/types
 export * from './types.js';
 export { ApiError, isApiError, isRetryableApiError, ValidationError, type ApiErrorRequestContext, type ApiErrorResponseDetails, type RetryableApiError, type RetryableStatus } from './errors.js';
 export { HttpClient } from './http-client.js';
+export { createStreamFrameBuffer, parseSseChunk, finishSseStream, DEFAULT_MAX_STREAM_FRAME_BYTES } from './http-client.js';
 export type {
+  HoodyFetch,
   IHttpClientConfig,
   IRequestData,
+  IEventStream,
+  IStreamEvent,
+  IStreamEventsOptions,
+  IStreamFrameBuffer,
+  IStreamResponse,
   IHttpClientMiddleware,
   IHttpClientMiddlewareRequestContext,
   IHttpClientMiddlewareResponseContext,
@@ -88,3 +98,4 @@ export type {
 } from './http-client.js';
 
 export { HoodyClient } from './client.js';
+export { TwoFactorRequiredError, isRealmScopeError, type RealmScopeApiError, type HoodySessionTokens } from './client.js';

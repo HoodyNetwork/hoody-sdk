@@ -6,6 +6,5 @@
  */
 
 export { UiService } from './ui.service.js';
-export { InfoService } from './info.service.js';
-export { HealthService } from './health.service.js';
+export { KitService } from './kit.service.js';
 export { PipeService } from './pipe.service.js';

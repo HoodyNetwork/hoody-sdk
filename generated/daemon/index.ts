@@ -5,8 +5,6 @@
  * @packageDocumentation
  */
 
-export { HealthService } from './health.service.js';
+export { KitService } from './kit.service.js';
 export { ProgramsService } from './programs.service.js';
-export { ControlService } from './control.service.js';
-export { StatusService } from './status.service.js';
-export { QuickStartService } from './quick-start.service.js';
+export { EphemeralProgramsService } from './ephemeral-programs.service.js';

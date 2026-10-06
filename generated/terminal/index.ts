@@ -5,13 +5,13 @@
  * @packageDocumentation
  */
 
-export { HealthService } from './health.service.js';
-export { TerminalSessionsService } from './terminal-sessions.service.js';
-export { TerminalExecutionService } from './terminal-execution.service.js';
-export { WebInterfaceService } from './web-interface.service.js';
-export { ApiDocumentationService } from './api-documentation.service.js';
-export { SystemMonitoringService } from './system-monitoring.service.js';
-export { TerminalService } from './terminal.service.js';
-export { TerminalStateService } from './terminal-state.service.js';
-export { TerminalAutomationService } from './terminal-automation.service.js';
-export { TerminalDragAndDropService } from './terminal-drag-and-drop.service.js';
+export { KitService } from './kit.service.js';
+export { CommandsService } from './commands.service.js';
+export { SessionsService } from './sessions.service.js';
+export { UiService } from './ui.service.js';
+export { ProcessesService } from './processes.service.js';
+export { SystemService } from './system.service.js';
+export { AutomationService } from './automation.service.js';
+export { KeysService } from './keys.service.js';
+export { DropsService } from './drops.service.js';
+export { TerminalConnectTerminalWebSocketWebSocket } from './terminal_connect-terminal-web-socket.websocket.js';
