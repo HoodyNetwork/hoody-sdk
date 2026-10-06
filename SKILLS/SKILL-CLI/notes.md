@@ -1,4 +1,4 @@
-> _**CLI skill · `notes` namespace** · ~8,947 tokens · hoody-sdk v1.0.0-beta.14_
+> _**CLI skill · `notes` namespace** · ~11,258 tokens · hoody-sdk v1.0.0-beta.15_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 
@@ -16,9 +16,10 @@ SQL/KV → `sqlite`, container fs → `files`, desktop notifs → `notifications
 
 ## Prerequisites
 
-- `notebookId` per call; first `hoody notes whoami` auto-provisions notebook+user from `?username=` (default `user`).
-- HTTP/raw fetch supports `X-Idempotency-Key` for retry-safe creates. **Most generated SDK service methods do NOT expose per-call request headers** (`requestOptions` has no `headers` field), so idempotency-keyed retries on those must use raw `fetch()` against the kit URL. **The exception is `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`, which accepts the key as `options.XIdempotencyKey`** — so the recommended document-writing path is fully retry-safe from the SDK. Export `ticket` is HTML-export-only.
-- **Writing a document needs editor-or-admin role on the node** — `hoody notes doc put`/`hoody notes doc patch`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` resolve access via `getNodeAccess` and reject viewers/read-only collaborators with `403`. Documents attach only to `page` and `record` nodes (the node types that declare a `documentSchema`); `message`/`channel`/`database` nodes do not support documents.
+- **To add a note, create a page in a notebook you already have; do not create a notebook for it.** Your default notebook (the `notebookId` from `hoody notes whoami`) and every new notebook come with a `Home` section. A page is `hoody notes nodes create` with `type:"page"`, `parentId:<Home section id>` (from `hoody notes nodes list` with `type:"section"`) and `attributes:{name}`; then write its text with `hoody notes document append`.
+- `notebookId` on every notebook-scoped call (identity and notebook list/create take none). Notebook-scoped commands fall back to your default notebook when `--notebook-id` is omitted. Without a Bearer token or export ticket, identity comes from the `?username=` / `?role=` query parameters on each request (default username `user`, default role `owner`). The first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`); every query-identity user joins that same notebook, so it is not private. Use `hoody notes notebooks create` for a separate notebook.
+- `hoody notes document append` takes `--x-idempotency-key <key>`, so the recommended document-writing path is retry-safe from the CLI. Most other commands have no idempotency flag; use raw HTTP with an `X-Idempotency-Key` header when you need a retry-safe node or record create. Notebook create, comment create and version create ignore that header, so retrying those can create duplicates. Export `ticket` is HTML-export-only.
+- **Writing a document needs editor-or-admin role on the node** — `hoody notes document set`/`hoody notes document update`/`hoody notes document append` reject viewers and read-only collaborators with `403`. Documents attach only to `page` and `record` nodes; `message`/`channel`/`database` nodes do not support documents.
 
 ## Capability URL
 
@@ -33,36 +34,41 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-1. **Write a page (RECOMMENDED: append)** — the simplest, most reliable way to put content into a note. First get a page node id (use the auto-provisioned `Home` section: `hoody notes node list` `type:"section"` → pick `Home` → `hoody notes node create` `type:"page"`, `parentId:<sectionId>`, `attributes:{name}`). Then `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` with `{text:"…", type:"paragraph"|"heading1"|…}` (one block from plain text) OR `{blocks:[{type,content,attrs}]}` (batch). **The server assigns each block's `id`, `parentId`, and `index`** — you never compute fractional indices or block ids, which is the part agents get wrong with `hoody notes doc put`. Creates the document if absent; pass `X-Idempotency-Key` (SDK `options.XIdempotencyKey`) for safe retries. See §Examples 1–2.
-2. **Bootstrap identity + notebook** — `hoody notes whoami` → `{userId,username,role,notebookId}` (auto-provisions a notebook + `Home` section + starter pages). `hoody notes notebook list`/`create`/`get` open to any non-`none` member; `update`/`delete` are owner-gated.
-3. **Build a structured document with `hoody notes doc put`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `hoody notes doc put` OVERWRITES the whole document; `hoody notes doc patch` shallow-merges at the TOP level only (submitting `content.blocks` REPLACES the entire blocks map — it does NOT merge per-block). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real `EditorNodeTypes` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 3.
-4. **Database CRUD** — `hoody notes node create` `type:"database"`; then `hoody notes db create`/`hoody notes db list`/`hoody notes db search`/`hoody notes db update` (merges `fields`)/`hoody notes db delete`. Page with `page`/`count` on `hoody notes db list` (count max 100). ⚠ SDK-only: the auto-pagination helpers (listIterator / listAll) are misconfigured upstream — they send `limit`/`offset` while the route accepts `page`/`count`; prefer manual paged list loops.
-5. **Comments + versions** — `hoody notes collab add` (`admin`/`editor`/`collaborator`/`viewer`). `hoody notes comment create` (top-level, anchored, or reply); `hoody notes comment edit`/`delete`/`hoody notes comment resolve` accept optional `expectedVersion` for optimistic concurrency. `hoody notes version create`/`list`/`get`/`hoody notes version restore`.
-6. **TUS upload + download** — `POST /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` for `fileId`; `PATCH /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` `PATCH`+`Upload-Offset`; `HEAD /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` `HEAD` returns resume offset; `DELETE /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` cancels. `hoody notes file list`, `hoody notes file download`.
+1. **Write a page (RECOMMENDED: append)** — the simplest, most reliable way to put content into a note. First get a page node id (use the auto-provisioned `Home` section: `hoody notes nodes list` `type:"section"` → pick `Home` → `hoody notes nodes create` `type:"page"`, `parentId:<sectionId>`, `attributes:{name}`). Then `hoody notes document append` with `{text:"…", type:"paragraph"|"heading1"|…}` (one block from plain text) OR `{blocks:[{type,content,attrs}]}` (batch). **The server assigns each block's `id`, `parentId`, and `index`** — you never compute fractional indices or block ids, which is the part agents get wrong with `hoody notes document set`. Creates the document if absent; pass an idempotency key (`--x-idempotency-key`) for safe retries. See §Examples 1–2.
+2. **Bootstrap identity + notebook** — `hoody notes whoami` → `{userId,username,role,notebookId}`. The `notebookId` is the container's shared default notebook (`Hoody Notes`, with a `Home` section and starter pages), which every query-identity username joins; create your own with `hoody notes notebooks create` when the content must not be shared. `hoody notes notebooks list`/`create`/`get` open to any non-`none` member; `update`/`delete` are owner-gated.
+3. **Build a structured document with `hoody notes document set`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `hoody notes document set` OVERWRITES the whole document; `hoody notes document update` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `hoody notes document set`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
+4. **Database CRUD** — `hoody notes nodes create` `type:"database"`; then `hoody notes records create`/`hoody notes records list`/`hoody notes records search`/`hoody notes records update` (merges `fields`)/`hoody notes records delete`. Page with `page`/`count` on `hoody notes records list` (count max 100).
+5. **Comments + versions** — `hoody notes collaborators add` (`admin`/`editor`/`collaborator`/`viewer`). `hoody notes comments create` (top-level, anchored, or reply); `hoody notes comments update` / `hoody notes comments delete` / `hoody notes comments resolve` accept optional `expectedVersion` for optimistic concurrency. `hoody notes versions create`/`list`/`get`/`hoody notes versions restore`.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `hoody notes nodes create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `hoody notes files download`. The CLI has no TUS commands (`hoody notes files` only lists and downloads), so upload over HTTP.
 
 ## Quirks & gotchas
 
-- **Use the real block `type` strings and the `attrs` key — wrong values store silently but render blank.** Valid block types are the `EditorNodeTypes` values: `paragraph`, `heading1`/`heading2`/`heading3`, `blockquote`, `bulletList`, `listItem`, `orderedList`, `taskList`, `taskItem`, `codeBlock`, `horizontalRule`, `table`/`tableRow`/`tableHeader`/`tableCell`, `page`, `file`, `folder`, `tempFile`, `drawing`, `grid`, plus the editor-extension blocks `embed` (block) and inline `mention`/`hardBreak`. There is NO `code`, `bullet_list_item`, or `quote` type, and block attributes live under `attrs` (NOT `props`); code language is `attrs.language`, a task's done-state is `attrs.checked`. The block schema is loose (`type:z.string()`, `attrs:z.record`), so a bad `type`/`props` is accepted with `200` and stored — the CRDT bridge validates with `safeParse` but writes the ORIGINAL object, persisting the junk key — the editor then has no renderer for it and the block shows blank. (A later full rewrite that omits the bad key reconciles it away.)
-- **Container blocks hold NO direct text — their text lives in a CHILD `paragraph` block.** Only `paragraph`/`heading1-3`/`codeBlock` (and the text-less `horizontalRule`) are leaf blocks that carry `content:[{type:'text',text}]` directly. For `listItem`, `taskItem`, `blockquote`, `tableCell`, `tableHeader` you MUST add a child `paragraph` block whose `parentId` is the container's id; putting text directly on the container makes it render empty. See §Examples 0 and 3 for the exact nesting.
-- **Prefer `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` for adding content; it does NOT create the node.** Append server-assigns `id`/`parentId`/`index` and creates the document row if missing, but `404`s if the node is absent and `400`s for node types without a `documentSchema` (only `page`/`record`) — so create/find the page first. It rejects client-supplied `id`/`parentId`/`index` and reserved `attrs` keys (`id`,`parentId`,`index`,`type`,`__proto__`,`constructor`,`prototype`), accepts only `{type:'text'}` leaves (no inline `mention`/image), the `{text}` form does NOT split newlines (one literal block), and it caps at 100 blocks / 512 KiB per call. Appendable types: `paragraph`, `heading1-3`, `codeBlock`, `horizontalRule` (containers and `file` are rejected).
-- **`hoody notes doc put` has no block/byte cap** (only the Fastify 10 MB body limit) and requires the node to exist, creating the document row if it has none; the 100-block / 512 KiB caps are append-only.
-- **`hoody notes node create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — `YDoc.update()` throws on the attribute `safeParse` before the create transaction's try/catch (unknown type / missing parent → `400`; permission/`canCreate` → `403`). A page needs `attributes.name` + `parentId` and cannot be root-level; a manually-created `section` must include `attributes.collaborators` with the creator as `admin` and is root-only — easiest is to reuse the auto-provisioned `Home` section.
-- `notebookAuthenticator` re-anchors identity to URL `notebookId`; one bearer reaches any notebook the username joined.
-- Cross-client convergence is **mutation-stream-driven** via the `POST /api/v1/notes/notebooks/{notebookId}/mutations` route + WS feed: each mutation type (`document.update`, `node.*`, etc.) is dispatched server-side to a SQL-backed lib function. `hoody notes doc put`/`hoody notes doc patch` are last-writer-wins JSON overlays on top of the same store; two concurrent PATCHes will clobber each other unless drivers coordinate via the WS mutation feed.
-- `identity.get?username=&role=` creates user+notebook and runs `initializeNotebookContent`. Priority Bearer → `ticket` → `?username=&role=`; invalid Bearer = 401 even with fallback. **Without any of the three, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=` on every unauthenticated call, or attach Bearer / `ticket`. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
-- **`Readonly` notebook gates writes only** — read endpoints still serve through; write routes (mutations, document.put/patch, record-create, etc.) are rejected with `403 notebook_readonly`.
-- `X-Idempotency-Key` replay returns saved response; same key+different payload → 409.
-- `hoody notes db update` merges `fields`; access runs through `getNodeAccess(notebookId, databaseId, userId)`, which resolves your role from the `collaborations` row on the notebook **root** node, then walks the database's full ancestor chain and returns `403` if any ancestor is a private `section`, or a `channel` whose `attributes.collaborators` map omits you (notebook owner/admin bypasses the privacy walk). A root collaboration alone is therefore NOT sufficient. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.
-- `documents.get?output=html` needs single-use export `ticket` on `GET .../document`. `hoody notes doc put` overwrites; `hoody notes doc patch` top-level spreads the request body over current content — submitting `content.blocks` REPLACES the blocks map, it does not merge per-block. For per-block CRDT merging use the `POST /api/v1/notes/notebooks/{notebookId}/mutations` WS feed instead. `hoody notes comment edit`/`delete`/`hoody notes comment resolve` accept optional `expectedVersion`.
-- `hoody notes db search` matches against record names AND field values (not just names).
-- Text filter operators in `databases.list?filters=`: `is_equal_to` / `is_not_equal_to` / `contains` / `does_not_contain` / `starts_with` / `ends_with` / `is_empty` / `is_not_empty`. The bare `is` is NOT a valid operator — use `is_equal_to`; the bare `not_contains` is NOT either — use `does_not_contain`.
-- TUS chunk uploads: `PATCH /api/v1/notes/notebooks/{n}/files/{id}/tus` is the byte-transfer call — send the raw chunk as the request body with `Upload-Offset`/`Tus-Resumable` headers (e.g. via `@tus/client`). SDK-only: the generated tusUploadChunk method takes no chunk-body or Upload-Offset parameter, so drop to raw `@tus/client`/`fetch` for the actual byte transfer.
+- **Use the real block `type` strings and the `attrs` key — a value the kit cannot repair stores silently but renders blank.** The valid block types are: `paragraph`, `heading1`/`heading2`/`heading3`, `blockquote`, `bulletList`, `listItem`, `orderedList`, `taskList`, `taskItem`, `codeBlock`, `horizontalRule`, `table`/`tableRow`/`tableHeader`/`tableCell`, `page`, `file`, `folder`, `tempFile`, `drawing`, `grid`, plus the editor-extension blocks `embed` (block) and inline `mention`/`hardBreak`. There is NO `code`, `bullet_list_item`, or `quote` type, and block attributes live under `attrs` (NOT `props`); code language is `attrs.language`, a task's done-state is `attrs.checked`. `hoody notes document set` and `hoody notes document update` repair the unambiguous mistakes before validating: known type aliases (`code`, `quote`, `bullet_list_item`, `numbered_list_item`, `h1`, …) become the real type, with flat list items wrapped in a list, and `props` becomes `attrs` when the block has no `attrs`. Other write paths skip this repair, and it leaves anything ambiguous alone (an unknown type, a bare `list_item`). The block schema is loose (`type:z.string()`, `attrs:z.record`), so an unrepaired bad `type`/`props` is accepted with `200` and stored — the block is validated on the way in, but the ORIGINAL object is what gets written, so the junk key persists — the editor then has no renderer for it and the block shows blank. (A later full rewrite that omits the bad key reconciles it away.)
+- **Container blocks hold NO direct text — their text lives in a CHILD `paragraph` block.** Only `paragraph`/`heading1-3`/`codeBlock` (and the text-less `horizontalRule`) are leaf blocks that carry `content:[{type:'text',text}]` directly. For `listItem`, `taskItem`, `blockquote`, `tableCell`, `tableHeader` you MUST add a child `paragraph` block whose `parentId` is the container's id. `hoody notes document set`/`hoody notes document update` move text found directly on a container with no children into a new child paragraph, but text on a container that already has children is left there and renders empty. See §Examples 0 and 2 for the exact nesting.
+- **Prefer `hoody notes document append` for adding content; it does NOT create the node.** Append server-assigns `id`/`parentId`/`index` and creates the document row if missing, but `404`s if the node is absent and `400`s for node types that do not support documents (only `page`/`record` do) — so create/find the page first. It rejects client-supplied `id`/`parentId`/`index` and reserved `attrs` keys (`id`,`parentId`,`index`,`type`,`__proto__`,`constructor`,`prototype`), accepts only `{type:'text'}` leaves (no inline `mention`/image), the `{text}` form does NOT split newlines (one literal block), and it caps at 100 blocks / 512 KiB per call. Appendable types: `paragraph`, `heading1-3`, `codeBlock`, `horizontalRule` (containers and `file` are rejected).
+- **`hoody notes document set` has no block/byte cap** (only the Fastify 10 MB body limit) and requires the node to exist, creating the document row if it has none; the 100-block / 512 KiB caps are append-only.
+- **A page needs a parent and a `name`: `hoody notes nodes create` with `type:"page"`, `parentId` and `attributes.name`.** The parent is the `Home` section (its id from `hoody notes nodes list` with `type:"section"`) or another page you can edit; in flags: `--type page --parent-id <sectionId> --attributes name=<name>`. With no `parentId` the kit answers `400 parent_required`: add the parent rather than creating a notebook. A `403 forbidden` is a real permission refusal (your role on the parent does not allow the create). The label is `name`; there is no `title` attribute, and a page without `name` fails with `500 unknown`.
+- **`hoody notes nodes create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A manually-created `section` must include `attributes.collaborators` with the creator as `admin` and is root-only — easiest is to reuse the auto-provisioned `Home` section.
+- **`hoody notes notebooks create` always makes a new, separate notebook; it is not how you add a note.** It takes only `name` (plus optional `description`/`avatar`) and no parent: a notebook is top-level. It ignores `X-Idempotency-Key`, and names are not unique, so a retry or a second call with the same name makes a duplicate. Run `hoody notes notebooks list` first and reuse a notebook that has the name; to add a note, create a page in an existing notebook with `hoody notes nodes create`.
+- **Known defect (CLI): `hoody notes document set` and `hoody notes document update` cannot write text.** `--content KEY=VALUE` sends a flat object of strings, not a rich-text document (`{type:"rich_text",blocks:{…}}`): `doc put` is refused with `400`, and `doc patch` stores an extra key the page never shows. Write text with `hoody notes document append --body '{"text":"…","type":"paragraph"}'`; build lists and tables over HTTP or the SDK.
+- **Known defect (CLI): `hoody notes records create` and `hoody notes records update` cannot set field values.** `--fields KEY=VALUE` sends each value as a plain string, but a record field is a typed `{type, value}` object keyed by the field id, so any `--fields` is refused (`db create` `500`, `db update` `400`). Use `--name` alone from the CLI and write field values over HTTP or the SDK.
+- **Known defect (CLI): `hoody notes avatars upload` has no input for the image**, so it sends an empty request and the kit answers `400`. Upload over HTTP: `POST /api/v1/notes/avatars` with the raw JPEG, PNG or WebP bytes as the body and a matching `Content-Type`; the response carries the avatar id for `--avatar`.
+- Authentication re-anchors identity to the `notebookId` in the URL, so one bearer token reaches any notebook the username has joined.
+- Cross-client convergence is **mutation-stream-driven** via the `POST /api/v1/notes/notebooks/{notebookId}/mutations` (HTTP only; no CLI command) route + WS feed: each mutation type (`hoody notes document update`, `node.*`, etc.) is dispatched server-side to a SQL-backed lib function. `hoody notes document set` is a last-writer-wins overwrite of the same store. `hoody notes document update` re-applies its merge to the current document when a concurrent write lands first, so two PATCHes that send different blocks both survive; two that send the same block id are last-writer-wins for that block, and a `hoody notes document set` racing a PATCH still overwrites whatever it omits.
+- `hoody notes whoami` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `hoody notes notebooks create` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`; invalid Bearer = 401 even with fallback. **Without any of the three, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=` on every unauthenticated call, or attach Bearer / `ticket`. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
+- **`Readonly` notebook gates writes** — content reads still serve through; write routes (mutations, document.put/patch, record-create, etc.) are rejected with `403 notebook_readonly`. The TUS upload route refuses every method on a readonly notebook, the `HEAD` offset check included.
+- `X-Idempotency-Key` replay returns saved response; same key+different payload → 409. Only routes that implement it honour the header (see Prerequisites); notebook create does not.
+- `hoody notes records update` merges `fields`. Access resolves your role from your collaboration on the notebook **root** node, falling back to your notebook role when there is none, then walks the database's full ancestor chain and returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you (notebook owner/admin bypasses the privacy walk). A root collaboration alone is therefore NOT sufficient under such an ancestor. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.
+- `hoody notes document get` with `output=html` needs a short-lived export `ticket` (3 uses, 2 minutes) on `GET .../document`. `hoody notes document set` overwrites; `hoody notes document update` merges: top-level keys replace the stored ones, and `content.blocks` (a map by block id, or a list of blocks with distinct ids) merges by block id — a sent block replaces the stored block with that id, every other block is kept, and removing blocks takes a `hoody notes document set`. Any other `blocks` shape is a `400`. `hoody notes comments update` / `hoody notes comments delete` / `hoody notes comments resolve` accept optional `expectedVersion`.
+- `hoody notes records search` matches against record names AND field values (not just names).
+- Text filter operators in `hoody notes records list --filters <filters>`: `is_equal_to` / `is_not_equal_to` / `contains` / `does_not_contain` / `starts_with` / `ends_with` / `is_empty` / `is_not_empty`. The bare `is` is NOT a valid operator — use `is_equal_to`; the bare `not_contains` is NOT either — use `does_not_contain`.
+- TUS chunk uploads: `PATCH /api/v1/notes/notebooks/{n}/files/{id}/tus` is the byte-transfer call — send the raw chunk as the request body with `Upload-Offset`/`Tus-Resumable` headers (e.g. via `@tus/client`). The file node must already exist with a `…18` id (workflow 6). 
 
 ## Common errors
 
-- `400 bad_request` validation (`details[]`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.
-- `403 notebook_no_access`/`notebook_readonly`/`forbidden` (db needs `collaborations` or `canCreate`).
-- `404 not_found` — node/file/comment/version missing or `notebook_id` mismatch. `500 unknown` — read-back failed or uncategorized.
+- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.
+- `403 notebook_no_access`/`notebook_readonly`/`forbidden` (a database write needs a collaboration granting you create rights).
+- `404 not_found` — node/comment/version missing, or it does not belong to the `notebookId` given in the path. File routes use their own codes: `hoody notes files download` answers `400 file_not_found` for a missing file node or one outside the notebook, `400 file_not_ready` / `400 file_upload_not_found` for an upload that has not finished, and `404 file_not_found` when the stored bytes are missing; the TUS route answers `404 file_not_found` for a missing file node. `500 unknown` — read-back failed or uncategorized.
 
 ## Related namespaces
 
@@ -70,15 +76,15 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Examples
 
-Every step in every example was live-tested against a real `notes-1` kit. Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first; bootstrap identity once with `GET /api/v1/notes/me?username=...&role=owner` to auto-provision `notebookId`.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK), except the structured-document and typed-record steps the CLI flags cannot express, which point to the HTTP or SDK skill instead. Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. The examples send no `?username=`, Bearer token or ticket, so every call runs as the default username `user`; to act as another user, add the same `?username=<name>` to every request (a username that appears on only some calls splits ownership between two users).
 
 ### 0. Block model cheat-sheet — types, the `attrs` key, and container nesting
 
-**Read this before hand-building any `hoody notes doc put` body.** A document is
+**Read this before hand-building any `hoody notes document set` body.** A document is
 `{ "content": { "type": "rich_text", "blocks": { "<blockId>": <block> } } }`. Each
 block is `{ id, type, parentId, index, content?, attrs? }`:
 
-- `type` is one of the real `EditorNodeTypes` strings. There is **no** `code`,
+- `type` is one of the block types listed above. There is **no** `code`,
   `bullet_list_item`, `quote`, or `numbered_list_item`. Block attributes live under
   `attrs` (**never** `props`).
 - **Leaf blocks** carry text directly in `content`: `paragraph`, `heading1`,
@@ -144,180 +150,213 @@ Table — `table → tableRow → tableHeader/tableCell → paragraph`:
 
 **Goal:** stand up a fresh notebook from scratch, attach a page under the auto-created Home section, give it a one-block document.
 
-**Step 1 — bootstrap identity & create notebook.** First call to `hoody notes whoami` with `?username=&role=` auto-provisions a default notebook + Home section + Welcome page; pass it once per `username`. Then `hoody notes notebook create` for a second, named one.
+**Step 1 — check identity & create notebook.** `hoody notes whoami` returns the caller (`user` here) and the shared default notebook that the first request joined it to. Then `hoody notes notebooks create` for a separate, named notebook owned by that user. To write into the default notebook instead, skip `hoody notes notebooks create` and use the `notebookId` that `hoody notes whoami` returns.
 
 ```bash
 hoody --container "$C" notes whoami
-NBID=$(hoody --container "$C" notes notebook create \
+NBID=$(hoody --container "$C" notes notebooks create \
   --name team-wiki --description 'engineering docs' -o json | jq -r .id)
 ```
-**Step 2 — find the auto-created Home section and add a page under it.** Every fresh notebook ships with a `section` named `Home`; `hoody notes node create` with `type:"page"` needs that section as `parentId`. POST returns `201` (NOT 200 — generic retry helpers that only accept 200 will treat success as failure).
+
+**Step 2 — find the auto-created Home section and add a page under it.** Every fresh notebook ships with a `section` named `Home`; `hoody notes nodes create` with `type:"page"` needs that section as `parentId`. POST returns `201` (NOT 200 — generic retry helpers that only accept 200 will treat success as failure).
 
 ```bash
-SEC=$(hoody --container "$C" notes node list --notebook-id "$NBID" -o json \
+SEC=$(hoody --container "$C" notes nodes list --notebook-id "$NBID" -o json \
   | jq -r '.nodes[] | select(.type=="section") | .id' | head -1)
-PAGE=$(hoody --container "$C" notes node create --notebook-id "$NBID" \
+PAGE=$(hoody --container "$C" notes nodes create --notebook-id "$NBID" \
   --type page --parent-id "$SEC" --attributes name=Runbook -o json | jq -r .id)
 ```
-**Step 3 — append the first content (recommended).** `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`
+
+**Step 3 — append the first content (recommended).** `hoody notes document append`
 appends to the END of the page's document and **the server assigns each block's
 `id`, `parentId`, and `index`** — so you never compute fractional indices or block
 ids. Send EITHER `{text, type?}` (one block from plain text; `type` defaults to
 `paragraph`) OR `{blocks:[{type, content?, attrs?}]}` (a batch of flat blocks).
 Appendable types are `paragraph`, `heading1`–`heading3`, `codeBlock`,
-`horizontalRule` only; containers (lists/tables) need `hoody notes doc put` (Example 3).
+`horizontalRule` only; containers (lists/tables) need `hoody notes document set` (Example 2).
 If the document doesn't exist yet it is created. `X-Idempotency-Key` makes retries
 safe.
 
 ```bash
-# There is no generated document-append CLI command (only doc get/put/patch), so
-# use the kit HTTP endpoint directly:
-curl -sf -X POST "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document/append" \
-  -H 'Content-Type: application/json' \
-  -d '{"type":"heading1","text":"Runbook"}'
+# --body takes the raw JSON request body (one block or {"blocks":[...]})
+hoody --container "$C" notes document append --notebook-id "$NBID" --node-id "$PAGE" \
+  --x-idempotency-key runbook-h1 --body '{"type":"heading1","text":"Runbook"}'
 ```
-### 2. Build a structured document with `hoody notes doc put` — leaf blocks + a bulleted list
+
+### 2. Build a structured document with `hoody notes document set` — leaf blocks + a bulleted list
 
 **Goal:** lay out a page with a header, prose, a fenced code block, and a 2-item
 bulleted list, in one full-document write. Use PUT (not append) when you need
 containers or precise ordering. ⚠ Two traps this example fixes: (1) use the REAL type
 strings — `codeBlock` (not `code`) with the language under `attrs` (not `props`),
-and a `bulletList`→`listItem`→`paragraph` nest (there is no `bullet_list_item`); a
-wrong type/`props` is stored silently and renders blank. (2) `hoody notes doc patch` does
-NOT merge by block id — it REPLACES the entire `blocks` map (live-verified). To add to
-an existing doc, `GET` the current blocks, mutate locally, `PUT` the union back (or
-just use `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`).
+and a `bulletList`→`listItem`→`paragraph` nest (there is no `bullet_list_item`). PUT
+repairs the well-known aliases, but a wrong type it cannot map is stored silently and
+renders blank (see Quirks). (2) `hoody notes document update` merges
+by block id: each sent block replaces the stored block with that id wholesale and
+omitted blocks are kept, so it can add or rewrite blocks but never remove one. To
+remove blocks, `GET` the current blocks, mutate locally, `PUT` the result back (to
+add plain blocks, `hoody notes document append` is simpler).
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; use the HTTP curl form above or the SDK form below)_
+_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; run this step over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
+
 ### 3. Update one block's content + reorder by changing `index`
 
 **Goal:** rewrite a paragraph and move it to the top of the page. Because PUT is full-overwrite, you read the current doc, mutate the target block, and write the full map back.
 
 **Step 1 — read current blocks.**
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; use the HTTP curl form above or the SDK form below)_
-**Step 2 — mutate locally + PUT back.** Set the target block's `index` to a key that sorts FIRST (e.g. prefix `Z` → swap to `9`, or use a fresh small string like `_a0`); rewrite its `content`.
+```bash
+DOC=$(hoody --container "$C" notes document get --notebook-id "$NBID" --node-id "$PAGE" -o json)
+echo "$DOC" | jq '.content.blocks | to_entries | map({k:.key,t:.value.type,i:.value.index})'
+```
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; use the HTTP curl form above or the SDK form below)_
+**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An arbitrary string such as `_a0` sorts first but breaks the editor's next insert beside it.
+
+_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; run this step over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
+
 ### 4. Delete a block + verify ordering survives
 
 **Goal:** drop a single block from the doc. Same overwrite trick — `delete blocks[b3]` locally, PUT remaining map back, then GET to verify the survivors keep their `index` order.
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; use the HTTP curl form above or the SDK form below)_
+_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; run this step over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
+
 ### 5. Create a database (Tasks) with typed columns + add records
 
-**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `hoody notes node create` for `type:"database"` REQUIRES `attributes.fields` populated — without it the kit returns `500` (the attribute `safeParse` throws inside `YDoc.update` before the create transaction's try/catch — a `canCreate` failure would be a `403`). Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
+**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `hoody notes nodes create` for `type:"database"` REQUIRES `attributes.fields` populated — without it the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
 
 ```bash
 # _(no native `hoody notes` shape)_ — `--fields` is a KEY=VALUE collector, so the
 # JSON would be sent as a literal STRING and the server rejects the untyped value
 # (`db create` 500s, `db update` 400s). Typed database fields are HTTP/SDK-only.
 ```
+
 ### 6. Query records — filter + sort
 
 **Goal:** find records with `priority > 1` sorted descending. Both `filters` and `sorts` are JSON-encoded query strings. ⚠ `filters` MUST be a **JSON array** (not an object) of `{ id, type:"field", fieldId, operator, value }`; sending an object returns `400 "filters" query parameter must be a JSON array.` Operators are field-type-specific: numbers use `is_equal_to`/`is_not_equal_to`/`is_greater_than`/`is_less_than`/`is_greater_than_or_equal_to`/`is_less_than_or_equal_to`, text uses `is_equal_to`/`is_not_equal_to`/`contains`/`does_not_contain`/`starts_with`/`ends_with`/`is_empty`/`is_not_empty`, booleans use `is_true`/`is_false`. Sort entries are `{ id, fieldId, direction:"asc"|"desc" }` (also array).
 
 ```bash
-hoody --container "$C" notes db list --notebook-id "$NBID" --database-id "$DBID" \
+hoody --container "$C" notes records list --notebook-id "$NBID" --database-id "$DBID" \
   --filters '[{"id":"f1","type":"field","fieldId":"f_priority","operator":"is_greater_than","value":1}]' \
   --sorts '[{"id":"s1","fieldId":"f_priority","direction":"desc"}]' \
   --count 50 -o json | jq '.records[] | {n:.name,p:.fields.f_priority.value}'
 ```
-A simpler full-text alternative is `databases.search?q=...` — no array shape, just a query string; matches against record `name` AND field values.
+
+A simpler full-text alternative is `hoody notes records search --q ...` — no array shape, just a query string; matches against record `name` AND field values.
 
 ### 7. Update a record by id — partial-merge fields
 
-**Goal:** mark Task 1 as done. `hoody notes db update` PATCH MERGES `fields` (live-verified: sending only `f_status` + `f_done` left `f_priority` untouched). Each field value must be the typed wrapper `{ type: <type>, value: <v> }` matching the column type.
+**Goal:** mark Task 1 as done. `hoody notes records update` PATCH MERGES `fields` (sending only `f_status` + `f_done` left `f_priority` untouched). Each field value must be the typed wrapper `{ type: <type>, value: <v> }` matching the column type.
 
 ```bash
-RID=$(hoody --container "$C" notes db list --notebook-id "$NBID" --database-id "$DBID" --count 50 -o json \
+RID=$(hoody --container "$C" notes records list --notebook-id "$NBID" --database-id "$DBID" --count 50 -o json \
   | jq -r '.records[] | select(.name=="Task 1") | .id' | head -1)
 # _(no native `hoody notes` shape for the update itself)_ — `--fields` is a KEY=VALUE
 # collector and would send the typed union as a literal string (`400` at the route).
-# Use the HTTP or SDK form below to write typed field values.
+# Write typed field values over HTTP or from the SDK: see this example in
+# SKILL-HTTP/notes.md or SKILL-SDK/notes.md.
 ```
+
 ### 8. Bulk import records from a CSV
 
-**Goal:** load a list of imports into the Tasks database in a loop. There is no single-call bulk-create endpoint; loop `hoody notes db create` per row. ⚠ Records DO NOT auto-deduplicate by `name` — re-running the same import doubles your data. If you need idempotency over HTTP/raw fetch, set the request header `X-Idempotency-Key` to a deterministic per-row key (replay returns the saved response; same key + different payload returns `409`). The **generated SDK service methods do not expose per-call headers**, so idempotency keys must be sent via raw `fetch()` (or `client.api.http.*` low-level if available).
+**Goal:** load a list of imports into the Tasks database in a loop. There is no single-call bulk-create endpoint; loop `hoody notes records create` per row. ⚠ Records DO NOT auto-deduplicate by `name` — re-running the same import doubles your data. If you need idempotency over HTTP/raw fetch, set the request header `X-Idempotency-Key` to a deterministic per-row key (replay returns the saved response; same key + different payload returns `409`). 
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; use the HTTP curl form above or the SDK form below)_
-### 9. Export a page to HTML — single-use ticket flow
+_(this step has no native `hoody notes` shape — `--fields` is a KEY=VALUE collector, so typed field values would be sent as literal strings, and `hoody notes records create` has no idempotency flag; run the import over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
 
-**Goal:** publish a static HTML snapshot of a page. `documents.get?output=html` requires a single-use export `ticket` (markdown via `?output=md` does NOT — it returns text directly with no ticket). Tickets default to 3 uses and expire in ~2 minutes (live-verified). Anyone with the kit URL + ticket can download until it expires.
+### 9. Export a page to HTML — short-lived ticket flow
+
+**Goal:** publish a static HTML snapshot of a page. `hoody notes document get` with `output=html` requires a short-lived export `ticket` (markdown via `?output=md` does NOT — it returns text directly with no ticket). Each ticket allows 3 uses and expires after 2 minutes. Anyone with the kit URL + ticket can download until it expires.
 
 **Step 1 — create a ticket.**
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; use the HTTP curl form above or the SDK form below)_
+```bash
+TICKET=$(hoody --container "$C" notes document tickets create --notebook-id "$NBID" --node-id "$PAGE" \
+  --theme-mode light --include-comments appendix -o json | jq -r .ticket)   # output defaults to html
+```
+
 **Step 2 — fetch the HTML.** Same kit URL; pass `ticket=` in the query.
 
 ```bash
-hoody --container "$C" notes doc get --notebook-id "$NBID" --node-id "$PAGE" \
+# global -o raw writes the body as-is; the command's own --output picks the export format
+hoody --container "$C" -o raw notes document get --notebook-id "$NBID" --node-id "$PAGE" \
   --output html --ticket "$TICKET" > /tmp/page.html
 ```
+
 ### 10. Tear down — delete the database, then the section (cascade), then the notebook
 
-**Goal:** clean up everything you created. Order matters: deleting a `section` cascades to every descendant page/database/record under it (live-verified — one DELETE on the section emptied the notebook). Then `hoody notes notebook delete` removes the notebook itself.
+**Goal:** clean up everything you created. Order matters: deleting a `section` cascades to every descendant page/database/record under it (one DELETE on the section empties the notebook). Then `hoody notes notebooks delete` removes the notebook itself.
 
-`hoody notes notebook delete` returns `200` immediately after soft-deleting the notebook (flips `status` to `Inactive`); the caller must be `owner`. A background `notebook.clean` job then recursively purges child rows asynchronously — re-list via `hoody notes notebook list` to confirm the notebook no longer appears (the list filters out `Inactive` status).
+`hoody notes notebooks delete` returns `200` immediately after soft-deleting the notebook (flips `status` to `Inactive`); the caller must be `owner`. A background `notebook.clean` job then recursively purges child rows asynchronously — re-list via `hoody notes notebooks list` to confirm the notebook no longer appears (the list filters out `Inactive` status).
 
 ```bash
-hoody --container "$C" notes db list --notebook-id "$NBID" --database-id "$DBID" -o json \
+hoody --container "$C" notes records list --notebook-id "$NBID" --database-id "$DBID" -o json \
   | jq -r '.records[].id' | while read RID; do
-      hoody --container "$C" notes db delete --notebook-id "$NBID" --database-id "$DBID" --record-id "$RID"
+      hoody --container "$C" notes records delete --notebook-id "$NBID" --database-id "$DBID" --record-id "$RID"
     done
-hoody --container "$C" notes node delete --notebook-id "$NBID" --node-id "$DBID"
-hoody --container "$C" notes node delete --notebook-id "$NBID" --node-id "$SEC"
-hoody --container "$C" notes notebook delete --notebook-id "$NBID" || true
-hoody --container "$C" notes notebook update --notebook-id "$NBID" --name team-wiki-DELETED
+hoody --container "$C" notes nodes delete --notebook-id "$NBID" --node-id "$DBID"
+hoody --container "$C" notes nodes delete --notebook-id "$NBID" --node-id "$SEC"
+# rename only if the delete failed (a deleted notebook is Inactive and rejects updates)
+hoody --container "$C" notes notebooks delete --notebook-id "$NBID" \
+  || hoody --container "$C" notes notebooks update --notebook-id "$NBID" --name team-wiki-DELETED
 ```
 
 ## Reference
 
-### `hoody notes` (43) — Hoody Notes — notebooks, nodes, documents, comments, versions, and databases
+### `hoody notes` (54) — Hoody Notes — notebooks, nodes, documents, comments, versions, and databases
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
-| `hoody notes collab add` |  | write | Add a collaborator to a node | `notes.collaborators.add` | `hoody notes collab add --notebook-id abc-123 --node-id 1 --collaborator-id abc-123 --role admin` |
-| `hoody notes collab list` |  | read | List collaborators on a node | `notes.collaborators.list` | `hoody notes collab list --notebook-id abc-123 --node-id 1` |
-| `hoody notes collab remove` |  | destructive | Remove a collaborator from a node | `notes.collaborators.remove` | `hoody notes collab remove --notebook-id abc-123 --node-id 1 --collaborator-id abc-123` |
-| `hoody notes collab update` |  | write | Update a collaborator's role on a node | `notes.collaborators.update` | `hoody notes collab update --notebook-id abc-123 --node-id 1 --collaborator-id abc-123 --role admin` |
-| `hoody notes comment anchors` |  | read | List comment anchors (the inline document positions threads are pinned to) | `notes.comments.listAnchors` | `hoody notes comment anchors --limit 500 --offset 0 --cursor <cursor> --notebook-id abc-123 --node-id 1` |
-| `hoody notes comment create` |  | write | Create a new comment (optionally anchored to a document location) | `notes.comments.create` | `hoody notes comment create --notebook-id abc-123 --node-id 1 --content "Hello" --parent-id abc-123 --anchor-block-id abc-123 --anchor <anchor>` |
-| `hoody notes comment delete` |  | destructive | Delete a comment | `notes.comments.delete` | `hoody notes comment delete --expected-version 10 --notebook-id abc-123 --node-id 1 --comment-id abc-123` |
-| `hoody notes comment edit` |  | write | Edit a comment's body | `notes.comments.edit` | `hoody notes comment edit --notebook-id abc-123 --node-id 1 --comment-id abc-123 --content "Hello" --expected-version 10` |
-| `hoody notes comment list` |  | read | List comments on a node | `notes.comments.list` | `hoody notes comment list --limit 100 --offset 0 --cursor <cursor> --notebook-id abc-123 --node-id 1` |
-| `hoody notes comment resolve` |  | action | Mark a comment thread resolved | `notes.comments.resolve` | `hoody notes comment resolve --notebook-id abc-123 --node-id 1 --comment-id abc-123 --expected-version 10` |
-| `hoody notes db create` |  | write | Create a new record in a database node | `notes.databases.create` | `hoody notes db create --notebook-id abc-123 --database-id abc-123 --id abc-123 --name Untitled --avatar https://example.com/avatar.png --fields <key=value>` |
-| `hoody notes db delete` |  | destructive | Delete a database record | `notes.databases.delete` | `hoody notes db delete --notebook-id abc-123 --database-id abc-123 --record-id abc-123` |
-| `hoody notes db get` |  | read | Get a database record by id | `notes.databases.get` | `hoody notes db get --notebook-id abc-123 --database-id abc-123 --record-id abc-123` |
-| `hoody notes db list` |  | read | List records in a database node | `notes.databases.listIterator` | `hoody notes db list --filters <filters> --sorts <sorts> --page 1 --count 50 --notebook-id abc-123 --database-id abc-123` |
-| `hoody notes db search` |  | read | Search records in a database node | `notes.databases.search` | `hoody notes db search --q <q> --exclude "*.ts" --notebook-id abc-123 --database-id abc-123` |
-| `hoody notes db update` |  | write | Update a database record's fields | `notes.databases.update` | `hoody notes db update --notebook-id abc-123 --database-id abc-123 --record-id abc-123 --name my-resource --avatar https://example.com/avatar.png --fields <key=value>` |
-| `hoody notes doc get` |  | read | Get document content for a node (rich-text body) | `notes.documents.get` | `hoody notes doc get --block-ids <block_ids> --lines 100 --include-comments none --ticket <ticket> --notebook-id abc-123 --node-id 1` |
-| `hoody notes doc patch` |  | write | Merge changes into a node's document content | `notes.documents.patch` | `hoody notes doc patch --notebook-id abc-123 --node-id 1 --content <key=value>` |
-| `hoody notes doc put` |  | write | Create or replace a node's document content (full overwrite) | `notes.documents.put` | `hoody notes doc put --notebook-id abc-123 --node-id 1 --content <key=value>` |
-| `hoody notes file download` |  | read | Download a file attachment by id | `notes.files.download` | `hoody notes file download --file-id abc-123 --notebook-id abc-123` |
-| `hoody notes file list` |  | read | List file attachments in a notebook | `notes.files.listIterator` | `hoody notes file list --limit 50 --offset 0 --notebook-id abc-123` |
-| `hoody notes node children` |  | read | List immediate child nodes of a node | `notes.nodes.listChildren` | `hoody notes node children --limit 50 --offset 0 --notebook-id abc-123 --node-id 1` |
-| `hoody notes node create` |  | write | Create a node inside a notebook (type: page/folder/database/etc.) | `notes.nodes.create` | `hoody notes node create --notebook-id abc-123 --id abc-123 --type default --parent-id abc-123 --attributes <key=value>` |
-| `hoody notes node delete` |  | destructive | Delete a node and its descendants | `notes.nodes.delete` | `hoody notes node delete --notebook-id abc-123 --node-id 1` |
-| `hoody notes node get` |  | read | Get a node by id | `notes.nodes.get` | `hoody notes node get --notebook-id abc-123 --node-id 1` |
-| `hoody notes node get-by-alias` |  | read | Resolve a page-style node by its URL alias (slug) | `notes.nodes.getByAlias` | `hoody notes node get-by-alias --notebook-id abc-123 --alias my-resource` |
-| `hoody notes node list` |  | read | List nodes in a notebook (pages, folders, databases) | `notes.nodes.list` | `hoody notes node list --type default --parent-id abc-123 --root-id abc-123 --limit 50 --offset 0 --notebook-id abc-123` |
-| `hoody notes node update` |  | write | Update a node (rename, move, change attributes) | `notes.nodes.update` | `hoody notes node update --notebook-id abc-123 --node-id 1 --attributes <key=value>` |
-| `hoody notes notebook create` |  | write | Create a new notebook (top-level workspace) | `notes.notebooks.create` | `hoody notes notebook create --name my-resource --description "My description" --avatar https://example.com/avatar.png` |
-| `hoody notes notebook delete` |  | destructive | Delete a notebook (irreversible — deletes all nodes/documents/comments inside) | `notes.notebooks.delete` | `hoody notes notebook delete --notebook-id abc-123` |
-| `hoody notes notebook get` |  | read | Get notebook details | `notes.notebooks.get` | `hoody notes notebook get --notebook-id abc-123` |
-| `hoody notes notebook list` |  | read | List notebooks the current user has access to | `notes.notebooks.listNotebooks` | `hoody notes notebook list` |
-| `hoody notes notebook update` |  | write | Update notebook settings (name, description, avatar) | `notes.notebooks.update` | `hoody notes notebook update --notebook-id abc-123 --name my-resource --description "My description" --avatar https://example.com/avatar.png` |
-| `hoody notes reaction add` |  | write | Add an emoji reaction to a node | `notes.reactions.add` | `hoody notes reaction add --notebook-id abc-123 --node-id 1 --reaction <reaction>` |
-| `hoody notes reaction list` |  | read | List reactions on a node | `notes.reactions.list` | `hoody notes reaction list --notebook-id abc-123 --node-id 1` |
-| `hoody notes reaction remove` |  | destructive | Remove an emoji reaction from a node | `notes.reactions.remove` | `hoody notes reaction remove --notebook-id abc-123 --node-id 1 --reaction <reaction>` |
-| `hoody notes user set-role` |  | write | Update a user's role on a notebook (owner/admin/collaborator/guest/none) | `notes.users.updateRole` | `hoody notes user set-role --notebook-id abc-123 --user-id abc-123 --role owner` |
-| `hoody notes version create` |  | write | Create a new document version snapshot (point-in-time backup) | `notes.versions.create` | `hoody notes version create --notebook-id abc-123 --node-id 1` |
-| `hoody notes version delete` |  | destructive | Delete a document version snapshot | `notes.versions.delete` | `hoody notes version delete --notebook-id abc-123 --node-id 1 --version-id abc-123` |
-| `hoody notes version get` |  | read | Get a specific document version's content | `notes.versions.get` | `hoody notes version get --notebook-id abc-123 --node-id 1 --version-id abc-123` |
-| `hoody notes version list` |  | read | List document version snapshots for a node | `notes.versions.list` | `hoody notes version list --limit 20 --offset 0 --notebook-id abc-123 --node-id 1` |
-| `hoody notes version restore` |  | action | Restore a document to a previous version (replaces current content) | `notes.versions.restore` | `hoody notes version restore --notebook-id abc-123 --node-id 1 --version-id abc-123` |
-| `hoody notes whoami` |  | read | Get current Notes identity (user id, username, role, default notebook id) | `notes.identity.get` | `hoody notes whoami` |
+| `hoody notes avatars download` |  | read | Download an avatar image by id | `notes.avatars.download` | `hoody notes avatars download --avatar-id abc-123` |
+| `hoody notes avatars upload` |  | write | Upload an avatar image and get its id (JPEG, PNG or WebP; resized to 500x500) | `notes.avatars.upload` | `hoody notes avatars upload` |
+| `hoody notes collaborators add` |  | write | Add a collaborator to a node | `notes.collaborators.add` | `hoody notes collaborators add --notebook-id abc-123 --node-id 1 --collaborator-id abc-123 --role admin` |
+| `hoody notes collaborators list` |  | read | List collaborators on a node | `notes.collaborators.list` | `hoody notes collaborators list --notebook-id abc-123 --node-id 1` |
+| `hoody notes collaborators remove` |  | destructive | Remove a collaborator from a node | `notes.collaborators.remove` | `hoody notes collaborators remove --notebook-id abc-123 --node-id 1 --collaborator-id abc-123` |
+| `hoody notes collaborators role set` |  | write | Update a collaborator's role on a node | `notes.collaborators.setRole` | `hoody notes collaborators role set --notebook-id abc-123 --node-id 1 --collaborator-id abc-123 --role admin` |
+| `hoody notes comments anchor set` |  | write | Move a comment thread to a new anchor in the document | `notes.comments.setAnchor` | `hoody notes comments anchor set --notebook-id abc-123 --node-id 1 --comment-id abc-123 --anchor-type document --expected-version 10` |
+| `hoody notes comments anchors list` |  | read | List comment anchors (the inline document positions threads are pinned to) | `notes.comments.listAnchors` | `hoody notes comments anchors list --limit 500 --offset 0 --notebook-id abc-123 --node-id 1` |
+| `hoody notes comments create` |  | write | Create a new comment (optionally anchored to a document location) | `notes.comments.create` | `hoody notes comments create --notebook-id abc-123 --node-id 1 --content Hello` |
+| `hoody notes comments delete` |  | destructive | Delete a comment | `notes.comments.delete` | `hoody notes comments delete --expected-version 10 --notebook-id abc-123 --node-id 1 --comment-id abc-123` |
+| `hoody notes comments list` |  | read | List comments on a node | `notes.comments.list` | `hoody notes comments list --limit 100 --offset 0 --notebook-id abc-123 --node-id 1` |
+| `hoody notes comments resolve` |  | action | Mark a comment thread resolved | `notes.comments.resolve` | `hoody notes comments resolve --notebook-id abc-123 --node-id 1 --comment-id abc-123 --expected-version 10` |
+| `hoody notes comments update` |  | write | Edit a comment's body | `notes.comments.update` | `hoody notes comments update --notebook-id abc-123 --node-id 1 --comment-id abc-123 --content Hello --expected-version 10` |
+| `hoody notes document append` |  | write | Append blocks to the end of a node's document (creates the document if absent) | `notes.document.append` | `hoody notes document append --notebook-id abc-123 --node-id 1 --body '{"text":"Hello"}'` |
+| `hoody notes document blocks export` |  | read | Render a drawing block from a node's document as SVG | `notes.document.exportBlock` | `hoody notes document blocks export --scale 10 --notebook-id abc-123 --node-id 1 --block-id abc-123` |
+| `hoody notes document get` |  | read | Get document content for a node (rich-text body) | `notes.document.get` | `hoody notes document get --lines 100 --output json --notebook-id abc-123 --node-id 1` |
+| `hoody notes document set` |  | write | Create or replace a node's document content (full overwrite) | `notes.document.set` | `hoody notes document set --notebook-id abc-123 --node-id 1 --content key=hello` |
+| `hoody notes document tickets create` |  | action | Mint a single-use ticket for an HTML export of a node's document | `notes.document.createExportTicket` | `hoody notes document tickets create --notebook-id abc-123 --node-id 1 --include-comments none --include-background` |
+| `hoody notes document update` |  | write | Merge changes into a node's document content | `notes.document.update` | `hoody notes document update --notebook-id abc-123 --node-id 1 --content key=hello` |
+| `hoody notes files download` |  | read | Download a file attachment by id | `notes.files.download` | `hoody notes files download --notebook-id abc-123 --file-id abc-123` |
+| `hoody notes files list` |  | read | List file attachments in a notebook | `notes.files.list` | `hoody notes files list --limit 50 --offset 0 --notebook-id abc-123` |
+| `hoody notes health` |  | read | Show Notes service health and runtime info | `notes.kit.getHealth` | `hoody notes health` |
+| `hoody notes members invite` |  | write | Invite users to a notebook by username and assign their role | `notes.members.invite` | `hoody notes members invite --notebook-id abc-123 --users username=alice,role=owner` |
+| `hoody notes members role set` |  | write | Update a user's role on a notebook (owner/admin/collaborator/guest/none) | `notes.members.setRole` | `hoody notes members role set --notebook-id abc-123 --user-id abc-123 --role owner` |
+| `hoody notes nodes children list` |  | read | List immediate child nodes of a node | `notes.nodes.listChildren` | `hoody notes nodes children list --limit 50 --offset 0 --notebook-id abc-123 --node-id 1` |
+| `hoody notes nodes create` |  | write | Create a node inside a notebook (type: page/folder/database/etc.) | `notes.nodes.create` | `hoody notes nodes create --notebook-id abc-123 --type <type> --attributes key=hello` |
+| `hoody notes nodes delete` |  | destructive | Delete a node and its descendants | `notes.nodes.delete` | `hoody notes nodes delete --notebook-id abc-123 --node-id 1` |
+| `hoody notes nodes get` |  | read | Get a node by id | `notes.nodes.get` | `hoody notes nodes get --notebook-id abc-123 --node-id 1` |
+| `hoody notes nodes list` |  | read | List nodes in a notebook (pages, folders, databases) | `notes.nodes.list` | `hoody notes nodes list --limit 50 --offset 0 --notebook-id abc-123` |
+| `hoody notes nodes mark opened` |  | action | Record that the current user has opened a node | `notes.nodes.markOpened` | `hoody notes nodes mark opened --notebook-id abc-123 --node-id 1` |
+| `hoody notes nodes mark seen` |  | action | Record that the current user has seen a node | `notes.nodes.markSeen` | `hoody notes nodes mark seen --notebook-id abc-123 --node-id 1` |
+| `hoody notes nodes resolve` |  | read | Resolve a page-style node by its URL alias (slug) | `notes.nodes.resolve` | `hoody notes nodes resolve --notebook-id abc-123 --alias my-resource` |
+| `hoody notes nodes update` |  | write | Update a node (rename, move, change attributes) | `notes.nodes.update` | `hoody notes nodes update --notebook-id abc-123 --node-id 1 --attributes key=hello` |
+| `hoody notes notebooks create` |  | write | Create a new notebook (top-level workspace) | `notes.notebooks.create` | `hoody notes notebooks create --name my-resource --description 'My description' --avatar https://example.com/avatar.png` |
+| `hoody notes notebooks delete` |  | destructive | Delete a notebook (irreversible — deletes all nodes/documents/comments inside) | `notes.notebooks.delete` | `hoody notes notebooks delete --notebook-id abc-123` |
+| `hoody notes notebooks get` |  | read | Get notebook details | `notes.notebooks.get` | `hoody notes notebooks get --notebook-id abc-123` |
+| `hoody notes notebooks list` |  | read | List notebooks the current user has access to | `notes.notebooks.list` | `hoody notes notebooks list` |
+| `hoody notes notebooks update` |  | write | Update notebook settings (name, description, avatar) | `notes.notebooks.update` | `hoody notes notebooks update --notebook-id abc-123 --name my-resource --description 'My description' --avatar https://example.com/avatar.png` |
+| `hoody notes open` |  | action | Open the Notes kit in your browser |  | `hoody notes open` |
+| `hoody notes reactions add` |  | write | Add an emoji reaction to a node | `notes.reactions.add` | `hoody notes reactions add --notebook-id abc-123 --node-id 1 --reaction <reaction>` |
+| `hoody notes reactions list` |  | read | List reactions on a node | `notes.reactions.list` | `hoody notes reactions list --notebook-id abc-123 --node-id 1` |
+| `hoody notes reactions remove` |  | destructive | Remove an emoji reaction from a node | `notes.reactions.remove` | `hoody notes reactions remove --notebook-id abc-123 --node-id 1 --reaction <reaction>` |
+| `hoody notes records create` |  | write | Create a new record in a database node | `notes.records.create` | `hoody notes records create --notebook-id abc-123 --database-id abc-123 --name Untitled --avatar https://example.com/avatar.png` |
+| `hoody notes records delete` |  | destructive | Delete a database record | `notes.records.delete` | `hoody notes records delete --notebook-id abc-123 --database-id abc-123 --record-id abc-123` |
+| `hoody notes records get` |  | read | Get a database record by id | `notes.records.get` | `hoody notes records get --notebook-id abc-123 --database-id abc-123 --record-id abc-123` |
+| `hoody notes records list` |  | read | List records in a database node | `notes.records.list` | `hoody notes records list --page 1 --count 50 --notebook-id abc-123 --database-id abc-123` |
+| `hoody notes records search` |  | read | Search records in a database node | `notes.records.search` | `hoody notes records search --exclude '*.ts' --notebook-id abc-123 --database-id abc-123` |
+| `hoody notes records update` |  | write | Update a database record's fields | `notes.records.update` | `hoody notes records update --notebook-id abc-123 --database-id abc-123 --record-id abc-123 --name my-resource --avatar https://example.com/avatar.png` |
+| `hoody notes versions create` |  | write | Create a new document version snapshot (point-in-time backup) | `notes.versions.create` | `hoody notes versions create --notebook-id abc-123 --node-id 1` |
+| `hoody notes versions delete` |  | destructive | Delete a document version snapshot | `notes.versions.delete` | `hoody notes versions delete --notebook-id abc-123 --node-id 1 --version-id abc-123 -y` |
+| `hoody notes versions get` |  | read | Get a specific document version's content | `notes.versions.get` | `hoody notes versions get --notebook-id abc-123 --node-id 1 --version-id abc-123` |
+| `hoody notes versions list` |  | read | List document version snapshots for a node | `notes.versions.list` | `hoody notes versions list --limit 20 --offset 0 --notebook-id abc-123 --node-id 1` |
+| `hoody notes versions restore` |  | action | Restore a document to a previous version (replaces current content) | `notes.versions.restore` | `hoody notes versions restore --notebook-id abc-123 --node-id 1 --version-id abc-123` |
+| `hoody notes whoami` |  | read | Get current Notes identity (user id, username, role, default notebook id) | `notes.whoami` | `hoody notes whoami` |
 

@@ -1,4 +1,4 @@
-> _**HTTP skill · `notes` namespace** · ~11,039 tokens · hoody-sdk v1.0.0-beta.14_
+> _**HTTP skill · `notes` namespace** · ~12,654 tokens · hoody-sdk v1.0.0-beta.15_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 
@@ -16,9 +16,10 @@ SQL/KV → `sqlite`, container fs → `files`, desktop notifs → `notifications
 
 ## Prerequisites
 
-- `notebookId` per call; first `GET /api/v1/notes/me` auto-provisions notebook+user from `?username=` (default `user`).
-- HTTP/raw fetch supports `X-Idempotency-Key` for retry-safe creates. **Most generated SDK service methods do NOT expose per-call request headers** (`requestOptions` has no `headers` field), so idempotency-keyed retries on those must use raw `fetch()` against the kit URL. **The exception is `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`, which accepts the key as `options.XIdempotencyKey`** — so the recommended document-writing path is fully retry-safe from the SDK. Export `ticket` is HTML-export-only.
-- **Writing a document needs editor-or-admin role on the node** — `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`/`PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` resolve access via `getNodeAccess` and reject viewers/read-only collaborators with `403`. Documents attach only to `page` and `record` nodes (the node types that declare a `documentSchema`); `message`/`channel`/`database` nodes do not support documents.
+- **To add a note, create a page in a notebook you already have; do not create a notebook for it.** Your default notebook (the `notebookId` from `GET /api/v1/notes/me`) and every new notebook come with a `Home` section. A page is `POST /api/v1/notes/notebooks/{notebookId}/nodes` with `type:"page"`, `parentId:<Home section id>` (from `GET /api/v1/notes/notebooks/{notebookId}/nodes` with `type:"section"`) and `attributes:{name}`; then write its text with `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`.
+- `notebookId` on every notebook-scoped call (identity and notebook list/create take none). Without a Bearer token or export ticket, identity comes from the `?username=` / `?role=` query parameters on each request (default username `user`, default role `owner`). The first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`); every query-identity user joins that same notebook, so it is not private. Use `POST /api/v1/notes/notebooks` for a separate notebook.
+- Send an `X-Idempotency-Key` header to make retries safe on node create, record create, `POST …/document/append`, collaborator add, reactions and interactions. Notebook create, comment create and version create ignore the header, so retrying those can create duplicates. Export `ticket` is HTML-export-only.
+- **Writing a document needs editor-or-admin role on the node** — `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`/`PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` reject viewers and read-only collaborators with `403`. Documents attach only to `page` and `record` nodes; `message`/`channel`/`database` nodes do not support documents.
 
 ## Capability URL
 
@@ -33,36 +34,38 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-1. **Write a page (RECOMMENDED: append)** — the simplest, most reliable way to put content into a note. First get a page node id (use the auto-provisioned `Home` section: `GET /api/v1/notes/notebooks/{notebookId}/nodes` `type:"section"` → pick `Home` → `POST /api/v1/notes/notebooks/{notebookId}/nodes` `type:"page"`, `parentId:<sectionId>`, `attributes:{name}`). Then `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` with `{text:"…", type:"paragraph"|"heading1"|…}` (one block from plain text) OR `{blocks:[{type,content,attrs}]}` (batch). **The server assigns each block's `id`, `parentId`, and `index`** — you never compute fractional indices or block ids, which is the part agents get wrong with `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`. Creates the document if absent; pass `X-Idempotency-Key` (SDK `options.XIdempotencyKey`) for safe retries. See §Examples 1–2.
-2. **Bootstrap identity + notebook** — `GET /api/v1/notes/me` → `{userId,username,role,notebookId}` (auto-provisions a notebook + `Home` section + starter pages). `GET /api/v1/notes/notebooks`/`create`/`get` open to any non-`none` member; `update`/`delete` are owner-gated.
-3. **Build a structured document with `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` OVERWRITES the whole document; `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` shallow-merges at the TOP level only (submitting `content.blocks` REPLACES the entire blocks map — it does NOT merge per-block). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real `EditorNodeTypes` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 3.
-4. **Database CRUD** — `POST /api/v1/notes/notebooks/{notebookId}/nodes` `type:"database"`; then `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`/`GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`/`GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search`/`PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` (merges `fields`)/`DELETE /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`. Page with `page`/`count` on `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` (count max 100). ⚠ SDK-only: the auto-pagination helpers (listIterator / listAll) are misconfigured upstream — they send `limit`/`offset` while the route accepts `page`/`count`; prefer manual paged list loops.
-5. **Comments + versions** — `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators` (`admin`/`editor`/`collaborator`/`viewer`). `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments` (top-level, anchored, or reply); `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}`/`delete`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` accept optional `expectedVersion` for optimistic concurrency. `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`/`list`/`get`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}/restore`.
-6. **TUS upload + download** — `POST /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` for `fileId`; `PATCH /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` `PATCH`+`Upload-Offset`; `HEAD /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` `HEAD` returns resume offset; `DELETE /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` cancels. `GET /api/v1/notes/notebooks/{notebookId}/files`, `GET /api/v1/notes/notebooks/{notebookId}/files/{fileId}`.
+1. **Write a page (RECOMMENDED: append)** — the simplest, most reliable way to put content into a note. First get a page node id (use the auto-provisioned `Home` section: `GET /api/v1/notes/notebooks/{notebookId}/nodes` `type:"section"` → pick `Home` → `POST /api/v1/notes/notebooks/{notebookId}/nodes` `type:"page"`, `parentId:<sectionId>`, `attributes:{name}`). Then `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` with `{text:"…", type:"paragraph"|"heading1"|…}` (one block from plain text) OR `{blocks:[{type,content,attrs}]}` (batch). **The server assigns each block's `id`, `parentId`, and `index`** — you never compute fractional indices or block ids, which is the part agents get wrong with `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`. Creates the document if absent; pass an idempotency key (`X-Idempotency-Key` header) for safe retries. See §Examples 1–2.
+2. **Bootstrap identity + notebook** — `GET /api/v1/notes/me` → `{userId,username,role,notebookId}`. The `notebookId` is the container's shared default notebook (`Hoody Notes`, with a `Home` section and starter pages), which every query-identity username joins; create your own with `POST /api/v1/notes/notebooks` when the content must not be shared. `GET /api/v1/notes/notebooks`/`create`/`get` open to any non-`none` member; `update`/`delete` are owner-gated.
+3. **Build a structured document with `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` OVERWRITES the whole document; `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
+4. **Database CRUD** — `POST /api/v1/notes/notebooks/{notebookId}/nodes` `type:"database"`; then `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`/`GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`/`GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search`/`PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` (merges `fields`)/`DELETE /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`. Page with `page`/`count` on `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` (count max 100).
+5. **Comments + versions** — `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators` (`admin`/`editor`/`collaborator`/`viewer`). `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments` (top-level, anchored, or reply); `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `DELETE /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` accept optional `expectedVersion` for optimistic concurrency. `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`/`list`/`get`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions/{versionId}/restore`.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `POST /api/v1/notes/notebooks/{notebookId}/nodes` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `GET /api/v1/notes/notebooks/{notebookId}/files/{fileId}`. 
 
 ## Quirks & gotchas
 
-- **Use the real block `type` strings and the `attrs` key — wrong values store silently but render blank.** Valid block types are the `EditorNodeTypes` values: `paragraph`, `heading1`/`heading2`/`heading3`, `blockquote`, `bulletList`, `listItem`, `orderedList`, `taskList`, `taskItem`, `codeBlock`, `horizontalRule`, `table`/`tableRow`/`tableHeader`/`tableCell`, `page`, `file`, `folder`, `tempFile`, `drawing`, `grid`, plus the editor-extension blocks `embed` (block) and inline `mention`/`hardBreak`. There is NO `code`, `bullet_list_item`, or `quote` type, and block attributes live under `attrs` (NOT `props`); code language is `attrs.language`, a task's done-state is `attrs.checked`. The block schema is loose (`type:z.string()`, `attrs:z.record`), so a bad `type`/`props` is accepted with `200` and stored — the CRDT bridge validates with `safeParse` but writes the ORIGINAL object, persisting the junk key — the editor then has no renderer for it and the block shows blank. (A later full rewrite that omits the bad key reconciles it away.)
-- **Container blocks hold NO direct text — their text lives in a CHILD `paragraph` block.** Only `paragraph`/`heading1-3`/`codeBlock` (and the text-less `horizontalRule`) are leaf blocks that carry `content:[{type:'text',text}]` directly. For `listItem`, `taskItem`, `blockquote`, `tableCell`, `tableHeader` you MUST add a child `paragraph` block whose `parentId` is the container's id; putting text directly on the container makes it render empty. See §Examples 0 and 3 for the exact nesting.
-- **Prefer `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` for adding content; it does NOT create the node.** Append server-assigns `id`/`parentId`/`index` and creates the document row if missing, but `404`s if the node is absent and `400`s for node types without a `documentSchema` (only `page`/`record`) — so create/find the page first. It rejects client-supplied `id`/`parentId`/`index` and reserved `attrs` keys (`id`,`parentId`,`index`,`type`,`__proto__`,`constructor`,`prototype`), accepts only `{type:'text'}` leaves (no inline `mention`/image), the `{text}` form does NOT split newlines (one literal block), and it caps at 100 blocks / 512 KiB per call. Appendable types: `paragraph`, `heading1-3`, `codeBlock`, `horizontalRule` (containers and `file` are rejected).
+- **Use the real block `type` strings and the `attrs` key — a value the kit cannot repair stores silently but renders blank.** The valid block types are: `paragraph`, `heading1`/`heading2`/`heading3`, `blockquote`, `bulletList`, `listItem`, `orderedList`, `taskList`, `taskItem`, `codeBlock`, `horizontalRule`, `table`/`tableRow`/`tableHeader`/`tableCell`, `page`, `file`, `folder`, `tempFile`, `drawing`, `grid`, plus the editor-extension blocks `embed` (block) and inline `mention`/`hardBreak`. There is NO `code`, `bullet_list_item`, or `quote` type, and block attributes live under `attrs` (NOT `props`); code language is `attrs.language`, a task's done-state is `attrs.checked`. `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` and `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` repair the unambiguous mistakes before validating: known type aliases (`code`, `quote`, `bullet_list_item`, `numbered_list_item`, `h1`, …) become the real type, with flat list items wrapped in a list, and `props` becomes `attrs` when the block has no `attrs`. Other write paths skip this repair, and it leaves anything ambiguous alone (an unknown type, a bare `list_item`). The block schema is loose (`type:z.string()`, `attrs:z.record`), so an unrepaired bad `type`/`props` is accepted with `200` and stored — the block is validated on the way in, but the ORIGINAL object is what gets written, so the junk key persists — the editor then has no renderer for it and the block shows blank. (A later full rewrite that omits the bad key reconciles it away.)
+- **Container blocks hold NO direct text — their text lives in a CHILD `paragraph` block.** Only `paragraph`/`heading1-3`/`codeBlock` (and the text-less `horizontalRule`) are leaf blocks that carry `content:[{type:'text',text}]` directly. For `listItem`, `taskItem`, `blockquote`, `tableCell`, `tableHeader` you MUST add a child `paragraph` block whose `parentId` is the container's id. `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`/`PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` move text found directly on a container with no children into a new child paragraph, but text on a container that already has children is left there and renders empty. See §Examples 0 and 2 for the exact nesting.
+- **Prefer `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` for adding content; it does NOT create the node.** Append server-assigns `id`/`parentId`/`index` and creates the document row if missing, but `404`s if the node is absent and `400`s for node types that do not support documents (only `page`/`record` do) — so create/find the page first. It rejects client-supplied `id`/`parentId`/`index` and reserved `attrs` keys (`id`,`parentId`,`index`,`type`,`__proto__`,`constructor`,`prototype`), accepts only `{type:'text'}` leaves (no inline `mention`/image), the `{text}` form does NOT split newlines (one literal block), and it caps at 100 blocks / 512 KiB per call. Appendable types: `paragraph`, `heading1-3`, `codeBlock`, `horizontalRule` (containers and `file` are rejected).
 - **`PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` has no block/byte cap** (only the Fastify 10 MB body limit) and requires the node to exist, creating the document row if it has none; the 100-block / 512 KiB caps are append-only.
-- **`POST /api/v1/notes/notebooks/{notebookId}/nodes` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — `YDoc.update()` throws on the attribute `safeParse` before the create transaction's try/catch (unknown type / missing parent → `400`; permission/`canCreate` → `403`). A page needs `attributes.name` + `parentId` and cannot be root-level; a manually-created `section` must include `attributes.collaborators` with the creator as `admin` and is root-only — easiest is to reuse the auto-provisioned `Home` section.
-- `notebookAuthenticator` re-anchors identity to URL `notebookId`; one bearer reaches any notebook the username joined.
-- Cross-client convergence is **mutation-stream-driven** via the `POST /api/v1/notes/notebooks/{notebookId}/mutations` route + WS feed: each mutation type (`document.update`, `node.*`, etc.) is dispatched server-side to a SQL-backed lib function. `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`/`PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` are last-writer-wins JSON overlays on top of the same store; two concurrent PATCHes will clobber each other unless drivers coordinate via the WS mutation feed.
-- `identity.get?username=&role=` creates user+notebook and runs `initializeNotebookContent`. Priority Bearer → `ticket` → `?username=&role=`; invalid Bearer = 401 even with fallback. **Without any of the three, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=` on every unauthenticated call, or attach Bearer / `ticket`. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
-- **`Readonly` notebook gates writes only** — read endpoints still serve through; write routes (mutations, document.put/patch, record-create, etc.) are rejected with `403 notebook_readonly`.
-- `X-Idempotency-Key` replay returns saved response; same key+different payload → 409.
-- `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` merges `fields`; access runs through `getNodeAccess(notebookId, databaseId, userId)`, which resolves your role from the `collaborations` row on the notebook **root** node, then walks the database's full ancestor chain and returns `403` if any ancestor is a private `section`, or a `channel` whose `attributes.collaborators` map omits you (notebook owner/admin bypasses the privacy walk). A root collaboration alone is therefore NOT sufficient. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.
-- `documents.get?output=html` needs single-use export `ticket` on `GET .../document`. `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` overwrites; `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` top-level spreads the request body over current content — submitting `content.blocks` REPLACES the blocks map, it does not merge per-block. For per-block CRDT merging use the `POST /api/v1/notes/notebooks/{notebookId}/mutations` WS feed instead. `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}`/`delete`/`POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` accept optional `expectedVersion`.
+- **A page needs a parent and a `name`: `POST /api/v1/notes/notebooks/{notebookId}/nodes` with `type:"page"`, `parentId` and `attributes.name`.** The parent is the `Home` section (its id from `GET /api/v1/notes/notebooks/{notebookId}/nodes` with `type:"section"`) or another page you can edit. With no `parentId` the kit answers `400 parent_required`: add the parent rather than creating a notebook. A `403 forbidden` is a real permission refusal (your role on the parent does not allow the create). The label is `name`; there is no `title` attribute, and a page without `name` fails with `500 unknown`.
+- **`POST /api/v1/notes/notebooks/{notebookId}/nodes` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A manually-created `section` must include `attributes.collaborators` with the creator as `admin` and is root-only — easiest is to reuse the auto-provisioned `Home` section.
+- **`POST /api/v1/notes/notebooks` always makes a new, separate notebook; it is not how you add a note.** It takes only `name` (plus optional `description`/`avatar`) and no parent: a notebook is top-level. It ignores `X-Idempotency-Key`, and names are not unique, so a retry or a second call with the same name makes a duplicate. Run `GET /api/v1/notes/notebooks` first and reuse a notebook that has the name; to add a note, create a page in an existing notebook with `POST /api/v1/notes/notebooks/{notebookId}/nodes`.
+- Authentication re-anchors identity to the `notebookId` in the URL, so one bearer token reaches any notebook the username has joined.
+- Cross-client convergence is **mutation-stream-driven** via the `POST /api/v1/notes/notebooks/{notebookId}/mutations` route + WS feed: each mutation type (`PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`, `node.*`, etc.) is dispatched server-side to a SQL-backed lib function. `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` is a last-writer-wins overwrite of the same store. `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` re-applies its merge to the current document when a concurrent write lands first, so two PATCHes that send different blocks both survive; two that send the same block id are last-writer-wins for that block, and a `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` racing a PATCH still overwrites whatever it omits.
+- `GET /api/v1/notes/me` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `POST /api/v1/notes/notebooks` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`; invalid Bearer = 401 even with fallback. **Without any of the three, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=` on every unauthenticated call, or attach Bearer / `ticket`. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
+- **`Readonly` notebook gates writes** — content reads still serve through; write routes (mutations, document.put/patch, record-create, etc.) are rejected with `403 notebook_readonly`. The TUS upload route refuses every method on a readonly notebook, the `HEAD` offset check included.
+- `X-Idempotency-Key` replay returns saved response; same key+different payload → 409. Only routes that implement it honour the header (see Prerequisites); notebook create does not.
+- `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` merges `fields`. Access resolves your role from your collaboration on the notebook **root** node, falling back to your notebook role when there is none, then walks the database's full ancestor chain and returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you (notebook owner/admin bypasses the privacy walk). A root collaboration alone is therefore NOT sufficient under such an ancestor. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.
+- `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` with `output=html` needs a short-lived export `ticket` (3 uses, 2 minutes) on `GET .../document`. `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` overwrites; `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` merges: top-level keys replace the stored ones, and `content.blocks` (a map by block id, or a list of blocks with distinct ids) merges by block id — a sent block replaces the stored block with that id, every other block is kept, and removing blocks takes a `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`. Any other `blocks` shape is a `400`. `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `DELETE /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` / `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` accept optional `expectedVersion`.
 - `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search` matches against record names AND field values (not just names).
-- Text filter operators in `databases.list?filters=`: `is_equal_to` / `is_not_equal_to` / `contains` / `does_not_contain` / `starts_with` / `ends_with` / `is_empty` / `is_not_empty`. The bare `is` is NOT a valid operator — use `is_equal_to`; the bare `not_contains` is NOT either — use `does_not_contain`.
-- TUS chunk uploads: `PATCH /api/v1/notes/notebooks/{n}/files/{id}/tus` is the byte-transfer call — send the raw chunk as the request body with `Upload-Offset`/`Tus-Resumable` headers (e.g. via `@tus/client`). SDK-only: the generated tusUploadChunk method takes no chunk-body or Upload-Offset parameter, so drop to raw `@tus/client`/`fetch` for the actual byte transfer.
+- Text filter operators in `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records?filters=`: `is_equal_to` / `is_not_equal_to` / `contains` / `does_not_contain` / `starts_with` / `ends_with` / `is_empty` / `is_not_empty`. The bare `is` is NOT a valid operator — use `is_equal_to`; the bare `not_contains` is NOT either — use `does_not_contain`.
+- TUS chunk uploads: `PATCH /api/v1/notes/notebooks/{n}/files/{id}/tus` is the byte-transfer call — send the raw chunk as the request body with `Upload-Offset`/`Tus-Resumable` headers (e.g. via `@tus/client`). The file node must already exist with a `…18` id (workflow 6). 
 
 ## Common errors
 
-- `400 bad_request` validation (`details[]`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.
-- `403 notebook_no_access`/`notebook_readonly`/`forbidden` (db needs `collaborations` or `canCreate`).
-- `404 not_found` — node/file/comment/version missing or `notebook_id` mismatch. `500 unknown` — read-back failed or uncategorized.
+- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.
+- `403 notebook_no_access`/`notebook_readonly`/`forbidden` (a database write needs a collaboration granting you create rights).
+- `404 not_found` — node/comment/version missing, or it does not belong to the `notebookId` given in the path. File routes use their own codes: `GET /api/v1/notes/notebooks/{notebookId}/files/{fileId}` answers `400 file_not_found` for a missing file node or one outside the notebook, `400 file_not_ready` / `400 file_upload_not_found` for an upload that has not finished, and `404 file_not_found` when the stored bytes are missing; the TUS route answers `404 file_not_found` for a missing file node. `500 unknown` — read-back failed or uncategorized.
 
 ## Related namespaces
 
@@ -70,7 +73,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Examples
 
-Every step in every example was live-tested against a real `notes-1` kit. Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first; bootstrap identity once with `GET /api/v1/notes/me?username=...&role=owner` to auto-provision `notebookId`.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. The examples send no `?username=`, Bearer token or ticket, so every call runs as the default username `user`; to act as another user, add the same `?username=<name>` to every request (a username that appears on only some calls splits ownership between two users).
 
 ### 0. Block model cheat-sheet — types, the `attrs` key, and container nesting
 
@@ -78,7 +81,7 @@ Every step in every example was live-tested against a real `notes-1` kit. Each s
 `{ "content": { "type": "rich_text", "blocks": { "<blockId>": <block> } } }`. Each
 block is `{ id, type, parentId, index, content?, attrs? }`:
 
-- `type` is one of the real `EditorNodeTypes` strings. There is **no** `code`,
+- `type` is one of the block types listed above. There is **no** `code`,
   `bullet_list_item`, `quote`, or `numbered_list_item`. Block attributes live under
   `attrs` (**never** `props`).
 - **Leaf blocks** carry text directly in `content`: `paragraph`, `heading1`,
@@ -144,16 +147,17 @@ Table — `table → tableRow → tableHeader/tableCell → paragraph`:
 
 **Goal:** stand up a fresh notebook from scratch, attach a page under the auto-created Home section, give it a one-block document.
 
-**Step 1 — bootstrap identity & create notebook.** First call to `GET /api/v1/notes/me` with `?username=&role=` auto-provisions a default notebook + Home section + Welcome page; pass it once per `username`. Then `POST /api/v1/notes/notebooks` for a second, named one.
+**Step 1 — check identity & create notebook.** `GET /api/v1/notes/me` returns the caller (`user` here) and the shared default notebook that the first request joined it to. Then `POST /api/v1/notes/notebooks` for a separate, named notebook owned by that user. To write into the default notebook instead, skip `POST /api/v1/notes/notebooks` and use the `notebookId` that `GET /api/v1/notes/me` returns.
 
 ```bash
 KIT="https://${P}-${C}-notes-1.${N}.containers.hoody.com"
-curl -sf "$KIT/api/v1/notes/me?username=alex&role=owner" | jq .   # one-time auto-provision
+curl -sf "$KIT/api/v1/notes/me" | jq .   # runs as username "user" (no ?username=)
 NBID=$(curl -sf -X POST "$KIT/api/v1/notes/notebooks" \
   -H 'Content-Type: application/json' \
   -d '{"name":"team-wiki","description":"engineering docs"}' | jq -r .id)
 echo "NBID=$NBID"
 ```
+
 **Step 2 — find the auto-created Home section and add a page under it.** Every fresh notebook ships with a `section` named `Home`; `POST /api/v1/notes/notebooks/{notebookId}/nodes` with `type:"page"` needs that section as `parentId`. POST returns `201` (NOT 200 — generic retry helpers that only accept 200 will treat success as failure).
 
 ```bash
@@ -164,13 +168,14 @@ PAGE=$(curl -sf -X POST "$KIT/api/v1/notes/notebooks/$NBID/nodes" \
   -d "{\"type\":\"page\",\"parentId\":\"$SEC\",\"attributes\":{\"name\":\"Runbook\"}}" \
   | jq -r .id)
 ```
+
 **Step 3 — append the first content (recommended).** `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`
 appends to the END of the page's document and **the server assigns each block's
 `id`, `parentId`, and `index`** — so you never compute fractional indices or block
 ids. Send EITHER `{text, type?}` (one block from plain text; `type` defaults to
 `paragraph`) OR `{blocks:[{type, content?, attrs?}]}` (a batch of flat blocks).
 Appendable types are `paragraph`, `heading1`–`heading3`, `codeBlock`,
-`horizontalRule` only; containers (lists/tables) need `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` (Example 3).
+`horizontalRule` only; containers (lists/tables) need `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` (Example 2).
 If the document doesn't exist yet it is created. `X-Idempotency-Key` makes retries
 safe.
 
@@ -187,17 +192,20 @@ curl -sf -X POST "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document/append"
         {"type":"codeBlock","attrs":{"language":"bash"},"content":[{"type":"text","text":"./deploy.sh prod"}]}
       ]}'
 ```
+
 ### 2. Build a structured document with `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` — leaf blocks + a bulleted list
 
 **Goal:** lay out a page with a header, prose, a fenced code block, and a 2-item
 bulleted list, in one full-document write. Use PUT (not append) when you need
 containers or precise ordering. ⚠ Two traps this example fixes: (1) use the REAL type
 strings — `codeBlock` (not `code`) with the language under `attrs` (not `props`),
-and a `bulletList`→`listItem`→`paragraph` nest (there is no `bullet_list_item`); a
-wrong type/`props` is stored silently and renders blank. (2) `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` does
-NOT merge by block id — it REPLACES the entire `blocks` map (live-verified). To add to
-an existing doc, `GET` the current blocks, mutate locally, `PUT` the union back (or
-just use `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`).
+and a `bulletList`→`listItem`→`paragraph` nest (there is no `bullet_list_item`). PUT
+repairs the well-known aliases, but a wrong type it cannot map is stored silently and
+renders blank (see Quirks). (2) `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` merges
+by block id: each sent block replaces the stored block with that id wholesale and
+omitted blocks are kept, so it can add or rewrite blocks but never remove one. To
+remove blocks, `GET` the current blocks, mutate locally, `PUT` the result back (to
+add plain blocks, `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` is simpler).
 
 ```bash
 PAGE=...
@@ -219,6 +227,7 @@ EOF
 curl -sf -X PUT "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document" \
   -H 'Content-Type: application/json' -d @/tmp/doc.json
 ```
+
 ### 3. Update one block's content + reorder by changing `index`
 
 **Goal:** rewrite a paragraph and move it to the top of the page. Because PUT is full-overwrite, you read the current doc, mutate the target block, and write the full map back.
@@ -229,18 +238,19 @@ curl -sf -X PUT "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document" \
 DOC=$(curl -sf "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document")
 echo "$DOC" | jq '.content.blocks | to_entries | map({k:.key,t:.value.type,i:.value.index})'
 ```
-**Step 2 — mutate locally + PUT back.** Set the target block's `index` to a key that sorts FIRST (e.g. prefix `Z` → swap to `9`, or use a fresh small string like `_a0`); rewrite its `content`.
+
+**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An arbitrary string such as `_a0` sorts first but breaks the editor's next insert beside it.
 
 ```bash
-NEW=$(echo "$DOC" | jq --arg t "Updated intro paragraph (now first)." '
+NEW=$(echo "$DOC" | jq --arg id "$B2" --arg t "Updated intro paragraph (now first)." '
   .content.blocks
-  | to_entries
-  | map(if .value.type=="paragraph" then .value.index="_a0" | .value.content=[{type:"text",text:$t}] else . end)
-  | from_entries
+  | .[$id].index = "Zz"
+  | .[$id].content = [{type:"text",text:$t}]
   | {content:{type:"rich_text",blocks:.}}')
 curl -sf -X PUT "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document" \
   -H 'Content-Type: application/json' -d "$NEW"
 ```
+
 ### 4. Delete a block + verify ordering survives
 
 **Goal:** drop a single block from the doc. Same overwrite trick — `delete blocks[b3]` locally, PUT remaining map back, then GET to verify the survivors keep their `index` order.
@@ -251,11 +261,12 @@ NEW=$(echo "$DOC" | jq 'del(.content.blocks["'"$B3"'"]) | {content:{type:"rich_t
 curl -sf -X PUT "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document" \
   -H 'Content-Type: application/json' -d "$NEW"
 curl -sf "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document" \
-  | jq '.content.blocks | to_entries | sort_by(.value.index) | map(.value.type)'
+  | jq --arg p "$PAGE" '[.content.blocks[] | select(.parentId==$p)] | sort_by(.index) | map(.type)'
 ```
+
 ### 5. Create a database (Tasks) with typed columns + add records
 
-**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `POST /api/v1/notes/notebooks/{notebookId}/nodes` for `type:"database"` REQUIRES `attributes.fields` populated — without it the kit returns `500` (the attribute `safeParse` throws inside `YDoc.update` before the create transaction's try/catch — a `canCreate` failure would be a `403`). Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
+**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `POST /api/v1/notes/notebooks/{notebookId}/nodes` for `type:"database"` REQUIRES `attributes.fields` populated — without it the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
 
 ```bash
 DBID=$(curl -sf -X POST "$KIT/api/v1/notes/notebooks/$NBID/nodes" \
@@ -279,6 +290,7 @@ for i in 1 2 3; do
     }}" >/dev/null
 done
 ```
+
 ### 6. Query records — filter + sort
 
 **Goal:** find records with `priority > 1` sorted descending. Both `filters` and `sorts` are JSON-encoded query strings. ⚠ `filters` MUST be a **JSON array** (not an object) of `{ id, type:"field", fieldId, operator, value }`; sending an object returns `400 "filters" query parameter must be a JSON array.` Operators are field-type-specific: numbers use `is_equal_to`/`is_not_equal_to`/`is_greater_than`/`is_less_than`/`is_greater_than_or_equal_to`/`is_less_than_or_equal_to`, text uses `is_equal_to`/`is_not_equal_to`/`contains`/`does_not_contain`/`starts_with`/`ends_with`/`is_empty`/`is_not_empty`, booleans use `is_true`/`is_false`. Sort entries are `{ id, fieldId, direction:"asc"|"desc" }` (also array).
@@ -291,11 +303,12 @@ ENC_S=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1
 curl -sf "$KIT/api/v1/notes/notebooks/$NBID/databases/$DBID/records?filters=$ENC_F&sorts=$ENC_S&count=50" \
   | jq '.records[] | {n:.name, p:.fields.f_priority.value}'
 ```
-A simpler full-text alternative is `databases.search?q=...` — no array shape, just a query string; matches against record `name` AND field values.
+
+A simpler full-text alternative is `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search?q=...` — no array shape, just a query string; matches against record `name` AND field values.
 
 ### 7. Update a record by id — partial-merge fields
 
-**Goal:** mark Task 1 as done. `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` PATCH MERGES `fields` (live-verified: sending only `f_status` + `f_done` left `f_priority` untouched). Each field value must be the typed wrapper `{ type: <type>, value: <v> }` matching the column type.
+**Goal:** mark Task 1 as done. `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` PATCH MERGES `fields` (sending only `f_status` + `f_done` left `f_priority` untouched). Each field value must be the typed wrapper `{ type: <type>, value: <v> }` matching the column type.
 
 ```bash
 RID=$(curl -sf "$KIT/api/v1/notes/notebooks/$NBID/databases/$DBID/records?count=50" \
@@ -305,9 +318,10 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID/databases/$DBID/records/$RI
   -d '{"fields":{"f_status":{"type":"text","value":"done"},"f_done":{"type":"boolean","value":true}}}' \
   | jq '.fields'
 ```
+
 ### 8. Bulk import records from a CSV
 
-**Goal:** load a list of imports into the Tasks database in a loop. There is no single-call bulk-create endpoint; loop `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` per row. ⚠ Records DO NOT auto-deduplicate by `name` — re-running the same import doubles your data. If you need idempotency over HTTP/raw fetch, set the request header `X-Idempotency-Key` to a deterministic per-row key (replay returns the saved response; same key + different payload returns `409`). The **generated SDK service methods do not expose per-call headers**, so idempotency keys must be sent via raw `fetch()` (or `client.api.http.*` low-level if available).
+**Goal:** load a list of imports into the Tasks database in a loop. There is no single-call bulk-create endpoint; loop `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` per row. ⚠ Records DO NOT auto-deduplicate by `name` — re-running the same import doubles your data. If you need idempotency over HTTP/raw fetch, set the request header `X-Idempotency-Key` to a deterministic per-row key (replay returns the saved response; same key + different payload returns `409`). 
 
 ```bash
 cat > /tmp/tasks.csv <<EOF
@@ -327,9 +341,10 @@ tail -n +2 /tmp/tasks.csv | while IFS=, read -r name pri stat; do
          f_done:{type:"boolean",value:false}}}')" >/dev/null
 done
 ```
-### 9. Export a page to HTML — single-use ticket flow
 
-**Goal:** publish a static HTML snapshot of a page. `documents.get?output=html` requires a single-use export `ticket` (markdown via `?output=md` does NOT — it returns text directly with no ticket). Tickets default to 3 uses and expire in ~2 minutes (live-verified). Anyone with the kit URL + ticket can download until it expires.
+### 9. Export a page to HTML — short-lived ticket flow
+
+**Goal:** publish a static HTML snapshot of a page. `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` with `output=html` requires a short-lived export `ticket` (markdown via `?output=md` does NOT — it returns text directly with no ticket). Each ticket allows 3 uses and expires after 2 minutes. Anyone with the kit URL + ticket can download until it expires.
 
 **Step 1 — create a ticket.**
 
@@ -339,6 +354,7 @@ TICKET=$(curl -sf -X POST "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/export-
   -d '{"output":"html","themeMode":"light","includeComments":"appendix"}' \
   | jq -r .ticket)
 ```
+
 **Step 2 — fetch the HTML.** Same kit URL; pass `ticket=` in the query.
 
 ```bash
@@ -346,9 +362,10 @@ curl -sf "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document?output=html&tic
 # Markdown export — no ticket needed:
 curl -sf "$KIT/api/v1/notes/notebooks/$NBID/nodes/$PAGE/document?output=md" > /tmp/page.md
 ```
+
 ### 10. Tear down — delete the database, then the section (cascade), then the notebook
 
-**Goal:** clean up everything you created. Order matters: deleting a `section` cascades to every descendant page/database/record under it (live-verified — one DELETE on the section emptied the notebook). Then `DELETE /api/v1/notes/notebooks/{notebookId}` removes the notebook itself.
+**Goal:** clean up everything you created. Order matters: deleting a `section` cascades to every descendant page/database/record under it (one DELETE on the section empties the notebook). Then `DELETE /api/v1/notes/notebooks/{notebookId}` removes the notebook itself.
 
 `DELETE /api/v1/notes/notebooks/{notebookId}` returns `200` immediately after soft-deleting the notebook (flips `status` to `Inactive`); the caller must be `owner`. A background `notebook.clean` job then recursively purges child rows asynchronously — re-list via `GET /api/v1/notes/notebooks` to confirm the notebook no longer appears (the list filters out `Inactive` status).
 
@@ -363,12 +380,15 @@ curl -sf "$KIT/api/v1/notes/notebooks/$NBID/databases/$DBID/records?count=100" \
 curl -sf -X DELETE "$KIT/api/v1/notes/notebooks/$NBID/nodes/$DBID" >/dev/null
 # cascade-delete by removing the section (drops every page/db underneath)
 curl -sf -X DELETE "$KIT/api/v1/notes/notebooks/$NBID/nodes/$SEC" >/dev/null
-# notebook delete (returns 200 immediately, soft-delete — see note above)
-curl -s  -X DELETE "$KIT/api/v1/notes/notebooks/$NBID" -o /dev/null -w '%{http_code}\n'
-# fallback: rename so it's clearly disused
-curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"team-wiki-DELETED"}'
+# notebook delete (returns 200 immediately, soft-delete — see note above).
+# Rename only if the delete failed: once deleted, the notebook is Inactive and a
+# PATCH returns 403 notebook_no_access.
+CODE=$(curl -s -X DELETE "$KIT/api/v1/notes/notebooks/$NBID" -o /dev/null -w '%{http_code}')
+if [ "$CODE" != 200 ]; then
+  curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
+    -H 'Content-Type: application/json' \
+    -d '{"name":"team-wiki-DELETED"}'
+fi
 ```
 
 ## Reference
@@ -378,7 +398,7 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/notes/avatars/{avatarId}` | Download an avatar image |  |
-| `POST /api/v1/notes/avatars` | Upload an avatar image |  |
+| `POST /api/v1/notes/avatars` | Upload an avatar image | `body*:image/jpeg,image/png,image/webp` |
 
 ### `collaborators` (4) — collaborators
 
@@ -400,36 +420,20 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
 |--------|---------|--------|
 | `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments` | Create a comment | `body*` |
 | `DELETE /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` | Delete a comment | `?expectedVersion` |
-| `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` | Edit a comment | `body*` |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments` | List comments | `?limit` `?offset` `?cursor` |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comment-anchors` | List comment anchors | `?limit` `?offset` `?cursor` |
-| `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/reanchor` | Re-anchor a comment thread | `body*` |
 | `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` | Resolve a comment | `body*` |
+| `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/reanchor` | Re-anchor a comment thread | `body*` |
+| `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` | Edit a comment | `body*` |
 
 **Body shapes:**
 
 - `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments` body — `{ content*: string, parentId: string, anchorBlockId: string, anchor: object }`
-- `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` body — `{ content*: string, expectedVersion: int }`
-- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/reanchor` body — `{ anchor*: object, expectedVersion: int }`
 - `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/resolve` body — `{ expectedVersion: int }`
+- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/reanchor` body — `{ anchor*: object, expectedVersion: int }`
+- `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}` body — `{ content*: string, expectedVersion: int }`
 
-### `databases` (6) — databases
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` | Create a database record | `body*` |
-| `DELETE /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` | Delete a database record |  |
-| `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` | Get a database record |  |
-| `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` | List database records | `?filters` `?sorts` `?page` `?count` |
-| `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search` | Search database records | `?q` `?exclude` |
-| `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` | Update a database record | `body*` |
-
-**Body shapes:**
-
-- `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` body — `{ id: string, name: string="Untitled", avatar: string | null, fields: { [key: string]: any } }`
-- `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` body — `{ name: string, avatar: string | null, fields: { [key: string]: object } }`
-
-### `documents` (6) — documents
+### `document` (6) — documents
 
 | Method | Summary | Params |
 |--------|---------|--------|
@@ -437,8 +441,8 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
 | `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/export-ticket` | Create secure HTML export ticket | `body*` |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/blocks/{blockId}/svg` | Export drawing block as SVG | `?bg` `?scale` |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Get document content | `?blockIds` `?lines` `?output` `?includeComments` `?ticket` |
-| `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Merge document content | `body*` |
 | `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Create or replace document | `body*` |
+| `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` | Merge document content | `body*` |
 
 **Param notes:**
 
@@ -448,43 +452,49 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
 
 - `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append` body — `{ text*: string, type: "paragraph" | "heading1" | "heading2" | "heading3" | "codeBlock"="paragraph", attrs: object | null } | { blocks*: object[] }`
 - `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/export-ticket` body — `{ output: "html"="html", includeComments: "none" | "appendix"="none", includeBackground: bool=true, themeMode: "light" | "dark"="dark", themeId: string | null, themeVariables: { [key: string]: string }, fileName: string }`
-- `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` body — `{ content*: { [key: string]: any } }`
 - `PUT /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` body — `{ content*: { [key: string]: any } }`
+- `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document` body — `{ content*: { [key: string]: any } }`
 
-### `files` (6) — files
+### `files` (2) — files
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/notes/notebooks/{notebookId}/files/{fileId}` | Download a file |  |
 | `GET /api/v1/notes/notebooks/{notebookId}/files` | List all uploaded files | `?limit` `?offset` |
-| `DELETE /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Abort a TUS upload |  |
-| `HEAD /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Check a TUS upload's offset (for resuming) |  |
-| `POST /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Create a resumable (TUS) upload |  |
-| `PATCH /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Upload a chunk to a TUS upload |  |
 
-### `health` (1) — health
+### `files.uploads` (4) — files
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `DELETE /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Abort a TUS upload | `H:Tus-Resumable*` |
+| `POST /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Create a resumable (TUS) upload | `H:Tus-Resumable*` `H:Upload-Length*` `H:Upload-Metadata` |
+| `HEAD /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Check a TUS upload's offset (for resuming) | `H:Tus-Resumable*` |
+| `PATCH /api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus` | Upload a chunk to a TUS upload | `H:Tus-Resumable*` `H:Upload-Offset*` `body*:application/offset+octet-stream` |
+
+**Param notes:**
+
+- `Tus-Resumable` — TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412.
+- `Upload-Length` — Total size of the file in bytes. Must equal the file node's `size` (set when the node was created), which must not exceed the notebook's maximum file size. Upload-Defer-Length is not supported.
+- `Upload-Metadata` — Optional TUS metadata: comma-separated `key base64(value)` pairs.
+- `Upload-Offset` — Offset this chunk starts at — the value the HEAD check (or the previous chunk) returned.
+
+### `kit` (1) — health
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/notes/health` | Service health and runtime info |  |
 
-### `identity` (1) — identity
+### `members` (2) — users
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/notes/me` | Get current identity |  |
-
-### `interactions` (2) — interactions
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened` | Mark node as opened | `body*` |
-| `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen` | Mark node as seen | `body*` |
+| `POST /api/v1/notes/notebooks/{notebookId}/users` | Invite users to notebook | `body*` |
+| `PATCH /api/v1/notes/notebooks/{notebookId}/users/{userId}/role` | Update user role | `body*` |
 
 **Body shapes:**
 
-- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened` body — `{ openedAt: string }`
-- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen` body — `{ seenAt: string }`
+- `POST /api/v1/notes/notebooks/{notebookId}/users` body — `{ users*: { username*: string, role*: "owner" | "admin" | "collaborator" | "guest" | "none" }[] }`
+- `PATCH /api/v1/notes/notebooks/{notebookId}/users/{userId}/role` body — `{ role*: "owner" | "admin" | "collaborator" | "guest" | "none" }`
 
 ### `mutations` (1) — mutations
 
@@ -496,21 +506,25 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
 
 - `POST /api/v1/notes/notebooks/{notebookId}/mutations` body — `{ mutations*: object[] }`
 
-### `nodes` (7) — nodes
+### `nodes` (9) — nodes
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `POST /api/v1/notes/notebooks/{notebookId}/nodes` | Create a node | `body*` |
 | `DELETE /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}` | Delete a node |  |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}` | Get a node |  |
-| `GET /api/v1/notes/notebooks/{notebookId}/nodes/alias/{alias}` | Resolve page by alias |  |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes` | List nodes | `?type` `?parentId` `?rootId` `?limit` `?offset` |
 | `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/children` | List child nodes | `?limit` `?offset` |
+| `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened` | Mark node as opened | `body*` |
+| `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen` | Mark node as seen | `body*` |
+| `GET /api/v1/notes/notebooks/{notebookId}/nodes/alias/{alias}` | Resolve page by alias |  |
 | `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}` | Update a node | `body*` |
 
 **Body shapes:**
 
 - `POST /api/v1/notes/notebooks/{notebookId}/nodes` body — `{ id: string, type*: string, parentId: string, attributes*: { [key: string]: any } }`
+- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened` body — `{ openedAt: string }`
+- `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen` body — `{ seenAt: string }`
 - `PATCH /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}` body — `{ attributes*: { [key: string]: any } }`
 
 ### `notebooks` (5) — notebooks
@@ -528,6 +542,12 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
 - `POST /api/v1/notes/notebooks` body — `{ name*: string, description: string | null, avatar: string | null }`
 - `PATCH /api/v1/notes/notebooks/{notebookId}` body — `{ name*: string, description: string | null, avatar: string | null }`
 
+### `notes` (1) — identity
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `GET /api/v1/notes/me` | Get current identity |  |
+
 ### `reactions` (3) — reactions
 
 | Method | Summary | Params |
@@ -540,24 +560,28 @@ curl -sf -X PATCH "$KIT/api/v1/notes/notebooks/$NBID" \
 
 - `POST /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/reactions` body — `{ reaction*: string }`
 
+### `records` (6) — databases
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` | Create a database record | `body*` |
+| `DELETE /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` | Delete a database record |  |
+| `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` | Get a database record |  |
+| `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` | List database records | `?filters` `?sorts` `?page` `?count` |
+| `GET /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search` | Search database records | `?q` `?exclude` |
+| `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` | Update a database record | `body*` |
+
+**Body shapes:**
+
+- `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records` body — `{ id: string, name: string="Untitled", avatar: string | null, fields: { [key: string]: any } }`
+- `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}` body — `{ name: string, avatar: string | null, fields: { [key: string]: object } }`
+
 ### `sockets` (2) — sockets
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `POST /api/v1/notes/sockets` | Initialize a WebSocket session |  |
 | `GET /api/v1/notes/sockets/{socketId}` | Open a WebSocket connection |  |
-
-### `users` (2) — users
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `POST /api/v1/notes/notebooks/{notebookId}/users` | Invite users to notebook | `body*` |
-| `PATCH /api/v1/notes/notebooks/{notebookId}/users/{userId}/role` | Update user role | `body*` |
-
-**Body shapes:**
-
-- `POST /api/v1/notes/notebooks/{notebookId}/users` body — `{ users*: ({ username*: string, role*: "owner" | "admin" | "collaborator" | "guest" | "none" })[] }`
-- `PATCH /api/v1/notes/notebooks/{notebookId}/users/{userId}/role` body — `{ role*: "owner" | "admin" | "collaborator" | "guest" | "none" }`
+| `POST /api/v1/notes/sockets` | Initialize a WebSocket session |  |
 
 ### `versions` (5) — versions
 

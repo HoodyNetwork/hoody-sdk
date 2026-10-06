@@ -1,4 +1,4 @@
-> _**HTTP skill · `cron` namespace** · ~3,856 tokens · hoody-sdk v1.0.0-beta.14_
+> _**HTTP skill · `cron` namespace** · ~5,436 tokens · hoody-sdk v1.0.0-beta.15_
 
 # `cron` — managed crontab entries per system user
 
@@ -36,11 +36,11 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Schedule
 
-`POST /users/{user}/entries` schedule + command (+ name/comment/expires_at/enabled) → `ManagedEntry` with `id`.
+`POST /users/{user}/entries` takes a schedule + command (plus name/comment/expires_at/enabled) and returns the created entry with its `id`.
 
 ### 2. List
 
-`GET /users/{user}/entries` (`page`/`limit`, max 200); the SDK additionally offers auto-pagination helpers (`GET /users/{user}/entries`, `GET /users/{user}/entries`) over the same endpoint.
+`GET /users/{user}/entries` (`page`/`limit`, max 200).
 
 ### 3. Edit / disable / extend
 
@@ -52,26 +52,34 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 5. Audit all users
 
-`GET /crontab` → paginated `{ items: [{ user, crontab }], total, page, limit }`; the SDK additionally offers auto-pagination helpers (`GET /crontab`, `GET /crontab`) over the same endpoint.
+`GET /crontab` → paginated `{ items: [{ user, crontab }], total, page, limit }`.
 
 ## Quirks & gotchas
 
 - `user`: matches `^[A-Za-z0-9_.-]{1,32}$` for the character class, but the validator additionally rejects a **leading** `-` (trailing `-` is allowed).
 - Vixie 5-field plus standard `@`-macros; Quartz rejected.
 - `command`/`name`/`comment` reject newline/null/VT/FF/NEL/LS/PS; caps 4096/120/500.
+- The kit collapses runs of whitespace inside the command of a managed entry with a 5-field schedule: when the spool is parsed back, the command is split on whitespace and re-joined with single spaces, and the next write for that user stores the collapsed text. `echo "a  b"` becomes `echo "a b"`. An `@macro` schedule keeps the command as written. Put commands that depend on exact spacing in a script and schedule the script.
 - `expires_at` RFC 3339, strictly future.
-- Body cap 256 KiB (configurable via `max_crontab_bytes`, default 256 KiB) AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
-- **`PUT /users/{user}/crontab` is a full overwrite — destroys every managed entry on the target user, not just the raw lines.** Server persists only the parsed payload via `state.backend.set(&user, &cleaned)`; entries not in the request body are gone. If you mix `POST /users/{user}/entries` and `PUT /users/{user}/crontab` on the same user, every PUT wipes prior managed state. Strategy: pick one (managed-only via the `entries` endpoints, OR raw-only via `PUT /users/{user}/crontab`); if you must mix, treat the PUT body as the canonical source of truth and re-create managed entries after each PUT.
-- Forged `# hoody-cron:` lines in PUT body are revalidated and rejected.
+- Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
+- **`PUT /users/{user}/crontab` replaces the whole crontab.** `GET /users/{user}/crontab` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `GET /users/{user}/crontab` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
+- A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line.
 - `GET /users/{user}/entries`/`GET /users/{user}/entries/{id}` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
 - `GET /users/{user}/entries` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
 - Sweep every 60s default; per-user lock.
 
 ## Common errors
 
+Error bodies are `{ code, message, details }`, except where noted.
+
 - `400 INVALID_EXPIRES_AT` / `EXPIRES_IN_PAST`.
 - `400 INVALID_SCHEDULE / Invalid schedule` — Vixie 5-field plus `@`-macros only; Quartz / 6-field rejected.
-- `413 PAYLOAD_TOO_LARGE` — body exceeds 256 KiB cap.
+- `400 INVALID_USER` (bad user name), `INVALID_COMMAND`, `INVALID_NAME`, `INVALID_COMMENT`: a field failed validation (see Quirks for the rules).
+- `400 INVALID_ID` `Entry id must be a UUID`: the `{id}` path segment is not a UUID.
+- `400 INVALID_PAGINATION`: `page` must be 1 or more and `limit` 1 to 200 (default 50).
+- `404 USER_NOT_FOUND`: the user is not in `/etc/passwd`. `404 ENTRY_NOT_FOUND`: no managed entry has that id (it may have expired and been swept).
+- `413`: a request body over the size cap (256 KiB by default) is rejected by the HTTP layer before the handler runs, with a plain-text body, not JSON. The JSON `PAYLOAD_TOO_LARGE` comes from the crontab parser: for a crontab over 10,000 lines, or over its separate byte ceiling of about 40 MB, which only a deployment that raised the size cap can reach.
+- `415` (the body is not `application/json`) and `422` (the JSON does not match the request schema) come from the JSON extractor, with a plain-text body.
 - `500 BACKEND_ERROR` — `crontab(1)` fail / 30s timeout.
 - `403 Forbidden` — private IP, no dev-server.
 
@@ -81,26 +89,28 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Examples
 
-Every step in every example was live-tested against a real `cron-1` kit. Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
 
 ### 1. Set up a nightly DB backup with trial-run dry-fire
 
-**Goal:** schedule `pg_dump` daily at 02:00 in the container's LOCAL timezone (the kit does no TZ conversion; only `expires_at` is UTC-anchored), set the entry to expire end of 2026; first verify it actually fires by running it every minute for one cycle.
+**Goal:** schedule `pg_dump` daily at 02:00 in the container's LOCAL timezone (the kit does no TZ conversion; only `expires_at` is UTC-anchored), set the entry to expire one year from now; first verify it actually fires by running it every minute for one cycle.
 
 **Step 1 — create the entry.** Capture the returned `id`; `schedule_human` should read `"At 02:00 every day"`.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
+EXP=$(date -u -d '+1 year' +%FT%TZ)   # expires_at must be in the future
 ID=$(curl -sX POST "$KIT/users/root/entries" \
   -H 'Content-Type: application/json' \
-  -d '{
-    "schedule": "0 2 * * *",
-    "command": "pg_dump -U postgres mydb | gzip > /backups/db-$(date +\\%F).sql.gz",
-    "name": "nightly-db-backup",
-    "expires_at": "2026-12-31T23:59:59Z"
-  }' | jq -r '.id')
+  -d "$(jq -nc --arg e "$EXP" '{
+    schedule: "0 2 * * *",
+    command: "pg_dump -U postgres mydb | gzip > /backups/db-$(date +\\%F).sql.gz",
+    name: "nightly-db-backup",
+    expires_at: $e
+  }')" | jq -r '.id')
 echo "id=$ID"
 ```
+
 **Step 2 — trial-run** by tightening to every minute. Wait ~70 s then `tail /var/log/syslog` (via the `terminal` kit) to confirm cron actually fired the job.
 
 ```bash
@@ -108,6 +118,7 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
   -d '{"schedule":"* * * * *","comment":"TEST MODE — revert before merge"}'
 ```
+
 **Step 3 — promote back to nightly** with a clean comment.
 
 ```bash
@@ -115,75 +126,120 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
   -d '{"schedule":"0 2 * * *","comment":"production schedule"}'
 ```
+
 ### 2. Maintenance window — pause every managed job, do work, resume
 
 **Goal:** disable every managed entry so nothing fires during a 30-min DB migration; re-enable once clean.
 
-**Step 1 — capture every enabled managed id.**
+**Step 1 — capture every enabled managed id.** The listing is paginated (50 per page by default, at most 200), so read every page before filtering: a job left on a later page stays enabled through the migration. Run steps 1 and 2 as one script that exits on any listing or update failure, and start the migration only when it exits successfully; a partial list or a failed disable leaves jobs enabled.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-IDS=$(curl -sf "$KIT/users/root/entries" \
-  | jq -r '.entries[] | select(.type=="managed" and .enabled) | .id')
+IDS=""; page=1
+while :; do
+  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") \
+    || { echo "listing page $page failed" >&2; exit 1; }
+  ids=$(jq -r '.entries[] | select(.type=="managed" and .enabled) | .id' <<<"$body") \
+    || { echo "unreadable listing" >&2; exit 1; }
+  IDS="$IDS $ids"
+  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
+  page=$((page + 1))
+done
 echo "$IDS"
 ```
+
 **Step 2 — bulk disable.**
 
 ```bash
 for id in $IDS; do
-  curl -sX PATCH "$KIT/users/root/entries/$id" \
+  curl -sf -X PATCH "$KIT/users/root/entries/$id" \
     -H 'Content-Type: application/json' \
-    -d '{"enabled":false}' >/dev/null
+    -d '{"enabled":false}' >/dev/null \
+    || { echo "disable failed for $id: do not start the migration" >&2; exit 1; }
 done
 ```
-**Step 3 — run your migration. Step 4 — bulk re-enable** (same loop, body `{ enabled: true }`). Entries pick up at their next regular tick; no missed-window catch-up.
+
+**Step 3 — run your migration. Step 4 — bulk re-enable** the captured ids (same loop with `enabled: true`). After a failed step 2, re-enable the same list: the entries disabled before the failure are still disabled. Entries pick up at their next regular tick; no missed-window catch-up.
 
 ### 3. Migrate a hand-written crontab into managed entries
 
-**Goal:** convert legacy raw lines (no `id`, no metadata) into managed entries with names + lifecycle fields. ⚠ Read the warning at step 3 before running anything destructive.
+**Goal:** convert legacy raw lines (no `id`, no metadata) into managed entries with names + lifecycle fields, then remove the raw originals so nothing runs twice.
 
-**Step 1 — read the raw crontab.** `GET /users/{user}/entries` shows the same lines as `{ type: 'raw', line: '...' }` items.
+**Step 1 — collect the raw lines to migrate.** `GET /users/{user}/entries` returns hand-written lines as `{ type: 'raw', line }` items; managed entries are `type: 'managed'` and are left alone.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-curl -sf "$KIT/users/root/crontab" | jq -r .crontab
+# Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO=, ...).
+: > /tmp/cron-migrate.txt; page=1
+while :; do
+  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") || exit 1
+  jq -r '.entries[] | select(.type=="raw") | .line' <<<"$body" \
+    | grep -Ev '^[[:space:]]*($|#|[A-Za-z_][A-Za-z0-9_]*=)' >> /tmp/cron-migrate.txt
+  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
+  page=$((page + 1))
+done
+cat /tmp/cron-migrate.txt
 ```
-**Step 2 — re-create as managed.** Parse each raw line into `(schedule, command)` and POST it.
+
+**Step 2 — create a managed entry per line.** An `@macro` line (`@daily`, `@reboot`, ...) has a one-field schedule; any other line has five fields. The rest of the line is the command.
 
 ```bash
-# expects each $LINE to be `<schedule> <command>` (5 fields + remainder)
-SCHED=$(echo "$LINE" | awk '{print $1,$2,$3,$4,$5}')
-CMD=$(echo "$LINE"   | awk '{$1=$2=$3=$4=$5=""; sub(/^ +/,""); print}')
-curl -sX POST "$KIT/users/root/entries" \
-  -H 'Content-Type: application/json' \
-  -d "$(jq -nc --arg s "$SCHED" --arg c "$CMD" --arg n "$NAME" \
-    '{schedule:$s,command:$c,name:$n}')"
+i=0; FAILED=0
+while IFS= read -r LINE; do
+  i=$((i + 1))
+  case "$(echo "$LINE" | sed -E 's/^[[:space:]]+//')" in @*) F=1 ;; *) F=5 ;; esac
+  SCHED=$(echo "$LINE" | awk -v f="$F" '{s=$1; for (k = 2; k <= f; k++) s = s " " $k; print s}')
+  CMD=$(echo "$LINE" | sed -E "s/^[[:space:]]*([^[:space:]]+[[:space:]]+){$F}//")
+  curl -sf -X POST "$KIT/users/root/entries" \
+    -H 'Content-Type: application/json' \
+    -d "$(jq -nc --arg s "$SCHED" --arg c "$CMD" --arg n "migrated-$i" '{schedule:$s,command:$c,name:$n}')" >/dev/null \
+    || { echo "create failed for: $LINE" >&2; FAILED=1; break; }
+done < /tmp/cron-migrate.txt
+[ "$FAILED" = 0 ] || exit 1   # stop here: step 3 must not run after a failed create
 ```
-**Step 3 — ⚠ DESTRUCTIVE — wipe the raw lines.** `PUT /users/{user}/crontab` REPLACES the entire crontab including managed entries (live-verified — see Quirks). Do this ONLY after step 2 has succeeded, and re-create the managed entries AFTER the wipe if you want them back.
+
+**Step 3 — remove only the migrated raw lines.** Only after every create in step 2 succeeded: run steps 2 and 3 as one script, so the stop after a failed create also skips this step. After a partial failure, the managed entries created so far run alongside their raw lines (each of those jobs runs twice) until you delete them or finish the migration. Read the crontab text again (it now contains the new managed entries as `# hoody-cron:` metadata and rule line pairs), drop the raw lines from step 1 and write the rest back. A new managed entry's rule line is usually the same text as the raw line it replaces, so match a line only when the line before it is not a `# hoody-cron:` metadata line: dropping a rule line leaves its metadata unpaired, and the managed entry is lost. The PUT keeps every managed entry that is still in the text, with the same id. Do not PUT an empty crontab here: that would delete the entries step 2 just created.
 
 ```bash
-curl -sX PUT "$KIT/users/root/crontab" \
+[ -s /tmp/cron-migrate.txt ] || exit 0   # nothing to drop
+BODY=$(curl -sf "$KIT/users/root/crontab") || exit 1
+CUR=$(jq -er '.crontab | select(type == "string")' <<<"$BODY") || exit 1
+# Drop a listed line only when it does not follow a "# hoody-cron:" metadata line.
+NEW=$(printf '%s\n' "$CUR" | awk 'NR == FNR { drop[$0] = 1; next }
+  { keep = !($0 in drop) || prev ~ /^[[:space:]]*# hoody-cron:/; prev = $0 } keep' /tmp/cron-migrate.txt -)
+curl -sf -X PUT "$KIT/users/root/crontab" \
   -H 'Content-Type: application/json' \
-  -d '{"crontab":""}'
+  -d "$(jq -nc --arg c "$NEW" '{crontab:$c}')"
 ```
+
 ### 4. Hourly poll → tighten to every 5 minutes after a failure
 
 **Goal:** a health-poller is failing intermittently; you want denser data without redeploying anything. Find by name, change schedule, restore later.
 
-**Step 1 — find the entry id by name.**
+**Step 1 — find the entry id by name.** Names are not unique and the listing is paginated, so read every page and stop unless exactly one managed entry carries the name.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-ID=$(curl -sf "$KIT/users/root/entries" \
-  | jq -r '.entries[] | select(.type=="managed" and .name=="health-poll") | .id')
+ID=""; page=1
+while :; do
+  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") || exit 1
+  ID="$ID $(jq -r '.entries[] | select(.type=="managed" and .name=="health-poll") | .id' <<<"$body")"
+  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
+  page=$((page + 1))
+done
+set -- $ID
+[ $# -eq 1 ] || { echo "expected one entry named health-poll, found $#: $ID" >&2; exit 1; }
+ID=$1
 ```
+
 **Step 2 — tighten to `*/5 * * * *`.** `schedule_human` becomes `"Every 5 minutes"` immediately on the response.
 
 ```bash
 curl -sX PATCH "$KIT/users/root/entries/$ID" \
   -H 'Content-Type: application/json' -d '{"schedule":"*/5 * * * *"}'
 ```
-**Step 3 — restore** to hourly with body `{ schedule: '0 * * * *' }` once the investigation is over (same call, different schedule string).
+
+**Step 3 — restore** to hourly once the investigation is over: the same call with the JSON body `{"schedule":"0 * * * *"}`.
 
 ### 5. Time-bounded experiment — auto-expire after 30 days
 
@@ -193,43 +249,54 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
+EXP=$(date -u -d '+30 days' +%FT%TZ)
 ID=$(curl -sX POST "$KIT/users/root/entries" \
   -H 'Content-Type: application/json' \
-  -d '{
-    "schedule":"@daily",
-    "command":"/opt/metrics/sample.sh",
-    "name":"metrics-experiment",
-    "expires_at":"2026-07-08T00:00:00Z"
-  }' | jq -r .id)
+  -d "$(jq -nc --arg e "$EXP" '{
+    schedule: "@daily",
+    command: "/opt/metrics/sample.sh",
+    name: "metrics-experiment",
+    expires_at: $e
+  }')" | jq -r .id)
 ```
+
 After the timestamp passes, the kit's 60 s sweep **deletes** expired managed entries. `GET /users/{user}/entries`/`GET /users/{user}/entries/{id}` also clean expired entries before serializing, so once the sweep runs you can no longer read the expired entry — the entry simply disappears from listings. The `removed_expired` count on `PUT /users/{user}/crontab` tells you how many expired entries got dropped during a bulk replace.
 
-**Step 2a — extend the deadline mid-experiment** (push out by 30 days):
+**Step 2a — extend the deadline mid-experiment** (to 60 days from now):
 
 ```bash
 curl -sX PATCH "$KIT/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
-  -d '{"expires_at":"2026-08-07T00:00:00Z"}'
+  -d "$(jq -nc --arg e "$(date -u -d '+60 days' +%FT%TZ)" '{expires_at:$e}')"
 ```
+
 **Step 2b — make it permanent** instead. Pass `clear_expiration: true`. If you also send `expires_at` in the same call, `clear_expiration` silently wins (server returns `200` with `expires_at: null` — no error).
 
 ```bash
 curl -sX PATCH "$KIT/users/root/entries/$ID" \
   -H 'Content-Type: application/json' -d '{"clear_expiration":true}'
 ```
+
 ### 6. Quick-disable a misbehaving entry by name
 
 **Goal:** A teammate paged you about a runaway cron at 3am. You don't have the id, only the name they mentioned (`noisy-job`).
 
-**Step 1 — find its id by name.**
+**Step 1 — find its id by name.** Read every page and require exactly one match; if several entries share the name, pick the intended id explicitly.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-ENTRY_ID=$(curl -sf "$KIT/users/root/entries" \
-  | jq -r '.entries[] | select(.type=="managed" and .name=="noisy-job") | .id')
-echo "$ENTRY_ID"
-# → e.g. ced921ab-a14e-410e-99e2-0a5c35ee730b
+ENTRY_ID=""; page=1
+while :; do
+  body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") || exit 1
+  ENTRY_ID="$ENTRY_ID $(jq -r '.entries[] | select(.type=="managed" and .name=="noisy-job") | .id' <<<"$body")"
+  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
+  page=$((page + 1))
+done
+set -- $ENTRY_ID
+[ $# -eq 1 ] || { echo "expected one entry named noisy-job, found $#: $ENTRY_ID" >&2; exit 1; }
+ENTRY_ID=$1
 ```
+
 **Step 2 — disable it (entry stays in the listing for forensics; cron won't fire it).**
 
 ```bash
@@ -237,24 +304,31 @@ curl -sX PATCH "$KIT/users/root/entries/$ENTRY_ID" \
   -H 'Content-Type: application/json' \
   -d "{\"enabled\":false,\"comment\":\"disabled $(date -u +%FT%TZ) — investigating\"}"
 ```
-**Step 3 — re-enable later** by calling the same update with `{ enabled: true }`.
+
+**Step 3 — re-enable later** by calling the same update with `enabled: true`.
 
 ### 7. Audit which users on the container have any cron entries
 
-**Goal:** compliance question — "who has scheduled jobs?". Container has 60+ system users; you want one shot.
+**Goal:** compliance question — "who has scheduled jobs?". A container has 60+ system users, more than the default page of 50, so read every page.
 
-`GET /crontab` returns one record per account in `/etc/passwd` (`{ user, crontab }`). Filter client-side for non-empty `crontab`.
+`GET /crontab` returns one record per account in `/etc/passwd` (`{ user, crontab }`), 50 per page by default and at most 200. Filter client-side for non-empty `crontab`.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-curl -sf "$KIT/crontab?limit=200" \
-  | jq '.items[] | select(.crontab | test("\\S")) | {user, crontab}'
+page=1
+while :; do
+  body=$(curl -sf "$KIT/crontab?page=$page&limit=200") || break
+  jq '.items[] | select(.crontab | test("\\S")) | {user, crontab}' <<<"$body"
+  [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
+  page=$((page + 1))
+done
 ```
-For each non-empty user, drill in via `GET /users/{user}/entries` for the managed view, or read the `crontab` text directly from step 1.
+
+For each non-empty user, drill in via `GET /users/{user}/entries` for that user for the managed view, or read the `crontab` text directly from the listing above.
 
 ### 8. Atomic full-crontab replace from versioned config
 
-**Goal:** your IaC layer keeps the canonical crontab as a string in Git; on deploy, push the whole thing. ⚠ Destructive — wipes managed AND raw entries.
+**Goal:** your IaC layer keeps the canonical crontab as a string in Git; on deploy, push the whole thing. ⚠ The canonical text becomes the whole crontab: raw lines not in it are removed, and so is every managed entry whose `# hoody-cron:` metadata and rule lines are not in it.
 
 **Step 1 — snapshot current state** for forensics:
 
@@ -262,6 +336,7 @@ For each non-empty user, drill in via `GET /users/{user}/entries` for the manage
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 curl -sf "$KIT/users/root/crontab" > /tmp/cron-snapshot.json
 ```
+
 **Step 2 — push the canonical config.** Body MUST be `application/json` (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
 
 ```bash
@@ -270,9 +345,10 @@ curl -sX PUT "$KIT/users/root/crontab" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg c "$NEW" '{crontab:$c}')"
 ```
+
 ### 9. Update only the comment / metadata, leave the schedule untouched
 
-**Goal:** add a runbook URL or owner tag without risking changing what the entry does. PATCH is partial — fields you don't pass stay put.
+**Goal:** add a runbook URL or owner tag without changing the schedule or the enabled state. PATCH is partial — fields you don't pass are not assigned. The write still rewrites the user's whole crontab, so runs of whitespace inside a five-field managed entry's command are collapsed (see Quirks).
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
@@ -280,18 +356,22 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
   -H 'Content-Type: application/json' \
   -d '{"comment":"owner: @team · runbook: https://wiki.example.com/cron-x"}'
 ```
-`updated_at` advances; `schedule` / `command` / `enabled` are unchanged.
+
+`updated_at` advances; `schedule` and `enabled` are unchanged, and `command` is unchanged unless it contained runs of whitespace, which the rewrite collapses.
 
 ### 10. Rotate-and-replace pattern — read, edit text, write back
 
-**Goal:** a teammate wants ONE hand-written line gone without disturbing the rest. You don't have an id (it's raw).
+**Goal:** a teammate wants ONE hand-written line gone without disturbing the rest. You don't have an id (it's raw). Match the whole line exactly, and skip a matching line that follows a `# hoody-cron:` metadata line: that one is a managed entry's rule, and dropping it orphans the entry.
 
-**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** ⚠ This also wipes any managed entries — re-create them with `POST /users/{user}/entries` afterwards if you had any.
+**Step 1 — fetch** the multi-line string. **Step 2 — edit client-side** (split, drop, rejoin). **Step 3 — write back.** Managed entries survive: the fetched text holds each one as a `# hoody-cron:` metadata line plus its rule line, and the PUT parses them back with the same ids. Leave those lines untouched and do not re-create the entries afterwards, or every managed job runs twice.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-CUR=$(curl -sf "$KIT/users/root/crontab" | jq -r .crontab)
-NEW=$(echo "$CUR" | grep -v '^\*/30 \* \* \* \* /old\.sh')
+# Check the read and the parse separately: a failed read must never become an empty PUT.
+BODY=$(curl -sf "$KIT/users/root/crontab") || exit 1
+CUR=$(jq -er '.crontab | select(type == "string")' <<<"$BODY") || exit 1
+NEW=$(printf '%s\n' "$CUR" | awk -v target='*/30 * * * * /old.sh' \
+  '{ keep = $0 != target || prev ~ /^[[:space:]]*# hoody-cron:/; prev = $0 } keep')
 curl -sX PUT "$KIT/users/root/crontab" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg c "$NEW" '{crontab:$c}')"
@@ -299,7 +379,7 @@ curl -sX PUT "$KIT/users/root/crontab" \
 
 ## Reference
 
-### `crontab` (3) — Raw crontab management
+### `crontabs` (3) — Raw crontab management
 
 | Method | Summary | Params |
 |--------|---------|--------|
@@ -329,18 +409,11 @@ curl -sX PUT "$KIT/users/root/crontab" \
 - `page` — Page number (1-based)
 - `limit` — Items per page (max 200)
 
-### `health` (1) — Health
+### `kit` (1) — System endpoints
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /health` | Health Check |  |
-
-### `system` (2) — System endpoints
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `GET /openapi.json` | Get Open Api Json |  |
-| `GET /openapi.yaml` | Get Open Api Yaml |  |
 
 
 ### Body schemas

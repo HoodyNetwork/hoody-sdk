@@ -1,4 +1,4 @@
-> _**HTTP skill · `tunnel` namespace** · ~4,325 tokens · hoody-sdk v1.0.0-beta.14_
+> _**HTTP skill · `tunnel` namespace** · ~5,230 tokens · hoody-sdk v1.0.0-beta.15_
 
 # `tunnel` — reverse tunnels for HTTP/WS/TCP via container relay
 
@@ -6,10 +6,10 @@
 
 **Mental model: ngrok, but built into every container, with the rest of the platform glued in for free.** Same job — reverse tunnel laptop ↔ container — but the public URL lives on the container's own `*.containers.hoody.com` host, so it inherits everything the proxy already does:
 
-- **Capability gates** (`proxyPermissionsContainer.*`) apply unchanged — Password / Token / JWT / IP groups gate the tunnel URL the same way they gate any kit URL.
-- **Request hooks (MITM)** — wire `proxyHooks.*` rules to inspect, transform, redirect, or block requests before they reach the tunnel; same engine as the rest of the platform.
-- **Proxy logs** — every tunnel request is captured by `proxyLogs.*` automatically (status, latency, headers, source IP). No extra setup.
-- **Friendly aliases** — point a `<alias>.{server_name}.containers.hoody.com` at the tunnel via `POST /api/v1/proxy/aliases` so the public URL hides `containerId`.
+- **Capability gates** (`* /api/v1/containers/{id}/proxy/permissions*`) — Password / Token / JWT / IP groups can gate the tunnel URLs like any other container URL, once a group is granted access and the container's default policy denies everyone else (see Workflow 3).
+- **Request hooks (MITM)** — `* /api/v1/containers/{id}/proxy/hooks*` rules apply to the kit's own admin/connect URL (service key `tunnel`). An exposed application is reached on its own port, which has no service name, so hooks do not run on that visitor traffic.
+- **Proxy logs** — requests through the proxy, including tunnel traffic, can appear in `* /_logs*` (status, latency, headers, source IP), subject to the container's logging configuration and exclusions.
+- **Friendly aliases** — for an exposed application, create an alias with `program: 'http'` and `port` set to the container port the EXPOSE bind was given, so the public URL hides `containerId`. `program: 'tunnel'` targets the kit's admin/connect endpoints instead.
 
 Two surfaces:
 - **EXPOSE**: publish laptop HTTP/1.1 (+WS) on container's public domain. (ngrok `http`)
@@ -32,7 +32,7 @@ Container-hosted HTTP → `exec`, browser → `browser`, one-shot HTTP → `curl
 ## Prerequisites
 
 - `hoody-tunnel` kit running; base port reserved.
-- EXPOSE URL needs `HOODY_TUNNEL_PUBLIC_URL_PATTERN`.
+- A public EXPOSE URL is only issued where the deployment is configured to mint one; otherwise the bind succeeds with no public URL.
 
 ## Capability URL
 
@@ -61,54 +61,55 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 Tunnel traffic flows through the same proxy as every other kit URL, so:
 
-- **Logs**: `client.proxyLogs.logs.list({ serviceName: 'tunnel' })` returns every request that hit the tunnel — status, latency, source IP, headers — and `client.proxyLogs.logs.streamLogs(...)` for live tail; the generated SDK stream method does **not** expose `serviceName`, so use `list({ serviceName: 'tunnel', ... })` for tunnel-scoped polling. (proxyLogs query params on `list` are `limit` / `offset` / `projectId` / `containerId` / `serviceName` / `level` / `includeRequestBody` / `includeResponseBody` / `last` / `afterId` / `cursor` / `kind` / `method` / `source`; there is no `program` filter.) No agent on the laptop needed.
-- **Hooks (MITM)**: register a `proxyHooks` rule scoped to `program: 'tunnel'` (or by alias hostname) to inspect / rewrite / inject / block requests before they reach the WS data plane. Same hook DSL as for any kit. Useful for: stripping a bearer header on the way through, redacting PII, rate-limiting, swapping bodies on the fly, fault-injecting for tests.
-- **Gates**: layer `proxyPermissionsContainer.set{Password,Token,Jwt,Ip}Group` on the container; the tunnel URL becomes auth-gated without the laptop ever needing to handle it.
+- **Logs** (subject to the container's logging configuration and exclusions; entries for the kit's admin/connect URL carry `serviceName` `tunnel`, while visitor traffic on an exposed port is reached through that port and does not carry the `tunnel` service name): the proxy-logs kit (`https://{P}-{C}-logs-1.{N}.containers.hoody.com`, a separate `-logs-` host) serves `GET /_logs` (every request that hit the container: status, latency, source IP, headers) and `GET /_logs/stream` (live SSE tail). ⚠ `GET /_logs` ignores a `serviceName` query (the host already scopes the read to your container), so filter its entries on `serviceName == "tunnel"` yourself; `/_logs/stream` honours `serviceName`, so the live tail can be scoped server-side. (proxyLogs query params on `list` are `limit` / `offset` / `projectId` / `containerId` / `serviceName` / `level` / `includeRequestBody` / `includeResponseBody` / `last` / `afterId` / `kind` / `method` / `source` / `sinceMs` / `untilMs`; there is no `program` filter.) No agent on the laptop needed.
+- **Hooks (MITM)**: proxy hook rules registered under the `tunnel` service key (hooks are keyed by service name, per container) inspect / rewrite / inject / block requests to the kit's admin and `/connect` URL. They do **not** run on visitor traffic to an exposed application: that traffic arrives on the exposed port, which carries no service name, and the proxy only hook-routes requests that have one. A rule is `{ match, script, timeout? }`, and `match` can test only `method`, `path` and `headers`: there is no `program` field and no alias-hostname match.
+- **Gates**: defining an authentication group (the container proxy-permissions group endpoints of the Hoody API) does not gate anything by itself: the group starts with no access grants, and a container whose default policy is `allow` still lets every other caller through. Grant the group access and set the default policy to `deny`. An exposed port has no service name, so its route checks the matching protocol cell (`http`/`https`) first, where a grant or an explicit `false` decides, and only falls back to the `*` cell when there is no protocol cell; the laptop never has to handle the credential.
 
 ## Quirks & gotchas
 
-- The data-plane (open / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 20+ (the listening-server form is Bun-only). The main `tunnel` namespace covers only the read/observability + admin surface (`GET /api/v1/tunnel/tunnels`, `GET /api/v1/tunnel/sessions`, `GET /api/v1/tunnel/bindings`, `GET /api/v1/tunnel/metrics`, `DELETE /api/v1/tunnel/sessions/{session_id}`).
-- `BIND_OK.publicUrl=null` without `HOODY_TUNNEL_PUBLIC_URL_PATTERN`.
+- The data plane (expose / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 22.23+ (24.18+ on the 24 line; the listening-server form is Bun-only). The generated `tunnel` namespace covers only the read/observability + admin surface (`GET /api/v1/tunnel/tunnels`, `GET /api/v1/tunnel/sessions`, `GET /api/v1/tunnel/bindings`, `GET /api/v1/tunnel/metrics`, `DELETE /api/v1/tunnel/sessions/{session_id}`) — the driver itself ships alongside it. It has no HTTP form: run it from the SDK (`tunnelExpose` / `tunnelPull`) or the CLI (`hoody tunnel expose` / `hoody tunnel pull`).
+- `BIND_OK.publicUrl` is `null` on deployments that do not mint public tunnel URLs — the bind still works, you just reach it another way.
 - `grace_ms` capped at 5000ms; over → `400`.
-- Ports `<80` rejected; `80..=1023` need `--allow-privileged-expose`/`--allow-privileged-pull`.
-- PULL loopback-only. EXPOSE has atomic takeover (`takeover:true`); old owner gets `RESET(BIND_TAKEOVER)`+`BIND_REVOKED`. PULL takeover → `BIND_ERR(INVALID_KIND)`.
-- Idle reaping needs zero streams AND zero bindings. Orphans with parked bindings wait 60s takeover-grace.
+- `containerPort: 0` requests an automatically allocated port; ports 1–79 are rejected; `80..=1023` are refused unless the deployment allows privileged ports (gated separately for expose and for pull).
+- PULL loopback-only. EXPOSE has atomic takeover (`takeover:true`); the displaced owner gets a `RESET` frame on each stream of the old binding carrying the **numeric** code `13`, then a takeover notice: frame type `0x40` (`TunnelFrameType.BindRevoked` in the SDK), whose JSON body is `{bindId, reason}` — `reason` is free text, so branch on the frame type, never on its wording. The `tunnelExpose` driver does not surface that notice; only code that decodes frames itself sees it. PULL takeover → `BIND_ERR` with `code:"INVALID_KIND"`.
+- Idle reaping needs zero streams AND zero bindings. Orphans with parked bindings wait out the configured takeover grace (default 60 s; zero disables parking).
 - v1 vs v2 subprotocols share `/connect` (`hoody-tunnel.v1` for single-WS sessions, `hoody-tunnel.v2` for multi-WS shard pools); `isV2` on `GET /api/v1/tunnel/sessions` reports the shape. Both subprotocols support graceful resume via `resume.sessionId` in HELLO; `isV2:false` does NOT mean "no resume".
 - Multi-WS (v2) drop semantics: dropping the **primary** socket closes the whole session; dropping a **secondary** shard makes the driver close streams pinned to that shard while the kit detaches the shard and the session continues.
-- Pre-auth connection cap defaults to `--max-pre-auth-connections=32`; exceeding it closes the socket before HELLO (no explicit close code). HELLO timeout defaults to 5 s.
+- Pre-auth connection cap defaults to 32; exceeding it closes the socket before HELLO (no explicit close code). HELLO timeout defaults to 5 s.
 - **No UDP support.** EXPOSE is HTTP/1.1+WS only; PULL is TCP only.
-- `GET /api/v1/tunnel/connect` is the WS-upgrade endpoint of the data plane. The generated SDK exposes it as a plain `http.get` returning an `ApiResponse<unknown>` — that is NOT a working tunnel attach. Use the driver helpers (`tunnelExpose` / `tunnelPull` / `tunnelServe`) re-exported from the main SDK package, which handle the WS subprotocol, HELLO frame, and resume; do not call `GET /api/v1/tunnel/connect` directly.
+- `GET /api/v1/tunnel/connect` (operation `tunnelConnect`) is the WS-upgrade endpoint of the data plane. Opening a tunnel needs a WebSocket client that speaks the tunnel protocol (subprotocol, HELLO frame, resume); the HTTP recipes here manage tunnels that already exist.
 
 ## Common errors
 
 - `404` on kill — session gone; no retry.
-- `403` — SSRF guard; not via Hoody Proxy.
+- `403` — SSRF guard; not via the edge proxy.
 - Upgrade `400` — missing/unsupported subprotocol; WS `1002` — HELLO rejected after upgrade; plain socket close — HELLO timeout or pre-auth cap reached.
 - `BIND_ERR` codes: `ALREADY_BOUND` (retry `takeover:true`), `PORT_IN_USE`, `RESERVED_PORT`, `INVALID_HOST`, `PRIVILEGED_PORT`, `BIND_CAP_EXCEEDED`, `INVALID_KIND` (unsupported `(kind, mode)` combo, or `takeover:true` on PULL), `INTERNAL` (server-side, e.g. random-port exhaustion).
-- `GOAWAY(IDLE_TIMEOUT)` — no PONG in 60s; reconnect via `resume.sessionId`.
+- `GOAWAY` on an idle or unanswered-PING session: the body is a JSON object whose `code` is a **number**, `10`, and whose `message` reads `session idle timeout` or `pong timeout`; its two other fields are always `0`. The takeover RESET below carries `13` (`0x000d`). Treat `message` as human-readable only. Reconnect via `resume.sessionId`.
 - `503`+`Retry-After:5` at visitor URL — orphan takeover-grace window (set by `expose` driver kill, NOT by admin `DELETE /api/v1/tunnel/sessions/{session_id}` which skips orphan parking).
 
 ## Related namespaces
 
-- `proxyLogs` — every tunnel request appears here automatically; filter by `serviceName: 'tunnel'` (there is no `program` filter on the proxy-log API).
-- `api` — `proxyHooks.*` (MITM rules), `proxyPermissionsContainer.*` (capability gates), `POST /api/v1/proxy/aliases` (friendly hostnames hiding `containerId`).
+- `proxyLogs` — tunnel traffic through the proxy can appear here, subject to the logging configuration; the list route ignores the `serviceName` query (and there is no `program` filter), and only the kit's admin/connect traffic carries `serviceName` `tunnel`.
+- `api` — `* /api/v1/containers/{id}/proxy/hooks*` (MITM rules for the kit's admin/connect URL), `* /api/v1/containers/{id}/proxy/permissions*` (capability gates), `* /api/v1/proxy/aliases*` (friendly hostnames hiding `containerId`: `program: 'http'` plus `port` for an exposed application).
 - `exec` — for one-off HTTP handlers hosted directly inside the container (no laptop). `curl` — outbound HTTP from the container. `browser` — full headless Chromium. `daemon` — supervise long-running processes.
 
 ## Examples
 
-The `tunnel` namespace covers only the **observability + admin** surface — `GET /api/v1/tunnel/health`, `GET /api/v1/tunnel/tunnels`, `GET /api/v1/tunnel/sessions`, `GET /api/v1/tunnel/bindings`, `GET /api/v1/tunnel/metrics`, `DELETE /api/v1/tunnel/sessions/{session_id}`. The data plane (open / pull) is a long-running WebSocket driver that lives in a separate package; it is intentionally out of scope here, so these 7 examples assume *somebody else* (a teammate's tunnel expose/pull session, your CI machine's tunnel session, a test rig) is currently holding the tunnel. You're the operator: inspecting it, scraping metrics, killing it. Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
+The `tunnel` namespace's REST operations cover the **observability + admin** surface — `GET /api/v1/tunnel/health`, `GET /api/v1/tunnel/tunnels`, `GET /api/v1/tunnel/sessions`, `GET /api/v1/tunnel/bindings`, `GET /api/v1/tunnel/metrics`, `DELETE /api/v1/tunnel/sessions/{session_id}`. The data plane (expose / pull) is a long-running WebSocket driver: it ships with this package (driver-only, no HTTP form) but is out of scope for these 7 examples, which assume *somebody else* (a teammate's tunnel session, your CI machine's session, a test rig) is currently holding the tunnel. You're the operator: inspecting it, scraping metrics, killing it. Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
 
-The admin endpoints serve independently of any session. Schemas, status codes, response shapes and CLI flags are verified against `generated/openapi.public.json`, `docs/reference/CLI-COMMANDS.md`.
+The admin endpoints serve independently of any session.
 
-### 1. Health probe — kit alive, FD budget not exhausted
+### 1. Health probe — kit alive
 
-**Goal:** before any other call, confirm the tunnel kit is reachable and not saturated. Response includes `pid`, `started`, `userAgent`, `fds` (Unix-only file-descriptor count when available), and `memory.rss`.
+**Goal:** before any other call, confirm the tunnel kit is reachable and read its process statistics. It always reports `status: "ok"` when it answers and does not check tunnel capacity: for that, read `fdPermitsAvailable` from `GET /api/v1/tunnel/tunnels` (example #2) or the FD-permits metric (example #5). Response includes `pid`, `started`, `userAgent`, `fds` (Unix-only file-descriptor count when available), and `memory.rss`.
 
 ```bash
 KIT="https://${P}-${C}-tunnel-1.${N}.containers.hoody.com"
 curl -sf "$KIT/api/v1/tunnel/health" | jq '{status, service, started, pid, fds, rss: .memory.rss}'
 # {"status":"ok","service":"hoody-tunnel","started":"2026-05-05T22:00:11Z","pid":42,"fds":128,"rss":52428800}
 ```
+
 If the response is HTML / `Error 502` instead of JSON, the kit base listener isn't reachable through the proxy (kit crashed / not installed / proxy mis-route) — the admin endpoints are designed to stay live independent of any active session. Lack of an active session shows up as `sessions: []`, not 502.
 
 ### 2. List every active tunnel — combined sessions + bindings + FD budget
@@ -126,11 +127,12 @@ curl -sf "$KIT/api/v1/tunnel/tunnels" | jq '{
   ids: [.sessions[].sessionId]
 }'
 ```
+
 `GET /api/v1/tunnel/tunnels` is the one-shot overview. For per-session detail (peer addr, max-stream cap, v2 flag) drill in via `GET /api/v1/tunnel/sessions` (example #3). Note: `protocol` is per-session and reflects the negotiated control-plane protocol, NOT the upstream — for the "is this an EXPOSE or PULL" answer, look at which of `exposeBindings` / `pullBindings` is non-empty.
 
 ### 3. Drill into one session — peer addr, stream load, capacity
 
-**Goal:** you got a `sessionId` from #2; now you want the operator-facing detail (who's connected, how loaded). Returns `peerAddr` (`<ip>:<port>` of the laptop holding the tunnel), `connectionsGranted` (lifetime), `activeStreams` (right now), `maxStreams` (negotiated cap), `isV2` (control-plane protocol), and `bindings[]`.
+**Goal:** you got a `sessionId` from #2; now you want the session detail (who's connected, how loaded). Returns `peerAddr` (`<ip>:<port>` of the laptop holding the tunnel), `connectionsGranted` (the negotiated WebSocket pool size: 1 for v1, 1–16 for v2), `activeStreams` (right now), `maxStreams` (negotiated cap), `isV2` (control-plane protocol), and `bindings[]`.
 
 ```bash
 KIT="https://${P}-${C}-tunnel-1.${N}.containers.hoody.com"
@@ -140,41 +142,47 @@ curl -sf "$KIT/api/v1/tunnel/sessions" \
       peer: .peerAddr,
       v2: .isV2,
       load: "\(.activeStreams)/\(.maxStreams)",
-      lifetimeConnections: .connectionsGranted,
+      webSocketPoolSize: .connectionsGranted,
       binds: [.bindings[] | "\(.kind)/\(.mode):\(.containerPort)#\(.bindId)"]
     }'
 ```
-`activeStreams / maxStreams` is the headroom number — a session sitting at `48/50` is one curl away from `STREAM_LIMIT`. `isV2:false` means the session negotiated the single-WebSocket v1 control plane; resume is still supported via `resume.sessionId` while the orphan is in takeover grace.
+
+`activeStreams / maxStreams` is the headroom number — a session sitting at `48/50` has two stream slots left. At the cap there is no error code to match on: an EXPOSE visitor request is answered `503` with `Retry-After: 1` and the plain-text body `max streams exceeded`, while a PULL connection is dropped with nothing sent at all. `isV2:false` means the session negotiated the single-WebSocket v1 control plane; resume is still supported via `resume.sessionId` while the orphan is in takeover grace.
 
 ### 4. List bindings — which ports are exposed across every session
 
-**Goal:** answer "what container ports are tunnels eating right now?". `GET /api/v1/tunnel/bindings` flattens across one row per active binding — `port`, `kind` (`http` / `tcp`), `mode` (`expose` / `pull`). EXPOSE rows include the owning `sessionId`/`bindId`; current PULL rows report `sessionId: ""` and `bindId: 0`.
+**Goal:** answer "what container ports are tunnels eating right now?". `GET /api/v1/tunnel/bindings` flattens across one row per active binding — `port`, `kind` (`http` / `tcp`), `mode` (`expose` / `pull`), plus the owning `sessionId`/`bindId` on every row. PULL rows also carry `bindAddr`: the same port can be bound on two loopback addresses at once, so a PULL listener is identified by `bindAddr` + `port`, not by the port alone. EXPOSE rows omit `bindAddr`.
 
 ```bash
 KIT="https://${P}-${C}-tunnel-1.${N}.containers.hoody.com"
 curl -sf "$KIT/api/v1/tunnel/bindings" | jq '
-  .bindings | group_by(.mode) | map({mode: .[0].mode, count: length, ports: map(.port)})
+  .bindings | group_by(.mode)
+  | map({mode: .[0].mode, count: length,
+         listeners: map(if .bindAddr then "\(.bindAddr):\(.port)" else "\(.port)" end)})
 '
 ```
-Useful pre-flight check before someone tries to bind another port — `BIND_ERR(PORT_IN_USE)` is one of the most common BIND failures. Also: the wire field is `port` here but `containerPort` inside the per-session `bindings[]` array of #3 — same value, different name (verified against `tunnel_BindingDetail` vs `tunnel_BindingInfo` in the openapi spec).
+
+Useful pre-flight check before someone tries to bind another port — `BIND_ERR(PORT_IN_USE)` is one of the most common BIND failures. Also: the wire field is `port` here but `containerPort` inside the per-session `bindings[]` array of #3: same value, different name.
 
 ### 5. Scrape Prometheus metrics — sessions, bindings, FD permits
 
-**Goal:** wire the tunnel kit into your scrape job. Endpoint emits Prometheus text (one of the few endpoints that's not JSON). Three live-verified counters: `hoody_tunnel_sessions_active`, `hoody_tunnel_bindings_active`, `hoody_tunnel_fd_permits_available`.
+**Goal:** wire the tunnel kit into your scrape job. Endpoint emits Prometheus text (one of the few endpoints that's not JSON). Three gauges: `hoody_tunnel_sessions_active`, `hoody_tunnel_bindings_active` (two labelled series, `{kind="http",mode="expose"}` and `{kind="tcp",mode="pull"}`; sum them for the total) and `hoody_tunnel_fd_permits_available`.
 
 ```bash
 KIT="https://${P}-${C}-tunnel-1.${N}.containers.hoody.com"
 curl -sf "$KIT/api/v1/tunnel/metrics" \
   | grep -E '^hoody_tunnel_(sessions_active|bindings_active|fd_permits_available)\b'
-# hoody_tunnel_sessions_active 1
-# hoody_tunnel_bindings_active 2
+# hoody_tunnel_sessions_active{kit="hoody-tunnel"} 1
+# hoody_tunnel_bindings_active{kind="http",mode="expose"} 2
+# hoody_tunnel_bindings_active{kind="tcp",mode="pull"} 1
 # hoody_tunnel_fd_permits_available 1022
 ```
-For a dashboard, register the kit URL as a Prometheus scrape target via `POST /api/v1/proxy/aliases` so the scrape config doesn't carry `containerId`, then gate it with `PUT /api/v1/containers/{id}/proxy/permissions/groups/{groupName}/ip` so only your monitoring VPC can hit `/api/v1/tunnel/metrics`.
+
+For a dashboard, register the kit URL as a Prometheus scrape target through an alias so the scrape config doesn't carry `containerId`: `POST /api/v1/proxy/aliases` with `{"container_id":"<container-id>","program":"tunnel"}`. To restrict it to your monitoring network, define an IP group, grant it the `tunnel` service, and set the container's default policy to `deny` — the group alone restricts nothing (see Workflow 3).
 
 ### 6. Kill a stuck session (recipe — needs a real session)
 
-**Goal:** a teammate's tunnel expose session is wedged; you want it gone without restarting the kit. `DELETE /api/v1/tunnel/sessions/{session_id}` returns `202` with `{sessionId, status}`. `grace_ms` ∈ [0, 5000] (default 50, anything above 5000 → `400`); the kit sends GOAWAY then waits up to that many ms for in-flight streams before closing. Orphan sessions skip the parking grace window and drop immediately.
+**Goal:** a teammate's tunnel expose session is wedged; you want it gone without restarting the kit. `DELETE /api/v1/tunnel/sessions/{session_id}` returns `202` with `{sessionId, status}`. `grace_ms` ∈ [0, 5000] (default 50, anything above 5000 → `400`); it bounds how long the kit spends sending a best-effort GOAWAY before teardown. It is not a drain period: in-flight streams can be cut off. Orphan sessions skip the parking grace window and drop immediately.
 
 ⚠ Don't run this in the doc as live verification — it kills whoever's actually connected. Recipe only.
 
@@ -184,14 +192,15 @@ SID=$(curl -sf "$KIT/api/v1/tunnel/sessions" \
   | jq -r '.sessions[] | select(.peerAddr | startswith("203.0.113.")) | .sessionId' | head -1)
 [ -n "$SID" ] || { echo "no matching session"; exit 1; }
 
-# Give in-flight requests 1 second to drain, then close.
+# Allow up to 1000 ms to send GOAWAY before teardown.
 curl -sX DELETE "$KIT/api/v1/tunnel/sessions/$SID?grace_ms=1000" | jq .
 # {"sessionId":"S-466ab70d-...","status":"closing"}
 
 # Re-list to confirm it's gone (404 on a second kill is expected — see Common errors).
 curl -sf "$KIT/api/v1/tunnel/sessions" | jq --arg s "$SID" '.sessions[] | select(.sessionId==$s) | "still here"'
 ```
-After a non-admin driver disconnect, visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace. `DELETE /api/v1/tunnel/sessions/{session_id}` (admin) skips orphan parking and tears bindings down, so do **not** expect that 60 s 503 window from an admin kill — bindings drop immediately. PULL bindings drop instantly in both paths.
+
+After a non-admin driver disconnect, visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace (default 60 s). PULL listeners also stay bound during that grace, but drop each new connection while no live session holds them. `DELETE /api/v1/tunnel/sessions/{session_id}` (admin) skips orphan parking and starts teardown, so do **not** expect that 503 window from an admin kill; its `202` means teardown was initiated, not that it has finished, so re-list to confirm.
 
 ### 7. Auto-discover orphans + low-FD alert (monitoring recipe)
 
@@ -209,28 +218,38 @@ if [ "$FDS" -lt 64 ] || [ "$ORPH" -gt 0 ]; then
   # …route to PagerDuty / Slack here…
 fi
 ```
-For a continuous live tail of `GOAWAY` / `IDLE_TIMEOUT` / `BIND_REVOKED` events as they happen, attach with the tunnel driver helpers (`TunnelSession` / `tunnelExpose` / `tunnelPull`, re-exported from the main SDK package) to `/api/v1/tunnel/connect` — that's the data-plane driver's surface and lives outside this namespace; do **not** use generated `GET /api/v1/tunnel/connect` for a real attach. The polling recipe above stays inside the request/response admin surface.
+
+Only the process that owns a tunnel sees its `GOAWAY` and `RESET` frames: opening another connection to `/api/v1/tunnel/connect` starts a new session (or resumes an orphaned one) and does not observe a live session held by someone else.  As an operator, poll the admin endpoints as above.
 
 ## Reference
 
-### `health` (1) — Health
+### `bindings` (1) — Tunnel control plane (WebSocket + health + management)
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `GET /api/v1/tunnel/bindings` | List active bindings across all sessions |  |
+
+### `kit` (2) — Tunnel control plane (WebSocket + health + management)
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/tunnel/health` | Kit health |  |
+| `GET /api/v1/tunnel/metrics` | Prometheus metrics |  |
 
-### `tunnel` (6) — Tunnel control plane (WebSocket + health + management)
+### `sessions` (2) — Tunnel control plane (WebSocket + health + management)
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/tunnel/metrics` | Prometheus metrics |  |
 | `DELETE /api/v1/tunnel/sessions/{session_id}` | Terminate an active tunnel session | `?grace_ms` |
-| `GET /api/v1/tunnel/bindings` | List active bindings across all sessions |  |
 | `GET /api/v1/tunnel/sessions` | List active tunnel sessions |  |
-| `GET /api/v1/tunnel/tunnels` | List all active tunnels (combined sessions + bindings) |  |
-| `GET /api/v1/tunnel/connect` | Tunnel WebSocket control plane |  |
 
 **Param notes:**
 
 - `grace_ms` — GOAWAY drain budget in ms (0-5000, default 50)
+
+### `tunnel` (1) — Tunnel control plane (WebSocket + health + management)
+
+| Method | Summary | Params |
+|--------|---------|--------|
+| `GET /api/v1/tunnel/tunnels` | List all active tunnels (combined sessions + bindings) |  |
 

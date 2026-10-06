@@ -1,4 +1,4 @@
-> _**SDK skill · `run` namespace** · ~9,989 tokens · hoody-sdk v1.0.0-beta.14_
+> _**SDK skill · `run` namespace** · ~10,440 tokens · hoody-sdk v1.0.0-beta.15_
 
 # `run` — resolve apps to shell commands
 
@@ -11,7 +11,7 @@ Hoody Run — HTTP resolver across package sources (trusted-list, system-path, n
 - Resolve `firefox`/`react`/`owner/repo` to a command.
 - Cross-provider candidates with stable `set_id`.
 - Preview the resolved command via `print_curl` / `preflight`.
-- Batch via `runBatch`; persist profiles/recipes.
+- Batch via `resolveMany`; persist profiles/recipes.
 
 ## When NOT to use
 
@@ -36,44 +36,56 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Search then pick
 
-1. `client.run.searchCandidates({ app, os?, kind?, arch?, tags?, source? })` → `{ set_id, candidates[] }`.
+1. `client.run.search({ selector: { app, os?, kind?, arch?, tags?, source?, limit? } })` → `{ set_id, total_count, items[], next_cursor? }`.
 2. `client.run.resolve({ ...selector, set_id, pick:"index", pick_index:N })` → `shell_command`.
 
 ### 2. Preflight
 
-1. `client.run.preflightRun(Selector)` → `recommended_mode`, `missing_requirements`, `effective_policy`.
+1. `client.run.test(Selector)` → `recommended_mode`, `missing_requirements`, `effective_policy`.
 2. `client.run.resolve(Selector)` → resolved command + preview.
 
 ### 3. Cursor-paged search
 
-`client.run.searchCandidatesPaged` → `{ set_id, total_count, items, next_cursor }` (note `items`, not `candidates`). The cursor-paged endpoint returns one page per call; drain manually by carrying `next_cursor` forward until it's null/absent.
-The SDK exposes `client.run.searchCandidatesPagedAll` and `client.run.searchCandidatesPagedIterator`, but they currently only return/yield the **first page** — the generated paginator can't thread the cursor back into a cursor-paged call, so it stops after one page. To collect all candidates reliably, carry `next_cursor` forward by hand until it's null/absent.
+`client.run.search` → `{ set_id, total_count, items, next_cursor }` (note `items`, not `candidates`). The cursor-paged endpoint returns one page per call; carry `next_cursor` forward until it's null/absent.
+`client.run.search` fetches one page. `client.run.searchAll` collects every page and `client.run.searchIterator` yields their items; both write `next_cursor` back into the body's `cursor` for you. A manual cursor loop also works.
+
 ### 4. Batch
 
-`client.run.runBatch({ items: [{ request_id, mode, selector }] })`. `mode:"run"` resolves each item to a command.
+`client.run.resolveMany({ items: [{ request_id, mode, selector }] })`. `mode:"run"` resolves each item to a command. Each result item is `result: "search"`, `"run"` or `"error"` (the item's own `{ error, code }`), so one bad item does not fail the batch.
 
 ### 5. Recipes
 
-`recipes.createRecipe({ name, selector_template, allowed_overrides })`; invoke via `recipes.runRecipe(name, data)` — generated SDK takes `name` positional + a body, NOT a single options object.
+`client.run.recipes.create` with `{ name, selector_template, allowed_overrides }`; invoke it with `client.run.recipes.resolve`, passing only the allow-listed fields under `overrides`. The generated SDK takes the recipe `name` as a positional argument plus a body (`recipes.resolve(name, { overrides })`), NOT a single options object.
 
 ## Quirks & gotchas
 
-- Kit slug/URL/HTTP prefix all `run`. The resolve endpoint is `GET|POST /api/v1/run/resolve` (operations `resolveGet` / `resolve`).
-- Every candidate carries a `kind` — `gui` | `cli` | `any` (`any` means the source doesn't classify it). Pass `kind` in the selector to narrow (`kind:'cli'`, `kind:'gui'`), or `kind:'any'` for no filter.
-- `limit` default 25, clamped 1..=100.
-- 30s query cache; `HOODY_RUN_QUERY_CACHE_TTL_MS`.
+- Kit slug/URL/HTTP prefix all `run`. The resolve endpoint answers both `GET /api/v1/run/resolve` (selector in the query string) and `POST /api/v1/run/resolve` (selector as a JSON body). SDK: `client.run.resolve` sends the POST form.
+- Every candidate carries a `kind` — `gui` | `cli` | `any` (`any` means the source doesn't classify it). `kind` and `os` in the selector are applied by each source from its own metadata, not by a final filter: system-path results ignore them (and report `kind: any`), nix lets packages it cannot classify through, trusted-list and manifest entries are filtered only when they declare the field, and the nix, pkgx, OCI and AppImage sources return nothing at all for a non-Linux `os` such as `windows`. Inspect the selected candidate and its command before treating it as GUI, CLI or Windows-compatible.
+- Omitted selector fields inherit the requested `profile`, or else the kit's selected profile (`os`, `kind`, `source`, `pick`, `terminal_id`, `display`, `limit`). With no profile default, `limit` defaults to 25, clamped 1..=100.
+- Candidates are ordered by source priority first (the trusted list outranks system-path and the package sources), then score, then title and id, so the top hit is not always the highest score. Read the returned list and use the actual index or `candidate_id`.
+- `candidate_id` is a content hash the kit computes over what the candidate runs, not a readable `<provider>:<path>` string. Copy it from a search response; never build one by hand.
+- Query results are cached for about 30 s.
 - `set_id` expires 300s.
 - Selector requires `app`. Aliases `q`/`name` are accepted ONLY by the urlencoded query-string parser (GET / form-style); the JSON `Selector` model has only `app`, so JSON POST / SDK calls must use `app:`.
-- Resolve is command-only: the response `status` is `"dry-run"` (a single picked candidate) or `"resolved"` (an unpicked candidate set), and carries a `handoff` object whose `state` is `"preview"`. When the resolved candidate has display/terminal surfaces, `preview_display_url` / `preview_terminal_url` are populated. The kit never launches the app or executes anything.
-- `runBatch` only knows `mode: "search" | "run"` (no `"preflight"`); `"run"` resolves to a command.
-- `recipes.runRecipe` / `recipes.searchRecipe` reject disallowed overrides with `400 "recipe override not allowed: <field>"` — they are NOT silently dropped.
-- `selected.run_plan` carries `command`/`env`/`cwd`; `argv` is on `selected.execution_plan`.
-- `/go/...` are alias routes for bookmarkable resolve URLs — `client.run.runPathBased` (selector parsed from path segments) and `client.run.runTerminalAnchored` (terminal id baked into the path prefix). Both are public and supported, but the canonical machine-facing entrypoint is `client.run.resolve` (`GET|POST /api/v1/run/resolve`) — prefer it for programmatic callers.
+- Resolve is command-only; the kit never launches the app or executes anything. The response `status` is `"dry-run"` (one picked candidate), `"printed-curl"` (one picked candidate, plus a `curl` line because `print_curl` was set) or `"resolved"` (pick mode `ask`: the candidate set, nothing selected). Only a picked response carries `handoff` (`{ state: "preview", terminal_id, display, preview_display_url?, preview_terminal_url? }`); a `resolved` response has none. The two preview URLs are built from the kit's configured URL templates for the target `terminal_id`, not from the candidate, so they are absent when no template is configured and do not prove anything is running.
+- `resolveMany` only knows `mode: "search" | "run"` (no `"preflight"`); `"run"` resolves to a command.
+- `recipes.resolve` / `recipes.search` reject a recognized selector field outside `allowed_overrides` with `400 "recipe override not allowed: <field>"`; it is not silently dropped. An unknown key under `overrides` is ignored, so spell the selector field names exactly.
+- **Outbound requests the kit makes itself (webhook delivery, remote manifest index fetches, source fetches) go only to public IPv4 addresses.** Private, loopback, link-local, CGNAT, reserved and multicast destinations and every IPv6 form are refused, and a name that resolves to ANY prohibited IPv4 address is refused whole; no setting admits one, so a remote index URL on `localhost` or a sibling container's private address cannot work. Webhooks are configured in the kit's config file only (`GET /api/v1/run/config` is read-only), so this matters mainly when diagnosing a source sync or a webhook someone set up. A refusal carries the marker `refusing to connect to` and is not retried; `the name <host> resolved to no address` carries no marker and is a transient failure. Proxy environment variables are ignored; webhook and remote-index fetches follow no redirects, and source fetches follow at most ten. Helper binaries a provider shells out to (`nix search`) are outside this guarantee.
+- `selected.run_plan` carries `command`/`env`/`cwd` and is always present. `selected.execution_plan` (`argv`/`env`/`cwd`) is optional: trusted-list, manifest and AppImage candidates omit it. Read it as optional and use `shell_command` for the command to run.
+- `/go/...` are alias routes for bookmarkable resolve URLs — `GET /api/v1/run/go/{rest}` (selector parsed from path segments) and `GET /api/v1/run/t/{terminal_id}/go/{rest}` (terminal id baked into the path prefix, where it wins over any other `terminal_id`). Both are public HTTP routes, but neither has an SDK method: programmatic callers use the resolve endpoint from the first bullet. 
+
 ## Common errors
 
-- `400 INVALID_PICK` — bad `pick_index`/`candidate_id`.
-- `409 cursor set expired` — re-search.
-- `502 SOURCE_RESOLUTION_FAILED` — a source (e.g. `nix`/`pkgx`) failed or is missing.
+Every error body is `{ "error": "<text>", "code": <HTTP status> }`. There is no symbolic error-code field, so match on the status and the start of the text.
+
+- `400` `pick_index required`, `pick_index out of range: <N>`, `candidate_id required`, `candidate_id not found` or `no candidates`: the pick does not match the candidate set.
+- `400 INVALID_SELECTOR: invalid <field>: <value>`: a query-string selector value is not accepted, for example an unknown `source`.
+- `422` with a deserialization message: a JSON body carries a value that is not in the field's enum (for example `"kind":"create"`), in the same `{error, code}` body.
+- `409 SET_EXPIRED: …`: the `set_id` is unknown or older than 300 s; search again and pick against the new `set_id`.
+- `403 POLICY_DENIED: …`: the effective policy does not permit the selected candidate.
+- `409 cursor set expired`: `search/paged` only; start again without a cursor.
+- A single source such as `nix` or `pkgx` that fails or is missing does not fail the request: the search continues with the other sources and can return an empty list (a pick against it then gives `400 no candidates`). An error the source reports is recorded in its diagnostics (`GET /api/v1/run/sources/{source_id}/diagnostics`), but some sources, `pkgx` among them, turn a missing tool or a failed query into an empty successful result, so the diagnostics can show no error at all. `502` is reserved for a resolution that fails as a whole.
+- `404 job not found`: the job id is unknown or its TTL ran out (see example 7).
 
 ## Related namespaces
 
@@ -85,49 +97,54 @@ Each example below has a copy-pasteable code block in the mode you're reading (c
 
 ### 1. Resolve `firefox` to a shell command — search, then pick the top hit
 
-**Goal:** turn the user's typed `firefox` into a runnable shell command. The default `pick` mode is `ask` (returns candidates, no selection); use `first` to auto-pick the highest-ranked one.
+**Goal:** turn the user's typed `firefox` into a runnable shell command. When no profile sets a default, an omitted `pick` returns the candidates without selecting one; send `pick:"ask"` explicitly to be sure nothing is selected.
 
-**Step 1 — search.** Returns a `set_id` (binds your follow-up `pick` against this exact candidate list — `set_id` expires after ~300s) and `candidates[]` ranked by score. Each candidate carries a `kind` (`gui`/`cli`/`any`).
+**Step 1 — search.** Returns a `set_id` (a later `pick:"index"` sent with it selects from this exact candidate list; `set_id` expires after ~300s) and the candidates (`candidates[]` over HTTP, `items[]` from the SDK and CLI search, which is the cursor-paged one), ordered by source priority, then score. Each candidate carries a `kind` (`gui`/`cli`/`any`).
 
 ```typescript
-const r = await client.run.searchCandidates({ app: 'firefox', kind: 'any', limit: 5 });
+const r = await client.run.search({ selector: { app: 'firefox', kind: 'any', limit: 5 } });
 const setId = (r.data as any).set_id;
-const top = (r.data as any).candidates[0];
+const top = (r.data as any).items[0];
 console.log(top.candidate_id, top.kind, top.score);
 ```
-**Step 2 — resolve to a command.** `pick: 'first'` returns `shell_command` for the top candidate.
+
+**Step 2 — resolve to a command.** To take the top candidate of the list you just saw, send its `set_id` with `pick:"index"` and `pick_index:0`. (`pick:"first"` also works, but it ignores `set_id` and picks from a freshly resolved list, which can differ from the one you displayed.)
 
 ```typescript
 const run = await client.run.resolve({
-  app: 'firefox', kind: 'any', pick: 'first',
+  app: 'firefox', kind: 'any', set_id: setId, pick: 'index', pick_index: 0,
 });
 console.log((run.data as any).shell_command);
 ```
+
 ### 2. Resolve to a command and read the execution plan
 
 **Goal:** get the exact command plus its structured plan. Lightweight CLI app (`echo`) used so we don't leak GUI state.
 
-The response carries `shell_command` plus the full selected entry: `run_plan.{command,env,cwd}` (the resolved shell-form) and `execution_plan.{argv,env,cwd}` (the argv-form). When the candidate has display/terminal surfaces, `preview_display_url` / `preview_terminal_url` are populated so a caller can open the preview; resolve itself never launches anything.
+The response carries `shell_command` plus the full selected entry: `run_plan.{command,env,cwd}` (the shell-form, always present) and, when the source provides one, `execution_plan.{argv,env,cwd}` (the argv-form; trusted-list, manifest and AppImage candidates have none). `shell_command` is the command to run either way. A picked response also carries `handoff`; its `preview_display_url` / `preview_terminal_url` are present only when the kit's URL templates are configured, and they are built for the target terminal, not from the candidate. Resolve itself never launches anything.
 
 ```typescript
 const r = await client.run.resolve({
   app: 'echo', kind: 'cli', pick: 'first',
 });
-console.log('argv:', (r.data as any).selected.execution_plan.argv);
-console.log('preview:', (r.data as any).preview_terminal_url);
+console.log('argv:', (r.data as any).selected.execution_plan?.argv); // absent for some sources
+console.log('command:', (r.data as any).shell_command);
+console.log('preview:', (r.data as any).handoff?.preview_terminal_url); // absent when no URL template is configured
 ```
+
 ### 3. Pick a non-default candidate by index when multiple match
 
-**Goal:** `git` resolves to `system-path:/usr/bin/git` by default, but you specifically want the `pkgx` candidate at index 2. Bind the pick to a `set_id` to avoid the candidate list shifting under you.
+**Goal:** `git` matches several candidates and you want one other than the first (say the `pkgx` one). Positions depend on source priority and on which sources are available, so list the candidates, find the index of the one you want, and bind the pick to the `set_id` so the list cannot shift under you. The examples below use index 2; use the index you actually found.
 
 **Step 1 — list candidates with `set_id`.**
 
 ```typescript
-const list = await client.run.searchCandidates({ app: 'git', kind: 'cli', limit: 5 });
-(list.data as any).candidates.forEach((c, i) =>
+const list = await client.run.search({ selector: { app: 'git', kind: 'cli', limit: 5 } });
+(list.data as any).items.forEach((c: any, i: number) =>
   console.log(i, c.candidate_id, c.provider, c.score));
 const setId = (list.data as any).set_id;
 ```
+
 **Step 2 — pick by index against the captured `set_id`.** Out-of-range raises `400 pick_index out of range: <N>`.
 
 ```typescript
@@ -136,42 +153,47 @@ const r = await client.run.resolve({
 });
 console.log((r.data as any).shell_command);
 ```
-**Pick by id alternative** — when you know the exact candidate, use `pick: 'id'` + `candidate_id`:
+
+**Pick by id alternative** — use `pick: 'id'` + `candidate_id`, copying the exact `candidate_id` from the step 1 response. It is a content hash, so never build one from the provider or the executable path.
 
 ```typescript
+const wanted = (list.data as any).items[2]; // the candidate you chose in step 1
 await client.run.resolve({
-  app: 'git', kind: 'cli', pick: 'id',
-  candidate_id: 'system-path:/usr/bin/git',
+  app: 'git', kind: 'cli', set_id: setId, pick: 'id',
+  candidate_id: wanted.candidate_id,
 });
 ```
+
 ### 4. Filter by os / arch / kind / source / tags
 
 **Goal:** narrow candidates to Linux x86_64 CLI tools sourced only from the system PATH (skip `nix`/`pkgx`/`appimage`). Useful when you don't want long resolver tails.
 
-`source` is repeatable on `GET` (`source=system&source=registry`); it's an array on the JSON body. Empty / absent → no filter. `kind` narrows by classification (`cli` / `gui` / `any`).
+`source` is repeatable on `GET` (`source=system&source=registry`); it's an array on the JSON body. Empty / absent → the profile's default sources if a profile sets them, otherwise no filter; `source:["any"]` always means no source filter. `kind`, `os` and `arch` are passed to each source, which applies them only as far as its metadata allows (see Quirks).
 
 ```typescript
-const r = await client.run.searchCandidates({
-  app: 'jq', os: 'linux', arch: 'amd64', kind: 'cli', source: ['system'], limit: 5,
+const r = await client.run.search({
+  selector: { app: 'jq', os: 'linux', arch: 'amd64', kind: 'cli', source: ['system'], limit: 5 },
 });
-const providers = new Set((r.data as any).candidates.map(c => c.provider));
+const providers = new Set((r.data as any).items.map((c: any) => c.provider));
 // providers = Set { 'system' }
 ```
-**Tags** are free-form ranking hints (e.g. `tags: ['portable']` boosts AppImage / pkgx candidates). Combine with `kind: 'gui'` for X11 apps, or `os: 'windows'` to filter the catalog to Wine-runnable variants.
+
+**Tags** are accepted and passed to sources and recipe templates, but the kit does not use them to rank or filter candidates, so do not rely on them to narrow a search. Filtering by `kind: 'gui'` or `os: 'windows'` (Wine-runnable variants) is up to each source: system-path ignores both, trusted-list and manifest entries are filtered on the fields they declare, and nix, pkgx, OCI and AppImage return no candidates at all for a Windows `os`, even though their candidates carry no kind classification.
 
 ### 5. Preflight before resolving — check requirements + policy
 
 **Goal:** before resolving a GUI app, learn whether the kit thinks it'll succeed. `preflight` returns `recommended_mode`, `missing_requirements`, and the `effective_policy` (verify, integrity, deny-lists).
 
 ```typescript
-const pf = await client.run.preflightRun({
+const pf = await client.run.test({
   app: 'xeyes', kind: 'gui', pick: 'first',
 });
 if ((pf.data as any).missing_requirements?.length) {
   console.error('Missing:', (pf.data as any).missing_requirements);
 }
 ```
-### 6. Pagination — walk a long candidate list with `searchCandidatesPaged`
+
+### 6. Pagination — walk a long candidate list with `search`
 
 **Goal:** the `git` query returns many candidates across providers. Fetch them in pages of 3 without re-running expensive nix/pkgx queries.
 
@@ -180,21 +202,22 @@ if ((pf.data as any).missing_requirements?.length) {
 **Step 1 — first page.**
 
 ```typescript
-const page1 = await client.run.searchCandidatesPaged({
+const page1 = await client.run.search({
   selector: { app: 'git', kind: 'cli' }, page_size: 3,
 });
 console.log((page1.data as any).total_count, (page1.data as any).items.length);
 const cursor = (page1.data as any).next_cursor;
 ```
-**Step 2 — fetch all pages.** ⚠ The `search/paged` endpoint returns one page per call — there is no built-in drain-all behavior, so walk it manually by carrying `next_cursor` between calls until it's null/absent.
-⚠ The SDK's `client.run.searchCandidatesPagedAll(...)` and `client.run.searchCandidatesPagedIterator(...)` helpers currently return/yield only the **first page** (the generated paginator can't advance the cursor on a cursor-paged op) — relying on them silently drops later pages, so use the manual `next_cursor` loop above to collect all candidates.
+
+**Step 2 — fetch all pages.** The `search/paged` endpoint returns one page per call; carry `next_cursor` between calls until it's null/absent.
+`client.run.searchAll(...)` does this for you and returns every item, and `client.run.searchIterator(...)` yields them page by page. The manual loop below is the equivalent by hand.
+
 ```typescript
-// ⚠ searchCandidatesPagedAll / searchCandidatesPagedIterator currently return
-// only the FIRST page (the paginator can't advance the cursor). Drain by hand:
+// Manual drain (client.run.searchAll does the same):
 let cursor2 = (page1.data as any).next_cursor;
 const all = [...((page1.data as any).items as any[])];
 while (cursor2) {
-  const p = await client.run.searchCandidatesPaged({
+  const p = await client.run.search({
     selector: { app: 'git', kind: 'cli' }, page_size: 3, cursor: cursor2,
   });
   all.push(...((p.data as any).items as any[]));
@@ -202,6 +225,7 @@ while (cursor2) {
 }
 console.log('drained:', all.length);
 ```
+
 ⚠ `409 cursor set expired` after ~300s — re-run the initial search with `selector` (no cursor) to get a fresh `set_id`.
 
 ### 7. Async search via job queue — for slow nix/pkgx queries
@@ -213,28 +237,29 @@ console.log('drained:', all.length);
 **Step 1 — submit.**
 
 ```typescript
-const sub = await client.run.jobs.createSearchJob({ app: 'firefox', kind: 'any' });
+const sub = await client.run.jobs.createSearch({ app: 'firefox', kind: 'any' });
 const jid = (sub.data as any).job_id;
 ```
-**Step 2 — poll.** Status transitions `queued → running → done` (or `error`). Search-resolve jobs have a 10-minute TTL refreshed on every status/result read, so polling keeps them alive — but plan to read the result the moment status flips to `done`/`error` rather than relying on the TTL.
+
+**Step 2 — wait for the result.** Status transitions `queued → running → done`, or ends in `error`, or in `cancelled` after a cancel request; all three are final, so stop polling on any of them. The job's TTL restarts only when its state changes, not when it is read, so polling does not keep a finished job alive; a caller that comes back too late gets `404 job not found`. Long-poll with `wait=done` and `timeout_ms` (max 120000) so the call returns as soon as the job finishes, and read the result from that response.
 
 ```typescript
-let status = '';
-while (!['done', 'error'].includes(status)) {
-  await new Promise(r => setTimeout(r, 1000));
-  const s = await client.run.jobs.getJobStatus(jid);
-  status = (s.data as any).status;
-}
-const final = await client.run.jobs.getJobStatus(jid); // read result inline
+// Keep timeout_ms below the SDK's default 30 s request timeout.
+let job: any;
+do {
+  job = (await client.run.jobs.get(jid, { wait: 'done', timeout_ms: 25000 })).data;
+} while (!['done', 'error', 'cancelled'].includes(job.status));
+console.log(job.status, job.result);
 ```
+
 ### 8. Batch — resolve N apps in a single round-trip
 
 **Goal:** the agent decided on three apps at once (`ls`, `echo`, `git`); resolve all to commands without three separate HTTP hits.
 
-`runBatch` accepts items with `mode: 'search' | 'run'` (NOT `'preflight'`). Each item has its own `request_id` for correlation; results come back in the same order with one of `result: 'search'` (full search response) or `result: 'run'` (with `selected` + `shell_command`).
+`resolveMany` accepts items with `mode: 'search' | 'run'` (NOT `'preflight'`). Each item has its own `request_id` for correlation; results come back in the same order with one of `result: 'search'` (full search response), `result: 'run'` (with `selected` + `shell_command`) or `result: 'error'` (with `error: { error, code }` for that item only; the rest of the batch still runs).
 
 ```typescript
-const batch = await client.run.runBatch({
+const batch = await client.run.resolveMany({
   items: [
     { request_id: 'a', mode: 'run', selector: { app: 'ls', kind: 'cli', pick: 'first' } },
     { request_id: 'b', mode: 'run', selector: { app: 'echo', kind: 'cli', pick: 'first' } },
@@ -244,16 +269,18 @@ const batch = await client.run.runBatch({
 for (const it of (batch.data as any).items) {
   if (it.result === 'run')    console.log(it.request_id, it.run.shell_command);
   if (it.result === 'search') console.log(it.request_id, it.search.candidates.length, 'candidates');
+  if (it.result === 'error')  console.error(it.request_id, it.error.code, it.error.error);
 }
 ```
+
 ### 9. Save a recipe — reusable selector template with override allow-list
 
 **Goal:** the team often resolves "give me a JS runtime" with a fixed set of filters. Save it once as a recipe; teammates run it by name and only override approved fields.
 
-**Step 1 — create.** `allowed_overrides` is a whitelist; any `overrides.*` outside it is rejected with `400 "recipe override not allowed: <field>"` on `recipes.runRecipe` — update the recipe to widen the allow-list.
+**Step 1 — create.** `allowed_overrides` is a whitelist; a recognized selector field under `overrides` that is outside it is rejected with `400 "recipe override not allowed: <field>"` on `recipes.resolve` — update the recipe to widen the allow-list. An unknown key is ignored, not rejected.
 
 ```typescript
-await client.run.recipes.createRecipe({
+await client.run.recipes.create({
   name: 'team-js-runtime',
   description: 'Resolve a JS runtime; team-default = node CLI',
   selector_template: {
@@ -262,625 +289,524 @@ await client.run.recipes.createRecipe({
   allowed_overrides: ['app', 'version', 'tags'],
 });
 ```
+
 **Step 2 — list / get / update / delete.**
 
 ```typescript
-const list = await client.run.recipes.listRecipes();
-const one  = await client.run.recipes.getRecipe('team-js-runtime');
-await client.run.recipes.updateRecipe('team-js-runtime', {
+const list = await client.run.recipes.list();
+const one  = await client.run.recipes.get('team-js-runtime');
+await client.run.recipes.update('team-js-runtime', {
   description: 'Updated: now also resolves bun/deno via override',
 });
-await client.run.recipes.deleteRecipe('team-js-runtime');
+await client.run.recipes.delete('team-js-runtime');
 ```
-### 10. Invoke a recipe with overrides — `recipes.runRecipe(name, { overrides })`
+
+### 10. Invoke a recipe with overrides — `recipes.resolve(name, { overrides })`
 
 **Goal:** teammate uses the `team-js-runtime` recipe but wants `bun` instead of the default `node`. They override only the allow-listed `app` field; other selector fields stay locked.
 
 **Step 1 — run with overrides.** Returns the same envelope as `resolve` (`{ status, shell_command, selected, ... }`).
 
 ```typescript
-const r = await client.run.recipes.runRecipe('team-js-runtime', {
+const r = await client.run.recipes.resolve('team-js-runtime', {
   overrides: { app: 'bun' },
 });
 console.log((r.data as any).shell_command, (r.data as any).selected.provider);
 ```
-**Step 2 — search through the recipe** (same selector, but stop at candidate listing instead of resolving) via `recipes.searchRecipe`:
+
+**Step 2 — search through the recipe** (same selector, but stop at candidate listing instead of resolving) via `recipes.search`:
 
 ```typescript
-const s = await client.run.recipes.searchRecipe('team-js-runtime', {
+const s = await client.run.recipes.search('team-js-runtime', {
   overrides: { app: 'node' },
 });
 console.log((s.data as any).candidates.length, 'candidates across',
-  new Set((s.data as any).candidates.map(c => c.provider)));
+  new Set((s.data as any).candidates.map((c: any) => c.provider)));
 ```
-⚠ Overrides outside `allowed_overrides` are **rejected** with `400 "recipe override not allowed: <field>"` — they are NOT silently dropped. Use `recipes.updateRecipe` to widen the allow-list.
+
+⚠ A recognized selector field outside `allowed_overrides` is **rejected** with `400 "recipe override not allowed: <field>"`, not silently dropped; a key that is not a selector field at all is ignored, so spell field names exactly. Use `recipes.update` to widen the allow-list.
 
 ## Reference
 
 **Accessor:** `client.run`  |  **Import:** `import * as run from 'hoody-sdk/run'`
 
-### `client.run.configuration` (1) — APIs for retrieving consolidated runtime configuration state including active profile selection
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
 
-#### `getConfig` — Get full runtime configuration
+### `client.run.config` (1) — APIs for retrieving consolidated runtime configuration state including active profile selection
+
+#### `get` — Get full runtime configuration
 
 ```typescript
-client.run.configuration.getConfig()
+client.run.config.get()
 ```
 
-**Returns:** `run_ConfigFile`  |  **HTTP:** `GET /api/v1/run/config`
+**Returns:** `Promise<RunConfigGetResponse>`  |  **HTTP:** `GET /api/v1/run/config`
+**CLI:** `hoody run config get`
 
 ---
 
-### `client.run.documentation` (2) — Self-documenting specification endpoints in JSON and YAML formats
+### `client.run.jobs` (4) — APIs for tracking async job status with optional long-polling support for sync and background operations
 
-#### `getOpenApiJson` — OpenAPI specification (JSON)
-
-```typescript
-client.run.documentation.getOpenApiJson()
-```
-
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/run/openapi.json`
-
----
-
-#### `getOpenApiYaml` — OpenAPI specification (YAML)
+#### `cancel` — Cancel a search job
 
 ```typescript
-client.run.documentation.getOpenApiYaml()
-```
-
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/run/openapi.yaml`
-
----
-
-### `client.run.jobs` (2) — APIs for tracking async job status with optional long-polling support for sync and background operations
-
-#### `createSearchJob` — Start an async search job
-
-```typescript
-client.run.jobs.createSearchJob(data: run_Selector)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `data` | `run_Selector` | body | Yes |  |
-
-**Returns:** `run_Job`  |  **HTTP:** `POST /api/v1/run/search/jobs`
-
----
-
-#### `getJobStatus` — Get job status
-
-```typescript
-client.run.jobs.getJobStatus(job_id: string, options?: { wait?: string; timeout_ms?: integer })
+client.run.jobs.cancel(job_id: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `job_id` | `string` | path | Yes | Job identifier (UUID) |
-| `wait` | `string` | query | No | Set to 'done' to long-poll until job completes |
-| `timeout_ms` | `integer` | query | No | Long-poll timeout in milliseconds (default 0, max 120000) |
 
-**Returns:** `run_Job`  |  **HTTP:** `GET /api/v1/run/jobs/{job_id}`
+**Returns:** `Promise<RunJobsCancelResponse>`  |  **HTTP:** `POST /api/v1/run/jobs/{job_id}/cancel`
+**CLI:** `hoody run jobs cancel`
+
+---
+
+#### `createSearch` — Start an async search job
+
+```typescript
+client.run.jobs.createSearch(data: RunJobsCreateSearchRequest)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `data` | `RunJobsCreateSearchRequest` | body | Yes | Shape: `run_Selector` under Body schemas. |
+
+**Returns:** `Promise<RunJobsCreateSearchResponse>`  |  **HTTP:** `POST /api/v1/run/search/jobs`
+**CLI:** `hoody run jobs search create`
+
+---
+
+#### `get` — Get job status
+
+```typescript
+client.run.jobs.get(job_id: string, options?: { wait?: string; timeout_ms?: number })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `job_id` | `string` | path | Yes | Job identifier (UUID) |
+| `wait` | `string` | query | No | Set to 'done' to long-poll until the job completes, fails or is cancelled |
+| `timeout_ms` | `number` | query | No | Long-poll timeout in milliseconds (default 0, max 120000) |
+
+**Returns:** `Promise<RunJobsGetResponse>`  |  **HTTP:** `GET /api/v1/run/jobs/{job_id}`
+**CLI:** `hoody run jobs get`
+
+---
+
+#### `list` — List background jobs
+
+```typescript
+client.run.jobs.list(options?: { kind?: "search-resolve" | "source-sync"; status?: "queued" | "running" | "done" | "error" | "cancelled" })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `kind` | `"search-resolve" \| "source-sync"` | query | No | Only jobs of this kind |
+| `status` | `"queued" \| "running" \| "done" \| "error" \| "cancelled"` | query | No | Only jobs in this status |
+
+**Returns:** `Promise<RunJobsListResponse>`  |  **HTTP:** `GET /api/v1/run/jobs`
+**CLI:** `hoody run jobs list`
 
 ---
 
 ### `client.run.profiles` (5) — APIs for managing user profiles and defaults including source overrides, pick mode, and display preferences
 
-#### `createProfile` — Create a new profile
+#### `create` — Create a new profile
 
 ```typescript
-client.run.profiles.createProfile(data: run_ProfileConfig)
+client.run.profiles.create(data: RunProfilesCreateRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `run_ProfileConfig` | body | Yes |  |
+| `data` | `RunProfilesCreateRequest` | body | Yes | Shape: `run_ProfileConfig` under Body schemas. |
 
-**Returns:** `any`  |  **HTTP:** `POST /api/v1/run/profiles`
+**Returns:** `Promise<RunProfilesCreateResponse>`  |  **HTTP:** `POST /api/v1/run/profiles`
+**CLI:** `hoody run profiles create`
 
 ---
 
-#### `deleteProfile` — Delete a profile
+#### `delete` — Delete a profile
 
 ```typescript
-client.run.profiles.deleteProfile(profile: string)
+client.run.profiles.delete(profile: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `profile` | `string` | path | Yes | Profile name |
 
-**Returns:** `void`  |  **HTTP:** `DELETE /api/v1/run/profiles/{profile}`
+**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `DELETE /api/v1/run/profiles/{profile}`
+**CLI:** `hoody run profiles delete`
 
 ---
 
-#### `listProfiles` — List all profiles
+#### `list` — List all profiles
 
 ```typescript
-client.run.profiles.listProfiles()
+client.run.profiles.list()
 ```
 
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/run/profiles`
+**Returns:** `Promise<RunProfilesListResponse>`  |  **HTTP:** `GET /api/v1/run/profiles`
+**CLI:** `hoody run profiles list`
 
 ---
 
-#### `selectProfile` — Select the active profile
+#### `update` — Update a profile
 
 ```typescript
-client.run.profiles.selectProfile(profile: string)
+client.run.profiles.update(profile: string, data: RunProfilesUpdateRequest)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `profile` | `string` | path | Yes | Profile name |
+| `data` | `RunProfilesUpdateRequest` | body | Yes | Shape: `run_ProfileUpdate` under Body schemas. |
+
+**Returns:** `Promise<RunProfilesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/run/profiles/{profile}`
+**CLI:** `hoody run profiles update`
+
+---
+
+#### `use` — Select the active profile
+
+```typescript
+client.run.profiles.use(profile: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `profile` | `string` | path | Yes | Profile name to select |
 
-**Returns:** `run_SelectedProfileResponse`  |  **HTTP:** `POST /api/v1/run/profiles/{profile}/select`
-
----
-
-#### `updateProfile` — Update a profile
-
-```typescript
-client.run.profiles.updateProfile(profile: string, data: object)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `profile` | `string` | path | Yes | Profile name |
-| `data` | `object` | body | Yes |  |
-
-**Returns:** `run_ProfileConfig`  |  **HTTP:** `PATCH /api/v1/run/profiles/{profile}`
+**Returns:** `Promise<RunProfilesUseResponse>`  |  **HTTP:** `POST /api/v1/run/profiles/{profile}/select`
+**CLI:** `hoody run profiles use`
 
 ---
 
 ### `client.run.recipes` (7) — APIs for managing saved selector templates and invoking them with controlled overrides
 
-#### `createRecipe` — Create a saved recipe
+#### `create` — Create a saved recipe
 
 ```typescript
-client.run.recipes.createRecipe(data: run_RecipeConfig)
+client.run.recipes.create(data: RunRecipesCreateRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `run_RecipeConfig` | body | Yes |  |
+| `data` | `RunRecipesCreateRequest` | body | Yes | Shape: `run_RecipeConfig` under Body schemas. |
 
-**Returns:** `any`  |  **HTTP:** `POST /api/v1/run/recipes`
-
----
-
-#### `deleteRecipe` — Delete a saved recipe
-
-```typescript
-client.run.recipes.deleteRecipe(name: string)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `name` | `string` | path | Yes | Recipe name |
-
-**Returns:** `void`  |  **HTTP:** `DELETE /api/v1/run/recipes/{name}`
+**Returns:** `Promise<RunRecipesCreateResponse>`  |  **HTTP:** `POST /api/v1/run/recipes`
+**CLI:** `hoody run recipes create`
 
 ---
 
-#### `getRecipe` — Get a saved recipe
+#### `delete` — Delete a saved recipe
 
 ```typescript
-client.run.recipes.getRecipe(name: string)
+client.run.recipes.delete(name: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `name` | `string` | path | Yes | Recipe name |
 
-**Returns:** `run_RecipeConfig`  |  **HTTP:** `GET /api/v1/run/recipes/{name}`
+**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `DELETE /api/v1/run/recipes/{name}`
+**CLI:** `hoody run recipes delete`
 
 ---
 
-#### `listRecipes` — List saved launch recipes
+#### `get` — Get a saved recipe
 
 ```typescript
-client.run.recipes.listRecipes()
-```
-
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/run/recipes`
-
----
-
-#### `runRecipe` — Run using a saved recipe
-
-```typescript
-client.run.recipes.runRecipe(name: string, data: run_RecipeExecutionRequest)
+client.run.recipes.get(name: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `name` | `string` | path | Yes | Recipe name |
-| `data` | `run_RecipeExecutionRequest` | body | Yes |  |
 
-**Returns:** `run_RunResponse`  |  **HTTP:** `POST /api/v1/run/recipes/{name}/run`
+**Returns:** `Promise<RunRecipesGetResponse>`  |  **HTTP:** `GET /api/v1/run/recipes/{name}`
+**CLI:** `hoody run recipes get`
 
 ---
 
-#### `searchRecipe` — Search using a saved recipe
+#### `list` — List saved launch recipes
 
 ```typescript
-client.run.recipes.searchRecipe(name: string, data: run_RecipeExecutionRequest)
+client.run.recipes.list()
+```
+
+**Returns:** `Promise<RunRecipesListResponse>`  |  **HTTP:** `GET /api/v1/run/recipes`
+**CLI:** `hoody run recipes list`
+
+---
+
+#### `resolve` — Run using a saved recipe
+
+```typescript
+client.run.recipes.resolve(name: string, data: RunRecipesResolveRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `name` | `string` | path | Yes | Recipe name |
-| `data` | `run_RecipeExecutionRequest` | body | Yes |  |
+| `data` | `RunRecipesResolveRequest` | body | Yes | Shape: `run_RecipeExecutionRequest` under Body schemas. |
 
-**Returns:** `run_SearchResponse`  |  **HTTP:** `POST /api/v1/run/recipes/{name}/search`
+**Returns:** `Promise<RunRecipesResolveResponse>`  |  **HTTP:** `POST /api/v1/run/recipes/{name}/run`
+**CLI:** `hoody run recipes resolve`
 
 ---
 
-#### `updateRecipe` — Update a saved recipe
+#### `search` — Search using a saved recipe
 
 ```typescript
-client.run.recipes.updateRecipe(name: string, data: object)
+client.run.recipes.search(name: string, data: RunRecipesSearchRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `name` | `string` | path | Yes | Recipe name |
-| `data` | `object` | body | Yes |  |
+| `data` | `RunRecipesSearchRequest` | body | Yes | Shape: `run_RecipeExecutionRequest` under Body schemas. |
 
-**Returns:** `run_RecipeConfig`  |  **HTTP:** `PATCH /api/v1/run/recipes/{name}`
-
----
-
-### `client.run` (11) — APIs for searching and running applications across multiple package sources with automatic candidate ranking and selection
-
-#### `healthCheck` — Service health check
-
-```typescript
-client.run.healthCheck()
-```
-
-**Returns:** `run_HealthResponse`  |  **HTTP:** `GET /api/v1/run/health`
+**Returns:** `Promise<RunRecipesSearchResponse>`  |  **HTTP:** `POST /api/v1/run/recipes/{name}/search`
+**CLI:** `hoody run recipes search`
 
 ---
 
-#### `preflightRun` — Preflight a run request
+#### `update` — Update a saved recipe
 
 ```typescript
-client.run.preflightRun(data: run_Selector)
+client.run.recipes.update(name: string, data: RunRecipesUpdateRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `run_Selector` | body | Yes |  |
+| `name` | `string` | path | Yes | Recipe name |
+| `data` | `RunRecipesUpdateRequest` | body | Yes | Shape: `run_RecipeUpdate` under Body schemas. |
 
-**Returns:** `run_PreflightResponse`  |  **HTTP:** `POST /api/v1/run/preflight`
+**Returns:** `Promise<RunRecipesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/run/recipes/{name}`
+**CLI:** `hoody run recipes update`
 
 ---
+
+### `client.run` (6) — APIs for searching and running applications across multiple package sources with automatic candidate ranking and selection
 
 #### `resolve` — Resolve an application via JSON body
 
 ```typescript
-client.run.resolve(data: run_Selector)
+client.run.resolve(data: RunResolveRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `run_Selector` | body | Yes |  |
+| `data` | `RunResolveRequest` | body | Yes | Shape: `run_Selector` under Body schemas. |
 
-**Returns:** `run_RunResponse`  |  **HTTP:** `POST /api/v1/run/resolve`
+**Returns:** `Promise<RunResolveResponse>`  |  **HTTP:** `POST /api/v1/run/resolve`
+**CLI:** `hoody run resolve`
 
 ---
 
-#### `resolveGet` — Resolve an application and return exact shell command
+#### `resolveMany` — Execute a batch of search or run requests
 
 ```typescript
-client.run.resolveGet(options?: { app?: string; os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; terminal_id?: integer; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
+client.run.resolveMany(data: RunResolveManyRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `app` | `string` | query | Yes | Primary name query |
-| `os` | `string` | query | No | Target OS filter |
-| `source` | `array` | query | No | Source kind filter (repeatable) |
-| `kind` | `string` | query | No | App kind filter |
-| `arch` | `string` | query | No | Target CPU architecture filter |
-| `tags` | `array` | query | No | Free-form tags for filtering and ranking (repeatable) |
-| `profile` | `string` | query | No | Named profile for default preferences |
-| `channel` | `string` | query | No | Release channel hint |
-| `version` | `string` | query | No | Exact version or provider-defined version constraint |
-| `variant` | `string` | query | No | Provider-specific variant hint |
-| `publisher` | `string` | query | No | Publisher hint for curated registries |
-| `repo` | `string` | query | No | Repository hint such as owner/name |
-| `release` | `string` | query | No | Release hint such as a tag name |
-| `asset` | `string` | query | No | Desired asset name or pattern |
-| `pick` | `string` | query | No | Candidate selection mode (ask, first, index, id) |
-| `pick_index` | `integer` | query | No | Candidate index (required when pick=index) |
-| `candidate_id` | `string` | query | No | Specific candidate ID (required when pick=id) |
-| `set_id` | `string` | query | No | Bind pick to a specific candidate set |
-| `terminal_id` | `integer` | query | No | Terminal session ID (default 1) |
-| `display` | `string` | query | No | X11 DISPLAY number |
-| `origin` | `string` | query | No | Origin identifier for observability propagation |
-| `dry_run` | `boolean` | query | No | If true, force command-only response (hoody-run never executes) |
-| `print_curl` | `string` | query | No | Generate curl command (hoody-run) |
-| `format` | `string` | query | No | Output format (json or html) |
-| `limit` | `integer` | query | No | Max candidates (default 25) |
+| `data` | `RunResolveManyRequest` | body | Yes | Shape: `run_BatchRequest` under Body schemas. |
 
-**Returns:** `run_RunResponse`  |  **HTTP:** `GET /api/v1/run/resolve`
+**Returns:** `Promise<RunResolveManyResponse>`  |  **HTTP:** `POST /api/v1/run/batch`
 
 ---
 
-#### `runBatch` — Execute a batch of search or run requests
+#### `search` — Search for app candidates with cursor pagination
 
 ```typescript
-client.run.runBatch(data: run_BatchRequest)
+client.run.search(data: RunSearchRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `run_BatchRequest` | body | Yes |  |
+| `data` | `RunSearchRequest` | body | Yes | Shape: `run_PagedSearchRequest` under Body schemas. |
 
-**Returns:** `run_BatchResponse`  |  **HTTP:** `POST /api/v1/run/batch`
+**Returns:** `Promise<RunSearchResponse>`  |  **HTTP:** `POST /api/v1/run/search/paged`
+**CLI:** `hoody run search`
 
 ---
 
-#### `runPathBased` — Path-based resolve (positional or key-value)
+#### `searchAll` — Search for app candidates with cursor pagination (collect all pages)
 
 ```typescript
-client.run.runPathBased(rest: string, options?: { os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; terminal_id?: integer; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
+client.run.searchAll(data: RunSearchRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `rest` | `string` | path | Yes | Path segments for positional or key-value app specification |
-| `os` | `string` | query | No | Target OS filter when not supplied in the path |
-| `source` | `array` | query | No | Source kind filter (repeatable) |
-| `kind` | `string` | query | No | App kind filter when not supplied in the path |
-| `arch` | `string` | query | No | Target CPU architecture filter |
-| `tags` | `array` | query | No | Free-form tags for filtering and ranking (repeatable) |
-| `profile` | `string` | query | No | Named profile for default preferences |
-| `channel` | `string` | query | No | Release channel hint |
-| `version` | `string` | query | No | Exact version or provider-defined version constraint |
-| `variant` | `string` | query | No | Provider-specific variant hint |
-| `publisher` | `string` | query | No | Publisher hint for curated registries |
-| `repo` | `string` | query | No | Repository hint such as owner/name |
-| `release` | `string` | query | No | Release hint such as a tag name |
-| `asset` | `string` | query | No | Desired asset name or pattern |
-| `pick` | `string` | query | No | Candidate selection mode (ask, first, index, id) |
-| `pick_index` | `integer` | query | No | Candidate index (required when pick=index) |
-| `candidate_id` | `string` | query | No | Specific candidate ID (required when pick=id) |
-| `set_id` | `string` | query | No | Bind pick to a specific candidate set |
-| `terminal_id` | `integer` | query | No | Terminal session ID when not supplied in the path |
-| `display` | `string` | query | No | X11 DISPLAY number |
-| `origin` | `string` | query | No | Origin identifier for observability propagation |
-| `dry_run` | `boolean` | query | No | If true, force command-only response (hoody-run never executes) |
-| `print_curl` | `string` | query | No | Generate curl command (hoody-run) |
-| `format` | `string` | query | No | Output format (json or html) |
-| `limit` | `integer` | query | No | Max candidates (default 25) |
+| `data` | `RunSearchRequest` | body | Yes | Shape: `run_PagedSearchRequest` under Body schemas. |
 
-**Returns:** `run_RunResponse`  |  **HTTP:** `GET /api/v1/run/go/{rest}`
+**Returns:** `Promise<(NonNullable<RunSearchResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`search()` fetches one page). Each item is `run_Candidate`. `searchIterator()` streams the same items instead of collecting them.  |  **HTTP:** `POST /api/v1/run/search/paged`
+**CLI:** `hoody run search`
 
 ---
 
-#### `runTerminalAnchored` — Terminal-anchored path-based resolve
+#### `searchIterator` — Search for app candidates with cursor pagination (async iterator)
 
 ```typescript
-client.run.runTerminalAnchored(terminal_id: integer, rest: string, options?: { os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; pick?: string; pick_index?: integer; candidate_id?: string; set_id?: string; display?: string; origin?: string; dry_run?: boolean; print_curl?: string; format?: string; limit?: integer })
+client.run.searchIterator(data: RunSearchRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `terminal_id` | `integer` | path | Yes | Terminal session ID (1-65535) |
-| `rest` | `string` | path | Yes | Path segments for app specification |
-| `os` | `string` | query | No | Target OS filter when not supplied in the path |
-| `source` | `array` | query | No | Source kind filter (repeatable) |
-| `kind` | `string` | query | No | App kind filter when not supplied in the path |
-| `arch` | `string` | query | No | Target CPU architecture filter |
-| `tags` | `array` | query | No | Free-form tags for filtering and ranking (repeatable) |
-| `profile` | `string` | query | No | Named profile for default preferences |
-| `channel` | `string` | query | No | Release channel hint |
-| `version` | `string` | query | No | Exact version or provider-defined version constraint |
-| `variant` | `string` | query | No | Provider-specific variant hint |
-| `publisher` | `string` | query | No | Publisher hint for curated registries |
-| `repo` | `string` | query | No | Repository hint such as owner/name |
-| `release` | `string` | query | No | Release hint such as a tag name |
-| `asset` | `string` | query | No | Desired asset name or pattern |
-| `pick` | `string` | query | No | Candidate selection mode (ask, first, index, id) |
-| `pick_index` | `integer` | query | No | Candidate index (required when pick=index) |
-| `candidate_id` | `string` | query | No | Specific candidate ID (required when pick=id) |
-| `set_id` | `string` | query | No | Bind pick to a specific candidate set |
-| `display` | `string` | query | No | X11 DISPLAY number |
-| `origin` | `string` | query | No | Origin identifier for observability propagation |
-| `dry_run` | `boolean` | query | No | If true, force command-only response (hoody-run never executes) |
-| `print_curl` | `string` | query | No | Generate curl command (hoody-run) |
-| `format` | `string` | query | No | Output format (json or html) |
-| `limit` | `integer` | query | No | Max candidates (default 25) |
+| `data` | `RunSearchRequest` | body | Yes | Shape: `run_PagedSearchRequest` under Body schemas. |
 
-**Returns:** `run_RunResponse`  |  **HTTP:** `GET /api/v1/run/t/{terminal_id}/go/{rest}`
+**Returns:** `AsyncGenerator<(NonNullable<RunSearchResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`search()` fetches one page). Each item is `run_Candidate`.  |  **HTTP:** `POST /api/v1/run/search/paged`
+**CLI:** `hoody run search`
 
 ---
 
-#### `searchCandidates` — Search for app candidates
+#### `test` — Preflight a run request
 
 ```typescript
-client.run.searchCandidates(options?: { app?: string; os?: string; source?: array; kind?: string; arch?: string; tags?: array; profile?: string; channel?: string; version?: string; variant?: string; publisher?: string; repo?: string; release?: string; asset?: string; limit?: integer })
+client.run.test(data: RunTestRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `app` | `string` | query | Yes | Primary name query (aliases q, name) |
-| `os` | `string` | query | No | Target OS filter |
-| `source` | `array` | query | No | Source kind filter (repeatable) |
-| `kind` | `string` | query | No | App kind filter (gui, cli, any) |
-| `arch` | `string` | query | No | Target CPU architecture filter |
-| `tags` | `array` | query | No | Free-form tags for filtering and ranking (repeatable) |
-| `profile` | `string` | query | No | Named profile for default preferences |
-| `channel` | `string` | query | No | Release channel hint (for example stable or beta) |
-| `version` | `string` | query | No | Exact version or provider-defined version constraint |
-| `variant` | `string` | query | No | Provider-specific variant hint (for example portable or headless) |
-| `publisher` | `string` | query | No | Publisher hint for curated registries |
-| `repo` | `string` | query | No | Repository hint such as owner/name |
-| `release` | `string` | query | No | Release hint such as a tag name |
-| `asset` | `string` | query | No | Desired asset name or pattern |
-| `limit` | `integer` | query | No | Max candidates to return (default 25) |
+| `data` | `RunTestRequest` | body | Yes | Shape: `run_Selector` under Body schemas. |
 
-**Returns:** `run_SearchResponse`  |  **HTTP:** `GET /api/v1/run/search`
-
----
-
-#### `searchCandidatesPaged` — Search for app candidates with cursor pagination
-
-```typescript
-client.run.searchCandidatesPaged(data: run_PagedSearchRequest)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `data` | `run_PagedSearchRequest` | body | Yes |  |
-
-**Returns:** `run_PagedSearchResponse`  |  **HTTP:** `POST /api/v1/run/search/paged`
-
----
-
-#### `searchCandidatesPagedAll` — Search for app candidates with cursor pagination (collect all pages)
-
-```typescript
-client.run.searchCandidatesPagedAll(data: run_PagedSearchRequest)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `data` | `run_PagedSearchRequest` | body | Yes |  |
-
-**Returns:** `run_PagedSearchResponse[]`  |  **HTTP:** `POST /api/v1/run/search/paged`
-
----
-
-#### `searchCandidatesPagedIterator` — Search for app candidates with cursor pagination (async iterator)
-
-```typescript
-client.run.searchCandidatesPagedIterator(data: run_PagedSearchRequest)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `data` | `run_PagedSearchRequest` | body | Yes |  |
-
-**Returns:** `AsyncIterableIterator<run_PagedSearchResponse>`  |  **HTTP:** `POST /api/v1/run/search/paged`
+**Returns:** `Promise<RunTestResponse>`  |  **HTTP:** `POST /api/v1/run/preflight`
+**CLI:** `hoody run test`
 
 ---
 
 ### `client.run.sources` (7) — APIs for managing package sources including CRUD operations, enable/disable, priority control, and sync triggers
 
-#### `createSource` — Create a new package source
+#### `create` — Create a new package source
 
 ```typescript
-client.run.sources.createSource(data: run_SourceConfig)
+client.run.sources.create(data: RunSourcesCreateRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `run_SourceConfig` | body | Yes |  |
+| `data` | `RunSourcesCreateRequest` | body | Yes | Shape: `run_SourceConfig` under Body schemas. |
 
-**Returns:** `any`  |  **HTTP:** `POST /api/v1/run/sources`
-
----
-
-#### `deleteSource` — Delete a package source
-
-```typescript
-client.run.sources.deleteSource(source_id: string)
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `source_id` | `string` | path | Yes | Source identifier |
-
-**Returns:** `void`  |  **HTTP:** `DELETE /api/v1/run/sources/{source_id}`
+**Returns:** `Promise<RunSourcesCreateResponse>`  |  **HTTP:** `POST /api/v1/run/sources`
+**CLI:** `hoody run sources create`
 
 ---
 
-#### `getSourceDiagnostics` — Get runtime diagnostics for a source
+#### `delete` — Delete a package source
 
 ```typescript
-client.run.sources.getSourceDiagnostics(source_id: string)
+client.run.sources.delete(source_id: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `source_id` | `string` | path | Yes | Source identifier |
 
-**Returns:** `run_SourceDiagnostics`  |  **HTTP:** `GET /api/v1/run/sources/{source_id}/diagnostics`
+**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `DELETE /api/v1/run/sources/{source_id}`
+**CLI:** `hoody run sources delete`
 
 ---
 
-#### `listSources` — List all package sources
+#### `getDiagnostics` — Get runtime diagnostics for a source
 
 ```typescript
-client.run.sources.listSources()
-```
-
-**Returns:** `any`  |  **HTTP:** `GET /api/v1/run/sources`
-
----
-
-#### `syncAllSources` — Sync all sources
-
-```typescript
-client.run.sources.syncAllSources()
-```
-
-**Returns:** `run_Job`  |  **HTTP:** `POST /api/v1/run/sources/sync`
-
----
-
-#### `syncSource` — Sync a single source
-
-```typescript
-client.run.sources.syncSource(source_id: string)
+client.run.sources.getDiagnostics(source_id: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `source_id` | `string` | path | Yes | Source identifier |
 
-**Returns:** `run_Job`  |  **HTTP:** `POST /api/v1/run/sources/{source_id}/sync`
+**Returns:** `Promise<RunSourcesGetDiagnosticsResponse>`  |  **HTTP:** `GET /api/v1/run/sources/{source_id}/diagnostics`
+**CLI:** `hoody run sources diagnostics get`
 
 ---
 
-#### `updateSource` — Update a package source
+#### `list` — List all package sources
 
 ```typescript
-client.run.sources.updateSource(source_id: string, data: object)
+client.run.sources.list()
+```
+
+**Returns:** `Promise<RunSourcesListResponse>`  |  **HTTP:** `GET /api/v1/run/sources`
+**CLI:** `hoody run sources list`
+
+---
+
+#### `sync` — Sync a single source
+
+```typescript
+client.run.sources.sync(source_id: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `source_id` | `string` | path | Yes | Source identifier |
-| `data` | `object` | body | Yes |  |
 
-**Returns:** `run_SourceConfig`  |  **HTTP:** `PATCH /api/v1/run/sources/{source_id}`
+**Returns:** `Promise<RunSourcesSyncResponse>`  |  **HTTP:** `POST /api/v1/run/sources/{source_id}/sync`
+**CLI:** `hoody run sources sync`
+
+---
+
+#### `syncAll` — Sync all sources
+
+```typescript
+client.run.sources.syncAll()
+```
+
+**Returns:** `Promise<RunSourcesSyncAllResponse>`  |  **HTTP:** `POST /api/v1/run/sources/sync`
+**CLI:** `hoody run sources sync`
+
+---
+
+#### `update` — Update a package source
+
+```typescript
+client.run.sources.update(source_id: string, data: RunSourcesUpdateRequest)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `source_id` | `string` | path | Yes | Source identifier |
+| `data` | `RunSourcesUpdateRequest` | body | Yes | Shape: `run_SourceUpdate` under Body schemas. |
+
+**Returns:** `Promise<RunSourcesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/run/sources/{source_id}`
+**CLI:** `hoody run sources update`
 
 
 ### Body schemas
 
 - `run_PagedSearchRequest` — `{ selector*: run_Selector, cursor: string, page_size: int }`
 - `run_Selector` — `{ app*: string, os: run_Os, kind: run_AppKind, source: run_SourceKind[], arch: run_Arch, tags: string[], profile: string, channel: string, version: string, variant: string, publisher: string, repo: string, release: string, asset: string, pick: run_PickMode, pick_index: int, candidate_id: string, set_id: string, terminal_id: int, display: string, origin: string, format: run_OutputFormat, dry_run: bool, print_curl: run_PrintCurlMode, limit: int }`
+  - `pick_index` — Candidate index (required when pick=index)
+  - `candidate_id` — Specific candidate ID (required when pick=id)
 - `run_BatchRequest` — `{ items: run_BatchItemRequest[] }`
 - `run_SourceConfig` — `{ source_id*: string, enabled*: bool, priority*: int, provider*: run_SourceKind, source_type*: run_SourceType, pin: run_SourcePin, config: object }`
+- `run_SourceUpdate` — `{ enabled: bool, priority: int, pin: run_SourcePin|null, config: object }`
+  - Partial source update. Only the fields present in the body are applied; everything else keeps its stored value. The merged source is re-validated before it is committed, so a patch that would downgrade a signed remote index is refused.
 - `run_ProfileConfig` — `{ name*: string, description: string, defaults: run_ProfileDefaults, sources_mode: run_ProfileSourceMode, sources: run_ProfileSourceOverride[], policy: run_PolicyConfig }`
+- `run_ProfileUpdate` — `{ description: string|null, defaults: run_ProfileDefaults, sources_mode: run_ProfileSourceMode, sources: run_ProfileSourceOverride[], policy: run_PolicyConfig }`
+  - Partial profile update. Only the fields present in the body are applied; everything else keeps its stored value. The profile's name is taken from the path and cannot be changed here.
 - `run_RecipeConfig` — `{ name*: string, description: string, selector_template: run_SelectorTemplate, allowed_overrides: string[] }`
+- `run_RecipeUpdate` — `{ description: string|null, selector_template: run_SelectorTemplate, allowed_overrides: string[] }`
+  - Partial recipe update. Only the fields present in the body are applied; everything else keeps its stored value. The recipe's name is taken from the path and cannot be changed here.
 - `run_RecipeExecutionRequest` — `{ overrides: run_SelectorTemplate }`
 - `run_Os` — `"linux" | "windows" | "any"`
 - `run_AppKind` — `"gui" | "cli" | "any"`
 - `run_SourceKind` — `"nix" | "pkgx" | "appimage" | "oci" | "registry" | "system" | "any"`
 - `run_Arch` — `"amd64" | "arm64" | "any"`
 - `run_PickMode` — `"ask" | "first" | "index" | "id"`
+  - Candidate selection mode: ask: return candidate list without selecting (default); first: automatically select the highest-ranked candidate; index: select by 0-based index (requires pick_index); id: select by candidate_id (requires candidate_id)
 - `run_OutputFormat` — `"json" | "html"`
 - `run_PrintCurlMode` — `"hoody-run"`
 - `run_BatchItemRequest` — `{ request_id*: string, mode*: run_BatchMode, selector*: run_Selector }`
-- `run_SourceType` — `"nix-pkgs" | "nix-flake" | "pkgx" | "app-image-pinned" | "app-image-git-hub-releases" | "app-image-catalog" | "oci-local-images" | "manifest-registry" | …(11 values)`
+- `run_SourceType` — `"nix-pkgs" | "nix-flake" | "pkgx" | "app-image-pinned" | "app-image-git-hub-releases" | "app-image-catalog" | "oci-local-images" | "manifest-registry" | "manifest-remote-index" | "system-path" | "trusted-list-file"`
 - `run_SourcePin` — `{ url*: string, sha256: string, author_pubkey_ed25519: string, sig_ed25519: string }`
 - `run_ProfileDefaults` — `{ os: run_Os, kind: run_AppKind, source: run_SourceKind[], pick: run_PickMode, terminal_id: int, display: string, limit: int }`
 - `run_ProfileSourceMode` — `"inherit" | "allowlist"`

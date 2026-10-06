@@ -18,28 +18,28 @@ curl -O https://hoody.com/SKILLS/HOODY_SKILLS.zip
 
 ## Start here
 
-- [`SKILL.md`](SKILL.md) — mode-blend skill (chooser + SDK/HTTP/CLI side-by-side) · ~11,480 tokens
-- [`SKILL.lite.md`](SKILL.lite.md) — compact tier-0 skill (always-loaded by agents) · ~4,154 tokens
-- [`ONBOARDING.md`](ONBOARDING.md) — guided onboarding skill (agent-directed) · ~6,383 tokens
+- [`SKILL.md`](SKILL.md) — mode-blend skill (chooser + SDK/HTTP/CLI side-by-side) · ~12,490 tokens
+- [`SKILL.lite.md`](SKILL.lite.md) — compact tier-0 skill (always-loaded by agents) · ~5,173 tokens
+- [`ONBOARDING.md`](ONBOARDING.md) — guided onboarding skill (agent-directed) · ~6,764 tokens
 
 ## One surface, in depth
 
-- [`SKILL-HTTP.md`](SKILL-HTTP.md) — HTTP skill (basic) · ~16,228 tokens
-- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL — basic + all 20 namespaces) · ~216,641 tokens
-- [`SKILL-SDK.md`](SKILL-SDK.md) — SDK skill (basic) · ~17,317 tokens
-- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL — basic + all 20 namespaces) · ~348,804 tokens
-- [`SKILL-CLI.md`](SKILL-CLI.md) — CLI skill (basic) · ~17,095 tokens
-- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL — basic + all 20 namespaces) · ~159,299 tokens
+- [`SKILL-HTTP.md`](SKILL-HTTP.md) — HTTP skill (basic) · ~18,793 tokens
+- [`SKILL-HTTP-FULL.md`](SKILL-HTTP-FULL.md) — HTTP skill (FULL: basic + all 21 namespaces) · ~302,485 tokens
+- [`SKILL-SDK.md`](SKILL-SDK.md) — SDK skill (basic) · ~23,036 tokens
+- [`SKILL-SDK-FULL.md`](SKILL-SDK-FULL.md) — SDK skill (FULL: basic + all 21 namespaces) · ~514,282 tokens
+- [`SKILL-CLI.md`](SKILL-CLI.md) — CLI skill (basic) · ~19,153 tokens
+- [`SKILL-CLI-FULL.md`](SKILL-CLI-FULL.md) — CLI skill (FULL: basic + all 21 namespaces) · ~197,951 tokens
 
 ## Per-namespace reference
 
-- [`SKILL-HTTP/`](SKILL-HTTP/) — HTTP skill, one file per namespace · 20 files
-- [`SKILL-SDK/`](SKILL-SDK/) — SDK skill, one file per namespace · 20 files
-- [`SKILL-CLI/`](SKILL-CLI/) — CLI skill, one file per namespace · 20 files
+- [`SKILL-HTTP/`](SKILL-HTTP/) — HTTP skill, one file per namespace · 21 files
+- [`SKILL-SDK/`](SKILL-SDK/) — SDK skill, one file per namespace · 21 files
+- [`SKILL-CLI/`](SKILL-CLI/) — CLI skill, one file per namespace · 21 files
 
 ## Routing manifest
 
-- [`INDEX.md`](INDEX.md) — routing manifest (full INDEX with routing-hints appendix; ~7k tokens, on-demand) · ~7,926 tokens
+- [`INDEX.md`](INDEX.md) — routing manifest (full INDEX with routing-hints appendix, on-demand) · ~9,129 tokens
 
 ## Whole bundle
 

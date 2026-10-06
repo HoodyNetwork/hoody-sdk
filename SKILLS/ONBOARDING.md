@@ -1,4 +1,4 @@
-> _**guided onboarding skill (agent-directed)** · ~6,383 tokens · hoody-sdk v1.0.0-beta.14_
+> _**guided onboarding skill (agent-directed)** · ~6,764 tokens · hoody-sdk v1.0.0-beta.15_
 
 # Hoody — Onboarding (a brief for the agent running this)
 
@@ -55,7 +55,7 @@ Throughout: **keep asking in small batches, and prefer pick-one options over ope
 
 - **Control plane** — `https://api.hoody.com` — needs `Authorization: Bearer <token>` (you get the token at sign-in).
 - **Per-container kit URLs** — `https://{P}-{C}-{kit}-{n}.{N}.containers.hoody.com` — the **URL itself is the credential**; just call it. (`{P}`=project id, `{C}`=container id, `{N}`=server name, from the container's details.)
-- No exceptions: the `agent` kit (host `…-agent-1.…`) works the same way — the kit URL is the credential; it needs **no** container claim or extra auth headers (its HTTP edge has no service-level auth). (The **Hoody Agent browser GUI** on the same `-agent-1` host opens in a browser and signs the user in for the interactive UI; the HTTP API needs nothing beyond the kit URL.)
+- The `agent` kit (host `…-agent-1.…`) works the same way — the kit URL is the credential; it needs **no** container claim or extra auth headers. (The **Hoody Agent browser GUI** on the same `-agent-1` host opens in a browser and signs the user in for the interactive UI; the HTTP API needs nothing beyond the kit URL.) The `bot` kit's management routes need no account token either, so gate its URL with proxy permissions.
 
 Keep the user's token in memory for the session; don't paste it into chat or anywhere public. **If any control-plane call returns 401, your token is missing or stale — re-run the login (Step 1) rather than retrying the failing call.**
 
@@ -63,7 +63,7 @@ Keep the user's token in memory for the session; don't paste it into chat or any
 
 ## Step 1 — Sign them up (right here, no website trip)
 
-Collect, in one friendly batch: **email** and a **password** (≥12 chars, must include upper + lower + digit + symbol). A **region** is optional and is *validated against a live pool* — so either omit it (Hoody auto-picks by location) or first call `GET https://api.hoody.com/api/v1/auth/available-regions` and pass one returned as available. Then create the account:
+Collect, in one friendly batch: **email** and a **password** (at least 12 characters and at most 72 UTF-8 bytes, using at least 3 of: uppercase, lowercase, digit, symbol). A **region** is optional and is *validated against a live pool* — so either omit it (Hoody auto-picks by location) or first call `GET https://api.hoody.com/api/v1/auth/available-regions` and pass one returned as available. Then create the account:
 
 ```bash
 curl -sX POST "https://api.hoody.com/api/v1/auth/signup" \
@@ -75,7 +75,7 @@ curl -sX POST "https://api.hoody.com/api/v1/auth/signup" \
 Now the important part — **the account isn't active until they click the verification link in their email. This is a hard pause: you cannot log in until they've clicked it, so don't try.** So:
 
 1. Tell them plainly: *"I've created your account — check your inbox and click the verification link, then tell me when you're done."* **Then wait for them to confirm before doing anything else.** (Mention the spam folder if a minute passes.)
-2. If it never arrives, resend: `POST https://api.hoody.com/api/v1/auth/resend-verification` with `{"email":"…"}`. (Signup/resend are rate-limited — on a `429`, tell them you'll wait a moment, then retry once; **don't loop**. If it still doesn't show after a resend, don't get stuck: point them at the web signup page and resume at login once they're verified.)
+2. If it never arrives, resend: `POST https://api.hoody.com/api/v1/auth/resend-verification` with `{"email":"…"}`. (Signup/resend are rate-limited — on a `429`, tell them you'll wait a moment, then retry once; **don't loop**. If it still doesn't show after a resend, don't get stuck: ask them to check spam and the address they typed, and resume at login once they have clicked the link. The marketing site's signup page only joins a waitlist; it does not create or verify an account.)
 3. Once they confirm, log them in and keep the token (login accepts **email or username**):
 
 ```bash
@@ -89,15 +89,15 @@ Three branches to know here:
 
 - **Verification can return the token directly** — the verify step itself returns `data.token`, so if you orchestrated it you may already have the token and can skip this login.
 - **Login fails with "email not verified"** — they simply haven't clicked the link yet; this is the single most common first-run snag, and it's not an error on your end. Say so gently, wait, and retry.
-- **Signup returns `403` (administratively disabled)** — login is unaffected; already-verified users can still sign in. Send them to this deployment's web signup page — `https://hoody.com/signup` on production — instead of retrying the API, then resume at login.
+- **Signup returns `403` (administratively disabled)** — login is unaffected; already-verified users can still sign in. Don't retry the API. Tell them registration is currently closed; `https://hoody.com/signup` only joins the waitlist and does not create an account. Resume at login once they have an activated account.
 
-**Tell them what just happened:** they now own a Hoody account, and Hoody is provisioning a free server + first container for them in the background, at no cost — no "rent a server" step. We'll confirm it's ready in the next step. That's the no-friction promise in action.
+**Tell them what just happened:** they now own a Hoody account, and Hoody is normally provisioning a free server + first container for them in the background, at no cost — no "rent a server" step. On a deployment that requires an invite code for the free server, that step waits for the code (Step 2 covers it). We'll confirm it's ready in the next step. That's the no-friction promise in action.
 
 ---
 
 ## Step 2 — Meet their first container (confirm it's ready)
 
-A **container** is their computer in the cloud. Hoody provisions a default one right after email verification, but that happens **in the background and can take a moment** (occasionally it needs a nudge). So **confirm it's ready before doing anything else** — poll until a default container is `running` and has its coordinates (`project_id` = `P`, `id` = `C`, `server_name` = `N`, needed for every URL later):
+A **container** is their computer in the cloud. Hoody normally provisions a default one right after email verification, but that happens **in the background and can take a moment** (occasionally it needs a nudge, and on an invite-only deployment it needs an invite code first). So **confirm it's ready before doing anything else** — poll until a default container is `running` and has its coordinates (`project_id` = `P`, `id` = `C`, `server_name` = `N`, needed for every URL later):
 
 ```bash
 # Repeat every few seconds until this prints a row with status "running":
@@ -106,13 +106,25 @@ curl -s "https://api.hoody.com/api/v1/containers" \
   | jq '.data.containers[] | select(.is_default) | {C:.id, P:.project_id, N:.server_name, status}'
 ```
 
-An empty result or a non-`running` status early on is **completely normal** — keep waiting and reassure them ("setting up your computer, almost there"). Don't treat the empty result as a failure; it just means provisioning is still in flight. If it's still missing after ~30–60s, nudge provisioning once, then keep polling:
+An empty result or a non-`running` status early on is **completely normal** — keep waiting and reassure them ("setting up your computer, almost there"). Don't treat the empty result as a failure; it usually means provisioning is still in flight. If it's still missing after ~30–60s, nudge provisioning once, then keep polling:
 
 ```bash
 curl -sX POST "https://api.hoody.com/api/v1/users/me/retry-setup" \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}'
 # rate-limited to ~1/min — wait between attempts, don't fire it repeatedly
 ```
+
+**If that call answers `403` with `FREE_TIER_INVITE_REQUIRED`**, waiting will not help: free servers are currently handed out by invite code. Ask them for their invite code and redeem it — a successful redeem unlocks the account and tries to claim the free server — then resume polling:
+
+```bash
+curl -sX POST "https://api.hoody.com/api/v1/users/me/redeem-invite" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"code":"<their-invite-code>"}'
+```
+
+If the redeem answers `200` with `data.claim_blocked_reason: "pool_empty"`, the code worked but no server was free: wait a minute, call `retry-setup` again (it is rate-limited), and poll once it succeeds.
+
+No invite code? Stop here and tell them plainly that the free server is invite-only right now; don't keep polling.
 
 **If the container shows up but its status is `stopped` (or `paused`)** — waiting won't fix that; start it yourself, then resume polling until `running`:
 
@@ -138,7 +150,7 @@ This is the single best on-ramp, so make it prominent. **The Hoody Agent browser
 https://{P}-{C}-agent-1.{N}.containers.hoody.com
 ```
 
-Tell them: *"Open this in your browser and log in with the account you just made. This is your Hoody desktop — from here you can browse files, edit code, and even hand tasks to an AI agent that works right inside your machine. It'll ask you to log in — keep this link private (don't post it publicly)."* They don't deal with tokens or setup — logging in wires everything up automatically. **If it asks them to log in and seems to "do nothing" after, that's expected — the first load wires up the container claim behind the scenes; have them wait a beat or refresh once.**
+Tell them: *"Open this in your browser and log in with the account you just made. This is your Hoody desktop — from here you can browse files, edit code, and even hand tasks to an AI agent that works right inside your machine. It'll ask you to log in — keep this link private (don't post it publicly)."* They don't deal with tokens or setup — logging in wires everything up automatically. **If it asks them to log in and seems to "do nothing" after, have them wait a beat or refresh the page once.**
 
 (For a developer, add: the container's primitives — terminal, files, exec, browser, etc. — are all fully programmatic via the SDK/HTTP kits; the GUI is just one client of those same APIs.)
 
@@ -152,7 +164,8 @@ This is the "wow." **Anything you run on a port inside the container is instantl
 # Start a simple site on port 8080 inside their container (the terminal kit URL is itself the credential).
 # Write to /tmp (world-writable) so it works whether the session runs as root or 'user'.
 # The backgrounded server survives the ephemeral session — the kit keeps '&' jobs alive.
-curl -sX POST "https://{P}-{C}-terminal-1.{N}.containers.hoody.com/api/v1/terminal/execute?ephemeral=true" \
+# terminal-0 is the "fresh session" host: the host index picks the session, and terminal-1 is the user's own shell.
+curl -sX POST "https://{P}-{C}-terminal-0.{N}.containers.hoody.com/api/v1/terminal/execute?ephemeral=true" \
   -H 'Content-Type: application/json' \
   -d '{"command":"mkdir -p /tmp/site && echo \"<h1>Hello from my Hoody computer 🚀</h1>\" > /tmp/site/index.html && nohup python3 -m http.server 8080 --directory /tmp/site >/tmp/web.log 2>&1 &","wait":false}'
 ```
@@ -211,17 +224,17 @@ Do it in this order:
 1. **Create a persistent terminal pinned to a display.** Use the number **100** for both, on purpose (more on why below):
 
 ```bash
-curl -sX POST "https://{P}-{C}-terminal-1.{N}.containers.hoody.com/api/v1/terminal/create" \
+curl -sX POST "https://{P}-{C}-terminal-100.{N}.containers.hoody.com/api/v1/terminal/create" \
   -H 'Content-Type: application/json' \
-  -d '{"terminal_id":100,"display":":100","shell":"bash","user":"user"}'
+  -d '{"terminal_id":"100","display":":100","shell":"bash","user":"user"}'
 ```
 
-This call can take **~20–30s** while the screen (an xpra X server) boots — **that's expected, not a hang. Wait it out.** **Do not retry-create** on a slow or timeout-looking response (re-creating an existing `terminal_id` just returns success, but a second call will block again while the screen boots); instead, when it returns, just check the response didn't come back with `"status":"error"`. Because we pinned `display:":100"`, the create only returns once the screen is ready, so Firefox will have something to draw on.
+This call can take **~20–30s** while the screen (a virtual X server) boots — **that's expected, not a hang. Wait it out.** **Do not retry-create** on a slow or timeout-looking response (re-creating an existing `terminal_id` just returns success, but a second call will block again while the screen boots); instead, when it returns, check that the HTTP status is 2xx (add `-w '%{http_code}'`); a failure is a non-2xx status with a `{"error":"<message>","code":"<CODE>"}` body. Because we pinned `display:":100"`, the create only returns once the screen is ready, so Firefox will have something to draw on.
 
-2. **Launch Firefox inside that session** (note `terminal_id` goes on the query string; background it with `&` so the shell stays free). First confirm Firefox is installed — if `which firefox` is empty, install it (`apt-get install -y firefox-esr`):
+2. **Launch Firefox inside that session** — call the `terminal-100` host: the host index IS the session (the proxy overwrites any `?terminal_id=` from it, so a `terminal-1` URL would run Firefox in session 1). Background it with `&` so the shell stays free. First confirm Firefox is installed — if `which firefox` is empty, install it (`apt-get install -y firefox-esr`):
 
 ```bash
-curl -sX POST "https://{P}-{C}-terminal-1.{N}.containers.hoody.com/api/v1/terminal/execute?terminal_id=100" \
+curl -sX POST "https://{P}-{C}-terminal-100.{N}.containers.hoody.com/api/v1/terminal/execute" \
   -H 'Content-Type: application/json' \
   -d '{"command":"firefox &","wait":false}'
 ```

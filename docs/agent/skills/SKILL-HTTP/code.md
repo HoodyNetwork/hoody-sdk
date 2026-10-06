@@ -1,38 +1,43 @@
-> _**HTTP skill · `code` namespace** · ~6,496 tokens · hoody-sdk v1.0.0-beta.14_
+> _**HTTP skill · `code` namespace** · ~6,922 tokens · hoody-sdk v1.0.0-beta.15_
 
 # `code` — VS Code in the browser, per container
 
 ## Purpose
 
-**This is the VS Code IDE running in a browser tab — not a programmatic API.** Open `https://{P}-{C}-code-1.{N}.containers.hoody.com/?folder=<abs-path>&id=1` and you get the full editor: file tree, diff view, debugger, terminals, extensions marketplace, all backed by the container's filesystem. The public `code-1` URL is served by an **orchestrator** that requires both `folder` and `id` query params on `/` (it boots child editor instance `id` and iframes it from the `{P}-{C}-http-<60000+id>.{N}` subdomain); with neither param it serves the OpenAPI spec, with only one it returns 400. The `code` namespace methods documented here exist mainly to *configure* the editor (open a folder, install an extension, mint a path-proxy URL) — the day-to-day use is "open the URL".
+**This is the VS Code IDE running in a browser tab — not a programmatic API.** Open `https://{P}-{C}-code-1.{N}.containers.hoody.com/` and you get the full editor: file tree, diff view, debugger, terminals, extensions marketplace, all backed by the container's filesystem. The `code-N` URL is served by an **orchestrator** that starts one isolated editor instance per index and returns a page that embeds it. The index is the hostname: `code-1` is instance 1, `code-2` is instance 2, each with its own settings, state and running process.
 
-Like every Hoody kit URL, `code` is **iframable**: drop the `code-1` URL into an `<iframe>` and you've embedded VS Code in your own page. Same for every other kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …) — you can compose a full HTML "operating system" out of Hoody kit iframes with no native code, just URLs and standard CSP / cookie wiring.
+On a `code-N` host the platform's edge fills in the two parameters the entry page needs. It sets the instance selector `id` from the hostname, overwriting anything the caller sent, and it sets `folder` to the container's default workspace when the request names none. Add `?folder=<abs-path>` to open a different folder. Talking to a bare kit server with no edge in front of it, a client must send both `folder` and `id` itself: with neither the entry path returns the kit specification, with only one it returns `400`.
 
-**Headline mode: extension-only embed.** Add `&extension=<publisher>.<name>` (alongside the required `folder` and `id` params) and the editor boots into a **single extension's UI** — no file tree, no command palette, no marketplace, no IDE chrome. Just that extension's panel filling the viewport. Pair the extension with the iframable kit URL and you have:
+The methods in this namespace read the service's state (health, running instances, versions), stage extensions and confirm what an instance has installed, and build embed URLs. Day-to-day use is "open the URL".
+
+Like every Hoody kit URL, `code` is **iframable**: drop the `code-N` URL into an `<iframe>` and you've embedded VS Code in your own page. Same for every other kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …) — you can compose a full HTML "operating system" out of Hoody kit iframes with no native code, just URLs and standard CSP / cookie wiring.
+
+**Headline mode: extension-only embed.** Add `?extension=<publisher>.<name>` and the editor hides its chrome and opens that extension's **sidebar view** filling the viewport. It works for an installed extension that contributes a sidebar view (an Activity Bar panel); when no sidebar view of that extension can be found, even after activating it, the editor falls back to the file explorer. Pair such an extension with the iframable kit URL and you have:
 
 - A coding agent (e.g. **Cline** — `saoudrizwan.claude-dev`) accessible from any browser, including mobile phones with no IDE installed.
 - The same agent embedded into your own dashboard, a docs site, a Notion page, a Slack canvas (URL preview), a CRM, or any other HTML surface.
-- A focused tool surface (Continue, Copilot Chat, Roo Cline, GitLens, Marquee, Excalidraw, Markdown previewer, Jupyter, …) without exposing the full editor.
-- A "Cline-as-a-service" deployment: brand it via `POST /api/v1/proxy/aliases` and ship a URL like `https://agent.{server_name}.containers.hoody.com` to your team, hiding the `containerId`.
+- A focused tool surface from any other extension with its own sidebar view (Continue, Roo Cline, GitLens, …) without exposing the full editor. An extension that only adds editors, commands or previews has no sidebar view to open.
+- A branded deployment: point a proxy alias at the `code` service and hand out the alias URL instead of one that carries the `containerId` (Example 7).
 
-The container's filesystem still backs the extension (it can edit files, run terminals, hit the network, etc.) — same persistent state as the full IDE. Multiple child instances let you run multiple single-extension surfaces side-by-side under one container — same `code-1` URL, different `id` values (e.g. Cline at `?extension=…&folder=…&id=1`, Continue at `…&id=2`).
+The container's filesystem still backs the extension (it can edit files, run terminals, hit the network, etc.) — same persistent state as the full IDE. To run two single-extension surfaces side by side, give each its own instance through its own hostname: Cline on `code-1`, Continue on `code-2`.
 
 ## When to use
 
 - **Humans editing code**: hand the user the URL — that's the whole product.
-- **Single-extension embed for an agent or tool** — `?extension=<publisher>.<name>` boots straight into that extension's UI; iframable, mobile-friendly, distributable as a brand-able alias.
-- Pre-open a workspace/folder for them via `?folder=` / `?workspace=` (so the URL is bookmarkable).
-- Pre-install extensions (custom internal VSIX) via the kit's launch flags or in-editor — the `* /api/v1/code/extensions/*` HTTP endpoints are spec-only, not implemented (see Quirks).
-- Tunnel an in-container port through the editor's path-proxy on the **child instance** subdomain: `/proxy/{port}` (rewrites `req.base`) or `/absproxy/{port}` (verbatim — use this for APIs/WS).
+- **Single-extension embed for an agent or tool** — `?extension=<publisher>.<name>` opens that extension's sidebar view full-screen; iframable, mobile-friendly, distributable behind a proxy alias.
+- Pre-open a folder with `?folder=<abs-path>`, so the URL is bookmarkable.
+- Stage a custom VSIX with `POST /api/v1/code/extensions/install`, then confirm with `GET /api/v1/code/extensions/list` that an instance actually installed it.
+- Read which editor instances are running (`GET /status`) and which orchestrator and editor builds are deployed (`GET /api/v1/code/version`).
 
 ## When NOT to use
 
-Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → `files`, long-lived processes → `daemon`, headless web → `browser`. Not a coding-agent control plane → `agent` (the typed in-container AI-agent HTTP namespace, slug `agent`; the Hoody Agent browser GUI on the same `-agent-1` host is the human surface).
+Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → `files`, long-lived processes → `daemon`, headless web → `browser`, exposing a dev server that runs in the container → a proxy alias with program `http` and its port (see the `api` namespace). Not a coding-agent control plane → `agent` (the typed in-container AI-agent HTTP namespace, slug `agent`; the Hoody Agent browser GUI on the same `-agent-1` host is the human surface).
 
 ## Prerequisites
 
-- Password mode: session cookie via the HTML form login at the **child instance** root (`POST /login`, form-encoded — see Example 7). The generated `* /api/v1/code/log*` accessors build `/api/v1/code/login|logout`, which no surface routes.
-- VSIX install: the `* /api/v1/code/extensions/*` HTTP endpoints are spec-only (not implemented) — pre-install via the child launch flags or in-editor (see Example 3).
+- A running container. Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}`.
+- Address the service through its `code-N` URL. That hostname selects the instance, so the CLI offers no instance flag and the generated SDK sends no `id` unless you pass one. An SDK client pointed at a bare kit server passes `id` itself.
+- VSIX staging needs a downloadable `.vsix` URL that the service may fetch: `http` or `https`, no credentials in the URL, and not an address inside the container or on a private network.
 
 ## Capability URL
 
@@ -40,314 +45,247 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 
 ## Common workflows
 
-### 1. Open a workspace folder
+### 1. Open the editor on a folder
 
-1. Open `https://{P}-{C}-code-1.{N}.containers.hoody.com/?folder=<abs-path>&id=1` — both `folder` and `id` are required at the public kit URL.
-2. `GET /api/v1/code` (`folder`/`workspace`/`locale`) is the child-instance surface behind it; `ew=true` clears the persisted folder.
+1. Open `https://{P}-{C}-code-1.{N}.containers.hoody.com/?folder=<abs-path>`. Leave `folder` out to open the container's default workspace.
+2. To switch folders, open the same URL with another `folder`. A running instance is reused, and the page loads the editor on the folder the request names. `GET /status` keeps reporting the folder the instance was started with. Add `restart=true` only when you mean to restart the instance's process.
 
 ### 2. Embed a single extension (single-tool browser surface)
 
-Pin one extension as the entire UI of a `code-N` instance — no editor chrome around it.
+1. Make sure the extension is installed in that instance: stage it (workflow 3) or install it in the editor.
+2. Open or iframe `https://{P}-{C}-code-1.{N}.containers.hoody.com/?extension=<publisher>.<name>&folder=<abs-path>`.
+3. Brand it with `POST /api/v1/proxy/aliases` (program `code`, the landing query in `target_path`) and gate it with `* /api/v1/containers/{id}/proxy/permissions*` before sharing.
 
-1. Make sure the extension is installed in the container's VS Code: pre-install via the child launch flags (`--install-extension`, `--preload-builtin-extensions-dir`) or in-editor — the `POST /api/v1/code/extensions/install`/`GET /api/v1/code/extensions/list` HTTP endpoints are spec-only (see Quirks).
-2. Open / iframe `https://{P}-{C}-code-1.{N}.containers.hoody.com/?extension=<publisher>.<name>&folder=<abs-path>&id=1` (`folder` and `id` are required). Examples:
-   - `?extension=saoudrizwan.claude-dev` — Cline (autonomous coding agent), works on a phone.
-   - `?extension=continue.continue` — Continue chat.
-   - `?extension=ms-toolsai.jupyter` — Jupyter notebooks UI only.
-   - `?extension=eamodio.gitlens` — GitLens panel.
-3. Point `folder` at the repo you want the extension to see (it is required either way).
-4. Embed: `<iframe src="…/?extension=…&folder=…" allow="clipboard-read; clipboard-write"></iframe>` — works in any HTML page, mobile browser, Slack URL preview surface, etc.
-5. Brand the URL: `POST /api/v1/proxy/aliases` → `https://agent.{server_name}.containers.hoody.com`. Hides the `containerId`; gate via `proxyPermissionsContainer.*` for production.
+### 3. Stage a VSIX, apply it, confirm it installed
 
-To run two distinct single-extension surfaces under the same container, use different `id` values at the same `code-1` URL (`id=1` for Cline, `id=2` for Continue, etc. — each `id` is its own child editor instance).
+1. `POST /api/v1/code/extensions/install` with the `.vsix` URL. A success means the file is staged, not installed: the response reports `requiresRestartToApply: true` and `appliesAt: "next-instance-start"`. 
+2. Start or restart the instance that should have it (open its URL with `restart=true`). Staging is shared across instances, so every instance installs it at its next start.
+3. `GET /api/v1/code/extensions/list` and read `observed`: `status: "running"` means the instance is running and the version it has installed is the staged one. It compares version numbers only; it does not show that the extension activated.
 
-### 3. Install and verify a VSIX
+### 4. Inspect instances and versions
 
-`POST /api/v1/code/extensions/install` / `GET /api/v1/code/extensions/list` are spec-only — not implemented by the current kit (see Quirks). Pre-install via the child launch flags or in-editor, then verify on disk (Example 4).
-
-### 4. Tunnel a container port
-
-The **child instance** mounts `/proxy/:port` and `/absproxy/:port` at its root (`{P}-{C}-http-<60000+id>.{N}` subdomain); the public `code-1` root does NOT route them. The generated accessors `GET /api/v1/code/proxy/{port}/{path}` / `GET /api/v1/code/absproxy/{port}/{path}` build URLs against `/api/v1/code/proxy/...` which no surface routes — drive path-proxy with raw URLs (`https://{P}-{C}-http-60001.{N}.containers.hoody.com/proxy/{port}/...`) or the hand-extended embed-URL builder under the `code.vscode` service (see Quirks for `embedUrl`).
-
-### 5. Authenticate password mode
-
-Form-POST the password to the **child instance** root `/login` (see Example 7) — the generated `* /api/v1/code/log*` accessors build `/api/v1/code/login|logout`, which no surface routes.
+1. `GET /status` lists the running instances (id, port, folder, uptime) and the orchestrator's `basePort`.
+2. `GET /api/v1/code/version` reports the orchestrator build and the packaged editor tree separately.
 
 ## Quirks & gotchas
 
-- Login limit 2/min, 12/hr per process.
-- `/api/v1/code/health` resets idle heartbeat; only `/healthz` excluded.
-- 3 mount prefixes; use `/api/v1/code`.
-- `GET /api/v1/code` persists `folder`/`workspace` as the last-opened workspace in the instance's user-data dir; `ew=true` wipes.
-- `POST /api/v1/code/mint-key` idempotent.
-- `POST /api/v1/code/extensions/install` / `GET /api/v1/code/extensions/list` are declared in the kit OpenAPI (and surfaced by the generated SDK/CLI) but the current kit does NOT implement them — no extensions router is mounted anywhere, so requests fall through and the call fails rather than installing or listing anything. Pre-install via the child launch flags (`--install-extension`, `--install-builtin-extension`, `--preload-builtin-extensions-dir`) or in-editor.
-- `/proxy/:port` and `/absproxy/:port` are mounted at the **child instance root** (`{P}-{C}-http-<60000+id>.{N}` subdomain), NOT under `/api/v1/code` and NOT at the public `code-1` root — the orchestrator has no proxy routes. Use `https://{P}-{C}-http-60001.{N}.containers.hoody.com/proxy/{port}/...` (or `/absproxy/{port}/...`).
-- `/proxy/:port/...` rewrites `req.base` so the upstream sees `/<rest>`; `/absproxy/:port/...` keeps the full `/absproxy/:port/...` prefix verbatim — use `absproxy` for APIs/WS where the upstream cares about its own base path.
-- `GET /api/v1/code/update/check` (the generated accessor — the `update.*` service does not exist) queries GitHub releases. NOTE: the generated path is `/api/v1/code/update/check`, but `/update` is mounted on the **child instance** root only — the generated call and the public `code-1` root both miss it (orchestrator has no `/update` route). Call `https://{P}-{C}-http-<60000+id>.{N}…/update/check` directly. The route returns `{ checked, latest, current, isLatest }`, but the generated TS type `CodeHealthCheckUpdateResponse` (from the OpenAPI spec) mis-declares `{ current, latest, updateAvailable }` and drops `checked` — read `.isLatest`/`.checked` from the raw JSON, not `.updateAvailable`. `?force=true` bypasses the 24 h cache (kit-level only — not exposed via the generated SDK or CLI surfaces; reachable only by raw HTTP to `/update/check?force=true`).
-- `GET /api/v1/code/health` at the public `code-1` URL hits the ORCHESTRATOR, which returns the standardized 9-field `{ status: "ok", service, built, started, memory, fds, pid, ip, userAgent }` envelope — matching the generated TS type. The flat `{ status: "alive" | "expired", lastHeartbeat }` shape only appears on the child instance's health route (`{P}-{C}-http-<60000+id>.{N}` subdomain).
+- On a `code-N` host the edge sets `id` from the hostname and overwrites a caller's value, so a query-string `id` cannot pick another instance. `code-0` is treated as `code-1`.
+- The edge fills `folder` with the container's default workspace only when the request carries no `folder`; an explicit `folder` wins.
+- A request with a different `folder` for a running instance reuses that instance and its page loads the editor on the requested folder; no restart is needed. The instance keeps the folder it was started with as its own, which is the one `GET /status` reports. `restart=true` kills and respawns the instance.
+- The entry path forwards only the query parameters it declares (`?folder`, `?id`, `?extension`, `?restart`, `?page-loader`, `?disable-walkthroughs`, `?hoody-code`, `?welcome-iframe-url`, `?page-loader-path`, `?proxy-domain`, `?locale`, `?app-name`) and drops any other name without reporting it.
+- The query string on the entry path is capped at 8192 bytes; a longer one is answered `400` and starts nothing.
+- The page embeds the instance from the container's `http-<port>` host, where the port is `basePort + id`. `basePort` is deployment configuration: read `orchestrator.basePort`, or the instance's own `port`, from `GET /status` instead of assuming a number. That host is editor transport, not part of the kit API.
+- Staging is not installation. The editor installs staged extensions only while an instance starts, and the stage directory is shared, so one stage reaches every instance at its next start.
+- A stage that lands while an instance is starting can be installed with one version's details and another's contents. `GET /api/v1/code/extensions/list` reads only the installed version number, so it may not reveal that pairing; restarting the instance installs whatever is staged then. Stage before starting an instance.
+- `GET /api/v1/code/extensions/list` keeps `desired` (what is staged) and `observed` (what this instance appears to have) apart. A section that could not be read reports `status: "unavailable"` and has no `extensions` key at all, and `partial` is then true.
+- An observed entry's `status` is `running` (the instance is running and its installed version equals the staged version, or the extension is installed with nothing staged for it), `stale` (normal between a stage and the next start), `failed` (started after the stage and still lacks it), `stopped` or `unavailable`. `running` is a version comparison, not proof that the extension activated. Match entries on `logicalKey`, the lowercased `publisher.name`.
+- `allowDowngrade` is off by default, so a restage cannot silently roll an extension back; a refused downgrade is `409`.
+- `GET /api/v1/code/version` reports the orchestrator and the packaged editor as two figures because they are built and deployed separately. It never contacts the network and there is no update check.
+- `GET /api/v1/code/health`, `GET /status` and `GET /api/v1/code/version` take no query parameters; an `id` sent to them changes nothing.
+- Building an extension-only URL does not open the editor or start an instance. Compose it from the `code-N` URL with the `extension` and `folder` query parameters. 
 - `kit_slug` always `code`.
-- `embedUrl` is a hand-extended SDK builder hung off the `code.vscode` service; an equivalent embed builder also exists on the CLI surface. Composes the iframe URL without firing a request.
 
 ## Common errors
 
-- `POST /api/v1/code/extensions/install` / `GET /api/v1/code/extensions/list`: not implemented — at `code-1` the orchestrator returns a plain-text 404; on the child the request falls through to the vscode catch-all (SPA / 302 / 401). The `MISSING_URL`/`INVALID_URL_FORMAT`/`DOWNLOAD_FAILED`/`INSTALLATION_FAILED` codes exist only in the OpenAPI spec, never at runtime.
-- Path-proxy 400 `Invalid port`. The cited line only checks `isNaN(port)`; the 1024–65535 range is enforced by the OpenAPI client validator before the request lands.
-- `/proxy/{port}/` unauth root returns 302 `/login`; deeper 401.
-- `POST /api/v1/code/login` rate-limit returns HTML, not JSON.
-- Unauth `GET /api/v1/code` returns 302 `/login`, not 401.
-- On the **child instance** (`-http-<port>` subdomain) unmatched `/api/v1/code/*` paths fall through to the editor's catch-all route, which serves the SPA shell / 401 / 302 depending on auth — NOT a JSON 404. At the public `code-1` URL they return the orchestrator's plain-text 404 instead. Test against an explicit known-good path (e.g. `/api/v1/code/health`) for kit liveness.
+- `403` with the plain-text body `Forbidden` (not JSON): the request came from a private, loopback or otherwise reserved address, such as a process inside the container calling the service directly. Use the `code-N` URL.
+- `400` HTML page from the entry path: exactly one of `folder` and `id` carried a value, `id` is not an unsigned decimal integer or was sent twice, `id` exceeds `65535 - basePort`, or the query is over 8192 bytes. Only a bare kit server hits the first case; behind the edge both are filled.
+- `409` from the entry path: the instance's port is held by a process the orchestrator did not start. Retrying does not help until it is released.
+- `503` from the entry path: the instance did not finish starting in time. Worth retrying.
+- `POST /api/v1/code/extensions/install` errors carry a stable `error` code: `destination-refused` (`403`, the URL is outside the fetch policy), `downgrade-refused` (`409`), `not-a-vsix` (`422`), `upstream-error` (`502`, may be retried), `upstream-timeout` (`504`), `installs-at-capacity` (`503`, honour `Retry-After`), `insufficient-storage` (`507`), `extension-too-large` (`413`, the archive is over the size limit). Branch on `error`, not on the message.
+- Either extensions operation can return `invalid-selector` (`400`, an `id` the service cannot parse) or `internal-error` (`500`). Only `POST /api/v1/code/extensions/install` reads a request body, so only it returns `invalid-request` (`400`, malformed body or `url`), `unsupported-media-type` (`415`, body not sent as `application/json`) and `request-too-large` (`413`, body over the limit).
+- `404` with `error: "unknown-instance"` from either extensions operation means the service has no extensions directory configured, despite the code's name; retrying with another instance id does not help. An instance that was never started lists as `stopped`, not 404.
+- `503` from `GET /api/v1/code/extensions/list` carries the normal result body with `desired.status: "unavailable"`: the staged set could not be read, and `observed` is still reported.
 
 ## Related namespaces
 
-→ `terminal`, `files`, `exec`, `browser`, `daemon`.
+→ `terminal`, `files`, `exec`, `browser`, `daemon`, `api` (proxy aliases and permissions).
 
 ## Examples
 
-`code` is a **URL-first** namespace — for most workflows the kit URL itself (with the right query string and / or iframe wrapper) IS the deliverable. The methods here exist to *configure* the editor (install an extension, mint a key, log in), not to drive it. Each example below is a copy-pasteable recipe in the mode you're reading. URL-composition steps are pure string templates and need no kit call. HTTP / SDK steps were verified against the kit source (orchestrator + child-instance routes). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
+`code` is a **URL-first** namespace — for most workflows the kit URL itself (with the right query string and / or iframe wrapper) IS the deliverable. The methods here read state, stage extensions and build URLs; they do not drive the editor. Each example below is a copy-pasteable recipe in the mode you're reading. URL-composition steps are pure string templates and need no kit call. Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
 
 ### 1. Open the editor with a folder pre-loaded — bookmarkable URL
 
-**Goal:** ship a teammate a single URL that opens VS Code already pointing at the right repo. `?folder=<absolute-path>` is persisted as the last-opened workspace in the instance's user-data dir, so even subsequent un-querystringed visits land back on it (until you pass `?ew=true` to clear).
+**Goal:** ship a teammate a single URL that opens VS Code already pointing at the right repo.
 
 ```bash
 KIT="https://${P}-${C}-code-1.${N}.containers.hoody.com"
-URL="$KIT/?folder=/workspace/myrepo&id=1"
+URL="$KIT/?folder=/workspace/myrepo"
 echo "$URL"
-# Send / paste / bookmark. The orchestrator boots child instance 1 and iframes the editor
-# with /workspace/myrepo in the file tree. (The raw editor surface /api/v1/code?folder=…
-# lives on the child subdomain ${P}-${C}-http-60001.${N}…, not on code-1.)
+# The edge sets id=1 from the code-1 hostname. Leave ?folder out to open the
+# container's default workspace instead.
 ```
-To clear the persisted folder later (so the next visit opens the welcome page), append `?ew=true` (`GET /api/v1/code` with `ew=true` wipes the persisted workspace).
 
-### 2. Extension-only embed — boot straight into one extension's UI
+### 2. Extension-only embed — open one extension's sidebar view
 
-**Goal:** open `code-1` as a single extension's panel — no file tree, no command palette, no marketplace. The whole viewport is that extension. Pair with a folder so the extension opens with the right repo selected.
+**Goal:** open `code-1` as a single extension's panel — the editor chrome is hidden and the extension's sidebar view fills the viewport. Pair it with a folder so the extension opens with the right repo selected. The extension must be installed in that instance and contribute a sidebar view; otherwise the file explorer opens instead.
 
 URL pattern (no kit call):
 
 ```
-https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=<publisher>.<name>&folder=<absolute-path>&id=1
+https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=<publisher>.<name>&folder=<absolute-path>
 ```
 
 ```bash
 KIT="https://${P}-${C}-code-1.${N}.containers.hoody.com"
-URL="$KIT/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo&id=1"
+URL="$KIT/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo"
 echo "$URL"
 ```
-The `extension` query value MUST match `^[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+$` — `publisher.name` only, no version.
 
-### 3. Install a custom VSIX programmatically
+Name the extension as `publisher.name`, no version. The entry page forwards the value as sent; the editor also accepts a sidebar container id such as `workbench.view.scm`, or part of one. A second surface (say Continue, `continue.continue`) goes on its own instance: build the same URL on `code-2`.
 
-**Goal:** push an internal extension (`.vsix`) into the container's VS Code. ⚠ **`POST /api/v1/code/extensions/install` is spec-only** — the current kit mounts no extensions router, so the documented `POST /api/v1/code/extensions/install` never reaches a handler and the call fails. What actually works:
+### 3. Open another folder on a running instance
 
-- **At child boot (launch flags):** `--install-extension <id-or-vsix-path>`, `--install-builtin-extension <vsix-path>`, or drop VSIXes in the preload dir consumed by `--preload-builtin-extensions-dir` (the platform passes `/hoody/storage/hoody-code/extensions` by default).
-- **In-editor:** Extensions view → `…` menu → "Install from VSIX…" (the VSIX must already be on the container filesystem — push it via the `files` namespace).
-
-### 4. List installed extensions + verify a specific one is present
-
-**Goal:** sanity-check after a deploy that the extensions you expected are actually loaded. ⚠ **`GET /api/v1/code/extensions/list` is spec-only** (same as `POST /api/v1/code/extensions/install` — no extensions router is mounted). Verify on disk instead: each child instance keeps its extensions at `/hoody/storage/hoody-code/data/<id>/extensions`, with directory names like `<publisher>.<name>-<version>`. Run the check inside the container via the `terminal` / `exec` namespaces:
-
-```bash
-ls /hoody/storage/hoody-code/data/1/extensions
-# → ms-python.python-2024.0.0  saoudrizwan.claude-dev-3.7.0  …
-ls /hoody/storage/hoody-code/data/1/extensions | grep -q '^saoudrizwan\.claude-dev-' \
-  || echo "MISSING: saoudrizwan.claude-dev"
-```
-
-(Generated `GET /api/v1/code/extensions/list` accessors on any surface target the unimplemented endpoint and return no data.)
-
-### 5. Path-proxy a container port through the editor — `/proxy/{port}` for browser previews
-
-**Goal:** surface a dev server (Vite, Next.js, `python -m http.server`) running inside the container at `localhost:3000` to your laptop's browser. `/proxy/{port}` rewrites `req.base` so relative URLs in the upstream HTML still resolve under the proxy prefix — use this for **browser-rendered apps with relative asset paths**.
-
-```
-https://${P}-${C}-http-60001.${N}.containers.hoody.com/proxy/3000/
-```
-
-(`http-<60000+id>` is the **child instance** subdomain — `60001` for `id=1`. The public `code-1` root does NOT route `/proxy`.)
-
-```bash
-CHILD="https://${P}-${C}-http-60001.${N}.containers.hoody.com"
-# 1. (inside container, e.g. via terminal kit) start a dev server on :3000
-# 2. From your laptop:
-curl -sIL "$CHILD/proxy/3000/" | head -5
-# Unauth root returns 302 → /login; deeper paths return 401. Authenticate first
-# (see example 7) then re-issue the request with the session cookie.
-```
-Port range is `1024–65535`; the kit only enforces `isNaN(port)` at `pathProxy.ts:18` (returns `400 Invalid port`); the 1024–65535 range is enforced by the SDK client validator (`proxy.service.generated.ts:157`) but NOT by the server — raw HTTP callers (curl/fetch) must self-enforce the range.
-
-### 6. Absproxy a container port — `/absproxy/{port}` for raw API / WebSocket passthrough
-
-**Goal:** call a JSON API or open a WebSocket running inside the container with the **path preserved verbatim**. Use this — not `/proxy/` — for any case where the upstream cares about the literal request path (REST APIs, gRPC-Web, WebSockets at fixed routes). The `/proxy` variant rewrites `req.base` and will break path-sensitive servers.
-
-```
-https://${P}-${C}-http-60001.${N}.containers.hoody.com/absproxy/8080/v1/items?q=cake
-                                                                              ^^^^^^^^^^^^^^^^^ ← upstream sees exactly this path
-```
-
-```bash
-CHILD="https://${P}-${C}-http-60001.${N}.containers.hoody.com"
-# REST GET against the in-container API on :8080:
-curl -sf -b /tmp/code-cookie.txt "$CHILD/absproxy/8080/v1/items?q=cake"
-# WebSocket (with wscat / SDK):
-#   wss://${P}-${C}-http-60001.${N}.containers.hoody.com/absproxy/8080/ws
-```
-`/proxy` and `/absproxy` share the same auth gate: unauth root returns `302 /login`, deeper paths `401`.
-
-### 7. Authenticate password mode — `GET /api/v1/code/login` + `POST /api/v1/code/login`
-
-**Goal:** when the kit is launched with `--password <plaintext>` / `--hashed-password <argon2>`, every route is gated. The login flow is HTML-form-based (not a JSON API): fetch `/login` to bootstrap, then `POST /login` form-encoded to get a session cookie.
-
-```bash
-CHILD="https://${P}-${C}-http-60001.${N}.containers.hoody.com"   # child instance for id=1
-# (/login lives on the CHILD root only — the public code-1 URL has no login surface.)
-JAR=/tmp/code-cookie.txt; rm -f "$JAR"
-# Step 1 — bootstrap the login page (sets the CSRF / pre-session cookies):
-curl -sf -c "$JAR" "$CHILD/login" -o /dev/null
-# Step 2 — submit the password form-encoded (NOT JSON):
-curl -sf -c "$JAR" -b "$JAR" -X POST "$CHILD/login?to=/" \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode "password=$CODE_PASSWORD" \
-  -D - -o /dev/null | grep -iE '^(location|set-cookie):'
-# Step 3 — every subsequent child call uses -b "$JAR" (200 = authenticated):
-curl -s -b "$JAR" -o /dev/null -w '%{http_code}\n' "$CHILD/api/v1/code"
-```
-Rate limit: **2/min, 12/hr per process**. Hitting the limit returns HTML, not JSON — tail the body for the literal string `Login rate limited!` (i18n LOGIN_RATE_LIMIT, English locale value).
-
-### 8. Health check + extension verify — post-deploy smoke test
-
-**Goal:** after a container rebuild, confirm the `code` kit is up AND the extensions you ship pre-installed actually loaded. One-shot smoke.
+**Goal:** instance 1 is open on `/workspace/myrepo` and you want the editor on `/workspace/other`. Open the same instance URL with the new `folder`: the running instance is reused and the page loads the editor on that folder. `GET /status` keeps reporting the folder the instance was started with.
 
 ```bash
 KIT="https://${P}-${C}-code-1.${N}.containers.hoody.com"
-# 1. Health — the public code-1 URL hits the ORCHESTRATOR's standardized envelope:
-#    {status:"ok", service:"hoody-code", built, started, memory, fds, pid, ip, userAgent}
-HEALTH=$(curl -sf --max-time 30 "$KIT/api/v1/code/health" | jq -r .status)
-[ "$HEALTH" = "ok" ] || { echo "kit unhealthy"; exit 1; }
-# (The flat {status:"alive"|"expired", lastHeartbeat} shape lives on the CHILD health
-#  route — probe https://${P}-${C}-http-60001.${N}…/api/v1/code/health if you need it.)
-# 2. Extensions — verify on disk (extensions.list is spec-only, see Example 4); run
-#    inside the container via terminal/exec:
-#      ls /hoody/storage/hoody-code/data/1/extensions | grep '^saoudrizwan\.claude-dev-'
-echo "smoke PASS"
+URL="$KIT/?folder=/workspace/other"
+echo "$URL"   # open it in the browser; no restart needed
 ```
-⚠ On the **child instance**, `/api/v1/code/health` resets the idle-shutdown heartbeat, so hitting it on a cron keeps the child hot. The orchestrator's `code-1` health endpoint does not touch child heartbeats.
 
-### 9. Logout + verify the session cookie is revoked
+Add `restart=true` only when the process itself must restart, for example to apply a staged extension (Example 4). Restarting ends that instance's running editor session, including its terminals. Other instances are untouched.
 
-**Goal:** end the password-mode session cleanly when a teammate steps away. `GET /api/v1/code/logout` clears the cookie server-side; subsequent requests with the old cookie redirect to `/login`.
+### 4. Stage a custom VSIX and confirm it installed
+
+**Goal:** push an internal extension (`.vsix`) into the editor and confirm the instance has it installed.
+
+**Step 1 — stage it.**
 
 ```bash
-CHILD="https://${P}-${C}-http-60001.${N}.containers.hoody.com"   # /logout lives on the CHILD root
-JAR=/tmp/code-cookie.txt
-# 1. Logout — kit clears the session and 302s back to /login:
-curl -sf -b "$JAR" "$CHILD/logout" -D - -o /dev/null | grep -iE '^location:'
-# 2. Verify: any auth-gated route now redirects to /login (302), confirming revocation:
-curl -s -b "$JAR" -o /dev/null -w 'status=%{http_code} loc=%{redirect_url}\n' \
-  "$CHILD/api/v1/code"
-# Expected → status=302 loc=…/login?to=%2F
+KIT="https://${P}-${C}-code-1.${N}.containers.hoody.com"
+curl -sf -X POST "$KIT/api/v1/code/extensions/install" \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://example.com/acme.internal-tools-1.2.3.vsix"}' \
+  | jq '{outcome, appliesAt, stageScope, key: .extension.logicalKey}'
+# → {"outcome":"staged","appliesAt":"next-instance-start","stageScope":"shared-across-instances","key":"acme.internal-tools"}
 ```
-Note: on the child instance, `/api/v1/code` unauth → `302 /login` (NOT `401`); plan your client to follow / catch the redirect rather than expect a JSON `401` body.
 
-### 10. Embed the extension URL in an iframe — drop VS Code into your own page
+**Step 2 — apply it** by starting or restarting the instance: open its URL with `restart=true`. Every other instance picks it up at its own next start.
 
-**Goal:** ship a brand-able dashboard / docs site / Notion-style canvas with VS Code (or a single extension) embedded as a panel. The kit URL is iframable; just hand the right `src` and `allow` attributes.
+**Step 3 — confirm.** The observed entry reports `status: "running"` when the running instance has the staged version installed. This compares version numbers; it does not show that the extension activated.
+
+```bash
+curl -sf "$KIT/api/v1/code/extensions/list" | jq '{partial,
+  observed: [.observed.extensions[]? | select(.logicalKey == "acme.internal-tools")
+             | {status, stagedVersion, installedVersion}]}'
+```
+
+`stale` right after a stage is normal; `failed` means the instance started after the stage, had time to install it, and still does not have it. If `observed.status` is `unavailable` there is no `extensions` array and nothing can be concluded from it.
+
+To install without the API: drop the VSIX on the container filesystem through the `files` namespace and use the editor's Extensions view → `…` menu → "Install from VSIX…".
+
+### 5. Which instances are running, and which builds
+
+**Goal:** see what the service is doing before you restart anything.
+
+```bash
+KIT="https://${P}-${C}-code-1.${N}.containers.hoody.com"
+curl -sf "$KIT/status" | jq '{basePort: .orchestrator.basePort, instances: [.instances[] | {id, port, folder, uptime}]}'
+curl -sf "$KIT/api/v1/code/version" | jq '{orchestrator: .orchestrator.version, editor: .editor.version, vscode: .editor.vscodeVersion, status: .editor.status}'
+```
+
+An instance that has not been opened since the service started is simply absent from `instances`.
+
+### 6. Health check + extension verify — post-deploy smoke test
+
+**Goal:** after a container rebuild, confirm the `code` service is up AND instance 1 has the extension you ship installed at the staged version. This is a service-health and installed-version check; it does not prove the extension activated.
+
+```bash
+KIT="https://${P}-${C}-code-1.${N}.containers.hoody.com"
+# 1. Health — {status:"ok", service:"hoody-code", built, started, memory, fds, pid, ip, userAgent}
+HEALTH=$(curl -sf --max-time 30 "$KIT/api/v1/code/health" | jq -r .status)
+[ "$HEALTH" = "ok" ] || { echo "service unhealthy"; exit 1; }
+# 2. Extension — observed on this instance and running:
+curl -sf --max-time 30 "$KIT/api/v1/code/extensions/list" \
+  | jq -e '.observed.status == "ok"
+           and any(.observed.extensions[]?; .logicalKey == "saoudrizwan.claude-dev" and .status == "running")' >/dev/null \
+  || { echo "extension not installed on instance 1"; exit 1; }
+echo "smoke PASS"
+```
+
+An instance that has not started since the rebuild lists as `stopped`, and a stage it has not applied yet as `stale`; open the instance's URL once before the check.
+
+### 7. Embed the editor in your own page, behind a branded URL
+
+**Goal:** ship a dashboard / docs site / Notion-style canvas with VS Code (or a single extension) embedded as a panel.
 
 ```html
 <!-- Full editor, with a folder pre-loaded -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=/workspace/myrepo&id=1"
+  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=/workspace/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write; cross-origin-isolated"
 ></iframe>
 
 <!-- Single extension only (no IDE chrome) — Cline as a service -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo&id=1"
+  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write"
 ></iframe>
 ```
 
-To hide the `containerId` behind a brandable host, wrap the URL with a `POST /api/v1/proxy/aliases` — the iframe `src` becomes `https://agent.{server_name}.containers.hoody.com`, the `containerId` never leaves the server. Gate it via `proxyPermissionsContainer.*` for production (IP allow-list, basic-auth, etc. — see the `api` namespace).
+To keep the `containerId` out of the iframe `src`, create a proxy alias on the `code` service with the landing query as its `target_path`, and use the URL the call returns:
 
-The same iframe pattern works for **every** Hoody kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …) — compose a full HTML "operating system" out of kit iframes with no native code.
+```bash
+curl -sX POST "https://api.hoody.com/api/v1/proxy/aliases" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d "$(jq -nc --arg cid "$C" '{container_id:$cid, program:"code", index:1, alias:"agent",
+        target_path:"/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo&id=1"}')"
+```
+
+Gate the alias with `* /api/v1/containers/{id}/proxy/permissions*` before sharing it (see the `api` namespace). The same iframe pattern works for **every** Hoody kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …).
 
 ## Reference
 
-### `auth` (3) — Authentication endpoints
+### `extensions` (2) — Extension staging and inspection
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/code/login` | Get login page | `?to` |
-| `POST /api/v1/code/login` | Submit login credentials | `?to` `body*` |
-| `GET /api/v1/code/logout` | Logout |  |
+| `POST /api/v1/code/extensions/install` | Stage a VS Code extension from a URL | `?id` `body*` |
+| `GET /api/v1/code/extensions/list` | Staged extensions, and what the instance appears to have installed | `?id` |
 
 **Param notes:**
 
-- `to` — URL to redirect to after successful login
-
-### `extensions` (2) — Extension management (CLI)
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `POST /api/v1/code/extensions/install` | Install VS Code extension from URL | `body*` |
-| `GET /api/v1/code/extensions/list` | List installed extensions |  |
+- `id` — Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. Supply it yourself only when addressing the orchestrator directly, which is the case this being required describes: there is no discovery branch here to fall back to, so a request that reaches the orchestrator without an `id` has named no instance and is answered `400`.
 
 **Body shapes:**
 
-- `POST /api/v1/code/extensions/install` body — `{ url*: string, asBuiltin: bool=false }`
-  - `url` — URL to the VSIX file to install. Supports: - HTTPS URLs (recommended) - HTTP URLs
-  - `asBuiltin` — If true, install as a system/built-in extension. Built-in extensions cannot be uninstalled by users.
+- `POST /api/v1/code/extensions/install` body — `{ url*: string, allowDowngrade: bool=false }`
+  - `url` — HTTPS or HTTP URL of the `.vsix` to stage.
+  - `allowDowngrade` — Permit replacing a staged version with an older one. Refused by default so a routine restage cannot silently roll an extension back.
 
-### `health` (2) — Health and monitoring
+### `kit` (3) — Health, version and status monitoring
 
 | Method | Summary | Params |
 |--------|---------|--------|
 | `GET /api/v1/code/health` | Service health check |  |
-| `GET /api/v1/code/update/check` | Check for updates |  |
+| `GET /status` | Get orchestrator and instance status |  |
+| `GET /api/v1/code/version` | Versions of the running orchestrator and its packaged editor |  |
 
-### `proxy` (2) — Port forwarding and proxying
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `GET /api/v1/code/proxy/{port}/{path}` | Proxy to local port (path-based) |  |
-| `GET /api/v1/code/absproxy/{port}/{path}` | Proxy to local port (absolute path) |  |
-
-**Param notes:**
-
-- `port` — Local port to proxy to
-- `path` — Path to append to the proxied request
-- `path` — Path (preserved in forwarded request)
-
-### `static` (5) — Static assets and resources
+### `ui` (5) — Static assets and descriptors served by this host
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /_static/{path}` | Get static asset |  |
-| `GET /hoody-code/injected/{script}` | Get Hoody Code injected script |  |
-| `GET /openapi.yaml` | Get OpenAPI specification |  |
-| `GET /robots.txt` | Get robots.txt |  |
-| `GET /security.txt` | Get security policy |  |
+| `GET /favicon.ico` | Site icon |  |
+| `GET /api/v1/code/manifest.json` | Web application manifest for installing the editor |  |
+| `GET /api/v1/code` | Open the editor (canonical kit path) | `?folder` `?id` `?extension` `?restart` `?page-loader` `?disable-walkthroughs` `?hoody-code` `?welcome-iframe-url` `?page-loader-path` `?proxy-domain` `?locale` `?app-name` |
+| `GET /robots.txt` | Crawler policy |  |
+| `GET /security.txt` | Security contact information |  |
 
 **Param notes:**
 
-- `path` — Path to static file
-- `script` — Script filename
-
-### `vscode` (3) — VS Code web interface
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `GET /api/v1/code/manifest.json` | Get PWA manifest |  |
-| `GET /api/v1/code` | Get VS Code web interface | `?folder` `?workspace` `?extension` `?ew` `?locale` |
-| `POST /api/v1/code/mint-key` | Generate server web key |  |
-
-**Param notes:**
-
-- `folder` — Absolute path to folder to open in VS Code.  - Takes precedence over `workspace` parameter - Can be a local filesystem path - Stored in settings for next session
-- `workspace` — Absolute path to VS Code workspace file (.code-workspace).  - Used when `folder` is not provided - Workspace files can contain multiple folders and settings - Stored in settings for next session
-- `extension` — Extension identifier to open in extension-only mode.  **Format**: `PUBLISHER.NAME`  **Behavior when set**: - File explorer is hidden - Extension's views and UI are prominently displayed - Perfect for creating extension-powered web apps  **Use cases**: - Custom web-based tools built on VS Code extensions - Specialized editors (Jupyter notebooks, database tools, etc.) - Kiosk mode for specific workflows  **Examples**: - `ms-python.python` - Python development - `ms-toolsai.jupyter` - Jupyter notebooks - `ms-azuretools.vscode-docker` - Docker management - `redhat.vscode-yaml` - YAML editing
-- `ew` — "Empty Window" flag - indicates workspace was closed.  When present, clears the last opened folder/workspace from settings.
-- `locale` — Display language for VS Code UI.  Format: IETF language tag (e.g., en, fr, de, ja, zh-CN)  See: https://en.wikipedia.org/wiki/IETF_language_tag
+- `folder` — Absolute path to the folder to open in the instance. Supply it together with `id` to open an editor. Omit both, or send both with empty values, to retrieve this specification. The path is normalised before use. A `..` segment is resolved away rather than rejected, and a relative path is resolved against the orchestrator's own working directory, so the folder that opens may differ from the string sent. Send an absolute, already normalised path. An empty value counts as not sent. On its own it produces the discovery response rather than an error; alongside a non-empty `id` it is rejected with `400`. Switching folders reuses the running instance: A later request naming the same `id` and a different `folder` is answered from the running instance, and the page it returns loads the editor on the folder this request names. No restart is needed. The instance keeps the folder it was started with as its own: that is the folder the status endpoint reports. `restart` is optional here. It kills and respawns the instance, ending its running sessions, and applies the parameters of the request that carries it.
+- `id` — Instance selector. Supply it together with `folder` to open an editor. Omit both, or send both with empty values, to retrieve this specification. It determines: TCP port: `basePort + id`; Data directory: `dataDir/instances/{id}/`; Unique isolation per ID Upper bound: The instance binds `basePort + id`, so the largest accepted value is `65535 - basePort`, not a fixed number. `basePort` is part of this deployment's configuration and is reported as `orchestrator.basePort` by `/status`. With a base port of 7000, for example, ids above 58535 are rejected. A rejection names the limit and the base port in use. How the value is read: The selector decides which instance a request reaches, so it is read strictly rather than leniently. The value must be an unsigned decimal integer. A sign, a decimal point, surrounding whitespace, hexadecimal notation or any trailing character is rejected, so `+2`, `2.0`, ` 2`, `0x2` and `2abc` are not accepted as `2`. Only the exact name `id` is read. Bracket spellings such as `id[]` and `id[0]` are different names: they are ignored rather than merged into this parameter, and a request carrying only those has supplied no selector. Sending `id` more than once is rejected outright rather than resolved to one of the values. A percent-encoded spelling of the same name counts as a repeat. Repeats whose values are all empty are the exception: with no non-empty `folder` alongside them they count as no selector at all and the request takes the discovery branch. Alongside a non-empty `folder` they are still a repeat and are rejected. The query string carrying the selector is limited in size. See "Query size limit" in this operation's description.
+- `extension` — Extension identifier to open in extension-only mode (embedded extension) Format: `PUBLISHER.NAME` (e.g., `ms-python.python`) This parameter is: **Preserved** in the iframe URL for VS Code to consume; **NOT forwarded** to the child CLI arguments When present, VS Code will: Hide the file explorer; Focus on the extension's UI; Display only that extension's views and commands
+- `restart` — Force restart the instance before rendering. Accepted truthy values: `true`, `1`, `yes`, `on` If the instance is running and restart is explicitly true: The instance is killed; A new instance is spawned; The iframe is rendered with the new instance Note: Missing or empty parameter does NOT trigger restart.
+- `page-loader` — Enable/disable the page loader overlay in the child instance. Boolean flag (passed to child without value): Truthy: `true`, `1`, `yes`, `on`, or empty string; Falsy: `false`, `0`, `no`, `off`, or omitted When enabled, child shows loading overlay during initialization.
+- `disable-walkthroughs` — Disable VS Code walkthrough functionality in the child instance. Boolean flag (passed to child without value). Default in orchestrator: true (walkthroughs disabled by default)
+- `hoody-code` — Enable/disable loading of Hoody Code injected scripts (extra/injected/*.js). Boolean flag (passed to child without value). When enabled, all .js files in extra/injected/ are loaded after page load.
+- `welcome-iframe-url` — URL for custom welcome page iframe. Passed to child as `--welcome-iframe-url <url>`. Replaces the default Welcome (Getting Started) page with a fullscreen iframe.
+- `page-loader-path` — Path to the loading page the instance serves while it starts. Passed to child as `--page-loader-path <path>`. It is read by the instance, so the path is resolved on the container's filesystem and not on the caller's. It has no effect unless `page-loader` is also enabled.
+- `proxy-domain` — Domain pattern for port proxying. Automatically computed from request Host header: `<proj>-<cont>-ui.<domain>` → `<proj>-<cont>-http-{{port}}.<domain>`; Passed to child as `--proxy-domain <pattern>` Manual override: `--proxy-domain custom-{{port}}.example.com`
+- `locale` — Display language for VS Code UI. Format: IETF language tag (e.g., en, fr, de, ja, zh-CN). Passed to child as `--locale <tag>`.
+- `app-name` — Custom application name displayed in the VS Code title bar and branding. Passed to child as `--app-name <name>`. Replaces `{{app}}` placeholders in templates.
 

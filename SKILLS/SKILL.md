@@ -2,7 +2,7 @@
 name: "hoody"
 description: "Hoody: run code, processes, GUIs, browsers, databases, cron jobs and HTTP services on real cloud computers the user owns, and operate their Hoody account — containers, files across 60+ storage providers, secrets, proxies, billing, notifications. Use when a task needs a real computer in the cloud, or any operation against the user's own tenant. Abstain for pre-sales, compliance, support/status, third-party SSO, and generic programming help."
 ---
-> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~11,480 tokens · hoody-sdk v1.0.0-beta.14_
+> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~12,490 tokens · hoody-sdk v1.0.0-beta.15_
 
 # Hoody Agent Skill — pick a surface (SDK / HTTP / CLI)
 
@@ -14,7 +14,7 @@ The control plane is the same across **three surfaces**: a typed **SDK** (`hoody
 
 ## When is this a Hoody task? (and when to abstain)
 
-Reach for Hoody whenever the work needs a **real computer in the cloud** or an operation on the user's **own account**: running code / processes / GUIs, file storage with history (which **also extends out to the user's cloud storage — Mega, S3, Google Drive, Dropbox, B2, SFTP, WebDAV, Git and 60+ more — through one `files` API**, so an agent can work programmatically across local *and* remote files without per-provider SDKs), browser & desktop automation, on-demand HTTP services, databases, scheduled jobs, **delegating coding work to a remote agent**, and **reaching the human operator out-of-band** (fire a notification and it lands on their phone/desktop/smartwatch — see the `notifications` namespace). Anything the user could do with an API call against their own tenant — auth/2FA, billing & usage reads (wallet), projects, containers (snapshots, env vars, firewall), the secrets vault, proxy permissions & aliases, realms, server rentals & shared pools, and the account event/activity feed — is also a Hoody task → `api`.
+Reach for Hoody whenever the work needs a **real computer in the cloud** or an operation on the user's **own account**: running code / processes / GUIs, file storage with history (which **also extends out to the user's cloud storage — Mega, S3, Google Drive, Dropbox, B2, SFTP, WebDAV and 60+ more — through one `files` API**, so an agent can work programmatically across local *and* remote files without per-provider SDKs), browser & desktop automation, on-demand HTTP services, databases, scheduled jobs, **delegating coding work to a remote agent**, and **reaching the human operator out-of-band** (fire a notification and it lands on their phone/desktop/smartwatch — see the `notifications` namespace). Anything the user could do with an API call against their own tenant — auth/2FA, billing & usage reads (wallet), projects, containers (snapshots, env vars, firewall), the secrets vault, proxy permissions & aliases, realms, server rentals & shared pools, and the account event/activity feed — is also a Hoody task → `api`.
 
 **Prefer Hoody's built-ins over rolling your own.** If a kit already does the job, use the kit instead of hand-building infrastructure: expose a service by **binding a port** (the URL is auto-public) instead of configuring a proxy; persist state in the **`sqlite`/`files`** kits instead of standing up a database; schedule with **`cron`/`curl.schedules`** instead of a custom loop; reach the human with **`notifications`** instead of improvising; run or supervise a process with **`exec`/`daemon`** instead of bespoke glue; call an LLM through the **built-in Hoody AI gateway** instead of wiring up an external provider key (see § Hoody AI below). The platform ships these so an agent doesn't have to reinvent them.
 
@@ -24,7 +24,7 @@ Reach for Hoody whenever the work needs a **real computer in the cloud** or an o
 
 | You're … | Pick |
 |---|---|
-| Writing code — a TypeScript / JavaScript service, script, or browser app | **SDK** — typed, retries, async iterators, auto re-auth |
+| Writing code — a TypeScript / JavaScript service, script, or browser app | **SDK** — typed, opt-in retries, async iterators, auto re-auth |
 | Writing code in another language (Python, Rust, Go, …) | **HTTP** — bearer token + `curl`/your stdlib client |
 | In a terminal — an agent with a shell tool or a human at a prompt; shell scripts, Makefiles, CI, `ssh` | **CLI** — `hoody …` one-liners, `-o json` for piping (preinstalled in every container; zero-install `npx hoody-sdk`) |
 | No `hoody` CLI and can't install one — or pseudo-scripting a few one-off calls | **HTTP** — anything that can send a request works; `curl` + the snippets below are the whole toolchain |
@@ -43,7 +43,7 @@ const hoody = new HoodyClient({
   baseURL: 'https://api.hoody.com',
   token: process.env.HOODY_TOKEN!,
 });
-const me = await hoody.api.authentication.getCurrentUser();
+const me = await hoody.api.auth.whoami();
 ```
 
 **HTTP**
@@ -64,13 +64,13 @@ curl -s "$A/api/v1/users/auth/me" -H "Authorization: Bearer $TOKEN"
 curl -fsSL https://install.hoody.com | sh   # macOS/Linux; PowerShell: iwr https://install.hoody.com/install.ps1 -UseB | iex
 # Zero-install alternative: npx hoody-sdk --help   (also bunx / pnpm dlx)
 hoody login --username <user> --password <pass>   # bare `hoody login` is interactive; `--web` runs the device flow
-hoody auth profile current        # current user
+hoody auth whoami        # current user
 hoody config set baseUrl https://api.hoody.com    # override default
 ```
 
-**Auth model — one paragraph.** A bearer token authenticates against `https://api.hoody.com`; per-container kit URLs (`https://{P}-{C}-{kit}-1.{N}.containers.hoody.com`) are themselves the credential — the URL IS bearer for every kit (`files`, `sqlite`, `exec`, `terminal`, `display`, `notifications`, `agent`, …). The `agent` kit (slug `agent`) needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers — it is reached at its `-agent-1` kit URL exactly like any other kit (no claim minting, no `401 CLAIM_REQUIRED`). Realm-scoped: prepend `{realmId}.` to the API host. **Full reference: <https://hoody.com/SKILLS/SKILL-SDK.md> § Auth model** (or `SKILL-HTTP.md` / `SKILL-CLI.md` — same content, same `/SKILLS/` directory).
+**Auth model — one paragraph.** A bearer token authenticates against `https://api.hoody.com`; per-container kit URLs (`https://{P}-{C}-{kit}-1.{N}.containers.hoody.com`) are themselves the credential — the URL IS bearer for every kit (`files`, `sqlite`, `exec`, `terminal`, `display`, `notifications`, `agent`, …) `bot` included (its management routes take no account token, so gate the URL with proxy permissions). The `agent` kit (slug `agent`) needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers — it is reached at its `-agent-1` kit URL exactly like any other kit (no claim minting, no `401 CLAIM_REQUIRED`). Realm-scoped: prepend `{realmId}.` to the API host. **Full reference: <https://hoody.com/SKILLS/SKILL-SDK.md> § Auth model** (or `SKILL-HTTP.md` / `SKILL-CLI.md` — same content, same `/SKILLS/` directory).
 
-**Kit URLs — one paragraph.** Every container exposes ~18 kits behind URLs of the shape `https://{projectId}-{containerId}-{kit_slug}-{n}.{server_name}.containers.hoody.com`. The `proxy_domains[]` array (carrying the canonical `url` for each kit) is **opt-in**: pass the **string** `'true'` (the SDK validates `'true' | 'false'`, NOT a boolean) to `containers.get(id, { include_proxy_domains: 'true' })`, `containers.list({ include_proxy_domains: 'true' })`, or `containers.listByProject(projectId, { include_proxy_domains: 'true' })`. Omit the flag and you have to assemble URLs by hand from `{P}-{C}-{slug}-1.{server_name}.containers.hoody.com`. Kits include `terminal`, `files`, `code`, `display`, `desktop`, `sqlite`, `browser`, `exec`, … each iframable, each backed by an HTTP/WS API. **Slug ≠ namespace for some kits** (`notifications` → `n`, `proxyLogs` → `logs`); the `agent` kit's slug equals its namespace (`agent`); see <https://hoody.com/SKILLS/SKILL-SDK.md> § Proxy URLs for the full slug table.
+**Kit URLs — one paragraph.** A container created with `hoody_kit: true` exposes its kits (20 kit namespaces, plus the `desktop` surface) behind URLs of the shape `https://{projectId}-{containerId}-{kit_slug}-{n}.{server_name}.containers.hoody.com`. The `proxy_domains[]` array lists the container's configured proxy **aliases** (each with its `url`), not the standard kit URLs, and is **opt-in**: pass the boolean `true` to `containers.get(id, { include_proxy_domains: true })`, `containers.list({ include_proxy_domains: true })`, or `containers.listByProject(projectId, { include_proxy_domains: true })`. Standard kit URLs do not depend on that flag: assemble them from `{P}-{C}-{slug}-1.{server_name}.containers.hoody.com`, or use the SDK's `getKitUrl()` / `withContainer()`. Kits include `terminal`, `files`, `code`, `display`, `desktop`, `sqlite`, `browser`, `exec`, … each iframable, each backed by an HTTP/WS API. **Slug ≠ namespace for some kits** (`notifications` → `n`, `proxyLogs` → `logs`); the `agent` kit's slug equals its namespace (`agent`); see <https://hoody.com/SKILLS/SKILL-SDK.md> § Proxy URLs for the full slug table.
 
 ## Common operations — same task, three surfaces
 
@@ -78,22 +78,23 @@ For each operation below, the SDK / HTTP / CLI snippets do exactly the same thin
 
 ### 1. Sign up
 
-Create a new account: `email` + `password` (≥ 12 chars, MUST include uppercase + lowercase + digit + special). A verification email is sent on success; **the account is not active until the link is clicked**. Optional `region` (e.g. `eu-west`, `us-east`, `ap-southeast`) — auto-provisioning prefers a server in that region; omitted → GeoIP proximity. Signup is also reachable via the marketing site at `https://hoody.com/signup` for human flows; the calls below are the programmatic surface.
+Create a new account: `email` + `password` (at least 12 characters, at most 72 UTF-8 bytes, with at least 3 of the 4 character classes: uppercase, lowercase, digit, symbol). A verification email is sent on success; **the account is not active until the link is clicked**. Optional `region` (e.g. `eu-west`, `us-east`, `ap-southeast`) — auto-provisioning prefers a server in that region; omitted → GeoIP proximity. The marketing site's `https://hoody.com/signup` only joins the waitlist; it does not create an account. The calls below create one.
 
-**A free-tier server, default project, and default container are auto-provisioned on signup** — no separate "rent server" / "create container" / "create project" steps needed for the first one. After you verify your email and log in (§2), `containers.list()` already returns one container (the auto-provisioned default; flagged `is_default: true` on the container AND its parent project). You can skip §4 entirely for the trial flow — go straight to using the container (§6 onwards). If the async auto-setup happens to fail (rare; transient server-allocation issue), call `POST /api/v1/users/me/retry-setup` — idempotent, safe to call repeatedly, and a no-op once a default server already exists.
+**A free-tier server, default project, and default container are normally auto-provisioned on signup** — no separate "rent server" / "create container" / "create project" steps needed for the first one. After you verify your email and log in (§2), `containers.list()` already returns one container (the auto-provisioned default; flagged `is_default: true` on the container AND its parent project). You can skip §4 entirely for the trial flow — go straight to using the container (§6 onwards). If the async auto-setup happens to fail (rare; transient server-allocation issue), call `POST /api/v1/users/me/retry-setup` — idempotent, and a no-op once a default server already exists. On a deployment that hands out free servers by invite code, the list stays empty and `retry-setup` answers `403 FREE_TIER_INVITE_REQUIRED`: redeem the code with `POST /api/v1/users/me/redeem-invite` `{ "code": "…" }`, which unlocks the account and tries to claim the server (`data.claim_blocked_reason: "pool_empty"` means none was free yet: call `retry-setup` again later).
 
 **SDK**
 
 ```typescript
+import { HoodyClient } from 'hoody-sdk';
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
-const r = await hoody.api.authentication.signup({
+const r = await hoody.api.auth.signup({
   email: 'you@example.com',
-  password: process.env.HOODY_PASSWORD,
+  password: process.env.HOODY_PASSWORD!,
   region: 'eu-west',                 // optional — auto-provisioned server region
 });
 // r.data → { email: 'you@example.com' }
 // Verify email, log in (§2), then the auto-provisioned default is already there:
-//   const def = (await hoody.api.containers.list()).data!.containers.find(c => c.is_default);
+//   const def = ((await hoody.api.containers.list()).data.containers ?? []).find(c => c.is_default);
 // Rare async-setup failure → await hoody.api.users.retrySetup({});  (idempotent)
 ```
 
@@ -112,10 +113,10 @@ curl -X POST "$A/api/v1/auth/signup" \
 **CLI**
 
 ```bash
-hoody auth signup --email you@example.com --password "$HOODY_PASSWORD" --region eu-west
+hoody signup --email you@example.com --password "$HOODY_PASSWORD" --region eu-west
 # Verify email, then `hoody login` (§2); the default container appears automatically:
 #   hoody containers list -o json | jq '.containers[] | select(.is_default)'
-# Rare async-setup failure → hoody users retry-setup
+# Rare async-setup failure → hoody users setup retry
 ```
 
 ### 2. Log in
@@ -125,18 +126,17 @@ hoody auth signup --email you@example.com --password "$HOODY_PASSWORD" --region 
 **SDK**
 
 ```typescript
+import { HoodyClient } from 'hoody-sdk';
 const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
-const r = await hoody.api.authentication.login({
+const r = await hoody.api.auth.login({
   email: 'you@example.com',  // or `username: 'alex_3'`
-  password: process.env.HOODY_PASSWORD,
+  password: process.env.HOODY_PASSWORD!,
 });
-const d = r.data as any;
-if (d?.requires_2fa) {
-  // 2FA-enabled account: verify the code; THAT response carries the real token.
-  const r2 = await hoody.api.tfa.verify({ temp_token: d.temp_token, code: codeFromAuthenticator });
-  hoody.setToken((r2.data as any).token);
-} else {
-  hoody.setToken(d.token);
+if (r.data && 'temp_token' in r.data) {
+  // 2FA-enabled account: verify the code and adopt the session it returns.
+  await hoody.completeTwoFactorLogin(r.data.temp_token, codeFromAuthenticator);
+} else if (r.data && 'token' in r.data) {
+  hoody.setToken(r.data.token);
 }
 ```
 
@@ -162,7 +162,7 @@ hoody login --username alex --password "$HOODY_PASSWORD"
 
 ```typescript
 for await (const c of hoody.api.containers.listIterator()) {
-  console.log(c.id, c.name, c.status);
+  console.log(c.id, c.name, c.status);  // rows are typed from the list response
 }
 // Or: const page = await hoody.api.containers.listByProject(projectId);
 ```
@@ -182,21 +182,28 @@ curl "$A/api/v1/projects/{P}/containers" -H "Authorization: Bearer $TOKEN" \
 ```bash
 hoody containers list -o wide
 # `hoody … -o json` UNWRAPS the {data, statusCode} envelope — top level is what was in `data`.
-hoody c list -o json | jq '.containers[] | select(.project_id=="{P}")'  # filter by project
+# Filter by project: `containers list` has no project filter and returns 50 per page
+# by default (100 max), so walk every page:
+page=1; while :; do
+  out=$(hoody c list --limit 100 --page "$page" -o json)
+  echo "$out" | jq '.containers[] | select(.project_id=="{P}")'
+  [ "$(echo "$out" | jq '.containers | length')" -lt 100 ] && break
+  page=$((page+1))
+done
 ```
 
 ### 4. Create a container
 
 **Note:** signup auto-provisions a free-tier server + default container (§1), so for the very first container you don't need this — `containers.list()` already returns one. Use the call below to create **additional** containers (e.g. a second box on a different server, a project-scoped container, or one with `dev_kit: true`).
 
-Defaults provision the `hoody_kit` (~18 kits + runtimes). Pass `dev_kit: true` for the comprehensive coding setup (Node, Bun, Rust, Go, Docker, Nix, …).
+Defaults provision the `hoody_kit` (the kit services + runtimes). Pass `dev_kit: true` for the comprehensive coding setup (Node, Bun, Rust, Go, Docker, Nix, …).
 
-**Need a `projectId`?** Every container row carries `project_id` — read it off §3's list (the auto-provisioned default's parent project is flagged `is_default`). SDK: `(await hoody.api.containers.list()).data!.containers[0].project_id`; HTTP: `curl "$A/api/v1/containers" -H "Authorization: Bearer $TOKEN" | jq -r '.data.containers[0].project_id'`; CLI: `hoody c list -o json | jq -r '.containers[0].project_id'`.
+**Need a `projectId`?** Every container row carries `project_id` — read it off §3's list (the auto-provisioned default's parent project is flagged `is_default`). SDK: `(await hoody.api.containers.list()).data.containers?.[0]?.project_id`; HTTP: `curl "$A/api/v1/containers" -H "Authorization: Bearer $TOKEN" | jq -r '.data.containers[0].project_id'`; CLI: `hoody c list -o json | jq -r '.containers[0].project_id'`.
 
-**Need a `server_id`?** Discover from your existing rentals or rent a new server from the marketplace:
-- SDK: `(await hoody.api.rentals.list()).data![0].id` (or `hoody.api.serverRental.browse({...})` + `hoody.api.serverRental.rent(serverId, {...})`)
-- HTTP: `curl "$A/api/v1/rentals" -H "Authorization: Bearer $TOKEN" | jq -r '.data[0].id'` (response is `{data: [...]}` — bare array, no `items` wrapper)
-- CLI: `hoody servers list-rentals -o json | jq -r '.[0].id'` (CLI unwraps the envelope; top level is the array) — or `hoody servers marketplace` → `hoody servers rent <id>`
+**Need a `server_id`?** Discover from your existing rentals or rent a new server from the marketplace. Read each rental row's `server_id`, not its `id`: the rental `id` identifies the rental and only matches the server id on the auto-provisioned free-tier row.
+- SDK: `(await hoody.api.servers.list()).data![0].server_id` (or `hoody.api.servers.listMarketplace({...})` + `hoody.api.servers.rent(serverId, {...})`)
+- HTTP: `curl "$A/api/v1/rentals" -H "Authorization: Bearer $TOKEN" | jq -r '.data[0].server_id'` (response is `{data: [...]}` — bare array, no `items` wrapper)
+- CLI: `hoody servers list -o json | jq -r '.[0].server_id'` (CLI unwraps the envelope; top level is the array) — or `hoody servers marketplace list` → `hoody servers rent <id>`
 
 **SDK**
 
@@ -207,7 +214,8 @@ const c = await hoody.api.containers.create(projectId, {
   hoody_kit: true,
   dev_kit: true,
 });
-const container = c.data!;
+// Response fields are typed optional; the URL helpers and withContainer need a string id.
+const container = { ...c.data!, id: c.data!.id! };
 ```
 
 **HTTP**
@@ -222,27 +230,27 @@ curl -X POST "$A/api/v1/projects/{P}/containers" \
 
 ```bash
 hoody containers create --project {P} --server-id {S} --name box-1 --hoody-kit --dev-kit
-# Discover servers: hoody servers {list-rentals|marketplace|rent <id>}
+# Discover servers: hoody servers {list|marketplace|rent <id>}
 ```
 
 ### 5. Lifecycle — start / stop / wait
 
-Valid ops: `start | stop | force-stop | restart | pause | resume`. Fresh containers may take 10-60s to reach `running`.
+Lifecycle verbs: `start | stop | restart | pause | resume`; `stop` also takes a force option that kills the container without a clean shutdown (CLI `--force`, SDK `containers.stop(id, undefined, { force: true })`). Fresh containers may take 10-60s to reach `running`.
 
 **SDK**
 
 ```typescript
-await hoody.api.containers.manage(container.id, 'start');
-let c;
+await hoody.api.containers.start(container.id);
+let status: string | undefined;
 const deadline = Date.now() + 120_000;
 do {
   await new Promise(r => setTimeout(r, 2000));
-  c = (await hoody.api.containers.get(container.id)).data!;
-  if (['failed', 'deleted', 'deleting'].includes(c.status)) {
-    throw new Error(`container reached terminal state: ${c.status}`);
+  status = (await hoody.api.containers.get(container.id)).data!.status;
+  if (['failed', 'deleted', 'deleting'].includes(status ?? '')) {
+    throw new Error(`container reached terminal state: ${status}`);
   }
-  if (Date.now() > deadline) throw new Error(`timeout waiting for running; last=${c.status}`);
-} while (c.status !== 'running');
+  if (Date.now() > deadline) throw new Error(`timeout waiting for running; last=${status}`);
+} while (status !== 'running');
 ```
 
 **HTTP**
@@ -256,7 +264,7 @@ until [ "$(curl -s "$A/api/v1/containers/{C}" -H "Authorization: Bearer $TOKEN" 
 **CLI**
 
 ```bash
-hoody containers manage {C} start
+hoody containers start {C}
 # `hoody … -o json` unwraps the envelope — top level is the container body, so `.status` (not `.data.status`).
 until [[ "$(hoody containers get {C} -o json | jq -r .status)" == running ]]; do sleep 2; done
 ```
@@ -265,17 +273,16 @@ until [[ "$(hoody containers get {C} -o json | jq -r .status)" == running ]]; do
 
 Path is **absolute** in the container's filesystem. SDK exposes `box.files.get / put` after `await hoody.withContainer(c)`; HTTP and CLI hit the `files` kit URL directly.
 
-**Beyond the container's own disk — `files` extends the filesystem to your cloud storage.** Connect any of 60+ rclone-backed targets — **Mega, S3, Google Drive, Dropbox, Backblaze B2, SFTP, WebDAV, Git, …** — then operate on them through the *same* `files` endpoints by appending `?backend=<id>` (or `?type=<rclone-type>`), or FUSE-mount a backend **as** a local path (`mounts.create`) so downstream code reads it like any other directory. One programmatic API spans the user's entire storage footprint, so an agent can read / write / copy / move files **across remote providers** without a separate SDK per service. Requires the kit started with `--allow-remote`; `glob`/`grep`/`?lines=`/journal history stay local-FS-only. See the `files` deep-dive in <https://hoody.com/SKILLS/SKILL-SDK/files.md> (or the SKILL-HTTP / SKILL-CLI variant) for the `backend`/`mounts` mechanics.
+**Beyond the container's own disk — `files` extends the filesystem to your cloud storage.** Connect any of 60+ rclone-backed targets — **Mega, S3, Google Drive, Dropbox, Backblaze B2, SFTP, WebDAV, …** — then operate on them through the *same* `files` endpoints by appending `?backend=<id>` (or `?type=<rclone-type>`), or FUSE-mount a backend **as** a local path (`mounts.create`) so downstream code reads it like any other directory. One programmatic API spans the user's entire storage footprint, so an agent can read / write / copy / move files **across remote providers** without a separate SDK per service. Git repositories are not a backend (`type=git` is refused): run `git` in the container through `terminal` or `daemon`, then work on the checkout through `files`. Requires a deployment with remote backends enabled; `glob`/`grep`/`?lines=`/journal history stay local-FS-only. See the `files` deep-dive in <https://hoody.com/SKILLS/SKILL-SDK/files.md> (or the SKILL-HTTP / SKILL-CLI variant) for the `backend`/`mounts` mechanics.
 
 **SDK**
 
 ```typescript
 const box = await hoody.withContainer(container);
-// SDK get() returns the ApiResponse envelope by default — pass `rawResponse: true`
-// to get the body directly, OR read `.data` off the result.
-const r = await box.files.get('/etc/hostname', { responseType: 'text', rawResponse: true });
-const text = r as unknown as string;
-await box.files.put('/workspace/hello.txt', Buffer.from('hello'));
+// The readers resolve to the content itself: readText → string, readJson → parsed value,
+// readBytes → Uint8Array. (files.get resolves to the { statusCode, message, data } envelope.)
+const text = await box.files.readText('/etc/hostname');
+await box.files.upload('/workspace/hello.txt', Buffer.from('hello'));   // the body is bytes
 ```
 
 **HTTP**
@@ -290,11 +297,11 @@ curl -X PUT --data-binary 'more'  "$F/append/workspace/hello.txt" # append/-pref
 **CLI**
 
 ```bash
-hoody --container {C} files dir /workspace                                   # list
+hoody --container {C} files get /workspace                                   # list
 hoody --container {C} files get /etc/hostname -o raw                          # read
-echo -n 'hello' | hoody --container {C} files put /workspace/hello.txt        # write (body comes from stdin)
-hoody --container {C} files put /workspace/big.bin   < ./local.bin            # write (from file)
-hoody --container {C} files put /workspace/notes.txt < input.txt              # write (from stdin)
+echo -n 'hello' | hoody --container {C} files upload /workspace/hello.txt        # write (body comes from stdin)
+hoody --container {C} files upload /workspace/big.bin   < ./local.bin            # write (from file)
+hoody --container {C} files upload /workspace/notes.txt < input.txt              # write (from stdin)
 ```
 
 ### 7. Run a script as an HTTP endpoint (`exec`)
@@ -311,9 +318,9 @@ await box.exec.scripts.write({
 });
 // 2. Trigger via the SDK accessor — multi-segment paths work: `api/build` is sent
 //    as `api/build`, not `api%2Fbuild`. (`.` and `..` segments are rejected.)
-const r = await box.exec.execution.execute('build');  // r.data → { ok: true, ts: … }
+const r = await box.exec.run('build');  // r.data → { ok: true, ts: … }
 // Or fetch the bare URL — exec kit accepts the URL itself as bearer (works for any path depth):
-const r2 = await fetch(`https://${c.project_id}-${c.id}-exec-1.${c.server_name}.containers.hoody.com/build`);
+const r2 = await fetch(`https://${container.project_id}-${container.id}-exec-1.${container.server_name}.containers.hoody.com/build`);
 ```
 
 **HTTP**
@@ -339,7 +346,7 @@ hoody --container {C} exec scripts write \
 # 2. Trigger from anywhere:
 curl https://{P}-{C}-exec-1.{N}.containers.hoody.com/build
 # Or, route through the container's curl kit:
-hoody --container {C} curl get-url --url 'https://{P}-{C}-exec-1.{N}.containers.hoody.com/build'
+hoody --container {C} curl run --url 'https://{P}-{C}-exec-1.{N}.containers.hoody.com/build'
 ```
 
 ### 8. SQLite KV + Terminal — quick kit calls
@@ -349,19 +356,17 @@ Two minute-scale workhorses: a key/value store (any bytes, JSON-encoded if you l
 **SDK**
 
 ```typescript
-// SQLite KV — value is a string; JSON-encode objects yourself.
-await box.sqlite.kvStore.set('user:42', JSON.stringify({ name: 'Ada' }), {
-  db: '/data/app.db', create_db_if_missing: true,
+// SQLite KV — pass the value itself (object, array, number, boolean): the SDK JSON-encodes it.
+// Do not JSON.stringify it first: a string is stored as a JSON string. setMany items take string values.
+await box.sqlite.kv.set('user:42', { name: 'Ada' }, {
+  db: '/hoody/databases/app.db', create_db_if_missing: true,   // or a bare name: 'app'
 });
-// get() returns the ApiResponse envelope; .data is the stored body (a JSON STRING here — parse yourself).
-const r = await box.sqlite.kvStore.get('user:42', { db: '/data/app.db' });
-const v = JSON.parse(r.data as string);  // → { name: 'Ada' }
+// get() returns the ApiResponse envelope; .data is the stored value, a JSON value decoded.
+const { data: v } = await box.sqlite.kv.get('user:42', { db: '/hoody/databases/app.db' });  // → { name: 'Ada' }
 
-// One-off shell command (ephemeral terminal — no session reuse):
-const run = await box.terminal.execution.execute(
-  { command: 'uname -a && uptime' },
-  { ephemeral: true },
-);
+// One-off shell command in a fresh session; resolves to { stdout, stderr, exitCode, timedOut }, no envelope.
+// A non-zero exit does not throw; stdout may end with a newline.
+const { stdout, exitCode } = await box.terminal.run('uname -a && uptime');
 ```
 
 **HTTP**
@@ -369,13 +374,13 @@ const run = await box.terminal.execution.execute(
 ```bash
 # SQLite KV — GET returns the raw stored bytes (no envelope); PUT/DELETE return a JSON status envelope.
 S=https://{P}-{C}-sqlite-1.{N}.containers.hoody.com/api/v1/sqlite
-KV="$S/kv/user:42?db=/data/app.db&create_db_if_missing=true"
+KV="$S/kv/user:42?db=/hoody/databases/app.db&create_db_if_missing=true"
 curl -X PUT "$KV" -H 'Content-Type: application/json' --data-raw '{"name":"Ada"}'  # → {"success":true,"key":"user:42","size":14}
 curl "$KV"                                                                       # → {"name":"Ada"}   (raw stored body)
 # GET on a missing key returns 404 with a JSON error envelope — check status before piping to jq.
 
-# One-off shell command:
-T=https://{P}-{C}-terminal-1.{N}.containers.hoody.com/api/v1/terminal
+# One-off shell command — on the terminal-0 host (the host index is the session; terminal-1 would reuse session 1):
+T=https://{P}-{C}-terminal-0.{N}.containers.hoody.com/api/v1/terminal
 curl -X POST "$T/execute?ephemeral=true" \
   -H 'Content-Type: application/json' -d '{"command":"uname -a","wait":true}'
 ```
@@ -384,13 +389,12 @@ curl -X POST "$T/execute?ephemeral=true" \
 
 ```bash
 # SQLite KV — CLI group is top-level `kv`; key is POSITIONAL, value goes in --body
-hoody --container {C} kv set user:42 --db /data/app.db --body '{"name":"Ada"}' --create-db-if-missing
-hoody --container {C} kv get user:42 --db /data/app.db -o raw
+hoody --container {C} kv set user:42 --db /hoody/databases/app.db --body '{"name":"Ada"}' --create-db-if-missing
+hoody --container {C} kv get user:42 --db /hoody/databases/app.db -o raw
 
 # One-off shell command
-hoody --container {C} shell -- uname -a && uptime
-# Or:  hoody pty {C} -- tmux ls    (`pty`/`ssh` alias `hoody shell`;
-#                                 the command is POSITIONAL — there is no --command flag)
+hoody --container {C} shell -- 'uname -a && uptime'   # quote it: an unquoted && runs `uptime` on YOUR machine
+# Or:  hoody --container {C} shell -- tmux ls    (the command is POSITIONAL — there is no --command flag)
 ```
 
 ### 9. SSH into the container (full-Linux escape hatch)
@@ -415,7 +419,7 @@ curl -s "$A/api/v1/containers/{C}" -H "Authorization: Bearer $TOKEN" \
 **CLI**
 
 ```bash
-# `hoody ssh` is a re-dispatch alias to `hoody shell` (WebSocket terminal through the kit)
+# `hoody shell` is a WebSocket terminal through the kit
 # — NOT a wrapper around the local `ssh` binary. To get a real SSH session, resolve the
 # hostname and shell out yourself:
 ssh root@$(hoody containers get {C} -o json | jq -r .ssh_hostname)
@@ -432,15 +436,16 @@ ssh root@$(hoody containers get {C} -o json | jq -r .ssh_hostname) 'uname -a'
 | `http-<port>` | proxy speaks **HTTP** to `localhost:<port>` inside the container | `https://{P}-{C}-http-<port>.{N}.containers.hoody.com` |
 | `https-<port>` | proxy speaks **HTTPS** (target must terminate TLS itself) | `https://{P}-{C}-https-<port>.{N}.containers.hoody.com` |
 
-WebSockets just work via `wss://`. Port range `1..65535`; defaults: `http` → 80, `https` → 443. Same capability-token rules as any kit URL — the URL IS bearer; gate via `proxyPermissionsContainer` if you don't want it open.
+WebSockets just work via `wss://`. Port range `1..65535`; defaults: `http` → 80, `https` → 443. Same capability-token rules as any kit URL — the URL IS bearer; gate via `proxy.containerPermissions` if you don't want it open.
 
 **SDK**
 
 ```typescript
 // Start a server inside the container (any language; example uses python3 via terminal kit):
-await box.terminal.execution.execute(
+await box.terminal.commands.run(
   { command: 'nohup python3 -m http.server 8080 > /tmp/web.log 2>&1 &' },
   { ephemeral: true },
+  { serviceIndex: 0 },  // terminal-0 host = fresh ephemeral session
 );
 // The URL is reachable from anywhere — no Authorization header:
 const c = (await hoody.api.containers.get(container.id)).data!;
@@ -465,17 +470,17 @@ curl https://{P}-{C}-https-8443.{N}.containers.hoody.com/
 
 ```bash
 # Bind a server (here: a one-liner Python static server on :8080):
-hoody --container {C} run -- nohup python3 -m http.server 8080 > /tmp/web.log 2>&1 &
+hoody --container {C} shell -- 'nohup python3 -m http.server 8080 > /tmp/web.log 2>&1 &'
 # Or use a real daemon: `hoody --container {C} daemon programs create --name web --command '...' --user user` for supervised lifecycle.
 # Then hit it from anywhere:
 curl https://{P}-{C}-http-8080.{N}.containers.hoody.com/
 ```
 
-**Want to hide `{P}{C}` and brand the host?** Create a `proxyAlias` with `program: 'http'` and `port: 8080` (prefer `port`; `index` is the legacy field and `port` wins over it) — your URL becomes `https://my-api.{N}.containers.hoody.com`. See <https://hoody.com/SKILLS/SKILL-SDK.md> § Proxy URLs (same section in SKILL-HTTP / SKILL-CLI).
+**Want to hide `{P}{C}` and brand the host?** Create a proxy alias (`POST /api/v1/proxy/aliases`, SDK `client.api.proxy.aliases.create`, CLI `hoody proxy aliases create`) with `program: 'http'` and `port: 8080` (prefer `port`; `index` is the legacy field and `port` wins over it) — your URL becomes `https://my-api.{N}.containers.hoody.com`. See <https://hoody.com/SKILLS/SKILL-SDK.md> § Proxy URLs (same section in SKILL-HTTP / SKILL-CLI).
 
 ### 11. GUI apps — display kit (X11 desktop in a browser tab)
 
-The `display` kit gives every container virtual X11 servers (Xpra-backed), reachable two ways:
+The `display` kit gives every container virtual X11 servers, reachable two ways:
 
 - **Visit `https://{P}-{C}-display-N.{N_srv}.containers.hoody.com/` in a browser** — interactive HTML5 desktop for display `:N`, mouse + keyboard + clipboard, iframable (set `allow="clipboard-read; clipboard-write"`). Same for `desktop-1` (full XFCE/MATE).
 - **Drive programmatically** — screenshots + clicks + keystrokes + window queries via the HTTP/SDK/CLI surface. Coordinate origin is top-left; `button: 1`=left, `2`=middle, `3`=right.
@@ -496,15 +501,15 @@ await box.terminal.sessions.create({
   user: 'user',
 });
 // 2. Launch a GUI app inside that session (use & to background — keeps PTY interactive)
-await box.terminal.execution.execute(
+await box.terminal.commands.run(
   { command: 'xeyes &' },
   { terminal_id: '1' },  // route to session 1 — DO NOT pass ephemeral:true
 );
 // 3. Screenshot display :1 (base64 = inline; omit for arrayBuffer)
 const shot = await box.display.screenshots.capture({ base64: true, displayId: 1 });
 // 4. Click + type at coordinates
-await box.display.input.clickAt({ x: 640, y: 360, button: 1 }, { displayId: 1 });
-await box.display.input.typeAt({ x: 640, y: 360, text: 'hello world' }, { displayId: 1 });
+await box.display.input.click({ x: 640, y: 360, button: 1 }, { displayId: 1 });
+await box.display.input.type({ x: 640, y: 360, text: 'hello world' }, { displayId: 1 });
 // 5. Re-capture to verify
 const shot2 = await box.display.screenshots.capture({ base64: true, displayId: 1 });
 ```
@@ -516,7 +521,7 @@ T=https://{P}-{C}-terminal-1.{N}.containers.hoody.com/api/v1/terminal
 D=https://{P}-{C}-display-1.{N}.containers.hoody.com/api/v1/display
 # 1. Create a persistent terminal session with terminal_id=1 AND display=":1"
 curl -sX POST "$T/create" -H 'Content-Type: application/json' \
-  -d '{"terminal_id":1,"display":":1","shell":"bash","user":"user"}'
+  -d '{"terminal_id":"1","display":":1","shell":"bash","user":"user"}'
 # 2. Launch a GUI app inside terminal_id=1
 #    NOTE: terminal_id MUST be on the query string, not in the body (body field is silently ignored)
 curl -sX POST "$T/execute?terminal_id=1" -H 'Content-Type: application/json' \
@@ -537,12 +542,12 @@ curl -sX POST "$D/input/type-at?displayId=1"  -H 'Content-Type: application/json
 # 1. Create a persistent terminal pinned to display :1
 hoody --container {C} terminal sessions create --terminal-id 1 --display ':1' --shell bash --user user
 # 2. Launch a GUI app inside terminal_id=1 (NOT --ephemeral — ephemeral strips DISPLAY)
-hoody --container {C} terminal sessions exec --terminal-id 1 --command 'xeyes &'
+hoody --container {C} terminal commands run --terminal-id 1 --command 'xeyes &'
 # 3. Screenshot display :1 — `--display-id 1` selects the virtual display
 hoody --container {C} display screenshots capture --display-id 1 -o raw > shot.png
 # 4. Click + type at coordinates
-hoody --container {C} display input click-at --display-id 1 --x 640 --y 360 --button 1
-hoody --container {C} display input type-at  --display-id 1 --x 640 --y 360 --text 'hello world'
+hoody --container {C} display input click --display-id 1 --x 640 --y 360 --button 1
+hoody --container {C} display input type  --display-id 1 --x 640 --y 360 --text 'hello world'
 # 5. Open the live desktop in a browser:
 hoody --container {C} display open    # opens display-1 kit URL in your browser
 ```
@@ -564,17 +569,18 @@ curl https://ai.hoody.com/api/v1/chat/completions \
 
 ## Pitfalls (mode-agnostic)
 
+- **A CLI flag belongs to the command it follows.** `hoody --container {C} files get /workspace` and `hoody files get /workspace --container {C}` are the same call: a global works in either position. But when the command declares a flag of its own with that spelling, the COMMAND gets it — `hoody agent github auth login --token ghp_x` sends the GitHub PAT, and the Hoody credential comes from `-t <hoody-token>` on the same line, from a position before the command, or from the config/env. The same rule covers `--format` (image or paper format on `browser screenshot` / `browser pdf`, output format everywhere else), `--profile` (an AWS profile on the S3 backends) and `--output` (the document format on `notes doc get`). When in doubt, put the Hoody global before the command.
 - **Kit URL IS the credential — and a container restart does NOT rotate it.** The `{P}-{C}-{kit}-{n}` prefix is stable for the container's lifetime; only delete + recreate changes it. Don't paste it in public chats.
-- **Gating a kit URL without recreating = replace the proxy-permissions policy, with optimistic locking.** GET the current document to read `file_version`, then PUT with `If-Match: file:v<N>` (428 without the header, 412 if stale). SDK: `client.api.proxyPermissionsContainer.replace(containerId, body, { ifMatch: 'file:v' + currentVersion })`; HTTP: `PUT /api/v1/containers/{C}/proxy/permissions`; CLI: `hoody containers proxy permissions replace -c {C} --project {P} --groups … --permissions … --if-match file:v<N>` (the CLI does not auto-fetch the version). Full shape — auth groups + per-program permissions + hooks — is in <https://hoody.com/SKILLS/SKILL-SDK/api.md> § proxyPermissionsContainer.
-- **Kit auth is uniform — the URL is the credential.** `sqlite` / `files` / `exec` / `terminal` / `display` / `agent` etc. all accept the bare per-container kit URL as bearer (no extra headers), reached directly. The `agent` (slug `agent`, host `…-agent-{index}.…`) kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers and never returns `401 CLAIM_REQUIRED`: reaching the kit URL is sufficient.
-- **`refreshToken` works directly via SDK and CLI** — both auto-inject the header. **Raw HTTP** requires the refresh token in BOTH the body AND the `Authorization: Bearer` header.
-- **Login JWTs expire (~1 day; refresh token ~7 days).** A `401` on the control plane is NOT retryable — the token is missing, stale, or expired: refresh (or re-login), then retry the call. Headless / long-running agents should mint a long-lived auth token instead (`authTokens.create` / `POST /api/v1/auth/tokens`) — scopable, IP-restrictable, rotatable. Details: § Auth model in `SKILL-SDK.md` / `SKILL-HTTP.md` / `SKILL-CLI.md`.
+- **Gating a kit URL without recreating = replace the proxy-permissions policy, with optimistic locking.** GET the current document to read `file_version`, then PUT with `If-Match: file:v<N>` (428 without the header, 412 if stale). SDK: `client.api.proxy.containerPermissions.set(containerId, body, { ifMatch: 'file:v' + currentVersion })`; HTTP: `PUT /api/v1/containers/{C}/proxy/permissions`; CLI: `hoody containers proxy permissions set -c {C} --project {P} --groups … --permissions … --if-match file:v<N>` (the CLI does not auto-fetch the version). A group alone restricts nothing: give it per-program access and set `default: 'deny'`, or anyone who matches no group still gets in. Full shape — auth groups + per-program permissions + hooks — is in <https://hoody.com/SKILLS/SKILL-SDK/api.md> § proxy.containerPermissions.
+- **Kit auth is uniform — the URL is the credential.** `sqlite` / `files` / `exec` / `terminal` / `display` / `agent` etc. all accept the bare per-container kit URL as bearer (no extra headers, `bot`'s management routes included), reached directly. The `agent` (slug `agent`, host `…-agent-{index}.…`) kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers and never returns `401 CLAIM_REQUIRED`: reaching the kit URL is sufficient.
+- **Refreshing a login token needs the refresh token twice** — in the body AND as `Authorization: Bearer <refreshToken>`, else `401 Invalid refresh token`. **SDK**: `api.auth.refresh({ refreshToken })` sends it in both places for you, and the client's automatic 401 recovery uses its stored refresh token before falling back to `credentials`. **HTTP**: send both yourself. **CLI**: `hoody auth refresh` sends both for you, using `--refresh-token` or the refresh token saved by the last `hoody login`, and saves the new tokens; with no saved refresh token, pass `--refresh-token` or run `hoody login` again.
+- **Login JWTs expire (~1 day; refresh token ~7 days).** A `401` on the control plane is NOT retryable — the token is missing, stale, or expired: refresh (or re-login), then retry the call. Headless / long-running agents should mint a long-lived auth token instead (`auth.tokens.create` / `POST /api/v1/auth/tokens`) — scopable, IP-restrictable, rotatable. Details: § Auth model in `SKILL-SDK.md` / `SKILL-HTTP.md` / `SKILL-CLI.md`.
 - **List endpoints paginate.** Control-plane lists take `?page=N&limit=M` and return a `pagination` object alongside the items; several kit lists use `offset`/`limit` or `cursor` instead (the per-namespace skill names which). A bare list call returns only the FIRST page — don't treat it as exhaustive. SDK: prefer the `listIterator()` variants (e.g. `containers.listIterator()`), which auto-paginate.
 - **`server_name` is the routable host**, never `subserver_name`. Build kit URLs from `server_name` (returned in container details).
 - **Container ≠ Docker.** It's a full Linux box: systemd, root, ssh, persistent disk, default user `user` with passwordless sudo.
-- **Realm-scoped tokens.** Mint with `hoody.api.authTokens.create({ alias:'agent-x', realm_ids:[realmId] })` (SDK — the field is `alias` not `name`) / `POST /api/v1/auth/tokens` (HTTP). Use either **per-call** via the generated `_realm` option (`containers.list({ _realm: realmId })`, etc. — every method accepts it) OR **globally** via `https://{realmId}.api.hoody.com` as the `baseURL`. Resources created under a realm-scoped client / host are auto-tagged with that realm.
+- **Realm-scoped tokens.** Mint with `hoody.api.auth.tokens.create({ alias:'agent-x', realm_ids:[realmId] })` (SDK — the field is `alias` not `name`) / `POST /api/v1/auth/tokens` (HTTP). Use either **per-call** via the generated `_realm` option (`containers.list({ _realm: realmId })`, etc. — every control-plane `api.*` method accepts it; kit methods do not, since a kit call is routed by its container URL, not by realm) OR **globally** via `https://{realmId}.api.hoody.com` as the `baseURL`. Resources created under a realm-scoped client / host are auto-tagged with that realm.
 - **Retryable errors:** `408 / 425 / 429 / 500 / 502 / 503 / 504`. SDK throws `ApiError` with `isApiError` / `isRetryableApiError` type guards; CLI exits non-zero with the message; HTTP returns the status code.
-- **Failed/4xx body shape differs by surface.** The **control plane** (`api.hoody.com` / `client.api.*`) returns `{statusCode, error, message, data?}` consistently. **Per-container kits** use kit-specific shapes — `files` and `sqlite` return `{"error":"<msg>"}`; `terminal` returns `{"status":"error","code":"<errcode>","message":"<msg>"}` (`code` is a string identifier such as `"timeout"`, not numeric). Always branch on the HTTP status code, not on body field presence.
+- **Failed/4xx body shape differs by surface.** The **control plane** (`api.hoody.com` / `client.api.*`) returns `{statusCode, error, message, data?}` consistently. **Per-container kits** use kit-specific shapes — `files` and `sqlite` return `{"error":"<msg>"}`; `terminal` returns `{"error":"<msg>","code":"<CODE>"}` (`code` is an upper-case string such as `"REQUEST_TIMEOUT"` or `"NOT_FOUND"`, not numeric). Always branch on the HTTP status code, not on body field presence.
 
 ## Ask the docs over HTTP (any agent, no login)
 
@@ -589,23 +595,23 @@ Pipeline failures come back as HTTP-200 with `isError: true` (a result field, no
 
 ## Driving Hoody from a URL-only client (no POST) — the `curl` kit GET-bridge
 
-When the caller can **only fetch a URL** — the claude.ai web-fetch UI, a webhook/CRM field that takes a link, an `<img src>`/`<a href>`, an LLM tool with web-search-only access — route the request through the container's **`curl` kit**, which converts a bodyless HTTP call into a single GET-able URL and performs it for you (live-tested; `{P}`/`{C}`/`{N}` as defined in § Kit URLs above, `<TOKEN>` = your bearer token):
+When the caller can **only fetch a URL** — the claude.ai web-fetch UI, a webhook/CRM field that takes a link, an `<img src>`/`<a href>`, an LLM tool with web-search-only access — route the request through the container's **`curl` kit**, which converts a bodyless HTTP call into a single GET-able URL and performs it for you (`{P}`/`{C}`/`{N}` as defined in § Kit URLs above, `<TOKEN>` = your bearer token):
 
 ```
 # Any upstream call as ONE GET. response=transparent → raw body; omit → JSON envelope.
 # A read (bearer_token authenticates, e.g. listing the control plane):
 https://{P}-{C}-curl-1.{N}.containers.hoody.com/api/v1/curl/request?url=https%3A%2F%2Fapi.hoody.com%2Fapi%2Fv1%2Fcontainers&method=GET&bearer_token=<TOKEN>&response=transparent
-# A full POST with a JSON body + header — the body auto-upgrades the method to POST:
+# A full POST with a JSON body + header — no `method` param, so the body upgrades it to POST:
 https://{P}-{C}-curl-1.{N}.containers.hoody.com/api/v1/curl/request?url=<urlencoded-target>&json=%7B%22event%22%3A%22X%22%7D&header=Authorization:%20Bearer%20XYZ
 ```
 
-Accepted GET params: `url`, `method`, **`data`** (raw body), **`json`** (JSON body — sets `Content-Type`), **`data_base64`** (binary-safe base64, URL-safe ok; precedence over `data`/`json`), repeatable **`header=Name: Value`**, plus `bearer_token`, `response` (`transparent`|`json`), `timeout`, `follow_redirects`, `session_id`, `user_agent`, `referer`, `save`/`save_path`, `insecure`, `compressed`, `job_name`. **Supplying a body auto-upgrades the method GET→POST**, so a full body-bearing POST/PUT/PATCH (with headers) is one GET URL — that's the "any REST call → a single link" promise, made real. (Multipart `form` + binary `--data-binary @file` uploads remain POST-only.) Brand the bridge behind a `proxyAliases.create({ container_id, program: 'curl' })` host (`container_id` is required) to hide `{P}{C}`. Full surface, sessions, and async jobs → the `curl` skill.
+Accepted GET params: `url`, `method`, **`data`** (raw body), **`json`** (JSON body — sets `Content-Type`), **`data_base64`** (binary-safe base64, URL-safe ok; precedence over `data`/`json`), repeatable **`header=Name: Value`**, plus `bearer_token`, `response` (`transparent`|`json`), `timeout`, `follow_redirects`, `session_id`, `user_agent`, `referer`, `save`/`save_path`, `insecure`, `compressed`, `job_name`. **Supplying a body with no `method` param auto-upgrades the method GET→POST** (an explicit `method=GET` wins and the body is dropped, so leave `method` out or set `POST`/`PUT`/`PATCH`), so a full body-bearing POST/PUT/PATCH (with headers) is one GET URL — that's the "any REST call → a single link" promise, made real. (Multipart `form` + binary `--data-binary @file` uploads remain POST-only.) Brand the bridge behind a `proxy.aliases.create({ container_id, program: 'curl' })` host (`container_id` is required) to hide `{P}{C}`. Full surface, sessions, and async jobs → the `curl` skill.
 
 ## Index — drill-down skills
 
 ### Per-mode
 
-| Mode | Basic skill (start here) | FULL skill (basic + 20 namespaces) | Use when |
+| Mode | Basic skill (start here) | FULL skill (basic + every namespace) | Use when |
 |---|---|---|---|
 | SDK | [SKILL-SDK.md](https://hoody.com/SKILLS/SKILL-SDK.md) | [SKILL-SDK-FULL.md](https://hoody.com/SKILLS/SKILL-SDK-FULL.md) | TS/JS service or browser app |
 | HTTP | [SKILL-HTTP.md](https://hoody.com/SKILLS/SKILL-HTTP.md) | [SKILL-HTTP-FULL.md](https://hoody.com/SKILLS/SKILL-HTTP-FULL.md) | Any other language; raw `curl` |
@@ -613,19 +619,20 @@ Accepted GET params: `url`, `method`, **`data`** (raw body), **`json`** (JSON bo
 
 ### Per-namespace deep-dives
 
-20 namespaces × 3 modes = 60 sub-skills. Each row below maps one namespace to its three mode-specific files; pick the column matching your runtime. Auto-generated from the per-namespace notes.
+One sub-skill per namespace per mode. Each row below maps one namespace to its three mode-specific files; pick the column matching your runtime. The table is generated from the per-namespace notes, so its length is the namespace count.
 
-**Still can't route a task?** Fetch the routing index **<https://hoody.com/SKILLS/INDEX.md>** (~7.5k tokens) — per-namespace ops lists plus routing hints for ambiguous cases (`tunnel` vs `api`, `daemon` vs `terminal` vs `exec`, `watch` vs `proxyLogs`, …). And when even the per-namespace skill runs out, the **machine-readable spec is the last rung**: `GET https://api.hoody.com/openapi.json` (full control plane + kits; YAML at `/openapi.yaml`), or a single kit's spec at `https://{P}-{C}-{kit}-1.{N}.containers.hoody.com/api/v1/{kit}/openapi.json`.
+**Still can't route a task?** Fetch the routing index **<https://hoody.com/SKILLS/INDEX.md>** (~8k tokens) — per-namespace ops lists plus routing hints for ambiguous cases (`tunnel` vs `api`, `daemon` vs `terminal` vs `exec`, `watch` vs `proxyLogs`, …). And when even the per-namespace skill runs out, the **machine-readable spec is the last rung**: the OpenAPI spec shipped in the package as `hoody-sdk/openapi.json` (full control plane + kits; YAML at `hoody-sdk/openapi.yaml`). Several kits also serve their own spec over HTTP — e.g. `/openapi.json` on the `watch`, `cron`, `browser` and `exec` kit URLs, `/api/v1/sqlite/openapi.json` on `sqlite` — and the path varies per kit, so take it from that kit's skill.
 
 | Namespace | Purpose | SDK | HTTP | CLI |
 |---|---|---|---|---|
 | `agent` | In-container AI coding agent over HTTP | [SDK](https://hoody.com/SKILLS/SKILL-SDK/agent.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/agent.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/agent.md) |
 | `api` | Platform control plane: identity, projects, containers, billing, vault | [SDK](https://hoody.com/SKILLS/SKILL-SDK/api.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/api.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/api.md) |
-| `browser` | Per-container Chromium/Firefox via Playwright/Patchright | [SDK](https://hoody.com/SKILLS/SKILL-SDK/browser.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/browser.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/browser.md) |
+| `bot` | chat-app control of a container, Telegram first | [SDK](https://hoody.com/SKILLS/SKILL-SDK/bot.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/bot.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/bot.md) |
+| `browser` | Per-container Chromium or Firefox instances, one per slot | [SDK](https://hoody.com/SKILLS/SKILL-SDK/browser.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/browser.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/browser.md) |
 | `code` | VS Code in the browser, per container | [SDK](https://hoody.com/SKILLS/SKILL-SDK/code.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/code.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/code.md) |
 | `cron` | managed crontab entries per system user | [SDK](https://hoody.com/SKILLS/SKILL-SDK/cron.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/cron.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/cron.md) |
 | `curl` | full HTTP client gateway + REST-as-GET-URL bridge | [SDK](https://hoody.com/SKILLS/SKILL-SDK/curl.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/curl.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/curl.md) |
-| `daemon` | supervisord program lifecycle (start any program; logs always retained) | [SDK](https://hoody.com/SKILLS/SKILL-SDK/daemon.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/daemon.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/daemon.md) |
+| `daemon` | supervisord program lifecycle (start any program; logs kept) | [SDK](https://hoody.com/SKILLS/SKILL-SDK/daemon.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/daemon.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/daemon.md) |
 | `display` | programmatic GUI desktops with screenshots, input, and windows | [SDK](https://hoody.com/SKILLS/SKILL-SDK/display.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/display.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/display.md) |
 | `egress` | the container's outbound HTTP proxy | [SDK](https://hoody.com/SKILLS/SKILL-SDK/egress.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/egress.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/egress.md) |
 | `exec` | micro-services: any script or API as an instant HTTP endpoint | [SDK](https://hoody.com/SKILLS/SKILL-SDK/exec.md) | [HTTP](https://hoody.com/SKILLS/SKILL-HTTP/exec.md) | [CLI](https://hoody.com/SKILLS/SKILL-CLI/exec.md) |
