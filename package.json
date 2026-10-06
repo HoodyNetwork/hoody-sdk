@@ -1,6 +1,6 @@
 {
   "name": "hoody-sdk",
-  "version": "1.0.0-beta.14",
+  "version": "1.0.0-beta.15",
   "description": "Official Hoody Platform SDK - unified access to all Hoody APIs",
   "license": "Apache-2.0",
   "author": "Hoody Platform",
@@ -41,6 +41,10 @@
     "./ssh-keys": {
       "types": "./dist-ts/lib/ssh-keys.d.ts",
       "default": "./dist-ts/lib/ssh-keys.js"
+    },
+    "./types": {
+      "types": "./dist-ts/generated/types.d.ts",
+      "default": "./dist-ts/generated/types.js"
     },
     "./api": {
       "types": "./dist-ts/generated/api/index.d.ts",
@@ -86,6 +90,10 @@
       "types": "./dist-ts/lib/subpath/mount.d.ts",
       "default": "./dist-ts/lib/subpath/mount.js"
     },
+    "./share": {
+      "types": "./dist-ts/lib/subpath/share.d.ts",
+      "default": "./dist-ts/lib/subpath/share.js"
+    },
     "./notes": {
       "types": "./dist-ts/generated/notes/index.d.ts",
       "default": "./dist-ts/generated/notes/index.js"
@@ -126,6 +134,10 @@
       "types": "./dist-ts/generated/agent/index.d.ts",
       "default": "./dist-ts/generated/agent/index.js"
     },
+    "./bot": {
+      "types": "./dist-ts/lib/subpath/bot.d.ts",
+      "default": "./dist-ts/lib/subpath/bot.js"
+    },
     "./chat": {
       "types": "./dist-ts/lib/chat/index.d.ts",
       "default": "./dist-ts/lib/chat/index.js"
@@ -140,6 +152,7 @@
     },
     "./openapi.json": "./generated/openapi.public.json",
     "./openapi.yaml": "./generated/openapi.public.yaml",
+    "./embeds/catalog.v1.json": "./generated/embeds.catalog.v1.json",
     "./package.json": "./package.json"
   },
   "files": [
@@ -150,6 +163,7 @@
     "!generated/**/*.yml",
     "generated/openapi.public.json",
     "generated/openapi.public.yaml",
+    "generated/embeds.catalog.v1.json",
     "lib",
     "!lib/chat/system-prompt.txt",
     "dist",
@@ -160,6 +174,7 @@
     "cli/CLI_AUTHENTICATION.md",
     "docs/reference",
     "docs/agent/skills",
+    "docs/MIGRATION-2026-10-NAMES.md",
     "assets",
     "README.md",
     "CHANGELOG.md",
