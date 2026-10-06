@@ -50,7 +50,7 @@ Passwords are masked with `*` during input. Signup requires password confirmatio
 
 ### Browser / device-flow login
 
-`hoody login --web` (alias `--oauth`) signs in through your browser — GitHub, Google, or an existing web session — via the OAuth device flow, with no password typed at the terminal.
+`hoody login --web` (alias `--oauth`) signs in through your browser via the OAuth device flow, using GitHub, Google, or an existing web session. You type no password at the terminal.
 
 > **2FA:** password auto-login fails on accounts that require two-factor authentication. Use browser login (`hoody login --web`), which completes 2FA in the browser, or supply a pre-obtained token (`--token` / `HOODY_TOKEN`).
 
@@ -102,11 +102,11 @@ Or via `HOODY_PROFILE` environment variable.
 
 ## 5. `hoody chat` provider authentication
 
-`hoody chat` uses its own provider auth — separate from the Hoody API
+`hoody chat` uses its own provider auth, separate from the Hoody API
 token above, because chat talks to an LLM endpoint rather than `api.hoody.com`.
 Three atomic tiers; first tier with any variable set wins:
 
-### Tier 1 — Hoody chat-dedicated (default MiniMax)
+### Tier 1, Hoody chat-dedicated (default MiniMax)
 
 ```bash
 export HOODY_CHAT_KEY=sk-…                          # required
@@ -114,7 +114,7 @@ export HOODY_CHAT_URL=https://api.minimax.io/v1      # default
 export HOODY_CHAT_MODEL=MiniMax-M2.7-highspeed       # default
 ```
 
-### Tier 2 — shared with `ai-fix` typo corrector
+### Tier 2, shared with `ai-fix` typo corrector
 
 ```bash
 export HOODY_CLI_AI_KEY=…
@@ -129,7 +129,7 @@ export HOODY_CLI_AI_MODEL=hoody-ai/hoody-free          # default (free tier —
 ### AI typo corrector (`ai-fix`)
 
 Off unless you turn it on. `suggest` prints a corrected command; `auto` **runs
-it** — and a suggestion is model output, so `auto` grants whoever answers your
+it**. A suggestion is model output, so `auto` grants whoever answers your
 provider the ability to run any `hoody` command as you, including
 `hoody shell <id> <cmd>`. Prefer `suggest` unless you trust the provider as much
 as your own shell.
@@ -143,9 +143,9 @@ export HOODY_CLI_AI_REASONING_EFFORT=low     # minimal|low|medium|high; unset by
 Inside a Hoody container these are pre-set for you, so the corrector works with
 no configuration.
 
-### Tier 3 — OpenAI-compatible
+### Tier 3, OpenAI-compatible
 
-`OPENAI_BASE_URL` and `OPENAI_MODEL` are required — no defaults, to prevent silently leaking a key to a surprise endpoint. `OPENAI_API_KEY` is required for non-local endpoints; localhost / RFC1918 origins may omit it (keyless local models).
+`OPENAI_BASE_URL` and `OPENAI_MODEL` are required and have no defaults, which stops a key leaking silently to a surprise endpoint. `OPENAI_API_KEY` is required for non-local endpoints; localhost / RFC1918 origins may omit it (keyless local models).
 
 ```bash
 export OPENAI_API_KEY=sk-…
@@ -160,7 +160,7 @@ accidentally going to MiniMax because you forgot to set the base URL.
 ### Endpoint acceptance
 
 Non-allowlisted origins require `--accept-endpoint <origin>`,
-`HOODY_CHAT_ACCEPT_ENDPOINT`, or a one-time interactive confirmation at a TTY prompt. Built-in allowlist: `chatbot.hoody.com`, plus localhost/RFC1918 private IPs. Note that the tier-1 and tier-2 defaults (`api.minimax.io`, `ai.hoody.com`) are NOT built-in — first use prompts for acceptance like any other origin.
+`HOODY_CHAT_ACCEPT_ENDPOINT`, or a one-time interactive confirmation at a TTY prompt. Built-in allowlist: `chatbot.hoody.com`, plus localhost/RFC1918 private IPs. The tier-1 and tier-2 defaults (`api.minimax.io`, `ai.hoody.com`) are NOT built-in. First use prompts for acceptance like any other origin.
 Accepted origins persist to `~/.hoody/chats/chat-accept.json`.
 
 ### Other chat env vars
@@ -193,13 +193,13 @@ The CLI includes a `config` command group for managing the config file:
 
 ```bash
 hoody config path              # Print config file path
-hoody config show              # Show config (secrets masked)
-hoody config show --resolved   # Show merged config (file + env vars)
+hoody config get               # Show config (secrets masked)
+hoody config get --resolved    # Show merged config (file + env vars)
 hoody config validate          # Validate config and report issues
 hoody config reset --yes       # Reset config to defaults
 hoody config set <key> <value> # Set a config value
 hoody config get <key>         # Get a config value
-hoody config unset <key>       # Remove a config key
+hoody config clear <key>       # Remove a config key
 ```
 
 Profile-scoped operations:
