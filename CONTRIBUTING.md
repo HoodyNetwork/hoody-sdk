@@ -4,7 +4,7 @@ Read this before opening a pull request. This repository does not accept code ch
 
 ## This repository is a published mirror
 
-`hoody-sdk` is generated. The client in `generated/` is built from the OpenAPI documents of every Hoody service, `docs/` and `SKILLS/` are emitted by generators, and `dist/`, `dist-ts/` and `cli/dist/` are build output. Each release replaces the entire tree here with a freshly built, audited one and force-updates `main`.
+`hoody-sdk` is generated. The client in `generated/` is built from the OpenAPI documents of every Hoody service, `docs/` (including the agent skills corpus at `docs/agent/skills/`) is emitted by generators, and `dist/`, `dist-ts/` and `cli/dist/` are build output. Each release replaces the entire tree here with a freshly built, audited one and force-updates `main`.
 
 A merged pull request would therefore survive until the next release and then disappear. That is true of every path in the repository, including hand-written files, because the release publishes one sealed tree rather than a diff. Pull requests are closed with a pointer to this page, not because the change was unwelcome.
 

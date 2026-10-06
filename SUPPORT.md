@@ -14,7 +14,7 @@ Start with [docs.hoody.com](https://docs.hoody.com). Every service has a page co
 
 For an exact signature rather than an explanation, [`docs/reference/`](./docs/reference/) lists every SDK method, CLI command, and endpoint, generated from the same specification the client is built from.
 
-If you are pointing an AI agent at Hoody, give it `https://hoody.com/SKILLS/SKILL.md` or run `npx skills add https://hoody.com/SKILLS/SKILL.md`. The same corpus ships inside the package under `SKILLS/`, so an agent working offline can read it from `node_modules`.
+If you are pointing an AI agent at Hoody, give it `https://hoody.com/SKILLS/SKILL.md` or run `npx skills add https://hoody.com/SKILLS/SKILL.md`. The same corpus ships inside the package under `docs/agent/skills/`, so an agent working offline can read it from `node_modules/hoody-sdk/docs/agent/skills/`.
 
 ## Something is broken
 
