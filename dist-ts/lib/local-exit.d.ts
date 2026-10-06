@@ -169,8 +169,8 @@ export declare function decodeChunked(payload: Buffer): string;
 /**
  * Decide whether a proxied HTTP response is complete, and read its body.
  *
- * Extracted from the reader so the framing rules can be tested directly. An
- * independent review pointed out that the only tests over this code covered the
+ * Extracted from the reader so the framing rules can be tested directly.
+ * Before the extraction, the only tests over this code covered the
  * two chunk helpers, leaving the state machine itself — interim responses,
  * Content-Length validation, bodyless statuses, status parsing — with no
  * coverage at all, on the argument that live verification exercised it. Live

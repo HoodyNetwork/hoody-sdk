@@ -2,17 +2,18 @@
  * Terminal SSH convenience methods — high-level wrappers for SSH terminal creation.
  *
  * Architecture:
- *   This module extends HoodyClient with SSH-specific convenience methods:
+ *   This module extends the generated terminal services with SSH-specific convenience methods:
  *
- *   - `createSshTerminal(options)` — create an SSH terminal session (ephemeral by default)
- *   - `createLocalTerminal(options?)` — create a local terminal session (ephemeral by default)
- *   - `createDesktopTerminal(options)` — create a desktop terminal with X11 display
- *   - `executeSshCommand(options)` — execute a command on a remote SSH server
+ *   - `terminal.sessions.createSsh(options)` — create an SSH terminal session (ephemeral by default)
+ *   - `terminal.sessions.createLocal(options?)` — create a local terminal session (ephemeral by default)
+ *   - `terminal.sessions.createDesktop(options)` — create a desktop terminal with X11 display
+ *   - `terminal.commands.runSsh(options)` — run a command on a remote SSH server
  *
  *   All methods require a container-scoped client (via `withContainer()`).
- *   They are attached to HoodyClient.prototype via module augmentation
- *   and runtime prototype patching, following the same pattern as
- *   terminal-exec.ts.
+ *   They are attached to SessionsService.prototype / CommandsService.prototype via module
+ *   augmentation and runtime prototype patching, following the same pattern as exec-scripts.ts.
+ *   The owning client (for the container URL templates) is read back from the service
+ *   (lib/service-owner.ts).
  *
  *   Each method returns `terminal_url` built from the container's URL templates.
  */
@@ -103,15 +104,15 @@ export interface SshExecResult {
     exit_code?: number;
     [key: string]: unknown;
 }
-declare module './hoody-client.js' {
-    interface HoodyClient {
+declare module '../generated/terminal/sessions.service.js' {
+    interface SessionsService {
         /**
          * Create an SSH terminal session. Ephemeral by default.
          *
          * @example
          * ```ts
          * const scoped = await client.withContainer(container);
-         * const result = await scoped.createSshTerminal({
+         * const result = await scoped.terminal.sessions.createSsh({
          *   host: '192.168.1.100',
          *   user: 'admin',
          *   password: 'secret',
@@ -119,18 +120,18 @@ declare module './hoody-client.js' {
          * console.log(result.terminal_url);
          * ```
          */
-        createSshTerminal(options: SshTerminalOptions): Promise<TerminalCreateResult>;
+        createSsh(options: SshTerminalOptions): Promise<TerminalCreateResult>;
         /**
          * Create a local terminal session (bash/zsh/fish). Ephemeral by default.
          *
          * @example
          * ```ts
          * const scoped = await client.withContainer(container);
-         * const result = await scoped.createLocalTerminal({ shell: 'bash' });
+         * const result = await scoped.terminal.sessions.createLocal({ shell: 'bash' });
          * console.log(result.terminal_url);
          * ```
          */
-        createLocalTerminal(options?: LocalTerminalOptions): Promise<TerminalCreateResult>;
+        createLocal(options?: LocalTerminalOptions): Promise<TerminalCreateResult>;
         /**
          * Create a desktop terminal session with X11 display.
          * Requires explicit terminal_id — desktop sessions need display/dbus.
@@ -138,21 +139,25 @@ declare module './hoody-client.js' {
          * @example
          * ```ts
          * const scoped = await client.withContainer(container);
-         * const result = await scoped.createDesktopTerminal({
+         * const result = await scoped.terminal.sessions.createDesktop({
          *   terminal_id: '5',
          *   desktop_env: 'xfce',
          * });
          * console.log(result.terminal_url);
          * ```
          */
-        createDesktopTerminal(options: DesktopTerminalOptions): Promise<TerminalCreateResult>;
+        createDesktop(options: DesktopTerminalOptions): Promise<TerminalCreateResult>;
+    }
+}
+declare module '../generated/terminal/commands.service.js' {
+    interface CommandsService {
         /**
-         * Execute a command on a remote SSH server. Ephemeral by default, wait=true.
+         * Run a command on a remote SSH server. Ephemeral by default, wait=true.
          *
          * @example
          * ```ts
          * const scoped = await client.withContainer(container);
-         * const result = await scoped.executeSshCommand({
+         * const result = await scoped.terminal.commands.runSsh({
          *   command: 'ls -la /var/log',
          *   host: '192.168.1.100',
          *   user: 'admin',
@@ -161,7 +166,7 @@ declare module './hoody-client.js' {
          * console.log(result.stdout);
          * ```
          */
-        executeSshCommand(options: SshExecOptions): Promise<SshExecResult>;
+        runSsh(options: SshExecOptions): Promise<SshExecResult>;
     }
 }
 export declare function patchTerminalSshPrototype(): void;

@@ -5,7 +5,7 @@
  *   - Bare `hoody` (root command, no subcommand)
  *   - `hoody [anything] --help` (Commander's --help path)
  *
- * NEVER on other subcommand output — keeps `hoody list --json | jq` clean.
+ * NEVER on other subcommand output — keeps `hoody containers list --json | jq` clean.
  *
  * Cases:
  *   1. Cache status = 'error' OR cache expired (now > not_after) → just version

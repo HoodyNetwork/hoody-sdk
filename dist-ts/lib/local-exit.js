@@ -75,10 +75,10 @@ function serverNameOf(c) {
  * Find the API base URL a client is configured with.
  *
  * HoodyClient keeps it on the inner HttpClient, not on itself, so reading
- * `client.config.baseURL` finds nothing. This used to fall back to
- * `https://api.hoody.com`, which turned a realm mismatch into a hostname that
- * does not resolve: an account on `.icu` got a tunnel URL under
- * `containers.hoody.com` and the only symptom was "WebSocket error".
+ * `client.config.baseURL` finds nothing. This used to fall back to a fixed
+ * default API URL, which turned a realm mismatch into a hostname that does not
+ * resolve: an account on another deployment got a tunnel URL under the
+ * default's containers domain and the only symptom was "WebSocket error".
  *
  * A wrong realm is not a recoverable default, so this throws instead. Every
  * URL in the chain is derived from this one value.
@@ -153,7 +153,7 @@ const LOCAL_EXIT_HOST = '127.0.0.1';
  * The second one is narrower than it sounds, and worth stating precisely: two
  * LIVE exits cannot collide on a loopback port at all. The tunnel does a real
  * `TcpListener::bind`, and an occupied port fails with PORT_IN_USE rather than
- * being shared (hoody-tunnel/src/bind/pull.rs:44-55). It takes a stale handle:
+ * being shared. It takes a stale handle:
  * this exit's listener must already be gone, the port must have been reused by
  * a new exit, and only then does a late teardown on the old handle see an
  * identical status object. `upstreamConfirmedGone` removes that specific
@@ -243,9 +243,8 @@ export async function startLocalExit(opts) {
     // Unsuffixed, matching `getKitUrl('egress', …)`, the CLI's getKitBaseUrl and
     // the docs. The edge normalizes a missing index to 1, so this IS index 1 —
     // including for proxy permissions, which are evaluated per index. Emitting
-    // `-egress-1` here instead would route identically but break the four-layer
-    // parity that tests/unit/egress-url-parity.test.ts exists to hold, after a
-    // rename once already split the SDK from the CLI and docs.
+    // `-egress-1` here instead would route identically but break the parity
+    // between the SDK, the CLI and the docs, which a rename once already split.
     const egressBase = `https://${projectId}-${container.id}-egress.${server}.${domain}`;
     const token = await client.getAuthToken();
     if (!token)
@@ -266,10 +265,33 @@ export async function startLocalExit(opts) {
     // replaced here could not be restored afterwards — the user would simply lose
     // it. A stale entry from a killed run is the common case, so the message says
     // how to clear one.
-    const existing = unwrap(await box.egress.getUpstream());
+    const existing = unwrap(await box.egress.upstream.get());
     if (existing?.enabled === true && opts.replaceExistingUpstream !== true) {
-        const where = `${existing.scheme ?? '?'}://${existing.host ?? '?'}:${existing.port ?? '?'}`;
-        throw new Error(`local exit: this container already has an upstream (${where}). ` +
+        /**
+         * Describe the upstream in the way the payload actually supports.
+         *
+         * `enabled: true` covers a slot that is configured but unusable, and when
+         * the governing text never parsed the service reports no scheme, host or
+         * port at all. Interpolating them anyway produced `?://?:?`, which reads
+         * like a bug in this command rather than a statement about the container,
+         * and it is the exact case a user meets when a stored upstream stops being
+         * accepted. Say which of the two situations it is instead.
+         */
+        const hasTarget = typeof existing.host === 'string';
+        const where = hasTarget
+            ? `${existing.scheme ?? '?'}://${existing.host}:${existing.port ?? '?'}`
+            : undefined;
+        const what = where !== undefined
+            ? `this container already has an upstream (${where})`
+            : existing.state === 'unavailable'
+                // State the observation and stop. Three different causes produce this same
+                // addressless payload: a config file that could not be read at all, a line
+                // in it that is not a URL, and a start-up value that is not a URL. Nothing
+                // on the wire distinguishes them, so any cause named here would be a guess
+                // that is wrong for the other two.
+                ? 'this container reports an upstream it cannot use, and no address for it'
+                : 'this container already has an upstream configured, though the service reported no address for it';
+        throw new Error(`local exit: ${what}. ` +
             `Stopping this exit would clear it, and its credentials cannot be read back to restore it. ` +
             `Clear it first, or pass replaceExistingUpstream/--replace-upstream to take it over.`);
     }
@@ -306,10 +328,111 @@ export async function startLocalExit(opts) {
         // Recorded BEFORE the call, not after: a setUpstream that fails ambiguously
         // may still have committed, and the unwind has to consider it ours.
         upstreamAttempted = true;
-        await box.egress.setUpstream(upstream);
+        await box.egress.upstream.set(upstream);
         // 3. Read back. `auth: true` proves the credential survived the write; the
         //    kit never echoes the secret itself.
-        const state = unwrap(await box.egress.getUpstream());
+        const state = unwrap(await box.egress.upstream.get());
+        /**
+         * `enabled` and `state` answer different questions, and neither one is a
+         * reachability report.
+         *
+         * Since hoody-egress started refusing a configured-but-unusable upstream
+         * instead of quietly egressing directly, `enabled: true` means "an upstream
+         * is configured" and nothing more. `state` adds what the service decided
+         * about it: `active` means an address was approved and pinned, NOT that
+         * anything answers there — the spec is explicit that a permitted address
+         * with nothing listening stays active. So this check rules out a container
+         * that cannot even try; checking whether the exit IP a request comes out of
+         * matches this machine's is what
+         * the verification step below does.
+         *
+         * A configured upstream reads `unavailable` when it was refused, would not
+         * resolve, is not a usable URL at all, or has not been classified yet — AND
+         * no previously approved pins remain in force: a replacement that fails
+         * while a working upstream is active leaves that upstream alone and keeps
+         * reading `active`. The slot also reads `unavailable` when, at startup, the
+         * config file could not be read at all and no upstream was given on the
+         * command line; that is the one case where nothing is known to be
+         * configured. A forwarded request that reaches the unavailable slot is
+         * answered 502 rather than sent out directly. (Not every request: an IPv6
+         * LITERAL is refused by the destination rules before the slot is consulted
+         * at all — a name that answers only with IPv6 still gets the 502 — and
+         * connections already open are unaffected.)
+         *
+         * The checks below it catch the shapes this flow can meet, but by accident
+         * rather than on purpose, and one of them they do not catch at all:
+         *
+         *   - An unavailable slot whose governing text never parsed carries no
+         *     `port`, so the port comparison fires — with "expected port" as the
+         *     stated reason, which is not what went wrong.
+         *   - An unavailable slot that DID parse still reports a scheme, host, port
+         *     and an `auth` flag, and that flag is true whenever the configured URL
+         *     carried credentials. Those checks never look at the scheme, so a
+         *     CREDENTIALLED upstream on this exit's own loopback port with an `http`
+         *     scheme — refused, because the loopback exception is for SOCKS only —
+         *     matches on all three while the container is refusing forwarded
+         *     requests. It is reached through the config file or a restart, never
+         *     through the management API, which classifies before it stores and
+         *     answers 400.
+         *
+         * The same slot carrying this exit's own URL needs an intervening
+         * transition to be observed (the upstream cleared and the identical URL
+         * restored, read between the watcher's two publications). A periodic
+         * refresh alone never gets there, and that is not a property of loopback:
+         * the refresh demotes NO active upstream, whatever its scheme — a refused
+         * or failed re-check keeps the approved pins, and only text that will not
+         * parse publishes `unavailable`, and then only when nothing is active. That
+         * this particular upstream needs no DNS and is accepted unconditionally is
+         * why it also re-classifies cleanly every time; it is not what makes it
+         * safe from demotion.
+         *
+         * Absence is not evidence, for the same reason it is not in
+         * `upstreamIsForeign`: `state` does not exist on egress builds from before
+         * the fail-closed change, and the CLI talks to whatever version a container
+         * happens to be running. A bare `state.state !== 'active'` would therefore
+         * refuse to start an exit on every container that has not been updated yet.
+         * Only a field that is present, string-valued and disagreeing is allowed to
+         * fail the start; a malformed value of any other type is a broken answer,
+         * not a verdict, and the checks below still apply to it.
+         *
+         * The consequence is stated per value and never guessed. Saying "the
+         * container answers 502" for all of them would be false in the case that
+         * matters most: `direct` means the upstream is gone and the container is
+         * making its own outbound connections again, subject to the destination
+         * rules — the opposite failure, and the one a caller must not be told is a
+         * silent container.
+         *
+         * The gate on each consequence is agreement between `state` and `enabled`
+         * SPECIFICALLY, not a check that the whole payload is coherent. Those two
+         * come from one slot snapshot, so disagreement between them means the
+         * answer cannot be trusted at all. Other oddities are not adjudicated here
+         * either: a `direct` answer that still carries a scheme and port, say, is
+         * refused on its `state` alone and never reaches the field checks below —
+         * those only ever see `active`, or a missing or malformed `state`. The
+         * extra fields appear in the dumped payload and nowhere else.
+         */
+        if (typeof state?.state === 'string' && state.state !== 'active') {
+            // What is always true is only that the start was not confirmed. A
+            // consequence is added on top of that in exactly the two cases where the
+            // kit defines one AND the answer agrees with itself; everything else gets
+            // no prediction at all.
+            //
+            // A value this build does not know has no defined behaviour, so any
+            // sentence about where traffic goes would be invented. A self-
+            // contradictory answer (`state: "unavailable"` with `enabled: false`) is a
+            // broken report, and diagnosing routing from a broken report is the same
+            // mistake in a different place: the kit derives both fields from one slot
+            // snapshot, so a contradiction means the answer cannot be trusted, not
+            // that some third behaviour is in effect.
+            const consequence = state.state === 'unavailable' && state.enabled === true
+                ? '; the container answers forwarded requests with 502 rather than routing them through this exit'
+                : state.state === 'direct' && state.enabled === false
+                    ? '; no upstream is configured any more, so requests are dialled from the container itself ' +
+                        'rather than through this exit, and something cleared it between the write and this read'
+                    : '';
+            throw new Error(`egress upstream read-back reports state="${state.state}", not "active", so this exit is ` +
+                `not confirmed as the upstream in force${consequence} (${JSON.stringify(state)})`);
+        }
         if (state?.enabled !== true || state?.port !== tunnel.containerPort) {
             throw new Error(`egress upstream read-back mismatch: ${JSON.stringify(state)} ` +
                 `(expected enabled=true port=${tunnel.containerPort})`);
@@ -322,7 +445,7 @@ export async function startLocalExit(opts) {
             const name = opts.alias === true
                 ? `exit-${randomBytes(4).toString('hex')}`
                 : opts.alias;
-            const created = await client.api.proxyAliases.create({
+            const created = await client.api.proxy.aliases.create({
                 container_id: container.id,
                 program: 'egress',
                 alias: name,
@@ -335,7 +458,7 @@ export async function startLocalExit(opts) {
                 // than leaving an orphan nobody knows about.
                 errors.push({
                     step: 'createAlias',
-                    message: `alias "${name}" was created but the response carried no id, so it cannot be removed automatically; find it with \`hoody proxy list\` and remove it with \`hoody proxy delete <id>\``,
+                    message: `alias "${name}" was created but the response carried no id, so it cannot be removed automatically; find it with \`hoody proxy aliases list\` and remove it with \`hoody proxy aliases delete <id>\``,
                 });
             }
         }
@@ -397,7 +520,7 @@ export async function startLocalExit(opts) {
                 // a working proxy that is not ours.
                 let foreign = false;
                 try {
-                    const owned = unwrap(await box.egress.getUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
+                    const owned = unwrap(await box.egress.upstream.get(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
                     foreign = upstreamIsForeign(owned, tunnel.containerPort);
                 }
                 catch { /* fall through and clear: our dead port is the worse state */ }
@@ -408,7 +531,7 @@ export async function startLocalExit(opts) {
                 let ok = false;
                 for (let attempt = 0; attempt < 3 && !ok; attempt++) {
                     try {
-                        const after = unwrap(await box.egress.disableUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
+                        const after = unwrap(await box.egress.upstream.disable(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
                         ok = after?.enabled === false;
                     }
                     catch { /* reported through the callback below */ }
@@ -419,7 +542,7 @@ export async function startLocalExit(opts) {
                     // the caller is told `upstreamCleared`, and that has to mean the same
                     // thing whichever path produced it.
                     try {
-                        const confirmed = unwrap(await box.egress.getUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
+                        const confirmed = unwrap(await box.egress.upstream.get(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
                         ok = confirmed?.enabled === false;
                         if (ok)
                             upstreamConfirmedGone = true;
@@ -431,7 +554,7 @@ export async function startLocalExit(opts) {
                 if (!ok) {
                     errors.push({
                         step: 'sessionLost',
-                        message: 'tunnel died and the upstream could not be cleared; run `hoody --container <id> egress upstream clear`',
+                        message: 'tunnel died and the upstream could not be cleared; run `hoody --container <id> egress upstream disable`',
                     });
                 }
                 notifySessionLost({ upstreamCleared: ok });
@@ -455,7 +578,7 @@ export async function startLocalExit(opts) {
                 report.upstreamVerified = true;
                 if (aliasId) {
                     try {
-                        await client.api.proxyAliases.delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS });
+                        await client.api.proxy.aliases.delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS });
                         report.aliasRemoved = true;
                         aliasId = undefined;
                     }
@@ -480,7 +603,7 @@ export async function startLocalExit(opts) {
             // same happens when a caller deliberately took over with
             // --replace-upstream. Check that the port still matches ours first.
             try {
-                const owned = unwrap(await box.egress.getUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
+                const owned = unwrap(await box.egress.upstream.get(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
                 if (upstreamIsForeign(owned, tunnel.containerPort)) {
                     report.upstreamCleared = false;
                     // NOT `upstreamVerified = true`. The upstream is still enabled — it
@@ -499,7 +622,7 @@ export async function startLocalExit(opts) {
                     });
                     if (aliasId) {
                         try {
-                            await client.api.proxyAliases.delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS });
+                            await client.api.proxy.aliases.delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS });
                             report.aliasRemoved = true;
                             aliasId = undefined;
                         }
@@ -526,7 +649,7 @@ export async function startLocalExit(opts) {
             // is never configured to dial a port that has already gone away.
             for (let attempt = 0; attempt < 3 && !report.upstreamCleared; attempt++) {
                 try {
-                    const cleared = unwrap(await box.egress.disableUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
+                    const cleared = unwrap(await box.egress.upstream.disable(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
                     report.upstreamCleared = cleared?.enabled === false;
                     if (!report.upstreamCleared) {
                         report.errors.push({ step: 'disableUpstream', message: JSON.stringify(cleared) });
@@ -537,7 +660,7 @@ export async function startLocalExit(opts) {
                 }
             }
             try {
-                const after = unwrap(await box.egress.getUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
+                const after = unwrap(await box.egress.upstream.get(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
                 report.upstreamVerified = after?.enabled === false;
                 // Latch it: a retried stop() on this handle has nothing left to clear,
                 // and by then the port may belong to a different exit.
@@ -575,7 +698,7 @@ export async function startLocalExit(opts) {
                 report.errors.push({
                     step: 'closeTunnel',
                     message: 'skipped: the upstream is still set, so the tunnel was left open to keep the ' +
-                        'container working. Clear it with `hoody --container <id> egress upstream clear`, then stop again.',
+                        'container working. Disable it with `hoody --container <id> egress upstream disable`, then stop again.',
                 });
             }
             if (aliasId) {
@@ -583,7 +706,7 @@ export async function startLocalExit(opts) {
                 // forceStop() before it could reach its forced close, which is exactly
                 // the situation forceStop() exists to escape.
                 try {
-                    await client.api.proxyAliases.delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS });
+                    await client.api.proxy.aliases.delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS });
                     report.aliasRemoved = true;
                     aliasId = undefined;
                 }
@@ -629,7 +752,7 @@ export async function startLocalExit(opts) {
                             step: 'closeTunnel',
                             message: 'forced: the upstream could not be verified as cleared, and the tunnel was ' +
                                 'closed anyway. The container may point at a dead port — run ' +
-                                '`hoody --container <id> egress upstream clear`.',
+                                '`hoody --container <id> egress upstream disable`.',
                         };
                     }
                 }
@@ -660,7 +783,7 @@ export async function startLocalExit(opts) {
             // Bounded, like every other teardown call. An unbounded delete here hung
             // the unwind of a startup that had ALREADY failed, turning one error into
             // a command that never returns.
-            await client.api.proxyAliases
+            await client.api.proxy.aliases
                 .delete(aliasId, { timeoutMs: TEARDOWN_TIMEOUT_MS })
                 .catch(() => { });
         }
@@ -669,7 +792,7 @@ export async function startLocalExit(opts) {
         let cleared = !upstreamAttempted;
         for (let attempt = 0; attempt < 3 && !cleared; attempt++) {
             try {
-                const after = unwrap(await box.egress.disableUpstream(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
+                const after = unwrap(await box.egress.upstream.disable(undefined, { timeoutMs: TEARDOWN_TIMEOUT_MS }));
                 cleared = after?.enabled === false;
             }
             catch { /* retried below, then reported on the thrown error */ }
@@ -687,7 +810,7 @@ export async function startLocalExit(opts) {
             const stranded = tunnel;
             let closed = false;
             throw new LocalExitStartupError(`${err.message}. The container's egress upstream could NOT be cleared — ` +
-                `run \`hoody --container <id> egress upstream clear\` against it before using its proxy again. ` +
+                `run \`hoody --container <id> egress upstream disable\` against it before using its proxy again. ` +
                 `The tunnel is still open; call \`error.closeTunnel()\` to release it.`, {
                 cause: err,
                 containerPort: stranded.containerPort,

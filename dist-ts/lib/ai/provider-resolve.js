@@ -16,7 +16,7 @@
  * Keyless allowed only when URL origin matches localhost/RFC1918.
  *
  * Endpoint acceptance for non-allowlisted origins handled separately in
- * chat/docs-search-tool.ts and (in later phases) chat/endpoint-accept.ts.
+ * chat/endpoint-accept.ts.
  */
 export function isResolverError(r) {
     return r.error !== undefined;

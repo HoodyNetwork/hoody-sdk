@@ -2,21 +2,24 @@
  * Terminal SSH convenience methods — high-level wrappers for SSH terminal creation.
  *
  * Architecture:
- *   This module extends HoodyClient with SSH-specific convenience methods:
+ *   This module extends the generated terminal services with SSH-specific convenience methods:
  *
- *   - `createSshTerminal(options)` — create an SSH terminal session (ephemeral by default)
- *   - `createLocalTerminal(options?)` — create a local terminal session (ephemeral by default)
- *   - `createDesktopTerminal(options)` — create a desktop terminal with X11 display
- *   - `executeSshCommand(options)` — execute a command on a remote SSH server
+ *   - `terminal.sessions.createSsh(options)` — create an SSH terminal session (ephemeral by default)
+ *   - `terminal.sessions.createLocal(options?)` — create a local terminal session (ephemeral by default)
+ *   - `terminal.sessions.createDesktop(options)` — create a desktop terminal with X11 display
+ *   - `terminal.commands.runSsh(options)` — run a command on a remote SSH server
  *
  *   All methods require a container-scoped client (via `withContainer()`).
- *   They are attached to HoodyClient.prototype via module augmentation
- *   and runtime prototype patching, following the same pattern as
- *   terminal-exec.ts.
+ *   They are attached to SessionsService.prototype / CommandsService.prototype via module
+ *   augmentation and runtime prototype patching, following the same pattern as exec-scripts.ts.
+ *   The owning client (for the container URL templates) is read back from the service
+ *   (lib/service-owner.ts).
  *
  *   Each method returns `terminal_url` built from the container's URL templates.
  */
-import { HoodyClient } from './hoody-client.js';
+import { SessionsService } from '../generated/terminal/sessions.service.js';
+import { CommandsService } from '../generated/terminal/commands.service.js';
+import { ownerOf } from './service-owner.js';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -90,7 +93,7 @@ async function createSshTerminalImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
     const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
-    const response = await api.sessions.createTerminal({
+    const response = await api.sessions.create({
         ssh_host: options.host,
         ssh_user: options.user,
         ssh_port: options.port,
@@ -120,7 +123,7 @@ async function createLocalTerminalImpl(options) {
     const api = getTerminalApi(this);
     const o = options || {};
     const si = terminalServiceIndex(o.serviceIndex, o.terminal_id);
-    const response = await api.sessions.createTerminal({
+    const response = await api.sessions.create({
         terminal_id: o.terminal_id,
         ephemeral: o.terminal_id ? (o.ephemeral ?? false) : (o.ephemeral ?? true),
         shell: o.shell,
@@ -142,7 +145,7 @@ async function createDesktopTerminalImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
     const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
-    const response = await api.sessions.createTerminal({
+    const response = await api.sessions.create({
         terminal_id: options.terminal_id,
         desktop: true,
         desktop_env: options.desktop_env,
@@ -168,10 +171,10 @@ async function executeSshCommandImpl(options) {
     assertContainerScoped(this);
     const api = getTerminalApi(this);
     const si = terminalServiceIndex(options.serviceIndex, options.terminal_id);
-    if (!api.execution) {
-        throw new Error('Terminal execution service not available');
+    if (!api.commands) {
+        throw new Error('Terminal commands service not available');
     }
-    const response = await api.execution.execute({
+    const response = await api.commands.run({
         command: options.command,
         timeout: options.timeout,
         wait: options.wait ?? true,
@@ -205,14 +208,22 @@ async function executeSshCommandImpl(options) {
 // ---------------------------------------------------------------------------
 const TERMINAL_SSH_PATCH_MARKER = Symbol.for('hoody.sdk.terminal.ssh.patch');
 export function patchTerminalSshPrototype() {
-    const prototype = HoodyClient.prototype;
-    if (prototype[TERMINAL_SSH_PATCH_MARKER])
+    const sessions = SessionsService.prototype;
+    if (sessions[TERMINAL_SSH_PATCH_MARKER])
         return;
-    prototype.createSshTerminal = createSshTerminalImpl;
-    prototype.createLocalTerminal = createLocalTerminalImpl;
-    prototype.createDesktopTerminal = createDesktopTerminalImpl;
-    prototype.executeSshCommand = executeSshCommandImpl;
-    prototype[TERMINAL_SSH_PATCH_MARKER] = true;
+    sessions['createSsh'] = function createSsh(options) {
+        return createSshTerminalImpl.call(ownerOf(this, 'terminal.sessions.createSsh'), options);
+    };
+    sessions['createLocal'] = function createLocal(options) {
+        return createLocalTerminalImpl.call(ownerOf(this, 'terminal.sessions.createLocal'), options);
+    };
+    sessions['createDesktop'] = function createDesktop(options) {
+        return createDesktopTerminalImpl.call(ownerOf(this, 'terminal.sessions.createDesktop'), options);
+    };
+    CommandsService.prototype['runSsh'] = function runSsh(options) {
+        return executeSshCommandImpl.call(ownerOf(this, 'terminal.commands.runSsh'), options);
+    };
+    sessions[TERMINAL_SSH_PATCH_MARKER] = true;
 }
 try {
     patchTerminalSshPrototype();

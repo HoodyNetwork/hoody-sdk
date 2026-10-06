@@ -73,7 +73,25 @@ function preferArrayBuffer(ws) {
            accepts Uint8Array / Blob, so this is best-effort. */
     }
 }
-export async function openWebSocket(url) {
+export async function openWebSocket(url, headers) {
+    const isBrowser = typeof globalThis.window !== "undefined" &&
+        typeof globalThis.document !== "undefined";
+    if (headers && Object.keys(headers).length > 0 && !isBrowser) {
+        // Upgrade headers need the `ws` package. Never fall back to a
+        // connection without them: the headers usually carry the credential.
+        let mod;
+        try {
+            mod = (await import(/* @vite-ignore */ "ws"));
+        }
+        catch (e) {
+            throw new Error("hoody-sdk: `headers` needs the optional `ws` package " +
+                "(`npm install ws`); refusing to connect without them. Original error: " +
+                (e instanceof Error ? e.message : String(e)));
+        }
+        const ws = new mod.default(url, undefined, { headers });
+        preferArrayBuffer(ws);
+        return ws;
+    }
     const globalAny = globalThis;
     const Ctor = globalAny.WebSocket;
     if (typeof Ctor === "function") {
@@ -794,7 +812,7 @@ export class CurlChannel {
             return;
         let ws;
         try {
-            ws = await openWebSocket(this.connectUrl);
+            ws = await openWebSocket(this.connectUrl, this.options.headers);
         }
         catch (e) {
             const err = e instanceof Error ? e : new Error(String(e));

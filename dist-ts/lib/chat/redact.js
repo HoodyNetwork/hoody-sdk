@@ -66,6 +66,8 @@ export const SENSITIVE_FLAGS = new Set([
     '--cur-password', '--cur-pass',
     '--db-password', '--db-pass',
     '--local-password',
+    // hoody exec remote: the script token.
+    '--remote-token',
 ]);
 // Matches the shared argv sanitizer literal for consistency across both redaction paths.
 export const REDACTED = '<REDACTED>';

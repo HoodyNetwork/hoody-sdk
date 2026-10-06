@@ -1,7 +1,7 @@
 /**
  * hoody-sdk/chat — programmatic access to the hoody chat feature.
  *
- * The CLI (`hoody chat` / `hoody chatbot`) is a thin Commander wrapper
+ * The CLI (`hoody chat`) is a thin Commander wrapper
  * around the runners and primitives re-exported here. Any consumer of the
  * SDK can therefore drive the same chat flow without shelling out to the
  * binary — useful for embedding chat into other tools, for writing

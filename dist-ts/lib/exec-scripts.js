@@ -3,7 +3,7 @@
  *
  * Architecture:
  *   This module extends the auto-generated ScriptsService with high-level
- *   helpers (readFile, writeMarkdown, readSchemaJson, etc.) without modifying
+ *   helpers (listFiles, readFile, writeFile, deleteFile) without modifying
  *   the generated code. It uses two TypeScript mechanisms:
  *
  *   1. `declare module` augmentation: adds new method signatures to
@@ -12,11 +12,11 @@
  *      is called as a side-effect of importing this module, attaching the
  *      actual implementations to ScriptsService.prototype.
  *
- * Four content-type families:
- *   - Generic files (readFile / writeFile / deleteFile / listFiles)
- *   - Markdown (.md) — auto-appends extension, skips validation
- *   - Schema JSON (.schema.json) — auto-appends extension, parses/serializes JSON
- *   - OpenAPI JSON (.openapi.json) — same as schema JSON with different extension
+ * One action, one name; the content family is an option, `kind`:
+ *   - 'file' (default) — a generic file, path used as given
+ *   - 'markdown' — .md, auto-appends the extension, skips validation
+ *   - 'schema' — .schema.json, auto-appends the extension, parses/serializes JSON
+ *   - 'openapi' — .openapi.json, same as schema with a different extension
  *
  * All path arguments pass through assertBasePath (from exec-path-utils.ts) to
  * prevent directory traversal before reaching the generated service layer.
@@ -55,6 +55,10 @@ function parseBooleanLike(value, fallback) {
  *   - metadata: coerced to boolean (false by default)
  *   - label, tags, mode, enabled, websocket: default to '' (no constraint)
  *   - recursive, include_comments: default to 'false'
+ *
+ * An exhaustive listing (exhaustive true or 'true') gets none of these defaults,
+ * not even the empty dir: the server refuses it with any option that could hide
+ * an entry. The caller's own options are still sent, and still refused.
  */
 function normalizeListScriptsOptions(options) {
     const source = typeof options === 'object' && options !== null
@@ -63,8 +67,13 @@ function normalizeListScriptsOptions(options) {
     const normalized = {
         ...source,
     };
+    const exhaustive = parseBooleanLike(normalized.exhaustive, false);
     if (normalized.dir === undefined || normalized.dir === null) {
-        normalized.dir = '';
+        // A null dir would be sent as the text "null".
+        if (exhaustive)
+            delete normalized.dir;
+        else
+            normalized.dir = '';
     }
     else if (typeof normalized.dir === 'string') {
         const trimmedDir = normalized.dir.trim();
@@ -73,6 +82,8 @@ function normalizeListScriptsOptions(options) {
     else {
         normalized.dir = '';
     }
+    if (exhaustive)
+        return normalized;
     if (normalized.filter === undefined
         || normalized.filter === null
         || normalized.filter === '') {
@@ -111,14 +122,23 @@ function normalizePathWithExtension(path, extension, helperName) {
     }
     return `${normalized}${extension}`;
 }
-function normalizeMarkdownPath(path, helperName) {
-    return normalizePathWithExtension(path, '.md', helperName);
+const KIND_EXTENSION = {
+    markdown: '.md',
+    schema: '.schema.json',
+    openapi: '.openapi.json',
+};
+/** The path a helper sends for a kind: a generic file as given, the others with their extension. */
+function pathForKind(path, kind, helperName) {
+    if (kind === undefined || kind === 'file')
+        return assertPath(path, helperName);
+    const extension = KIND_EXTENSION[kind];
+    if (extension === undefined) {
+        throw new Error(`${helperName}: unknown kind ${JSON.stringify(kind)}; expected file, markdown, schema or openapi`);
+    }
+    return normalizePathWithExtension(path, extension, helperName);
 }
-function normalizeSchemaJsonPath(path, helperName) {
-    return normalizePathWithExtension(path, '.schema.json', helperName);
-}
-function normalizeOpenApiJsonPath(path, helperName) {
-    return normalizePathWithExtension(path, '.openapi.json', helperName);
+function isJsonKind(kind) {
+    return kind === 'schema' || kind === 'openapi';
 }
 function normalizeJsonSpace(options) {
     const requested = options?.space;
@@ -194,106 +214,57 @@ export function patchExecScriptsServicePrototype() {
         return originalWrite.call(this, normalizedPayload, requestOptions, templateVars);
     };
     prototype.listFiles = function listFiles(options, templateVars) {
-        return this.list(options, templateVars);
+        const { kind, ...rest } = options ?? {};
+        const filter = rest.filter
+            ?? (kind === undefined || kind === 'file' ? undefined : `*${KIND_EXTENSION[kind]}`);
+        return this.list({ ...rest, ...(filter !== undefined ? { filter } : {}) }, templateVars);
     };
-    prototype.listMarkdown = function listMarkdown(options, templateVars) {
-        const normalizedOptions = {
-            ...(options || {}),
-            filter: options?.filter ?? '*.md',
-        };
-        return this.list(normalizedOptions, templateVars);
+    prototype.readFile = async function readFile(path, options, templateVars) {
+        const { kind, ...rest } = options ?? {};
+        const target = pathForKind(path, kind, 'readFile');
+        const response = await this.read({ ...rest, path: target }, templateVars);
+        if (!isJsonKind(kind))
+            return response;
+        const parsed = parseJsonContent(response.data?.content, target, 'readFile');
+        return { ...response, data: { ...response.data, content: parsed } };
     };
-    prototype.listSchemaJson = function listSchemaJson(options, templateVars) {
-        return this.listFiles({
-            ...(options || {}),
-            filter: options?.filter ?? '*.schema.json',
-        }, templateVars);
-    };
-    prototype.listOpenApiJson = function listOpenApiJson(options, templateVars) {
-        return this.listFiles({
-            ...(options || {}),
-            filter: options?.filter ?? '*.openapi.json',
-        }, templateVars);
-    };
-    prototype.readFile = function readFile(path, options, templateVars) {
-        const request = {
-            ...(options || {}),
-            path: assertPath(path, 'readFile'),
-        };
-        return this.read(request, templateVars);
-    };
-    prototype.readMarkdown = function readMarkdown(path, options, templateVars) {
-        return this.readFile(normalizeMarkdownPath(path, 'readMarkdown'), options, templateVars);
-    };
-    prototype.readSchemaJson = async function readSchemaJson(path, options, templateVars) {
-        const normalizedPath = normalizeSchemaJsonPath(path, 'readSchemaJson');
-        const response = await this.readFile(normalizedPath, options, templateVars);
-        const parsed = parseJsonContent(response.data?.content, normalizedPath, 'readSchemaJson');
-        return {
-            ...response,
-            data: {
-                ...response.data,
-                content: parsed,
-            },
-        };
-    };
-    prototype.readOpenApiJson = async function readOpenApiJson(path, options, templateVars) {
-        const normalizedPath = normalizeOpenApiJsonPath(path, 'readOpenApiJson');
-        const response = await this.readFile(normalizedPath, options, templateVars);
-        const parsed = parseJsonContent(response.data?.content, normalizedPath, 'readOpenApiJson');
-        return {
-            ...response,
-            data: {
-                ...response.data,
-                content: parsed,
-            },
-        };
-    };
-    prototype.writeFile = function writeFile(path, content, options, requestOptions, templateVars) {
+    prototype.writeFile = function writeFile(path, data, options, requestOptions, templateVars) {
+        const kind = options?.kind;
+        const target = pathForKind(path, kind, 'writeFile');
+        let content;
+        if (isJsonKind(kind)) {
+            if (typeof data !== 'object' || data === null) {
+                throw new Error(`writeFile with kind "${kind}" takes an object, not ${typeof data}`);
+            }
+            content = stringifyJson(data, options);
+        }
+        else {
+            if (typeof data !== 'string') {
+                throw new Error(`writeFile with kind "${kind ?? 'file'}" takes a string of content, not ${typeof data}`);
+            }
+            content = data;
+        }
         const payload = {
-            path: assertPath(path, 'writeFile'),
+            path: target,
             content,
             createDirs: options?.createDirs ?? true,
-            validate: parseBooleanLike(options?.validate, false),
+            // Only a generic file may ask for script validation; every other kind is data.
+            validate: kind === undefined || kind === 'file'
+                ? parseBooleanLike(options?.validate, false)
+                : false,
         };
         return this.write(payload, requestOptions, templateVars);
     };
-    prototype.writeMarkdown = function writeMarkdown(path, content, options, requestOptions, templateVars) {
-        return this.writeFile(normalizeMarkdownPath(path, 'writeMarkdown'), content, {
-            createDirs: options?.createDirs ?? true,
-            validate: false,
-        }, requestOptions, templateVars);
-    };
-    prototype.writeSchemaJson = function writeSchemaJson(path, schema, options, requestOptions, templateVars) {
-        const normalizedPath = normalizeSchemaJsonPath(path, 'writeSchemaJson');
-        return this.writeFile(normalizedPath, stringifyJson(schema, options), {
-            createDirs: options?.createDirs ?? true,
-            validate: false,
-        }, requestOptions, templateVars);
-    };
-    prototype.writeOpenApiJson = function writeOpenApiJson(path, openapi, options, requestOptions, templateVars) {
-        const normalizedPath = normalizeOpenApiJsonPath(path, 'writeOpenApiJson');
-        return this.writeFile(normalizedPath, stringifyJson(openapi, options), {
-            createDirs: options?.createDirs ?? true,
-            validate: false,
-        }, requestOptions, templateVars);
-    };
     prototype.deleteFile = function deleteFile(path, options, templateVars) {
+        const { kind, ...rest } = options ?? {};
         const request = {
-            ...(options || {}),
-            path: assertPath(path, 'deleteFile'),
+            ...rest,
+            path: pathForKind(path, kind, 'deleteFile'),
+            // The spec admits only "true"; any other value a caller passes is sent as given and the
+            // server refuses it, rather than being silently turned into a confirmation.
             confirm: normalizeConfirmQuery(options?.confirm),
         };
         return this.delete(request, templateVars);
-    };
-    prototype.deleteMarkdown = function deleteMarkdown(path, options, templateVars) {
-        return this.deleteFile(normalizeMarkdownPath(path, 'deleteMarkdown'), options, templateVars);
-    };
-    prototype.deleteSchemaJson = function deleteSchemaJson(path, options, templateVars) {
-        return this.deleteFile(normalizeSchemaJsonPath(path, 'deleteSchemaJson'), options, templateVars);
-    };
-    prototype.deleteOpenApiJson = function deleteOpenApiJson(path, options, templateVars) {
-        return this.deleteFile(normalizeOpenApiJsonPath(path, 'deleteOpenApiJson'), options, templateVars);
     };
     prototype[EXEC_SCRIPTS_PATCH_MARKER] = true;
 }

@@ -4,11 +4,11 @@
  * Auto-generated service exports for browser namespace
  * @packageDocumentation
  */
-export { InstanceManagementService } from './instance-management.service.js';
-export { BrowserInteractionService } from './browser-interaction.service.js';
-export { IntrospectionControlService } from './introspection-control.service.js';
-export { ServerHealthMetricsService } from './server-health-metrics.service.js';
-export { PageContentService } from './page-content.service.js';
-export { BrowserStateService } from './browser-state.service.js';
-export { DebuggingService } from './debugging.service.js';
-export { BrowsingHistoryService } from './browsing-history.service.js';
+export { InstancesService } from './instances.service.js';
+export { PageService } from './page.service.js';
+export { TabsService } from './tabs.service.js';
+export { KitService } from './kit.service.js';
+export { ViewportService } from './viewport.service.js';
+export { CookiesService } from './cookies.service.js';
+export { LogsService } from './logs.service.js';
+export { HistoryService } from './history.service.js';

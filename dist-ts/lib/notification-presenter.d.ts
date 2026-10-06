@@ -16,11 +16,16 @@
 import type { Notification as NotificationData } from '../generated/types.js';
 import type { NotificationServerMessage } from '../generated/notifications/notifications_connect-notification-stream.websocket.js';
 export type { NotificationServerMessage };
+/**
+ * The fields of a parsed message: `id` always, every other Notification field only when the message
+ * carried it with the right type.
+ */
+export type ParsedNotificationData = Pick<NotificationData, 'id'> & Partial<Omit<NotificationData, 'id'>>;
 export interface ParsedNotification {
     /** Original raw WebSocket message */
     raw: NotificationServerMessage;
     /** Typed notification data (runtime-validated, not just cast) */
-    data: NotificationData;
+    data: ParsedNotificationData;
     /** Fully resolved absolute icon URL, or undefined */
     iconUrl: string | undefined;
     /** Display ID from the WebSocket message */
@@ -58,7 +63,8 @@ export interface NotificationPresenter {
  * Parse a raw WebSocket notification message into a typed ParsedNotification.
  *
  * Performs runtime field extraction with type checks — does NOT blindly cast
- * `data: unknown` to NotificationData. Missing fields become `undefined`.
+ * `data: unknown` to ParsedNotificationData. Missing fields become `undefined`, except `id`: a message
+ * without an integer id is refused with a ValidationError (field `id`).
  */
 export declare function parseNotificationData(message: NotificationServerMessage, baseUrl?: string): ParsedNotification;
 /**

@@ -5,17 +5,18 @@
  *   This module extends HoodyClient with four convenience methods:
  *
  *   - `saveScreenshot(options)` — generic: specify source + options
- *   - `saveDisplayScreenshot(path?, options?)` — capture display + save
- *   - `saveBrowserScreenshot(path?, options?)` — capture browser + save
- *   - `saveTerminalScreenshot(path?, options?)` — capture terminal + save
+ *   - `display.screenshots.save(path?, options?)` — capture display + save
+ *   - `browser.page.saveScreenshot(path?, options?)` — capture browser + save
+ *   - `terminal.sessions.saveScreenshot(path?, options?)` — capture terminal + save
  *
  *   All methods require a container-scoped client (via `withContainer()`).
  *   They compose: capture API call → decode → validate → putFile → chmod.
  *
  *   Data flow:
- *     Display:  captureScreenshot({base64:true}) → Buffer.from(base64)
- *     Browser:  takeScreenshot({format})                → Buffer.from(base64)
- *     Terminal: captureTerminalScreenshot({save:false})  → Buffer.from(arrayBuffer)
+ *     Display:  display.screenshots.capture({base64:true})        → Buffer.from(base64)
+ *     Browser:  browser.page.captureScreenshot({format})        → Buffer.from(base64)
+ *     Terminal: terminal.sessions.captureScreenshot({save:false}) → Buffer.from(arrayBuffer)
+ *     Write:    files.mkdir → files.upload → files.chmod 0600 (files.delete on failure)
  *
  *   Path validation (17 checks):
  *     typeof, mutual exclusivity, raw length, NFKC, '..' pre/post normalize,
@@ -25,6 +26,10 @@
  */
 import { posix as pathPosix } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { ScreenshotsService } from '../generated/display/screenshots.service.js';
+import { PageService } from '../generated/browser/page.service.js';
+import { SessionsService } from '../generated/terminal/sessions.service.js';
+import { ownerOf } from './service-owner.js';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -304,10 +309,14 @@ function assertContainerScoped(client) {
 // ---------------------------------------------------------------------------
 // Capture implementations
 // ---------------------------------------------------------------------------
+// The capture/write helpers take the typed HoodyClient, never `any`: every
+// call below is checked against the generated service classes, so a rename in
+// sdk-names.json (captureScreenshot → capture, putFile → upload, …) fails the
+// typecheck instead of turning into a runtime "is not a function".
 async function captureDisplay(client, options) {
-    const response = await client.display.screenshots.captureScreenshot({
-        base64: true,
+    const response = await client.display.screenshots.capture({
         ...options,
+        base64: true,
     });
     const data = response?.data ?? response;
     const base64String = data?.image?.data;
@@ -322,7 +331,7 @@ async function captureDisplay(client, options) {
     return Buffer.from(base64String, 'base64');
 }
 async function captureBrowser(client, format, options) {
-    const response = await client.browser.interaction.takeScreenshot({
+    const response = await client.browser.page.captureScreenshot({
         ...options,
         format: format === 'jpeg' ? 'jpeg' : 'png',
     });
@@ -450,24 +459,21 @@ async function saveScreenshotImpl(options) {
     // 2. Validate magic bytes
     validateMagicBytes(buffer, resolvedFormat);
     // 3. Create directory if needed
+    // Typed calls on the generated FilesService (mkdir/upload/chmod/delete): the
+    // old untyped `(this as any).files.putFile` named methods that had been
+    // renamed, so every save failed and the chmod was silently skipped.
+    const filesService = this.files;
     if (needsMkdir) {
         try {
-            const filesService = this.files;
-            if (filesService?.postFileOperation) {
-                await filesService.postFileOperation(mkdirPath, { mkdir: '' });
-            }
+            await filesService.mkdir(mkdirPath);
         }
         catch {
             // mkdir may fail if dir exists — that's OK
         }
     }
     // 4. Write file
-    const filesService = this.files;
-    if (!filesService?.putFile) {
-        throw new ScreenshotSaveError('WRITE_FAILED', 'Files service not available on this client');
-    }
     try {
-        await filesService.putFile(resolvedPath, buffer);
+        await filesService.upload(resolvedPath, buffer);
     }
     catch (err) {
         throw new ScreenshotSaveError('WRITE_FAILED', `Failed to write screenshot: ${err.message}`, {
@@ -478,18 +484,14 @@ async function saveScreenshotImpl(options) {
     }
     // 5. chmod 0600 (best-effort hardening with rollback)
     try {
-        if (filesService.chmodFile) {
-            await filesService.chmodFile(resolvedPath, { chmod: '0600' });
-        }
+        await filesService.chmod(resolvedPath, { chmod: '0600' });
     }
     catch (chmodError) {
         // Rollback: delete the file to prevent exposure with wrong permissions
         let deleted = false;
         try {
-            if (filesService.deleteFile) {
-                await filesService.deleteFile(resolvedPath);
-                deleted = true;
-            }
+            await filesService.delete(resolvedPath);
+            deleted = true;
         }
         catch {
             // Cleanup failed
@@ -520,24 +522,19 @@ export function patchScreenshotSavePrototype(HoodyClientClass) {
     if (prototype[SCREENSHOT_SAVE_PATCH_MARKER])
         return;
     prototype.saveScreenshot = saveScreenshotImpl;
-    prototype.saveDisplayScreenshot = function saveDisplayScreenshot(path, options) {
-        const opts = { ...options, source: 'display' };
-        if (path !== undefined)
-            opts.path = path;
-        return this.saveScreenshot(opts);
+    // The per-kit helpers sit on their own services and reach the client through its owner stamp
+    // (lib/service-owner.ts): the capture and the write both go through the container-scoped client.
+    const onService = (service, name, source, label) => {
+        service.prototype[name] = function saveFromService(path, options) {
+            const opts = { ...options, source };
+            if (path !== undefined)
+                opts.path = path;
+            return ownerOf(this, label).saveScreenshot(opts);
+        };
     };
-    prototype.saveBrowserScreenshot = function saveBrowserScreenshot(path, options) {
-        const opts = { ...options, source: 'browser' };
-        if (path !== undefined)
-            opts.path = path;
-        return this.saveScreenshot(opts);
-    };
-    prototype.saveTerminalScreenshot = function saveTerminalScreenshot(path, options) {
-        const opts = { ...options, source: 'terminal' };
-        if (path !== undefined)
-            opts.path = path;
-        return this.saveScreenshot(opts);
-    };
+    onService(ScreenshotsService, 'save', 'display', 'display.screenshots.save');
+    onService(PageService, 'saveScreenshot', 'browser', 'browser.page.saveScreenshot');
+    onService(SessionsService, 'saveScreenshot', 'terminal', 'terminal.sessions.saveScreenshot');
     prototype[SCREENSHOT_SAVE_PATCH_MARKER] = true;
 }
 // NOTE: Do NOT auto-invoke here — circular import with hoody-client.js causes

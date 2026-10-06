@@ -54,7 +54,7 @@ function assertAgentCmdExclusive(options) {
  * TerminalClient — Duplex stream for terminal I/O
  *
  * Implements Node.js Duplex stream interface plus terminal-specific events.
- * Internally delegates wire protocol handling to the typed W3 client.
+ * Internally delegates wire protocol handling to the generated typed WebSocket client.
  */
 export class TerminalClient extends Duplex {
     client = null;
@@ -305,6 +305,19 @@ export class TerminalClient extends Duplex {
                 else {
                     headers['Authorization'] = `Basic ${cred}`;
                 }
+            }
+            else if (kitAuth.type === 'token' && kitAuth.param !== undefined) {
+                // A proxy TokenAuth rule with `param` reads ONLY that query
+                // parameter (hoody-containers-reverse-proxy-endpoints
+                // matrix.service.ts case 'token'), in Node and browsers alike:
+                // no header, and not the legacy `?token=` name.
+                if (!urlObj) {
+                    throw new Error('TerminalClient: cannot add the kitAuth token parameter to an unparseable WebSocket URL');
+                }
+                const name = kitAuth.param.trim();
+                if (!name)
+                    throw new Error('kitAuth token: `param` must be a non-empty query parameter name');
+                urlObj.searchParams.set(name, kitAuth.value);
             }
             else if (kitAuth.type === 'jwt' || kitAuth.type === 'token') {
                 const value = kitAuth.type === 'jwt' ? kitAuth.token : kitAuth.value;

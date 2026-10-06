@@ -19,3 +19,16 @@ export function base64Encode(str) {
     // Browser: btoa only handles Latin-1, so encode UTF-8 first
     return btoa(unescape(encodeURIComponent(str)));
 }
+/**
+ * `url` with a token credential in its query parameter (`auth.param`),
+ * replacing any value already there. Only a kit credential ever goes here —
+ * never the account API token.
+ */
+export function withTokenQueryParam(url, auth) {
+    const name = auth.param.trim();
+    if (!name)
+        throw new Error('kitAuth token: `param` must be a non-empty query parameter name');
+    const u = new URL(url);
+    u.searchParams.set(name, auth.value);
+    return u.toString();
+}

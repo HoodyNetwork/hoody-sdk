@@ -293,3 +293,41 @@ export function verifyHoodySignatureFrom(source, input, options = {}) {
     }
     return verifyHoodySignatureHeader(parsed, input, options);
 }
+/**
+ * The `path` hoody-api signs for a request URL: the request target as the
+ * server received it, path plus query string (Fastify's `request.url`).
+ */
+export function hoodySignaturePath(url) {
+    const parsed = new URL(url, 'http://placeholder.invalid');
+    return `${parsed.pathname}${parsed.search}`;
+}
+/**
+ * Verify the `X-Hoody-Signature` of a response from inside SDK response
+ * middleware, with the response bytes the client captured:
+ *
+ * ```ts
+ * const client = new HoodyClient({ baseURL, token, captureRawBody: true,
+ *   middlewares: [{ onResponse(ctx) {
+ *     if (!verifyHoodySignatureFromContext(ctx, publicKey)) throw new Error('bad signature');
+ *     return ctx;
+ *   } }] });
+ * ```
+ *
+ * Returns `false` when the header is absent or malformed or the signature
+ * does not verify (unsigned responses — empty bodies, streams, kit routes —
+ * are therefore `false`). Throws when the context carries no `rawBody`: the
+ * client was not asked to capture it, which is a configuration error, not a
+ * bad signature.
+ */
+export function verifyHoodySignatureFromContext(context, publicKey, options = {}) {
+    if (!(context.rawBody instanceof Uint8Array)) {
+        throw new Error('verifyHoodySignatureFromContext: the middleware context has no rawBody; set captureRawBody: true on the client or the request');
+    }
+    return verifyHoodySignatureFrom(context.response, {
+        method: context.method,
+        statusCode: context.response.status,
+        path: hoodySignaturePath(context.url),
+        body: context.rawBody,
+        publicKey,
+    }, options);
+}

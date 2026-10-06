@@ -25,10 +25,74 @@
  *     "container.running") or on "*" for all data events.
  */
 import type { EventsService } from '../generated/api/events.service.js';
-import type { EventServerMessage } from './events-types.js';
+import { type EventFilter, type EventsConnectionState, type EventsStateEvent } from './events-manager.js';
+import type { EventServerMessage, HoodyEvent, HoodyStreamEvent } from './events-types.js';
+import type { EventsSession } from './events-session.js';
+import { type EventPattern, type EventTypesMatching } from './events-catalog.js';
+/** Options of the §5 runtime behind an EventsClient. */
+export interface EventsClientOptions {
+    /** The client session the stream is bound to; `client.events` passes it. */
+    session?: EventsSession;
+    /**
+     * C5 "refresh + reconnect". Defaults to the service HTTP client's own
+     * single-flight 401 refresh, so the socket and REST refresh the same way.
+     */
+    refreshToken?: () => Promise<string | undefined>;
+    /** Obtain a token when there is none yet (`client.events` runs the client's lazy login). */
+    prepareCredential?: () => Promise<unknown>;
+    /** Called for `scope_changed`; `client.events` clears the HTTP GET cache. */
+    onScopeChanged?: (projectId: string) => void;
+    /** Replay bound per catch-up, in 500-event pages (default 20). */
+    maxReplayPages?: number;
+    /** Deadline for the server's `welcome` after the socket connects (default 10 s). */
+    welcomeTimeoutMs?: number;
+    /** Reconnect backoff (default 1 s doubling to 30 s). */
+    backoff?: {
+        initialMs?: number;
+        maxMs?: number;
+    };
+    /** Where a throwing handler's error goes; nothing is logged by default. */
+    onListenerError?: (error: unknown, event: HoodyEvent) => void;
+    debug?: boolean;
+}
+/** Options of `on()`. */
+export interface EventsOnOptions {
+    signal?: AbortSignal;
+    /** Let wildcards (`'*'`, `'x.*'`) deliver live-only types such as `activity.logged`. */
+    includeEphemeral?: boolean;
+    filter?: EventFilter;
+}
+/** Options of `waitFor()` and `prepareWait()`. */
+export interface EventsWaitOptions {
+    signal?: AbortSignal;
+    /** Overall deadline, including connecting and catching up. */
+    timeoutMs?: number;
+    includeEphemeral?: boolean;
+}
+/** Options of `stream()`. */
+export interface EventsStreamOptions<P extends EventPattern = EventPattern> {
+    /** Patterns to deliver; all persisted types when omitted. */
+    types?: readonly P[];
+    /**
+     * Resume point: a `resume_after` saved from an event this stream (or an
+     * earlier one) yielded. Not `event.cursor`: see HoodyStreamEvent.
+     */
+    after?: string;
+    filter?: EventFilter;
+    signal?: AbortSignal;
+    /** Byte bound of the buffer (default 8 MiB); past it the oldest buffered events are dropped. */
+    maxBytes?: number;
+    includeEphemeral?: boolean;
+    /** `'throw'` ends the iterator with EventsGapError on any gap; `'continue'` (default) keeps going. */
+    onGap?: 'continue' | 'throw';
+}
+/** A `waitFor` filter: an EventFilter, or a predicate. */
+export type EventsWaitFilter<T extends HoodyEvent = HoodyEvent> = EventFilter | ((event: T) => boolean);
 export declare class EventsClient {
     private manager;
     private baseURL;
+    /** Realm the stream is scoped to (from the service), sent as `realm_id` on the handshake. */
+    private realmId;
     private getToken;
     /**
      * @param eventsService - Generated EventsService instance; used as a fallback
@@ -40,7 +104,82 @@ export declare class EventsClient {
      *   This fallback chain allows the events client to reuse the same auth token
      *   as the REST client without requiring the caller to wire it explicitly.
      */
-    constructor(eventsService: EventsService, baseURL?: string, getToken?: () => string | null);
+    constructor(eventsService: EventsService, baseURL?: string, getToken?: () => string | null, options?: EventsClientOptions);
+    /**
+     * Handle events of one or more types or patterns (`'container.running'`,
+     * `['container.running', 'container.stopped']`, `'container.*'`, `'*'`).
+     * Resolves with the unsubscribe function once the stream is admitted.
+     *
+     * Wildcards leave out live-only types unless `includeEphemeral` is set.
+     * Naming `activity.logged` itself opts this connection in to the activity
+     * feed. Replayed events (recovered from history after a disconnect) carry
+     * `replayed: true`; an event is delivered once per subscription even when
+     * both the socket and history carry it.
+     */
+    on<P extends EventPattern>(pattern: P | readonly P[], handler: (event: HoodyEvent<EventTypesMatching<P>>) => void, options?: EventsOnOptions): Promise<() => void>;
+    /**
+     * Events as an async iterator. Starts at the stream's boundary, or at
+     * `after` (an event's `resume_after`, saved after handling it). Breaking out of the
+     * loop unsubscribes. Byte-bounded: see EventsStreamOptions.maxBytes.
+     */
+    stream<P extends EventPattern = '*'>(options?: EventsStreamOptions<P>): AsyncIterableIterator<HoodyStreamEvent<EventTypesMatching<P>>>;
+    /**
+     * Resolves once history has been read up to the stream's boundary (the
+     * first catch-up of this session that ends with `has_more:false`).
+     * Anything committed after that is delivered to the handlers and
+     * streams open at the time.
+     *
+     * ready() holds the connection only while it waits. On its own it does
+     * not keep the stream open: with no handler, stream, wait or bootstrap
+     * running, the socket closes once it resolves, and a later subscription
+     * starts again from a new boundary. Register handlers first, or use
+     * waitFor/prepareWait/bootstrap, which hold the connection themselves.
+     */
+    ready(options?: {
+        signal?: AbortSignal;
+        timeoutMs?: number;
+    }): Promise<void>;
+    /**
+     * Wait for the first matching event. With `action`, the action runs only
+     * after `ready()`, so its event cannot be missed, even on a cold start:
+     *
+     *     const running = await client.events.waitFor('container.running',
+     *         { resourceId: id }, () => client.api.containers.start(id));
+     */
+    waitFor<P extends EventPattern>(pattern: P | readonly P[], filter?: EventsWaitFilter<HoodyEvent<EventTypesMatching<P>>>, action?: () => unknown, options?: EventsWaitOptions): Promise<HoodyEvent<EventTypesMatching<P>>>;
+    /**
+     * Subscribe, then resolve after `ready()` with `{ result }`. Act, then
+     * await `result`. The two-step form of `waitFor(type, filter, action)`.
+     */
+    prepareWait<P extends EventPattern>(pattern: P | readonly P[], filter?: EventsWaitFilter<HoodyEvent<EventTypesMatching<P>>>, options?: EventsWaitOptions): Promise<{
+        result: Promise<HoodyEvent<EventTypesMatching<P>>>;
+    }>;
+    /**
+     * Load a consistent starting state: waits for `ready()`, runs `readFn`
+     * (your GET calls), and returns the snapshot with every resource that
+     * events touched while it ran. Refetch those through GET; never apply an
+     * event payload over a snapshot. A gap while reading restarts it (at most
+     * 3 times, then EventsGapError).
+     */
+    bootstrap<S>(readFn: () => Promise<S> | S, options?: {
+        signal?: AbortSignal;
+        timeoutMs?: number;
+    }): Promise<{
+        snapshot: S;
+        touched: Array<{
+            resource_type: string;
+            resource_id: string;
+        }>;
+    }>;
+    /** Observe connection state, gaps, `scope_changed` and non-fatal notices. Returns an unsubscribe function. */
+    onState(listener: (event: EventsStateEvent) => void): () => void;
+    /** The §5 connection state. */
+    get state(): EventsConnectionState;
+    /**
+     * Close the stream for good: the socket closes, pending waits reject with
+     * EventsClosedError, streams end and every handler is dropped. Idempotent.
+     */
+    close(): void;
     /**
      * Listen for activity.logged events
      * @param callback Function to call when event occurs
@@ -408,30 +547,6 @@ export declare class EventsClient {
      */
     onStorageShareUpdated(callback: (event: EventServerMessage) => void): Promise<() => void>;
     /**
-     * Listen for user.banned events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    onUserBanned(callback: (event: EventServerMessage) => void): Promise<() => void>;
-    /**
-     * Listen for user.created events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    onUserCreated(callback: (event: EventServerMessage) => void): Promise<() => void>;
-    /**
-     * Listen for user.role_changed events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    onUserRoleChanged(callback: (event: EventServerMessage) => void): Promise<() => void>;
-    /**
-     * Listen for user.unbanned events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    onUserUnbanned(callback: (event: EventServerMessage) => void): Promise<() => void>;
-    /**
      * Listen to all events for a specific container.
      * Uses wildcard "*" event type with a filter on resourceId + resourceType.
      * @param containerId Container ID to filter events
@@ -564,8 +679,4 @@ export interface EventListeners {
     onStorageShareExpiringSoon?: (event: EventServerMessage) => void;
     onStorageShareMountChanged?: (event: EventServerMessage) => void;
     onStorageShareUpdated?: (event: EventServerMessage) => void;
-    onUserBanned?: (event: EventServerMessage) => void;
-    onUserCreated?: (event: EventServerMessage) => void;
-    onUserRoleChanged?: (event: EventServerMessage) => void;
-    onUserUnbanned?: (event: EventServerMessage) => void;
 }

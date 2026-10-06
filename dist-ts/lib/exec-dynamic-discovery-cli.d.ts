@@ -1,7 +1,7 @@
 /**
  * Raw-response discovery adapter.
  *
- * For callers that have only the raw `listUserScripts` HTTP response (no
+ * For callers that have only the raw `openapi.listScripts` HTTP response (no
  * ScriptsService handle — e.g. anything using the bare HttpClient), this
  * module extracts the script array out of the various response shapes the
  * API emits and delegates to the shared `parseRawScriptEntries` parser.
@@ -11,7 +11,7 @@
  */
 import type { DiscoveredScript } from './exec-dynamic-discovery.js';
 /**
- * Parse a raw API response from listUserScripts into DiscoveredScript[].
+ * Parse a raw API response from openapi.listScripts into DiscoveredScript[].
  * Works with both `{ data: [...] }` and `{ data: { data: [...] } }` shapes.
  */
 export declare function discoverScriptsFromRawResponse(response: unknown): DiscoveredScript[];

@@ -16,5 +16,10 @@ export declare function handleTcpStream(session: TunnelSession, streamId: number
 /**
  * Set up automatic stream forwarding for a session.
  * Intercepts STREAM_OPEN frames and forwards to the appropriate local target.
+ *
+ * Installed as the session's inbound router, so it covers every socket the
+ * session has or opens later (v2 secondaries included). Call it before
+ * `connect()` when the kit can open a stream right behind HELLO_OK (a resumed
+ * session): see `TunnelSession.setInboundRouter()`.
  */
 export declare function setupAutoForwarding(session: TunnelSession, httpTarget: LocalTarget, tcpTarget?: LocalTarget): void;

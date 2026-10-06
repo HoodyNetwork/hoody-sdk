@@ -5,17 +5,18 @@
  *   This module extends HoodyClient with four convenience methods:
  *
  *   - `saveScreenshot(options)` — generic: specify source + options
- *   - `saveDisplayScreenshot(path?, options?)` — capture display + save
- *   - `saveBrowserScreenshot(path?, options?)` — capture browser + save
- *   - `saveTerminalScreenshot(path?, options?)` — capture terminal + save
+ *   - `display.screenshots.save(path?, options?)` — capture display + save
+ *   - `browser.page.saveScreenshot(path?, options?)` — capture browser + save
+ *   - `terminal.sessions.saveScreenshot(path?, options?)` — capture terminal + save
  *
  *   All methods require a container-scoped client (via `withContainer()`).
  *   They compose: capture API call → decode → validate → putFile → chmod.
  *
  *   Data flow:
- *     Display:  captureScreenshot({base64:true}) → Buffer.from(base64)
- *     Browser:  takeScreenshot({format})                → Buffer.from(base64)
- *     Terminal: captureTerminalScreenshot({save:false})  → Buffer.from(arrayBuffer)
+ *     Display:  display.screenshots.capture({base64:true})        → Buffer.from(base64)
+ *     Browser:  browser.page.captureScreenshot({format})        → Buffer.from(base64)
+ *     Terminal: terminal.sessions.captureScreenshot({save:false}) → Buffer.from(arrayBuffer)
+ *     Write:    files.mkdir → files.upload → files.chmod 0600 (files.delete on failure)
  *
  *   Path validation (17 checks):
  *     typeof, mutual exclusivity, raw length, NFKC, '..' pre/post normalize,
@@ -89,25 +90,37 @@ declare module './hoody-client.js' {
          * Requires a container-scoped client (call `withContainer()` first).
          */
         saveScreenshot(options: SaveScreenshotOptions): Promise<SaveScreenshotResult>;
+    }
+}
+declare module '../generated/display/screenshots.service.js' {
+    interface ScreenshotsService {
         /**
          * Capture a display screenshot and save it to the container filesystem.
          *
          * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
          *               Bare filenames (e.g. "foo.png") are placed in the default directory.
          */
-        saveDisplayScreenshot(path?: string, options?: Omit<SaveScreenshotOptions, 'source' | 'path'>): Promise<SaveScreenshotResult>;
+        save(path?: string, options?: Omit<SaveScreenshotOptions, 'source' | 'path'>): Promise<SaveScreenshotResult>;
+    }
+}
+declare module '../generated/browser/page.service.js' {
+    interface PageService {
         /**
          * Capture a browser screenshot and save it to the container filesystem.
          *
          * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
          */
-        saveBrowserScreenshot(path?: string, options?: Omit<SaveScreenshotOptions, 'source' | 'path'>): Promise<SaveScreenshotResult>;
+        saveScreenshot(path?: string, options?: Omit<SaveScreenshotOptions, 'source' | 'path'>): Promise<SaveScreenshotResult>;
+    }
+}
+declare module '../generated/terminal/sessions.service.js' {
+    interface SessionsService {
         /**
          * Capture a terminal screenshot and save it to the container filesystem.
          *
          * @param path - File path or filename. If omitted, auto-generates in /hoody/storage/hoody-sdk/screenshots/.
          */
-        saveTerminalScreenshot(path?: string, options?: Omit<SaveScreenshotOptions, 'source' | 'path'>): Promise<SaveScreenshotResult>;
+        saveScreenshot(path?: string, options?: Omit<SaveScreenshotOptions, 'source' | 'path'>): Promise<SaveScreenshotResult>;
     }
 }
 export declare function patchScreenshotSavePrototype(HoodyClientClass: {

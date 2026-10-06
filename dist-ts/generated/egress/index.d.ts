@@ -4,4 +4,5 @@
  * Auto-generated service exports for egress namespace
  * @packageDocumentation
  */
-export { EgressService } from './egress.service.js';
+export { KitService } from './kit.service.js';
+export { UpstreamService } from './upstream.service.js';

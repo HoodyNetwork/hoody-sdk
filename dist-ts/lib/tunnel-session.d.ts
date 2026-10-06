@@ -4,9 +4,22 @@
  * control (per-session + per-stream CreditGate).
  */
 import { type Frame } from "./tunnel-protocol-types.js";
+import type { ProxyAuth, ProxyAuthPolicy } from "./proxy-auth.js";
 export interface ConnectOptions {
     url: string;
-    token: string;
+    /**
+     * @deprecated Ignored and never sent. The tunnel kit does not read the
+     * HELLO `auth` field (Hoody Proxy enforces access upstream), and sending
+     * the account token there leaked it to the container. Use `kitAuth`.
+     */
+    token?: string;
+    /**
+     * Kit credential for the proxy's permission rule on the tunnel service,
+     * carried on the WebSocket upgrade: headers in Node / Bun, `?token=` in a
+     * browser (a containerClaim credential is Node-only). A policy selects
+     * `services.tunnel`, then `default`. Never the account token.
+     */
+    kitAuth?: ProxyAuth | ProxyAuthPolicy;
     /** If set, ask the kit to resume this session (HELLO.resume.sessionId). */
     resumeSessionId?: string;
     /**
@@ -61,6 +74,9 @@ export interface BindResult {
     publicUrl?: string;
 }
 type FrameHandler = (frame: Frame) => void | Promise<void>;
+/** Receives every frame after the handshake, with the socket that delivered
+ *  it; calls `session.dispatchFrame()` for the frames it does not handle. */
+export type InboundRouter = (frame: Frame, deliveredOn: WebSocket) => void;
 /**
  * Tunnel session client.
  * Connects to the kit via WebSocket, performs HELLO handshake,
@@ -129,7 +145,21 @@ export declare class TunnelSession {
      *  down resources tied to the session lifecycle rather than per-stream
      *  EOF frames, which never fire on an abrupt WS drop. */
     private closeListeners;
+    /** Set by setInboundRouter(). Configuration, not session state: connect()
+     *  and close() keep it. */
+    private inboundRouter;
     constructor(options: ConnectOptions);
+    /**
+     * Route every frame received after HELLO_OK / JOIN_OK, on every socket of
+     * this session, through `router` instead of the default dispatcher.
+     *
+     * Set it before connect() when the kit may open a stream as soon as HELLO_OK
+     * is out, as it does for a resumed session's binds: HELLO_OK and that
+     * STREAM_OPEN can arrive in one read, and both are handled before the code
+     * after `await connect()` runs, so a router installed there drops the request.
+     */
+    setInboundRouter(router: InboundRouter | null): void;
+    private routeInbound;
     /** Register a listener fired exactly once on session close. Returns an
      *  unsubscribe function. Use for resources whose lifecycle is tied to the
      *  session itself (e.g. an upgrade socket forwarded through a stream that
@@ -139,6 +169,10 @@ export declare class TunnelSession {
     get id(): string;
     /** Full HELLO_OK result including `resumed` and `resumedBinds`. Null before connect(). */
     get hello(): HelloResult | null;
+    /** Open one tunnel WebSocket with the kit credential on its upgrade. */
+    private openSocket;
+    /** Resolve an openSocket() result; a supersede during the wait closes it. */
+    private settleSocket;
     connect(): Promise<string>;
     private openSecondary;
     /** Dispatch an already-decoded frame (public for setupAutoForwarding to avoid double-decode). */
@@ -159,8 +193,18 @@ export declare class TunnelSession {
     bind(opts: BindOptions): Promise<BindResult>;
     /** Register a handler for frames on a specific stream ID */
     onStream(streamId: number, handler: FrameHandler): void;
-    /** Remove stream handler */
-    offStream(streamId: number): void;
+    /**
+     * Remove stream handler. With `handler`, only if it is still the one registered: a
+     * request ending late must not remove a later request's handler for the same ID (a
+     * fresh kit session after a reconnect numbers its streams from 2 again).
+     */
+    offStream(streamId: number, handler?: FrameHandler): void;
+    /**
+     * The connection this session is on: it changes with every `connect()` and `close()`.
+     * Something started on one connection does nothing to the next (see tunnel-http-pump's
+     * `streamEnd`).
+     */
+    get generation(): number;
     /** Send a raw frame. v3 batching: frames enqueued in the same event-loop
      * tick are coalesced into one WS message, cutting ws.send calls ~3-4×.
      * PING/PONG/GOAWAY flush pending first and ship immediately.
@@ -171,6 +215,8 @@ export declare class TunnelSession {
      * For credit-tracked DATA frames, use `_sendFrameStrict` which throws
      * so `sendData` can release permits. */
     sendFrame(frame: Frame): void;
+    /** Add one encoded frame to `target`'s batch, flushed at the end of this tick. */
+    private enqueue;
     /** Strict variant of sendFrame — THROWS if the target WS is closed OR
      * if the frame can't be enqueued. Used by sendData() so permit release
      * on the catch path is triggered exactly when the frame didn't reach the
@@ -182,6 +228,20 @@ export declare class TunnelSession {
      * we've consumed credit. */
     private _sendFrameStrict;
     private flushBatch;
+    /**
+     * Secondary socket `ws` is gone, or can no longer send `frames` (queued for it). Called
+     * from the flush that finds it closing and from its close, so each part is idempotent.
+     *   - The session credit of the lost DATA comes back: the peer will never WINDOW it.
+     *   - The lost RESETs go on the primary, as at enqueue (sendFrame).
+     *   - Every other stream that lost a frame, or is pinned to `ws`, is reset on the
+     *     primary, and its handler hears that as a RESET: the request aborts its local
+     *     side (freeing its pool slot) and sends nothing more, since neither the rest of a
+     *     body nor an EOF may follow bytes the peer never got.
+     *   - A stream that already ended is left alone: its terminal frame went out (the
+     *     pump's RESET falls back to the primary), and a second one would answer nothing.
+     *     A lost EOF is the exception: that stream has not ended for the peer.
+     */
+    private secondaryLost;
     /** Bind an EXPOSE port. Omit `port` for a random available port in 20000-65534. */
     expose(port?: number | null, opts?: {
         label?: string;

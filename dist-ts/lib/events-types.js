@@ -7,13 +7,24 @@
  * Socket.IO-based message format.
  */
 import { io } from 'socket.io-client';
+import { isEphemeralEventType, } from './events-catalog.js';
 /**
- * Normalise the server's wire-format into the consumer-facing shape.
+ * Normalise the server's wire-format into the legacy consumer-facing shape.
  *
- * Exported so tests can exercise the mapping without instantiating a real
- * socket.io transport; also used internally by `ApiConnecteventstreamWebSocket`.
+ * A frame that carries the C1 top-level `resource_type`/`resource_id` is
+ * taken at its word. Only a frame from an older hoody-api without them falls
+ * back to guessing from the payload shape.
  */
 export function normalizeServerMessage(m) {
+    if (typeof m.resource_id === 'string' && m.resource_id.length > 0) {
+        return {
+            event_type: m.event,
+            resource_id: m.resource_id,
+            ...(typeof m.resource_type === 'string' ? { resource_type: m.resource_type } : {}),
+            timestamp: m.timestamp,
+            ...(m.data !== undefined ? { data: m.data } : {}),
+        };
+    }
     const payload = (m.data ?? {});
     // hoody-api container broadcasts send `data: { container: { id, … } }`
     // without a top-level resource_id. Read nested `container.id` /
@@ -44,6 +55,58 @@ export function normalizeServerMessage(m) {
         ...(m.data !== undefined ? { data: m.data } : {}),
     };
 }
+const nullableString = (v) => (typeof v === 'string' ? v : null);
+/**
+ * Build the consumer envelope from a live frame or a history item. Returns
+ * null for a frame without the two fields every server has always sent
+ * (`event` and `eventId`): such a frame cannot be routed or de-duplicated.
+ */
+export function toHoodyEvent(item, replayed) {
+    if (!item || typeof item !== 'object')
+        return null;
+    if (typeof item.event !== 'string' || item.event.length === 0)
+        return null;
+    if (typeof item.eventId !== 'string' || item.eventId.length === 0)
+        return null;
+    // Ephemeral is what the frame says, or what the catalog says of a frame
+    // from a server that does not send the flag yet. A persisted event
+    // without a cursor (an older server) keeps cursor '' so the union stays
+    // honest about its type; recovery never reads a cursor off an event.
+    const ephemeral = item.ephemeral === true || (item.ephemeral === undefined && isEphemeralEventType(item.event));
+    const legacy = normalizeServerMessage(item);
+    const event = {
+        id: item.eventId,
+        type: item.event,
+        event_type: item.event,
+        timestamp: typeof item.timestamp === 'string' ? item.timestamp : '',
+        data: (item.data ?? {}),
+        resource_type: typeof item.resource_type === 'string' ? item.resource_type : (legacy.resource_type ?? ''),
+        resource_id: legacy.resource_id,
+        project_id: nullableString(item.project_id),
+        container_id: nullableString(item.container_id),
+        realm_ids: Array.isArray(item.realm_ids) ? item.realm_ids.filter((r) => typeof r === 'string') : [],
+        all_realms: item.all_realms === true,
+        visibility: item.visibility === 'removed' || item.visibility === 'nameless' ? item.visibility : 'full',
+        schema_version: typeof item.schema_version === 'number' ? item.schema_version : 1,
+        change_id: nullableString(item.change_id),
+        operation_id: nullableString(item.operation_id),
+        cause_event_id: nullableString(item.cause_event_id),
+        actor: item.actor && typeof item.actor === 'object' && (item.actor.kind === 'user' || item.actor.kind === 'system')
+            ? { kind: item.actor.kind, ...(typeof item.actor.id === 'string' ? { id: item.actor.id } : {}) }
+            : null,
+        replayed,
+        cursor: ephemeral ? null : (typeof item.cursor === 'string' ? item.cursor : ''),
+        ephemeral,
+    };
+    return event;
+}
+/** True for a `message` frame the runtime should treat as a control frame. */
+export function isControlFrame(frame) {
+    if (!frame || typeof frame !== 'object')
+        return false;
+    const t = frame.type;
+    return typeof t === 'string' && t !== 'event';
+}
 /**
  * Socket.IO-backed WebSocket client for the Hoody Events stream.
  *
@@ -67,7 +130,18 @@ export class ApiConnecteventstreamWebSocket {
     constructor(url, options = {}) {
         this.url = url;
         // Normalise: we own `autoConnect` so `connect()` can return a real promise.
-        this.defaultOptions = { ...options, autoConnect: false };
+        //
+        // WebSocket first, by default. hoody-api's cluster (Bun) path refuses engine.io long-polling
+        // at the request boundary (400) because polling cannot survive `reusePort` worker hashing,
+        // and socket.io-client does NOT fall back from a failed polling handshake to websocket
+        // unless `tryAllTransports` is set — so a polling-first client never connects there.
+        // A caller who fronts the API with a sid-affine proxy can still pass `transports` explicitly.
+        //
+        // `reconnection: false` by default: socket.io-client does not reconnect after a server
+        // namespace disconnect anyway (every refusal and revocation is one), and a client-side
+        // retry loop racing the runtime's own loop reconnected with a stale token.
+        // EventsManager owns every retry (`reconnection: false`).
+        this.defaultOptions = { transports: ['websocket'], reconnection: false, ...options, autoConnect: false };
         this.socket = io(this.url, this.defaultOptions);
         // Keep `connected` in sync with the transport.
         this.socket.on('connect', () => { this.connected = true; });
@@ -180,8 +254,16 @@ export class ApiConnecteventstreamWebSocket {
             this.socket.io.off('error', handler);
         };
     }
+    /**
+     * Data events only, in the legacy shape. Control frames (`welcome`,
+     * `tick`, `error`, `revoked`, …) share the `message` channel and are NOT
+     * events: delivering them here made every `onAnyEvent` listener fire on
+     * them with `event_type: undefined`.
+     */
     onEvent(callback) {
         const handler = (raw) => {
+            if (!raw || typeof raw !== 'object' || raw.type !== 'event')
+                return;
             try {
                 callback(normalizeServerMessage(raw));
             }
@@ -192,5 +274,39 @@ export class ApiConnecteventstreamWebSocket {
         };
         this.socket.on('message', handler);
         return () => this.socket.off('message', handler);
+    }
+    /** Every `message` frame, raw: event frames and control frames alike. */
+    onFrame(callback) {
+        const handler = (raw) => {
+            if (!raw || typeof raw !== 'object')
+                return;
+            callback(raw);
+        };
+        this.socket.on('message', handler);
+        return () => this.socket.off('message', handler);
+    }
+    /**
+     * The socket-level `error` event. hoody-api sends some refusals there
+     * (`{type:'error', error}`), REALM_SELECTION_CONFLICT among them; for one
+     * release they are sent on `message` too. `error` is not a reserved
+     * socket.io client event, so only a listener on it sees them.
+     */
+    onSocketError(callback) {
+        const handler = (raw) => {
+            if (!raw || typeof raw !== 'object')
+                return;
+            const code = raw.error;
+            if (typeof code !== 'string')
+                return;
+            callback({ ...raw, type: 'error', error: code });
+        };
+        this.socket.on('error', handler);
+        return () => this.socket.off('error', handler);
+    }
+    /** Raw socket.io `disconnect`, with socket.io's reason string. */
+    onClose(callback) {
+        const handler = (reason) => callback(typeof reason === 'string' ? reason : 'disconnect');
+        this.socket.on('disconnect', handler);
+        return () => this.socket.off('disconnect', handler);
     }
 }

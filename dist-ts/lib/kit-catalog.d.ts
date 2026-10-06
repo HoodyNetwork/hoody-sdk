@@ -40,4 +40,4 @@ export interface KitCatalogOptions {
 /**
  * Return a clone of the kit catalog so callers can safely mutate their local copy.
  */
-export declare function getKitCatalogEntries(options?: KitCatalogOptions): KitCatalogEntry[];
+export declare function listKits(options?: KitCatalogOptions): KitCatalogEntry[];

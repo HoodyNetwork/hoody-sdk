@@ -24,11 +24,50 @@
  *     Each registers a listener on the exact event_type string (e.g.
  *     "container.running") or on "*" for all data events.
  */
-import { EventsManager } from './events-manager.js';
+import { ApiError } from '../generated/errors.js';
+import { EventsManager, } from './events-manager.js';
 import { ApiConnecteventstreamWebSocket } from './events-types.js';
+import { EventsError } from './events-errors.js';
+import { isEventPattern } from './events-catalog.js';
+function toFilter(filter) {
+    if (!filter)
+        return undefined;
+    if (typeof filter === 'function')
+        return { where: filter };
+    return filter;
+}
+function toPatterns(pattern) {
+    const list = typeof pattern === 'string' ? [pattern] : [...pattern];
+    if (list.length === 0)
+        throw new TypeError('At least one event type or pattern is required');
+    for (const p of list) {
+        // A typo must not become a handler that silently never fires.
+        if (typeof p !== 'string' || !isEventPattern(p))
+            throw new TypeError(`Unknown event type or pattern "${String(p)}"`);
+    }
+    return list;
+}
+/** Parse a C4 cursor-mode (or bootstrap) success body; anything else is not a cursor-capable server. */
+function parseHistoryPage(body) {
+    const data = body?.data;
+    const pagination = data?.pagination;
+    if (!data || !Array.isArray(data.events) || !pagination
+        || typeof pagination.next_cursor !== 'string' || typeof pagination.latest_cursor !== 'string'
+        || typeof pagination.has_more !== 'boolean') {
+        throw new EventsError('EVENTS_HISTORY_MALFORMED', 'The events history response carries no cursors');
+    }
+    return {
+        events: data.events,
+        has_more: pagination.has_more,
+        next_cursor: pagination.next_cursor,
+        latest_cursor: pagination.latest_cursor,
+    };
+}
 export class EventsClient {
     manager;
     baseURL;
+    /** Realm the stream is scoped to (from the service), sent as `realm_id` on the handshake. */
+    realmId;
     getToken;
     /**
      * @param eventsService - Generated EventsService instance; used as a fallback
@@ -40,11 +79,32 @@ export class EventsClient {
      *   This fallback chain allows the events client to reuse the same auth token
      *   as the REST client without requiring the caller to wire it explicitly.
      */
-    constructor(eventsService, baseURL, getToken) {
-        // Extract baseURL from the service's http client
+    constructor(eventsService, baseURL, getToken, options = {}) {
+        // The stream must be scoped exactly like the service's REST calls.
+        // A service from `client.withRealm(id).api.events` carries its realm
+        // as `defaultRealmId` and applies it per request as a host label, while
+        // its HTTP client holds the account base URL. Reading only that base
+        // URL subscribed account-wide (hoody-api joins the user room when the
+        // handshake names no realm) and mixed every realm's events into a
+        // realm-scoped view. So: the realm host, resolved by the service's own
+        // realm routing, plus `?realm_id=` (the server's documented base-domain
+        // form; it must agree with the host, which it does by construction).
+        // An explicit `baseURL` argument still wins, and then no realm is added.
+        const service = eventsService;
+        const serviceBaseURL = service?.http?.getBaseURL?.() || service?.http?.config?.baseURL;
+        const realmId = typeof service?.defaultRealmId === 'string' && service.defaultRealmId.length > 0
+            ? service.defaultRealmId
+            : undefined;
+        let realmBaseURL;
+        if (!baseURL && realmId && typeof service?.buildRealmUrl === 'function') {
+            const resolved = service.buildRealmUrl('', realmId);
+            if (/^https?:\/\//i.test(resolved))
+                realmBaseURL = resolved;
+        }
+        this.realmId = baseURL ? undefined : realmId;
         this.baseURL = baseURL
-            || eventsService?.http?.getBaseURL?.()
-            || eventsService?.http?.config?.baseURL
+            || realmBaseURL
+            || serviceBaseURL
             || 'https://api.hoody.com';
         // Default token resolver reads from the underlying service HTTP client if not provided
         this.getToken = getToken ?? (() => {
@@ -55,27 +115,182 @@ export class EventsClient {
                 return null;
             }
         });
+        const http = service?.http;
+        // History goes through the service's own HTTP layer and realm routing,
+        // so it is scoped and authenticated exactly like the socket and like
+        // REST (raw query because the generated list() predates `after`).
+        const historyUrl = () => {
+            if (typeof service?.buildRealmUrl === 'function') {
+                return service.buildRealmUrl.call(service, '/api/v1/events');
+            }
+            return '/api/v1/events';
+        };
+        const historyGet = async (query, signal) => {
+            if (!http || typeof http.get !== 'function') {
+                throw new EventsError('EVENTS_HISTORY_UNAVAILABLE', 'The events service has no HTTP client for history reads');
+            }
+            return http.get(historyUrl(), { query, signal, cache: false });
+        };
+        const history = {
+            page: async (after, limit, signal) => parseHistoryPage(await historyGet({ after, limit }, signal)),
+            bootstrap: async (signal) => {
+                const page = parseHistoryPage(await historyGet({ bootstrap: 'true' }, signal));
+                return { next_cursor: page.next_cursor, latest_cursor: page.latest_cursor };
+            },
+        };
+        // C5 "refresh + reconnect" rides the HTTP client's own single-flight
+        // 401 refresh (and, under HoodyClient, its session recovery), with the
+        // same acceptance check the transport applies before installing a token.
+        const refreshToken = options.refreshToken ?? (async () => {
+            if (!http || typeof http.tryRefreshToken !== 'function')
+                return undefined;
+            const expired = new ApiError({ message: 'Events stream token expired', status: 401, code: 'JWT_EXPIRED' });
+            const token = await http.tryRefreshToken.call(http, expired);
+            if (!token)
+                return undefined;
+            const accept = http.config?.acceptRefreshedToken;
+            if (typeof accept === 'function' && !accept(token))
+                return undefined;
+            http.setToken?.call(http, token);
+            return token;
+        });
         this.manager = new EventsManager(async () => {
             // Construct WebSocket URL (base URL only, path is in options)
             const wsUrl = this.baseURL.replace(/^http/, 'ws');
-            // Get authentication token if available
-            const token = this.getToken?.();
-            const options = {
+            const socketOptions = {
                 path: '/api/v1/events', // ← Server handles both GET and WebSocket UPGRADE on this path
             };
-            if (token) {
-                options.auth = { token }; // Use auth object, not query param
+            if (this.realmId) {
+                socketOptions.query = { realm_id: this.realmId };
             }
+            // `auth` as a function: socket.io-client calls it on every
+            // CONNECT, so each attempt presents the CURRENT token, never
+            // the one this socket was built with. The token
+            // travels in the CONNECT packet, never in the URL.
+            socketOptions.auth = (cb) => {
+                const token = this.getToken?.();
+                cb(token ? { token } : {});
+            };
             // Create the wrapper but DO NOT connect here — EventsManager
             // installs lifecycle + message listeners before calling
             // `connect()` itself, so no early events can be lost to a
             // socket that handshakes before listeners attach.
-            return new ApiConnecteventstreamWebSocket(wsUrl, options);
+            return new ApiConnecteventstreamWebSocket(wsUrl, socketOptions);
         }, {
             autoConnect: true,
             autoReconnect: true,
-            debug: false,
+            debug: options.debug ?? false,
+            history,
+            ...(this.realmId ? { realmId: this.realmId } : {}),
+            ...(options.session ? { session: options.session } : {}),
+            refreshToken,
+            // After logout there is nothing to connect with; the next
+            // session (login/adoptSession) reconnects the subscribers.
+            hasCredential: () => !!this.getToken?.(),
+            ...(options.prepareCredential ? { prepareCredential: options.prepareCredential } : {}),
+            ...(options.maxReplayPages !== undefined ? { maxReplayPages: options.maxReplayPages } : {}),
+            ...(options.welcomeTimeoutMs !== undefined ? { welcomeTimeoutMs: options.welcomeTimeoutMs } : {}),
+            ...(options.backoff ? { backoff: options.backoff } : {}),
+            ...(options.onScopeChanged ? { onScopeChanged: options.onScopeChanged } : {}),
+            ...(options.onListenerError ? { onListenerError: options.onListenerError } : {}),
         });
+    }
+    // ============================================================================
+    // Runtime surface
+    // ============================================================================
+    /**
+     * Handle events of one or more types or patterns (`'container.running'`,
+     * `['container.running', 'container.stopped']`, `'container.*'`, `'*'`).
+     * Resolves with the unsubscribe function once the stream is admitted.
+     *
+     * Wildcards leave out live-only types unless `includeEphemeral` is set.
+     * Naming `activity.logged` itself opts this connection in to the activity
+     * feed. Replayed events (recovered from history after a disconnect) carry
+     * `replayed: true`; an event is delivered once per subscription even when
+     * both the socket and history carry it.
+     */
+    async on(pattern, handler, options = {}) {
+        const patterns = toPatterns(pattern);
+        return this.manager.subscribe(patterns, handler, {
+            ...(options.filter ? { filter: options.filter } : {}),
+            ...(options.includeEphemeral ? { includeEphemeral: true } : {}),
+            ...(options.signal ? { signal: options.signal } : {}),
+        });
+    }
+    /**
+     * Events as an async iterator. Starts at the stream's boundary, or at
+     * `after` (an event's `resume_after`, saved after handling it). Breaking out of the
+     * loop unsubscribes. Byte-bounded: see EventsStreamOptions.maxBytes.
+     */
+    stream(options = {}) {
+        const patterns = options.types ? toPatterns(options.types) : ['*'];
+        return this.manager.stream(patterns, {
+            ...(options.filter ? { filter: options.filter } : {}),
+            ...(options.after !== undefined ? { after: options.after } : {}),
+            ...(options.signal ? { signal: options.signal } : {}),
+            ...(options.maxBytes !== undefined ? { maxBytes: options.maxBytes } : {}),
+            ...(options.includeEphemeral ? { includeEphemeral: true } : {}),
+            ...(options.onGap ? { onGap: options.onGap } : {}),
+        });
+    }
+    /**
+     * Resolves once history has been read up to the stream's boundary (the
+     * first catch-up of this session that ends with `has_more:false`).
+     * Anything committed after that is delivered to the handlers and
+     * streams open at the time.
+     *
+     * ready() holds the connection only while it waits. On its own it does
+     * not keep the stream open: with no handler, stream, wait or bootstrap
+     * running, the socket closes once it resolves, and a later subscription
+     * starts again from a new boundary. Register handlers first, or use
+     * waitFor/prepareWait/bootstrap, which hold the connection themselves.
+     */
+    ready(options = {}) {
+        return this.manager.whenReady(options);
+    }
+    /**
+     * Wait for the first matching event. With `action`, the action runs only
+     * after `ready()`, so its event cannot be missed, even on a cold start:
+     *
+     *     const running = await client.events.waitFor('container.running',
+     *         { resourceId: id }, () => client.api.containers.start(id));
+     */
+    waitFor(pattern, filter, action, options = {}) {
+        const patterns = toPatterns(pattern);
+        return this.manager.waitFor(patterns, toFilter(filter), action, options);
+    }
+    /**
+     * Subscribe, then resolve after `ready()` with `{ result }`. Act, then
+     * await `result`. The two-step form of `waitFor(type, filter, action)`.
+     */
+    prepareWait(pattern, filter, options = {}) {
+        const patterns = toPatterns(pattern);
+        return this.manager.prepareWait(patterns, toFilter(filter), options);
+    }
+    /**
+     * Load a consistent starting state: waits for `ready()`, runs `readFn`
+     * (your GET calls), and returns the snapshot with every resource that
+     * events touched while it ran. Refetch those through GET; never apply an
+     * event payload over a snapshot. A gap while reading restarts it (at most
+     * 3 times, then EventsGapError).
+     */
+    bootstrap(readFn, options = {}) {
+        return this.manager.bootstrap(readFn, options);
+    }
+    /** Observe connection state, gaps, `scope_changed` and non-fatal notices. Returns an unsubscribe function. */
+    onState(listener) {
+        return this.manager.onState(listener);
+    }
+    /** The §5 connection state. */
+    get state() {
+        return this.manager.connectionState;
+    }
+    /**
+     * Close the stream for good: the socket closes, pending waits reject with
+     * EventsClosedError, streams end and every handler is dropped. Idempotent.
+     */
+    close() {
+        this.manager.close();
     }
     // ============================================================================
     // Activity Events (1 events)
@@ -596,41 +811,6 @@ export class EventsClient {
         return this.manager.addEventListener('storage.share.updated', callback);
     }
     // ============================================================================
-    // User Events (4 events)
-    // ============================================================================
-    /**
-     * Listen for user.banned events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    async onUserBanned(callback) {
-        return this.manager.addEventListener('user.banned', callback);
-    }
-    /**
-     * Listen for user.created events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    async onUserCreated(callback) {
-        return this.manager.addEventListener('user.created', callback);
-    }
-    /**
-     * Listen for user.role_changed events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    async onUserRoleChanged(callback) {
-        return this.manager.addEventListener('user.role_changed', callback);
-    }
-    /**
-     * Listen for user.unbanned events
-     * @param callback Function to call when event occurs
-     * @returns Unsubscribe function
-     */
-    async onUserUnbanned(callback) {
-        return this.manager.addEventListener('user.unbanned', callback);
-    }
-    // ============================================================================
     // Resource-Specific Listeners
     // ============================================================================
     // These use the wildcard event type "*" combined with an EventFilter
@@ -820,14 +1000,6 @@ export class EventsClient {
                 unsubscribers.push(await this.onStorageShareMountChanged(handlers.onStorageShareMountChanged));
             if (handlers.onStorageShareUpdated)
                 unsubscribers.push(await this.onStorageShareUpdated(handlers.onStorageShareUpdated));
-            if (handlers.onUserBanned)
-                unsubscribers.push(await this.onUserBanned(handlers.onUserBanned));
-            if (handlers.onUserCreated)
-                unsubscribers.push(await this.onUserCreated(handlers.onUserCreated));
-            if (handlers.onUserRoleChanged)
-                unsubscribers.push(await this.onUserRoleChanged(handlers.onUserRoleChanged));
-            if (handlers.onUserUnbanned)
-                unsubscribers.push(await this.onUserUnbanned(handlers.onUserUnbanned));
             return () => {
                 // Wrap each unsub individually so a single throw doesn't
                 // leak the remaining listeners in the manager's map (parity with
@@ -906,4 +1078,15 @@ export class EventsClient {
     disconnect() {
         this.manager.disconnect();
     }
+}
+// `await using events = …` closes the stream where the runtime has explicit
+// resource management; the symbol is not in this package's ES2022 lib, so it
+// is attached only when present.
+const asyncDispose = Symbol.asyncDispose;
+if (typeof asyncDispose === 'symbol') {
+    Object.defineProperty(EventsClient.prototype, asyncDispose, {
+        value: async function () { this.close(); },
+        configurable: true,
+        writable: true,
+    });
 }

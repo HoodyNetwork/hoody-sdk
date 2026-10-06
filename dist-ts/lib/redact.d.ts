@@ -13,14 +13,70 @@
  * (every backend, third-party API, and exec script defines its own
  * credential field names) but the structural patterns are bounded.
  */
-export declare function redactHeaders(headers: Record<string, string>): Record<string, string>;
+/**
+ * True for a header name in the secret set above. Exported so the browser
+ * HttpClient's credential-scope check uses the same set the redactor does.
+ */
+export declare function isSecretHeaderName(name: string): boolean;
+/**
+ * `extraNames`: header names configured to carry a credential (the CLI's
+ * renamed kit-token header, or the SDK's recorded kitAuth headers, see
+ * CREDENTIAL_HEADERS_KEY), which an operator chose and the pattern cannot
+ * know. Matched case-insensitively.
+ */
+export declare function redactHeaders(headers: Record<string, string>, extraNames?: readonly string[]): Record<string, string>;
+/**
+ * The middlewareContext key under which a request records the names of query
+ * parameters that carry a credential (a kitAuth token with `param`, see
+ * lib/proxy-auth.ts). The HTTP clients pass these names to `redactUrl` /
+ * `redactSensitiveValue` and strip the parameters when a request leaves the
+ * credential's origin. Value: `string[]`, deduplicated.
+ */
+export declare const CREDENTIAL_QUERY_PARAMS_KEY = "_credentialQueryParams";
+/**
+ * Record that `name` carries a credential in this request's URL. Mutates
+ * `middlewareContext` (creating the array if absent, deduplicating) so every
+ * holder of the context sees it, and returns the context — a new object when
+ * none was given.
+ */
+export declare function recordCredentialQueryParam(middlewareContext: Record<string, unknown> | undefined, name: string): Record<string, unknown>;
+/** The recorded credential parameter names of a middlewareContext (empty when none). */
+export declare function credentialQueryParamsOf(middlewareContext: unknown): string[];
+/**
+ * The middlewareContext key under which a request records the names of the
+ * headers that carry a credential (every header the kitAuth middleware sets,
+ * including a `header` name the operator chose, which SECRET_HEADER_RE cannot
+ * know). The HTTP clients treat these as credential headers when a request
+ * leaves the credential's origin, and pass them to `redactHeaders` as
+ * `extraNames`. Value: `string[]`, deduplicated.
+ */
+export declare const CREDENTIAL_HEADERS_KEY = "_credentialHeaders";
+/**
+ * Record that header `name` carries a credential in this request. Mutates
+ * `middlewareContext` (creating the array if absent, deduplicating
+ * case-insensitively) and returns it — a new object when none was given.
+ */
+export declare function recordCredentialHeader(middlewareContext: Record<string, unknown> | undefined, name: string): Record<string, unknown>;
+/** The recorded credential header names of a middlewareContext (empty when none). */
+export declare function credentialHeadersOf(middlewareContext: unknown): string[];
 /**
  * Redact secret query params and URL userinfo. Unparseable URLs pass through
  * unchanged so error-attach paths never throw while scrubbing.
+ *
+ * `extraParamNames`: parameter names to redact in addition to the built-in
+ * secret-name pattern — the request's recorded credential parameters
+ * (`credentialQueryParamsOf(middlewareContext)`), whose names an operator
+ * chose and the pattern cannot know. Matched case-insensitively.
  */
-export declare function redactUrl(url: string): string;
+export declare function redactUrl(url: string, extraParamNames?: readonly string[]): string;
 /**
  * Recursively clone an object/array with any secret key redacted. Protects
  * against circular references and caps recursion depth.
+ *
+ * `extraFieldNames`: names to treat as secret in addition to the built-in
+ * pattern (the request's recorded credential query parameters). They redact
+ * an object key of that name (e.g. a `query` record) and a `name=value` pair
+ * inside any string value (e.g. a URL under a non-secret key).
+ * `redactSensitiveValue(v)` behaves exactly as before.
  */
-export declare function redactSensitiveValue(v: unknown, _depth?: number, seen?: WeakSet<object>): unknown;
+export declare function redactSensitiveValue(v: unknown, _depth?: number, seen?: WeakSet<object>, extraFieldNames?: readonly string[]): unknown;

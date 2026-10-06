@@ -30,7 +30,7 @@
  * terminal.write('ls -la\n');
  * ```
  */
-import { Duplex, DuplexOptions } from 'stream';
+import { Duplex, type DuplexOptions } from 'stream';
 import { type ProxyAuth } from './proxy-auth.js';
 /**
  * Terminal client options
@@ -47,6 +47,8 @@ export interface TerminalClientOptions extends DuplexOptions {
      * Hoody Proxy sitting in front of the terminal service. Five variants:
      *   - `password` → Authorization: Basic base64(user:pass)
      *   - `jwt` / `token` → Authorization: Bearer <value> (or custom header)
+     *   - `token` with `param` → `?<param>=<value>` on the socket URL, in
+     *     Node and browsers (the proxy rule reads only that parameter)
      *   - `containerClaim` → X-Hoody-Container-Claim + X-Hoody-Token headers
      *   - `ip` → no-op (proxy verifies client IP)
      */
@@ -178,7 +180,7 @@ export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'rec
  * TerminalClient — Duplex stream for terminal I/O
  *
  * Implements Node.js Duplex stream interface plus terminal-specific events.
- * Internally delegates wire protocol handling to the typed W3 client.
+ * Internally delegates wire protocol handling to the generated typed WebSocket client.
  */
 export declare class TerminalClient extends Duplex {
     private client;

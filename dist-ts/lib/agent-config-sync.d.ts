@@ -14,9 +14,9 @@
  *   - "Whole dir with excludes" by default: everything EXCEPT history/cache.
  *     Intelligent category flags let you narrow to e.g. credentials-only or
  *     skills-only.
- *   - Uses the PROPER raw-byte write path: `files.put(path, Buffer)`. Passing a
+ *   - Uses the PROPER raw-byte write path: `files.upload(path, Buffer)`. Passing a
  *     Buffer/Uint8Array sends the body verbatim (http-client.browser.ts), unlike
- *     `files.put(path, {content})` which stores the JSON envelope (GOTCHA-5).
+ *     `files.upload(path, {content})` which stores the JSON envelope (GOTCHA-5).
  *   - Perms via TYPED endpoints `files.chmod` / `files.chown` (no shell-exec,
  *     no injection surface). Dirs 0700, files 0600, chown <user>:<user>.
  *
@@ -26,10 +26,10 @@
  *   and build.config.ts stubs it for the browser build — mirroring
  *   screenshot-save.ts exactly.
  *
- * Attached to HoodyClient.prototype:
- *   - syncAgentConfig(tool, options?)   — sync one tool
- *   - syncAgentConfigs(tools[], options?) — sync several
- *   - listAgentConfigTools()            — inspect the registry
+ * Attached to the agent namespace (AgentService.prototype):
+ *   - agent.importLocalConfig(tool, options?)    — import one tool's local config
+ *   - agent.importLocalConfigs(tools[], options?) — import several
+ *   - agent.listLocalConfigTools()               — inspect the registry
  *
  * All three require a container-scoped client (call `withContainer()` first).
  */
@@ -133,33 +133,31 @@ declare function buildPlan(spec: AgentConfigToolSpec, opts: AgentConfigSyncOptio
     path: string;
     reason: string;
 }>): Promise<SyncFileEntry[]>;
-declare module './hoody-client.js' {
-    interface HoodyClient {
+declare module '../generated/agent/agent.service.js' {
+    interface AgentService {
         /**
          * Push a local agent CLI's config/credentials into the container.
          * Requires a container-scoped client (call `withContainer()` first).
          *
          * @example
          * const box = await client.withContainer(container);
-         * await box.syncAgentConfig('codex');                    // whole dir minus history/cache
-         * await box.syncAgentConfig('claude', { only: 'credentials' });
-         * await box.syncAgentConfig('gemini', { source: '/custom/.gemini', dryRun: true });
+         * await box.agent.importLocalConfig('codex');                    // whole dir minus history/cache
+         * await box.agent.importLocalConfig('claude', { only: 'credentials' });
+         * await box.agent.importLocalConfig('gemini', { source: '/custom/.gemini', dryRun: true });
          */
-        syncAgentConfig(tool: string, options?: AgentConfigSyncOptions): Promise<AgentConfigSyncResult>;
-        /** Sync several tools with shared options. */
-        syncAgentConfigs(tools: string[], options?: AgentConfigSyncOptions): Promise<AgentConfigSyncResult[]>;
+        importLocalConfig(tool: string, options?: AgentConfigSyncOptions): Promise<AgentConfigSyncResult>;
+        /** Import several tools with shared options. */
+        importLocalConfigs(tools: string[], options?: AgentConfigSyncOptions): Promise<AgentConfigSyncResult[]>;
         /** Inspect the agent-config tool registry. */
-        listAgentConfigTools(): AgentConfigToolSpec[];
+        listLocalConfigTools(): AgentConfigToolSpec[];
     }
 }
 /**
- * Attach syncAgentConfig/syncAgentConfigs/listAgentConfigTools to
- * HoodyClient.prototype. Called from lib/index.ts (Node entry) after all
+ * Attach importLocalConfig/importLocalConfigs/listLocalConfigTools to
+ * AgentService.prototype. Called from lib/index.ts (Node entry) after all
  * modules load. Idempotent.
  */
-export declare function patchAgentConfigSyncPrototype(HoodyClientClass: {
-    prototype: unknown;
-}): void;
+export declare function patchAgentConfigSyncPrototype(): void;
 export declare const __testing: {
     expandLocal: typeof expandLocal;
     expandRemote: typeof expandRemote;

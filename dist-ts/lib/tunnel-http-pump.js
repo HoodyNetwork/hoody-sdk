@@ -3,7 +3,6 @@
  * dispatch, request body streaming, WebSocket upgrades, and TCP forwarding.
  */
 import { FrameType } from "./tunnel-protocol-types.js";
-import { decodeFrames } from "./tunnel-protocol-codec.js";
 import * as http from "node:http";
 import * as net from "node:net";
 import { getFastPool } from "./tunnel-local-http-fast.js";
@@ -74,28 +73,123 @@ function safeHeaderEntries(raw) {
     }
     return out;
 }
-function sendResetFrame(session, streamId, reason) {
-    const reasonBytes = new TextEncoder().encode(reason);
-    const resetPayload = new Uint8Array(2 + reasonBytes.length);
-    new DataView(resetPayload.buffer).setUint16(0, 0x0006, false);
-    resetPayload.set(reasonBytes, 2);
-    session.sendFrame({
-        header: { frameType: FrameType.Reset, streamId, length: resetPayload.length },
-        payload: resetPayload,
-    });
+/**
+ * One request's end. The first of the peer's RESET, our RESET or our EOF decides it, and
+ * nothing is sent after it. Several paths can end one request (the local response failing,
+ * the pump's catch, the visitor's RESET and the abort it causes), and each goes through this,
+ * so the peer gets one terminal frame and never an answer to its own RESET.
+ *
+ * It also holds the request to the connection it started on. After a reconnect the session
+ * is on a new connection, whose kit numbers its streams from 2 again: a late callback of
+ * this request (a pool wait timing out, a local socket closing) must not send on, close or
+ * unregister the new connection's stream of the same ID. So the request counts as ended
+ * once the session's generation moves, and `off()` removes only this request's handler.
+ */
+function streamEnd(session, streamId) {
+    let ended = false;
+    let handler = null;
+    const generationOf = () => session.generation;
+    const generation = generationOf();
+    const isEnded = () => ended || generationOf() !== generation;
+    return {
+        ended: isEnded,
+        /** The peer reset the stream, or the session is gone: it is over, and nothing answers it. */
+        peerReset: () => { ended = true; },
+        reset: (reason) => {
+            if (isEnded())
+                return;
+            ended = true;
+            session.sendReset(streamId, reason);
+        },
+        eof: () => {
+            if (isEnded())
+                return;
+            ended = true;
+            session.sendEof(streamId);
+        },
+        /** Register this request's handler for its stream. */
+        on: (h) => {
+            handler = h;
+            session.onStream(streamId, h);
+        },
+        /** Unregister it, and nothing a later request registered for the same ID. */
+        off: () => {
+            if (handler)
+                session.offStream(streamId, handler);
+        },
+    };
+}
+/**
+ * What the local side of an upgraded or TCP stream sends, passed on in order: each read in
+ * frames of at most MAX_CHUNK under the stream's credit, the local socket paused until they
+ * are out. The socket's end and close queue behind them (`after`), so an EOF never overtakes
+ * DATA still waiting on credit. A stream that has ended, or a send that fails, destroys the
+ * socket and drops the rest.
+ */
+function localToStream(session, streamId, end, socket) {
+    let chain = Promise.resolve();
+    let queued = 0;
+    return {
+        forward: (bytes) => {
+            queued++;
+            socket.pause();
+            chain = chain.then(async () => {
+                try {
+                    for (let offset = 0; offset < bytes.length; offset += MAX_CHUNK) {
+                        if (end.ended())
+                            throw new Error(`stream ${streamId} ended`);
+                        await session.sendData(streamId, new Uint8Array(bytes.subarray(offset, Math.min(offset + MAX_CHUNK, bytes.length))));
+                    }
+                }
+                catch {
+                    try {
+                        socket.destroy();
+                    }
+                    catch { }
+                }
+                if (--queued === 0)
+                    socket.resume();
+            });
+        },
+        after: (fn) => {
+            chain = chain.then(fn).catch(() => { });
+        },
+    };
+}
+/**
+ * Call `fn` once the session is gone (its primary socket closed, or `close()`), and return
+ * what detaches it. Mock sessions in tests may have no `onClose`.
+ */
+function onSessionGone(session, fn) {
+    const s = session;
+    return typeof s.onClose === "function" ? s.onClose(fn) : () => { };
 }
 async function forwardFetch(session, streamId, openPayload, target) {
     const { method, target: reqTarget, headers: reqHeaders } = openPayload;
     // Validate peer-controlled method/target to prevent HTTP request smuggling.
     if (!isValidHttpMethod(method) || !isValidRequestTarget(reqTarget)) {
-        sendResetFrame(session, streamId, "invalid-method-or-target");
+        session.sendReset(streamId, "invalid-method-or-target");
         session.offStream(streamId);
         return;
     }
-    session.onStream(streamId, (f) => {
-        if (f.header.frameType === FrameType.Eof || f.header.frameType === FrameType.Reset) {
-            session.offStream(streamId);
+    // The visitor's RESET aborts the local request at once: an idle response (server-sent
+    // events, long-poll) would otherwise keep its local connection until it sent again. The
+    // request's EOF only ends a body this request does not have.
+    const end = streamEnd(session, streamId);
+    const visitorGone = new AbortController();
+    end.on((f) => {
+        if (f.header.frameType === FrameType.Reset) {
+            end.peerReset();
+            end.off();
+            visitorGone.abort();
         }
+    });
+    // So does the session going away, with nothing left to send it on. The pool is shared
+    // by local target: an idle response would otherwise keep its slot past a reconnect.
+    const detachSessionGone = onSessionGone(session, () => {
+        end.peerReset();
+        end.off();
+        visitorGone.abort();
     });
     let headerLines = `Host: ${target.host}:${target.port}\r\n`;
     // Shape-validate each header entry before destructuring.
@@ -111,34 +205,61 @@ async function forwardFetch(session, streamId, openPayload, target) {
             continue;
         headerLines += `${name}: ${value}\r\n`;
     }
+    const sink = responseSink(session, streamId, end);
     try {
         const pool = getFastPool(target.host, target.port);
-        const res = await pool.request(method, reqTarget, headerLines);
-        session.sendResponseHead(streamId, res.status, res.headers);
-        if (res.body.length > 0) {
-            if (res.body.length <= MAX_CHUNK) {
-                await session.sendData(streamId, res.body);
-            }
-            else {
-                for (let off = 0; off < res.body.length; off += MAX_CHUNK) {
-                    const end = Math.min(off + MAX_CHUNK, res.body.length);
-                    await session.sendData(streamId, res.body.subarray(off, end));
-                }
-            }
-        }
-        session.sendEof(streamId);
-        session.offStream(streamId);
+        await pool.request(method, reqTarget, headerLines, sink, visitorGone.signal);
+        // Nothing, if the visitor's RESET ended the stream first.
+        end.eof();
+        end.off();
     }
     catch {
-        sendResetFrame(session, streamId, "local connect failed");
-        session.offStream(streamId);
+        end.reset(sink.headSent() ? "local response cut" : "local connect failed");
+        end.off();
     }
+    finally {
+        detachSessionGone();
+    }
+}
+/**
+ * The local response, streamed to the stream as the pool parses it: the head at once, then
+ * each body piece under the stream's credit. Nothing waits for the whole body, so a body of
+ * any size passes and its first byte leaves when the local target sends it.
+ *
+ * No frame crosses a MAX_CHUNK boundary of the body, as when the body was sent whole: pieces
+ * come in whatever sizes the local socket reads, and a frame sized by them could need more
+ * than the credit left in a window the peer refills only once it is spent.
+ */
+function responseSink(session, streamId, end) {
+    let sent = false;
+    let offset = 0;
+    return {
+        headSent: () => sent,
+        head: (status, headers) => {
+            sent = true;
+            if (!end.ended())
+                session.sendResponseHead(streamId, status, headers);
+        },
+        // At the failure itself, not once the pump hears of it: a WINDOW read in between would
+        // let the send waiting on credit go out after the response had failed.
+        fail: () => end.reset("local response cut"),
+        body: async (chunk) => {
+            for (let off = 0; off < chunk.length;) {
+                if (end.ended())
+                    throw new Error(`stream ${streamId} ended`);
+                const n = Math.min(chunk.length - off, MAX_CHUNK - (offset % MAX_CHUNK));
+                await session.sendData(streamId, chunk.subarray(off, off + n));
+                off += n;
+                offset += n;
+            }
+        },
+    };
 }
 async function forwardHttpStream(session, streamId, openPayload, target) {
     const { method, target: reqTarget, headers: reqHeaders } = openPayload;
     // Validate peer-controlled method/target to prevent HTTP request smuggling.
     if (!isValidHttpMethod(method) || !isValidRequestTarget(reqTarget)) {
-        sendResetFrame(session, streamId, "invalid-method-or-target");
+        session.sendReset(streamId, "invalid-method-or-target");
         session.offStream(streamId);
         return;
     }
@@ -168,7 +289,11 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
     const HTTP_EARLY_BUFFER_CAP = 1 * 1024 * 1024; // 1 MiB
     let earlyBufferedBytes = 0;
     let handleReady = null;
-    session.onStream(streamId, (f) => {
+    const end = streamEnd(session, streamId);
+    end.on((f) => {
+        // At once, buffered or not: the abort it leads to must not answer it.
+        if (f.header.frameType === FrameType.Reset)
+            end.peerReset();
         if (finished)
             return;
         // dispatch may return a Promise when the local socket is backpressured;
@@ -179,8 +304,8 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
                 const incoming = b.kind === "data" && b.payload ? b.payload.byteLength : 0;
                 if (earlyBufferedBytes + incoming > HTTP_EARLY_BUFFER_CAP) {
                     finished = true;
-                    sendResetFrame(session, streamId, "early-buffer-overflow");
-                    session.offStream(streamId);
+                    end.reset("early-buffer-overflow");
+                    end.off();
                     earlyBuffer.length = 0;
                     earlyBufferedBytes = 0;
                     return;
@@ -196,7 +321,7 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
             else if (b.kind === "reset") {
                 finished = true;
                 handleReady.abort();
-                session.offStream(streamId);
+                end.off();
             }
         };
         if (f.header.frameType === FrameType.Data)
@@ -206,9 +331,20 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
         else if (f.header.frameType === FrameType.Reset)
             return dispatch({ kind: "reset" });
     });
+    // The session going away ends the request as the visitor's RESET does, with nothing to
+    // send: the local request is aborted, here or once the pool hands over its handle.
+    const detachSessionGone = onSessionGone(session, () => {
+        end.peerReset();
+        if (finished)
+            return;
+        finished = true;
+        end.off();
+        handleReady?.abort();
+    });
+    const sink = responseSink(session, streamId, end);
     try {
         const pool = getFastPool(target.host, target.port);
-        const handle = await pool.requestStreaming(method, reqTarget, headerLines);
+        const handle = await pool.requestStreaming(method, reqTarget, headerLines, sink);
         // If the early-buffer overflowed (finished=true) while
         // requestStreaming() was in flight, abort the resolved handle so the
         // pool slot / socket FD is released instead of waiting forever for
@@ -248,7 +384,7 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
                     handle.waitResponse().catch(() => { });
                 }
                 catch { }
-                session.offStream(streamId);
+                end.off();
             }
         }
         earlyBuffer.length = 0;
@@ -273,29 +409,20 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
         handleReady = handle;
         if (!hasBody)
             handle.endBody();
-        const res = await handle.waitResponse();
-        session.sendResponseHead(streamId, res.status, res.headers);
-        if (res.body.length > 0) {
-            if (res.body.length <= MAX_CHUNK) {
-                await session.sendData(streamId, res.body);
-            }
-            else {
-                for (let off = 0; off < res.body.length; off += MAX_CHUNK) {
-                    const end = Math.min(off + MAX_CHUNK, res.body.length);
-                    await session.sendData(streamId, res.body.subarray(off, end));
-                }
-            }
-        }
+        await handle.waitResponse();
         finished = true;
-        session.sendEof(streamId);
-        session.offStream(streamId);
+        end.eof();
+        end.off();
     }
     catch {
         if (!finished) {
             finished = true;
-            sendResetFrame(session, streamId, "local connect failed");
-            session.offStream(streamId);
+            end.reset(sink.headSent() ? "local response cut" : "local connect failed");
+            end.off();
         }
+    }
+    finally {
+        detachSessionGone();
     }
 }
 export async function handleHttpStream(session, streamId, openPayload, target) {
@@ -303,20 +430,13 @@ export async function handleHttpStream(session, streamId, openPayload, target) {
 }
 function forwardUpgradeToLocal(session, streamId, openPayload, target) {
     const { method, target: reqTarget, headers: reqHeaders } = openPayload;
-    const sendReset = (reason) => {
-        const reasonBytes = new TextEncoder().encode(reason);
-        const resetPayload = new Uint8Array(2 + reasonBytes.length);
-        new DataView(resetPayload.buffer).setUint16(0, 0x0006, false);
-        resetPayload.set(reasonBytes, 2);
-        session.sendFrame({
-            header: { frameType: FrameType.Reset, streamId, length: resetPayload.length },
-            payload: resetPayload,
-        });
-    };
+    // The session's RESET, never a raw frame: it also closes the stream's credit gate, so a
+    // send waiting on it rejects and gives back the session credit it holds.
+    const end = streamEnd(session, streamId);
     // Validate peer-controlled method/target BEFORE touching the socket.
     if (!isValidHttpMethod(method) || !isValidRequestTarget(reqTarget)) {
-        sendReset("invalid-method-or-target");
-        session.offStream(streamId);
+        end.reset("invalid-method-or-target");
+        end.off();
         return;
     }
     const headerObj = {};
@@ -341,22 +461,65 @@ function forwardUpgradeToLocal(session, streamId, openPayload, target) {
     const sessionWithClose = session;
     const detachSessionClose = typeof sessionWithClose.onClose === 'function'
         ? sessionWithClose.onClose(() => {
+            // Ended first: the socket's close comes later, and must send nothing.
+            end.peerReset();
             try {
                 socket.destroy();
             }
             catch { }
-            session.offStream(streamId);
+            end.off();
         })
         : () => { };
-    socket.once("close", () => {
-        detachSessionClose();
-    });
     let buffer = Buffer.alloc(0);
     let headersParsed = false;
     const MAX_HEAD = 32 * 1024; // cap at 32KB of header data
-    const MAX_CHUNK = 65536;
+    const out = localToStream(session, streamId, end, socket);
+    // From the start, not once the local headers arrive, and until the local side ends or
+    // closes: the visitor can reset the stream at any time, and that ends this request.
+    end.on((f) => {
+        if (f.header.frameType === FrameType.Reset) {
+            end.peerReset();
+            end.off();
+            // Destroy, never end: a half-closed local peer that stays silent would keep the
+            // connection, and the session's close listener, for the life of the session.
+            socket.destroy();
+            return;
+        }
+        // The request's EOF (the kit sends it at once: an upgrade has no body) and any DATA
+        // only matter once the local service has answered.
+        if (!headersParsed)
+            return;
+        if (f.header.frameType === FrameType.Data) {
+            // Await socket drain before inbound WINDOW replenishment.
+            const ok = socket.write(Buffer.from(f.payload));
+            if (!ok) {
+                return new Promise((resolve) => {
+                    const cleanup = () => {
+                        socket.off('drain', onDrain);
+                        socket.off('close', onClose);
+                        socket.off('error', onClose);
+                    };
+                    const onDrain = () => { cleanup(); resolve(); };
+                    const onClose = () => { cleanup(); resolve(); };
+                    socket.once('drain', onDrain);
+                    socket.once('close', onClose);
+                    socket.once('error', onClose);
+                });
+            }
+            return;
+        }
+        else if (f.header.frameType === FrameType.Eof) {
+            // Half-close only: the stream is not over until the local side ends or closes, and
+            // the visitor can still reset it.
+            socket.end();
+        }
+    });
     const onHeadersReady = (statusLine, headerLines, leftover) => {
         headersParsed = true;
+        if (end.ended()) {
+            socket.destroy();
+            return;
+        }
         const match = statusLine.match(/^HTTP\/1\.[01]\s+(\d{3})/);
         const status = match ? parseInt(match[1], 10) : 502;
         const respHeaders = [];
@@ -372,78 +535,25 @@ function forwardUpgradeToLocal(session, streamId, openPayload, target) {
             respHeaders.push([name, value]);
         }
         session.sendResponseHead(streamId, status, respHeaders);
-        // If the upstream didn't actually switch protocols, forward body bytes as
-        // regular HTTP body. We don't parse chunked/content-length — just stream
-        // the rest of the socket until it closes.
-        if (leftover.length > 0) {
-            // Fire-and-forget: called inline from a Node socket data callback.
-            // sendData() is async (flow-control) and can reject on a closed
-            // session/stream; attach a catch so the rejection doesn't escape as
-            // an unhandled promise rejection.
-            session.sendData(streamId, new Uint8Array(leftover)).catch(() => {
-                try {
-                    socket.destroy();
-                }
-                catch { }
-            });
-        }
-        session.onStream(streamId, (f) => {
-            if (f.header.frameType === FrameType.Data) {
-                // Await socket drain before inbound WINDOW replenishment.
-                const ok = socket.write(Buffer.from(f.payload));
-                if (!ok) {
-                    return new Promise((resolve) => {
-                        const cleanup = () => {
-                            socket.off('drain', onDrain);
-                            socket.off('close', onClose);
-                            socket.off('error', onClose);
-                        };
-                        const onDrain = () => { cleanup(); resolve(); };
-                        const onClose = () => { cleanup(); resolve(); };
-                        socket.once('drain', onDrain);
-                        socket.once('close', onClose);
-                        socket.once('error', onClose);
-                    });
-                }
-                return;
-            }
-            else if (f.header.frameType === FrameType.Eof || f.header.frameType === FrameType.Reset) {
-                socket.end();
-                session.offStream(streamId);
-            }
-        });
+        // The bytes that came with the head (a 101's first frames, or the body when the
+        // local service did not switch protocols) go first, in order with the rest.
+        if (leftover.length > 0)
+            out.forward(leftover);
     };
-    socket.on("data", async (chunk) => {
+    socket.on("data", (chunk) => {
         if (headersParsed) {
-            // Pause the socket so credit backpressure flows back to the local
-            // peer (TCP buffer fills, peer slows). Resume after the awaits clear.
-            socket.pause();
-            try {
-                if (chunk.length <= MAX_CHUNK) {
-                    await session.sendData(streamId, new Uint8Array(chunk));
-                }
-                else {
-                    for (let offset = 0; offset < chunk.length; offset += MAX_CHUNK) {
-                        const end = Math.min(offset + MAX_CHUNK, chunk.length);
-                        await session.sendData(streamId, new Uint8Array(chunk.subarray(offset, end)));
-                    }
-                }
-            }
-            catch {
-                // Stream/session closed mid-send — drop further bytes.
-                socket.destroy();
-                return;
-            }
-            socket.resume();
+            out.forward(chunk);
             return;
         }
         buffer = Buffer.concat([buffer, chunk]);
-        if (buffer.length > MAX_HEAD) {
-            sendReset("response headers too large");
+        // The cap is on the head alone: the read that ends it can carry the bytes after it too
+        // (a short 101 and the first frames, sent together), and those go out as DATA.
+        const headerEnd = buffer.indexOf("\r\n\r\n");
+        if ((headerEnd < 0 ? buffer.length : headerEnd + 4) > MAX_HEAD) {
+            end.reset("response headers too large");
             socket.destroy();
             return;
         }
-        const headerEnd = buffer.indexOf("\r\n\r\n");
         if (headerEnd < 0)
             return;
         const headerBlock = buffer.slice(0, headerEnd).toString("utf8");
@@ -452,20 +562,41 @@ function forwardUpgradeToLocal(session, streamId, openPayload, target) {
         const statusLine = lines.shift() || "";
         onHeadersReady(statusLine, lines, leftover);
     });
+    // Only the local side's clean end waits behind the DATA before it. A failure, or a close
+    // with no end before it, decides the RESET at once: the RESET closes the stream's credit
+    // gate, so a send still waiting on it gives its session credit back instead of holding it
+    // for a connection that is gone. Until then the handler stays, so a visitor's RESET is
+    // taken as the end and nothing answers it.
+    let localEnded = false;
     socket.on("end", () => {
-        if (headersParsed) {
-            session.sendEof(streamId);
-        }
-        else {
-            sendReset("upstream closed before response");
-        }
-        session.offStream(streamId);
+        // Bun emits `end` on a socket we destroy ourselves: that is no end from the local side.
+        if (socket.destroyed)
+            return;
+        localEnded = true;
+        out.after(() => {
+            if (headersParsed) {
+                end.eof();
+            }
+            else {
+                end.reset("upstream closed before response");
+            }
+            end.off();
+        });
     });
     socket.on("error", () => {
-        if (!headersParsed) {
-            sendReset("local connect failed");
-        }
-        session.offStream(streamId);
+        end.reset(headersParsed ? "local connection reset" : "local connect failed");
+        end.off();
+    });
+    socket.once("close", () => {
+        const closed = () => {
+            detachSessionClose();
+            end.reset(headersParsed ? "local connection reset" : "upstream closed before response");
+            end.off();
+        };
+        if (localEnded)
+            out.after(closed);
+        else
+            closed();
     });
     socket.on("connect", () => {
         // Normalize `Connection:` to "Upgrade" only. Don't append ", close":
@@ -492,15 +623,48 @@ export function handleTcpStream(session, streamId, target) {
     const { createConnection } = net;
     let localReady = false;
     let localSocket = null;
-    let finished = false;
+    // Two ends, kept apart: the visitor's EOF ends only what the visitor sends, and the
+    // local service can still answer it; `end` is the stream's end (our EOF or RESET,
+    // either side's RESET, the session's close), after which nothing more is sent.
+    const end = streamEnd(session, streamId);
+    let visitorDone = false;
     const buffered = [];
     let bufferedBytes = 0;
     // Bound the pre-connect queue so a peer flooding DATA before the local
     // TCP socket opens can't OOM the process. When we hit the cap, reset the
     // stream back to the peer and drop the socket attempt.
     const PRE_CONNECT_BUFFER_CAP = 1 * 1024 * 1024; // 1 MiB
-    session.onStream(streamId, (frame) => {
-        if (finished)
+    const socket = createConnection({ host: target.host, port: target.port }, () => {
+        if (end.ended()) {
+            // Stream was reset before the TCP connect completed.
+            // Destroy the socket without touching the (already-cleared) buffer.
+            try {
+                socket.destroy();
+            }
+            catch { }
+            return;
+        }
+        localSocket = socket;
+        localReady = true;
+        for (const f of buffered) {
+            socket.write(Buffer.from(f.payload));
+        }
+        buffered.length = 0;
+        if (visitorDone)
+            socket.end();
+    });
+    end.on((frame) => {
+        // A RESET ends both directions, even after the visitor's EOF: destroy, never end, as a
+        // half-closed local peer that stays silent would keep the socket. The socket itself,
+        // not `localSocket`: a connect still pending is cancelled too.
+        if (frame.header.frameType === FrameType.Reset) {
+            end.peerReset();
+            buffered.length = 0;
+            socket.destroy();
+            end.off();
+            return;
+        }
+        if (end.ended() || visitorDone)
             return;
         if (frame.header.frameType === FrameType.Data) {
             if (localReady && localSocket) {
@@ -527,47 +691,23 @@ export function handleTcpStream(session, streamId, target) {
             }
             const incoming = frame.payload?.byteLength ?? 0;
             if (bufferedBytes + incoming > PRE_CONNECT_BUFFER_CAP) {
-                finished = true;
                 buffered.length = 0;
                 bufferedBytes = 0;
-                try {
-                    session.resetStream?.(streamId);
-                }
-                catch { }
-                session.offStream(streamId);
+                end.reset("pre-connect-buffer-overflow");
+                socket.destroy();
+                end.off();
                 return;
             }
             buffered.push(frame);
             bufferedBytes += incoming;
         }
-        else if (frame.header.frameType === FrameType.Eof || frame.header.frameType === FrameType.Reset) {
-            // Mark finished so any later `connect` callback knows not to flush
-            // stale buffered bytes and so any more incoming frames are ignored.
-            finished = true;
+        else if (frame.header.frameType === FrameType.Eof) {
+            // The visitor has sent everything: half-close, now or once connected, after the
+            // bytes buffered before it. The handler stays: the visitor can still reset.
+            visitorDone = true;
             if (localSocket)
                 localSocket.end();
-            // Drop any buffered bytes that arrived before EOF/RESET — they must
-            // not leak to the local service post-close.
-            buffered.length = 0;
-            session.offStream(streamId);
         }
-    });
-    const socket = createConnection({ host: target.host, port: target.port }, () => {
-        if (finished) {
-            // Stream was closed (EOF/RESET) before the TCP connect completed.
-            // Destroy the socket without touching the (already-cleared) buffer.
-            try {
-                socket.destroy();
-            }
-            catch { }
-            return;
-        }
-        localSocket = socket;
-        localReady = true;
-        for (const f of buffered) {
-            socket.write(Buffer.from(f.payload));
-        }
-        buffered.length = 0;
     });
     // Destroy the upstream TCP socket when the session itself closes, not just
     // when a stream EOF/RESET arrives — abrupt WS drops without frame-level EOF
@@ -577,120 +717,96 @@ export function handleTcpStream(session, streamId, target) {
     const sessionWithClose = session;
     let detachSessionClose = null;
     if (typeof sessionWithClose.onClose === 'function') {
+        // Even once ended: an EOF either way only half-closed the socket.
         detachSessionClose = sessionWithClose.onClose(() => {
-            if (finished)
-                return;
-            finished = true;
+            end.peerReset();
             try {
                 socket.destroy();
             }
             catch { }
-            session.offStream(streamId);
-        });
-        socket.once("close", () => {
-            detachSessionClose?.();
+            end.off();
         });
     }
-    socket.on("data", async (chunk) => {
-        // Pause local socket while we await credit so TCP backpressure flows
-        // back to the user's local service. Resume once enqueued.
-        socket.pause();
-        try {
-            await session.sendData(streamId, new Uint8Array(chunk));
-        }
-        catch {
-            socket.destroy();
-            return;
-        }
-        socket.resume();
+    // Paused while each read waits for credit, so backpressure reaches the local service.
+    const out = localToStream(session, streamId, end, socket);
+    socket.on("data", (chunk) => out.forward(chunk));
+    // The handler and the session's close listener stay until the stream's terminal goes, behind
+    // the DATA before it: a socket that has closed while its DATA and EOF wait for credit has not
+    // ended the stream, and a visitor's RESET in the meantime still cancels them.
+    socket.once("close", () => {
+        out.after(() => {
+            detachSessionClose?.();
+            end.off();
+        });
     });
     socket.on("end", () => {
-        if (finished)
+        // Bun emits `end` on a socket we destroy ourselves: that is no end from the local side.
+        if (socket.destroyed)
             return;
-        finished = true;
-        session.sendEof(streamId);
-        session.offStream(streamId);
+        out.after(() => {
+            end.eof();
+            end.off();
+        });
     });
     socket.on("error", () => {
-        if (finished)
-            return;
-        finished = true;
-        const reason = new TextEncoder().encode("local connect failed");
-        const resetPayload = new Uint8Array(2 + reason.length);
-        new DataView(resetPayload.buffer).setUint16(0, 0x0006, false);
-        resetPayload.set(reason, 2);
-        session.sendFrame({
-            header: { frameType: FrameType.Reset, streamId, length: resetPayload.length },
-            payload: resetPayload,
-        });
+        end.reset("local connect failed");
         // Unregister the stream handler — without this the handler leaks.
-        session.offStream(streamId);
+        end.off();
     });
 }
 /**
  * Set up automatic stream forwarding for a session.
  * Intercepts STREAM_OPEN frames and forwards to the appropriate local target.
+ *
+ * Installed as the session's inbound router, so it covers every socket the
+ * session has or opens later (v2 secondaries included). Call it before
+ * `connect()` when the kit can open a stream right behind HELLO_OK (a resumed
+ * session): see `TunnelSession.setInboundRouter()`.
  */
 export function setupAutoForwarding(session, httpTarget, tcpTarget) {
-    const allWs = session.getAllWebSockets();
-    for (const ws of allWs) {
-        if (!ws)
-            continue;
-        attachAutoForwarder(ws, session, httpTarget, tcpTarget);
-    }
+    session.setInboundRouter((frame, ws) => routeAutoForwarded(frame, ws, session, httpTarget, tcpTarget));
 }
-function attachAutoForwarder(ws, session, httpTarget, tcpTarget) {
-    ws.onmessage = (event) => {
-        const data = new Uint8Array(event.data);
-        let result;
+function routeAutoForwarded(frame, ws, session, httpTarget, tcpTarget) {
+    if (frame.header.frameType === FrameType.StreamOpen) {
+        const streamId = frame.header.streamId;
+        session.dispatchFrame(frame, ws);
+        // Peer-supplied JSON: a malformed STREAM_OPEN payload would throw
+        // out of the WebSocket onmessage callback and kill the message
+        // loop. Reset the stream and keep the session alive so a single
+        // corrupt frame can't take down every other in-flight stream on
+        // the same socket.
+        let payload;
         try {
-            result = decodeFrames(data);
+            payload = JSON.parse(new TextDecoder().decode(frame.payload));
         }
         catch {
+            // Refuse the stream so the visitor gets an answer instead of waiting
+            // for a response that will never come.
+            session.sendReset(streamId, "malformed-stream-open");
             return;
         }
-        for (const frame of result.frames) {
-            if (frame.header.frameType === FrameType.StreamOpen) {
-                const streamId = frame.header.streamId;
-                session.dispatchFrame(frame, ws);
-                // Peer-supplied JSON: a malformed STREAM_OPEN payload would throw
-                // out of the WebSocket onmessage callback and kill the message
-                // loop. Reset the stream and keep the session alive so a single
-                // corrupt frame can't take down every other in-flight stream on
-                // the same socket.
-                let payload;
-                try {
-                    payload = JSON.parse(new TextDecoder().decode(frame.payload));
-                }
-                catch (err) {
-                    // Best-effort reset so the peer sees EOF on this stream instead
-                    // of a hung socket. Swallow reset errors too.
-                    try {
-                        session.resetStream?.(streamId);
-                    }
-                    catch { }
-                    continue;
-                }
-                if (payload.kind === "http") {
-                    if (payload.isUpgrade) {
-                        forwardUpgradeToLocal(session, streamId, payload, httpTarget);
-                        continue;
-                    }
-                    const methodUpper = String(payload.method || "GET").toUpperCase();
-                    if (methodUpper === "GET" || methodUpper === "HEAD") {
-                        forwardFetch(session, streamId, payload, httpTarget);
-                    }
-                    else {
-                        forwardHttpStream(session, streamId, payload, httpTarget);
-                    }
-                    continue;
-                }
-                if (payload.kind === "tcp" && tcpTarget) {
-                    handleTcpStream(session, streamId, tcpTarget);
-                    continue;
-                }
+        if (payload.kind === "http") {
+            if (payload.isUpgrade) {
+                forwardUpgradeToLocal(session, streamId, payload, httpTarget);
+                return;
             }
-            session.dispatchFrame(frame, ws);
+            const methodUpper = String(payload.method || "GET").toUpperCase();
+            if (methodUpper === "GET" || methodUpper === "HEAD") {
+                forwardFetch(session, streamId, payload, httpTarget);
+            }
+            else {
+                forwardHttpStream(session, streamId, payload, httpTarget);
+            }
+            return;
         }
-    };
+        if (payload.kind === "tcp" && tcpTarget) {
+            handleTcpStream(session, streamId, tcpTarget);
+            return;
+        }
+        // A kind nothing here forwards (tcp without a tcpTarget, or unknown):
+        // nothing would ever answer it, so refuse it too.
+        session.sendReset(streamId, "unsupported-stream-kind");
+        return;
+    }
+    session.dispatchFrame(frame, ws);
 }

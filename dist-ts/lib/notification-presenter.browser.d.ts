@@ -24,12 +24,14 @@ export interface ParsedNotification {
         message?: string;
         icon_url?: string;
         has_icon?: boolean;
-        id?: number;
+        /** Always present: the kit serves only notifications with an integer id. */
+        id: number;
         timestamp?: number;
-        display_id?: number;
-        urgency?: 'low' | 'normal' | 'critical';
+        display_id?: number | string;
+        urgency?: 'LOW' | 'NORMAL' | 'CRITICAL';
         category?: string;
-        expire_time?: number;
+        timeout?: number;
+        progress?: number;
     };
     iconUrl: string | undefined;
     displayId: string;

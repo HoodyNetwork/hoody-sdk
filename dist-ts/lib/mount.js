@@ -23,7 +23,8 @@ import { homedir, platform, userInfo } from 'node:os';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { execFile as execFileCb } from 'node:child_process';
-import { checkLiveness, claimState, computeMountId, configFilePath, deleteState, ensureMountpointParent, getStateDir, isMountpointEmpty, listStates, pruneStale, readState, stateFilePath, } from './mount-state.js';
+import { assertRcloneInstalled, detectRcloneVersion, isVersionAtLeast } from './rclone-local.js';
+import { cacheDirPath, checkLiveness, claimState, computeMountId, configFilePath, deleteState, ensureMountpointParent, getStateDir, isMountpointEmpty, listStates, pruneStale, readState, stateFilePath, } from './mount-state.js';
 const execFile = promisify(execFileCb);
 const RCLONE_HEADERS_MIN_VERSION = [1, 61];
 // ─── Public entry points ─────────────────────────────────────────────────
@@ -55,12 +56,18 @@ export async function probeKit(kitUrl, auth, timeoutMs = 10000) {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), timeoutMs);
     try {
+        // Never follow a redirect: fetch strips only Authorization on a cross-origin hop,
+        // so a kit token under another header name would reach the redirect's target.
         const res = await fetch(kitUrl, {
             method: 'OPTIONS',
             headers,
             signal: controller.signal,
+            redirect: 'manual',
         });
         const dav = res.headers.get('dav') ?? undefined;
+        if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
+            return { ok: false, status: res.status, davHeader: dav, needsAuth: false, detail: `redirect refused (${res.status}): the probe carries the kit credential and is sent only to ${kitUrl}` };
+        }
         if (res.status === 401 || res.status === 403) {
             return { ok: false, status: res.status, davHeader: dav, needsAuth: true, detail: `${res.status} ${res.statusText}` };
         }
@@ -132,6 +139,8 @@ export async function mount(opts) {
     });
     await fs.mkdir(getStateDir(opts.home), { recursive: true, mode: 0o700 });
     const confPath = configFilePath(id, opts.home);
+    const cacheDir = cacheDirPath(id, url, opts.home);
+    await fs.mkdir(cacheDir, { recursive: true, mode: 0o700 });
     const record = {
         id,
         version: 1,
@@ -160,6 +169,8 @@ export async function mount(opts) {
         localPath,
         '--config',
         confPath,
+        '--cache-dir',
+        cacheDir,
         ...(opts.noVfsCache ? [] : ['--vfs-cache-mode', 'writes']),
         ...(opts.readOnly ? ['--read-only'] : []),
         ...headerArgs,
@@ -417,35 +428,6 @@ async function rcloneObscure(rclonePath, plaintext) {
     // passed to rclone obscure, which rclone handles fine.
     const { stdout } = await execFile(rclonePath, ['obscure', plaintext], { timeout: 10000 });
     return stdout.trim();
-}
-async function detectRcloneVersion(rclonePath) {
-    try {
-        const { stdout } = await execFile(rclonePath, ['version'], { timeout: 5000 });
-        const m = stdout.match(/rclone v(\d+)\.(\d+)(?:\.(\d+))?/);
-        if (!m)
-            return null;
-        return [Number(m[1]), Number(m[2]), Number(m[3] ?? 0)];
-    }
-    catch {
-        return null;
-    }
-}
-async function assertRcloneInstalled(rclonePath) {
-    try {
-        await execFile(rclonePath, ['version'], { timeout: 5000 });
-    }
-    catch (err) {
-        void err;
-        throw new Error(`rclone not found at "${rclonePath}". Install rclone from https://rclone.org/install/ ` +
-            '(macOS: brew install rclone; Linux: apt/dnf install rclone; Windows: winget install Rclone.Rclone).');
-    }
-}
-function isVersionAtLeast(v, target) {
-    if (!v)
-        return false;
-    if (v[0] !== target[0])
-        return v[0] > target[0];
-    return v[1] >= target[1];
 }
 /**
  * Poll the OS process table for the rclone daemon process matching the

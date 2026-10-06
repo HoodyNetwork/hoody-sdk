@@ -5,18 +5,17 @@
  * @packageDocumentation
  */
 export { DownloadsService } from './downloads.service.js';
-export { ArchivesService } from './archives.service.js';
+export { ExtractionsService } from './extractions.service.js';
 export { BackendsService } from './backends.service.js';
 export { FilesService } from './files.service.js';
-export { HealthService } from './health.service.js';
+export { KitService } from './kit.service.js';
 export { JournalService } from './journal.service.js';
 export { MountsService } from './mounts.service.js';
-export { SystemService } from './system.service.js';
-export { ImageProcessingService } from './image-processing.service.js';
+export { UploadsService } from './uploads.service.js';
+export { ArchivesService } from './archives.service.js';
+export { ImagesService } from './images.service.js';
+export { UiService } from './ui.service.js';
 export { WebdavService } from './webdav.service.js';
-export { DirectoriesService } from './directories.service.js';
-export { AuthenticationService } from './authentication.service.js';
-export { RemoteFtpService } from './remote-ftp.service.js';
-export { RemoteGitService } from './remote-git.service.js';
-export { RemoteS3Service } from './remote-s3.service.js';
-export { RemoteSshService } from './remote-ssh.service.js';
+export { FtpService } from './ftp.service.js';
+export { S3Service } from './s3.service.js';
+export { SshService } from './ssh.service.js';

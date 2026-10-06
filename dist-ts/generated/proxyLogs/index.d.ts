@@ -4,4 +4,4 @@
  * Auto-generated service exports for proxyLogs namespace
  * @packageDocumentation
  */
-export { LogsService } from './logs.service.js';
+export { ProxyLogsService } from './proxy-logs.service.js';

@@ -9,9 +9,13 @@
  *
  * Lifecycle:
  *   - `constructor(initial)` sets the available pool (bytes).
- *   - `acquire(n)` awaits until `n` bytes are available; consumes them.
+ *   - `acquire(n, cancel?)` awaits until `n` bytes are available; consumes them.
+ *     Aborting `cancel` while it waits takes it out of the queue and rejects it.
  *   - `release(n)` returns `n` bytes; wakes FIFO waiters that fit.
  *   - `close(err?)` rejects every pending waiter and blocks future acquires.
+ *   - `closedSignal` aborts when the gate closes: the `cancel` for an acquire on
+ *     another gate made on this one's behalf (a stream's send waiting for
+ *     session credit ends with the stream).
  *
  * Protocol credit is ONLY released by peer WINDOW frames (call `release`
  * when a WINDOW arrives). Successful local sends do NOT release credit —
@@ -22,6 +26,7 @@ export class CreditGate {
     waiters = [];
     closed = false;
     closeError = null;
+    closing = null;
     constructor(initial) {
         if (initial < 0)
             throw new Error(`CreditGate initial must be >= 0, got ${initial}`);
@@ -29,9 +34,10 @@ export class CreditGate {
     }
     /**
      * Await up to `n` bytes of credit. Resolves once available. Rejects if
-     * the gate is closed.
+     * the gate is closed, or if `cancel` aborts first: the waiter leaves the
+     * queue having taken nothing, and the ones behind it move up.
      */
-    async acquire(n) {
+    async acquire(n, cancel) {
         if (n === 0)
             return;
         if (n < 0)
@@ -39,13 +45,32 @@ export class CreditGate {
         if (this.closed) {
             throw this.closeError ?? new Error("CreditGate closed");
         }
+        if (cancel?.aborted)
+            throw cancelled(cancel);
         // Fast path: credit available AND no one else is waiting (FIFO guard).
         if (this.available >= n && this.waiters.length === 0) {
             this.available -= n;
             return;
         }
         return new Promise((resolve, reject) => {
-            this.waiters.push({ needed: n, resolve, reject });
+            const onAbort = () => {
+                const i = this.waiters.indexOf(waiter);
+                if (i < 0)
+                    return;
+                this.waiters.splice(i, 1);
+                reject(cancelled(cancel));
+                // The head leaving can let the waiters behind it through.
+                if (i === 0)
+                    this.wake();
+            };
+            const waiter = {
+                needed: n,
+                cancel,
+                resolve: () => { cancel?.removeEventListener("abort", onAbort); resolve(); },
+                reject: (e) => { cancel?.removeEventListener("abort", onAbort); reject(e); },
+            };
+            this.waiters.push(waiter);
+            cancel?.addEventListener("abort", onAbort, { once: true });
         });
     }
     /**
@@ -61,8 +86,26 @@ export class CreditGate {
         if (this.closed)
             return;
         this.available += n;
-        while (this.waiters.length > 0 && this.available >= this.waiters[0].needed) {
-            const w = this.waiters.shift();
+        this.wake();
+    }
+    /**
+     * Serve the waiters at the head of the queue that fit, in order. One whose
+     * `cancel` has aborted is rejected, never served: waiters can share a signal,
+     * and the abort that wakes the queue may not have reached its listener yet.
+     */
+    wake() {
+        if (this.closed)
+            return;
+        while (this.waiters.length > 0) {
+            const w = this.waiters[0];
+            if (w.cancel?.aborted) {
+                this.waiters.shift();
+                w.reject(cancelled(w.cancel));
+                continue;
+            }
+            if (this.available < w.needed)
+                break;
+            this.waiters.shift();
             this.available -= w.needed;
             w.resolve();
         }
@@ -79,9 +122,22 @@ export class CreditGate {
         const waiters = this.waiters.splice(0);
         for (const w of waiters)
             w.reject(err);
+        this.closing?.abort(err);
+    }
+    /** Aborted, with the close error, once this gate closes. */
+    get closedSignal() {
+        if (!this.closing) {
+            this.closing = new AbortController();
+            if (this.closed)
+                this.closing.abort(this.closeError ?? new Error("CreditGate closed"));
+        }
+        return this.closing.signal;
     }
     /** Observability. */
     get availablePermits() { return this.available; }
     get waiterCount() { return this.waiters.length; }
     get isClosed() { return this.closed; }
+}
+function cancelled(signal) {
+    return signal.reason instanceof Error ? signal.reason : new Error("CreditGate acquire cancelled");
 }

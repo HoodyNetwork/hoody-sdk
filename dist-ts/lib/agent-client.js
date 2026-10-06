@@ -1,5 +1,6 @@
-import { parseSseStream } from './pipe-stream.js';
+import { parseSseStream } from './sse-stream.js';
 import { ApiError } from '../generated/errors.js';
+import { isProxyAuthPolicy } from './proxy-auth.js';
 /**
  * Encode a single URL path segment, REFUSING a relative one.
  *
@@ -38,62 +39,39 @@ function encodeSegment(value, label) {
 const TERMINAL_EVENTS = new Set(['event.agent_done', 'agent_done', 'event.quit', 'quit']);
 /** Assistant text-delta event. */
 const TEXT_EVENTS = new Set(['event.stream_chunk', 'stream_chunk']);
-/** Mint a container claim via the public authorize() API and pair it with the
- *  client's auth token (the claim object is JSON-stringified for the header,
- *  matching the CLI / proxy-auth-middleware contract). */
-async function mintKitAuth(client, container) {
-    const containerId = container.id;
-    if (!containerId)
-        throw new Error('streamAgentPrompt: container.id is required');
-    const resp = await client.api.containers.authorize(containerId);
-    const claimRaw = resp?.data?.container_claim ?? resp?.data?.claim;
-    if (!claimRaw)
-        throw new Error('authorize response contained no container_claim');
-    const token = resp?.data?.token ?? resp?.data?.x_hoody_token ?? (await client.getAuthToken());
-    if (!token)
-        throw new Error('no auth token available for agent kit handshake');
-    return {
-        claim: typeof claimRaw === 'string' ? claimRaw : JSON.stringify(claimRaw),
-        token: String(token),
-    };
-}
-/** Best-effort variant of `mintKitAuth`.
- *
- *  The agent kit answers on the bare container URL — it verifies no claim — so a
- *  failed mint must NOT sink the turn. The mint can fail for reasons that say
- *  nothing about the caller's access: `503 SIGNING_NOT_CONFIGURED` on a
- *  deployment with no Ed25519 signing key, or an auth token whose permission set
- *  excludes `containers.read`. Both used to throw here and abort a prompt the
- *  kit would have accepted unauthenticated.
- *
- *  Only the mint is forgiven. A missing `container.id` is a caller bug, not a
- *  deployment condition, so it is checked BEFORE the try and still throws —
- *  swallowing it would trade a precise error for a confusing one from
- *  `getKitUrl()` two lines later.
- *
- *  A real access failure still surfaces: the prompt POST itself returns the
- *  proxy's 401/403 when a permission rule guards the service. */
-async function mintKitAuthBestEffort(client, container) {
-    if (!container?.id)
-        throw new Error('streamAgentPrompt: container.id is required');
-    try {
-        return await mintKitAuth(client, container);
-    }
-    catch {
+/** Resolve the per-call credential: a policy picks `services.agent`, then
+ *  `default`. A legacy `{ claim, token }` object (the old option shape) is read
+ *  as an explicit `containerClaim` credential — it was supplied by the caller. */
+function resolvePromptAuth(auth) {
+    if (!auth)
         return undefined;
+    const legacy = auth;
+    if (legacy.type === undefined && typeof legacy.claim === 'string' && typeof legacy.token === 'string') {
+        return { type: 'containerClaim', claim: legacy.claim, token: legacy.token };
     }
+    if (isProxyAuthPolicy(auth))
+        return auth.services?.agent ?? auth.default;
+    return auth;
 }
 /**
  * Dispatch a streaming prompt turn against an existing agent session and return
  * a handle over the SSE event stream. Create the session first via
- * `client.api`-scoped `box.agent.sessions.createSession(...)`.
+ * `client.api`-scoped `box.agent.sessions.create(...)`.
  */
 export async function streamAgentPrompt(client, args) {
     const { container, sessionId, text } = args;
     if (!sessionId)
         throw new Error('streamAgentPrompt: sessionId is required');
-    const auth = args.auth ?? (await mintKitAuthBestEffort(client, container));
-    const base = client.getKitUrl('agent', container, args.serviceIndex ?? 1);
+    if (!container?.id)
+        throw new Error('streamAgentPrompt: container.id is required');
+    const auth = resolvePromptAuth(args.auth);
+    // An explicit per-call credential gets a derived client whose kitAuth it is
+    // (withContainer is local: no request for a container object). Without one,
+    // the caller's client and ITS kitAuth are used as-is. The namespace lets a
+    // kitAuth policy select its `agent` entry.
+    const scoped = auth ? await client.withContainer(container, { kitAuth: auth }) : client;
+    const middlewareContext = { _kitNamespace: 'agent' };
+    const base = scoped.getKitUrl('agent', container, args.serviceIndex ?? 1);
     const qs = args.policy ? `?policy=${encodeURIComponent(args.policy)}` : '';
     const url = `${base}/api/v1/agent/sessions/${encodeSegment(sessionId, 'sessionId')}/prompt:stream${qs}`;
     // Internal abort so cancel() can tear down the fetch independently of the
@@ -112,10 +90,6 @@ export async function streamAgentPrompt(client, args) {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
     };
-    if (auth) {
-        headers['X-Hoody-Container-Claim'] = auth.claim;
-        headers['X-Hoody-Token'] = auth.token;
-    }
     if (args.policy === 'auto_approve')
         headers['X-Hoody-Gate-Policy'] = 'auto_approve';
     const body = { text };
@@ -123,23 +97,30 @@ export async function streamAgentPrompt(client, args) {
         body.tool_mode = args.toolMode;
     if (args.dirScope)
         body.dir_scope = args.dirScope;
-    const res = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-        signal: ac.signal,
-    });
-    if (!res.ok || !res.body) {
-        let detail;
-        try {
-            detail = await res.json();
-        }
-        catch { /* ignore */ }
+    // The client's streaming seam: injected transport, request middleware
+    // (kitAuth), Authorization stripped on the kit URL, non-2xx → ApiError.
+    let res;
+    try {
+        res = await scoped.http.stream('POST', url, {
+            headers,
+            body,
+            signal: ac.signal,
+            middlewareContext,
+        });
+    }
+    catch (err) {
+        if (args.signal)
+            args.signal.removeEventListener('abort', onAbort);
+        throw err;
+    }
+    if (!res.body) {
+        if (args.signal)
+            args.signal.removeEventListener('abort', onAbort);
         throw new ApiError({
-            message: `agent prompt:stream failed (${res.status})`,
+            message: `agent prompt:stream failed (${res.status}): empty response body`,
             status: res.status,
             request: { method: 'POST', url, headers: {} },
-            response: detail,
+            response: null,
         });
     }
     const mkQ = () => ({ items: [], waiters: [], ended: false, consumed: false });
@@ -250,7 +231,12 @@ export async function streamAgentPrompt(client, args) {
                     finishOk('end', inner?.data ?? null);
                     return;
                 }
-                push(eventsQ, { type, data: inner?.data ?? null, seq });
+                const promptEvent = { type, data: inner?.data ?? null, seq };
+                if (envelope && typeof envelope.incarnation === 'string')
+                    promptEvent.incarnation = envelope.incarnation;
+                if (envelope && envelope.gate && typeof envelope.gate === 'object')
+                    promptEvent.gate = envelope.gate;
+                push(eventsQ, promptEvent);
                 if (TEXT_EVENTS.has(type)) {
                     const delta = (inner?.data && typeof inner.data === 'object' && typeof inner.data.text === 'string')
                         ? inner.data.text : '';
@@ -317,17 +303,11 @@ export async function streamAgentPrompt(client, args) {
     })();
     const cancel = async () => {
         cancelled = true;
-        // POST the cancel on the same kit URL + the SAME headers the prompt used
-        // (reuse the minted claim rather than re-resolving auth; when the mint was
-        // skipped or failed, cancel goes bare exactly like the prompt did).
+        // POST the cancel on the same kit URL, through the same transport and
+        // with the same credential selection the prompt used.
         try {
             const cancelUrl = `${base}/api/v1/agent/sessions/${encodeSegment(sessionId, 'sessionId')}/cancel`;
-            await fetch(cancelUrl, {
-                method: 'POST',
-                headers: auth
-                    ? { 'X-Hoody-Container-Claim': auth.claim, 'X-Hoody-Token': auth.token }
-                    : {},
-            });
+            await scoped.http.request('POST', cancelUrl, { middlewareContext, retries: 0, cache: false });
         }
         catch { /* best-effort */ }
         ac.abort();

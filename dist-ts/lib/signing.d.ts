@@ -108,3 +108,50 @@ export declare function verifyHoodySignatureHeader(header: HoodySignatureHeader,
  * Never throws for server-sent data — only for structurally-invalid caller input.
  */
 export declare function verifyHoodySignatureFrom(source: HoodySignatureHeaderCarrier, input: VerifyHoodySignatureInput, options?: VerifyHoodySignatureOptions): boolean;
+/**
+ * What `verifyHoodySignatureFromContext` reads. Structurally the SDK's
+ * response-middleware context (`IHttpClientMiddlewareResponseContext`), so an
+ * `onResponse` middleware passes its context straight in.
+ */
+export interface HoodySignatureResponseContext {
+    /** HTTP method of the request. */
+    method: string;
+    /** The full URL the request was sent to. */
+    url: string;
+    /** The fetch Response: its status and headers are read, never its body. */
+    response: {
+        status: number;
+        headers: Headers | Record<string, unknown>;
+    };
+    /**
+     * The exact response bytes. The client fills this only when
+     * `captureRawBody: true` is set on the client config or on the request;
+     * the parsed `data` cannot stand in for it (re-serialising does not
+     * reproduce the signed bytes).
+     */
+    rawBody?: Uint8Array;
+}
+/**
+ * The `path` hoody-api signs for a request URL: the request target as the
+ * server received it, path plus query string (Fastify's `request.url`).
+ */
+export declare function hoodySignaturePath(url: string): string;
+/**
+ * Verify the `X-Hoody-Signature` of a response from inside SDK response
+ * middleware, with the response bytes the client captured:
+ *
+ * ```ts
+ * const client = new HoodyClient({ baseURL, token, captureRawBody: true,
+ *   middlewares: [{ onResponse(ctx) {
+ *     if (!verifyHoodySignatureFromContext(ctx, publicKey)) throw new Error('bad signature');
+ *     return ctx;
+ *   } }] });
+ * ```
+ *
+ * Returns `false` when the header is absent or malformed or the signature
+ * does not verify (unsigned responses — empty bodies, streams, kit routes —
+ * are therefore `false`). Throws when the context carries no `rawBody`: the
+ * client was not asked to capture it, which is a configuration error, not a
+ * bad signature.
+ */
+export declare function verifyHoodySignatureFromContext(context: HoodySignatureResponseContext, publicKey: Uint8Array, options?: VerifyHoodySignatureOptions): boolean;

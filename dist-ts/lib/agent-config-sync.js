@@ -14,9 +14,9 @@
  *   - "Whole dir with excludes" by default: everything EXCEPT history/cache.
  *     Intelligent category flags let you narrow to e.g. credentials-only or
  *     skills-only.
- *   - Uses the PROPER raw-byte write path: `files.put(path, Buffer)`. Passing a
+ *   - Uses the PROPER raw-byte write path: `files.upload(path, Buffer)`. Passing a
  *     Buffer/Uint8Array sends the body verbatim (http-client.browser.ts), unlike
- *     `files.put(path, {content})` which stores the JSON envelope (GOTCHA-5).
+ *     `files.upload(path, {content})` which stores the JSON envelope (GOTCHA-5).
  *   - Perms via TYPED endpoints `files.chmod` / `files.chown` (no shell-exec,
  *     no injection surface). Dirs 0700, files 0600, chown <user>:<user>.
  *
@@ -26,16 +26,18 @@
  *   and build.config.ts stubs it for the browser build — mirroring
  *   screenshot-save.ts exactly.
  *
- * Attached to HoodyClient.prototype:
- *   - syncAgentConfig(tool, options?)   — sync one tool
- *   - syncAgentConfigs(tools[], options?) — sync several
- *   - listAgentConfigTools()            — inspect the registry
+ * Attached to the agent namespace (AgentService.prototype):
+ *   - agent.importLocalConfig(tool, options?)    — import one tool's local config
+ *   - agent.importLocalConfigs(tools[], options?) — import several
+ *   - agent.listLocalConfigTools()               — inspect the registry
  *
  * All three require a container-scoped client (call `withContainer()` first).
  */
 import { promises as fs } from 'node:fs';
 import { homedir } from 'node:os';
 import * as nodePath from 'node:path';
+import { AgentService } from '../generated/agent/agent.service.js';
+import { ownerOf } from './service-owner.js';
 /** Categories synced by default ("whole dir minus history+cache"). */
 export const DEFAULT_SYNC_CATEGORIES = ['credentials', 'config', 'skills'];
 // ---------------------------------------------------------------------------
@@ -371,8 +373,8 @@ async function pool(items, limit, fn) {
 // ---------------------------------------------------------------------------
 function getFilesService(client) {
     const files = client.files;
-    if (!files || typeof files.put !== 'function') {
-        throw new Error('syncAgentConfig() requires a container-scoped client with a files service. Call withContainer() first.');
+    if (!files || typeof files.upload !== 'function') {
+        throw new Error('agent.importLocalConfig() requires a container-scoped client with a files service. Call withContainer() first.');
     }
     return files;
 }
@@ -417,7 +419,7 @@ async function syncAgentConfigImpl(tool, options = {}) {
     const sortedDirs = [...dirs].sort((a, b) => a.split('/').length - b.split('/').length);
     for (const d of sortedDirs) {
         try {
-            await files.operate(d, { mkdir: '' });
+            await files.mkdir(d);
         }
         catch (err) {
             // dir may already exist — non-fatal
@@ -437,7 +439,7 @@ async function syncAgentConfigImpl(tool, options = {}) {
         }
         try {
             // Buffer is a Uint8Array → sent as raw body (NOT JSON-wrapped).
-            await files.put(entry.remote, buf);
+            await files.upload(entry.remote, buf);
         }
         catch (err) {
             result.errors.push({ path: entry.remote, stage: 'put', message: err.message });
@@ -497,17 +499,23 @@ function listAgentConfigToolsImpl() {
 // ---------------------------------------------------------------------------
 const AGENT_CONFIG_SYNC_PATCH_MARKER = Symbol.for('hoody.sdk.agent.config.sync.patch');
 /**
- * Attach syncAgentConfig/syncAgentConfigs/listAgentConfigTools to
- * HoodyClient.prototype. Called from lib/index.ts (Node entry) after all
+ * Attach importLocalConfig/importLocalConfigs/listLocalConfigTools to
+ * AgentService.prototype. Called from lib/index.ts (Node entry) after all
  * modules load. Idempotent.
  */
-export function patchAgentConfigSyncPrototype(HoodyClientClass) {
-    const prototype = HoodyClientClass.prototype;
+export function patchAgentConfigSyncPrototype() {
+    const prototype = AgentService.prototype;
     if (prototype[AGENT_CONFIG_SYNC_PATCH_MARKER])
         return;
-    prototype.syncAgentConfig = syncAgentConfigImpl;
-    prototype.syncAgentConfigs = syncAgentConfigsImpl;
-    prototype.listAgentConfigTools = listAgentConfigToolsImpl;
+    prototype['importLocalConfig'] = function importLocalConfig(tool, options) {
+        return syncAgentConfigImpl.call(ownerOf(this, 'agent.importLocalConfig'), tool, options);
+    };
+    prototype['importLocalConfigs'] = function importLocalConfigs(tools, options) {
+        return syncAgentConfigsImpl.call(ownerOf(this, 'agent.importLocalConfigs'), tools, options);
+    };
+    prototype['listLocalConfigTools'] = function listLocalConfigTools() {
+        return listAgentConfigToolsImpl.call(ownerOf(this, 'agent.listLocalConfigTools'));
+    };
     prototype[AGENT_CONFIG_SYNC_PATCH_MARKER] = true;
 }
 // Exported for unit tests (pure functions, no client needed).

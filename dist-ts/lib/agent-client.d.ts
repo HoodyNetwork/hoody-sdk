@@ -1,29 +1,33 @@
 /**
  * lib/agent-client.ts — streaming prompt helper for the `agent` kit.
  *
- * The generated `box.agent.sessions.promptStream()` returns a WebSocket client
- * (`AgentPromptStreamWebSocket`) that does NOT match the daemon's SSE wire
- * format (the daemon serves `POST .../prompt:stream` as `text/event-stream`,
- * framing each event as a `gatedEvent` `{ seq, event: { type, data } }`). This
- * hand-written helper is the supported SDK path for streamed prompting: it
- * POSTs the turn, reads the SSE body, unwraps the gatedEvent envelope, and
- * exposes the assistant text deltas + every turn event + a `done` promise.
+ * The generated `box.agent.sessions.startTurnAndStream()` yields the raw SSE frames
+ * (`IStreamEvent`, through the client's `streamEvents()`): each frame's `raw`
+ * is a JSON `gatedEvent` `{ seq, event: { type, data } }` the caller must
+ * parse and unwrap. This hand-written helper does that work: it POSTs the
+ * turn, reads the SSE body, unwraps the gatedEvent envelope, and exposes the
+ * assistant text deltas + every turn event + a `done` promise.
  *
- * Auth: the agent kit takes no auth of its own — the container URL is the
- * credential, as it is for every other kit. No proxy permission group verifies
- * a container claim either (the group types are password / jwt / ip / token /
- * hoody-identity). This still mints one via `client.api.containers.authorize()`
- * and sends `X-Hoody-Container-Claim` + `X-Hoody-Token` when it succeeds, for
- * parity with the kit handshake in lib/proxy-auth-middleware.ts /
- * lib/terminal-client.ts and for any container program of your own that checks
- * it, but the mint is BEST-EFFORT: where it fails (e.g. a deployment with
- * response signing disabled answers `503 SIGNING_NOT_CONFIGURED`) the turn runs
- * on the bare URL instead of failing. Pass an explicit `auth` to override.
+ * Transport + auth: the turn goes through the CLIENT's own streaming seam
+ * (`http.stream`), so the injected `fetch`, request middleware and
+ * ApiError handling apply exactly as for a generated call. Kit credentials are
+ * the client's `kitAuth` (from `withContainer(c, { kitAuth })` or the client
+ * config), selected for the `agent` namespace, or an explicit per-call `auth`
+ * of the same shape. The agent kit itself verifies nothing; a credential is
+ * only needed where a proxy permission rule guards the service.
  *
- * Runtime-agnostic: uses global `fetch` + `ReadableStream` + the SSE parser in
- * lib/pipe-stream.ts (Node 18+/Bun/browser), same as the tunnel/pipe helpers.
+ * The account token is NEVER sent: the transport strips `Authorization` on
+ * kit URLs, and this helper no longer mints a container claim or falls back to
+ * `getAuthToken()` (the old fallback shipped the account JWT to the container
+ * as `X-Hoody-Token` through the global fetch; nothing verified it).
+ *
+ * Runtime-agnostic: the client's HttpClient + the SSE parser in
+ * lib/sse-stream.ts (Node 18+/Bun/browser). It imports that module, not
+ * lib/pipe-stream.ts, because pipe-stream pulls in `node:net` / `node:fs` and
+ * would keep this helper out of the browser bundle.
  */
 import type { HoodyClient, ContainerLike } from '../generated/client.js';
+import { type ProxyAuth, type ProxyAuthPolicy } from './proxy-auth.js';
 export interface AgentPromptEvent {
     /** Event type, e.g. `event.stream_chunk` (the daemon's prefixed form). */
     type: string;
@@ -31,6 +35,18 @@ export interface AgentPromptEvent {
     data: unknown;
     /** Gateway sequence number, if present. */
     seq: number | null;
+    /**
+     * The gateway incarnation that stamped `seq`, when the envelope carries one.
+     * `seq` restarts at 1 when a session is torn down and re-attached, so a
+     * cursor only means something together with its incarnation.
+     */
+    incarnation?: string;
+    /** Present on the frame that parks a confirm gate: the gate to answer. */
+    gate?: {
+        id: string;
+        generation: number;
+        type: string;
+    };
 }
 export interface AgentPromptResult {
     /** Terminal event type that ended the turn (`event.agent_done` / `event.quit`). */
@@ -40,12 +56,13 @@ export interface AgentPromptResult {
     /** The terminal event's payload (turn count, usage, etc. for `agent_done`). */
     data: unknown;
 }
-export interface AgentPromptKitAuth {
-    /** Stringified container claim for `X-Hoody-Container-Claim`. */
-    claim: string;
-    /** Token for `X-Hoody-Token`. */
-    token: string;
-}
+/**
+ * Kit credential for the prompt — the same shape as `kitAuth` on
+ * `withContainer()` / the client config (password, jwt, token, containerClaim,
+ * ip, or a per-service policy; a policy's `services.agent` wins over its
+ * `default`).
+ */
+export type AgentPromptKitAuth = ProxyAuth | ProxyAuthPolicy;
 export interface StreamAgentPromptArgs {
     /** Target container (project_id + id + server). */
     container: ContainerLike;
@@ -59,9 +76,9 @@ export interface StreamAgentPromptArgs {
     policy?: 'auto_approve';
     /** Kit service index (the agent daemon is a singleton at 1). */
     serviceIndex?: number;
-    /** Explicit kit auth. If omitted, a container claim is minted via authorize()
-     *  on a best-effort basis; the agent kit does not require one, so a failed
-     *  mint falls through to the bare kit URL. */
+    /** Explicit kit credential for this turn (kitAuth shape). If omitted, the
+     *  client's own `kitAuth` applies; with neither, the request carries no
+     *  credential. The account token is never used. */
     auth?: AgentPromptKitAuth;
     /** Abort the in-flight turn. */
     signal?: AbortSignal;
@@ -79,6 +96,6 @@ export interface AgentPromptHandle {
 /**
  * Dispatch a streaming prompt turn against an existing agent session and return
  * a handle over the SSE event stream. Create the session first via
- * `client.api`-scoped `box.agent.sessions.createSession(...)`.
+ * `client.api`-scoped `box.agent.sessions.create(...)`.
  */
 export declare function streamAgentPrompt(client: HoodyClient, args: StreamAgentPromptArgs): Promise<AgentPromptHandle>;

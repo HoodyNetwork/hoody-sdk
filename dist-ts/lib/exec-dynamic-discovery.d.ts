@@ -1,6 +1,6 @@
 /**
  * Exec Dynamic Discovery — SDK-side runtime discovery of user scripts on exec
- * containers. Fetches the script inventory via `listUserScripts()` and parses
+ * containers. Fetches the script inventory via `openapi.listScripts()` and parses
  * each entry's metadata (HTTP method, parameters, tags) into
  * `DiscoveredScript` objects consumed by SDK callers and agent surfaces.
  *
@@ -10,7 +10,7 @@
  *   - No .md companion content is included (prompt injection vector)
  *   - Path traversal prevented via assertBasePath
  */
-import type { UserOpenapiService } from '../generated/exec/user-openapi.service.js';
+import type { OpenapiService } from '../generated/exec/openapi.service.js';
 import type { ScriptsService } from '../generated/exec/scripts.service.js';
 export declare const MAX_PARAMS_PER_SCRIPT = 20;
 export declare const MAX_SCHEMA_SIZE_BYTES = 10240;
@@ -89,14 +89,14 @@ export declare function sanitizeDescription(text: string | undefined): string | 
 /**
  * Discover user scripts from an exec container.
  *
- * Calls `listUserScripts()` to get the script inventory, then enriches
+ * Calls `openapi.listScripts()` to get the script inventory, then enriches
  * each entry with schema information where available.
  *
  * For scripts that declare `hasSchema: true` but don't include inline schema,
  * this function loads the companion `.schema.json` via the ScriptsService
  * before delegating to the shared parser. The raw-response adapter in
  * `exec-dynamic-discovery-cli.ts` is the variant used when only the raw
- * `listUserScripts` response is available (no ScriptsService handle) and
+ * `openapi.listScripts` response is available (no ScriptsService handle) and
  * therefore skips this enrichment step.
  */
-export declare function discoverScripts(openapiService: UserOpenapiService, scriptsService: ScriptsService | undefined, options?: DiscoverOptions): Promise<DiscoveredScript[]>;
+export declare function discoverScripts(openapiService: OpenapiService, scriptsService: ScriptsService | undefined, options?: DiscoverOptions): Promise<DiscoveredScript[]>;

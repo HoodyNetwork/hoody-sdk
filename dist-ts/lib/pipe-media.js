@@ -12,34 +12,91 @@
  *   // ... later
  *   session.stop();
  *
+ * `shareAudio()` streams the microphone (and optionally tab or system audio);
+ * viewers open the same `?video` player. `getPageUrl()` / `openPage()` build
+ * links to the kit's own browser pages (send, receive, share, video player,
+ * progress, no-JavaScript send) with every page setting pre-filled.
+ *
  * Browser-only: uses MediaRecorder, getDisplayMedia, getUserMedia.
  * Not exported from the Node.js entry point (lib/index.ts).
  */
+import { globalFetchPipeTransport, pipeTransportFromClient } from './pipe-transport.js';
+import { PipeTransferError, StatusLines, errorText, reservedPipePath } from './pipe-status.js';
+import { parseSseStream } from './sse-stream.js';
+/** Recorded bytes waiting for the reader (queued, or still Blobs being converted) at which the recorder pauses. */
+const CAPTURE_PAUSE_BYTES = 8 * 1024 * 1024;
+/** Waiting bytes at or below which a recorder paused for the reader resumes. */
+const CAPTURE_RESUME_BYTES = 4 * 1024 * 1024;
+/** Waiting bytes beyond which the stream fails and the recording stops (a recorder that kept sending while paused). */
+const CAPTURE_MAX_BYTES = 16 * 1024 * 1024;
 /**
  * Convert a MediaStream to a ReadableStream<Uint8Array> via MediaRecorder.
  *
  * Each MediaRecorder chunk (fired every `timeslice` ms) is converted to a
  * Uint8Array and enqueued. Blob→ArrayBuffer conversions are chained
- * sequentially to preserve chunk order. No backpressure pause/resume —
- * chunks flow as they arrive and fetch + TCP handle flow control naturally.
+ * sequentially to preserve chunk order. The recording follows the reader:
+ * while nobody reads (no receiver yet, a slow upload), the recorder pauses
+ * once 8 MiB wait and resumes when the reader is back to 4 MiB behind. More
+ * than 16 MiB waiting fails the stream with an error that says so and stops
+ * the recording.
  */
-export function mediaStreamToReadableStream(mediaStream, timeslice = 100, mimeType) {
+export function mediaStreamToReadableStream(mediaStream, timeslice = 100, mimeType, keyFrameIntervalMs) {
     const resolvedMime = mimeType || PipeMedia.pickMimeType(mediaStream);
-    const recorder = new MediaRecorder(mediaStream, { mimeType: resolvedMime });
+    // `videoKeyFrameIntervalDuration` is a newer MediaRecorder option; browsers without it ignore it.
+    const recorderOptions = keyFrameIntervalMs !== undefined
+        ? { mimeType: resolvedMime, videoKeyFrameIntervalDuration: keyFrameIntervalMs }
+        : { mimeType: resolvedMime };
+    const recorder = new MediaRecorder(mediaStream, recorderOptions);
+    // Bytes recorded but not read yet: Blobs still being converted, plus the
+    // stream's queue (counted by its byte-length strategy).
+    let converting = 0;
+    let ctrl;
+    const waiting = () => converting + (ctrl ? CAPTURE_PAUSE_BYTES - (ctrl.desiredSize ?? CAPTURE_PAUSE_BYTES) : 0);
+    let heldForReader = false;
+    let heldByCaller = false;
+    let failure;
+    const resumeIfWanted = () => {
+        if (heldForReader && waiting() <= CAPTURE_RESUME_BYTES)
+            heldForReader = false;
+        if (!heldForReader && !heldByCaller && recorder.state === 'paused')
+            recorder.resume();
+    };
     const stream = new ReadableStream({
         start(controller) {
+            ctrl = controller;
             // Chain blob→arrayBuffer conversions to guarantee chunk order
             let enqueueChain = Promise.resolve();
             recorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
+                if (e.data.size > 0 && failure === undefined) {
+                    const size = e.data.size;
+                    converting += size;
+                    if (waiting() > CAPTURE_MAX_BYTES) {
+                        failure = new Error('recording stopped: more than 16 MiB waited to be sent (the upload is not keeping up)');
+                        try {
+                            controller.error(failure);
+                        }
+                        catch { /* already closed */ }
+                        if (recorder.state !== 'inactive')
+                            recorder.stop();
+                        return;
+                    }
+                    if (waiting() >= CAPTURE_PAUSE_BYTES) {
+                        heldForReader = true;
+                        if (recorder.state === 'recording')
+                            recorder.pause();
+                    }
                     enqueueChain = enqueueChain.then(async () => {
                         try {
                             const buffer = await e.data.arrayBuffer();
-                            controller.enqueue(new Uint8Array(buffer));
+                            converting -= size;
+                            if (failure === undefined)
+                                controller.enqueue(new Uint8Array(buffer));
                         }
                         catch {
                             // Stream may have been closed between check and enqueue
+                            converting -= size;
                         }
+                        resumeIfWanted();
                     });
                 }
             };
@@ -68,14 +125,33 @@ export function mediaStreamToReadableStream(mediaStream, timeslice = 100, mimeTy
             }
             recorder.start(timeslice);
         },
+        // The reader took data: resume a recorder paused for it once it caught up.
+        pull() {
+            resumeIfWanted();
+        },
         cancel() {
             // Consumer cancelled the stream (e.g. fetch abort) — stop the recorder
             if (recorder.state !== 'inactive') {
                 recorder.stop();
             }
         },
-    });
-    return { stream, recorder, mimeType: recorder.mimeType || resolvedMime };
+    }, { highWaterMark: CAPTURE_PAUSE_BYTES, size: (chunk) => chunk.byteLength });
+    return {
+        stream,
+        recorder,
+        mimeType: recorder.mimeType || resolvedMime,
+        hold(paused) {
+            heldByCaller = paused;
+            if (paused) {
+                if (recorder.state === 'recording')
+                    recorder.pause();
+            }
+            else {
+                resumeIfWanted();
+            }
+        },
+        get failure() { return failure; },
+    };
 }
 // ---------------------------------------------------------------------------
 // PipeMedia class
@@ -84,18 +160,26 @@ export class PipeMedia {
     baseUrl;
     basePath;
     defaultTimeslice;
+    transport;
+    /** A given transport may not honour `cache`, so its receive URLs get a unique `_=`. */
+    bustCache;
     constructor(config) {
         this.baseUrl = config.pipeBaseUrl.replace(/\/+$/, '');
         this.basePath = (config.basePath ?? '/api/v1/pipe').replace(/\/+$/, '');
         this.defaultTimeslice = config.defaultTimeslice ?? 100;
+        this.transport = config.transport ?? globalFetchPipeTransport();
+        this.bustCache = config.transport !== undefined;
     }
     /**
      * Create a PipeMedia instance from a HoodyClient + container.
-     * Automatically resolves the pipe kit URL.
+     * Automatically resolves the pipe kit URL, and sends through `client.http`
+     * so the client's injected transport and kitAuth apply
+     * (lib/pipe-transport.ts).
      */
     static fromClient(client, container, serviceIndex = 1) {
         const pipeBaseUrl = client.getKitUrl('pipe', container, serviceIndex);
-        return new PipeMedia({ pipeBaseUrl });
+        const transport = pipeTransportFromClient(client);
+        return new PipeMedia({ pipeBaseUrl, ...(transport ? { transport } : {}) });
     }
     // -------------------------------------------------------------------------
     // Static helpers
@@ -120,11 +204,20 @@ export class PipeMedia {
      * This is critical for MSE playback — if the MIME declares an opus audio
      * track but the WebM data has none, MSE rejects the init segment with
      * "Initialization segment misses expected opus track".
+     * An audio-only stream gets an audio type (audio/webm;codecs=opus first),
+     * for the same reason: a video type declares a track the data lacks.
      */
     static pickMimeType(mediaStream) {
         if (typeof MediaRecorder === 'undefined')
             return 'video/webm';
         const hasAudio = mediaStream ? mediaStream.getAudioTracks().length > 0 : true;
+        if (mediaStream && hasAudio && mediaStream.getVideoTracks().length === 0) {
+            for (const mime of ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']) {
+                if (MediaRecorder.isTypeSupported(mime))
+                    return mime;
+            }
+            return 'audio/webm';
+        }
         const candidates = hasAudio
             ? [
                 'video/webm;codecs=vp8,opus',
@@ -184,33 +277,53 @@ export class PipeMedia {
      * `pipe-stream.ts`: this module is browser-only and dependency-free, and
      * pipe-stream imports `node:net`/`node:fs`/`node:stream`/`node:url` — pulling
      * it in breaks `build:browser` outright (measured). Keep the two in sync by
-     * hand; they encode the same rule, and `tests/unit/pipe-path-traversal.test.ts`
-     * fails if they drift.
+     * hand; they encode the same rule, and a test fails if they drift.
+     *
+     * A name the kit answers itself (`metrics`, `help/`, `/`, ...) throws: see
+     * reservedPipePath in pipe-status.ts.
      */
     getUrl(path) {
-        const encoded = String(path)
-            .split('/')
-            .map(segment => {
-            let decoded = segment;
-            try {
-                decoded = decodeURIComponent(segment);
-            }
-            catch {
-                // Malformed escape cannot decode to a dot segment.
-            }
-            if (segment === '.' || segment === '..' || decoded === '.' || decoded === '..') {
-                throw new Error(`Invalid pipe path: "${path}" contains a "${segment}" path segment. ` +
-                    'Relative segments are not allowed because they change which endpoint is called.');
-            }
-            return encodeURIComponent(segment);
-        })
-            .join('/');
+        const encoded = encodePipeName(path);
+        refuseReservedPipeName(path);
         return `${this.baseUrl}${this.basePath}/${encoded}`;
+    }
+    /**
+     * URL of one of the kit's browser pages, with its settings pre-filled.
+     *
+     *   send      `/?name=&n=&text=&mode=&filename=&autostart=1` (name optional)
+     *   receive   `/{name}?receive&n=&filename=&autostart=1&wait=&sha256=1`
+     *   share     `/{name}?share&source=&audio=1|0&surface=&quality=&fps=&n=&live=1`
+     *   video     `/{name}?video&n=&live=1&wait=`
+     *   progress  `/{name}?progress`
+     *   noscript  `/noscript?path={encoded name}&mode=&wait=&sha256=1` (name optional)
+     *
+     * Pages live under the base path (`/api/v1/pipe`), like the kit's own links.
+     * The name is encoded per segment (`/` stays a separator, a leading `/` is
+     * kept). The noscript page puts its `path` into the form's URL as it is, so
+     * it gets the encoded name, and the form posts to the pipe the SDK uses;
+     * its single path field takes no `/`. `n` is written only above 1,
+     * `autostart`, `sha256` and `live` only when true. A reserved name, a
+     * `.`/`..` segment, a control character or backslash, an option the page
+     * does not take, or an out-of-range value throws instead of building a link
+     * the page would ignore.
+     */
+    getPageUrl(page, name, options) {
+        return buildPipePageUrl(`${this.baseUrl}${this.basePath}`, page, name, options);
+    }
+    /**
+     * Open a page from getPageUrl() with `window.open` (new tab by default).
+     * Returns the new Window, or null when the browser blocked the popup or the
+     * features ask for `noopener`. Call it from a click handler: popup blockers
+     * allow window.open only during a user gesture.
+     */
+    openPage(page, name, options, open) {
+        return openPipePage(this.getPageUrl(page, name, options), open);
     }
     // -------------------------------------------------------------------------
     // Share screen
     // -------------------------------------------------------------------------
     async shareScreen(opts) {
+        this.checkSharePath(opts?.path, opts);
         const displayOpts = opts?.displayMediaOptions
             ?? buildDisplayMediaOptions(opts);
         const mediaStream = await navigator.mediaDevices.getDisplayMedia(displayOpts);
@@ -224,6 +337,7 @@ export class PipeMedia {
     // Share webcam
     // -------------------------------------------------------------------------
     async shareWebcam(opts) {
+        this.checkSharePath(opts?.path, opts);
         const mediaStream = await navigator.mediaDevices.getUserMedia({
             video: opts?.video ?? true,
             audio: opts?.audio ?? true,
@@ -231,18 +345,118 @@ export class PipeMedia {
         return this.streamMediaToPipe(mediaStream, buildStreamOpts(opts));
     }
     // -------------------------------------------------------------------------
+    // Share audio (microphone, optionally tab/system audio)
+    // -------------------------------------------------------------------------
+    /**
+     * Stream audio only. Viewers open `session.url` (the `?video` player plays
+     * an audio-only stream). With both the microphone and `systemAudio`, the two
+     * are mixed into one track. The session ends when any captured track ends
+     * (the user stops sharing in the browser UI) or on `stop()`, which releases
+     * every captured track.
+     */
+    async shareAudio(opts) {
+        const microphone = opts?.microphone ?? true;
+        const systemAudio = opts?.systemAudio ?? false;
+        if (microphone === false && !systemAudio) {
+            throw new Error('shareAudio needs the microphone, systemAudio, or both');
+        }
+        this.checkSharePath(opts?.path, opts);
+        const captured = [];
+        const release = () => {
+            for (const s of captured)
+                for (const t of s.getTracks())
+                    t.stop();
+        };
+        let mediaStream;
+        let mixer;
+        let mixed;
+        try {
+            if (microphone !== false) {
+                captured.push(await navigator.mediaDevices.getUserMedia({ audio: microphone, video: false }));
+            }
+            if (systemAudio) {
+                if (typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+                    throw new Error('Tab or system audio capture is not supported in this browser');
+                }
+                // The picker needs a video request; the video track stays unrecorded
+                // and only keeps the browser's "Stop sharing" control working.
+                const display = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true,
+                    systemAudio: 'include',
+                });
+                captured.push(display);
+                if (display.getAudioTracks().length === 0) {
+                    throw new Error('No tab or system audio was shared: tick "Share audio" in the browser picker');
+                }
+            }
+            const audioTracks = captured.flatMap(s => s.getAudioTracks());
+            if (audioTracks.length > 1) {
+                // MediaRecorder records one audio track only: mix them.
+                mixer = new AudioContext();
+                const dest = mixer.createMediaStreamDestination();
+                mixed = dest.stream;
+                for (const track of audioTracks)
+                    mixer.createMediaStreamSource(new MediaStream([track])).connect(dest);
+                mediaStream = mixed;
+            }
+            else {
+                mediaStream = new MediaStream(audioTracks);
+            }
+        }
+        catch (err) {
+            release();
+            if (mixed)
+                for (const t of mixed.getTracks())
+                    t.stop();
+            if (mixer)
+                void mixer.close().catch(() => { });
+            throw err;
+        }
+        const streamOpts = buildStreamOpts(opts);
+        if (streamOpts.viewer === undefined)
+            streamOpts.viewer = true;
+        let session;
+        try {
+            session = this.streamMediaToPipe(mediaStream, streamOpts);
+        }
+        catch (err) {
+            // streamMediaToPipe stopped its recorder and the mixed track.
+            release();
+            if (mixer)
+                void mixer.close().catch(() => { });
+            throw err;
+        }
+        session.onEnded(() => {
+            release();
+            if (mixer)
+                void mixer.close().catch(() => { });
+        });
+        // A captured track the session does not record (a mixed source, the
+        // display video track) ends the session too.
+        for (const s of captured) {
+            for (const track of s.getTracks()) {
+                track.addEventListener('ended', () => session.stop(), { once: true });
+            }
+        }
+        return session;
+    }
+    // -------------------------------------------------------------------------
     // Low-level: send any ReadableStream
     // -------------------------------------------------------------------------
-    async sendStream(path, stream, contentType) {
-        const url = this.getUrl(path);
-        const headers = {};
-        if (contentType)
-            headers['Content-Type'] = contentType;
-        return fetch(url, {
-            method: 'POST',
+    async sendStream(path, stream, contentType, opts) {
+        let url = this.getUrl(path);
+        if (opts?.live === true)
+            url += liveQuery('sendStream', opts.n);
+        else if (opts?.n && opts.n > 1)
+            url += `?n=${opts.n}`;
+        const headers = {
+            'Content-Type': contentType ?? 'application/octet-stream',
+        };
+        return this.transport('POST', url, {
             headers,
             body: stream,
-            duplex: 'half',
+            ...(opts?.signal ? { signal: opts.signal } : {}),
         });
     }
     // -------------------------------------------------------------------------
@@ -250,9 +464,23 @@ export class PipeMedia {
     // -------------------------------------------------------------------------
     async receiveStream(path, opts) {
         let url = this.getUrl(path);
-        if (opts?.n && opts.n > 1)
+        if (opts?.live === true)
+            url += liveQuery('receiveStream', opts.n);
+        else if (opts?.n && opts.n > 1)
             url += `?n=${opts.n}`;
-        return fetch(url);
+        return this.receiveGet(url, opts?.signal);
+    }
+    /**
+     * A receive GET that the browser's HTTP cache neither answers nor holds:
+     * Chromium keeps a second GET of an identical URL waiting behind the first
+     * (about 20 s), which stalled two tabs receiving one n>1 transfer.
+     */
+    receiveGet(url, signal, headers) {
+        return this.transport('GET', this.bustCache ? withCacheBuster(url) : url, {
+            cache: 'no-store',
+            ...(headers ? { headers } : {}),
+            ...(signal ? { signal } : {}),
+        });
     }
     // -------------------------------------------------------------------------
     // Receive media into a <video> element
@@ -269,45 +497,84 @@ export class PipeMedia {
     // -------------------------------------------------------------------------
     // Internal: stream media to pipe
     // -------------------------------------------------------------------------
+    /**
+     * Throw for a bad `path`, or `live` with `n` above 1 or a non-WebM `mimeType`,
+     * before any capture starts, so a refused share never turns a camera on.
+     */
+    checkSharePath(path, live) {
+        if (path !== undefined)
+            this.getUrl(path);
+        if (live?.live === true) {
+            liveQuery('share', live.n);
+            if (live.mimeType !== undefined && !isWebmMime(live.mimeType)) {
+                throw new RangeError(`share: live needs a WebM recording (got ${live.mimeType})`);
+            }
+        }
+    }
     streamMediaToPipe(mediaStream, opts) {
         const timeslice = opts.timeslice ?? this.defaultTimeslice;
         // If MediaRecorder creation fails (e.g. unsupported mimeType), release the
         // captured tracks immediately so the camera/screen indicator goes away.
-        let stream;
-        let recorder;
-        let mimeType;
+        let conversion;
         try {
-            ({ stream, recorder, mimeType } = mediaStreamToReadableStream(mediaStream, timeslice, opts.mimeType));
+            conversion = mediaStreamToReadableStream(mediaStream, timeslice, opts.mimeType, opts.live === true ? LIVE_KEYFRAME_INTERVAL_MS : undefined);
         }
         catch (err) {
             for (const track of mediaStream.getTracks())
                 track.stop();
             throw err;
         }
+        // Any later startup failure (a refused path, a transport that throws
+        // synchronously, e.g. unsupported duplex) stops the recording too: the
+        // caller gets no session to stop.
+        try {
+            // The kit joins live viewers at WebM keyframes; any other recording would join them mid-stream.
+            if (opts.live === true && !isWebmMime(conversion.mimeType)) {
+                throw new RangeError(`share: live needs a WebM recording; this browser records ${conversion.mimeType}`);
+            }
+            return this.uploadMediaSession(mediaStream, conversion, opts);
+        }
+        catch (err) {
+            if (conversion.recorder.state !== 'inactive')
+                conversion.recorder.stop();
+            for (const track of mediaStream.getTracks())
+                track.stop();
+            throw err;
+        }
+    }
+    uploadMediaSession(mediaStream, conversion, opts) {
+        const { stream, recorder, mimeType } = conversion;
         const pipePath = opts.path ?? PipeMedia.randomPath(mimeType);
         const url = this.getUrl(pipePath);
-        // fetchUrl = POST URL for the sender (never needs ?video)
-        let fetchUrl = url;
-        if (opts.n && opts.n > 1)
-            fetchUrl += `?n=${opts.n}`;
+        // fetchUrl = POST URL for the sender (never needs ?video). The share picks
+        // its own transfer id, so its watch asks for this transfer and no other.
+        const transferId = newTransferId();
+        let fetchUrl = `${url}?transfer=${transferId}`;
+        if (opts.live === true)
+            fetchUrl += '&live';
+        else if (opts.n && opts.n > 1)
+            fetchUrl += `&n=${opts.n}`;
         // shareUrl = URL for receivers to open in a browser
         // ?video makes the pipe server return an HTML MSE player page
         let shareUrl = url;
         const shareParams = [];
-        if (opts.n && opts.n > 1)
+        if (opts.n && opts.n > 1 && opts.live !== true)
             shareParams.push(`n=${opts.n}`);
         if (opts.viewer)
             shareParams.push('video');
+        if (opts.live === true)
+            shareParams.push('live');
         if (shareParams.length > 0)
             shareUrl += '?' + shareParams.join('&');
         let stopped = false;
         let uploadFinished = false;
+        let failure;
         let abortTimer;
         const abortController = new AbortController();
         const endedCallbacks = [];
         let endedFired = false;
         // Fire onEnded callbacks exactly once, then auto-stop the session.
-        // Called on: browser track end, network failure, or manual stop().
+        // Called on: browser track end, transfer failure, or manual stop().
         const fireEnded = () => {
             if (endedFired)
                 return;
@@ -321,53 +588,86 @@ export class PipeMedia {
             // Auto-stop: release tracks + close pipe
             session.stop();
         };
+        // The transfer failed: keep the first reason for `done`, end the capture.
+        const fail = (err) => {
+            if (failure === undefined)
+                failure = err;
+            fireEnded();
+        };
         // POST the stream to the pipe with MIME info in X-Hoody-Pipe header.
-        // Wrap in try/catch: if fetch throws synchronously (e.g. unsupported duplex),
-        // we must release the capture immediately to avoid leaking camera/screen.
-        let uploadPromise;
-        try {
-            uploadPromise = fetch(fetchUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': mimeType,
-                    'X-Hoody-Pipe': `mimeType=${mimeType}`,
-                },
-                body: stream,
-                signal: abortController.signal,
-                duplex: 'half',
-            }).then(async (res) => {
-                // Drain response body to confirm transfer is fully complete
+        // The kit answers 200 as soon as it takes the upload and reports what
+        // happens next in [INFO]/[ERROR] lines: no receivers in time, an idle
+        // timeout or every receiver leaving arrive only there. Read them, and end
+        // the session on a failure as soon as it shows.
+        const uploadPromise = this.transport('POST', fetchUrl, {
+            headers: {
+                'Content-Type': mimeType,
+                'X-Hoody-Pipe': `mimeType=${mimeType}`,
+            },
+            body: stream,
+            signal: abortController.signal,
+        }).then(async (res) => {
+            const status = new StatusLines();
+            if (res.body) {
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let text = '';
+                let ended = false;
                 try {
-                    await res.text();
+                    for (;;) {
+                        const { done, value } = await reader.read();
+                        if (done)
+                            break;
+                        text += decoder.decode(value, { stream: true });
+                        status.feed(text, false);
+                        const failed = status.failed(res.status);
+                        if (failed)
+                            fail(failed);
+                    }
+                    ended = true;
+                    status.feed(text + decoder.decode(), true);
                 }
-                catch { /* ignore */ }
-                uploadFinished = true;
-                // Treat non-2xx as failure (server rejected the upload)
-                if (!res.ok && !abortController.signal.aborted && !stopped) {
-                    fireEnded();
+                catch (err) {
+                    // Our own abort (the stop() fallback) is not a failure.
+                    if (!abortController.signal.aborted) {
+                        fail(new PipeTransferError(`pipe share failed: ${errorText(conversion.failure ?? err)}`, res.status, status.messages));
+                    }
                 }
-            }, (err) => {
-                uploadFinished = true;
-                // Abort errors are expected on manual stop() — swallow them
-                if (abortController.signal.aborted)
-                    return;
-                // Real network failure — auto-stop to release camera/screen
-                if (!stopped)
-                    fireEnded();
-            });
-        }
-        catch (err) {
-            // Synchronous fetch failure — release capture immediately
-            if (recorder.state !== 'inactive')
-                recorder.stop();
-            for (const track of mediaStream.getTracks())
-                track.stop();
-            throw err;
-        }
+                finally {
+                    if (!ended)
+                        void reader.cancel().catch(() => undefined);
+                    reader.releaseLock();
+                }
+            }
+            uploadFinished = true;
+            if (failure === undefined && !abortController.signal.aborted) {
+                const failed = status.failure(res.status, 'pipe share');
+                if (failed)
+                    fail(failed);
+            }
+            // The upload is over either way: nothing more can reach the viewers.
+            fireEnded();
+        }, (err) => {
+            uploadFinished = true;
+            // Abort errors are expected on manual stop() — swallow them
+            if (abortController.signal.aborted)
+                return;
+            // Real network failure (or a recording that outgrew its bound) — auto-stop to release camera/screen
+            fail(new PipeTransferError(`pipe share failed: ${errorText(conversion.failure ?? err)}`, 0));
+        });
+        // A browser hands over the upload's response only once the upload ends
+        // (fetch streaming uploads are half duplex), so while the capture runs a
+        // failure shows only on the name's ?progress events: follow them too.
+        const watch = new AbortController();
+        void this.watchShareFailure(url, transferId, watch.signal, fail);
         const done = uploadPromise.then(() => {
             if (abortTimer !== undefined)
                 clearTimeout(abortTimer);
+            if (failure !== undefined)
+                throw failure;
         });
+        // A caller that never awaits `done` must not get an unhandled rejection.
+        done.catch(() => undefined);
         // Auto-stop when user revokes sharing via browser chrome ("Stop sharing" button)
         for (const track of mediaStream.getTracks()) {
             track.addEventListener('ended', () => {
@@ -381,6 +681,7 @@ export class PipeMedia {
             mediaStream,
             recorder,
             mimeType,
+            transferId,
             get active() { return !stopped; },
             get paused() { return recorder.state === 'paused'; },
             done,
@@ -390,6 +691,7 @@ export class PipeMedia {
                 stopped = true;
                 // Notify listeners (idempotent — no-op if already fired by track end or network error)
                 fireEnded();
+                watch.abort();
                 // 1. Stop recorder → triggers final chunk + onstop → closes stream → fetch completes
                 if (recorder.state !== 'inactive') {
                     recorder.stop();
@@ -408,14 +710,12 @@ export class PipeMedia {
                 }
             },
             pause() {
-                if (!stopped && recorder.state === 'recording') {
-                    recorder.pause();
-                }
+                if (!stopped)
+                    conversion.hold(true);
             },
             resume() {
-                if (!stopped && recorder.state === 'paused') {
-                    recorder.resume();
-                }
+                if (!stopped)
+                    conversion.hold(false);
             },
             muteAudio(muted) {
                 for (const track of mediaStream.getAudioTracks()) {
@@ -449,15 +749,167 @@ export class PipeMedia {
         };
         return session;
     }
+    /**
+     * Follow a share's transfer while it uploads and report a failure: a
+     * browser hands the upload's response over only once the upload ends, so
+     * this is how a live share learns that its transfer failed.
+     *
+     * The share sent its own transfer id, so every check is about that transfer
+     * only, and the `done` event with that id on the name's ?progress stream (a
+     * spectator, no receiver slot) is followed between checks; until the
+     * transfer was seen, for one retry interval at most (an idle name's stream
+     * stays open and would stall the checks). Until the transfer is seen, a check reads the name's plain `?status`, which always
+     * answers 200: the first checks run before the upload reaches the kit, and a
+     * by-id miss there would be a 404 the browser logs as an error. A record
+     * with this share's id counts at once; when another transfer holds the name,
+     * this one is asked for by id (`?status&transfer=<id>`, its receipt), as it
+     * may already have ended behind it. While the name stays idle, every
+     * SHARE_WATCH_IDLE_ASK-th check asks by id too: the transfer may have ended
+     * before any check saw it, and the name drops an ended record after 30 s
+     * while its receipt stays 10 min. Once seen, every check is by id. A
+     * failed record ends the share; a complete one is left to the upload. A 404
+     * before the transfer was seen means the upload is not admitted yet (a
+     * refused one ends through its own response); after that, a 404 for
+     * SHARE_WATCH_MAX_GONE checks in a row (its record expired before a check
+     * found the outcome) ends the share as failed. Stops when `signal` aborts.
+     */
+    async watchShareFailure(url, transferId, signal, onFailed) {
+        const watch = { transferId, seen: false, idleChecks: 0 };
+        const report = (step) => {
+            if (signal.aborted)
+                return true;
+            if (step.kind === 'failed') {
+                onFailed(new PipeTransferError(`pipe share failed: ${step.reason}`, 0));
+                return true;
+            }
+            return step.kind === 'complete';
+        };
+        let gone = 0;
+        while (!signal.aborted) {
+            const status = await this.shareStatus(url, watch, signal);
+            if (report(status))
+                return;
+            if (status.kind === 'gone') {
+                // Gone: the transfer is no longer on the name, so its events would never come.
+                if (++gone >= SHARE_WATCH_MAX_GONE) {
+                    report({ kind: 'failed', reason: 'its transfer ended and the outcome is no longer known' });
+                    return;
+                }
+            }
+            else {
+                gone = 0;
+                if (watch.seen) {
+                    if (report(await this.followShareEvents(url, watch, signal)))
+                        return;
+                }
+                else {
+                    // Not seen yet: the name may be idle, and an idle name's ?progress stream stays
+                    // open (up to 30 min), which would hold back the next check and its by-id ask.
+                    // Follow it for one retry interval at most.
+                    const bounded = new AbortController();
+                    const stopFollowing = () => bounded.abort();
+                    signal.addEventListener('abort', stopFollowing, { once: true });
+                    const timer = setTimeout(stopFollowing, SHARE_WATCH_RETRY_MS);
+                    try {
+                        if (report(await this.followShareEvents(url, watch, bounded.signal)))
+                            return;
+                    }
+                    finally {
+                        clearTimeout(timer);
+                        signal.removeEventListener('abort', stopFollowing);
+                    }
+                }
+            }
+            await abortableDelay(SHARE_WATCH_RETRY_MS, signal);
+        }
+    }
+    /** One check of a share's transfer (see watchShareFailure). */
+    async shareStatus(url, watch, signal) {
+        if (!watch.seen) {
+            const name = await this.statusBody(`${url}?status`, signal);
+            if (name.body === null)
+                return { kind: 'unknown' };
+            if (name.body.transferId === watch.transferId)
+                return shareRecordStep(name.body, watch);
+            // Idle: not admitted yet, or admitted and already ended off the name (the name keeps an ended
+            // record 30 s, the kit keeps its receipt by id 10 min). Ask by id on every SHARE_WATCH_IDLE_ASK-th
+            // idle check only, so a share whose upload has not arrived yet does not log a 404 on each check.
+            // Another transfer on the name: ask for this one by id.
+            if (typeof name.body.transferId !== 'string' && ++watch.idleChecks % SHARE_WATCH_IDLE_ASK !== 0)
+                return { kind: 'unknown' };
+        }
+        const own = await this.statusBody(`${url}?status&transfer=${watch.transferId}`, signal);
+        if (own.body !== null)
+            return shareRecordStep(own.body, watch);
+        // Unknown id: not admitted yet, or (once seen) ended with its record expired.
+        return own.status === 404 && watch.seen ? { kind: 'gone' } : { kind: 'unknown' };
+    }
+    /** A ?status answer: its HTTP status, and its JSON object when that was a 200 (else null). */
+    async statusBody(statusUrl, signal) {
+        try {
+            const res = await this.receiveGet(statusUrl, signal);
+            if (signal.aborted || res.status !== 200) {
+                void res.body?.cancel().catch(() => undefined);
+                return { status: res.status, body: null };
+            }
+            const body = parseJsonObject(await res.text());
+            return { status: 200, body: signal.aborted ? null : body };
+        }
+        catch {
+            return { status: 0, body: null };
+        }
+    }
+    /** Follow the name's ?progress events until this share's transfer ends there, or the stream does. */
+    async followShareEvents(url, watch, signal) {
+        let res;
+        try {
+            res = await this.receiveGet(`${url}?progress`, signal, { Accept: 'text/event-stream' });
+        }
+        catch {
+            return { kind: 'unknown' };
+        }
+        if (signal.aborted || res.status !== 200 || !res.body) {
+            // 204: the transfer there already ended; the next ?status check says how.
+            void res.body?.cancel().catch(() => undefined);
+            return { kind: 'unknown' };
+        }
+        try {
+            for await (const ev of parseSseStream(res.body)) {
+                if (signal.aborted)
+                    return { kind: 'unknown' };
+                if (ev.event !== 'done')
+                    continue;
+                const data = parseJsonObject(ev.data);
+                // Another transfer's end on this name: ?status decides about this one.
+                if (data?.transferId !== watch.transferId)
+                    return { kind: 'unknown' };
+                if (data.state === 'failed') {
+                    return { kind: 'failed', reason: typeof data.reason === 'string' && data.reason ? data.reason : 'the transfer failed' };
+                }
+                return { kind: 'complete' };
+            }
+        }
+        catch {
+            // Lost: the caller checks ?status, then follows again.
+        }
+        finally {
+            void res.body.cancel().catch(() => undefined);
+        }
+        return { kind: 'unknown' };
+    }
     // -------------------------------------------------------------------------
     // Internal: receive via direct URL (fallback)
     // -------------------------------------------------------------------------
     receiveMediaDirect(path, videoElement, opts) {
         let stopped = false;
         let url = this.getUrl(path);
-        if (opts?.n && opts.n > 1)
+        if (opts?.live === true)
+            url += liveQuery('receiveMedia', opts.n);
+        else if (opts?.n && opts.n > 1)
             url += `?n=${opts.n}`;
-        videoElement.src = url;
+        // A media element cannot set a cache mode: a unique URL keeps it from
+        // waiting behind another receive of the same pipe.
+        videoElement.src = withCacheBuster(url);
         videoElement.play().catch(() => { });
         // Shared idempotent cleanup for both natural completion and manual stop()
         let cleaned = false;
@@ -510,10 +962,12 @@ export class PipeMedia {
             return this.receiveMediaDirect(path, videoElement, opts);
         }
         let fetchUrl = this.getUrl(path);
-        if (opts?.n && opts.n > 1)
+        if (opts?.live === true)
+            fetchUrl += liveQuery('receiveMedia', opts.n);
+        else if (opts?.n && opts.n > 1)
             fetchUrl += `?n=${opts.n}`;
         const abortController = new AbortController();
-        const response = await fetch(fetchUrl, { signal: abortController.signal });
+        const response = await this.receiveGet(fetchUrl, abortController.signal);
         if (!response.ok || !response.body) {
             throw new Error(`Pipe receive failed: ${response.status} ${response.statusText}`);
         }
@@ -539,6 +993,7 @@ export class PipeMedia {
         let probeResult = await probeMimeType(firstChunk, mimeVariants);
         if (!probeResult) {
             abortController.abort();
+            void reader.cancel().catch(() => undefined);
             throw new Error(`MSE cannot decode this stream. Tried: ${mimeVariants.join(', ')}. Use mode: 'direct'.`);
         }
         mimeType = probeResult;
@@ -554,16 +1009,41 @@ export class PipeMedia {
         // Shared finish logic — sets stopped, cleans up listeners, resolves done
         const onVideoEnded = () => { finish(); };
         const onVideoError = () => { finish(); };
+        // Live: playback events also keep the playhead in the buffered data
+        // (set in sourceopen), since playback can reach a gap after the last append.
+        const PLAYBACK_EVENTS = ['waiting', 'stalled', 'timeupdate'];
+        let onLivePlayback = null;
+        const detachLivePlayback = () => {
+            if (!onLivePlayback)
+                return;
+            for (const t of PLAYBACK_EVENTS)
+                videoElement.removeEventListener(t, onLivePlayback);
+            onLivePlayback = null;
+        };
         // Attach error listener early — catches decode/source errors during the entire session
         videoElement.addEventListener('error', onVideoError, { once: true });
+        // Every end of the session (playback ended, a video or SourceBuffer error,
+        // a network error, stop()) runs this once: the request is aborted, the body
+        // reader cancelled, the object URL revoked and the listeners removed.
         let finished = false;
+        let revoked = false;
+        const revokeUrl = () => {
+            if (revoked)
+                return;
+            revoked = true;
+            URL.revokeObjectURL(objectUrl);
+        };
         const finish = () => {
             if (finished)
                 return;
             finished = true;
             stopped = true;
+            abortController.abort();
+            void reader.cancel().catch(() => undefined);
+            revokeUrl();
             videoElement.removeEventListener('ended', onVideoEnded);
             videoElement.removeEventListener('error', onVideoError);
+            detachLivePlayback();
             resolvePromise?.();
         };
         const done = new Promise((resolve, reject) => {
@@ -574,8 +1054,6 @@ export class PipeMedia {
                     sourceBuffer = mediaSource.addSourceBuffer(mimeType);
                 }
                 catch (err) {
-                    URL.revokeObjectURL(objectUrl);
-                    abortController.abort();
                     finish();
                     return;
                 }
@@ -616,7 +1094,7 @@ export class PipeMedia {
                         }
                     }
                     catch { /* already ended */ }
-                    URL.revokeObjectURL(objectUrl);
+                    revokeUrl();
                     // Wait for video to finish playing all buffered content.
                     // Error listener is already attached early (after setting src).
                     if (videoElement.ended) {
@@ -669,7 +1147,39 @@ export class PipeMedia {
                         finishPlayback();
                     }
                 };
+                // Live (`?live`): a late viewer's media starts at the stream's current
+                // time, not 0, and a viewer that fell behind skips whole Clusters, which
+                // leaves gaps. Keep the playhead in the buffered data: when it sits
+                // before a range, or within 0.1 s of a range's end with a later range
+                // waiting, move it to the next range's start. A user's seek is never
+                // overridden, and a paused playhead moves only from before the first
+                // range (nothing to show there yet).
+                const keepLivePlayhead = () => {
+                    if (opts?.live !== true || stopped || videoElement.seeking)
+                        return;
+                    try {
+                        const b = sourceBuffer.buffered;
+                        const t = videoElement.currentTime;
+                        const paused = videoElement.paused;
+                        for (let i = 0; i < b.length; i++) {
+                            if (t < b.start(i)) {
+                                if (!paused || i === 0)
+                                    videoElement.currentTime = b.start(i);
+                                return;
+                            }
+                            if (t < b.end(i) - 0.1 || i === b.length - 1)
+                                return;
+                        }
+                    }
+                    catch { /* ignore */ }
+                };
+                if (opts?.live === true && !stopped) {
+                    onLivePlayback = keepLivePlayhead;
+                    for (const t of PLAYBACK_EVENTS)
+                        videoElement.addEventListener(t, onLivePlayback);
+                }
                 sourceBuffer.addEventListener('updateend', () => {
+                    keepLivePlayhead();
                     // Evict first; if eviction started, wait for its updateend before appending
                     if (!tryEvict()) {
                         appendNext();
@@ -679,19 +1189,10 @@ export class PipeMedia {
                 // calls throw InvalidStateError. Abort the stream and finish cleanly.
                 sourceBuffer.addEventListener('error', () => {
                     try {
-                        reader.cancel();
-                    }
-                    catch { /* ignore */ }
-                    try {
-                        abortController.abort();
-                    }
-                    catch { /* ignore */ }
-                    try {
                         if (mediaSource.readyState === 'open')
                             mediaSource.endOfStream('decode');
                     }
                     catch { /* ignore */ }
-                    URL.revokeObjectURL(objectUrl);
                     finish();
                 });
                 // Start playing as soon as we have data
@@ -731,7 +1232,6 @@ export class PipeMedia {
                             mediaSource.endOfStream('network');
                         }
                         catch { /* ignore */ }
-                        URL.revokeObjectURL(objectUrl);
                     }
                     finish();
                 }
@@ -743,16 +1243,10 @@ export class PipeMedia {
             stop() {
                 if (stopped)
                     return;
-                stopped = true;
-                abortController.abort();
+                finish();
                 videoElement.pause();
                 videoElement.removeAttribute('src');
                 videoElement.load();
-                URL.revokeObjectURL(objectUrl);
-                // Clean up any finishPlayback listeners
-                videoElement.removeEventListener('ended', onVideoEnded);
-                videoElement.removeEventListener('error', onVideoError);
-                resolvePromise?.();
             },
         };
     }
@@ -760,6 +1254,55 @@ export class PipeMedia {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+/** How long a share waits before it checks its name again. */
+const SHARE_WATCH_RETRY_MS = 3000;
+/** Checks in a row that find no transfer of a running share before it is ended as failed (about 30 s). */
+const SHARE_WATCH_MAX_GONE = 10;
+/** Idle checks of a not-yet-seen share per check that also asks the kit for its transfer by id (about 12 s). */
+const SHARE_WATCH_IDLE_ASK = 4;
+/** What a ?status record of this share's own transfer says. */
+function shareRecordStep(body, watch) {
+    const state = body.state;
+    if (state === 'failed')
+        return { kind: 'failed', reason: typeof body.reason === 'string' && body.reason ? body.reason : 'the transfer failed' };
+    if (state === 'complete')
+        return { kind: 'complete' };
+    // Waiting or streaming: from here on, an unknown id means its record expired.
+    watch.seen = true;
+    return { kind: 'live' };
+}
+/** A share's own transfer id: 22 base64url characters (128 random bits), as the kit's `?transfer=` takes. */
+function newTransferId() {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    let bin = '';
+    for (const b of bytes)
+        bin += String.fromCharCode(b);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function parseJsonObject(text) {
+    try {
+        const value = JSON.parse(text);
+        return value !== null && typeof value === 'object' ? value : null;
+    }
+    catch {
+        return null;
+    }
+}
+/** Resolves after `ms`, or at once when `signal` aborts. */
+function abortableDelay(ms, signal) {
+    return new Promise((resolve) => {
+        if (signal.aborted)
+            return resolve();
+        const finish = () => {
+            clearTimeout(timer);
+            signal.removeEventListener('abort', finish);
+            resolve();
+        };
+        const timer = setTimeout(finish, ms);
+        signal.addEventListener('abort', finish, { once: true });
+    });
+}
 function mimeToExtension(mimeType) {
     const base = mimeType.split(';')[0].trim();
     const map = {
@@ -943,6 +1486,17 @@ function buildDisplayMediaOptions(opts) {
     }
     return result;
 }
+/** Keyframe interval asked of the recorder for a live share: a late viewer joins at the next one. */
+const LIVE_KEYFRAME_INTERVAL_MS = 2000;
+function isWebmMime(mime) {
+    return /^(video|audio)\/webm\b/i.test(mime.trim());
+}
+/** `?live` for a URL, after refusing `n` above 1 (the kit answers 400). */
+function liveQuery(op, n) {
+    if (n !== undefined && n > 1)
+        throw new RangeError(`${op}: live cannot be combined with n above 1`);
+    return '?live';
+}
 /** Build stream options object, omitting undefined keys to satisfy exactOptionalPropertyTypes. */
 function buildStreamOpts(opts) {
     const result = {};
@@ -956,5 +1510,202 @@ function buildStreamOpts(opts) {
         result.n = opts.n;
     if (opts?.viewer !== undefined)
         result.viewer = opts.viewer;
+    if (opts?.live !== undefined)
+        result.live = opts.live;
     return result;
+}
+// ---------------------------------------------------------------------------
+// Pipe names and page URLs
+// ---------------------------------------------------------------------------
+const MAX_PIPE_RECEIVERS = 256;
+/** The longest `wait` the server takes, in seconds. */
+const MAX_PIPE_WAIT_S = 3600;
+/** The server's limit, counted on the encoded name (its path after the prefix). */
+const MAX_PIPE_NAME_LENGTH = 1024;
+/** The longest `text` the send page takes, and the longest `filename` a page or the server keeps. */
+const MAX_PAGE_TEXT = 100_000;
+const MAX_PAGE_FILENAME = 255;
+/**
+ * What the no-JavaScript page keeps of its `path` field; it drops anything else.
+ * An encoded name always fits, unless it has more than one segment (`/`).
+ */
+const NOSCRIPT_PATH = /^[a-zA-Z0-9._~:@!$&'()*+,;=%-]+$/;
+let cacheBusterCount = 0;
+/**
+ * `url` plus a unique `_=` query param, which the pipe kit ignores. For a
+ * receive GET that cannot set `cache: 'no-store'` (a client transport, an
+ * iframe, a media element): Chromium holds a second GET of an identical URL
+ * behind the first in its HTTP cache for about 20 s.
+ */
+export function withCacheBuster(url) {
+    cacheBusterCount = (cacheBusterCount + 1) % 1_679_616;
+    const unique = Date.now().toString(36) + cacheBusterCount.toString(36) + Math.random().toString(36).slice(2, 8);
+    return `${url}${url.includes('?') ? '&' : '?'}_=${unique}`;
+}
+/**
+ * Encode a pipe name for a URL path: each `/`-separated segment is
+ * percent-encoded on its own, so `/` stays a separator and a leading `/` is
+ * kept. A `.` or `..` segment (also as `%2e`) throws: see PipeMedia.getUrl.
+ */
+export function encodePipeName(path) {
+    return String(path)
+        .split('/')
+        .map(segment => {
+        let decoded = segment;
+        try {
+            decoded = decodeURIComponent(segment);
+        }
+        catch {
+            // Malformed escape cannot decode to a dot segment.
+        }
+        if (segment === '.' || segment === '..' || decoded === '.' || decoded === '..') {
+            throw new Error(`Invalid pipe path: "${path}" contains a "${segment}" path segment. ` +
+                'Relative segments are not allowed because they change which endpoint is called.');
+        }
+        return encodeURIComponent(segment);
+    })
+        .join('/');
+}
+/** `name`, unless the kit answers it itself (its pages, health, metrics): then throw. */
+export function refuseReservedPipeName(name) {
+    if (reservedPipePath(name) !== null) {
+        throw new Error(`Pipe name "${name}" is reserved by the server; choose another name`);
+    }
+    return name;
+}
+/** Encode a pipe name the pages can use, or throw why it cannot work. */
+function checkedPipeName(name, page) {
+    if (typeof name !== 'string' || name.length === 0) {
+        throw new TypeError(`The ${page} page needs a pipe name`);
+    }
+    // eslint-disable-next-line no-control-regex
+    if (/[\x00-\x1f\x7f\\]/.test(name)) {
+        throw new Error(`Invalid pipe name ${JSON.stringify(name)}: the server refuses control characters and backslashes`);
+    }
+    const encoded = encodePipeName(name);
+    refuseReservedPipeName(name);
+    if (encoded.length > MAX_PIPE_NAME_LENGTH) {
+        throw new RangeError(`Pipe name is ${encoded.length} characters once encoded; the server allows ${MAX_PIPE_NAME_LENGTH}`);
+    }
+    return encoded;
+}
+const PAGE_OPTIONS = {
+    send: ['n', 'text', 'mode', 'filename', 'autostart'],
+    receive: ['n', 'filename', 'autostart', 'wait', 'sha256'],
+    share: ['source', 'audio', 'surface', 'quality', 'fps', 'n', 'live'],
+    video: ['n', 'live', 'wait'],
+    progress: [],
+    noscript: ['mode', 'wait', 'sha256'],
+};
+const OPTION_ENUMS = {
+    mode: ['file', 'text'],
+    source: ['screen', 'camera', 'audio'],
+    surface: ['monitor', 'window', 'browser'],
+    quality: ['low', 'medium', 'high'],
+};
+function integerIn(key, value, min, max) {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) {
+        throw new RangeError(`${key} must be an integer from ${min} to ${max} (got ${String(value)})`);
+    }
+    return value;
+}
+/** The wire value of one page option, or undefined when it is not written. */
+function pageOptionValue(key, value) {
+    if (value === undefined)
+        return undefined;
+    switch (key) {
+        case 'n':
+            // 1 is every page's default, as in the kit's own links.
+            return integerIn('n', value, 1, MAX_PIPE_RECEIVERS) > 1 ? String(value) : undefined;
+        case 'fps':
+            return String(integerIn('fps', value, 1, 60));
+        case 'wait':
+            return String(integerIn('wait', value, 1, MAX_PIPE_WAIT_S));
+        case 'audio':
+            if (typeof value !== 'boolean')
+                throw new TypeError('audio must be a boolean');
+            return value ? '1' : '0';
+        case 'autostart':
+        case 'sha256':
+            if (typeof value !== 'boolean')
+                throw new TypeError(`${key} must be a boolean`);
+            return value ? '1' : undefined;
+        case 'live':
+            if (typeof value !== 'boolean')
+                throw new TypeError('live must be a boolean');
+            return value ? '1' : undefined;
+        case 'text':
+        case 'filename': {
+            if (typeof value !== 'string')
+                throw new TypeError(`${key} must be a string`);
+            // The pages cut longer values off; refuse them instead.
+            const max = key === 'text' ? MAX_PAGE_TEXT : MAX_PAGE_FILENAME;
+            if (value.length > max)
+                throw new RangeError(`${key} is ${value.length} characters; the page keeps ${max}`);
+            return value === '' ? undefined : value;
+        }
+        default: {
+            const allowed = OPTION_ENUMS[key];
+            if (typeof value !== 'string' || !allowed.includes(value)) {
+                throw new RangeError(`${key} must be one of ${allowed.join(', ')} (got ${String(value)})`);
+            }
+            return value;
+        }
+    }
+}
+/**
+ * Build a page URL under `root` (pipe base URL + base path). See
+ * PipeMedia.getPageUrl for the shapes and the refusals.
+ */
+export function buildPipePageUrl(root, page, name, options) {
+    const keys = PAGE_OPTIONS[page];
+    if (keys === undefined)
+        throw new RangeError(`Unknown pipe page "${String(page)}"`);
+    const opts = (options ?? {});
+    for (const key of Object.keys(opts)) {
+        if (!keys.includes(key))
+            throw new TypeError(`The ${page} page takes no "${key}" option`);
+    }
+    if (opts['live'] === true && typeof opts['n'] === 'number' && opts['n'] > 1) {
+        throw new RangeError('live cannot be combined with n above 1');
+    }
+    const query = [];
+    let path;
+    if (page === 'send') {
+        path = '/';
+        if (name !== undefined) {
+            checkedPipeName(name, page);
+            query.push(`name=${encodeURIComponent(name)}`);
+        }
+    }
+    else if (page === 'noscript') {
+        path = '/noscript';
+        if (name !== undefined) {
+            // The page writes `path` into its form's URL unchanged, so it gets the
+            // encoded name: the upload then reaches the pipe every other URL names
+            // (a literal `%`, a space or `$` in the name included).
+            const encoded = checkedPipeName(name, page);
+            if (!NOSCRIPT_PATH.test(encoded)) {
+                throw new Error(`The noscript page takes a name of one segment, without "/" (got ${JSON.stringify(name)})`);
+            }
+            query.push(`path=${encodeURIComponent(encoded)}`);
+        }
+    }
+    else {
+        path = `/${checkedPipeName(name, page)}`;
+        query.push(page);
+    }
+    for (const key of keys) {
+        const value = pageOptionValue(key, opts[key]);
+        if (value !== undefined)
+            query.push(`${key}=${encodeURIComponent(value)}`);
+    }
+    return `${root}${path}${query.length > 0 ? `?${query.join('&')}` : ''}`;
+}
+/** `window.open(url)` for a page URL; see PipeMedia.openPage. */
+export function openPipePage(url, open) {
+    const opener = globalThis.open;
+    if (typeof opener !== 'function')
+        throw new Error('openPage needs a browser window (window.open)');
+    return opener.call(globalThis, url, open?.target ?? '_blank', open?.features);
 }

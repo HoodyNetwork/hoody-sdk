@@ -37,6 +37,17 @@ export declare function computeMountId(localPath: string, uid?: number): string;
 export declare function stateFilePath(id: string, home?: string): string;
 export declare function configFilePath(id: string, home?: string): string;
 /**
+ * rclone's VFS cache directory for one mount: keyed by the mount id (the
+ * local path) AND the remote URL. rclone files its cache under the remote's
+ * name and root, which are the same (`hoody:`) for every mount, so a shared
+ * cache would let writes left pending by a crashed mount of one container be
+ * uploaded to whichever container is mounted next. The directory is kept
+ * after unmount, so remounting the same URL at the same path recovers its own
+ * pending writes. rclone expires cached files only while a mount of that cache
+ * runs; nothing removes the directory of a mount that is never made again.
+ */
+export declare function cacheDirPath(id: string, kitUrl: string, home?: string): string;
+/**
  * Attempt to claim a state record. Uses `fs.open(path, 'wx', 0o600)` for
  * atomic exclusive-create. On EEXIST runs a reclaim probe: if the prior
  * mount is dead AND not in the OS mount table, the stale record is

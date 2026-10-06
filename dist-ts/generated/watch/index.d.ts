@@ -4,7 +4,7 @@
  * Auto-generated service exports for watch namespace
  * @packageDocumentation
  */
-export { HealthService } from './health.service.js';
-export { SystemService } from './system.service.js';
+export { KitService } from './kit.service.js';
 export { WatchersService } from './watchers.service.js';
-export { StreamsService } from './streams.service.js';
+export { EventsService } from './events.service.js';
+export { WatchStreamWatcherEventsWsWebSocket } from './watch_stream-watcher-events-ws.websocket.js';

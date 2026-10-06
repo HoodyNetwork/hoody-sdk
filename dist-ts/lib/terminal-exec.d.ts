@@ -4,55 +4,21 @@
  * Architecture:
  *   This module extends HoodyClient with two convenience methods:
  *
- *   - `execute(command, options?)` — run a command and wait for the result
- *     (like child_process.exec). Uses the HTTP execute+poll path via
- *     TerminalExecutionService.
- *
- *   Named `execute` (not `exec`) to avoid collision with the generated
- *   `exec` property which holds the Hoody Exec kit service namespace.
+ *   - `terminal.run(command, options?)` — run a command and wait for the result
+ *     (like child_process.exec). Uses the HTTP run+poll path of
+ *     `terminal.commands`. It lives on the terminal namespace, not at the
+ *     root, so it cannot be mistaken for the Hoody Exec kit (`client.exec`).
  *
  *   - `shell(options?)` — open an interactive PTY session (like opening
  *     a remote terminal). Uses WebSocket duplex stream via TerminalClient.
  *
  *   Both methods require a container-scoped client (via `withContainer()`).
- *   They are attached to HoodyClient.prototype via module augmentation
- *   and runtime prototype patching, following the same pattern as
- *   exec-scripts.ts.
+ *   `shell` is attached to HoodyClient.prototype via module augmentation and
+ *   runtime prototype patching, following the same pattern as exec-scripts.ts;
+ *   `terminal.run` is installed on each client's terminal namespace object
+ *   (`installTerminalRun`), because that object is per instance.
  */
 import { Duplex } from 'stream';
-export interface TerminalExecOptions {
-    /** Working directory for command execution */
-    cwd?: string;
-    /** Shell to use (bash, zsh, fish, sh) */
-    shell?: string;
-    /** System user to run as */
-    user?: string;
-    /** Timeout in seconds (default: 0 = no timeout) */
-    timeout?: number;
-    /** Environment variables */
-    env?: Record<string, string>;
-    /** AbortSignal for cancellation */
-    signal?: AbortSignal;
-    /** Polling interval in ms (default: 250, min: 100) */
-    pollIntervalMs?: number;
-    /** Terminal service instance index (default: 0 — ephemeral PTY uses terminal-0) */
-    serviceIndex?: number;
-}
-export interface TerminalExecResult {
-    /** Standard output */
-    stdout: string;
-    /** Standard error */
-    stderr: string;
-    /** Process exit code (null if unknown) */
-    exitCode: number | null;
-    /** Whether the command timed out */
-    timedOut: boolean;
-    /** Execution duration in milliseconds
-     */
-    duration: number;
-    /** Server-assigned command ID */
-    commandId: string;
-}
 export interface TerminalShellOptions {
     /** Working directory */
     cwd?: string;
@@ -102,18 +68,6 @@ export interface TerminalShell extends Duplex {
 declare module './hoody-client.js' {
     interface HoodyClient {
         /**
-         * Execute a command in the container and wait for the result.
-         *
-         * Requires a container-scoped client (call `withContainer()` first).
-         *
-         * @example
-         * ```ts
-         * const scoped = await client.withContainer(container);
-         * const { stdout, exitCode } = await scoped.execute('ls -la');
-         * ```
-         */
-        execute(command: string, options?: TerminalExecOptions): Promise<TerminalExecResult>;
-        /**
          * Open an interactive PTY shell session to the container.
          *
          * Returns a Duplex stream that supports `.pipe()`.
@@ -132,9 +86,11 @@ declare module './hoody-client.js' {
     }
 }
 /**
- * Attach `execute()` and `shell()` to HoodyClient.prototype.
+ * Attach `shell()` to HoodyClient.prototype.
  *
  * Idempotent — safe to call multiple times (guarded by Symbol marker).
  * Called automatically when this module is imported.
  */
 export declare function patchTerminalExecPrototype(): void;
+export { installTerminalRun } from './terminal-run.js';
+export type { TerminalExecOptions, TerminalExecResult } from './terminal-run.js';

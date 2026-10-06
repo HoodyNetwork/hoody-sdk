@@ -242,7 +242,7 @@ export interface WsLike {
     addEventListener(type: "error", listener: (ev: unknown) => void): void;
 }
 export declare const WS_OPEN = 1;
-export declare function openWebSocket(url: string): Promise<WsLike>;
+export declare function openWebSocket(url: string, headers?: Record<string, string>): Promise<WsLike>;
 /** Maximum buffered SSE events per stream before the SDK cancels the upstream and emits a `dropped` synthetic event. Protects against memory-DoS from hostile/fast upstreams. */
 export declare const SSE_EVENT_QUEUE_CAP = 4096;
 /** Maximum inbound WS frame size the SDK will JSON.parse. Frames larger than this drop the connection. */
@@ -271,6 +271,12 @@ export interface ChannelOptions {
     reconnect?: ReconnectOptions;
     /** Observability hooks. All optional; called inline at the relevant lifecycle point. */
     hooks?: ChannelHooks;
+    /**
+     * Headers for the WebSocket upgrade, sent on every connect and reconnect
+     * (e.g. a kit credential). Node/Bun only: browsers cannot set upgrade
+     * headers, so there the credential belongs in the URL.
+     */
+    headers?: Record<string, string>;
     /**
      * Opt into the binary-frame fast path (default `true`). When enabled the
      * SDK opens the channel with `?binary=1`; if the server advertises
