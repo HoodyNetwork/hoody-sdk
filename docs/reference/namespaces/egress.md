@@ -1,6 +1,6 @@
-# `egress` — 5 methods
+# `egress` — 4 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.egress`
 
 ```typescript
@@ -9,91 +9,75 @@ import * as egress from 'hoody-sdk/egress';
 
 ---
 
-## `client.egress` (5 methods)
+## `client.egress.kit` (1 method)
 
-### `disableUpstream`
-
-**DELETE** `/api/v1/egress/upstream`
-
-Disable upstream
-
-```typescript
-client.egress.disableUpstream(): Promise<EgressDisableUpstreamResponse>
-```
-
-**Returns:** `EgressDisableUpstreamResponse`
-
-**CLI:** `hoody egress upstream clear`
-
----
-
-### `getUpstream`
-
-**GET** `/api/v1/egress/upstream`
-
-Get upstream status
-
-```typescript
-client.egress.getUpstream(): Promise<EgressGetUpstreamResponse>
-```
-
-**Returns:** `EgressGetUpstreamResponse`
-
-**CLI:** `hoody egress upstream get`
-
----
-
-### `healthCheck`
+### `getHealth`
 
 **GET** `/api/v1/egress/health`
 
 Service health check
 
 ```typescript
-client.egress.healthCheck(): Promise<EgressHealthCheckResponse>
+client.egress.kit.getHealth(): Promise<EgressKitGetHealthResponse>
 ```
 
-**Returns:** `EgressHealthCheckResponse`
+**Returns:** `EgressKitGetHealthResponse`
 
 **CLI:** `hoody egress health`
 
 ---
 
-### `setUpstream`
+## `client.egress.upstream` (3 methods)
+
+### `disable`
+
+**DELETE** `/api/v1/egress/upstream`
+
+Disable upstream
+
+```typescript
+client.egress.upstream.disable(): Promise<EgressUpstreamDisableResponse>
+```
+
+**Returns:** `EgressUpstreamDisableResponse`
+
+**CLI:** `hoody egress upstream disable`
+
+---
+
+### `get`
+
+**GET** `/api/v1/egress/upstream`
+
+Get upstream status
+
+```typescript
+client.egress.upstream.get(): Promise<EgressUpstreamGetResponse>
+```
+
+**Returns:** `EgressUpstreamGetResponse`
+
+**CLI:** `hoody egress upstream get`
+
+---
+
+### `set`
 
 **PUT** `/api/v1/egress/upstream`
 
 Set upstream
 
 ```typescript
-client.egress.setUpstream(data: string): Promise<EgressSetUpstreamResponse>
+client.egress.upstream.set(data: string): Promise<EgressUpstreamSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `string` | Yes | body |  |
 
-**Returns:** `EgressSetUpstreamResponse`
+**Returns:** `EgressUpstreamSetResponse`
 
 **CLI:** `hoody egress upstream set`
-
----
-
-### `setUpstreamPost`
-
-**POST** `/api/v1/egress/upstream`
-
-Set upstream
-
-```typescript
-client.egress.setUpstreamPost(data: string): Promise<EgressSetUpstreamPostResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `string` | Yes | body |  |
-
-**Returns:** `EgressSetUpstreamPostResponse`
 
 ---
 

@@ -35,13 +35,10 @@ reach your container.
 
 ```
 hoody chat [prompt...]                       # one-shot OR REPL (if no prompt)
-hoody chatbot [prompt...]                    # alias for `hoody chat`
-hoody ai chat [prompt...]                    # identical, discoverable under `hoody ai`
-hoody ai chatbot [prompt...]                 # alias
 
-hoody chat sessions list                     # (alias: ls)
-hoody chat sessions show <id>                # supports 8-hex id prefix match
-hoody chat sessions delete [id]              # (aliases: rm, remove)
+hoody chat sessions list
+hoody chat sessions get <id>                 # supports 8-hex id prefix match
+hoody chat sessions delete [id]
 hoody chat sessions delete --all -y          # wipe all; requires -y
 ```
 
@@ -163,7 +160,7 @@ oldest sessions beyond the cap are deleted. Retention order is by `createdAt`
 
 The session title is derived from the first user message and is passed through
 secret-detection patterns before it is written. Titles are re-redacted at READ
-time too (by `sessions list` / `sessions show`), so a file that reaches disk by
+time too (by `sessions list` / `sessions get`), so a file that reaches disk by
 any other route still cannot print a secret.
 
 ## Delete confirmation asymmetry (scripted vs interactive)
@@ -237,7 +234,7 @@ hoody chat --private "what is a realm?"
 
 # List, show, delete sessions:
 hoody chat sessions list
-hoody chat sessions show a1b2c3d4
+hoody chat sessions get a1b2c3d4
 hoody chat sessions delete --all -y
 ```
 

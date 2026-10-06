@@ -1,6 +1,6 @@
-# `exec` — 69 methods
+# `exec` — 67 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.exec`
 
 ```typescript
@@ -27,121 +27,133 @@ client.exec.cache.clear(data?: ExecCacheClearRequest): Promise<ExecCacheClearRes
 
 **Returns:** `ExecCacheClearResponse`
 
-**CLI:** `hoody exec system cache-clear`
+**CLI:** `hoody exec cache clear`
 
 ---
 
-## `client.exec.dependencies` (3 methods)
+## `client.exec` (1 method)
 
-### `check`
-
-**POST** `/api/v1/exec/dependencies/check`
-
-Check Dependencies
-
-```typescript
-client.exec.dependencies.check(data?: ExecDependenciesCheckRequest): Promise<ExecDependenciesCheckResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecDependenciesCheckRequest` | No | body |  |
-
-**Returns:** `ExecDependenciesCheckResponse`
-
-**CLI:** `hoody exec packages check`
-
----
-
-### `install`
-
-**POST** `/api/v1/exec/dependencies/install`
-
-Install Dependencies
-
-```typescript
-client.exec.dependencies.install(data: ExecDependenciesInstallRequest): Promise<ExecDependenciesInstallResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecDependenciesInstallRequest` | Yes | body |  |
-
-**Returns:** `ExecDependenciesInstallResponse`
-
-**CLI:** `hoody exec packages add-modules`
-
----
-
-### `listBundled`
-
-**GET** `/api/v1/exec/dependencies/bundled`
-
-List Bundled Dependencies
-
-```typescript
-client.exec.dependencies.listBundled(): Promise<ExecDependenciesListBundledResponse>
-```
-
-**Returns:** `ExecDependenciesListBundledResponse`
-
-**CLI:** `hoody exec packages list`
-
----
-
-## `client.exec.execution` (1 method)
-
-### `execute`
+### `run`
 
 **GET** `/{path}`
 
-Execute Script (GET)
+Run a user script with any HTTP method (GET by default), a query, a body and headers
 
 ```typescript
-client.exec.execution.execute(path: string): Promise<ApiResponse<unknown>>
+client.exec.run(options: { path: string; method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; query?: Record<string, unknown>; body?: unknown; headers?: Record<string, string> }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `path` | `string` | Yes | path | Script path (supports Next.js-style routing) |
+| `path` | `string` | Yes | path | Script path (supports Next.js-style routing). Each segment is percent-encoded once; a leading / is optional. |
+| `method` | `'GET' \| 'HEAD' \| 'POST' \| 'PUT' \| 'PATCH' \| 'DELETE'` | No | option | HTTP method; defaults to GET. Lowercase is accepted. |
+| `query` | `Record&lt;string, unknown&gt;` | No | option | Query parameters, sent as a real query string (never folded into the path). |
+| `body` | `unknown` | No | option | Request body (ignored for GET and HEAD). Objects are sent as JSON. |
+| `headers` | `Record&lt;string, string&gt;` | No | option | Per-request headers. |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `any`
 
 ---
 
-## `client.exec.health` (1 method)
+## `client.exec.kit` (6 methods)
 
-### `check`
+### `getHealth`
 
 **GET** `/api/v1/exec/health`
 
 Health Check
 
 ```typescript
-client.exec.health.check(): Promise<BrowserHealthCheckResponse>
+client.exec.kit.getHealth(): Promise<ExecHealthCheckResponse>
 ```
 
-**Returns:** `BrowserHealthCheckResponse`
+**Returns:** `ExecHealthCheckResponse`
 
 **CLI:** `hoody exec health`
 
 ---
 
-## `client.exec.ids` (1 method)
+### `getMetrics`
 
-### `list`
+**GET** `/api/v1/exec/monitor/metrics`
 
-**GET** `/api/v1/exec/list`
-
-List All Exec Ids
+Prometheus Export
 
 ```typescript
-client.exec.ids.list(): Promise<ExecIdsListResponse>
+client.exec.kit.getMetrics(): Promise<ApiResponse<string>>
 ```
 
-**Returns:** `ExecIdsListResponse`
+**Returns:** `ApiResponse<string>`
 
-**CLI:** `hoody exec namespaces list`
+**CLI:** `hoody exec metrics`
+
+---
+
+### `getStats`
+
+**GET** `/api/v1/exec/monitor/stats`
+
+Get Stats
+
+```typescript
+client.exec.kit.getStats(): Promise<ExecKitGetStatsResponse>
+```
+
+**Returns:** `ExecKitGetStatsResponse`
+
+**CLI:** `hoody exec stats`
+
+---
+
+### `getStatus`
+
+**GET** `/api/v1/exec/system/restart-status`
+
+Get Restart Status
+
+```typescript
+client.exec.kit.getStatus(): Promise<ExecKitGetStatusResponse>
+```
+
+**Returns:** `ExecKitGetStatusResponse`
+
+**CLI:** `hoody exec status`
+
+---
+
+### `listRequests`
+
+**GET** `/api/v1/exec/monitor/active-requests`
+
+Get Active Requests
+
+```typescript
+client.exec.kit.listRequests(): Promise<ExecKitListRequestsResponse>
+```
+
+**Returns:** `ExecKitListRequestsResponse`
+
+**CLI:** `hoody exec requests list`
+
+---
+
+### `restart`
+
+**POST** `/api/v1/exec/system/restart`
+
+Restart Server
+
+```typescript
+client.exec.kit.restart(data?: ExecKitRestartRequest): Promise<ExecKitRestartResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecKitRestartRequest` | No | body |  |
+
+**Returns:** `ExecKitRestartResponse`
+
+**CLI:** `hoody exec restart`
 
 ---
 
@@ -154,19 +166,40 @@ client.exec.ids.list(): Promise<ExecIdsListResponse>
 Clear Logs
 
 ```typescript
-client.exec.logs.clear(options?: { file?: string; type?: string; olderThanDays?: string; confirm?: string }): Promise<ExecLogsClearResponse>
+client.exec.logs.clear(options: { confirm: "true"; file?: string; type?: string; olderThanDays?: string; cache?: boolean | number }): Promise<ExecLogsClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `confirm` | `"true"` | Yes | query | Safety confirmation; must be the literal `true` or the request is rejected with 400. |
 | `file` | `string` | No | query | File query parameter |
 | `type` | `string` | No | query | Type query parameter |
 | `olderThanDays` | `string` | No | query | OlderThanDays query parameter |
-| `confirm` | `string` | No | query | Confirm query parameter |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecLogsClearResponse`
 
 **CLI:** `hoody exec logs clear`
+
+---
+
+### `get`
+
+**POST** `/api/v1/exec/logs/read`
+
+Read Log
+
+```typescript
+client.exec.logs.get(data: ExecLogsGetRequest): Promise<ExecLogsGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecLogsGetRequest` | Yes | body |  |
+
+**Returns:** `ExecLogsGetResponse`
+
+**CLI:** `hoody exec logs get`
 
 ---
 
@@ -177,37 +210,18 @@ client.exec.logs.clear(options?: { file?: string; type?: string; olderThanDays?:
 List Logs
 
 ```typescript
-client.exec.logs.list(options?: { type?: string; limit?: string }): Promise<ExecLogsListResponse>
+client.exec.logs.list(options?: { type?: string; limit?: string; cache?: boolean | number }): Promise<ExecLogsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `type` | `string` | No | query | Type query parameter |
 | `limit` | `string` | No | query | Limit query parameter |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecLogsListResponse`
 
 **CLI:** `hoody exec logs list`
-
----
-
-### `read`
-
-**POST** `/api/v1/exec/logs/read`
-
-Read Log
-
-```typescript
-client.exec.logs.read(data?: ExecLogsReadRequest): Promise<ExecLogsReadResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecLogsReadRequest` | No | body |  |
-
-**Returns:** `ExecLogsReadResponse`
-
-**CLI:** `hoody exec logs read`
 
 ---
 
@@ -238,39 +252,41 @@ client.exec.logs.search(data?: ExecLogsSearchRequest): Promise<ExecLogsSearchRes
 Stream Logs
 
 ```typescript
-client.exec.logs.stream(options?: { file: string; follow?: string }): Promise<ApiResponse<unknown>>
+client.exec.logs.stream(options: { file: string; follow?: boolean; cache?: boolean | number }): Promise<IEventStream>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `file` | `string` | Yes | query | File query parameter |
-| `follow` | `string` | No | query | Follow query parameter |
+| `follow` | `boolean` | No | query | Keep the stream open and send new lines as they are written. Default `true`. Accepts `true`/`false`/`1`/`0`. |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `IEventStream`
 
 **CLI:** `hoody exec logs stream`
 
 ---
 
-## `client.exec.magic` (4 methods)
+## `client.exec.magicComments` (5 methods)
 
-### `bulkUpdate`
+### `get`
 
-**POST** `/api/v1/exec/magic-comments/bulk-update`
+**GET** `/api/v1/exec/magic-comments/read`
 
-Bulk Update Magic Comments
+Read Magic Comments
 
 ```typescript
-client.exec.magic.bulkUpdate(data?: ExecMagicBulkUpdateRequest): Promise<ExecMagicBulkUpdateResponse>
+client.exec.magicComments.get(options: { path: string; cache?: boolean | number }): Promise<ExecMagicCommentsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecMagicBulkUpdateRequest` | No | body |  |
+| `path` | `string` | Yes | query | Path query parameter |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ExecMagicBulkUpdateResponse`
+**Returns:** `ExecMagicCommentsGetResponse`
 
-**CLI:** `hoody exec magic-comments bulk-update`
+**CLI:** `hoody exec magic comments get`
 
 ---
 
@@ -281,141 +297,148 @@ client.exec.magic.bulkUpdate(data?: ExecMagicBulkUpdateRequest): Promise<ExecMag
 Get Magic Comments Schema
 
 ```typescript
-client.exec.magic.getSchema(): Promise<ExecMagicGetSchemaResponse>
+client.exec.magicComments.getSchema(): Promise<ExecMagicCommentsGetSchemaResponse>
 ```
 
-**Returns:** `ExecMagicGetSchemaResponse`
+**Returns:** `ExecMagicCommentsGetSchemaResponse`
 
-**CLI:** `hoody exec magic-comments schema`
+**CLI:** `hoody exec magic comments schema get`
 
 ---
 
-### `read`
-
-**GET** `/api/v1/exec/magic-comments/read`
-
-Read Magic Comments
-
-```typescript
-client.exec.magic.read(options?: { path: string }): Promise<ExecMagicReadResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `path` | `string` | Yes | query | Path query parameter |
-
-**Returns:** `ExecMagicReadResponse`
-
-**CLI:** `hoody exec magic-comments read`
-
----
-
-### `updateHandler`
+### `update`
 
 **PUT** `/api/v1/exec/magic-comments/update`
 
 Update Magic Comments Handler
 
 ```typescript
-client.exec.magic.updateHandler(data: ExecMagicUpdateHandlerRequest): Promise<ExecMagicUpdateHandlerResponse>
+client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest): Promise<ExecMagicCommentsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecMagicUpdateHandlerRequest` | Yes | body |  |
+| `data` | `ExecMagicCommentsUpdateRequest` | Yes | body |  |
 
-**Returns:** `ExecMagicUpdateHandlerResponse`
+**Returns:** `ExecMagicCommentsUpdateResponse`
 
-**CLI:** `hoody exec magic-comments update`
-
----
-
-## `client.exec.monitor` (5 methods)
-
-### `getActiveRequests`
-
-**GET** `/api/v1/exec/monitor/active-requests`
-
-Get Active Requests
-
-```typescript
-client.exec.monitor.getActiveRequests(): Promise<ExecMonitorGetActiveRequestsResponse>
-```
-
-**Returns:** `ExecMonitorGetActiveRequestsResponse`
-
-**CLI:** `hoody exec system active-requests`
+**CLI:** `hoody exec magic comments update`
 
 ---
 
-### `getScriptPerformance`
+### `updateMany`
 
-**POST** `/api/v1/exec/monitor/script-performance`
+**POST** `/api/v1/exec/magic-comments/bulk-update`
 
-Get Script Performance
+Bulk Update Magic Comments
 
 ```typescript
-client.exec.monitor.getScriptPerformance(data?: ExecMonitorGetScriptPerformanceRequest): Promise<ExecMonitorGetScriptPerformanceResponse>
+client.exec.magicComments.updateMany(data: ExecMagicCommentsUpdateManyRequest): Promise<ExecMagicCommentsUpdateManyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecMonitorGetScriptPerformanceRequest` | No | body |  |
+| `data` | `ExecMagicCommentsUpdateManyRequest` | Yes | body |  |
 
-**Returns:** `ExecMonitorGetScriptPerformanceResponse`
+**Returns:** `ExecMagicCommentsUpdateManyResponse`
 
-**CLI:** `hoody exec scripts performance`
-
----
-
-### `getStats`
-
-**GET** `/api/v1/exec/monitor/stats`
-
-Get Stats
-
-```typescript
-client.exec.monitor.getStats(): Promise<ExecMonitorGetStatsResponse>
-```
-
-**Returns:** `ExecMonitorGetStatsResponse`
-
-**CLI:** `hoody exec system stats`
+**CLI:** `hoody exec magic comments batch update`
 
 ---
 
-### `listMonitorScripts`
+### `validate`
 
-**GET** `/api/v1/exec/monitor/scripts`
+**POST** `/api/v1/exec/validate/magic-comments`
 
-List Monitor Scripts
+Validate Magic Comments
 
 ```typescript
-client.exec.monitor.listMonitorScripts(options?: { limit?: number; sort?: "lastActivity" | "requests" | "errors" | "p95" | "ws_active" }): Promise<ListMonitorScriptsResponse>
+client.exec.magicComments.validate(data: ExecMagicCommentsValidateRequest): Promise<ExecMagicCommentsValidateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `limit` | `number` | No | query | Max number of scripts to return. Clamped to [1, 500]. Default 100. |
-| `sort` | `"lastActivity" \| "requests" \| "errors" \| "p95" \| "ws_active"` | No | query | Sort key. `lastActivity` (default) sorts by most recent activity; other keys sort descending by the matching metric. |
+| `data` | `ExecMagicCommentsValidateRequest` | Yes | body |  |
 
-**Returns:** `ListMonitorScriptsResponse`
+**Returns:** `ExecMagicCommentsValidateResponse`
+
+**CLI:** `hoody exec magic comments validate`
 
 ---
 
-### `prometheusExport`
+## `client.exec.modules` (3 methods)
 
-**GET** `/api/v1/exec/monitor/metrics`
+### `install`
 
-Prometheus Export
+**POST** `/api/v1/exec/dependencies/install`
+
+Install Dependencies
 
 ```typescript
-client.exec.monitor.prometheusExport(): Promise<ApiResponse<unknown>>
+client.exec.modules.install(data: ExecModulesInstallRequest): Promise<ExecModulesInstallResponse>
 ```
 
-**Returns:** `ApiResponse<unknown>`
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecModulesInstallRequest` | Yes | body |  |
 
-**CLI:** `hoody exec system prometheus`
+**Returns:** `ExecModulesInstallResponse`
+
+**CLI:** `hoody exec modules install`
+
+---
+
+### `listBundled`
+
+**GET** `/api/v1/exec/dependencies/bundled`
+
+List Bundled Dependencies
+
+```typescript
+client.exec.modules.listBundled(): Promise<ExecModulesListBundledResponse>
+```
+
+**Returns:** `ExecModulesListBundledResponse`
+
+**CLI:** `hoody exec modules list`
+
+---
+
+### `test`
+
+**POST** `/api/v1/exec/dependencies/check`
+
+Check Dependencies
+
+```typescript
+client.exec.modules.test(data: ExecModulesTestRequest): Promise<ExecModulesTestResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecModulesTestRequest` | Yes | body |  |
+
+**Returns:** `ExecModulesTestResponse`
+
+**CLI:** `hoody exec modules test`
+
+---
+
+## `client.exec.namespaces` (1 method)
+
+### `list`
+
+**GET** `/api/v1/exec/list`
+
+List All Exec Ids
+
+```typescript
+client.exec.namespaces.list(): Promise<ExecNamespacesListResponse>
+```
+
+**Returns:** `ExecNamespacesListResponse`
+
+**CLI:** `hoody exec namespaces list`
 
 ---
 
@@ -428,16 +451,65 @@ client.exec.monitor.prometheusExport(): Promise<ApiResponse<unknown>>
 Generate User OpenAPI
 
 ```typescript
-client.exec.openapi.generate(data: ExecOpenapiGenerateRequest): Promise<ExecOpenapiGenerateResponse>
+client.exec.openapi.generate(data?: ExecOpenapiGenerateRequest): Promise<ExecOpenapiGenerateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecOpenapiGenerateRequest` | Yes | body |  |
+| `data` | `ExecOpenapiGenerateRequest` | No | body |  |
 
 **Returns:** `ExecOpenapiGenerateResponse`
 
 **CLI:** `hoody exec openapi generate`
+
+---
+
+### `get`
+
+**GET** `/api/v1/exec/user-openapi/spec`
+
+Serve Generated Spec
+
+```typescript
+client.exec.openapi.get(options?: { dir?: string; directory?: string; format?: "json" | "yaml"; subdomain?: string; execId?: string; cache?: boolean | number }): Promise<ExecOpenapiGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `dir` | `string` | No | query | Script directory to scan (absolute or relative to scripts-dir). Default: `scripts`. |
+| `directory` | `string` | No | query | Alias of `dir`. Ignored when `dir` is provided. |
+| `format` | `"json" \| "yaml"` | No | query | Output format. `json` (default) or `yaml`. |
+| `subdomain` | `string` | No | query | Limit scan to scripts under this subdomain. Falls back to the Host header when omitted. |
+| `execId` | `string` | No | query | Limit scan to scripts under this execId. Falls back to the Host header when omitted. |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `ExecOpenapiGetResponse`
+
+**CLI:** `hoody exec openapi get`
+
+---
+
+### `getSchema`
+
+**GET** `/api/v1/exec/user-openapi/schema`
+
+Serve Schema File
+
+```typescript
+client.exec.openapi.getSchema(options?: { file?: string; path?: string; subdomain?: string; execId?: string; cache?: boolean | number }): Promise<ExecOpenapiGetSchemaResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `file` | `string` | No | query | Absolute or scripts-dir-relative path to the target script (e.g. `default/api/users/[id].ts`). Either `file` or `path` must be provided. |
+| `path` | `string` | No | query | Alias of `file`. Either `file` or `path` must be provided. |
+| `subdomain` | `string` | No | query | Resolve `file` under this subdomain. Falls back to the Host header when omitted. |
+| `execId` | `string` | No | query | Resolve `file` under this execId. Falls back to the Host header when omitted. |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `ExecOpenapiGetSchemaResponse`
+
+**CLI:** `hoody exec openapi schema get`
 
 ---
 
@@ -448,7 +520,7 @@ client.exec.openapi.generate(data: ExecOpenapiGenerateRequest): Promise<ExecOpen
 List User Scripts
 
 ```typescript
-client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; subdomain?: string; execId?: string }): Promise<ExecOpenapiListScriptsResponse>
+client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; subdomain?: string; execId?: string; cache?: boolean | number }): Promise<ExecOpenapiListScriptsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -457,10 +529,11 @@ client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; su
 | `dir` | `string` | No | query | Alias of `directory`. Ignored when `directory` is provided. |
 | `subdomain` | `string` | No | query | Limit scan to scripts under this subdomain. Falls back to the Host header when omitted. |
 | `execId` | `string` | No | query | Limit scan to scripts under this execId. Falls back to the Host header when omitted. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecOpenapiListScriptsResponse`
 
-**CLI:** `hoody exec scripts list-user`
+**CLI:** `hoody exec openapi scripts list`
 
 ---
 
@@ -471,61 +544,16 @@ client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; su
 Merge OpenAPI Specs
 
 ```typescript
-client.exec.openapi.merge(data: ExecOpenapiMergeRequest): Promise<ExecOpenapiMergeResponse>
+client.exec.openapi.merge(data?: ExecOpenapiMergeRequest): Promise<ExecOpenapiMergeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecOpenapiMergeRequest` | Yes | body |  |
+| `data` | `ExecOpenapiMergeRequest` | No | body |  |
 
 **Returns:** `ExecOpenapiMergeResponse`
 
 **CLI:** `hoody exec openapi merge`
-
----
-
-### `serve`
-
-**GET** `/api/v1/exec/user-openapi/spec`
-
-Serve Generated Spec
-
-```typescript
-client.exec.openapi.serve(options?: { dir?: string; directory?: string; format?: "json" | "yaml"; subdomain?: string; execId?: string }): Promise<ExecOpenapiServeResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `dir` | `string` | No | query | Script directory to scan (absolute or relative to scripts-dir). Default: `scripts`. |
-| `directory` | `string` | No | query | Alias of `dir`. Ignored when `dir` is provided. |
-| `format` | `"json" \| "yaml"` | No | query | Output format. `json` (default) or `yaml`. |
-| `subdomain` | `string` | No | query | Limit scan to scripts under this subdomain. Falls back to the Host header when omitted. |
-| `execId` | `string` | No | query | Limit scan to scripts under this execId. Falls back to the Host header when omitted. |
-
-**Returns:** `ExecOpenapiServeResponse`
-
-**CLI:** `hoody exec openapi serve`
-
----
-
-### `serveSchema`
-
-**GET** `/api/v1/exec/user-openapi/schema`
-
-Serve Schema File
-
-```typescript
-client.exec.openapi.serveSchema(options?: { file?: string; path?: string }): Promise<ExecOpenapiServeSchemaResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `file` | `string` | No | query | Absolute or scripts-dir-relative path to the target script (e.g. `default/api/users/[id].ts`). Either `file` or `path` must be provided. |
-| `path` | `string` | No | query | Alias of `file`. Either `file` or `path` must be provided. |
-
-**Returns:** `ExecOpenapiServeSchemaResponse`
-
-**CLI:** `hoody exec openapi serve-schema`
 
 ---
 
@@ -545,11 +573,11 @@ client.exec.openapi.validateSchema(data: ExecOpenapiValidateSchemaRequest): Prom
 
 **Returns:** `ExecOpenapiValidateSchemaResponse`
 
-**CLI:** `hoody exec validate user-schema`
+**CLI:** `hoody exec openapi schema validate`
 
 ---
 
-## `client.exec.package` (6 methods)
+## `client.exec.packages` (6 methods)
 
 ### `compare`
 
@@ -558,36 +586,52 @@ client.exec.openapi.validateSchema(data: ExecOpenapiValidateSchemaRequest): Prom
 Compare Packages
 
 ```typescript
-client.exec.package.compare(data: ExecPackageCompareRequest): Promise<ExecPackageCompareResponse>
+client.exec.packages.compare(data?: ExecPackagesCompareRequest): Promise<ExecPackagesCompareResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecPackageCompareRequest` | Yes | body |  |
+| `data` | `ExecPackagesCompareRequest` | No | body |  |
 
-**Returns:** `ExecPackageCompareResponse`
+**Returns:** `ExecPackagesCompareResponse`
 
 **CLI:** `hoody exec packages compare`
 
 ---
 
-### `initJson`
+### `createManifest`
 
 **POST** `/api/v1/exec/package/init`
 
 Init package.json
 
 ```typescript
-client.exec.package.initJson(data?: ExecPackageInitJsonRequest): Promise<ExecPackageInitJsonResponse>
+client.exec.packages.createManifest(data?: ExecPackagesCreateManifestRequest): Promise<ExecPackagesCreateManifestResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecPackageInitJsonRequest` | No | body |  |
+| `data` | `ExecPackagesCreateManifestRequest` | No | body |  |
 
-**Returns:** `ExecPackageInitJsonResponse`
+**Returns:** `ExecPackagesCreateManifestResponse`
 
-**CLI:** `hoody exec packages json init`
+**CLI:** `hoody exec packages manifest create`
+
+---
+
+### `getManifest`
+
+**GET** `/api/v1/exec/package/read`
+
+Read package.json
+
+```typescript
+client.exec.packages.getManifest(): Promise<ExecPackagesGetManifestResponse>
+```
+
+**Returns:** `ExecPackagesGetManifestResponse`
+
+**CLI:** `hoody exec packages manifest get`
 
 ---
 
@@ -598,94 +642,78 @@ client.exec.package.initJson(data?: ExecPackageInitJsonRequest): Promise<ExecPac
 Install Packages
 
 ```typescript
-client.exec.package.install(data?: ExecPackageInstallRequest): Promise<ExecPackageInstallResponse>
+client.exec.packages.install(data?: ExecPackagesInstallRequest): Promise<ExecPackagesInstallResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecPackageInstallRequest` | No | body |  |
+| `data` | `ExecPackagesInstallRequest` | No | body |  |
 
-**Returns:** `ExecPackageInstallResponse`
+**Returns:** `ExecPackagesInstallResponse`
 
 **CLI:** `hoody exec packages install`
 
 ---
 
-### `pinVersions`
+### `pin`
 
 **POST** `/api/v1/exec/package/pin`
 
 Pin Versions
 
 ```typescript
-client.exec.package.pinVersions(data?: ExecPackagePinVersionsRequest): Promise<ExecPackagePinVersionsResponse>
+client.exec.packages.pin(data?: ExecPackagesPinRequest): Promise<ExecPackagesPinResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecPackagePinVersionsRequest` | No | body |  |
+| `data` | `ExecPackagesPinRequest` | No | body |  |
 
-**Returns:** `ExecPackagePinVersionsResponse`
+**Returns:** `ExecPackagesPinResponse`
 
 **CLI:** `hoody exec packages pin`
 
 ---
 
-### `readJson`
-
-**GET** `/api/v1/exec/package/read`
-
-Read package.json
-
-```typescript
-client.exec.package.readJson(): Promise<ExecPackageReadJsonResponse>
-```
-
-**Returns:** `ExecPackageReadJsonResponse`
-
-**CLI:** `hoody exec packages json read`
-
----
-
-### `updateJson`
+### `updateManifest`
 
 **POST** `/api/v1/exec/package/update`
 
 Update package.json
 
 ```typescript
-client.exec.package.updateJson(data?: ExecPackageUpdateJsonRequest): Promise<ExecPackageUpdateJsonResponse>
+client.exec.packages.updateManifest(data?: ExecPackagesUpdateManifestRequest): Promise<ExecPackagesUpdateManifestResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecPackageUpdateJsonRequest` | No | body |  |
+| `data` | `ExecPackagesUpdateManifestRequest` | No | body |  |
 
-**Returns:** `ExecPackageUpdateJsonResponse`
+**Returns:** `ExecPackagesUpdateManifestResponse`
 
-**CLI:** `hoody exec packages json update`
+**CLI:** `hoody exec packages manifest update`
 
 ---
 
-## `client.exec.route` (3 methods)
+## `client.exec.routes` (3 methods)
 
-### `discover`
+### `list`
 
 **POST** `/api/v1/exec/route/discover`
 
 Discover Routes
 
 ```typescript
-client.exec.route.discover(data?: ExecRouteDiscoverRequest): Promise<ExecRouteDiscoverResponse>
+client.exec.routes.list(data?: ExecRoutesListRequest): Promise<ExecRoutesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecRouteDiscoverRequest` | No | body |  |
+| `data` | `ExecRoutesListRequest` | No | body |  |
 
-**Returns:** `ExecRouteDiscoverResponse`
+**Returns:** `ExecRoutesListResponse`
 
-**CLI:** `hoody exec routes discover`
+**CLI:** `hoody exec routes list`
 
 ---
 
@@ -696,14 +724,14 @@ client.exec.route.discover(data?: ExecRouteDiscoverRequest): Promise<ExecRouteDi
 Resolve Route
 
 ```typescript
-client.exec.route.resolve(data: ExecRouteResolveRequest): Promise<ExecRouteResolveResponse>
+client.exec.routes.resolve(data: ExecRoutesResolveRequest): Promise<ExecRoutesResolveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecRouteResolveRequest` | Yes | body |  |
+| `data` | `ExecRoutesResolveRequest` | Yes | body |  |
 
-**Returns:** `ExecRouteResolveResponse`
+**Returns:** `ExecRoutesResolveResponse`
 
 **CLI:** `hoody exec routes resolve`
 
@@ -716,14 +744,14 @@ client.exec.route.resolve(data: ExecRouteResolveRequest): Promise<ExecRouteResol
 Test Route
 
 ```typescript
-client.exec.route.test(data: ExecRouteTestRequest): Promise<ExecRouteTestResponse>
+client.exec.routes.test(data: ExecRoutesTestRequest): Promise<ExecRoutesTestResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecRouteTestRequest` | Yes | body |  |
+| `data` | `ExecRoutesTestRequest` | Yes | body |  |
 
-**Returns:** `ExecRouteTestResponse`
+**Returns:** `ExecRoutesTestResponse`
 
 **CLI:** `hoody exec routes test`
 
@@ -731,86 +759,88 @@ client.exec.route.test(data: ExecRouteTestRequest): Promise<ExecRouteTestRespons
 
 ## `client.exec.schedules` (4 methods)
 
-### `listSchedules`
+### `list`
 
 **GET** `/api/v1/exec/schedules/list`
 
 List Schedules
 
 ```typescript
-client.exec.schedules.listSchedules(): Promise<CurlSchedulesListResponse>
+client.exec.schedules.list(): Promise<ExecListSchedulesResponse>
 ```
 
-**Returns:** `CurlSchedulesListResponse`
+**Returns:** `ExecListSchedulesResponse`
 
 **CLI:** `hoody exec schedules list`
 
 ---
 
-### `reloadSchedules`
-
-**POST** `/api/v1/exec/schedules/reload`
-
-Reload Schedules
-
-```typescript
-client.exec.schedules.reloadSchedules(data?: ReloadSchedulesRequest): Promise<ReloadSchedulesResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ReloadSchedulesRequest` | No | body |  |
-
-**Returns:** `ReloadSchedulesResponse`
-
-**CLI:** `hoody exec schedules reload`
-
----
-
-### `scheduleHistory`
+### `listHistory`
 
 **GET** `/api/v1/exec/schedules/history`
 
 Schedule History
 
 ```typescript
-client.exec.schedules.scheduleHistory(options?: { scriptPath?: string; since?: string; limit?: number; includeRotated?: boolean }): Promise<ScheduleHistoryResponse>
+client.exec.schedules.listHistory(options?: { scriptPath?: string; since?: string; limit?: number; includeRotated?: boolean; cursor?: string; cache?: boolean | number }): Promise<ExecSchedulesListHistoryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `scriptPath` | `string` | No | query | Filter entries to a specific script (relative to scripts-dir). Optional. |
+| `scriptPath` | `string` | No | query | Filter entries to one script. An absolute path must be inside scripts-dir. A relative path is scoped like scripts/read: on a host that names an execId (`-exec-&lt;id&gt;`) or a subdomain, it is read as `&lt;subdomain\|default&gt;/&lt;execId&gt;/&lt;path&gt;` (`&lt;subdomain&gt;/&lt;path&gt;` when there is no execId) unless it already starts with that prefix; a `default.` subdomain counts as none. On any other host it is relative to scripts-dir. A path outside scripts-dir is 400. Optional. |
 | `since` | `string` | No | query | ISO 8601 lower bound on `ts`. Optional. |
 | `limit` | `number` | No | query | Max entries to return. Default 100, hard max 1000. |
 | `includeRotated` | `boolean` | No | query | When true, also scan rotated fires.log.* files (slower). |
+| `cursor` | `string` | No | query | Continuation token from a previous truncated response; resumes the backward scan where it stopped. Optional. |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ScheduleHistoryResponse`
+**Returns:** `ExecSchedulesListHistoryResponse`
 
-**CLI:** `hoody exec schedules history`
+**CLI:** `hoody exec schedules history list`
 
 ---
 
-### `triggerSchedule`
+### `reload`
+
+**POST** `/api/v1/exec/schedules/reload`
+
+Reload Schedules
+
+```typescript
+client.exec.schedules.reload(data?: ExecSchedulesReloadRequest): Promise<ExecSchedulesReloadResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecSchedulesReloadRequest` | No | body |  |
+
+**Returns:** `ExecSchedulesReloadResponse`
+
+**CLI:** `hoody exec schedules reload`
+
+---
+
+### `run`
 
 **POST** `/api/v1/exec/schedules/trigger`
 
 Trigger Schedule
 
 ```typescript
-client.exec.schedules.triggerSchedule(data: TriggerScheduleRequest): Promise<TriggerScheduleResponse>
+client.exec.schedules.run(data: ExecSchedulesRunRequest): Promise<ExecSchedulesRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `TriggerScheduleRequest` | Yes | body |  |
+| `data` | `ExecSchedulesRunRequest` | Yes | body |  |
 
-**Returns:** `TriggerScheduleResponse`
+**Returns:** `ExecSchedulesRunResponse`
 
-**CLI:** `hoody exec schedules trigger`
+**CLI:** `hoody exec schedules run`
 
 ---
 
-## `client.exec.scripts` (6 methods)
+## `client.exec.scripts` (13 methods)
 
 ### `delete`
 
@@ -819,20 +849,41 @@ client.exec.schedules.triggerSchedule(data: TriggerScheduleRequest): Promise<Tri
 Delete Script
 
 ```typescript
-client.exec.scripts.delete(options?: { path: string; confirm?: string; execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsDeleteResponse>
+client.exec.scripts.delete(options: { path: string; confirm: "true"; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | query | Path query parameter |
-| `confirm` | `string` | No | query | Confirm query parameter |
-| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. |
-| `exec_id` | `string` | No | query | Alias for execId (snake_case). |
+| `confirm` | `"true"` | Yes | query | Safety confirmation; must be the literal `true` or the request is rejected with 400. `confirm=false` is refused too: the check is for the literal value, not for truthiness. |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsDeleteResponse`
 
 **CLI:** `hoody exec scripts delete`
+
+---
+
+### `getStats`
+
+**POST** `/api/v1/exec/monitor/script-performance`
+
+Get Script Performance
+
+```typescript
+client.exec.scripts.getStats(data?: ExecScriptsGetStatsRequest): Promise<ExecScriptsGetStatsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecScriptsGetStatsRequest` | No | body |  |
+
+**Returns:** `ExecScriptsGetStatsResponse`
+
+**CLI:** `hoody exec scripts stats get`
 
 ---
 
@@ -843,19 +894,20 @@ client.exec.scripts.delete(options?: { path: string; confirm?: string; execId?: 
 Get Script Tree
 
 ```typescript
-client.exec.scripts.getTree(data?: ExecScriptsGetTreeRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsGetTreeResponse>
+client.exec.scripts.getTree(data?: ExecScriptsGetTreeRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsGetTreeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ExecScriptsGetTreeRequest` | No | body |  |
-| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. |
-| `exec_id` | `string` | No | query | Alias for execId (snake_case). |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsGetTreeResponse`
 
-**CLI:** `hoody exec scripts tree`
+**CLI:** `hoody exec scripts tree get`
 
 ---
 
@@ -866,7 +918,7 @@ client.exec.scripts.getTree(data?: ExecScriptsGetTreeRequest, options?: { execId
 List Scripts
 
 ```typescript
-client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: string; label?: string; tags?: string; mode?: string; enabled?: string; websocket?: string; recursive?: string; include_comments?: string; execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsListResponse>
+client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: string; label?: string; tags?: string; mode?: string; enabled?: string; websocket?: string; remote?: "any" | "none" | "messages" | "call" | "eval"; recursive?: string; include_comments?: string; exhaustive?: boolean; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -879,15 +931,40 @@ client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: s
 | `mode` | `string` | No | query | Mode query parameter |
 | `enabled` | `string` | No | query | Enabled query parameter |
 | `websocket` | `string` | No | query | Websocket query parameter |
+| `remote` | `"any" \| "none" \| "messages" \| "call" \| "eval"` | No | query | Keep only scripts by their remote operations: `any` (at least one of `@remote-messages`, `@remote-call`, `@remote-eval` is on), `none` (all off), or `messages` / `call` / `eval` (that one is on). Lists recursively and adds each script's `magicComments` and `remote` summary, like the other filters. Any other value is refused with 400. |
 | `recursive` | `string` | No | query | Recursive query parameter |
 | `include_comments` | `string` | No | query | Include_comments query parameter |
-| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. |
-| `exec_id` | `string` | No | query | Alias for execId (snake_case). |
+| `exhaustive` | `boolean` | No | query | When true, list every entry below `dir` recursively with its `type` (file, directory, symlink, fifo, socket, block-device, character-device, unknown), in `entries` instead of `scripts`. Nothing is hidden (dot-files, node_modules, .git, .hoody-cache, _sdk, _hoody) and no symlink is followed. Combine only with `dir`, `execId` and `subdomain` (other options are refused with 400). The answer is complete or an error, never partial: more than 10000 entries is 422 with `details.code` `TOO_MANY_ENTRIES`; a name or link target that is not valid UTF-8 is 422 with `details.code` `NAME_NOT_UTF8` (`details.parent`, and the raw name as `details.nameHex`); an entry or directory that disappears or is replaced during the scan, or a directory whose dev, inode, mtime or ctime changed after it was read (checked once the scan is done), restarts it, and a tree still changing after 3 restarts is 409 with `details.code` `TREE_CHANGED`. This is best effort, for a tree nobody mutates concurrently: a change undone within one timestamp tick, or on a filesystem without fine timestamps, can go unseen. |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsListResponse`
 
 **CLI:** `hoody exec scripts list`
+
+---
+
+### `listStats`
+
+**GET** `/api/v1/exec/monitor/scripts`
+
+List Monitor Scripts
+
+```typescript
+client.exec.scripts.listStats(options?: { limit?: number; sort?: "lastActivity" | "requests" | "errors" | "p95" | "ws_active"; cache?: boolean | number }): Promise<ExecScriptsListStatsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `limit` | `number` | No | query | Max number of scripts to return. Clamped to [1, 500]. Default 100. |
+| `sort` | `"lastActivity" \| "requests" \| "errors" \| "p95" \| "ws_active"` | No | query | Sort key. `lastActivity` (default) sorts by most recent activity; other keys sort descending by the matching metric. |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `ExecScriptsListStatsResponse`
+
+**CLI:** `hoody exec scripts stats list`
 
 ---
 
@@ -898,15 +975,16 @@ client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: s
 Move Script
 
 ```typescript
-client.exec.scripts.move(data: ExecScriptsMoveRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsMoveResponse>
+client.exec.scripts.move(data: ExecScriptsMoveRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsMoveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ExecScriptsMoveRequest` | Yes | body |  |
-| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. |
-| `exec_id` | `string` | No | query | Alias for execId (snake_case). |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsMoveResponse`
 
@@ -921,19 +999,120 @@ client.exec.scripts.move(data: ExecScriptsMoveRequest, options?: { execId?: stri
 Read Script
 
 ```typescript
-client.exec.scripts.read(options?: { path: string; execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsReadResponse>
+client.exec.scripts.read(options: { path: string; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsReadResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | query | Path query parameter |
-| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. |
-| `exec_id` | `string` | No | query | Alias for execId (snake_case). |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsReadResponse`
 
 **CLI:** `hoody exec scripts read`
+
+---
+
+### `validate`
+
+**POST** `/api/v1/exec/validate/script`
+
+Validate Script
+
+```typescript
+client.exec.scripts.validate(data: ExecScriptsValidateRequest): Promise<ExecScriptsValidateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecScriptsValidateRequest` | Yes | body |  |
+
+**Returns:** `ExecScriptsValidateResponse`
+
+**CLI:** `hoody exec scripts validate`
+
+---
+
+### `validateDependencies`
+
+**POST** `/api/v1/exec/validate/dependencies`
+
+Validate Dependencies
+
+```typescript
+client.exec.scripts.validateDependencies(data: ExecScriptsValidateDependenciesRequest): Promise<ExecScriptsValidateDependenciesResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecScriptsValidateDependenciesRequest` | Yes | body |  |
+
+**Returns:** `ExecScriptsValidateDependenciesResponse`
+
+**CLI:** `hoody exec scripts dependencies validate`
+
+---
+
+### `validateReturnType`
+
+**POST** `/api/v1/exec/validate/return-type`
+
+Validate Return Type
+
+```typescript
+client.exec.scripts.validateReturnType(data: ExecScriptsValidateReturnTypeRequest): Promise<ExecScriptsValidateReturnTypeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecScriptsValidateReturnTypeRequest` | Yes | body |  |
+
+**Returns:** `ExecScriptsValidateReturnTypeResponse`
+
+**CLI:** `hoody exec scripts returns validate`
+
+---
+
+### `validateSyntax`
+
+**POST** `/api/v1/exec/validate/syntax`
+
+Validate Syntax
+
+```typescript
+client.exec.scripts.validateSyntax(data: ExecScriptsValidateSyntaxRequest): Promise<ExecScriptsValidateSyntaxResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecScriptsValidateSyntaxRequest` | Yes | body |  |
+
+**Returns:** `ExecScriptsValidateSyntaxResponse`
+
+**CLI:** `hoody exec scripts syntax validate`
+
+---
+
+### `validateTypes`
+
+**POST** `/api/v1/exec/validate/typescript`
+
+Validate TypeScript
+
+```typescript
+client.exec.scripts.validateTypes(data: ExecScriptsValidateTypesRequest): Promise<ExecScriptsValidateTypesResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `ExecScriptsValidateTypesRequest` | Yes | body |  |
+
+**Returns:** `ExecScriptsValidateTypesResponse`
+
+**CLI:** `hoody exec scripts types validate`
 
 ---
 
@@ -944,15 +1123,16 @@ client.exec.scripts.read(options?: { path: string; execId?: string; exec_id?: st
 Write Script
 
 ```typescript
-client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsWriteResponse>
+client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsWriteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ExecScriptsWriteRequest` | Yes | body |  |
-| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. |
-| `exec_id` | `string` | No | query | Alias for execId (snake_case). |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsWriteResponse`
 
@@ -960,7 +1140,7 @@ client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: st
 
 ---
 
-## `client.exec.sdk` (4 methods)
+## `client.exec.sdks` (4 methods)
 
 ### `delete`
 
@@ -969,14 +1149,14 @@ client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: st
 Delete SDK
 
 ```typescript
-client.exec.sdk.delete(id: string): Promise<ExecSdkDeleteResponse>
+client.exec.sdks.delete(id: string): Promise<ExecSdksDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Id parameter |
 
-**Returns:** `ExecSdkDeleteResponse`
+**Returns:** `ExecSdksDeleteResponse`
 
 **CLI:** `hoody exec sdks delete`
 
@@ -989,34 +1169,34 @@ client.exec.sdk.delete(id: string): Promise<ExecSdkDeleteResponse>
 Get SDK
 
 ```typescript
-client.exec.sdk.get(id: string): Promise<ExecSdkGetResponse>
+client.exec.sdks.get(id: string): Promise<ExecSdksGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Id parameter |
 
-**Returns:** `ExecSdkGetResponse`
+**Returns:** `ExecSdksGetResponse`
 
 **CLI:** `hoody exec sdks get`
 
 ---
 
-### `importSDK`
+### `import`
 
 **POST** `/api/v1/exec/sdk/import`
 
 Import SDK
 
 ```typescript
-client.exec.sdk.importSDK(data: ExecSdkImportSDKRequest): Promise<ExecSdkImportSDKResponse>
+client.exec.sdks.import(data: ExecSdksImportRequest): Promise<ExecSdksImportResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecSdkImportSDKRequest` | Yes | body |  |
+| `data` | `ExecSdksImportRequest` | Yes | body |  |
 
-**Returns:** `ExecSdkImportSDKResponse`
+**Returns:** `ExecSdksImportResponse`
 
 **CLI:** `hoody exec sdks import`
 
@@ -1029,16 +1209,16 @@ client.exec.sdk.importSDK(data: ExecSdkImportSDKRequest): Promise<ExecSdkImportS
 List SDKs
 
 ```typescript
-client.exec.sdk.list(): Promise<ExecSdkListResponse>
+client.exec.sdks.list(): Promise<ExecSdksListResponse>
 ```
 
-**Returns:** `ExecSdkListResponse`
+**Returns:** `ExecSdksListResponse`
 
 **CLI:** `hoody exec sdks list`
 
 ---
 
-## `client.exec.state` (3 methods)
+## `client.exec.store` (3 methods)
 
 ### `clear`
 
@@ -1047,16 +1227,16 @@ client.exec.sdk.list(): Promise<ExecSdkListResponse>
 Clear Shared State
 
 ```typescript
-client.exec.state.clear(data: ExecStateClearRequest): Promise<ExecStateClearResponse>
+client.exec.store.clear(data?: ExecStoreClearRequest): Promise<ExecStoreClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecStateClearRequest` | Yes | body |  |
+| `data` | `ExecStoreClearRequest` | No | body |  |
 
-**Returns:** `ExecStateClearResponse`
+**Returns:** `ExecStoreClearResponse`
 
-**CLI:** `hoody exec state clear`
+**CLI:** `hoody exec store clear`
 
 ---
 
@@ -1067,16 +1247,16 @@ client.exec.state.clear(data: ExecStateClearRequest): Promise<ExecStateClearResp
 Get Shared State
 
 ```typescript
-client.exec.state.get(data: ExecStateGetRequest): Promise<ExecStateGetResponse>
+client.exec.store.get(data: ExecStoreGetRequest): Promise<ExecStoreGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecStateGetRequest` | Yes | body |  |
+| `data` | `ExecStoreGetRequest` | Yes | body |  |
 
-**Returns:** `ExecStateGetResponse`
+**Returns:** `ExecStoreGetResponse`
 
-**CLI:** `hoody exec state get`
+**CLI:** `hoody exec store get`
 
 ---
 
@@ -1087,122 +1267,56 @@ client.exec.state.get(data: ExecStateGetRequest): Promise<ExecStateGetResponse>
 Set Shared State
 
 ```typescript
-client.exec.state.set(data: ExecStateSetRequest): Promise<ExecStateSetResponse>
+client.exec.store.set(data: ExecStoreSetRequest): Promise<ExecStoreSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecStateSetRequest` | Yes | body |  |
+| `data` | `ExecStoreSetRequest` | Yes | body |  |
 
-**Returns:** `ExecStateSetResponse`
+**Returns:** `ExecStoreSetResponse`
 
-**CLI:** `hoody exec state set`
-
----
-
-## `client.exec.system` (4 methods)
-
-### `getOpenApiJson`
-
-**GET** `/openapi.json`
-
-Get OpenAPI Specification (JSON)
-
-```typescript
-client.exec.system.getOpenApiJson(): Promise<BrowserHealthGetOpenApiJsonResponse>
-```
-
-**Returns:** `BrowserHealthGetOpenApiJsonResponse`
-
----
-
-### `getOpenApiYaml`
-
-**GET** `/openapi.yaml`
-
-Get OpenAPI Specification (YAML)
-
-```typescript
-client.exec.system.getOpenApiYaml(): Promise<ApiResponse<unknown>>
-```
-
-**Returns:** `ApiResponse<unknown>`
-
----
-
-### `getRestartStatus`
-
-**GET** `/api/v1/exec/system/restart-status`
-
-Get Restart Status
-
-```typescript
-client.exec.system.getRestartStatus(): Promise<ExecSystemGetRestartStatusResponse>
-```
-
-**Returns:** `ExecSystemGetRestartStatusResponse`
-
-**CLI:** `hoody exec system restart-status`
-
----
-
-### `restartServer`
-
-**POST** `/api/v1/exec/system/restart`
-
-Restart Server
-
-```typescript
-client.exec.system.restartServer(data?: ExecSystemRestartServerRequest): Promise<ApiResponse<unknown>>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecSystemRestartServerRequest` | No | body |  |
-
-**Returns:** `ApiResponse<unknown>`
-
-**CLI:** `hoody exec system restart`
+**CLI:** `hoody exec store set`
 
 ---
 
 ## `client.exec.templates` (6 methods)
 
-### `createCustom`
+### `create`
 
 **POST** `/api/v1/exec/templates/create-custom`
 
 Create Custom Template
 
 ```typescript
-client.exec.templates.createCustom(data: ExecTemplatesCreateCustomRequest): Promise<ExecTemplatesCreateCustomResponse>
+client.exec.templates.create(data: ExecTemplatesCreateRequest): Promise<ExecTemplatesCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `ExecTemplatesCreateCustomRequest` | Yes | body |  |
+| `data` | `ExecTemplatesCreateRequest` | Yes | body |  |
 
-**Returns:** `ExecTemplatesCreateCustomResponse`
+**Returns:** `ExecTemplatesCreateResponse`
 
 **CLI:** `hoody exec templates create`
 
 ---
 
-### `deleteCustom`
+### `delete`
 
 **DELETE** `/api/v1/exec/templates/delete-custom/{name}`
 
 Delete Custom Template
 
 ```typescript
-client.exec.templates.deleteCustom(name: string): Promise<ExecTemplatesDeleteCustomResponse>
+client.exec.templates.delete(name: string): Promise<ExecTemplatesDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | Name parameter |
 
-**Returns:** `ExecTemplatesDeleteCustomResponse`
+**Returns:** `ExecTemplatesDeleteResponse`
 
 **CLI:** `hoody exec templates delete`
 
@@ -1235,7 +1349,7 @@ client.exec.templates.generate(data: ExecTemplatesGenerateRequest): Promise<Exec
 List Templates
 
 ```typescript
-client.exec.templates.list(options?: { category?: string; includeBuiltin?: boolean; includeCustom?: boolean }): Promise<ExecTemplatesListResponse>
+client.exec.templates.list(options?: { category?: string; includeBuiltin?: boolean; includeCustom?: boolean; cache?: boolean | number }): Promise<ExecTemplatesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1243,6 +1357,7 @@ client.exec.templates.list(options?: { category?: string; includeBuiltin?: boole
 | `category` | `string` | No | query | Filter templates to a single metadata category (e.g. `api`, `utility`). Omit to list all categories. |
 | `includeBuiltin` | `boolean` | No | query | Include built-in templates in the result set. Default `true`. Accepts `true`/`false`/`1`/`0`. |
 | `includeCustom` | `boolean` | No | query | Include user-supplied templates (from `_hoody/templates/`) in the result set. Default `true`. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecTemplatesListResponse`
 
@@ -1257,13 +1372,14 @@ client.exec.templates.list(options?: { category?: string; includeBuiltin?: boole
 Preview Template
 
 ```typescript
-client.exec.templates.preview(options?: { name: string; variables?: string }): Promise<ExecTemplatesPreviewResponse>
+client.exec.templates.preview(options: { name: string; variables?: string; cache?: boolean | number }): Promise<ExecTemplatesPreviewResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | query | Name query parameter |
 | `variables` | `string` | No | query | Variables query parameter |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecTemplatesPreviewResponse`
 
@@ -1271,146 +1387,24 @@ client.exec.templates.preview(options?: { name: string; variables?: string }): P
 
 ---
 
-### `updateCustom`
+### `update`
 
 **PUT** `/api/v1/exec/templates/update-custom/{name}`
 
 Update Custom Template
 
 ```typescript
-client.exec.templates.updateCustom(name: string, data?: ExecTemplatesUpdateCustomRequest): Promise<ExecTemplatesUpdateCustomResponse>
+client.exec.templates.update(name: string, data?: ExecTemplatesUpdateRequest): Promise<ExecTemplatesUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | Name parameter |
-| `data` | `ExecTemplatesUpdateCustomRequest` | No | body |  |
+| `data` | `ExecTemplatesUpdateRequest` | No | body |  |
 
-**Returns:** `ExecTemplatesUpdateCustomResponse`
+**Returns:** `ExecTemplatesUpdateResponse`
 
 **CLI:** `hoody exec templates update`
-
----
-
-## `client.exec.validate` (6 methods)
-
-### `validateDependencies`
-
-**POST** `/api/v1/exec/validate/dependencies`
-
-Validate Dependencies
-
-```typescript
-client.exec.validate.validateDependencies(data: ExecValidateValidateDependenciesRequest): Promise<ExecValidateValidateDependenciesResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecValidateValidateDependenciesRequest` | Yes | body |  |
-
-**Returns:** `ExecValidateValidateDependenciesResponse`
-
-**CLI:** `hoody exec validate dependencies`
-
----
-
-### `validateMagicComments`
-
-**POST** `/api/v1/exec/validate/magic-comments`
-
-Validate Magic Comments
-
-```typescript
-client.exec.validate.validateMagicComments(data: ExecValidateValidateMagicCommentsRequest): Promise<ExecValidateValidateMagicCommentsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecValidateValidateMagicCommentsRequest` | Yes | body |  |
-
-**Returns:** `ExecValidateValidateMagicCommentsResponse`
-
-**CLI:** `hoody exec validate magic-comments`
-
----
-
-### `validateReturnType`
-
-**POST** `/api/v1/exec/validate/return-type`
-
-Validate Return Type
-
-```typescript
-client.exec.validate.validateReturnType(data: ExecValidateValidateReturnTypeRequest): Promise<ExecValidateValidateReturnTypeResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecValidateValidateReturnTypeRequest` | Yes | body |  |
-
-**Returns:** `ExecValidateValidateReturnTypeResponse`
-
-**CLI:** `hoody exec validate return-type`
-
----
-
-### `validateScript`
-
-**POST** `/api/v1/exec/validate/script`
-
-Validate Script
-
-```typescript
-client.exec.validate.validateScript(data: ExecValidateValidateScriptRequest): Promise<ExecValidateValidateScriptResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecValidateValidateScriptRequest` | Yes | body |  |
-
-**Returns:** `ExecValidateValidateScriptResponse`
-
-**CLI:** `hoody exec validate script`
-
----
-
-### `validateSyntax`
-
-**POST** `/api/v1/exec/validate/syntax`
-
-Validate Syntax
-
-```typescript
-client.exec.validate.validateSyntax(data: ExecValidateValidateSyntaxRequest): Promise<ExecValidateValidateSyntaxResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecValidateValidateSyntaxRequest` | Yes | body |  |
-
-**Returns:** `ExecValidateValidateSyntaxResponse`
-
-**CLI:** `hoody exec validate syntax`
-
----
-
-### `validateTypeScript`
-
-**POST** `/api/v1/exec/validate/typescript`
-
-Validate TypeScript
-
-```typescript
-client.exec.validate.validateTypeScript(data: ExecValidateValidateTypeScriptRequest): Promise<ExecValidateValidateTypeScriptResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `ExecValidateValidateTypeScriptRequest` | Yes | body |  |
-
-**Returns:** `ExecValidateValidateTypeScriptResponse`
-
-**CLI:** `hoody exec validate types`
 
 ---
 

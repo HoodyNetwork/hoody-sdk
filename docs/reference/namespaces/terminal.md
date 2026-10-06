@@ -1,6 +1,6 @@
-# `terminal` — 48 methods
+# `terminal` — 39 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.terminal`
 
 ```typescript
@@ -9,53 +9,102 @@ import * as terminal from 'hoody-sdk/terminal';
 
 ---
 
-## `client.terminal.docs` (2 methods)
+## `client.terminal.automation` (1 method)
 
-### `getJson`
+### `getStats`
 
-**GET** `/api/v1/terminal/openapi.json`
+**GET** `/api/v1/terminal/automation/metrics`
 
-Get OpenAPI specification in JSON format
+Get terminal automation metrics
 
 ```typescript
-client.terminal.docs.getJson(): Promise<TerminalDocsGetJsonResponse>
+client.terminal.automation.getStats(): Promise<TerminalAutomationGetStatsResponse>
 ```
 
-**Returns:** `TerminalDocsGetJsonResponse`
+**Returns:** `TerminalAutomationGetStatsResponse`
+
+**CLI:** `hoody terminal automation stats`
 
 ---
 
-### `getYaml`
+## `client.terminal.commands` (4 methods)
 
-**GET** `/api/v1/terminal/openapi.yaml`
+### `cancel`
 
-Get OpenAPI specification in YAML format
+**POST** `/api/v1/terminal/execute/{command_id}/abort`
+
+Abort a running command
 
 ```typescript
-client.terminal.docs.getYaml(): Promise<ApiResponse<unknown>>
+client.terminal.commands.cancel(command_id: string, data?: TerminalCommandsCancelRequest): Promise<TerminalCommandsCancelResponse>
 ```
 
-**Returns:** `ApiResponse<unknown>`
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `command_id` | `string` | Yes | path | The command ID returned by the execute endpoint |
+| `data` | `TerminalCommandsCancelRequest` | No | body |  |
+
+**Returns:** `TerminalCommandsCancelResponse`
+
+**CLI:** `hoody terminal commands cancel`
 
 ---
 
-## `client.terminal.execution` (2 methods)
+### `get`
 
-### `execute`
+**GET** `/api/v1/terminal/result/{command_id}`
+
+Get command result
+
+```typescript
+client.terminal.commands.get(command_id: string): Promise<TerminalCommandsGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `command_id` | `string` | Yes | path | Command ID returned from /api/v1/terminal/execute (numeric 1-65535) |
+
+**Returns:** `TerminalCommandsGetResponse`
+
+**CLI:** `hoody terminal commands get`
+
+---
+
+### `list`
+
+**GET** `/api/v1/terminal/history/{terminal_id}`
+
+Get terminal command history
+
+```typescript
+client.terminal.commands.list(terminal_id: string): Promise<TerminalCommandsListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter). The containers proxy injects only the query form on hostname-routed calls — this path segment must always be supplied explicitly |
+
+**Returns:** `TerminalCommandsListResponse`
+
+**CLI:** `hoody terminal commands list`
+
+---
+
+### `run`
 
 **POST** `/api/v1/terminal/execute`
 
 Execute command in terminal session
 
 ```typescript
-client.terminal.execution.execute(data: TerminalExecutionExecuteRequest, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: number; defer_start_time_ticks?: string; defer_timeout_ms?: number; defer_poll_ms?: number; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; skip_display_wait?: boolean; display_wait_timeout?: number; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string }): Promise<TerminalExecutionExecuteResponse>
+client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: number; defer_start_time_ticks?: string; defer_timeout_ms?: number; defer_poll_ms?: number; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; skip_display_wait?: boolean; display_wait_timeout?: number; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string; cache?: boolean | number }): Promise<TerminalCommandsRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `TerminalExecutionExecuteRequest` | Yes | body |  |
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Use terminal_id=0 as an explicit sentinel meaning "no terminal ID" (treated as absent, useful when a reverse proxy always injects a terminal_id). Required unless ephemeral=true, in which case it is auto-generated if not provided |
-| `ephemeral` | `boolean` | No | query | When true, auto-generates a unique terminal_id (if not provided), skips display/dbus initialization, and applies aggressive cleanup. Designed for programmatic CLI command execution like child_process.exec (default: false). WARNING: Do NOT use ephemeral=true for GUI applications that require a display. Ephemeral sessions strip the DISPLAY environment variable, which means X11/GUI applications will not work. Use a regular terminal session with an explicit terminal_id and display parameter instead for GUI workloads |
+| `data` | `TerminalCommandsRunRequest` | Yes | body |  |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Required unless ephemeral=true, in which case it is auto-generated if not provided. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and OVERWRITES any value you send (a ?terminal_id=0 query sentinel never survives the proxy) — use the terminal-0 hostname as the "no terminal ID" sentinel so ephemeral=true can auto-generate; supply this parameter directly only when calling the terminal service without the proxy |
+| `ephemeral` | `boolean` | No | query | When true, auto-generates a unique terminal_id (if not provided), skips display/dbus initialization, and applies aggressive cleanup. Designed for programmatic CLI command execution like a scripted command runner (default: false). WARNING: Do NOT use ephemeral=true for GUI applications that require a display. Ephemeral sessions strip the DISPLAY environment variable, which means X11/GUI applications will not work. Use a regular terminal session with an explicit terminal_id and display parameter instead for GUI workloads |
 | `defer_pid` | `number` | No | query | Defer command injection until this PID exits (TUI-safe). If set, the API returns immediately regardless of wait=true |
 | `defer_start_time_ticks` | `string` | No | query | Optional /proc/&lt;pid&gt;/stat field 22 (starttime in clock ticks since boot) to avoid PID reuse bugs. If it mismatches, command executes immediately |
 | `defer_timeout_ms` | `number` | No | query | Max time to wait for defer_pid exit before failing (default: 60000) |
@@ -67,9 +116,9 @@ client.terminal.execution.execute(data: TerminalExecutionExecuteRequest, options
 | `user` | `string` | No | query | System user to spawn shell as (requires su permissions, only applies to new sessions or after reset) |
 | `cmd` | `string` | No | query | Base64-encoded command to execute automatically (works with both new and active shells, executes every time URL is visited) |
 | `env` | `string` | No | query | Environment variable in KEY=VALUE format (can be repeated for multiple variables, e.g., ?env=DEBUG=1&env=API_KEY=abc) |
-| `skip_display_wait` | `boolean` | No | query | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the endpoint blocks until the display server on port 4000+display_num is ready (default: false) |
+| `skip_display_wait` | `boolean` | No | query | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the endpoint blocks until the session's display server is ready (default: false) |
 | `display_wait_timeout` | `number` | No | query | Timeout in seconds for display readiness wait (default: 10, capped at 10 seconds to prevent event-loop pin; values &lt;=0 or malformed also map to the 10-second cap). Ignored if skip_display_wait=true |
-| `display` | `string` | No | query | DISPLAY environment variable for X11 applications (auto-formats:display if number provided, e.g., ?display=1 becomes DISPLAY=:1) |
+| `display` | `string` | No | query | DISPLAY environment variable for X11 applications (auto-formats :display if number provided, e.g., ?display=1 becomes DISPLAY=:1) |
 | `ssh_host` | `string` | No | query | SSH server hostname or IP address (creates SSH session if provided with ssh_user) |
 | `ssh_user` | `string` | No | query | SSH username (required if ssh_host is provided) |
 | `ssh_port` | `string` | No | query | SSH port number (default: 22) |
@@ -79,52 +128,244 @@ client.terminal.execution.execute(data: TerminalExecutionExecuteRequest, options
 | `socks5_user` | `string` | No | query | SOCKS5 proxy username for authentication |
 | `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key-based authentication (prefer over password-based auth) |
 | `socks5_pass` | `string` | No | query | SOCKS5 proxy password for authentication |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `TerminalExecutionExecuteResponse`
+**Returns:** `TerminalCommandsRunResponse`
 
-**CLI:** `hoody terminal sessions exec`
+**CLI:** `hoody terminal commands run`
 
 ---
 
-### `getResult`
+## `client.terminal.drops` (4 methods)
 
-**GET** `/api/v1/terminal/result/{command_id}`
+### `commit`
 
-Get command result
+**POST** `/api/v1/terminal/drop-commit`
+
+Finalize a drop and inject the OSC frame
 
 ```typescript
-client.terminal.execution.getResult(command_id: string): Promise<TerminalExecutionGetResultResponse>
+client.terminal.drops.commit(data: TerminalDropsCommitRequest, options: { drop: string; token: string; terminal_id: string; cache?: boolean | number }): Promise<TerminalDropsCommitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `command_id` | `string` | Yes | path | Command ID returned from /api/v1/terminal/execute (numeric 1-65535) |
+| `data` | `TerminalDropsCommitRequest` | Yes | body |  |
+| `drop` | `string` | Yes | query | Drop id from /drop-begin |
+| `token` | `string` | Yes | query | Drop token from /drop-begin |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `TerminalExecutionGetResultResponse`
-
-**CLI:** `hoody terminal sessions command-result`
+**Returns:** `TerminalDropsCommitResponse`
 
 ---
 
-## `client.terminal.health` (1 method)
+### `create`
 
-### `check`
+**POST** `/api/v1/terminal/drop-begin`
+
+Begin a drag-and-drop staging transaction
+
+```typescript
+client.terminal.drops.create(options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalDropsCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `TerminalDropsCreateResponse`
+
+---
+
+### `send`
+
+**POST** `/api/v1/terminal/drop`
+
+One-shot drop (begin + stage + commit)
+
+```typescript
+client.terminal.drops.send(data: TerminalDropsSendRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalDropsSendResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `TerminalDropsSendRequest` | Yes | body |  |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `TerminalDropsSendResponse`
+
+---
+
+### `writeChunk`
+
+**POST** `/api/v1/terminal/upload`
+
+Upload a raw file slice into a drop
+
+```typescript
+client.terminal.drops.writeChunk(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { drop: string; token: string; path: string; offset: number; terminal_id: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<TerminalDropsWriteChunkResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
+| `drop` | `string` | Yes | query | Drop id from /drop-begin |
+| `token` | `string` | Yes | query | Drop token from /drop-begin |
+| `path` | `string` | Yes | query | Sanitized relative path of the staged file (no `..`, not absolute) |
+| `offset` | `number` | Yes | query | Byte offset to write at (must equal the current staged size) |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
+| `contentType` | `'application/octet-stream'` | No | query |  |
+
+**Returns:** `TerminalDropsWriteChunkResponse`
+
+---
+
+## `client.terminal.keys` (1 method)
+
+### `list`
+
+**GET** `/api/v1/terminal/keys`
+
+List supported key names for /press endpoint
+
+```typescript
+client.terminal.keys.list(): Promise<TerminalKeysListResponse>
+```
+
+**Returns:** `TerminalKeysListResponse`
+
+**CLI:** `hoody terminal keys list`
+
+---
+
+## `client.terminal.kit` (1 method)
+
+### `getHealth`
 
 **GET** `/api/v1/terminal/health`
 
 Service health check
 
 ```typescript
-client.terminal.health.check(): Promise<BrowserHealthCheckResponse>
+client.terminal.kit.getHealth(): Promise<TerminalHealthCheckResponse>
 ```
 
-**Returns:** `BrowserHealthCheckResponse`
+**Returns:** `TerminalHealthCheckResponse`
 
 **CLI:** `hoody terminal health`
 
 ---
 
-## `client.terminal.sessions` (11 methods)
+## `client.terminal.processes` (5 methods)
+
+### `get`
+
+**GET** `/api/v1/system/processes/{pid}`
+
+Get process details by PID
+
+```typescript
+client.terminal.processes.get(pid: number): Promise<TerminalProcessesGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `pid` | `number` | Yes | path | Process ID |
+
+**Returns:** `TerminalProcessesGetResponse`
+
+**CLI:** `hoody terminal processes get`
+
+---
+
+### `list`
+
+**GET** `/api/v1/system/processes`
+
+List all system processes
+
+```typescript
+client.terminal.processes.list(options?: { sort?: "cpu" | "memory" | "pid" | "name"; limit?: number; filter?: string; cache?: boolean | number }): Promise<TerminalProcessesListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `sort` | `"cpu" \| "memory" \| "pid" \| "name"` | No | query | Sort by field: cpu, memory, pid, name (default: pid) |
+| `limit` | `number` | No | query | Maximum number of processes to return (default: all) |
+| `filter` | `string` | No | query | Filter by process name (substring match, case-insensitive) |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `TerminalProcessesListResponse`
+
+**CLI:** `hoody terminal processes list`
+
+---
+
+### `pause`
+
+**POST** `/api/v1/system/processes/freeze`
+
+Freeze (SIGSTOP) a process or process tree
+
+```typescript
+client.terminal.processes.pause(data: TerminalProcessesPauseRequest): Promise<TerminalProcessesPauseResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `TerminalProcessesPauseRequest` | Yes | body |  |
+
+**Returns:** `TerminalProcessesPauseResponse`
+
+**CLI:** `hoody terminal processes pause`
+
+---
+
+### `resume`
+
+**POST** `/api/v1/system/processes/unfreeze`
+
+Unfreeze (SIGCONT) a process or process tree
+
+```typescript
+client.terminal.processes.resume(data: TerminalProcessesResumeRequest): Promise<TerminalProcessesResumeResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `TerminalProcessesResumeRequest` | Yes | body |  |
+
+**Returns:** `TerminalProcessesResumeResponse`
+
+**CLI:** `hoody terminal processes resume`
+
+---
+
+### `signal`
+
+**POST** `/api/v1/system/process/signal`
+
+Send signal to process(es)
+
+```typescript
+client.terminal.processes.signal(data: TerminalProcessesSignalRequest): Promise<TerminalProcessesSignalResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `TerminalProcessesSignalRequest` | Yes | body |  |
+
+**Returns:** `TerminalProcessesSignalResponse`
+
+**CLI:** `hoody terminal processes signal`
+
+---
+
+## `client.terminal.sessions` (15 methods)
 
 ### `captureScreenshot`
 
@@ -133,37 +374,38 @@ client.terminal.health.check(): Promise<BrowserHealthCheckResponse>
 Capture terminal screenshot
 
 ```typescript
-client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; format?: "png" | "jpeg" | "gif"; foreground?: string; background?: string; fontsize?: number; save?: boolean }): Promise<ApiResponse<unknown>>
+client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; format?: "png" | "jpeg" | "gif"; foreground?: string; background?: string; fontsize?: number; save?: boolean; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535) |
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 | `format` | `"png" \| "jpeg" \| "gif"` | No | query | Output format: png, jpeg, gif (default: png) |
 | `foreground` | `string` | No | query | Foreground color: black, red, green, yellow, blue, magenta, cyan, white, or RGB (R,G,B,A) (default: white) |
 | `background` | `string` | No | query | Background color: same as foreground options (default: black) |
 | `fontsize` | `number` | No | query | Font size in pixels (default: 20) |
 | `save` | `boolean` | No | query | Save to storage directory (default: true) |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `ApiResponse<ArrayBuffer>`
 
-**CLI:** `hoody terminal sessions screenshot`
+**CLI:** `hoody terminal sessions screenshots capture`
 
 ---
 
-### `connectWebSocket`
+### `connect`
 
 **GET** `/api/v1/terminal/ws`
 
 WebSocket terminal connection
 
 ```typescript
-client.terminal.sessions.connectWebSocket(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; display?: string; pid?: number; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string }): Promise<TerminalConnectTerminalWebSocketWebSocket>
+client.terminal.sessions.connect(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; display?: string; pid?: number; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; ssh_key?: string; display_id?: string; ephemeral?: boolean; reset?: boolean; startup_script?: string; env_inject?: boolean; desktop?: boolean; desktop_env?: "xfce" | "mate"; debug?: boolean; welcome?: boolean; agent?: boolean; onboarding?: boolean; arg?: string; cache?: boolean | number }): Promise<TerminalConnectTerminalWebSocketWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, auto-generated if not provided) - Multiple clients can share by using same ID |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Omitted, the connection joins the shared terminal "1" that every client without a terminal_id uses; with ephemeral=true it instead gets a fresh ID in 40000-65535, reported in the SET_TERMINAL_ID frame. A value that is present but malformed is refused, never mapped to "1". Multiple clients can share by using the same ID. On connections routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
 | `readonly` | `boolean` | No | query | Enable read-only mode for this client (blocks keyboard input) - Use 'true', '1', or no value |
 | `cwd` | `string` | No | query | Working directory for new sessions |
 | `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new local session. Enable with 'true', '1', or no value (default: false) |
@@ -171,7 +413,7 @@ client.terminal.sessions.connectWebSocket(options?: { terminal_id?: string; read
 | `user` | `string` | No | query | System user to spawn shell as (requires permissions) |
 | `cmd` | `string` | No | query | Base64-encoded command to auto-execute on spawn |
 | `env` | `string` | No | query | Environment variable KEY=VALUE (repeatable) |
-| `display` | `string` | No | query | DISPLAY variable for X11 apps (auto-formats:N) |
+| `display` | `string` | No | query | DISPLAY variable for X11 apps (auto-formats :N) |
 | `pid` | `number` | No | query | Attach to existing process PID for monitoring |
 | `ssh_host` | `string` | No | query | SSH server hostname/IP for remote connections |
 | `ssh_user` | `string` | No | query | SSH username (required if ssh_host provided) |
@@ -179,6 +421,22 @@ client.terminal.sessions.connectWebSocket(options?: { terminal_id?: string; read
 | `ssh_password` | `string` | No | query | SSH password (use with caution) |
 | `socks5_host` | `string` | No | query | SOCKS5 proxy for SSH |
 | `socks5_port` | `string` | No | query | SOCKS5 port (default: 1080) |
+| `socks5_user` | `string` | No | query | SOCKS5 proxy username (alphanumeric with _-. characters) |
+| `socks5_pass` | `string` | No | query | SOCKS5 proxy password (shell-dangerous characters are refused) |
+| `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key authentication (alternative to ssh_password) |
+| `display_id` | `string` | No | query | Alias of display; when both are sent, display wins |
+| `ephemeral` | `boolean` | No | query | Throwaway session: without a terminal_id a fresh ID in 40000-65535 is allocated instead of joining shared terminal "1"; the display environment is not inherited, a cmd= command exits the shell when it finishes, and the idle session is cleaned up. Accepts true, 1 or yes (default: false). Ignored with agent=true |
+| `reset` | `boolean` | No | query | Tear down the session's running process (or SSH / PID attachment) and start a fresh one before this client joins. Accepts true, 1 or a bare flag (default: false) |
+| `startup_script` | `string` | No | query | Absolute path of a script to run before the shell starts; relative paths and paths containing ".." are ignored. Ignored with agent=true |
+| `env_inject` | `boolean` | No | query | Inject the HOODY_* environment variables into the spawned shell (default: true; only false or 0 disables it) |
+| `desktop` | `boolean` | No | query | Desktop mode: sets TTYD_DESKTOP_MODE=true in the shell environment (default: false). Ignored with agent=true |
+| `desktop_env` | `"xfce" \| "mate"` | No | query | Desktop environment for desktop mode; implies desktop=true. Other values are ignored. Not started again when a window manager already runs on the display; it keeps running after the session is deleted (POST /api/v1/system/displays/{display}/stop ends it) |
+| `debug` | `boolean` | No | query | Sets TTYD_DEBUG=true in the shell environment (default: false) |
+| `welcome` | `boolean` | No | query | Show the Hoody welcome banner when the shell starts (default: false) |
+| `agent` | `boolean` | No | query | Launch the server-configured Hoody Agent TUI instead of a shell. A locked-down mode: shell, cmd, user, ssh_*, pid, startup_script, desktop and ephemeral are ignored (default: false) |
+| `onboarding` | `boolean` | No | query | With agent=true, start the agent's first-run onboarding (default: false) |
+| `arg` | `string` | No | query | Command-line argument for the shell, repeatable and kept in order. Accepted only when URL arguments are enabled on this server; ignored otherwise |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalConnectTerminalWebSocketWebSocket`
 
@@ -218,7 +476,7 @@ client.terminal.sessions.delete(terminal_id: string): Promise<TerminalSessionsDe
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID to delete (numeric 1-65535) |
+| `terminal_id` | `string` | Yes | path | Terminal session ID to delete (numeric 1-65535). The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls |
 
 **Returns:** `TerminalSessionsDeleteResponse`
 
@@ -226,25 +484,47 @@ client.terminal.sessions.delete(terminal_id: string): Promise<TerminalSessionsDe
 
 ---
 
-### `getRawOutput`
+### `getAutomationStatus`
 
-**GET** `/api/v1/terminal/raw`
+**GET** `/api/v1/terminal/{terminal_id}/automation`
 
-Get raw terminal output
+Get per-session automation state
 
 ```typescript
-client.terminal.sessions.getRawOutput(options?: { terminal_id?: string; format?: "download" | "text" | "html"; tail?: number }): Promise<ApiResponse<unknown>>
+client.terminal.sessions.getAutomationStatus(terminal_id: string): Promise<TerminalSessionsGetAutomationStatusResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, defaults to "1" if not provided) |
-| `format` | `"download" \| "text" \| "html"` | No | query | Output format: download, text, or html (defaults to "download" if not provided) |
-| `tail` | `number` | No | query | Return only the last N lines of output |
+| `terminal_id` | `string` | Yes | path | Terminal session ID. The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `TerminalSessionsGetAutomationStatusResponse`
 
-**CLI:** `hoody terminal sessions raw-output`
+**CLI:** `hoody terminal sessions automation status`
+
+---
+
+### `getSnapshot`
+
+**GET** `/api/v1/terminal/snapshot`
+
+Get rendered terminal snapshot
+
+```typescript
+client.terminal.sessions.getSnapshot(options?: { terminal_id: string; include_colors?: boolean; include_highlights?: boolean; scroll_offset?: number; cache?: boolean | number }): Promise<TerminalSessionsGetSnapshotResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `include_colors` | `boolean` | No | query | Include ANSI SGR colored_lines array alongside plain text lines. Default: false |
+| `include_highlights` | `boolean` | No | query | Include reverse-video highlight spans. Default: true |
+| `scroll_offset` | `number` | No | query | Lines into scrollback (0 = live viewport). Default: 0 |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `TerminalSessionsGetSnapshotResponse`
+
+**CLI:** `hoody terminal sessions snapshot get`
 
 ---
 
@@ -255,13 +535,14 @@ client.terminal.sessions.getRawOutput(options?: { terminal_id?: string; format?:
 List all terminal sessions
 
 ```typescript
-client.terminal.sessions.list(options?: { history_limit?: number; history_lines?: number }): Promise<TerminalSessionsListResponse>
+client.terminal.sessions.list(options?: { history_limit?: number; history_lines?: number; cache?: boolean | number }): Promise<TerminalSessionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `history_limit` | `number` | No | query | Max command_history entries to include per session (default: 50, max: 1000) |
 | `history_lines` | `number` | No | query | Alias of history_limit |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsListResponse`
 
@@ -269,438 +550,158 @@ client.terminal.sessions.list(options?: { history_limit?: number; history_lines?
 
 ---
 
-### `listAll`
+### `paste`
 
-**GET** `/api/v1/terminal/sessions`
+**POST** `/api/v1/terminal/paste`
 
-List all terminal sessions (collect all pages)
+Paste text into terminal
 
 ```typescript
-client.terminal.sessions.listAll(options?: { history_limit?: number; history_lines?: number }): Promise<unknown[]>
+client.terminal.sessions.paste(data: TerminalSessionsPasteRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsPasteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `history_limit` | `number` | No | query | Max command_history entries to include per session (default: 50, max: 1000) |
-| `history_lines` | `number` | No | query | Alias of history_limit |
+| `data` | `TerminalSessionsPasteRequest` | Yes | body |  |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `unknown[]`
+**Returns:** `TerminalSessionsPasteResponse`
 
-**CLI:** `hoody terminal sessions list`
+**CLI:** `hoody terminal sessions paste`
 
 ---
 
-### `listHistory`
+### `pressKeys`
 
-**GET** `/api/v1/terminal/history/{terminal_id}`
+**POST** `/api/v1/terminal/press`
 
-Get terminal command history
+Send named key presses to terminal
 
 ```typescript
-client.terminal.sessions.listHistory(terminal_id: string): Promise<TerminalSessionsListHistoryResponse>
+client.terminal.sessions.pressKeys(data: TerminalSessionsPressKeysRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsPressKeysResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter) |
+| `data` | `TerminalSessionsPressKeysRequest` | Yes | body |  |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `TerminalSessionsListHistoryResponse`
+**Returns:** `TerminalSessionsPressKeysResponse`
 
-**CLI:** `hoody terminal sessions history`
+**CLI:** `hoody terminal sessions press`
 
 ---
 
-### `listHistoryAll`
+### `read`
 
-**GET** `/api/v1/terminal/history/{terminal_id}`
+**GET** `/api/v1/terminal/raw`
 
-Get terminal command history (collect all pages)
+Get raw terminal output
 
 ```typescript
-client.terminal.sessions.listHistoryAll(terminal_id: string): Promise<unknown[]>
+client.terminal.sessions.read(options?: { terminal_id?: string; format?: "download" | "text" | "html"; tail?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter) |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, defaults to "1" if not provided). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
+| `format` | `"download" \| "text" \| "html"` | No | query | Output format: download, text, or html (defaults to "download" if not provided) |
+| `tail` | `number` | No | query | Return only the last N lines of output |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `unknown[]`
+**Returns:** `ApiResponse<ArrayBuffer>`
 
-**CLI:** `hoody terminal sessions history`
+**CLI:** `hoody terminal sessions read`
 
 ---
 
-### `listHistoryIterator`
+### `reportDiagnostics`
 
-**GET** `/api/v1/terminal/history/{terminal_id}`
+**POST** `/api/v1/terminal/state`
 
-Get terminal command history (async iterator)
+Client render/connection diagnostics beacon
 
 ```typescript
-client.terminal.sessions.listHistoryIterator(terminal_id: string): AsyncIterableIterator<unknown>
+client.terminal.sessions.reportDiagnostics(data?: TerminalSessionsReportDiagnosticsRequest): Promise<TerminalSessionsReportDiagnosticsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter) |
+| `data` | `TerminalSessionsReportDiagnosticsRequest` | No | body |  |
 
-**Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody terminal sessions history`
+**Returns:** `TerminalSessionsReportDiagnosticsResponse`
 
 ---
 
-### `listIterator`
+### `search`
 
-**GET** `/api/v1/terminal/sessions`
+**GET** `/api/v1/terminal/find`
 
-List all terminal sessions (async iterator)
+Search terminal screen with regex
 
 ```typescript
-client.terminal.sessions.listIterator(options?: { history_limit?: number; history_lines?: number }): AsyncIterableIterator<unknown>
+client.terminal.sessions.search(options: { pattern: string; terminal_id: string; scope?: "screen" | "scrollback" | "all"; limit?: number; case_insensitive?: boolean; scroll_offset?: number; cache?: boolean | number }): Promise<TerminalSessionsSearchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `history_limit` | `number` | No | query | Max command_history entries to include per session (default: 50, max: 1000) |
-| `history_lines` | `number` | No | query | Alias of history_limit |
+| `pattern` | `string` | Yes | query | PCRE2 regex pattern to search for (max 1024 bytes) |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `scope` | `"screen" \| "scrollback" \| "all"` | No | query | Search scope: screen (default), scrollback, or all |
+| `limit` | `number` | No | query | Maximum number of hits to return (default 100, max 1000) |
+| `case_insensitive` | `boolean` | No | query | Case-insensitive matching. Default: false |
+| `scroll_offset` | `number` | No | query | Scrollback offset for screen scope (0 = live viewport). Default: 0 |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `AsyncIterableIterator<unknown>`
+**Returns:** `TerminalSessionsSearchResponse`
 
-**CLI:** `hoody terminal sessions list`
+**CLI:** `hoody terminal sessions search`
 
 ---
 
-## `client.terminal.system` (15 methods)
+### `sendMouseEvents`
 
-### `freezeProcess`
+**POST** `/api/v1/terminal/mouse`
 
-**POST** `/api/v1/system/processes/freeze`
-
-Freeze (SIGSTOP) a process or process tree
+Send cell-based mouse events to terminal
 
 ```typescript
-client.terminal.system.freezeProcess(data: FreezeProcessRequest): Promise<FreezeProcessResponse>
+client.terminal.sessions.sendMouseEvents(data: TerminalSessionsSendMouseEventsRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsSendMouseEventsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `FreezeProcessRequest` | Yes | body |  |
+| `data` | `TerminalSessionsSendMouseEventsRequest` | Yes | body |  |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `FreezeProcessResponse`
+**Returns:** `TerminalSessionsSendMouseEventsResponse`
 
----
-
-### `getDaemonConfig`
-
-**GET** `/api/v1/system/daemon`
-
-Get daemon programs configuration
-
-```typescript
-client.terminal.system.getDaemonConfig(): Promise<TerminalSystemGetDaemonConfigResponse>
-```
-
-**Returns:** `TerminalSystemGetDaemonConfigResponse`
-
-**CLI:** `hoody terminal system daemon-config`
+**CLI:** `hoody terminal sessions mouse send`
 
 ---
 
-### `getDisplayInfo`
+### `wait`
 
-**GET** `/api/v1/system/displays`
+**POST** `/api/v1/terminal/wait`
 
-Get display information
-
-```typescript
-client.terminal.system.getDisplayInfo(): Promise<TerminalSystemGetDisplayInfoResponse>
-```
-
-**Returns:** `TerminalSystemGetDisplayInfoResponse`
-
-**CLI:** `hoody terminal system display-info`
-
----
-
-### `getProcess`
-
-**GET** `/api/v1/system/processes/{pid}`
-
-Get process details by PID
+Wait for terminal condition
 
 ```typescript
-client.terminal.system.getProcess(pid: number): Promise<TerminalSystemGetProcessResponse>
+client.terminal.sessions.wait(data: TerminalSessionsWaitRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsWaitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `pid` | `number` | Yes | path | Process ID |
+| `data` | `TerminalSessionsWaitRequest` | Yes | body |  |
+| `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `TerminalSystemGetProcessResponse`
+**Returns:** `TerminalSessionsWaitResponse`
 
-**CLI:** `hoody terminal processes get`
-
----
-
-### `getResources`
-
-**GET** `/api/v1/system/resources`
-
-Get system resources and statistics
-
-```typescript
-client.terminal.system.getResources(): Promise<TerminalSystemGetResourcesResponse>
-```
-
-**Returns:** `TerminalSystemGetResourcesResponse`
-
-**CLI:** `hoody terminal system resources`
-
----
-
-### `listPorts`
-
-**GET** `/api/v1/system/ports`
-
-List all listening network ports
-
-```typescript
-client.terminal.system.listPorts(options?: { protocol?: string; user?: string; port?: number; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean }): Promise<TerminalSystemListPortsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `protocol` | `string` | No | query | Filter by protocol: tcp, udp, or comma-separated list |
-| `user` | `string` | No | query | Filter by user (exact match) |
-| `port` | `number` | No | query | Filter by specific port number |
-| `ip` | `string` | No | query | Filter by IP address (comma-separated list) |
-| `skip_program` | `string` | No | query | Exclude specific programs (comma-separated list) |
-| `http_only` | `boolean` | No | query | Only return HTTP services |
-| `hoody_only` | `boolean` | No | query | Only return Hoody Kit services |
-
-**Returns:** `TerminalSystemListPortsResponse`
-
-**CLI:** `hoody terminal system ports`
-
----
-
-### `listPortsAll`
-
-**GET** `/api/v1/system/ports`
-
-List all listening network ports (collect all pages)
-
-```typescript
-client.terminal.system.listPortsAll(options?: { protocol?: string; user?: string; port?: number; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `protocol` | `string` | No | query | Filter by protocol: tcp, udp, or comma-separated list |
-| `user` | `string` | No | query | Filter by user (exact match) |
-| `port` | `number` | No | query | Filter by specific port number |
-| `ip` | `string` | No | query | Filter by IP address (comma-separated list) |
-| `skip_program` | `string` | No | query | Exclude specific programs (comma-separated list) |
-| `http_only` | `boolean` | No | query | Only return HTTP services |
-| `hoody_only` | `boolean` | No | query | Only return Hoody Kit services |
-
-**Returns:** `unknown[]`
-
-**CLI:** `hoody terminal system ports`
-
----
-
-### `listPortsIterator`
-
-**GET** `/api/v1/system/ports`
-
-List all listening network ports (async iterator)
-
-```typescript
-client.terminal.system.listPortsIterator(options?: { protocol?: string; user?: string; port?: number; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `protocol` | `string` | No | query | Filter by protocol: tcp, udp, or comma-separated list |
-| `user` | `string` | No | query | Filter by user (exact match) |
-| `port` | `number` | No | query | Filter by specific port number |
-| `ip` | `string` | No | query | Filter by IP address (comma-separated list) |
-| `skip_program` | `string` | No | query | Exclude specific programs (comma-separated list) |
-| `http_only` | `boolean` | No | query | Only return HTTP services |
-| `hoody_only` | `boolean` | No | query | Only return Hoody Kit services |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody terminal system ports`
-
----
-
-### `listProcesses`
-
-**GET** `/api/v1/system/processes`
-
-List all system processes
-
-```typescript
-client.terminal.system.listProcesses(options?: { sort?: "cpu" | "memory" | "pid" | "name"; limit?: number; filter?: string }): Promise<TerminalSystemListProcessesResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `sort` | `"cpu" \| "memory" \| "pid" \| "name"` | No | query | Sort by field: cpu, memory, pid, name (default: pid) |
-| `limit` | `number` | No | query | Maximum number of processes to return (default: all) |
-| `filter` | `string` | No | query | Filter by process name (substring match, case-insensitive) |
-
-**Returns:** `TerminalSystemListProcessesResponse`
-
-**CLI:** `hoody terminal processes list`
-
----
-
-### `listProcessesAll`
-
-**GET** `/api/v1/system/processes`
-
-List all system processes (collect all pages)
-
-```typescript
-client.terminal.system.listProcessesAll(options?: { sort?: "cpu" | "memory" | "pid" | "name"; limit?: number; filter?: string }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `sort` | `"cpu" \| "memory" \| "pid" \| "name"` | No | query | Sort by field: cpu, memory, pid, name (default: pid) |
-| `limit` | `number` | No | query | Maximum number of processes to return (default: all) |
-| `filter` | `string` | No | query | Filter by process name (substring match, case-insensitive) |
-
-**Returns:** `unknown[]`
-
-**CLI:** `hoody terminal processes list`
-
----
-
-### `listProcessesIterator`
-
-**GET** `/api/v1/system/processes`
-
-List all system processes (async iterator)
-
-```typescript
-client.terminal.system.listProcessesIterator(options?: { sort?: "cpu" | "memory" | "pid" | "name"; limit?: number; filter?: string }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `sort` | `"cpu" \| "memory" \| "pid" \| "name"` | No | query | Sort by field: cpu, memory, pid, name (default: pid) |
-| `limit` | `number` | No | query | Maximum number of processes to return (default: all) |
-| `filter` | `string` | No | query | Filter by process name (substring match, case-insensitive) |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody terminal processes list`
-
----
-
-### `reboot`
-
-**POST** `/api/v1/system/reboot`
-
-Reboot the system
-
-```typescript
-client.terminal.system.reboot(options?: { delay?: number }): Promise<TerminalSystemRebootResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `delay` | `number` | No | query | Delay in seconds before reboot, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. |
-
-**Returns:** `TerminalSystemRebootResponse`
-
-**CLI:** `hoody terminal system reboot`
-
----
-
-### `sendSignal`
-
-**POST** `/api/v1/system/process/signal`
-
-Send signal to process(es)
-
-```typescript
-client.terminal.system.sendSignal(data: TerminalSystemSendSignalRequest): Promise<TerminalSystemSendSignalResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `TerminalSystemSendSignalRequest` | Yes | body |  |
-
-**Returns:** `TerminalSystemSendSignalResponse`
-
-**CLI:** `hoody terminal processes signal`
-
----
-
-### `shutdown`
-
-**POST** `/api/v1/system/shutdown`
-
-Shutdown the system
-
-```typescript
-client.terminal.system.shutdown(options?: { delay?: number }): Promise<TerminalSystemShutdownResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `delay` | `number` | No | query | Delay in seconds before shutdown, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. |
-
-**Returns:** `TerminalSystemShutdownResponse`
-
-**CLI:** `hoody terminal system shutdown`
-
----
-
-### `unfreezeProcess`
-
-**POST** `/api/v1/system/processes/unfreeze`
-
-Unfreeze (SIGCONT) a process or process tree
-
-```typescript
-client.terminal.system.unfreezeProcess(data: UnfreezeProcessRequest): Promise<UnfreezeProcessResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `UnfreezeProcessRequest` | Yes | body |  |
-
-**Returns:** `UnfreezeProcessResponse`
-
----
-
-## `client.terminal` (2 methods)
-
-### `abort`
-
-**POST** `/api/v1/terminal/execute/{command_id}/abort`
-
-Abort a running command
-
-```typescript
-client.terminal.abort(command_id: string, data?: TerminalAbortRequest): Promise<TerminalAbortResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `command_id` | `string` | Yes | path | The command ID returned by the execute endpoint |
-| `data` | `TerminalAbortRequest` | No | body |  |
-
-**Returns:** `TerminalAbortResponse`
-
-**CLI:** `hoody terminal sessions abort`
+**CLI:** `hoody terminal sessions wait`
 
 ---
 
@@ -711,322 +712,175 @@ client.terminal.abort(command_id: string, data?: TerminalAbortRequest): Promise<
 Write input to terminal
 
 ```typescript
-client.terminal.write(data?: TerminalWriteRequest, options?: { terminal_id: string }): Promise<TerminalWriteResponse>
+client.terminal.sessions.write(data?: TerminalSessionsWriteRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsWriteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `TerminalWriteRequest` | No | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID to write to |
+| `data` | `TerminalSessionsWriteRequest` | No | body |  |
+| `terminal_id` | `string` | Yes | query | Terminal session ID to write to. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `TerminalWriteResponse`
+**Returns:** `TerminalSessionsWriteResponse`
 
 **CLI:** `hoody terminal sessions write`
 
 ---
 
-## `client.terminal.terminalAutomation` (9 methods)
+## `client.terminal.system` (7 methods)
 
-### `findInTerminal`
+### `getStats`
 
-**GET** `/api/v1/terminal/find`
+**GET** `/api/v1/system/resources`
 
-Search terminal screen with regex
+Get system resources and statistics
 
 ```typescript
-client.terminal.terminalAutomation.findInTerminal(options?: { pattern: string; terminal_id: string; scope?: "screen" | "scrollback" | "all"; limit?: number; case_insensitive?: boolean; scroll_offset?: number }): Promise<FindInTerminalResponse>
+client.terminal.system.getStats(): Promise<TerminalSystemGetStatsResponse>
+```
+
+**Returns:** `TerminalSystemGetStatsResponse`
+
+**CLI:** `hoody terminal system stats`
+
+---
+
+### `listDaemonPrograms`
+
+**GET** `/api/v1/system/daemon`
+
+Get daemon programs configuration
+
+```typescript
+client.terminal.system.listDaemonPrograms(): Promise<TerminalSystemListDaemonProgramsResponse>
+```
+
+**Returns:** `TerminalSystemListDaemonProgramsResponse`
+
+**CLI:** `hoody terminal system daemon programs list`
+
+---
+
+### `listDisplays`
+
+**GET** `/api/v1/system/displays`
+
+Get display information
+
+```typescript
+client.terminal.system.listDisplays(): Promise<TerminalSystemListDisplaysResponse>
+```
+
+**Returns:** `TerminalSystemListDisplaysResponse`
+
+**CLI:** `hoody terminal system displays list`
+
+---
+
+### `listPorts`
+
+**GET** `/api/v1/system/ports`
+
+List all listening network ports
+
+```typescript
+client.terminal.system.listPorts(options?: { protocol?: string; user?: string; port?: number; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean; cache?: boolean | number }): Promise<TerminalSystemListPortsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `pattern` | `string` | Yes | query | PCRE2 regex pattern to search for (max 1024 bytes) |
-| `terminal_id` | `string` | Yes | query | Terminal session ID |
-| `scope` | `"screen" \| "scrollback" \| "all"` | No | query | Search scope: screen (default), scrollback, or all |
-| `limit` | `number` | No | query | Maximum number of hits to return (default 100, max 1000) |
-| `case_insensitive` | `boolean` | No | query | Case-insensitive matching. Default: false |
-| `scroll_offset` | `number` | No | query | Scrollback offset for screen scope (0 = live viewport). Default: 0 |
+| `protocol` | `string` | No | query | Filter by protocol: tcp, udp, or comma-separated list |
+| `user` | `string` | No | query | Filter by user (exact match) |
+| `port` | `number` | No | query | Filter by specific port number |
+| `ip` | `string` | No | query | Filter by IP address (comma-separated list) |
+| `skip_program` | `string` | No | query | Exclude specific programs (comma-separated list) |
+| `http_only` | `boolean` | No | query | Only return HTTP services |
+| `hoody_only` | `boolean` | No | query | Only return Hoody Kit services |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `FindInTerminalResponse`
+**Returns:** `TerminalSystemListPortsResponse`
 
-**CLI:** `hoody terminal sessions find`
-
----
-
-### `getAutomationMetrics`
-
-**GET** `/api/v1/terminal/automation/metrics`
-
-Get terminal automation metrics
-
-```typescript
-client.terminal.terminalAutomation.getAutomationMetrics(): Promise<GetAutomationMetricsResponse>
-```
-
-**Returns:** `GetAutomationMetricsResponse`
-
-**CLI:** `hoody terminal automation metrics`
+**CLI:** `hoody terminal system ports list`
 
 ---
 
-### `getSessionAutomationState`
+### `reboot`
 
-**GET** `/api/v1/terminal/{terminal_id}/automation`
+**POST** `/api/v1/system/reboot`
 
-Get per-session automation state
+Reboot the system
 
 ```typescript
-client.terminal.terminalAutomation.getSessionAutomationState(terminal_id: string): Promise<GetSessionAutomationStateResponse>
+client.terminal.system.reboot(options?: { delay?: number; cache?: boolean | number }): Promise<TerminalSystemRebootResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID |
+| `delay` | `number` | No | query | Delay in seconds before reboot, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `GetSessionAutomationStateResponse`
+**Returns:** `TerminalSystemRebootResponse`
 
-**CLI:** `hoody terminal sessions automation-state`
+**CLI:** `hoody terminal system reboot`
 
 ---
 
-### `getTerminalSnapshot`
+### `shutdown`
 
-**GET** `/api/v1/terminal/snapshot`
+**POST** `/api/v1/system/shutdown`
 
-Get rendered terminal snapshot
+Shutdown the system
 
 ```typescript
-client.terminal.terminalAutomation.getTerminalSnapshot(options?: { terminal_id: string; include_colors?: boolean; include_highlights?: boolean; scroll_offset?: number }): Promise<GetTerminalSnapshotResponse>
+client.terminal.system.shutdown(options?: { delay?: number; cache?: boolean | number }): Promise<TerminalSystemShutdownResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535) |
-| `include_colors` | `boolean` | No | query | Include ANSI SGR colored_lines array alongside plain text lines. Default: false |
-| `include_highlights` | `boolean` | No | query | Include reverse-video highlight spans. Default: true |
-| `scroll_offset` | `number` | No | query | Lines into scrollback (0 = live viewport). Default: 0 |
+| `delay` | `number` | No | query | Delay in seconds before shutdown, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `GetTerminalSnapshotResponse`
+**Returns:** `TerminalSystemShutdownResponse`
 
-**CLI:** `hoody terminal sessions snapshot`
+**CLI:** `hoody terminal system shutdown`
 
 ---
 
-### `listSupportedKeys`
+### `stopDisplay`
 
-**GET** `/api/v1/terminal/keys`
+**POST** `/api/v1/system/displays/{display}/stop`
 
-List supported key names for /press endpoint
-
-```typescript
-client.terminal.terminalAutomation.listSupportedKeys(): Promise<ListSupportedKeysResponse>
-```
-
-**Returns:** `ListSupportedKeysResponse`
-
-**CLI:** `hoody terminal automation keys`
-
----
-
-### `pasteTerminalText`
-
-**POST** `/api/v1/terminal/paste`
-
-Paste text into terminal
+Stop a display
 
 ```typescript
-client.terminal.terminalAutomation.pasteTerminalText(data: PasteTerminalTextRequest, options?: { terminal_id: string }): Promise<PasteTerminalTextResponse>
+client.terminal.system.stopDisplay(display: number): Promise<TerminalSystemStopDisplayResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `PasteTerminalTextRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID |
+| `display` | `number` | Yes | path | Display number (the N in :N), 0-65535 |
 
-**Returns:** `PasteTerminalTextResponse`
+**Returns:** `TerminalSystemStopDisplayResponse`
 
-**CLI:** `hoody terminal sessions paste`
-
----
-
-### `pressTerminalKeys`
-
-**POST** `/api/v1/terminal/press`
-
-Send named key presses to terminal
-
-```typescript
-client.terminal.terminalAutomation.pressTerminalKeys(data: PressTerminalKeysRequest, options?: { terminal_id: string }): Promise<PressTerminalKeysResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `PressTerminalKeysRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID |
-
-**Returns:** `PressTerminalKeysResponse`
-
-**CLI:** `hoody terminal sessions press`
+**CLI:** `hoody terminal system displays stop`
 
 ---
 
-### `sendTerminalMouseEvents`
+## `client.terminal.ui` (1 method)
 
-**POST** `/api/v1/terminal/mouse`
-
-Send cell-based mouse events to terminal
-
-```typescript
-client.terminal.terminalAutomation.sendTerminalMouseEvents(data: SendTerminalMouseEventsRequest, options?: { terminal_id: string }): Promise<SendTerminalMouseEventsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `SendTerminalMouseEventsRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID |
-
-**Returns:** `SendTerminalMouseEventsResponse`
-
----
-
-### `waitForTerminal`
-
-**POST** `/api/v1/terminal/wait`
-
-Wait for terminal condition
-
-```typescript
-client.terminal.terminalAutomation.waitForTerminal(data: WaitForTerminalRequest, options?: { terminal_id: string }): Promise<WaitForTerminalResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `WaitForTerminalRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID |
-
-**Returns:** `WaitForTerminalResponse`
-
-**CLI:** `hoody terminal sessions wait`
-
----
-
-## `client.terminal.terminalDragAndDrop` (4 methods)
-
-### `beginTerminalDrop`
-
-**POST** `/api/v1/terminal/drop-begin`
-
-Begin a drag-and-drop staging transaction
-
-```typescript
-client.terminal.terminalDragAndDrop.beginTerminalDrop(options?: { terminal_id: string }): Promise<BeginTerminalDropResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535) |
-
-**Returns:** `BeginTerminalDropResponse`
-
----
-
-### `commitTerminalDrop`
-
-**POST** `/api/v1/terminal/drop-commit`
-
-Finalize a drop and inject the OSC frame
-
-```typescript
-client.terminal.terminalDragAndDrop.commitTerminalDrop(data: CommitTerminalDropRequest, options?: { drop: string; token: string; terminal_id: string }): Promise<CommitTerminalDropResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `CommitTerminalDropRequest` | Yes | body |  |
-| `drop` | `string` | Yes | query | Drop id from /drop-begin |
-| `token` | `string` | Yes | query | Drop token from /drop-begin |
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535) |
-
-**Returns:** `CommitTerminalDropResponse`
-
----
-
-### `oneShotTerminalDrop`
-
-**POST** `/api/v1/terminal/drop`
-
-One-shot drop (begin + stage + commit)
-
-```typescript
-client.terminal.terminalDragAndDrop.oneShotTerminalDrop(data: OneShotTerminalDropRequest, options?: { terminal_id: string }): Promise<OneShotTerminalDropResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `OneShotTerminalDropRequest` | Yes | body |  |
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535) |
-
-**Returns:** `OneShotTerminalDropResponse`
-
----
-
-### `uploadTerminalDropSlice`
-
-**POST** `/api/v1/terminal/upload`
-
-Upload a raw file slice into a drop
-
-```typescript
-client.terminal.terminalDragAndDrop.uploadTerminalDropSlice(data: object, options?: { drop: string; token: string; path: string; offset: number; terminal_id: string }): Promise<UploadTerminalDropSliceResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `object` | Yes | body |  |
-| `drop` | `string` | Yes | query | Drop id from /drop-begin |
-| `token` | `string` | Yes | query | Drop token from /drop-begin |
-| `path` | `string` | Yes | query | Sanitized relative path of the staged file (no `..`, not absolute) |
-| `offset` | `number` | Yes | query | Byte offset to write at (must equal the current staged size) |
-| `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535) |
-
-**Returns:** `UploadTerminalDropSliceResponse`
-
----
-
-## `client.terminal.terminalState` (1 method)
-
-### `postTerminalState`
-
-**POST** `/api/v1/terminal/state`
-
-Client render/connection diagnostics beacon
-
-```typescript
-client.terminal.terminalState.postTerminalState(data?: PostTerminalStateRequest): Promise<PostTerminalStateResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `PostTerminalStateRequest` | No | body |  |
-
-**Returns:** `PostTerminalStateResponse`
-
----
-
-## `client.terminal.web` (1 method)
-
-### `get`
+### `getPage`
 
 **GET** `/`
 
 Get web terminal interface
 
 ```typescript
-client.terminal.web.get(options?: { terminal_id?: string; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; readonly?: boolean; title?: string; fontSize?: number; backgroundColor?: string; panel?: string; panelVisible?: boolean; panelPosition?: string; panelWidth?: string; panelResizable?: boolean; hideToolbar?: boolean; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; desktop?: boolean; desktop_env?: string; redirect?: string; redirect_delay?: number; arg?: string; welcome?: boolean; debug?: boolean; reset?: boolean; pid?: number; env?: string; display?: string; env_inject?: boolean; startup_script?: string; ssh_key?: string; panelHeight?: string }): Promise<ApiResponse<unknown>>
+client.terminal.ui.getPage(options?: { terminal_id?: string; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; readonly?: boolean; title?: string; fontSize?: number; backgroundColor?: string; panel?: string; panelVisible?: boolean; panelPosition?: string; panelWidth?: string; panelResizable?: boolean; hideToolbar?: boolean; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; desktop?: boolean; desktop_env?: string; redirect?: string; redirect_delay?: number; arg?: string; welcome?: boolean; debug?: boolean; reset?: boolean; pid?: number; env?: string; display?: string; env_inject?: boolean; startup_script?: string; ssh_key?: string; panelHeight?: string; panelWidthPct?: number; panelHeightPct?: number; wait_timeout?: number; rendererType?: "dom" | "canvas" | "webgl"; fontFamily?: string; fontWeight?: string; fontWeightBold?: string; lineHeight?: number; letterSpacing?: number; cursorBlink?: boolean; cursorStyle?: "block" | "underline" | "bar"; cursorWidth?: number; cursorInactiveStyle?: "outline" | "block" | "bar" | "underline" | "none"; theme?: string; minimumContrastRatio?: number; drawBoldTextInBrightColors?: boolean; scrollback?: number; scrollSensitivity?: number; fastScrollSensitivity?: number; smoothScrollDuration?: number; screenReaderMode?: boolean; disableResizeOverlay?: boolean; unicodeVersion?: string; cache?: boolean | number }): Promise<ApiResponse<string>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, auto-generated if not provided) - Allows multiple clients to share the same terminal session |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, auto-generated if not provided) - Allows multiple clients to share the same terminal session. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
 | `cwd` | `string` | No | query | Initial working directory for new terminal sessions (only applied when session is first created) |
 | `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new session. Enable with 'true', '1', or no value (default: false) |
 | `shell` | `string` | No | query | Shell to use: bash, zsh, fish, sh, etc. (default: server startup command, only applies to new sessions) |
@@ -1051,24 +905,46 @@ client.terminal.web.get(options?: { terminal_id?: string; cwd?: string; cwd_auto
 | `socks5_user` | `string` | No | query | SOCKS5 proxy username for authentication |
 | `socks5_pass` | `string` | No | query | SOCKS5 proxy password for authentication |
 | `desktop` | `boolean` | No | query | Enable Hoody Display desktop mode. Provides a full desktop environment instead of seamless individual windows (default: false) |
-| `desktop_env` | `string` | No | query | Desktop environment to launch (implies desktop=true). Starts the specified DE session after the display is ready. Valid values: xfce, mate |
+| `desktop_env` | `string` | No | query | Desktop environment to launch (implies desktop=true). Starts the specified DE session after the display is ready. Valid values: xfce, mate. Not started again when a window manager already runs on the display; it keeps running after the session is deleted (POST /api/v1/system/displays/{display}/stop ends it) |
 | `redirect` | `string` | No | query | Redirect mode. When set to "display", creates/ensures the terminal session, waits for X11 display readiness, then returns HTTP 302 redirect to the display URL. Requires terminal_id and display params |
 | `redirect_delay` | `number` | No | query | Extra delay in seconds after display is ready before redirecting. Only used when redirect=display (default: 0) |
-| `arg` | `string` | No | query | Command-line arguments to pass to shell (requires --url-arg server option, can be repeated) |
+| `arg` | `string` | No | query | Command-line arguments to pass to shell; accepted only where the deployment enabled shell arguments, and can be repeated |
 | `welcome` | `boolean` | No | query | Show welcome message on startup (default: false). Supports ?welcome=true, ?welcome=1, or ?welcome (no value = true) |
 | `debug` | `boolean` | No | query | Enable debug output in wrapper script (default: false) |
 | `reset` | `boolean` | No | query | Kill existing terminal process and reconfigure session (default: false). Use to switch shell, user, or from shell to SSH |
 | `pid` | `number` | No | query | Attach to an existing process by PID instead of spawning a new shell. Implies reset |
 | `env` | `string` | No | query | Inject environment variable as KEY=VALUE. Can be repeated for multiple variables (e.g., ?env=FOO=bar&env=BAZ=qux) |
-| `display` | `string` | No | query | X11 display number for GUI applications. Accepts number (e.g., 1) or:number (e.g.,:1). Shorthand for ?env=DISPLAY=:N |
+| `display` | `string` | No | query | X11 display number for GUI applications. Accepts number (e.g., 1) or :number (e.g., :1). Shorthand for ?env=DISPLAY=:N |
 | `env_inject` | `boolean` | No | query | Inject HOODY_* environment variables into shell session (default: true). Set to false to disable |
 | `startup_script` | `string` | No | query | Path to startup script to execute before shell launch (only applied on first session creation) |
 | `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key-based authentication (prefer over password-based auth) |
 | `panelHeight` | `string` | No | query | Initial panel height for top/bottom positioned panels (default: 300px) |
+| `panelWidthPct` | `number` | No | query | Initial panel width as a percentage of the window, 5-95. Takes precedence over panel-width |
+| `panelHeightPct` | `number` | No | query | Initial panel height as a percentage of the window for top/bottom panels, 5-95. Takes precedence over panel-height |
+| `wait_timeout` | `number` | No | query | Seconds to wait for the display to become ready before redirecting (default: 60, capped at 300). Only used when redirect=display |
+| `rendererType` | `"dom" \| "canvas" \| "webgl"` | No | query | Terminal renderer: dom, canvas or webgl (default: webgl, or dom in Firefox) |
+| `fontFamily` | `string` | No | query | Terminal font family, as a CSS font-family list |
+| `fontWeight` | `string` | No | query | Font weight of normal text: normal, bold, or 100 to 900 |
+| `fontWeightBold` | `string` | No | query | Font weight of bold text: normal, bold, or 100 to 900 |
+| `lineHeight` | `number` | No | query | Line height as a multiple of the font size (read as a whole number) |
+| `letterSpacing` | `number` | No | query | Extra space between characters, in whole pixels |
+| `cursorBlink` | `boolean` | No | query | Blink the cursor. Use 'true' or '1' |
+| `cursorStyle` | `"block" \| "underline" \| "bar"` | No | query | Cursor shape: block, underline or bar |
+| `cursorWidth` | `number` | No | query | Width of the bar cursor in pixels |
+| `cursorInactiveStyle` | `"outline" \| "block" \| "bar" \| "underline" \| "none"` | No | query | Cursor shape while the terminal is not focused: outline, block, bar, underline or none |
+| `theme` | `string` | No | query | Color theme as a JSON object of xterm theme keys, e.g. {"background":"#000000","foreground":"#ffffff"} |
+| `minimumContrastRatio` | `number` | No | query | Minimum contrast ratio between text and background, 1 (no adjustment) to 21 |
+| `drawBoldTextInBrightColors` | `boolean` | No | query | Draw bold text in the bright ANSI colors. Use 'true' or '1' |
+| `scrollback` | `number` | No | query | Number of lines kept in the scrollback buffer |
+| `scrollSensitivity` | `number` | No | query | Scroll speed multiplier |
+| `fastScrollSensitivity` | `number` | No | query | Scroll speed multiplier while the fast-scroll modifier key is held |
+| `smoothScrollDuration` | `number` | No | query | Smooth scrolling duration in milliseconds (0 turns it off) |
+| `screenReaderMode` | `boolean` | No | query | Turn on screen reader support. Use 'true' or '1' |
+| `disableResizeOverlay` | `boolean` | No | query | Hide the size overlay shown while the terminal is resized. Use 'true' or '1' |
+| `unicodeVersion` | `string` | No | query | Character width tables: graphemes (default) or 11 |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ApiResponse<unknown>`
-
-**CLI:** `hoody terminal sessions web`
+**Returns:** `ApiResponse<string>`
 
 ---
 

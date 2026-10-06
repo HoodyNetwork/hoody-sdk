@@ -1,6 +1,6 @@
-# `tunnel` — 7 methods
+# `tunnel` — 6 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.tunnel`
 
 ```typescript
@@ -9,25 +9,41 @@ import * as tunnel from 'hoody-sdk/tunnel';
 
 ---
 
-## `client.tunnel.health` (1 method)
+## `client.tunnel.bindings` (1 method)
 
-### `check`
+### `list`
+
+**GET** `/api/v1/tunnel/bindings`
+
+List active bindings across all sessions
+
+```typescript
+client.tunnel.bindings.list(): Promise<TunnelBindingsListResponse>
+```
+
+**Returns:** `TunnelBindingsListResponse`
+
+**CLI:** `hoody tunnel bindings list`
+
+---
+
+## `client.tunnel.kit` (2 methods)
+
+### `getHealth`
 
 **GET** `/api/v1/tunnel/health`
 
 Kit health
 
 ```typescript
-client.tunnel.health.check(): Promise<TunnelHealthCheckResponse>
+client.tunnel.kit.getHealth(): Promise<TunnelKitGetHealthResponse>
 ```
 
-**Returns:** `TunnelHealthCheckResponse`
+**Returns:** `TunnelKitGetHealthResponse`
 
 **CLI:** `hoody tunnel health`
 
 ---
-
-## `client.tunnel` (6 methods)
 
 ### `getMetrics`
 
@@ -36,95 +52,70 @@ client.tunnel.health.check(): Promise<TunnelHealthCheckResponse>
 Prometheus metrics
 
 ```typescript
-client.tunnel.getMetrics(): Promise<ApiResponse<unknown>>
+client.tunnel.kit.getMetrics(): Promise<ApiResponse<string>>
 ```
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `ApiResponse<string>`
 
 **CLI:** `hoody tunnel metrics`
 
 ---
 
-### `killSession`
+## `client.tunnel.sessions` (2 methods)
+
+### `close`
 
 **DELETE** `/api/v1/tunnel/sessions/{session_id}`
 
 Terminate an active tunnel session
 
 ```typescript
-client.tunnel.killSession(session_id: string, options?: { grace_ms?: number }): Promise<TunnelKillSessionResponse>
+client.tunnel.sessions.close(session_id: string, options?: { grace_ms?: number; cache?: boolean | number }): Promise<TunnelSessionsCloseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `session_id` | `string` | Yes | path | Session ID as returned by GET /sessions |
 | `grace_ms` | `number` | No | query | GOAWAY drain budget in ms (0-5000, default 50) |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `TunnelKillSessionResponse`
+**Returns:** `TunnelSessionsCloseResponse`
 
-**CLI:** `hoody tunnel sessions kill`
-
----
-
-### `listBindings`
-
-**GET** `/api/v1/tunnel/bindings`
-
-List active bindings across all sessions
-
-```typescript
-client.tunnel.listBindings(): Promise<TunnelListBindingsResponse>
-```
-
-**Returns:** `TunnelListBindingsResponse`
-
-**CLI:** `hoody tunnel bindings list`
+**CLI:** `hoody tunnel sessions close`
 
 ---
 
-### `listSessions`
+### `list`
 
 **GET** `/api/v1/tunnel/sessions`
 
 List active tunnel sessions
 
 ```typescript
-client.tunnel.listSessions(): Promise<TunnelListSessionsResponse>
+client.tunnel.sessions.list(): Promise<TunnelSessionsListResponse>
 ```
 
-**Returns:** `TunnelListSessionsResponse`
+**Returns:** `TunnelSessionsListResponse`
 
 **CLI:** `hoody tunnel sessions list`
 
 ---
 
-### `listTunnels`
+## `client.tunnel` (1 method)
+
+### `list`
 
 **GET** `/api/v1/tunnel/tunnels`
 
 List all active tunnels (combined sessions + bindings)
 
 ```typescript
-client.tunnel.listTunnels(): Promise<TunnelListTunnelsResponse>
+client.tunnel.list(): Promise<TunnelListResponse>
 ```
 
-**Returns:** `TunnelListTunnelsResponse`
+**Returns:** `TunnelListResponse`
 
 **CLI:** `hoody tunnel list`
-
----
-
-### `tunnelConnect`
-
-**GET** `/api/v1/tunnel/connect`
-
-Tunnel WebSocket control plane
-
-```typescript
-client.tunnel.tunnelConnect(): Promise<ApiResponse<unknown>>
-```
-
-**Returns:** `ApiResponse<unknown>`
 
 ---
 

@@ -1,6 +1,6 @@
-# `notes` — 64 methods
+# `notes` — 74 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.notes`
 
 ```typescript
@@ -27,6 +27,8 @@ client.notes.avatars.download(avatarId: string): Promise<ApiResponse<unknown>>
 
 **Returns:** `ApiResponse<unknown>`
 
+**CLI:** `hoody notes avatars download`
+
 ---
 
 ### `upload`
@@ -36,10 +38,16 @@ client.notes.avatars.download(avatarId: string): Promise<ApiResponse<unknown>>
 Upload an avatar image
 
 ```typescript
-client.notes.avatars.upload(): Promise<NotesAvatarsUploadResponse>
+client.notes.avatars.upload(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string): Promise<NotesAvatarsUploadResponse>
 ```
 
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
+
 **Returns:** `NotesAvatarsUploadResponse`
+
+**CLI:** `hoody notes avatars upload`
 
 ---
 
@@ -63,7 +71,7 @@ client.notes.collaborators.add(notebookId: string, nodeId: string, data: NotesCo
 
 **Returns:** `NotesCollaboratorsAddResponse`
 
-**CLI:** `hoody notes collab add`
+**CLI:** `hoody notes collaborators add`
 
 ---
 
@@ -84,7 +92,7 @@ client.notes.collaborators.list(notebookId: string, nodeId: string): Promise<Not
 
 **Returns:** `NotesCollaboratorsListResponse`
 
-**CLI:** `hoody notes collab list`
+**CLI:** `hoody notes collaborators list`
 
 ---
 
@@ -106,18 +114,18 @@ client.notes.collaborators.remove(notebookId: string, nodeId: string, collaborat
 
 **Returns:** `NotesCollaboratorsRemoveResponse`
 
-**CLI:** `hoody notes collab remove`
+**CLI:** `hoody notes collaborators remove`
 
 ---
 
-### `update`
+### `setRole`
 
 **PATCH** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/collaborators/{collaboratorId}`
 
 Update collaborator role
 
 ```typescript
-client.notes.collaborators.update(notebookId: string, nodeId: string, collaboratorId: string, data: NotesCollaboratorsUpdateRequest): Promise<NotesCollaboratorsUpdateResponse>
+client.notes.collaborators.setRole(notebookId: string, nodeId: string, collaboratorId: string, data: NotesCollaboratorsSetRoleRequest): Promise<NotesCollaboratorsSetRoleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -125,15 +133,15 @@ client.notes.collaborators.update(notebookId: string, nodeId: string, collaborat
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `collaboratorId` | `string` | Yes | path |  |
-| `data` | `NotesCollaboratorsUpdateRequest` | Yes | body |  |
+| `data` | `NotesCollaboratorsSetRoleRequest` | Yes | body |  |
 
-**Returns:** `NotesCollaboratorsUpdateResponse`
+**Returns:** `NotesCollaboratorsSetRoleResponse`
 
-**CLI:** `hoody notes collab update`
+**CLI:** `hoody notes collaborators role set`
 
 ---
 
-## `client.notes.comments` (7 methods)
+## `client.notes.comments` (11 methods)
 
 ### `create`
 
@@ -153,7 +161,7 @@ client.notes.comments.create(notebookId: string, nodeId: string, data: NotesComm
 
 **Returns:** `NotesCommentsCreateResponse`
 
-**CLI:** `hoody notes comment create`
+**CLI:** `hoody notes comments create`
 
 ---
 
@@ -164,7 +172,7 @@ client.notes.comments.create(notebookId: string, nodeId: string, data: NotesComm
 Delete a comment
 
 ```typescript
-client.notes.comments.delete(notebookId: string, nodeId: string, commentId: string, options?: { expectedVersion?: number }): Promise<NotesCommentsDeleteResponse>
+client.notes.comments.delete(notebookId: string, nodeId: string, commentId: string, options?: { expectedVersion?: number; cache?: boolean | number }): Promise<NotesCommentsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -173,33 +181,11 @@ client.notes.comments.delete(notebookId: string, nodeId: string, commentId: stri
 | `nodeId` | `string` | Yes | path |  |
 | `commentId` | `string` | Yes | path |  |
 | `expectedVersion` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesCommentsDeleteResponse`
 
-**CLI:** `hoody notes comment delete`
-
----
-
-### `edit`
-
-**PATCH** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}`
-
-Edit a comment
-
-```typescript
-client.notes.comments.edit(notebookId: string, nodeId: string, commentId: string, data: NotesCommentsEditRequest): Promise<NotesCommentsEditResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `nodeId` | `string` | Yes | path |  |
-| `commentId` | `string` | Yes | path |  |
-| `data` | `NotesCommentsEditRequest` | Yes | body |  |
-
-**Returns:** `NotesCommentsEditResponse`
-
-**CLI:** `hoody notes comment edit`
+**CLI:** `hoody notes comments delete`
 
 ---
 
@@ -210,7 +196,7 @@ client.notes.comments.edit(notebookId: string, nodeId: string, commentId: string
 List comments
 
 ```typescript
-client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): Promise<NotesCommentsListResponse>
+client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<NotesCommentsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -220,10 +206,34 @@ client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesCommentsListResponse`
 
-**CLI:** `hoody notes comment list`
+**CLI:** `hoody notes comments list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments`
+
+List comments (collect all pages)
+
+```typescript
+client.notes.comments.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cursor` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `unknown[]`
 
 ---
 
@@ -234,7 +244,7 @@ client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit
 List comment anchors
 
 ```typescript
-client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): Promise<NotesCommentsListAnchorsResponse>
+client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<NotesCommentsListAnchorsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -244,31 +254,80 @@ client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: 
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesCommentsListAnchorsResponse`
 
-**CLI:** `hoody notes comment anchors`
+**CLI:** `hoody notes comments anchors list`
 
 ---
 
-### `reanchor`
+### `listAnchorsAll`
 
-**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/reanchor`
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comment-anchors`
 
-Re-anchor a comment thread
+List comment anchors (collect all pages)
 
 ```typescript
-client.notes.comments.reanchor(notebookId: string, nodeId: string, commentId: string, data: NotesCommentsReanchorRequest): Promise<NotesCommentsReanchorResponse>
+client.notes.comments.listAnchorsAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
-| `commentId` | `string` | Yes | path |  |
-| `data` | `NotesCommentsReanchorRequest` | Yes | body |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cursor` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `NotesCommentsReanchorResponse`
+**Returns:** `unknown[]`
+
+---
+
+### `listAnchorsIterator`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comment-anchors`
+
+List comment anchors (async iterator)
+
+```typescript
+client.notes.comments.listAnchorsIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cursor` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments`
+
+List comments (async iterator)
+
+```typescript
+client.notes.comments.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cursor` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
 
 ---
 
@@ -291,219 +350,79 @@ client.notes.comments.resolve(notebookId: string, nodeId: string, commentId: str
 
 **Returns:** `NotesCommentsResolveResponse`
 
-**CLI:** `hoody notes comment resolve`
+**CLI:** `hoody notes comments resolve`
 
 ---
 
-## `client.notes.databases` (8 methods)
+### `setAnchor`
 
-### `create`
+**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}/reanchor`
 
-**POST** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
-
-Create a database record
+Re-anchor a comment thread
 
 ```typescript
-client.notes.databases.create(notebookId: string, databaseId: string, data: NotesDatabasesCreateRequest): Promise<NotesDatabasesCreateResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `data` | `NotesDatabasesCreateRequest` | Yes | body |  |
-
-**Returns:** `NotesDatabasesCreateResponse`
-
-**CLI:** `hoody notes db create`
-
----
-
-### `delete`
-
-**DELETE** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
-
-Delete a database record
-
-```typescript
-client.notes.databases.delete(notebookId: string, databaseId: string, recordId: string): Promise<NotesDatabasesDeleteResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `recordId` | `string` | Yes | path |  |
-
-**Returns:** `NotesDatabasesDeleteResponse`
-
-**CLI:** `hoody notes db delete`
-
----
-
-### `get`
-
-**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
-
-Get a database record
-
-```typescript
-client.notes.databases.get(notebookId: string, databaseId: string, recordId: string): Promise<NotesDatabasesGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `recordId` | `string` | Yes | path |  |
-
-**Returns:** `NotesDatabasesGetResponse`
-
-**CLI:** `hoody notes db get`
-
----
-
-### `list`
-
-**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
-
-List database records
-
-```typescript
-client.notes.databases.list(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number }): Promise<NotesDatabasesListResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `filters` | `string` | No | query |  |
-| `sorts` | `string` | No | query |  |
-| `page` | `number` | No | query |  |
-| `count` | `number` | No | query |  |
-
-**Returns:** `NotesDatabasesListResponse`
-
-**CLI:** `hoody notes db list`
-
----
-
-### `listAll`
-
-**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
-
-List database records (collect all pages)
-
-```typescript
-client.notes.databases.listAll(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `filters` | `string` | No | query |  |
-| `sorts` | `string` | No | query |  |
-| `page` | `number` | No | query |  |
-| `count` | `number` | No | query |  |
-
-**Returns:** `unknown[]`
-
-**CLI:** `hoody notes db list`
-
----
-
-### `listIterator`
-
-**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
-
-List database records (async iterator)
-
-```typescript
-client.notes.databases.listIterator(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `filters` | `string` | No | query |  |
-| `sorts` | `string` | No | query |  |
-| `page` | `number` | No | query |  |
-| `count` | `number` | No | query |  |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody notes db list`
-
----
-
-### `search`
-
-**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search`
-
-Search database records
-
-```typescript
-client.notes.databases.search(notebookId: string, databaseId: string, options?: { q?: string; exclude?: string }): Promise<NotesDatabasesSearchResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `q` | `string` | No | query |  |
-| `exclude` | `string` | No | query |  |
-
-**Returns:** `NotesDatabasesSearchResponse`
-
-**CLI:** `hoody notes db search`
-
----
-
-### `update`
-
-**PATCH** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
-
-Update a database record
-
-```typescript
-client.notes.databases.update(notebookId: string, databaseId: string, recordId: string, data: NotesDatabasesUpdateRequest): Promise<NotesDatabasesUpdateResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `databaseId` | `string` | Yes | path |  |
-| `recordId` | `string` | Yes | path |  |
-| `data` | `NotesDatabasesUpdateRequest` | Yes | body |  |
-
-**Returns:** `NotesDatabasesUpdateResponse`
-
-**CLI:** `hoody notes db update`
-
----
-
-## `client.notes.documents` (6 methods)
-
-### `appendDocument`
-
-**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`
-
-Append blocks to a document
-
-```typescript
-client.notes.documents.appendDocument(notebookId: string, nodeId: string, data: NotesAppendDocumentRequest, options?: { XIdempotencyKey?: string }): Promise<NotesAppendDocumentResponse>
+client.notes.comments.setAnchor(notebookId: string, nodeId: string, commentId: string, data: NotesCommentsSetAnchorRequest): Promise<NotesCommentsSetAnchorResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
-| `data` | `NotesAppendDocumentRequest` | Yes | body |  |
-| `XIdempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
+| `commentId` | `string` | Yes | path |  |
+| `data` | `NotesCommentsSetAnchorRequest` | Yes | body |  |
 
-**Returns:** `NotesAppendDocumentResponse`
+**Returns:** `NotesCommentsSetAnchorResponse`
+
+**CLI:** `hoody notes comments anchor set`
+
+---
+
+### `update`
+
+**PATCH** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/comments/{commentId}`
+
+Edit a comment
+
+```typescript
+client.notes.comments.update(notebookId: string, nodeId: string, commentId: string, data: NotesCommentsUpdateRequest): Promise<NotesCommentsUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `commentId` | `string` | Yes | path |  |
+| `data` | `NotesCommentsUpdateRequest` | Yes | body |  |
+
+**Returns:** `NotesCommentsUpdateResponse`
+
+**CLI:** `hoody notes comments update`
+
+---
+
+## `client.notes.document` (6 methods)
+
+### `append`
+
+**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document/append`
+
+Append blocks to a document
+
+```typescript
+client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { XIdempotencyKey?: string; cache?: boolean | number }): Promise<NotesDocumentAppendResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `data` | `NotesDocumentAppendRequest` | Yes | body |  |
+| `XIdempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `NotesDocumentAppendResponse`
+
+**CLI:** `hoody notes document append`
 
 ---
 
@@ -514,27 +433,29 @@ client.notes.documents.appendDocument(notebookId: string, nodeId: string, data: 
 Create secure HTML export ticket
 
 ```typescript
-client.notes.documents.createExportTicket(notebookId: string, nodeId: string, data: NotesDocumentsCreateExportTicketRequest): Promise<NotesDocumentsCreateExportTicketResponse>
+client.notes.document.createExportTicket(notebookId: string, nodeId: string, data: NotesDocumentCreateExportTicketRequest): Promise<NotesDocumentCreateExportTicketResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
-| `data` | `NotesDocumentsCreateExportTicketRequest` | Yes | body |  |
+| `data` | `NotesDocumentCreateExportTicketRequest` | Yes | body |  |
 
-**Returns:** `NotesDocumentsCreateExportTicketResponse`
+**Returns:** `NotesDocumentCreateExportTicketResponse`
+
+**CLI:** `hoody notes document tickets create`
 
 ---
 
-### `exportBlockSvg`
+### `exportBlock`
 
 **GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/blocks/{blockId}/svg`
 
 Export drawing block as SVG
 
 ```typescript
-client.notes.documents.exportBlockSvg(notebookId: string, nodeId: string, blockId: string, options?: { bg?: string; scale?: number }): Promise<ApiResponse<unknown>>
+client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: string, options?: { bg?: string; scale?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -544,8 +465,11 @@ client.notes.documents.exportBlockSvg(notebookId: string, nodeId: string, blockI
 | `blockId` | `string` | Yes | path |  |
 | `bg` | `string` | No | query |  |
 | `scale` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `ApiResponse<ArrayBuffer>`
+
+**CLI:** `hoody notes document blocks export`
 
 ---
 
@@ -556,7 +480,7 @@ client.notes.documents.exportBlockSvg(notebookId: string, nodeId: string, blockI
 Get document content
 
 ```typescript
-client.notes.documents.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string }): Promise<NotesDocumentsGetResponse>
+client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; cache?: boolean | number }): Promise<NotesDocumentGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -568,58 +492,59 @@ client.notes.documents.get(notebookId: string, nodeId: string, options?: { block
 | `output` | `"json" \| "md" \| "html"` | No | query |  |
 | `includeComments` | `"none" \| "appendix"` | No | query |  |
 | `ticket` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `NotesDocumentsGetResponse`
+**Returns:** `NotesDocumentGetResponse`
 
-**CLI:** `hoody notes doc get`
-
----
-
-### `patch`
-
-**PATCH** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`
-
-Merge document content
-
-```typescript
-client.notes.documents.patch(notebookId: string, nodeId: string, data: NotesDocumentsPatchRequest): Promise<NotesDocumentsPatchResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `nodeId` | `string` | Yes | path |  |
-| `data` | `NotesDocumentsPatchRequest` | Yes | body |  |
-
-**Returns:** `NotesDocumentsPatchResponse`
-
-**CLI:** `hoody notes doc patch`
+**CLI:** `hoody notes document get`
 
 ---
 
-### `put`
+### `set`
 
 **PUT** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`
 
 Create or replace document
 
 ```typescript
-client.notes.documents.put(notebookId: string, nodeId: string, data: NotesDocumentsPutRequest): Promise<NotesDocumentsPutResponse>
+client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest): Promise<NotesDocumentSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
-| `data` | `NotesDocumentsPutRequest` | Yes | body |  |
+| `data` | `NotesDocumentSetRequest` | Yes | body |  |
 
-**Returns:** `NotesDocumentsPutResponse`
+**Returns:** `NotesDocumentSetResponse`
 
-**CLI:** `hoody notes doc put`
+**CLI:** `hoody notes document set`
 
 ---
 
-## `client.notes.files` (8 methods)
+### `update`
+
+**PATCH** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`
+
+Merge document content
+
+```typescript
+client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest): Promise<NotesDocumentUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `data` | `NotesDocumentUpdateRequest` | Yes | body |  |
+
+**Returns:** `NotesDocumentUpdateResponse`
+
+**CLI:** `hoody notes document update`
+
+---
+
+## `client.notes.files` (4 methods)
 
 ### `download`
 
@@ -628,17 +553,17 @@ client.notes.documents.put(notebookId: string, nodeId: string, data: NotesDocume
 Download a file
 
 ```typescript
-client.notes.files.download(fileId: string, notebookId: string): Promise<ApiResponse<unknown>>
+client.notes.files.download(notebookId: string, fileId: string): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `fileId` | `string` | Yes | path |  |
 | `notebookId` | `string` | Yes | path |  |
+| `fileId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `ApiResponse<ArrayBuffer>`
 
-**CLI:** `hoody notes file download`
+**CLI:** `hoody notes files download`
 
 ---
 
@@ -649,7 +574,7 @@ client.notes.files.download(fileId: string, notebookId: string): Promise<ApiResp
 List all uploaded files
 
 ```typescript
-client.notes.files.list(notebookId: string, options?: { limit?: number; offset?: number }): Promise<NotesFilesListResponse>
+client.notes.files.list(notebookId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesFilesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -657,10 +582,11 @@ client.notes.files.list(notebookId: string, options?: { limit?: number; offset?:
 | `notebookId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesFilesListResponse`
 
-**CLI:** `hoody notes file list`
+**CLI:** `hoody notes files list`
 
 ---
 
@@ -671,7 +597,7 @@ client.notes.files.list(notebookId: string, options?: { limit?: number; offset?:
 List all uploaded files (collect all pages)
 
 ```typescript
-client.notes.files.listAll(notebookId: string, options?: { limit?: number; offset?: number }): Promise<unknown[]>
+client.notes.files.listAll(notebookId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -679,10 +605,9 @@ client.notes.files.listAll(notebookId: string, options?: { limit?: number; offse
 | `notebookId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
-
-**CLI:** `hoody notes file list`
 
 ---
 
@@ -693,7 +618,7 @@ client.notes.files.listAll(notebookId: string, options?: { limit?: number; offse
 List all uploaded files (async iterator)
 
 ```typescript
-client.notes.files.listIterator(notebookId: string, options?: { limit?: number; offset?: number }): AsyncIterableIterator<unknown>
+client.notes.files.listIterator(notebookId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -701,162 +626,162 @@ client.notes.files.listIterator(notebookId: string, options?: { limit?: number; 
 | `notebookId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
-**CLI:** `hoody notes file list`
-
 ---
 
-### `tusAbortUpload`
+## `client.notes.files.uploads` (4 methods)
+
+### `cancel`
 
 **DELETE** `/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`
 
 Abort a TUS upload
 
 ```typescript
-client.notes.files.tusAbortUpload(notebookId: string, fileId: string): Promise<ApiResponse<unknown>>
+client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: { TusResumable: "1.0.0"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
+| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
 ---
 
-### `tusCheckUpload`
-
-**HEAD** `/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`
-
-Check a TUS upload's offset (for resuming)
-
-```typescript
-client.notes.files.tusCheckUpload(notebookId: string, fileId: string): Promise<ApiResponse<unknown>>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `fileId` | `string` | Yes | path |  |
-
-**Returns:** `ApiResponse<unknown>`
-
----
-
-### `tusCreateUpload`
+### `create`
 
 **POST** `/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`
 
 Create a resumable (TUS) upload
 
 ```typescript
-client.notes.files.tusCreateUpload(notebookId: string, fileId: string): Promise<ApiResponse<unknown>>
+client.notes.files.uploads.create(notebookId: string, fileId: string, options: { TusResumable: "1.0.0"; UploadLength: number; UploadMetadata?: string; cache?: boolean | number }): Promise<NotesFilesUploadsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
+| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
+| `UploadLength` | `number` | Yes | header | Total size of the file in bytes. Must equal the file node's `size` (set when the node was created), which must not exceed the notebook's maximum file size. Upload-Defer-Length is not supported. |
+| `UploadMetadata` | `string` | No | header | Optional TUS metadata: comma-separated `key base64(value)` pairs. |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `NotesFilesUploadsCreateResponse`
 
 ---
 
-### `tusUploadChunk`
+### `getOffset`
+
+**HEAD** `/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`
+
+Check a TUS upload's offset (for resuming)
+
+```typescript
+client.notes.files.uploads.getOffset(options: { notebookId: string; fileId: string; TusResumable: string }): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `fileId` | `string` | Yes | path |  |
+| `TusResumable` | `string` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
+
+**Returns:** `any`
+
+---
+
+### `writeChunk`
 
 **PATCH** `/api/v1/notes/notebooks/{notebookId}/files/{fileId}/tus`
 
 Upload a chunk to a TUS upload
 
 ```typescript
-client.notes.files.tusUploadChunk(notebookId: string, fileId: string): Promise<ApiResponse<unknown>>
+client.notes.files.uploads.writeChunk(notebookId: string, fileId: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { TusResumable: "1.0.0"; UploadOffset: number; cache?: boolean | number; contentType?: 'application/offset+octet-stream' }): Promise<NotesFilesUploadsWriteChunkResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
+| `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
+| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
+| `UploadOffset` | `number` | Yes | header | Offset this chunk starts at — the value the HEAD check (or the previous chunk) returned. |
+| `cache` | `boolean \| number` | No | query |  |
+| `contentType` | `'application/offset+octet-stream'` | No | query |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `NotesFilesUploadsWriteChunkResponse`
 
 ---
 
-## `client.notes.health` (1 method)
+## `client.notes.kit` (1 method)
 
-### `check`
+### `getHealth`
 
 **GET** `/api/v1/notes/health`
 
 Service health and runtime info
 
 ```typescript
-client.notes.health.check(): Promise<NotesHealthCheckResponse>
+client.notes.kit.getHealth(): Promise<NotesKitGetHealthResponse>
 ```
 
-**Returns:** `NotesHealthCheckResponse`
+**Returns:** `NotesKitGetHealthResponse`
+
+**CLI:** `hoody notes health`
 
 ---
 
-## `client.notes.identity` (1 method)
+## `client.notes.members` (2 methods)
 
-### `get`
+### `invite`
 
-**GET** `/api/v1/notes/me`
+**POST** `/api/v1/notes/notebooks/{notebookId}/users`
 
-Get current identity
-
-```typescript
-client.notes.identity.get(): Promise<ApiResponse<unknown>>
-```
-
-**Returns:** `ApiResponse<unknown>`
-
-**CLI:** `hoody notes whoami`
-
----
-
-## `client.notes.interactions` (2 methods)
-
-### `markOpened`
-
-**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened`
-
-Mark node as opened
+Invite users to notebook
 
 ```typescript
-client.notes.interactions.markOpened(notebookId: string, nodeId: string, data: NotesInteractionsMarkOpenedRequest): Promise<NotesInteractionsMarkOpenedResponse>
+client.notes.members.invite(notebookId: string, data: NotesMembersInviteRequest): Promise<NotesMembersInviteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
-| `nodeId` | `string` | Yes | path |  |
-| `data` | `NotesInteractionsMarkOpenedRequest` | Yes | body |  |
+| `data` | `NotesMembersInviteRequest` | Yes | body |  |
 
-**Returns:** `NotesInteractionsMarkOpenedResponse`
+**Returns:** `NotesMembersInviteResponse`
+
+**CLI:** `hoody notes members invite`
 
 ---
 
-### `markSeen`
+### `setRole`
 
-**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen`
+**PATCH** `/api/v1/notes/notebooks/{notebookId}/users/{userId}/role`
 
-Mark node as seen
+Update user role
 
 ```typescript
-client.notes.interactions.markSeen(notebookId: string, nodeId: string, data: NotesInteractionsMarkSeenRequest): Promise<NotesInteractionsMarkSeenResponse>
+client.notes.members.setRole(notebookId: string, userId: string, data: NotesMembersSetRoleRequest): Promise<NotesMembersSetRoleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
-| `nodeId` | `string` | Yes | path |  |
-| `data` | `NotesInteractionsMarkSeenRequest` | Yes | body |  |
+| `userId` | `string` | Yes | path |  |
+| `data` | `NotesMembersSetRoleRequest` | Yes | body |  |
 
-**Returns:** `NotesInteractionsMarkSeenResponse`
+**Returns:** `NotesMembersSetRoleResponse`
+
+**CLI:** `hoody notes members role set`
 
 ---
 
@@ -869,7 +794,7 @@ client.notes.interactions.markSeen(notebookId: string, nodeId: string, data: Not
 Sync client mutations
 
 ```typescript
-client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest): Promise<ApiResponse<unknown>>
+client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest): Promise<NotesMutationsSyncResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -877,11 +802,11 @@ client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest)
 | `notebookId` | `string` | Yes | path |  |
 | `data` | `NotesMutationsSyncRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `NotesMutationsSyncResponse`
 
 ---
 
-## `client.notes.nodes` (7 methods)
+## `client.notes.nodes` (13 methods)
 
 ### `create`
 
@@ -900,7 +825,7 @@ client.notes.nodes.create(notebookId: string, data: NotesNodesCreateRequest): Pr
 
 **Returns:** `NotesNodesCreateResponse`
 
-**CLI:** `hoody notes node create`
+**CLI:** `hoody notes nodes create`
 
 ---
 
@@ -921,7 +846,7 @@ client.notes.nodes.delete(notebookId: string, nodeId: string): Promise<NotesNode
 
 **Returns:** `NotesNodesDeleteResponse`
 
-**CLI:** `hoody notes node delete`
+**CLI:** `hoody notes nodes delete`
 
 ---
 
@@ -942,28 +867,7 @@ client.notes.nodes.get(notebookId: string, nodeId: string): Promise<NotesNodesGe
 
 **Returns:** `NotesNodesGetResponse`
 
-**CLI:** `hoody notes node get`
-
----
-
-### `getByAlias`
-
-**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/alias/{alias}`
-
-Resolve page by alias
-
-```typescript
-client.notes.nodes.getByAlias(notebookId: string, alias: string): Promise<NotesNodesGetByAliasResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `alias` | `string` | Yes | path |  |
-
-**Returns:** `NotesNodesGetByAliasResponse`
-
-**CLI:** `hoody notes node get-by-alias`
+**CLI:** `hoody notes nodes get`
 
 ---
 
@@ -974,7 +878,7 @@ client.notes.nodes.getByAlias(notebookId: string, alias: string): Promise<NotesN
 List nodes
 
 ```typescript
-client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number }): Promise<NotesNodesListResponse>
+client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesNodesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -985,10 +889,35 @@ client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?
 | `rootId` | `string` | No | query |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesNodesListResponse`
 
-**CLI:** `hoody notes node list`
+**CLI:** `hoody notes nodes list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes`
+
+List nodes (collect all pages)
+
+```typescript
+client.notes.nodes.listAll(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `type` | `string` | No | query |  |
+| `parentId` | `string` | No | query |  |
+| `rootId` | `string` | No | query |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `unknown[]`
 
 ---
 
@@ -999,7 +928,7 @@ client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?
 List child nodes
 
 ```typescript
-client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<NotesNodesListChildrenResponse>
+client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesNodesListChildrenResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1008,10 +937,144 @@ client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { 
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesNodesListChildrenResponse`
 
-**CLI:** `hoody notes node children`
+**CLI:** `hoody notes nodes children list`
+
+---
+
+### `listChildrenAll`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/children`
+
+List child nodes (collect all pages)
+
+```typescript
+client.notes.nodes.listChildrenAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listChildrenIterator`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/children`
+
+List child nodes (async iterator)
+
+```typescript
+client.notes.nodes.listChildrenIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes`
+
+List nodes (async iterator)
+
+```typescript
+client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `type` | `string` | No | query |  |
+| `parentId` | `string` | No | query |  |
+| `rootId` | `string` | No | query |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `markOpened`
+
+**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/opened`
+
+Mark node as opened
+
+```typescript
+client.notes.nodes.markOpened(notebookId: string, nodeId: string, data: NotesNodesMarkOpenedRequest): Promise<NotesNodesMarkOpenedResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `data` | `NotesNodesMarkOpenedRequest` | Yes | body |  |
+
+**Returns:** `NotesNodesMarkOpenedResponse`
+
+**CLI:** `hoody notes nodes mark opened`
+
+---
+
+### `markSeen`
+
+**POST** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/interactions/seen`
+
+Mark node as seen
+
+```typescript
+client.notes.nodes.markSeen(notebookId: string, nodeId: string, data: NotesNodesMarkSeenRequest): Promise<NotesNodesMarkSeenResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `data` | `NotesNodesMarkSeenRequest` | Yes | body |  |
+
+**Returns:** `NotesNodesMarkSeenResponse`
+
+**CLI:** `hoody notes nodes mark seen`
+
+---
+
+### `resolve`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/alias/{alias}`
+
+Resolve page by alias
+
+```typescript
+client.notes.nodes.resolve(notebookId: string, alias: string): Promise<NotesNodesResolveResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `alias` | `string` | Yes | path |  |
+
+**Returns:** `NotesNodesResolveResponse`
+
+**CLI:** `hoody notes nodes resolve`
 
 ---
 
@@ -1033,7 +1096,7 @@ client.notes.nodes.update(notebookId: string, nodeId: string, data: NotesNodesUp
 
 **Returns:** `NotesNodesUpdateResponse`
 
-**CLI:** `hoody notes node update`
+**CLI:** `hoody notes nodes update`
 
 ---
 
@@ -1055,7 +1118,7 @@ client.notes.notebooks.create(data: NotesNotebooksCreateRequest): Promise<NotesN
 
 **Returns:** `NotesNotebooksCreateResponse`
 
-**CLI:** `hoody notes notebook create`
+**CLI:** `hoody notes notebooks create`
 
 ---
 
@@ -1075,7 +1138,7 @@ client.notes.notebooks.delete(notebookId: string): Promise<NotesNotebooksDeleteR
 
 **Returns:** `NotesNotebooksDeleteResponse`
 
-**CLI:** `hoody notes notebook delete`
+**CLI:** `hoody notes notebooks delete`
 
 ---
 
@@ -1095,23 +1158,23 @@ client.notes.notebooks.get(notebookId: string): Promise<NotesNotebooksGetRespons
 
 **Returns:** `NotesNotebooksGetResponse`
 
-**CLI:** `hoody notes notebook get`
+**CLI:** `hoody notes notebooks get`
 
 ---
 
-### `listNotebooks`
+### `list`
 
 **GET** `/api/v1/notes/notebooks`
 
 List notebooks
 
 ```typescript
-client.notes.notebooks.listNotebooks(): Promise<NotesListNotebooksResponse>
+client.notes.notebooks.list(): Promise<NotesNotebooksListResponse>
 ```
 
-**Returns:** `NotesListNotebooksResponse`
+**Returns:** `NotesNotebooksListResponse`
 
-**CLI:** `hoody notes notebook list`
+**CLI:** `hoody notes notebooks list`
 
 ---
 
@@ -1132,7 +1195,25 @@ client.notes.notebooks.update(notebookId: string, data: NotesNotebooksUpdateRequ
 
 **Returns:** `NotesNotebooksUpdateResponse`
 
-**CLI:** `hoody notes notebook update`
+**CLI:** `hoody notes notebooks update`
+
+---
+
+## `client.notes` (1 method)
+
+### `whoami`
+
+**GET** `/api/v1/notes/me`
+
+Get current identity
+
+```typescript
+client.notes.whoami(): Promise<NotesWhoamiResponse>
+```
+
+**Returns:** `NotesWhoamiResponse`
+
+**CLI:** `hoody notes whoami`
 
 ---
 
@@ -1156,7 +1237,7 @@ client.notes.reactions.add(notebookId: string, nodeId: string, data: NotesReacti
 
 **Returns:** `NotesReactionsAddResponse`
 
-**CLI:** `hoody notes reaction add`
+**CLI:** `hoody notes reactions add`
 
 ---
 
@@ -1177,7 +1258,7 @@ client.notes.reactions.list(notebookId: string, nodeId: string): Promise<NotesRe
 
 **Returns:** `NotesReactionsListResponse`
 
-**CLI:** `hoody notes reaction list`
+**CLI:** `hoody notes reactions list`
 
 ---
 
@@ -1199,88 +1280,234 @@ client.notes.reactions.remove(notebookId: string, nodeId: string, reaction: stri
 
 **Returns:** `NotesReactionsRemoveResponse`
 
-**CLI:** `hoody notes reaction remove`
+**CLI:** `hoody notes reactions remove`
+
+---
+
+## `client.notes.records` (8 methods)
+
+### `create`
+
+**POST** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
+
+Create a database record
+
+```typescript
+client.notes.records.create(notebookId: string, databaseId: string, data: NotesRecordsCreateRequest): Promise<NotesRecordsCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `data` | `NotesRecordsCreateRequest` | Yes | body |  |
+
+**Returns:** `NotesRecordsCreateResponse`
+
+**CLI:** `hoody notes records create`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
+
+Delete a database record
+
+```typescript
+client.notes.records.delete(notebookId: string, databaseId: string, recordId: string): Promise<NotesRecordsDeleteResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `recordId` | `string` | Yes | path |  |
+
+**Returns:** `NotesRecordsDeleteResponse`
+
+**CLI:** `hoody notes records delete`
+
+---
+
+### `get`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
+
+Get a database record
+
+```typescript
+client.notes.records.get(notebookId: string, databaseId: string, recordId: string): Promise<NotesRecordsGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `recordId` | `string` | Yes | path |  |
+
+**Returns:** `NotesRecordsGetResponse`
+
+**CLI:** `hoody notes records get`
+
+---
+
+### `list`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
+
+List database records
+
+```typescript
+client.notes.records.list(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number; cache?: boolean | number }): Promise<NotesRecordsListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `filters` | `string` | No | query |  |
+| `sorts` | `string` | No | query |  |
+| `page` | `number` | No | query |  |
+| `count` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `NotesRecordsListResponse`
+
+**CLI:** `hoody notes records list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
+
+List database records (collect all pages)
+
+```typescript
+client.notes.records.listAll(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number; cache?: boolean | number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `filters` | `string` | No | query |  |
+| `sorts` | `string` | No | query |  |
+| `page` | `number` | No | query |  |
+| `count` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
+
+List database records (async iterator)
+
+```typescript
+client.notes.records.listIterator(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `filters` | `string` | No | query |  |
+| `sorts` | `string` | No | query |  |
+| `page` | `number` | No | query |  |
+| `count` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `search`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/search`
+
+Search database records
+
+```typescript
+client.notes.records.search(notebookId: string, databaseId: string, options?: { q?: string; exclude?: string; cache?: boolean | number }): Promise<NotesRecordsSearchResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `q` | `string` | No | query |  |
+| `exclude` | `string` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `NotesRecordsSearchResponse`
+
+**CLI:** `hoody notes records search`
+
+---
+
+### `update`
+
+**PATCH** `/api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
+
+Update a database record
+
+```typescript
+client.notes.records.update(notebookId: string, databaseId: string, recordId: string, data: NotesRecordsUpdateRequest): Promise<NotesRecordsUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `databaseId` | `string` | Yes | path |  |
+| `recordId` | `string` | Yes | path |  |
+| `data` | `NotesRecordsUpdateRequest` | Yes | body |  |
+
+**Returns:** `NotesRecordsUpdateResponse`
+
+**CLI:** `hoody notes records update`
 
 ---
 
 ## `client.notes.sockets` (2 methods)
 
-### `init`
-
-**POST** `/api/v1/notes/sockets`
-
-Initialize a WebSocket session
-
-```typescript
-client.notes.sockets.init(): Promise<NotesSocketsInitResponse>
-```
-
-**Returns:** `NotesSocketsInitResponse`
-
----
-
-### `open`
+### `connect`
 
 **GET** `/api/v1/notes/sockets/{socketId}`
 
 Open a WebSocket connection
 
 ```typescript
-client.notes.sockets.open(socketId: string): Promise<ApiResponse<unknown>>
+client.notes.sockets.connect(socketId: string): Promise<NotesOpenSocketWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `socketId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `NotesOpenSocketWebSocket`
 
 ---
 
-## `client.notes.users` (2 methods)
+### `create`
 
-### `invite`
+**POST** `/api/v1/notes/sockets`
 
-**POST** `/api/v1/notes/notebooks/{notebookId}/users`
-
-Invite users to notebook
+Initialize a WebSocket session
 
 ```typescript
-client.notes.users.invite(notebookId: string, data: NotesUsersInviteRequest): Promise<NotesUsersInviteResponse>
+client.notes.sockets.create(): Promise<NotesSocketsCreateResponse>
 ```
 
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `data` | `NotesUsersInviteRequest` | Yes | body |  |
-
-**Returns:** `NotesUsersInviteResponse`
+**Returns:** `NotesSocketsCreateResponse`
 
 ---
 
-### `updateRole`
-
-**PATCH** `/api/v1/notes/notebooks/{notebookId}/users/{userId}/role`
-
-Update user role
-
-```typescript
-client.notes.users.updateRole(notebookId: string, userId: string, data: NotesUsersUpdateRoleRequest): Promise<NotesUsersUpdateRoleResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `notebookId` | `string` | Yes | path |  |
-| `userId` | `string` | Yes | path |  |
-| `data` | `NotesUsersUpdateRoleRequest` | Yes | body |  |
-
-**Returns:** `NotesUsersUpdateRoleResponse`
-
-**CLI:** `hoody notes user set-role`
-
----
-
-## `client.notes.versions` (5 methods)
+## `client.notes.versions` (7 methods)
 
 ### `create`
 
@@ -1299,7 +1526,7 @@ client.notes.versions.create(notebookId: string, nodeId: string): Promise<NotesV
 
 **Returns:** `NotesVersionsCreateResponse`
 
-**CLI:** `hoody notes version create`
+**CLI:** `hoody notes versions create`
 
 ---
 
@@ -1321,7 +1548,7 @@ client.notes.versions.delete(notebookId: string, nodeId: string, versionId: stri
 
 **Returns:** `NotesVersionsDeleteResponse`
 
-**CLI:** `hoody notes version delete`
+**CLI:** `hoody notes versions delete`
 
 ---
 
@@ -1343,7 +1570,7 @@ client.notes.versions.get(notebookId: string, nodeId: string, versionId: string)
 
 **Returns:** `NotesVersionsGetResponse`
 
-**CLI:** `hoody notes version get`
+**CLI:** `hoody notes versions get`
 
 ---
 
@@ -1354,7 +1581,7 @@ client.notes.versions.get(notebookId: string, nodeId: string, versionId: string)
 List document versions
 
 ```typescript
-client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<NotesVersionsListResponse>
+client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesVersionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1363,10 +1590,55 @@ client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesVersionsListResponse`
 
-**CLI:** `hoody notes version list`
+**CLI:** `hoody notes versions list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`
+
+List document versions (collect all pages)
+
+```typescript
+client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/versions`
+
+List document versions (async iterator)
+
+```typescript
+client.notes.versions.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `notebookId` | `string` | Yes | path |  |
+| `nodeId` | `string` | Yes | path |  |
+| `limit` | `number` | No | query |  |
+| `offset` | `number` | No | query |  |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
 
 ---
 
@@ -1388,7 +1660,7 @@ client.notes.versions.restore(notebookId: string, nodeId: string, versionId: str
 
 **Returns:** `NotesVersionsRestoreResponse`
 
-**CLI:** `hoody notes version restore`
+**CLI:** `hoody notes versions restore`
 
 ---
 

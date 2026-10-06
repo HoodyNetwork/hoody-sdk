@@ -1,6 +1,6 @@
 # `curl` — 31 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.curl`
 
 ```typescript
@@ -9,114 +9,16 @@ import * as curl from 'hoody-sdk/curl';
 
 ---
 
-## `client.curl` (2 methods)
+## `client.curl.channel` (1 method)
 
-### `execute`
-
-**POST** `/api/v1/curl/request`
-
-Execute HTTP request with full cURL capabilities
-
-```typescript
-client.curl.execute(data: CurlExecuteRequest): Promise<CurlExecuteResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `data` | `CurlExecuteRequest` | Yes | body |  |
-
-**Returns:** `CurlExecuteResponse`
-
-**CLI:** `hoody curl exec`
-
----
-
-### `executeCurlRequestGet`
-
-**GET** `/api/v1/curl/request`
-
-Execute simple HTTP request via query parameters
-
-```typescript
-client.curl.executeCurlRequestGet(options?: { url: string; method?: string; response?: string; mode?: string; session_id?: string; follow_redirects?: boolean; timeout?: number; user_agent?: string; referer?: string; bearer_token?: string; save?: boolean; save_path?: string; insecure?: boolean; compressed?: boolean; job_name?: string; data?: string; json?: string; header?: string[]; data_base64?: string }): Promise<ExecuteCurlRequestGetResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `url` | `string` | Yes | query | Target URL (required) |
-| `method` | `string` | No | query | HTTP method (default: GET) |
-| `response` | `string` | No | query | Response mode: transparent or json (default: json) |
-| `mode` | `string` | No | query | Execution mode: sync or async (default: sync) |
-| `session_id` | `string` | No | query | Session ID for cookie persistence |
-| `follow_redirects` | `boolean` | No | query | Follow redirects (default: true) |
-| `timeout` | `number` | No | query | Timeout in seconds |
-| `user_agent` | `string` | No | query | User-Agent header |
-| `referer` | `string` | No | query | Referer header |
-| `bearer_token` | `string` | No | query | Bearer token |
-| `save` | `boolean` | No | query | Save to storage |
-| `save_path` | `string` | No | query | Custom save path, relative to downloads/by-job/{job_id} (no absolute paths or `..`) |
-| `insecure` | `boolean` | No | query | Allow insecure SSL |
-| `compressed` | `boolean` | No | query | Request compressed |
-| `job_name` | `string` | No | query | Job name for async |
-| `data` | `string` | No | query | Raw request body (curl --data); alias `body`; presence upgrades default method to POST |
-| `json` | `string` | No | query | JSON request body, sent with Content-Type: application/json (curl --json); upgrades default method to POST |
-| `header` | `string[]` | No | query | Custom header as `Name: Value`. Repeatable — supply once per header |
-| `data_base64` | `string` | No | query | Base64 request body (binary-safe; standard or URL-safe); alias `body_base64`. Takes precedence over data/json; upgrades default method to POST |
-
-**Returns:** `ExecuteCurlRequestGetResponse`
-
-**CLI:** `hoody curl get-url`
-
----
-
-## `client.curl.events` (3 methods)
-
-### `sseJobEvents`
-
-**GET** `/api/v1/curl/sse`
-
-Subscribe to job events over Server-Sent Events
-
-```typescript
-client.curl.events.sseJobEvents(options?: { job_id?: string }): Promise<ApiResponse<unknown>>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `job_id` | `string` | No | query | Optional job ID filter |
-
-**Returns:** `ApiResponse<unknown>`
-
----
-
-### `streamWs`
-
-**GET** `/api/v1/curl/ws`
-
-Subscribe to job events over WebSocket
-
-```typescript
-client.curl.events.streamWs(options?: { job_id?: string }): Promise<CurlWsJobEventsWebSocket>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `job_id` | `string` | No | query | Optional job ID filter |
-
-**Returns:** `CurlWsJobEventsWebSocket`
-
-**CLI:** `hoody curl jobs events`
-
----
-
-### `wsRequestChannel`
+### `connect`
 
 **GET** `/api/v1/curl/channel`
 
 Execute cURL requests over a WebSocket channel
 
 ```typescript
-client.curl.events.wsRequestChannel(options?: { max_concurrent?: number; max_concurrent_streams?: number; max_pool?: number; max_queue?: number; max_frame_bytes?: number; max_request_bytes?: number; chunk_bytes?: number; stream_timeout_secs?: number; idle_timeout_secs?: number; max_outbound_messages?: number }): Promise<CurlWsRequestChannelWebSocket>
+client.curl.channel.connect(options?: { max_concurrent?: number; max_concurrent_streams?: number; max_pool?: number; max_queue?: number; max_frame_bytes?: number; max_request_bytes?: number; chunk_bytes?: number; stream_timeout_secs?: number; idle_timeout_secs?: number; max_outbound_messages?: number; binary?: boolean }): void
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -131,48 +33,92 @@ client.curl.events.wsRequestChannel(options?: { max_concurrent?: number; max_con
 | `stream_timeout_secs` | `number` | No | query | Per-stream execution timeout in seconds |
 | `idle_timeout_secs` | `number` | No | query | Idle channel timeout in seconds |
 | `max_outbound_messages` | `number` | No | query | Maximum queued outbound channel messages |
+| `binary` | `boolean` | No | query | `true` negotiates binary frames: response bodies arrive as binary BODY frames and request.start may set binary_body (see x-async-api x-binary-frames). Default false |
 
-**Returns:** `CurlWsRequestChannelWebSocket`
+**Returns:** `void`
 
 ---
 
-## `client.curl.health` (1 method)
+## `client.curl` (1 method)
 
-### `check`
+### `run`
 
-**GET** `/api/v1/curl/health`
+**POST** `/api/v1/curl/request`
 
-Service health check
+Execute HTTP request with full cURL capabilities
 
 ```typescript
-client.curl.health.check(): Promise<BrowserHealthCheckResponse>
+client.curl.run(data: CurlRunRequest): Promise<CurlRunResponse>
 ```
 
-**Returns:** `BrowserHealthCheckResponse`
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `CurlRunRequest` | Yes | body |  |
 
-**CLI:** `hoody curl health`
+**Returns:** `CurlRunResponse`
+
+**CLI:** `hoody curl run`
 
 ---
 
-## `client.curl.jobs` (6 methods)
+## `client.curl.jobs` (9 methods)
 
 ### `cancel`
 
 **DELETE** `/api/v1/curl/jobs/{id}`
 
-Cancel a pending or running job
+Cancel a pending or running job, or delete a finished one
 
 ```typescript
-client.curl.jobs.cancel(id: string): Promise<ApiResponse<unknown>>
+client.curl.jobs.cancel(id: string): Promise<curl_CurlJobDeleteResult>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique job identifier (UUID format) |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `curl_CurlJobDeleteResult`
 
 **CLI:** `hoody curl jobs cancel`
+
+---
+
+### `connect`
+
+**GET** `/api/v1/curl/ws`
+
+Subscribe to job events over WebSocket
+
+```typescript
+client.curl.jobs.connect(options?: { job_id?: string; cache?: boolean | number }): Promise<CurlWsJobEventsWebSocket>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `job_id` | `string` | No | query | Optional job ID filter |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `CurlWsJobEventsWebSocket`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/curl/jobs/{id}`
+
+Cancel a pending or running job, or delete a finished one
+
+```typescript
+client.curl.jobs.delete(id: string): Promise<curl_CurlJobDeleteResult>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Unique job identifier (UUID format) |
+
+**Returns:** `curl_CurlJobDeleteResult`
+
+**CLI:** `hoody curl jobs delete`
 
 ---
 
@@ -212,7 +158,7 @@ client.curl.jobs.getResult(id: string): Promise<ApiResponse<unknown>>
 
 **Returns:** `ApiResponse<unknown>`
 
-**CLI:** `hoody curl jobs result`
+**CLI:** `hoody curl jobs result get`
 
 ---
 
@@ -223,13 +169,14 @@ client.curl.jobs.getResult(id: string): Promise<ApiResponse<unknown>>
 List all async jobs
 
 ```typescript
-client.curl.jobs.list(options?: { page?: number; limit?: number }): Promise<CurlJobsListResponse>
+client.curl.jobs.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlJobsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlJobsListResponse`
 
@@ -244,17 +191,16 @@ client.curl.jobs.list(options?: { page?: number; limit?: number }): Promise<Curl
 List all async jobs (collect all pages)
 
 ```typescript
-client.curl.jobs.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
+client.curl.jobs.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
-
-**CLI:** `hoody curl jobs list`
 
 ---
 
@@ -265,33 +211,69 @@ client.curl.jobs.listAll(options?: { page?: number; limit?: number }): Promise<u
 List all async jobs (async iterator)
 
 ```typescript
-client.curl.jobs.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
+client.curl.jobs.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
-**CLI:** `hoody curl jobs list`
+---
+
+### `stream`
+
+**GET** `/api/v1/curl/sse`
+
+Subscribe to job events over Server-Sent Events
+
+```typescript
+client.curl.jobs.stream(options?: { job_id?: string; cache?: boolean | number }): Promise<IEventStream>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `job_id` | `string` | No | query | Optional job ID filter |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `IEventStream`
+
+**CLI:** `hoody curl jobs stream`
 
 ---
 
-## `client.curl.ops` (1 method)
+## `client.curl.kit` (2 methods)
 
-### `metrics`
+### `getHealth`
+
+**GET** `/api/v1/curl/health`
+
+Service health check
+
+```typescript
+client.curl.kit.getHealth(): Promise<ApiResponse<unknown>>
+```
+
+**Returns:** `ApiResponse<unknown>`
+
+**CLI:** `hoody curl health`
+
+---
+
+### `getMetrics`
 
 **GET** `/metrics`
 
 Prometheus metrics
 
 ```typescript
-client.curl.ops.metrics(): Promise<ApiResponse<unknown>>
+client.curl.kit.getMetrics(): Promise<ApiResponse<string>>
 ```
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `ApiResponse<string>`
 
 **CLI:** `hoody curl metrics`
 
@@ -366,13 +348,14 @@ client.curl.schedules.get(id: string): Promise<CurlSchedulesGetResponse>
 List all scheduled jobs
 
 ```typescript
-client.curl.schedules.list(options?: { page?: number; limit?: number }): Promise<CurlSchedulesListResponse>
+client.curl.schedules.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlSchedulesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlSchedulesListResponse`
 
@@ -387,17 +370,16 @@ client.curl.schedules.list(options?: { page?: number; limit?: number }): Promise
 List all scheduled jobs (collect all pages)
 
 ```typescript
-client.curl.schedules.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
+client.curl.schedules.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
-
-**CLI:** `hoody curl schedules list`
 
 ---
 
@@ -408,38 +390,37 @@ client.curl.schedules.listAll(options?: { page?: number; limit?: number }): Prom
 List all scheduled jobs (async iterator)
 
 ```typescript
-client.curl.schedules.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
+client.curl.schedules.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
-**CLI:** `hoody curl schedules list`
-
 ---
 
-### `toggle`
+### `update`
 
-**PATCH** `/api/v1/curl/schedule/{id}/toggle`
+**PATCH** `/api/v1/curl/schedule/{id}`
 
-Enable or disable a schedule
+Update a schedule's cron expression, request or enabled state
 
 ```typescript
-client.curl.schedules.toggle(id: string, data: CurlSchedulesToggleRequest): Promise<ApiResponse<unknown>>
+client.curl.schedules.update(id: string, data: CurlSchedulesUpdateRequest): Promise<CurlSchedulesUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique schedule identifier |
-| `data` | `CurlSchedulesToggleRequest` | Yes | body |  |
+| `data` | `CurlSchedulesUpdateRequest` | Yes | body |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `CurlSchedulesUpdateResponse`
 
-**CLI:** `hoody curl schedules toggle`
+**CLI:** `hoody curl schedules update`
 
 ---
 
@@ -485,26 +466,6 @@ client.curl.sessions.get(id: string): Promise<CurlSessionsGetResponse>
 
 ---
 
-### `getCookies`
-
-**GET** `/api/v1/curl/sessions/{id}/cookies`
-
-Get session cookies only
-
-```typescript
-client.curl.sessions.getCookies(id: string): Promise<ApiResponse<unknown>>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Session identifier |
-
-**Returns:** `ApiResponse<unknown>`
-
-**CLI:** `hoody curl sessions cookies`
-
----
-
 ### `list`
 
 **GET** `/api/v1/curl/sessions`
@@ -512,13 +473,14 @@ client.curl.sessions.getCookies(id: string): Promise<ApiResponse<unknown>>
 List all cookie sessions
 
 ```typescript
-client.curl.sessions.list(options?: { page?: number; limit?: number }): Promise<CurlSessionsListResponse>
+client.curl.sessions.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlSessionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlSessionsListResponse`
 
@@ -533,17 +495,36 @@ client.curl.sessions.list(options?: { page?: number; limit?: number }): Promise<
 List all cookie sessions (collect all pages)
 
 ```typescript
-client.curl.sessions.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
+client.curl.sessions.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
-**CLI:** `hoody curl sessions list`
+---
+
+### `listCookies`
+
+**GET** `/api/v1/curl/sessions/{id}/cookies`
+
+Get session cookies only
+
+```typescript
+client.curl.sessions.listCookies(id: string): Promise<ApiResponse<unknown>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Session identifier |
+
+**Returns:** `ApiResponse<unknown>`
+
+**CLI:** `hoody curl sessions cookies list`
 
 ---
 
@@ -554,30 +535,29 @@ client.curl.sessions.listAll(options?: { page?: number; limit?: number }): Promi
 List all cookie sessions (async iterator)
 
 ```typescript
-client.curl.sessions.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
+client.curl.sessions.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody curl sessions list`
 
 ---
 
 ## `client.curl.storage` (5 methods)
 
-### `deleteFile`
+### `delete`
 
 **DELETE** `/api/v1/curl/storage/{path}`
 
 Delete a saved file
 
 ```typescript
-client.curl.storage.deleteFile(path: string): Promise<ApiResponse<unknown>>
+client.curl.storage.delete(path: string): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -590,21 +570,21 @@ client.curl.storage.deleteFile(path: string): Promise<ApiResponse<unknown>>
 
 ---
 
-### `getFile`
+### `get`
 
 **GET** `/api/v1/curl/storage/{path}`
 
 Download a saved file
 
 ```typescript
-client.curl.storage.getFile(path: string): Promise<ApiResponse<unknown>>
+client.curl.storage.get(path: string): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Relative path to file in storage (supports nested paths) |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `ApiResponse<ArrayBuffer>`
 
 **CLI:** `hoody curl storage get`
 
@@ -617,13 +597,14 @@ client.curl.storage.getFile(path: string): Promise<ApiResponse<unknown>>
 List all saved downloads
 
 ```typescript
-client.curl.storage.list(options?: { page?: number; limit?: number }): Promise<CurlStorageListResponse>
+client.curl.storage.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlStorageListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlStorageListResponse`
 
@@ -638,17 +619,16 @@ client.curl.storage.list(options?: { page?: number; limit?: number }): Promise<C
 List all saved downloads (collect all pages)
 
 ```typescript
-client.curl.storage.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
+client.curl.storage.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
-
-**CLI:** `hoody curl storage list`
 
 ---
 
@@ -659,17 +639,16 @@ client.curl.storage.listAll(options?: { page?: number; limit?: number }): Promis
 List all saved downloads (async iterator)
 
 ```typescript
-client.curl.storage.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
+client.curl.storage.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody curl storage list`
 
 ---
 

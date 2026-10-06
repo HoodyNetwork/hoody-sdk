@@ -1,6 +1,6 @@
-# `watch` — 14 methods
+# `watch` — 13 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.watch`
 
 ```typescript
@@ -9,128 +9,16 @@ import * as watch from 'hoody-sdk/watch';
 
 ---
 
-## `client.watch.health` (1 method)
+## `client.watch.events` (5 methods)
 
-### `check`
-
-**GET** `/api/v1/watch/health`
-
-Health Check
-
-```typescript
-client.watch.health.check(): Promise<WatchHealthCheckResponse>
-```
-
-**Returns:** `WatchHealthCheckResponse`
-
-**CLI:** `hoody watch health`
-
----
-
-## `client.watch.streams` (5 methods)
-
-### `listEvents`
-
-**GET** `/watchers/{id}/events`
-
-List Watcher Events
-
-```typescript
-client.watch.streams.listEvents(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; page?: number | null; limit?: number | null }): Promise<WatchStreamsListEventsResponse>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Watcher id |
-| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
-| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `number \| null` | No | query | Page number (1-based). |
-| `limit` | `number \| null` | No | query | Items per page (1-200). |
-
-**Returns:** `WatchStreamsListEventsResponse`
-
-**CLI:** `hoody watch events list`
-
----
-
-### `listEventsAll`
-
-**GET** `/watchers/{id}/events`
-
-List Watcher Events (collect all pages)
-
-```typescript
-client.watch.streams.listEventsAll(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; page?: number | null; limit?: number | null }): Promise<unknown[]>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Watcher id |
-| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
-| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `number \| null` | No | query | Page number (1-based). |
-| `limit` | `number \| null` | No | query | Items per page (1-200). |
-
-**Returns:** `unknown[]`
-
-**CLI:** `hoody watch events list`
-
----
-
-### `listEventsIterator`
-
-**GET** `/watchers/{id}/events`
-
-List Watcher Events (async iterator)
-
-```typescript
-client.watch.streams.listEventsIterator(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; page?: number | null; limit?: number | null }): AsyncIterableIterator<unknown>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Watcher id |
-| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
-| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-| `page` | `number \| null` | No | query | Page number (1-based). |
-| `limit` | `number \| null` | No | query | Items per page (1-200). |
-
-**Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody watch events list`
-
----
-
-### `streamSse`
-
-**GET** `/watchers/{id}/events/sse`
-
-Stream Watcher Events Sse
-
-```typescript
-client.watch.streams.streamSse(id: string, options?: { since_id?: number | null; since_timestamp?: string | null }): Promise<ApiResponse<unknown>>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `id` | `string` | Yes | path | Watcher id |
-| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
-| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
-
-**Returns:** `ApiResponse<unknown>`
-
-**CLI:** `hoody watch events stream`
-
----
-
-### `streamWs`
+### `connect`
 
 **GET** `/watchers/{id}/events/ws`
 
 Stream Watcher Events Ws
 
 ```typescript
-client.watch.streams.streamWs(id: string, options?: { since_id?: number | null; since_timestamp?: string | null }): Promise<ApiResponse<unknown>>
+client.watch.events.connect(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; cache?: boolean | number }): Promise<WatchStreamWatcherEventsWsWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -138,42 +26,128 @@ client.watch.streams.streamWs(id: string, options?: { since_id?: number | null; 
 | `id` | `string` | Yes | path | Watcher id |
 | `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
 | `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `WatchStreamWatcherEventsWsWebSocket`
 
 ---
 
-## `client.watch.system` (2 methods)
+### `list`
 
-### `getOpenApiJson`
+**GET** `/watchers/{id}/events`
 
-**GET** `/openapi.json`
-
-Get Open Api Json
+List Watcher Events
 
 ```typescript
-client.watch.system.getOpenApiJson(): Promise<ApiResponse<unknown>>
+client.watch.events.list(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; page?: number | null; limit?: number | null; after_id?: number | null; cache?: boolean | number }): Promise<WatchEventsListResponse>
 ```
 
-**Returns:** `ApiResponse<unknown>`
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Watcher id |
+| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
+| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `number \| null` | No | query | Page number (1-based), counted from the oldest event still retained. History is a ring buffer: if events are evicted between two page requests the offsets shift and a page walk can skip events without an error. Walk with `after_id` instead to have that reported. Ignored when `after_id` is set. |
+| `limit` | `number \| null` | No | query | Items per page (1-200). |
+| `after_id` | `number \| null` | No | query | Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`). `since_id`, `since_timestamp` and `page` are ignored when it is set. If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it. |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `WatchEventsListResponse`
+
+**CLI:** `hoody watch events list`
 
 ---
 
-### `getOpenApiYaml`
+### `listAll`
 
-**GET** `/openapi.yaml`
+**GET** `/watchers/{id}/events`
 
-Get Open Api Yaml
+List Watcher Events (collect all pages)
 
 ```typescript
-client.watch.system.getOpenApiYaml(): Promise<ApiResponse<unknown>>
+client.watch.events.listAll(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; page?: number | null; limit?: number | null; after_id?: number | null; cache?: boolean | number }): Promise<unknown[]>
 ```
 
-**Returns:** `ApiResponse<unknown>`
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Watcher id |
+| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
+| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `number \| null` | No | query | Page number (1-based), counted from the oldest event still retained. History is a ring buffer: if events are evicted between two page requests the offsets shift and a page walk can skip events without an error. Walk with `after_id` instead to have that reported. Ignored when `after_id` is set. |
+| `limit` | `number \| null` | No | query | Items per page (1-200). |
+| `after_id` | `number \| null` | No | query | Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`). `since_id`, `since_timestamp` and `page` are ignored when it is set. If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it. |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `unknown[]`
 
 ---
 
-## `client.watch.watchers` (6 methods)
+### `listIterator`
+
+**GET** `/watchers/{id}/events`
+
+List Watcher Events (async iterator)
+
+```typescript
+client.watch.events.listIterator(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; page?: number | null; limit?: number | null; after_id?: number | null; cache?: boolean | number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Watcher id |
+| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
+| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `page` | `number \| null` | No | query | Page number (1-based), counted from the oldest event still retained. History is a ring buffer: if events are evicted between two page requests the offsets shift and a page walk can skip events without an error. Walk with `after_id` instead to have that reported. Ignored when `after_id` is set. |
+| `limit` | `number \| null` | No | query | Items per page (1-200). |
+| `after_id` | `number \| null` | No | query | Continue a walk: return the `limit` events after this event id (the previous response's `next_after_id`). `since_id`, `since_timestamp` and `page` are ignored when it is set. If any event after it has been evicted from history since, the request fails with `409 HISTORY_GAP` rather than skipping it. |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `stream`
+
+**GET** `/watchers/{id}/events/sse`
+
+Stream Watcher Events Sse
+
+```typescript
+client.watch.events.stream(id: string, options?: { since_id?: number | null; since_timestamp?: string | null; cache?: boolean | number }): Promise<IEventStream>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Watcher id |
+| `since_id` | `number \| null` | No | query | Replay events strictly after this event id. |
+| `since_timestamp` | `string \| null` | No | query | Replay events strictly after this timestamp. Accepted formats: - RFC3339 (e.g. 2026-02-11T15:30:00Z) - Unix seconds (e.g. 1739287800) - Unix milliseconds (e.g. 1739287800123) |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `IEventStream`
+
+**CLI:** `hoody watch events stream`
+
+---
+
+## `client.watch.kit` (1 method)
+
+### `getHealth`
+
+**GET** `/api/v1/watch/health`
+
+Health Check
+
+```typescript
+client.watch.kit.getHealth(): Promise<WatchKitGetHealthResponse>
+```
+
+**Returns:** `WatchKitGetHealthResponse`
+
+**CLI:** `hoody watch health`
+
+---
+
+## `client.watch.watchers` (7 methods)
 
 ### `create`
 
@@ -242,13 +216,14 @@ client.watch.watchers.get(id: string): Promise<WatchWatchersGetResponse>
 List Watchers
 
 ```typescript
-client.watch.watchers.list(options?: { page?: number | null; limit?: number | null }): Promise<WatchWatchersListResponse>
+client.watch.watchers.list(options?: { page?: number | null; limit?: number | null; cache?: boolean | number }): Promise<WatchWatchersListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number \| null` | No | query | Page number (1-based). |
 | `limit` | `number \| null` | No | query | Items per page (1-200). |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `WatchWatchersListResponse`
 
@@ -263,17 +238,16 @@ client.watch.watchers.list(options?: { page?: number | null; limit?: number | nu
 List Watchers (collect all pages)
 
 ```typescript
-client.watch.watchers.listAll(options?: { page?: number | null; limit?: number | null }): Promise<unknown[]>
+client.watch.watchers.listAll(options?: { page?: number | null; limit?: number | null; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number \| null` | No | query | Page number (1-based). |
 | `limit` | `number \| null` | No | query | Items per page (1-200). |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
-
-**CLI:** `hoody watch list`
 
 ---
 
@@ -284,17 +258,37 @@ client.watch.watchers.listAll(options?: { page?: number | null; limit?: number |
 List Watchers (async iterator)
 
 ```typescript
-client.watch.watchers.listIterator(options?: { page?: number | null; limit?: number | null }): AsyncIterableIterator<unknown>
+client.watch.watchers.listIterator(options?: { page?: number | null; limit?: number | null; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number \| null` | No | query | Page number (1-based). |
 | `limit` | `number \| null` | No | query | Items per page (1-200). |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
-**CLI:** `hoody watch list`
+---
+
+### `update`
+
+**PATCH** `/watchers/{id}`
+
+Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend.
+
+```typescript
+client.watch.watchers.update(id: string, data: WatchWatchersUpdateRequest): Promise<WatchWatchersUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | Watcher id |
+| `data` | `WatchWatchersUpdateRequest` | Yes | body |  |
+
+**Returns:** `WatchWatchersUpdateResponse`
+
+**CLI:** `hoody watch update`
 
 ---
 

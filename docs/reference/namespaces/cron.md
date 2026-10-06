@@ -1,6 +1,6 @@
-# `cron` — 15 methods
+# `cron` — 13 methods
 
-**Version:** 1.0.0-beta.14
+**Version:** 1.0.0-beta.15
 **Accessor:** `client.cron`
 
 ```typescript
@@ -9,7 +9,7 @@ import * as cron from 'hoody-sdk/cron';
 
 ---
 
-## `client.cron.crontab` (5 methods)
+## `client.cron.crontabs` (5 methods)
 
 ### `get`
 
@@ -18,100 +18,99 @@ import * as cron from 'hoody-sdk/cron';
 Get Crontab
 
 ```typescript
-client.cron.crontab.get(user: string): Promise<CronCrontabGetResponse>
+client.cron.crontabs.get(user: string): Promise<CronCrontabsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
 
-**Returns:** `CronCrontabGetResponse`
+**Returns:** `CronCrontabsGetResponse`
 
 **CLI:** `hoody cron crontabs get`
 
 ---
 
-### `listGlobal`
+### `list`
 
 **GET** `/crontab`
 
 List All Crontabs
 
 ```typescript
-client.cron.crontab.listGlobal(options?: { page?: number; limit?: number }): Promise<CronCrontabListGlobalResponse>
+client.cron.crontabs.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CronCrontabsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
+| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `CronCrontabListGlobalResponse`
+**Returns:** `CronCrontabsListResponse`
 
 **CLI:** `hoody cron crontabs list`
 
 ---
 
-### `listGlobalAll`
+### `listAll`
 
 **GET** `/crontab`
 
 List All Crontabs (collect all pages)
 
 ```typescript
-client.cron.crontab.listGlobalAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
+client.cron.crontabs.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
-**CLI:** `hoody cron crontabs list`
-
 ---
 
-### `listGlobalIterator`
+### `listIterator`
 
 **GET** `/crontab`
 
 List All Crontabs (async iterator)
 
 ```typescript
-client.cron.crontab.listGlobalIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
+client.cron.crontabs.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
-**CLI:** `hoody cron crontabs list`
-
 ---
 
-### `put`
+### `set`
 
 **PUT** `/users/{user}/crontab`
 
 Put Crontab
 
 ```typescript
-client.cron.crontab.put(user: string, data: CronCrontabPutRequest): Promise<CronCrontabPutResponse>
+client.cron.crontabs.set(user: string, data: CronCrontabsSetRequest): Promise<CronCrontabsSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
-| `data` | `CronCrontabPutRequest` | Yes | body |  |
+| `data` | `CronCrontabsSetRequest` | Yes | body |  |
 
-**Returns:** `CronCrontabPutResponse`
+**Returns:** `CronCrontabsSetResponse`
 
-**CLI:** `hoody cron crontabs replace`
+**CLI:** `hoody cron crontabs set`
 
 ---
 
@@ -151,7 +150,7 @@ client.cron.entries.delete(user: string, id: string): Promise<CronEntriesDeleteR
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
-| `id` | `string` | Yes | path | Managed entry id |
+| `id` | `string` | Yes | path | Managed entry id (UUID) |
 
 **Returns:** `CronEntriesDeleteResponse`
 
@@ -172,7 +171,7 @@ client.cron.entries.get(user: string, id: string): Promise<CronEntriesGetRespons
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
-| `id` | `string` | Yes | path | Managed entry id |
+| `id` | `string` | Yes | path | Managed entry id (UUID) |
 
 **Returns:** `CronEntriesGetResponse`
 
@@ -187,7 +186,7 @@ client.cron.entries.get(user: string, id: string): Promise<CronEntriesGetRespons
 List Entries
 
 ```typescript
-client.cron.entries.list(user: string, options?: { page?: number; limit?: number }): Promise<CronEntriesListResponse>
+client.cron.entries.list(user: string, options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CronEntriesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -195,6 +194,7 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 | `user` | `string` | Yes | path | System username |
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CronEntriesListResponse`
 
@@ -209,7 +209,7 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 List Entries (collect all pages)
 
 ```typescript
-client.cron.entries.listAll(user: string, options?: { page?: number; limit?: number }): Promise<unknown[]>
+client.cron.entries.listAll(user: string, options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -217,10 +217,9 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 | `user` | `string` | Yes | path | System username |
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
-
-**CLI:** `hoody cron entries list`
 
 ---
 
@@ -231,7 +230,7 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 List Entries (async iterator)
 
 ```typescript
-client.cron.entries.listIterator(user: string, options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
+client.cron.entries.listIterator(user: string, options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -239,10 +238,9 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 | `user` | `string` | Yes | path | System username |
 | `page` | `number` | No | query | Page number (1-based) |
 | `limit` | `number` | No | query | Items per page (max 200) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
-
-**CLI:** `hoody cron entries list`
 
 ---
 
@@ -259,7 +257,7 @@ client.cron.entries.update(user: string, id: string, data: CronEntriesUpdateRequ
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
-| `id` | `string` | Yes | path | Managed entry id |
+| `id` | `string` | Yes | path | Managed entry id (UUID) |
 | `data` | `CronEntriesUpdateRequest` | Yes | body |  |
 
 **Returns:** `CronEntriesUpdateResponse`
@@ -268,51 +266,21 @@ client.cron.entries.update(user: string, id: string, data: CronEntriesUpdateRequ
 
 ---
 
-## `client.cron.health` (1 method)
+## `client.cron.kit` (1 method)
 
-### `check`
+### `getHealth`
 
 **GET** `/health`
 
 Health Check
 
 ```typescript
-client.cron.health.check(): Promise<CronHealthCheckResponse>
+client.cron.kit.getHealth(): Promise<CronKitGetHealthResponse>
 ```
 
-**Returns:** `CronHealthCheckResponse`
+**Returns:** `CronKitGetHealthResponse`
 
 **CLI:** `hoody cron health`
-
----
-
-## `client.cron.system` (2 methods)
-
-### `getOpenApiJson`
-
-**GET** `/openapi.json`
-
-Get Open Api Json
-
-```typescript
-client.cron.system.getOpenApiJson(): Promise<ApiResponse<unknown>>
-```
-
-**Returns:** `ApiResponse<unknown>`
-
----
-
-### `getOpenApiYaml`
-
-**GET** `/openapi.yaml`
-
-Get Open Api Yaml
-
-```typescript
-client.cron.system.getOpenApiYaml(): Promise<ApiResponse<unknown>>
-```
-
-**Returns:** `ApiResponse<unknown>`
 
 ---
 
