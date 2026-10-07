@@ -1758,7 +1758,7 @@ export const EMBEDS_CATALOG = {
           "reasonCode": "mutating"
         }
       },
-      "publicDescription": "A results page that lists the applications matching a name, with their versions and sources.",
+      "publicDescription": "A results page that lists the applications matching a name, with their versions and the provider each comes from.",
       "defaultView": "run.results"
     },
     "daemon": {
@@ -6055,7 +6055,7 @@ export const EMBEDS_CATALOG = {
           "type": "array",
           "class": "typed",
           "repeat": "ordered",
-          "publicDescription": "Package sources to search. Repeat the key for several sources."
+          "publicDescription": "Source types to search: `nix`, `pkgx`, `appimage`, `oci` (Docker images already on the machine), `registry`, `system` or `any`. Repeat the key for several types."
         },
         "kind": {
           "wire": "kind",
@@ -6086,7 +6086,7 @@ export const EMBEDS_CATALOG = {
           "in": "query",
           "type": "string",
           "class": "typed",
-          "publicDescription": "Named preference profile to apply to this lookup."
+          "publicDescription": "Named preference profile to apply to this lookup; without it, the selected profile applies. The results page appears only when the profile leaves `pick` unset or set to `ask`: a profile that picks a result answers with JSON instead."
         },
         "version": {
           "wire": "version",
