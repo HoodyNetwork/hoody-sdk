@@ -4,6 +4,56 @@ All notable changes to `hoody-sdk` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-beta.16] — 2026-10-07
+
+### Removed
+
+- **Breaking: the methods that downloaded a kit's web page.** `display.ui.getPage()`, `code.ui.getPage()`, `terminal.ui.getPage()`, `pipe.ui.getPage()` and `pipe.ui.getNoScriptPage()` returned the page's HTML. Build the page's URL instead and open or embed it: `client.embeds.display.client()`, `client.embeds.code.editor()` (also `.root()` and `.extension()`), `client.embeds.terminal.session()`, `client.embeds.pipe.send()` and `client.embeds.pipe.noscript()`. `code.ui.getPage()` also started the editor for its instance; opening the editor URL still does. `files.ui.getPage()`, the Files directory listing, is unchanged.
+
+### Breaking
+
+- **The SDK retries failed requests by default.** When neither the client nor the call sets `retries`, a GET, HEAD, OPTIONS, PUT or DELETE goes again up to 2 times on 408, 425, 429, 500, 502, 503 or 504 or a lost connection, and a POST or PATCH only when it never reached the server. Waits are about 2 s then 4 s plus jitter, Retry-After is honoured, and the total wait is at most 10 s. A call that runs an exec script and a streamed request body are never retried by default. Set `retries: 0` on the client or the call to turn it off; any explicit `retries` keeps the previous rule (250 ms backoff base, no total cap).
+- **The CLI retries failed requests by default**, with the SDK's rules and timing (above). An exec script call, a streamed request body and a POST refused with `FILE_PATH_BUSY` are not retried by default. To turn it off, set `"retries": 0` in `~/.hoody/config.json` or in a profile; an explicit `retries` keeps the previous rule.
+- **`box.files.exists()` returns a boolean.** It used to return the response headers and throw on a missing file; it now returns `true`, or `false` on a 404, and still throws any other error. For a file's metadata, use `box.files.stat()`. `box.sqlite.kv.exists()` now also returns `false` on a 404 that carries no key error code.
+- **`client.logout()` ends this session only and makes no request.** The account stays signed in on other devices, and the dropped access token stays valid on the server until it expires. Call `client.logoutAll()` to sign out everywhere.
+- **`box.sqlite` returns integers outside ±(2^53 − 1) as `bigint`.** They used to come back rounded to the nearest `number`. Fractions, exponent notation and safe integers stay `number`. Arithmetic on such a value needs `bigint` (or an explicit conversion), and `JSON.stringify()` throws on a `bigint`, so convert it to a string first. A `bigint` in a request body (a bound parameter) is sent as a plain integer.
+
+#### Platform changes that ship with this release
+
+- **Proxy aliases with `allow_path_override: false` are now enforced.** Such an alias serves its root, which lands on `target_path`, and `target_path` itself; every other path, sub-paths and page assets included, answers 404 `ALIAS_PATH_PINNED`. Parameters written in `target_path` can no longer be overridden by the visitor. If the alias must serve more than one page, set `allow_path_override` to `true`.
+- **Web apps behind an alias or a custom domain (`http-<port>`) receive the `Host` the visitor typed.** An app with a strict host allow-list (Vite or webpack `allowedHosts`, Django `ALLOWED_HOSTS`, an nginx or Caddy `server_name`) must list the alias address or the custom domain.
+
+### Added
+
+- **`onSession` in the client config.** It receives every token pair the SDK obtains itself, with `reason` `'login'`, `'refresh'` or `'relogin'`, so a long-running service can save it and start its next run with `adoptSession()`. It is not awaited, and clients made with `withRealm()` / `withContainer()` carry it.
+- **Tunnels: `keepTunnelAlive()` reports why it ended.** `ended` settles with `code: 'RESUME_EXPIRED'` when a drop could not be resumed before the kit's hold ran out. A resume attempt takes `signal` and `handshakeTimeoutMs`; an aborted one rejects with `TunnelResumeAbortedError`.
+
+### Fixed
+
+- **The package guide (`AGENTS.md`) says `box.terminal.commands.run()` waits for the command to finish.** It said the call returns `command_id` at once; `wait` defaults to `true`, so pass `wait: false` to get `command_id` immediately and poll `box.terminal.commands.get()`. Its display example now starts `firefox` with `wait: false` instead of holding the call until the timeout.
+- **Terminal commands run with `ephemeral: true` get their own temporary session** instead of running in terminal 1; calls naming a terminal id go to that terminal's address. A write made while a terminal connection is dropping is sent after the reconnect instead of cancelling it. `TerminalClient` stops reconnecting when the server refuses access (`WebSocketUpgradeRefusedError`).
+- **Office and other vendor files are returned as bytes instead of corrupted text** (SDK and CLI downloads).
+- **Browser build: requests no longer set fetch `keepalive`**, so uploads over 64 KiB no longer fail; retries, large integers and text detection follow the same rules as Node.
+- **A per-request `Authorization` reaches kit services.** A direct call such as `exec.run(…)` with `headers: { Authorization }` in its options delivers the header to the script; the SDK used to remove it. The account token is still never sent to a kit.
+- **`shell()` with `reconnect: true` sends nothing to an unconfirmed session.** Input, signals and resizes sent during a reconnect are held until the session is confirmed to be the same one, and dropped with the "session was lost" error if it is not.
+- **Pagination helpers start at a service's documented starting point when it has one.** Notifications has none yet: a bare `notifications.listAll()` or `notifications.listIterator()` sends the plain first request, which can return only the newest page. Pass `since: 0` to walk the whole history.
+
+### Changed
+
+- **A WebSocket that keeps failing before it opens now checks once with a plain request**; if the server refuses access (401, 403, 404) reconnecting stops with a `WebSocketUpgradeRefusedError` carrying the status and the server's error code (option `refusalProbeAfter`, default 3).
+- **`hoody code extensions list` and `install` take `--id <n>` again.** beta.15 removed the flag; it is back, and names the editor instance the command acts on.
+
+### Documentation
+
+- **Node 20.3 or later.** On Node 20.3–22.18 npm prints an engine warning for `undici`, which the SDK does not load there (it uses Node's built-in fetch); installs with `engine-strict=true` need Node 22.19 or later. CLI proxy settings (`--proxy`, `HTTPS_PROXY`/`HTTP_PROXY`/`ALL_PROXY`, the config `proxy` key) need Node 22.19 or later or the standalone binary; on older Node, with a proxy configured, requests stop with `PROXY_UNSUPPORTED` and are not sent, except to hosts in `NO_PROXY`.
+- The `realmId` and `target` option descriptions write a realm host as `{realmId}.api.hoody.com`, under the account API host they already name, instead of a placeholder domain.
+- README runtime requirements match what the package does: Node.js 20.3 or later (22 or later recommended, since Node.js 20 is end-of-life), Bun, Deno and the browser. It also says which Node.js releases get their WebSockets through the `ws` package, and that `box.terminal.run` works in the browser build; the helpers the browser build leaves out are listed as absent, not stubbed.
+- README says that a page or offset `listAll()` / `listIterator()` walk is not a snapshot (rows deleted or added during the walk can be skipped or repeated), names the stable position each list offers, and that `notifications.list` without `since`, `after_id` or `cursor` returns the newest page only.
+- Agent skills, SDK reference: methods that set a field for you (`enable` / `disable`, `approve` / `deny`, `start` / `stop` and the like) are written in types the package exports, such as `Omit<SetTokenGatePatchRequest, "enabled">`; their body line no longer lists the field the method sets, and a "Fixed by the method" line says what it sets. A method with one form per call shape shows each form.
+- Agent skills, SDK reference: `notes.avatars.upload` shows `_templateVars` as its second argument and the `contentType` options as its third, as declared. The earlier signature put the options second, where they were ignored.
+- Agent skills, CLI reference: the `hoody kv changes list` / `stream` examples take `--since <cursor>` instead of a date, the `hoody kv table snapshots compare` example uses a real range, and the display capture example names the two commands that exist (`screenshots capture`, `screenshots latest get`).
+- The migration guide marks the five removed page methods and names the `client.embeds` builder that replaces each.
+
 ## [1.0.0-beta.15] — 2026-10-06
 
 **Breaking: CLI and SDK names.** Every CLI command and SDK method now follows one vocabulary, and the old names are removed with no aliases or compatibility layer. [docs/MIGRATION-2026-10-NAMES.md](docs/MIGRATION-2026-10-NAMES.md) lists every old name beside its new one.
@@ -451,7 +501,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Ver
 
   Only the service segment moves. The project and container IDs and the server are unchanged, so a stored URL can be repaired by replacing that one label.
 
-- **Hoody AI's built-in defaults point at `ai.hoody.com` and the free model.** The endpoint default was `ai.hoody.com`, and the model default was a paid catalog id that an account with no AI credit is refused outright.
+- **Hoody AI's built-in defaults point at `ai.hoody.com` and the free model.** Before, the model default was a paid catalog id that an account with no AI credit is refused outright.
 
 ## [1.0.0-beta.12] — 2026-08-06
 
