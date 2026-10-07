@@ -58,10 +58,10 @@ export interface HoodyClientConfig extends IHttpClientConfig {
      * Realm to scope account-API requests to: 24 hexadecimal characters, or
      * "all" / "default" / "*" for no realm. Anything else throws ValidationError.
      * On an account client (see target), a baseURL that already names a realm
-     * ({realmId}.api.example) selects that realm when this is omitted. On a
+     * ({realmId}.api.hoody.com) selects that realm when this is omitted. On a
      * client whose target is 'kit', a raw request on client.http bound for the
      * base host throws ValidationError, unless that host already carries the
-     * realm ({realmId}.api.example); the generated services apply it to their URLs.
+     * realm ({realmId}.api.hoody.com); the generated services apply it to their URLs.
      */
     realmId?: string;
     kitAuth?: ProxyAuth | ProxyAuthPolicy;
@@ -75,16 +75,43 @@ export interface HoodyClientConfig extends IHttpClientConfig {
      */
     realmErrorIntrospection?: boolean;
     /**
+     * Called each time the SDK itself obtains a session from the account API:
+     * login() (reason 'login'), and the automatic recovery of a 401, which
+     * exchanges the refresh token ('refresh') or signs in again with the stored
+     * credentials ('relogin'). It receives the access token now in use and the
+     * refresh token that goes with it, so a long-running service can save the
+     * pair and start its next run with adoptSession(). hoody-api rotates the
+     * refresh token on every refresh: the one saved before is spent.
+     *
+     * Concurrent 401s share one recovery, so it is called once per new pair,
+     * before the failed requests are replayed. Clients derived with
+     * withRealm() / withContainer() carry it. It is not called for tokens the
+     * caller supplied (adoptSession(), setToken(), setSessionToken(),
+     * onTokenExpired, refreshToken). It is not awaited, and whatever it throws
+     * or rejects with is discarded: a failed save must not fail the request
+     * that triggered the refresh, so handle errors inside it.
+     */
+    onSession?: (session: HoodySessionUpdate) => void | Promise<void>;
+    /**
      * What baseURL points at.
      *  - 'account': the Hoody account API. Kit namespaces refuse to send there
      *    (call withContainer() first), and a realm label on the host
-     *    ({realmId}.api.example) is read as the client's realm.
+     *    ({realmId}.api.hoody.com) is read as the client's realm.
      *  - 'kit': a kit or daemon reached directly. The URL is used as given.
      * When omitted: 'account' if the client has credentials, has no baseURL, has
      * a relative baseURL ('/proxy', resolved against the page), or baseURL is a
-     * Hoody API host (api.hoody.<tld>, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withContainer() keep it.
+     * Hoody API host (api.hoody.com, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withContainer() keep it.
      */
     target?: 'account' | 'kit';
+}
+/** What HoodyClientConfig.onSession receives. */
+export interface HoodySessionUpdate {
+    /** The access token the session now uses. */
+    token: string;
+    /** The refresh token issued with it; undefined when the response carried none. */
+    refreshToken: string | undefined;
+    /** How the SDK obtained it: login(), a refresh-token exchange, or an automatic sign-in with the stored credentials. */
+    reason: 'login' | 'refresh' | 'relogin';
 }
 /**
  * A login answer that is not a session yet: a two-factor challenge or an
@@ -157,7 +184,7 @@ export declare function isRealmScopeError(error: unknown): error is RealmScopeAp
  * server-details object, and its `name` is used.
  */
 export interface ContainerLike {
-    id: string;
+    id?: string;
     project_id?: string;
     [key: string]: unknown;
 }
@@ -193,6 +220,8 @@ export declare class HoodyClient {
      */
     private readonly userOnTokenExpired;
     private readonly userRefreshToken;
+    /** The caller's onSession hook; derived clients inherit it like the two above. */
+    private readonly userOnSession;
     /**
      * The last recovery result handed to this client's transport, with the
      * generation it belongs to. The transport asks acceptRefreshedToken() right
@@ -274,7 +303,7 @@ export declare class HoodyClient {
         tabs: browser.TabsService;
         viewport: browser.ViewportService;
     };
-    readonly code: {
+    readonly code: code.CodeService & {
         extensions: code.ExtensionsService;
         kit: code.KitService;
         ui: code.UiService;
@@ -300,7 +329,6 @@ export declare class HoodyClient {
         mouse: display.MouseService;
         screenshots: display.ScreenshotsService;
         thumbnails: display.ThumbnailsService;
-        ui: display.UiService;
         windows: display.WindowsService;
     };
     readonly exec: exec.ExecService & {
@@ -355,7 +383,6 @@ export declare class HoodyClient {
         processes: terminal.ProcessesService;
         sessions: terminal.SessionsService;
         system: terminal.SystemService;
-        ui: terminal.UiService;
     };
     readonly watch: {
         events: watch.EventsService;
@@ -369,7 +396,6 @@ export declare class HoodyClient {
     };
     readonly pipe: pipe.PipeService & {
         kit: pipe.KitService;
-        ui: pipe.UiService;
     };
     readonly notes: notes.NotesService & {
         avatars: notes.AvatarsService;
@@ -537,14 +563,18 @@ export declare class HoodyClient {
      */
     completeTwoFactorLogin(tempToken: string, code: string): Promise<string>;
     /**
-     * Log out. hoody-api's logout revokes EVERY session of the account (all
-     * devices, the CLI, other apps), not only this client's token. Afterwards
-     * this client, and every client derived from it or from the same parent,
-     * drops its access token, refresh token, stored credentials and kit
-     * credential (kitAuth), and automatic re-authentication stays off until
-     * login(), adoptSession(), setSessionToken() or setToken() starts a new
-     * session. Local state is cleared even when the request fails; the failure
-     * is then rethrown.
+     * Log out THIS session: this client, and every client derived from it or
+     * from the same parent, drops its access token, refresh token, stored
+     * credentials and kit credential (kitAuth), and automatic
+     * re-authentication stays off until login(), adoptSession(),
+     * setSessionToken() or setToken() starts a new session. No request is
+     * made, so it cannot fail, and the account's other sessions (other
+     * devices, the CLI, other apps) stay signed in. It is what the CLI's
+     * hoody logout does.
+     *
+     * hoody-api has no call that revokes one session: the dropped access token
+     * stays valid on the server until it expires. Use logoutAll() when the
+     * token may have leaked, or to sign the account out everywhere.
      *
      * kitAuth is cleared because it is sent on the session's behalf (it often
      * holds the account token itself); pass it again with withContainer() when
@@ -554,6 +584,14 @@ export declare class HoodyClient {
      * EventsClient reconnects with the current (now empty) token.
      */
     logout(): Promise<void>;
+    /**
+     * Log out EVERYWHERE: api.auth.logoutAll() revokes every session of the
+     * account (all devices, the CLI, other apps), not only this client's
+     * token, and then this session is cleared as logout() clears it. Local
+     * state is cleared even when the request fails; the failure is then
+     * rethrown.
+     */
+    logoutAll(): Promise<void>;
     /** Drop every credential of the shared session and stop automatic recovery. */
     private clearSession;
     /** Register this client with the shared session (weakly, so it can be collected). */
@@ -602,6 +640,12 @@ export declare class HoodyClient {
      * Extract and persist auth tokens from login/refresh responses.
      */
     private updateTokensFromAuthResponse;
+    /**
+     * Hand a pair the SDK just obtained to the caller's onSession hook. Never
+     * awaited and never allowed to throw: it runs inside login() and inside the
+     * 401 recovery, whose result must not depend on the caller's storage.
+     */
+    private notifySession;
     /**
      * Internal auth refresh flow for 401 responses.
      * Returns a fresh token when recovery succeeds.

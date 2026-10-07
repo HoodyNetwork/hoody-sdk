@@ -71,6 +71,18 @@ export interface IHttpClientConfig {
      */
     fetch?: HoodyFetch;
     timeout?: number;
+    /**
+     * How many more times a failed request may be sent. Absent (here and on the
+     * request): the default policy. An idempotent method (GET, HEAD, OPTIONS,
+     * PUT, DELETE) goes again up to 2 times on a status in `retryOnStatuses` and
+     * when it never reached a server; any other method only when it never
+     * reached a server; a `responseIsFinal` request and a streamed body never.
+     * Backoff about 2 s, then 4 s, plus jitter (`retryDelayMs` sets the base),
+     * Retry-After honoured, at most 10 s of waiting in all (a longer
+     * Retry-After ends the retries rather than being cut short); onError does
+     * not replay. Set it (0 included) and that budget applies under the full
+     * rule (see shouldRetry), 250 ms base, no total cap.
+     */
     retries?: number;
     retryDelayMs?: number;
     retryOnStatuses?: number[];
@@ -173,9 +185,20 @@ export interface IHttpClientConfig {
 }
 export interface IHttpClientTransportConfig {
     /**
-     * Enable explicit connection reuse (uses native fetch keepalive).
+     * Connection reuse. On by default; `false` sends `Connection: close` with
+     * every request.
      */
     keepAlive?: boolean;
+    /**
+     * Node only. `true` sends every request through the runtime's built-in
+     * fetch and whatever dispatcher the process has installed
+     * (setGlobalDispatcher), never through the SDK's own connection pool. The
+     * SDK already steps aside when it sees an application dispatcher; set this
+     * when yours is one it cannot tell from Node's default (an Agent that
+     * differs only by a custom `factory`, or a compose() wrapper, installed
+     * before the SDK was imported). Ignored when `fetch` is given.
+     */
+    useGlobalDispatcher?: boolean;
 }
 export interface IForceIPv4CacheConfig {
     /**
@@ -234,6 +257,25 @@ export interface IRequestData {
      */
     routeTag?: object;
     /**
+     * Any HTTP answer to this request is final, whatever its status. For a call whose handler is
+     * arbitrary code (an exec script): a 500, 502 or 429 it returned cannot be told from a
+     * platform failure, and sending the request again runs the code again. With this set,
+     * `retries` covers only a request that never reached a server (the connection could not be
+     * opened).
+     */
+    responseIsFinal?: boolean;
+    /**
+     * Read the JSON answer without rounding its integers. JSON.parse turns every
+     * number into a double, so an integer past Number.MAX_SAFE_INTEGER (2^53 - 1)
+     * comes back as a neighbouring value: 9007199254740993 reads as
+     * 9007199254740992. With this set, such an integer comes back as a
+     * `bigint`; every other number is a `number` as before. A `bigint` in a
+     * JSON request body is sent as a plain integer, so the value can go back.
+     * Generated methods of a service whose values are 64-bit integers (sqlite)
+     * set it.
+     */
+    losslessIntegers?: boolean;
+    /**
      * fetch redirect mode. 'error' refuses every redirect, same-origin ones
      * included (the request fails instead): HoodyClient sends credential-bearing
      * auth calls this way, so a redirect cannot replay their body to another
@@ -242,6 +284,85 @@ export interface IRequestData {
      */
     redirect?: 'follow' | 'error';
 }
+/**
+ * The SDK's own HTTP transport on Node.
+ *
+ * Node's built-in fetch runs on a process-wide undici dispatcher with fixed
+ * defaults, and three of them fail SDK calls: a 300 s headers timeout that
+ * cuts any longer timeoutMs short as an uncoded "fetch failed"; HTTP/2 on
+ * Node 26, where 10 MiB of buffered request bodies in flight break the
+ * session and every later call to that host; and no way to drop a broken
+ * connection. So on Node the client sends through undici's own fetch on an
+ * Agent it owns: HTTP/1.1 only, the headers and body timeouts taken from the
+ * request's timeoutMs, and replaced when an HTTP/2 failure is seen.
+ *
+ * undici is imported on first use, through a specifier no bundler follows, so
+ * nothing here reaches a browser bundle. The built-in fetch is used instead
+ * (returns null) when:
+ *   - the runtime is not Node, or is a Node below 22.19 (undici 8's floor);
+ *   - the process's global dispatcher is not Node's default Agent: one the
+ *     application installed (a proxy agent, a mock agent, --use-env-proxy)
+ *     keeps carrying the SDK's requests;
+ *   - undici cannot be imported.
+ * A client constructed with its own `fetch` never uses it either.
+ */
+export interface NodeTransport {
+    /**
+     * Send one request. `timeoutMs` is the request's budget (0 = none): the
+     * headers timeout follows it and the body idle timeout is never below it.
+     * Left out, undici's defaults apply. `init.dispatcher` (an undici dispatcher
+     * built from `undici` below, e.g. a ProxyAgent) replaces the SDK's Agent for
+     * this request and gets the same timeouts.
+     */
+    fetch: (input: string | URL, init?: RequestInit, timeoutMs?: number) => Promise<Response>;
+    /** Stop using the pooled connections: the next request opens new ones. In-flight requests finish. */
+    reset: () => void;
+    /** The undici module this transport loaded, for building a dispatcher of the same version. */
+    readonly undici: unknown;
+}
+/** True on a Node that can load the SDK's transport (22.19 or later; not Bun, not Deno). */
+export declare function nodeTransportSupported(): boolean;
+/** Whether a request sent now, by a client with no injected fetch, goes through the SDK's own transport. */
+export declare function nodeTransportInUse(): boolean;
+/**
+ * True for a media type whose body is text: text/*, or one of the subtypes or
+ * structured suffixes above. Matched on the exact subtype or suffix, never on
+ * a substring: `openxmlformats` (.docx, .xlsx, .pptx) contains "xml" and is a
+ * zip archive, which a substring test decoded as UTF-8 and corrupted. The same
+ * rule as the CLI client (cli/http-client.ts isTextMediaType).
+ */
+export declare function isTextMediaType(contentType: string | null | undefined): boolean;
+/**
+ * True for a media type whose body is bytes: any application/* type that is
+ * not text (isTextMediaType), and image/*, audio/*, video/*, font/*. Bytes are
+ * the default for application/*: an Office or other vendor file
+ * (vnd.openxmlformats-*, vnd.ms-*, vnd.oasis.opendocument.*) served without
+ * Content-Disposition: attachment was decoded as UTF-8 and corrupted. text/*,
+ * the text subtypes and a missing type are not bytes. The same rule as
+ * lib/http-wire.ts isBinaryMediaType.
+ */
+export declare function isBinaryMediaType(contentType: string | null | undefined): boolean;
+/**
+ * JSON.parse, except that an integer literal outside the safe range becomes a
+ * bigint instead of the nearest double. Fractions and exponents are numbers,
+ * as in JSON.parse. A text with no 16-digit run goes straight to JSON.parse.
+ *
+ * The text is scanned once outside its strings; each unsafe integer is swapped
+ * for a tagged string that the reviver turns into the bigint. The tag carries
+ * a per-call random part, so a string of the document cannot be mistaken for
+ * one.
+ */
+export declare function parseJsonLossless(text: string): unknown;
+/**
+ * JSON.stringify, except that a bigint is written as a plain integer literal
+ * instead of throwing. Only reached when the value holds a bigint.
+ */
+export declare function stringifyJsonLossless(value: unknown): string;
+/**
+ * The SDK's Node transport, created once per process; null where the built-in
+ * fetch is used instead (see NodeTransport).
+ */
+export declare function loadNodeTransport(): Promise<NodeTransport | null>;
 /**
  * Whether a Content-Type names JSON: application/json or a structured-syntax
  * +json type (application/problem+json, application/manifest+json), parameters
@@ -295,6 +416,17 @@ export interface IStreamEventsOptions {
      * `response.documented[name]`. Generated stream methods fill this in.
      */
     documentedHeaders?: Record<string, string>;
+    /**
+     * The error codes the operation's spec documents (x-error-codes), as
+     * `{ CODE: 'its title in the spec' }`. An HTTP error that carries one of
+     * them keeps that code, with the spec's title as its message, instead of
+     * becoming STREAM_HTTP_ERROR: a resuming client has to tell "your cursor is
+     * too old, re-read the state" (HISTORY_GAP, CHANGE_CURSOR_INVALID) from any
+     * other refusal. Both are fixed text from the spec; the server's own message
+     * and body still go only to `onDiagnostic`. Generated stream methods fill
+     * this in.
+     */
+    documentedErrorCodes?: Record<string, string>;
     /**
      * The largest frame this stream holds, in UTF-8 bytes of its field lines
      * (the `data:` payload and the rest of the frame). Overrides the client's
@@ -678,6 +810,15 @@ export declare class HttpClient {
      */
     private queryPairs;
     private buildUrl;
+    /**
+     * Adds the query to the parameters the path already carries. A key the path
+     * holds itself (a route marker: `/{archive}?extract`, `/{directory}?zip`)
+     * is never sent twice: a non-empty value from the caller replaces the bare
+     * marker (`?extract=src%2F`), an empty one leaves it as it is. The request
+     * used to go out as `?extract=&extract=src%2F`, which only reads right on a
+     * server that keeps the last value of a repeated key.
+     */
+    private mergeQueryPairs;
     private hasAbsoluteUrlOrigin;
     private joinRelativeUrl;
     private appendQueryParameters;
@@ -691,6 +832,19 @@ export declare class HttpClient {
     private pruneExpiredIPv4Cache;
     private buildApiErrorFromResponse;
     private toApiError;
+    /**
+     * Whether a failed attempt may be sent again. One rule, in this order:
+     *   1. This client's own timeout or abort, a refused redirect and a missing fetch are final.
+     *   2. A request that never reached a server (the connection could not be opened) ran
+     *      nothing: any method goes again.
+     *   3. A refusal whose code says nothing was done (RETRY_SAFE_CODES): any method goes again.
+     *   4. A request marked responseIsFinal stops here: its handler is arbitrary code, so a status
+     *      it returned is an answer, and a lost connection may have followed a run.
+     *   5. Otherwise the request may have been handled. An idempotent method (GET, HEAD, OPTIONS,
+     *      PUT, DELETE) goes again on a lost connection or a status in retryOnStatuses; any
+     *      other method only on 429, which refuses before handling.
+     * `byDefault` (nobody set `retries`): a method that is not idempotent goes again only by rule 2.
+     */
     private shouldRetry;
     /**
      * Exponential backoff with bounded cap + optional server-directed
@@ -743,9 +897,10 @@ export declare class HttpClient {
      */
     private isExternalDestination;
     /**
-     * Remove every spelling of Authorization. Header names are case-insensitive,
-     * so a configured or per-request "authorization" survived a delete of
-     * "Authorization" and rode out to an external host.
+     * Remove the client's own Authorization, in every spelling. Header names are
+     * case-insensitive, so a configured "authorization" survived a delete of
+     * "Authorization" and rode out to an external host. `callHeaders` are the
+     * request's own headers: an Authorization there is put back (see below).
      */
     private deleteAuthorization;
     /**
@@ -807,8 +962,15 @@ export declare class HttpClient {
      * Methods follow fetch: 303 turns anything but HEAD into a body-less GET,
      * 301 and 302 turn a POST into one, and 307 and 308 resend the method and
      * body (a streamed body, which cannot be sent twice, is refused).
-     * A request without credentials, or one sent with redirect: 'error', goes
-     * out unchanged.
+     * One sent with redirect: 'error' goes out unchanged.
+     *
+     * `trackHops` (request() sets it for a method that is not idempotent and
+     * for a responseIsFinal request): a request without credentials follows its
+     * redirects here too, wherever they lead, as fetch would (at most 20). A
+     * failure after the first hop was answered is marked `afterDispatch`: a
+     * script that ran and answered 3xx, whose destination then refused the
+     * connection, is not "never dispatched" and is not sent again. Any other
+     * request without credentials goes out unchanged.
      */
     private sendConfined;
     /** The ApiError sendConfined throws; the URL is redacted, the credentials never leave. */

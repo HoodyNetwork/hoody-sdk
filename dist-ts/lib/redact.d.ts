@@ -14,6 +14,15 @@
  * credential field names) but the structural patterns are bounded.
  */
 /**
+ * True for a body field or query parameter name that carries a credential:
+ * a name in SECRET_FIELD_RE, or one whose last word is a secret noun
+ * (`current_password`, `key_file_pass`, `client_credentials`, `confirm_token`,
+ * `sse_customer_key`, `otp_code`, `approver_lease`). Names that only mention a
+ * secret are not (`has_password`, `token_url`, `max_tokens`, `public_key`,
+ * `idempotency_key`, `next_page_token`).
+ */
+export declare function isSecretFieldName(name: string): boolean;
+/**
  * True for a header name in the secret set above. Exported so the browser
  * HttpClient's credential-scope check uses the same set the redactor does.
  */

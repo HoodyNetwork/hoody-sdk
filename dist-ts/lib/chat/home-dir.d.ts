@@ -13,6 +13,16 @@
  */
 export declare function hoodyHomeDir(): string;
 /**
+ * The API base URL of the account this process acts for, as the CLI resolves it without flags:
+ * HOODY_BASE_URL or HOODY_API_URL, else the CLI's saved config (`~/.hoody/config.json`: the
+ * default profile's `baseUrl`, else the top-level one). undefined when neither names an http(s)
+ * URL, or the file is missing or unreadable: the caller then uses the default platform.
+ *
+ * `hoody chat` uses it to reach the documentation assistant, and to link the documentation, of
+ * the platform the account is on (platformDomain in ../domain-utils.ts).
+ */
+export declare function accountApiBaseUrl(env?: Record<string, string | undefined>): string | undefined;
+/**
  * Return a user-facing snippet to persist an env var in the CURRENT shell.
  * Best-effort shell detection — we only need "probably PowerShell" vs
  * "probably POSIX" vs "probably cmd.exe" to be close enough for a hint.

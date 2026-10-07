@@ -1674,7 +1674,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly reasonCode: "mutating";
                 };
             };
-            readonly publicDescription: "A results page that lists the applications matching a name, with their versions and sources.";
+            readonly publicDescription: "A results page that lists the applications matching a name, with their versions and the provider each comes from.";
             readonly defaultView: "run.results";
         };
         readonly daemon: {
@@ -5098,7 +5098,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly type: "array";
                     readonly class: "typed";
                     readonly repeat: "ordered";
-                    readonly publicDescription: "Package sources to search. Repeat the key for several sources.";
+                    readonly publicDescription: "Source types to search: `nix`, `pkgx`, `appimage`, `oci` (Docker images already on the machine), `registry`, `system` or `any`. Repeat the key for several types.";
                 };
                 readonly kind: {
                     readonly wire: "kind";
@@ -5121,7 +5121,7 @@ export declare const EMBEDS_CATALOG: {
                     readonly in: "query";
                     readonly type: "string";
                     readonly class: "typed";
-                    readonly publicDescription: "Named preference profile to apply to this lookup.";
+                    readonly publicDescription: "Named preference profile to apply to this lookup; without it, the selected profile applies. The results page appears only when the profile leaves `pick` unset or set to `ask`: a profile that picks a result answers with JSON instead.";
                 };
                 readonly version: {
                     readonly wire: "version";

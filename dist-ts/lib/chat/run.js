@@ -8,7 +8,8 @@
  */
 import { prepareChatsDir } from './prepare-dir.js';
 import { createRenderer } from './markdown-renderer.js';
-import { askHoody, renderSources, TRUNCATION_NOTICE } from './service-client.js';
+import { askHoody, renderSources, truncationNotice, docsSiteBaseFor } from './service-client.js';
+import { accountApiBaseUrl } from './home-dir.js';
 import { docsLimiter } from './docs-singletons.js';
 /**
  * One-shot entry point. With no prompt argument, falls through to the REPL.
@@ -47,6 +48,7 @@ export async function runChat(args) {
                 acceptEndpointEnv: process.env.HOODY_CHAT_ACCEPT_ENDPOINT,
                 markdown: args.opts.markdown !== false,
                 stream: args.opts.stream !== false,
+                ...(args.apiBaseUrl !== undefined ? { apiBaseUrl: args.apiBaseUrl } : {}),
             });
         }
         catch (err) {
@@ -72,8 +74,12 @@ export async function runChat(args) {
             cleared = true;
         }
     };
+    // The platform the account is on decides which assistant answers and which docs site is linked.
+    const apiBaseUrl = args.apiBaseUrl ?? accountApiBaseUrl();
+    const docsSiteBase = docsSiteBaseFor(apiBaseUrl);
     const result = await askHoody({
         message: prompt,
+        apiBaseUrl,
         limiter: docsLimiter,
         acceptEndpointFlag: args.opts.acceptEndpoint,
         acceptEndpointEnv: process.env.HOODY_CHAT_ACCEPT_ENDPOINT,
@@ -119,8 +125,8 @@ export async function runChat(args) {
     // The notice is signalled by the flag, never streamed — otherwise it ends up
     // inside the caller's accumulated answer text.
     if (result.truncated)
-        renderer.write(TRUNCATION_NOTICE);
-    const citations = renderSources(result.sources);
+        renderer.write(truncationNotice(docsSiteBase));
+    const citations = renderSources(result.sources, docsSiteBase);
     if (citations)
         renderer.write(citations);
     renderer.end();

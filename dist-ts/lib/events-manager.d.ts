@@ -29,7 +29,7 @@ import { EventsError, type EventsGapReason } from './events-errors.js';
 import { type EventsHistoryReader } from './events-replay.js';
 import type { EventsSession } from './events-session.js';
 /** The transport surface the runtime needs; ApiConnecteventstreamWebSocket implements it. */
-export type EventsTransport = Pick<ApiConnecteventstreamWebSocket, 'connect' | 'disconnect' | 'removeAllListeners' | 'emit' | 'onFrame' | 'onSocketError' | 'onClose'>;
+export type EventsTransport = Pick<ApiConnecteventstreamWebSocket, 'connect' | 'disconnect' | 'removeAllListeners' | 'emit' | 'onFrame' | 'onSocketError' | 'onClose'> & Partial<Pick<ApiConnecteventstreamWebSocket, 'onTransportError'>>;
 /** Connection state. */
 export type EventsConnectionState = 'idle' | 'connecting' | 'recovering' | 'live' | 'offline' | 'closed';
 /** What `onState` listeners receive. */

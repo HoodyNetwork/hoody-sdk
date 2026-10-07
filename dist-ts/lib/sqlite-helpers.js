@@ -22,13 +22,16 @@
 import { SqlService } from '../generated/sqlite/sql.service.js';
 import { ValidationError } from '../generated/errors.js';
 const SQLITE_HELPERS_PATCH_MARKER = Symbol.for('hoody.sdk.sqlite.sql.helpers');
+/** sqlite's INTEGER is a signed 64-bit value: a bigint past either end has no column form. */
+const INT64_MIN = -(2n ** 63n);
+const INT64_MAX = 2n ** 63n - 1n;
 function describeBinding(value) {
     if (value === undefined)
         return 'undefined (pass null for SQL NULL)';
     if (typeof value === 'number')
         return `${value} (JSON would send it as null)`;
     if (typeof value === 'bigint')
-        return 'a bigint (JSON cannot carry it: pass a number, or a string for an INTEGER column)';
+        return `${value}n, outside the 64-bit INTEGER range (pass a string to store it as text)`;
     if (typeof value !== 'object' || value === null)
         return typeof value;
     if (ArrayBuffer.isView(value) || Object.prototype.toString.call(value) === '[object ArrayBuffer]') {
@@ -38,7 +41,10 @@ function describeBinding(value) {
 }
 /**
  * Each placeholder value must be one the kit binds as sent: a string, a
- * finite number, a boolean or null. The kit reads `values` as JSON
+ * finite number, a bigint inside sqlite's signed 64-bit INTEGER, a boolean or
+ * null. The client writes a bigint in the JSON body as an integer, and
+ * returns an INTEGER above 2^53-1 as one, so a value read back binds again.
+ * The kit reads `values` as JSON
  * (hoody-sqlite raw2params), and JSON.stringify turns NaN and Infinity into
  * null and drops an undefined key, so an INSERT would store NULL without an
  * error; a nested value or bytes would bind as a JSON array or map.
@@ -59,7 +65,9 @@ function checkBindings(label, field, bind) {
             continue;
         if (typeof v === 'number' && Number.isFinite(v))
             continue;
-        throw new ValidationError(`${label}: ${field}${slot} must be a string, a finite number, a boolean or null, got ${describeBinding(v)}`, field);
+        if (typeof v === 'bigint' && v >= INT64_MIN && v <= INT64_MAX)
+            continue;
+        throw new ValidationError(`${label}: ${field}${slot} must be a string, a finite number, a bigint, a boolean or null, got ${describeBinding(v)}`, field);
     }
 }
 async function sendOne(sql, method, kind, request, templateVars) {
@@ -85,7 +93,11 @@ async function sendOne(sql, method, kind, request, templateVars) {
     if (bind != null)
         checkBindings(label, params != null ? 'params' : 'values', bind);
     const item = kind === 'query' ? { query: statement } : { statement };
-    const response = await sql.runTransaction({ transaction: [bind == null ? item : { ...item, values: bind }] }, 
+    const response = await sql.runTransaction({ transaction: [bind == null ? item : {
+                ...item,
+                // The generated type lists the JSON scalars; a bigint goes out as a JSON integer.
+                values: bind,
+            }] }, 
     // Forced after the caller's options: the result is read from the envelope.
     { ...rest, rawResponse: false, responseType: 'json' }, templateVars);
     const results = response?.data?.results;

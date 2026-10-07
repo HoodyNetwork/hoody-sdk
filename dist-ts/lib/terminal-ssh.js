@@ -20,6 +20,7 @@
 import { SessionsService } from '../generated/terminal/sessions.service.js';
 import { CommandsService } from '../generated/terminal/commands.service.js';
 import { ownerOf } from './service-owner.js';
+import { terminalHostLabel } from './terminal-host.js';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -40,7 +41,9 @@ function getTerminalBaseUrl(client, serviceIndex = 0) {
     const domain = typeof client.resolveContainersDomain === 'function'
         ? client.resolveContainersDomain()
         : 'containers.hoody.com';
-    return `https://${t.projectId}-${t.containerId}-terminal-${serviceIndex}.${t.server}.${domain}`;
+    // terminalHostLabel: an index of 10000 or more (every ephemeral session) does
+    // not fit `terminal-<N>` in a DNS label; it gets the proxy's short `t-<N>`.
+    return `https://${terminalHostLabel(t.projectId, t.containerId, serviceIndex)}.${t.server}.${domain}`;
 }
 /**
  * Host index for a terminal request. The containers proxy injects
@@ -64,7 +67,9 @@ function terminalServiceIndex(explicit, terminalId) {
  * resolved to `terminal-<serviceIndex>` instead (index 0 = the kit's "no
  * terminal id" sentinel, which spawns a fresh ephemeral session rather than
  * attaching to the one just created). `serviceIndex` remains the fallback for
- * a non-numeric id.
+ * a non-numeric id. Ids of 10000 and up (every ephemeral session) use the
+ * proxy's short `t-<id>` label, because `terminal-<id>` is then one character
+ * too long for DNS (lib/terminal-host.ts).
  */
 function buildTerminalUrl(client, terminalId, serviceIndex = 0) {
     const n = Number(terminalId);

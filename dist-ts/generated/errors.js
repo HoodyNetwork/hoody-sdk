@@ -32,6 +32,12 @@ export function isApiError(error) {
         && typeof candidate.message === 'string';
 }
 const RETRYABLE_STATUSES = [408, 425, 429, 500, 502, 503, 504];
+/**
+ * Error codes with which a server refuses a request before doing anything, and asks for it
+ * again: the request can be repeated whatever its method. FILE_PATH_BUSY is hoody-files'
+ * 409 for a path another operation holds ("nothing was changed").
+ */
+export const RETRY_SAFE_CODES = ['FILE_PATH_BUSY', 'PATH_BUSY'];
 // The predicate narrows to RetryableApiError, NOT to ApiError — that distinction is the
 // whole point, because this tests a VALUE condition (is the status retryable?) rather
 // than a type. Declaring `error is ApiError` made the NEGATIVE branch subtract ApiError,
@@ -51,6 +57,8 @@ const RETRYABLE_STATUSES = [408, 425, 429, 500, 502, 503, 504];
 export function isRetryableApiError(error) {
     if (!isApiError(error))
         return false;
+    if (error.status === 409)
+        return typeof error.code === 'string' && RETRY_SAFE_CODES.includes(error.code);
     return RETRYABLE_STATUSES.includes(error.status);
 }
 export class ValidationError extends Error {

@@ -18,7 +18,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { tunnelSocks5 } from './tunnel-socks5.js';
-import { deriveSiblingDomain } from './domain-utils.js';
+import { deriveSiblingDomain, platformUrl } from './domain-utils.js';
 /**
  * Thrown when startup fails AND the container was left with this run's upstream
  * still set.
@@ -49,7 +49,23 @@ export class LocalExitStartupError extends Error {
         this.closeTunnel = opts.closeTunnel;
     }
 }
-const IP_SERVICE = 'https://ip.hoody.com';
+/**
+ * The IP service of the client's own platform: `https://ip.<platform domain>`.
+ *
+ * It was one fixed host, so an account on any other platform confirmed its exit against
+ * a different platform's service, from this machine and through the container. The client's own
+ * getIpUrl() is the answer when it has one (HoodyClient derives it from its base URL); a client
+ * without it gets the same derivation from the base URL every other URL here comes from.
+ * Exported for the unit test; not part of the package entry.
+ */
+export function ipServiceUrl(client, baseUrl) {
+    if (typeof client?.getIpUrl === 'function') {
+        const own = client.getIpUrl();
+        if (typeof own === 'string' && /^https:\/\/[A-Za-z0-9.-]+\/?$/.test(own))
+            return own.replace(/\/$/, '');
+    }
+    return platformUrl(baseUrl, 'ip');
+}
 /**
  * Deadline for the calls that unwire the container.
  *
@@ -59,6 +75,11 @@ const IP_SERVICE = 'https://ip.hoody.com';
  * which is the one way to guarantee the container is left dirty.
  */
 const TEARDOWN_TIMEOUT_MS = 15_000;
+function containerIdOf(c) {
+    if (typeof c?.id !== 'string' || c.id === '')
+        throw new Error('local exit: container is missing id');
+    return c.id;
+}
 function projectIdOf(c) {
     const id = c.project_id ?? c.projectId;
     if (!id)
@@ -200,8 +221,8 @@ function unwrap(res) {
 function containersDomain(baseUrl) {
     return deriveSiblingDomain(baseUrl, 'containers');
 }
-/** Query ip.hoody.com, optionally through the proxy, and normalize the payload. */
-async function readIpService(dispatcherUrl) {
+/** Query the platform's IP service, optionally through the proxy, and normalize the payload. */
+async function readIpService(ipService, dispatcherUrl) {
     // Bounded. Without a deadline this call is the one unbounded await in startup:
     // a stalled connection leaves the container relaying publicly while the caller
     // still has no handle to stop it with.
@@ -215,14 +236,15 @@ async function readIpService(dispatcherUrl) {
     if (dispatcherUrl) {
         throw new Error('readIpService: per-request proxying is handled by the caller');
     }
-    const res = await fetch(IP_SERVICE, init);
+    const ipHost = new URL(ipService).host;
+    const res = await fetch(ipService, init);
     if (!res.ok)
-        throw new Error(`ip.hoody.com returned ${res.status}`);
+        throw new Error(`${ipHost} returned ${res.status}`);
     const body = await res.json();
     const data = body?.data ?? body;
     const ip = data?.ip;
     if (typeof ip !== 'string' || ip.length === 0) {
-        throw new Error('ip.hoody.com response had no data.ip');
+        throw new Error(`${ipHost} response had no data.ip`);
     }
     return { ip, country: data?.ip_info?.country, asn: data?.ip_info?.asn?.name };
 }
@@ -235,17 +257,19 @@ async function readIpService(dispatcherUrl) {
  */
 export async function startLocalExit(opts) {
     const { client, container } = opts;
+    const containerId = containerIdOf(container);
     const projectId = projectIdOf(container);
     const server = serverNameOf(container);
     const baseUrl = resolveClientBaseUrl(client);
     const domain = containersDomain(baseUrl);
-    const tunnelWs = `wss://${projectId}-${container.id}-tunnel-1.${server}.${domain}/api/v1/tunnel/connect`;
+    const ipService = ipServiceUrl(client, baseUrl);
+    const tunnelWs = `wss://${projectId}-${containerId}-tunnel-1.${server}.${domain}/api/v1/tunnel/connect`;
     // Unsuffixed, matching `getKitUrl('egress', …)`, the CLI's getKitBaseUrl and
     // the docs. The edge normalizes a missing index to 1, so this IS index 1 —
     // including for proxy permissions, which are evaluated per index. Emitting
     // `-egress-1` here instead would route identically but break the parity
     // between the SDK, the CLI and the docs, which a rename once already split.
-    const egressBase = `https://${projectId}-${container.id}-egress.${server}.${domain}`;
+    const egressBase = `https://${projectId}-${containerId}-egress.${server}.${domain}`;
     const token = await client.getAuthToken();
     if (!token)
         throw new Error('local exit: client is not authenticated');
@@ -446,7 +470,7 @@ export async function startLocalExit(opts) {
                 ? `exit-${randomBytes(4).toString('hex')}`
                 : opts.alias;
             const created = await client.api.proxy.aliases.create({
-                container_id: container.id,
+                container_id: containerId,
                 program: 'egress',
                 alias: name,
             });
@@ -464,10 +488,10 @@ export async function startLocalExit(opts) {
         }
         const proxyUrl = aliasUrl ?? egressBase;
         const verifyExit = async () => {
-            const local = await readIpService();
+            const local = await readIpService(ipService);
             // Route the probe through the proxy itself by asking the container's egress
             // to fetch it: a CONNECT through proxyUrl is what a real consumer does.
-            const exit = await fetchThroughProxy(proxyUrl, IP_SERVICE);
+            const exit = await fetchThroughProxy(proxyUrl, ipService);
             const data = exit?.data ?? exit;
             return {
                 exitIp: data?.ip,

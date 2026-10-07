@@ -13,7 +13,7 @@
  *
  * `sources[]` entries are site-relative (`path`), never absolute — the browser
  * widget uses them as an href directly. A terminal cannot, so they are resolved
- * against DOCS_SITE_BASE here.
+ * against the docs site of the account's platform here (docsSiteBaseFor).
  *
  * Server-side limits this client is built against (chatbot's chat-handler.ts):
  *   message  ≤ 2000 chars   (CHATBOT_MAX_INPUT_LENGTH)
@@ -47,16 +47,25 @@ export type AskResult = {
     error: ChatErrorCode;
     message: string;
 };
-export declare const DEFAULT_SERVICE_URL = "https://chatbot.hoody.com/api/chat";
 /**
- * Public docs site, used to turn a citation into a clickable link. The service
- * emits site-relative paths and has never emitted an absolute URL.
- *
- * Treat this constant as generated: do not hand-edit it.
+ * The documentation assistant of the platform an account is on: `/api/chat` on the `chatbot.` host
+ * of the platform domain of its API base URL. One package serves every platform, so a fixed host
+ * sent every other platform's questions to a service the account is not on.
  */
-export declare const DOCS_SITE_BASE = "https://docs.hoody.com";
+export declare function serviceUrlFor(apiBaseUrl?: string): string;
+/** The assistant of the default platform: what serviceUrlFor() answers when no account is known. */
+export declare const DEFAULT_SERVICE_URL: string;
+/**
+ * Public docs site of the platform an account is on, used to turn a citation into a clickable
+ * link. The service emits site-relative paths and has never emitted an absolute URL.
+ */
+export declare function docsSiteBaseFor(apiBaseUrl?: string): string;
+/** The docs site of the default platform: what docsSiteBaseFor() answers when no account is known. */
+export declare const DOCS_SITE_BASE: string;
 /** Shown to the user when the answer hit the size cap. Never part of `text`. */
-export declare const TRUNCATION_NOTICE = "\n\u2026[truncated, see https://docs.hoody.com for full content]";
+export declare function truncationNotice(docsSiteBase?: string): string;
+/** truncationNotice() for the default platform. */
+export declare const TRUNCATION_NOTICE: string;
 export declare const DEFAULT_MAX_RESULT_BYTES = 16384;
 export declare const DEFAULT_TIMEOUT_MS = 120000;
 /**
@@ -90,8 +99,11 @@ export declare const MAX_HISTORY_BYTES = 32000;
  * as the answer), so both halves of the link are constrained: the path must be
  * a plain site-relative docs path, and the title cannot carry markdown-link
  * metacharacters or newlines that would break out of the `[…](…)`.
+ *
+ * `docsSiteBase` is the docs site the paths are resolved against: the default platform's, unless
+ * the caller passes the account's own (docsSiteBaseFor).
  */
-export declare function renderSources(sources: readonly DocsSource[]): string;
+export declare function renderSources(sources: readonly DocsSource[], docsSiteBase?: string): string;
 /**
  * Rolling-window request counter. One instance per process, shared by the
  * one-shot path and the REPL so a single bucket bounds them both.
@@ -117,6 +129,11 @@ export interface AskOptions {
     onDelta?: ((chunk: string) => void) | undefined;
     /** Override for HOODY_CHAT_URL. */
     url?: string | undefined;
+    /**
+     * The account's API base URL. When neither `url` nor HOODY_CHAT_URL names an endpoint, the
+     * question goes to the assistant of that platform (serviceUrlFor), which needs no acceptance.
+     */
+    apiBaseUrl?: string | undefined;
     maxResultBytes?: number | undefined;
     timeoutMs?: number | undefined;
     firstByteTimeoutMs?: number | undefined;

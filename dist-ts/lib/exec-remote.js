@@ -27,6 +27,7 @@
 import { ExecService } from '../generated/exec/exec.service.js';
 import { encodeExecScriptPath } from './exec-script-execution.js';
 import { recordCredentialHeader } from './redact.js';
+import { builtinWebSocketProhibited, SDK_WS_CAPS, unsafeBuiltinWebSocketMessage } from './kit-ws-auth.js';
 // ---------------------------------------------------------------------------
 // Wire constants (#674)
 // ---------------------------------------------------------------------------
@@ -576,7 +577,10 @@ function isBrowserRuntime() {
         && typeof globalThis.document !== 'undefined';
 }
 async function openRemoteSocket(url, protocols, headers) {
-    if (isBrowserRuntime()) {
+    // On a Node whose built-in WebSocket is prohibited (kit-ws-auth) the browser
+    // branch is never taken, DOM globals or not: such a process is still Node.
+    const prohibited = builtinWebSocketProhibited();
+    if (!prohibited && isBrowserRuntime()) {
         const credential = Object.keys(headers).find((h) => !NON_CREDENTIAL_UPGRADE_HEADERS.has(h.toLowerCase()));
         if (credential !== undefined) {
             // A browser socket cannot send headers; dropping the kit credential
@@ -593,14 +597,24 @@ async function openRemoteSocket(url, protocols, headers) {
         return new Ctor(url, protocols);
     }
     let mod;
+    let loadError;
     try {
         mod = (await import(/* @vite-ignore */ 'ws'));
     }
-    catch {
+    catch (err) {
         mod = undefined;
+        loadError = err;
     }
     if (mod) {
-        return new mod.default(url, protocols, { headers, maxPayload: EXEC_REMOTE_MAX_BODY_BYTES });
+        return new mod.default(url, protocols, { headers, maxPayload: EXEC_REMOTE_MAX_BODY_BYTES, ...SDK_WS_CAPS });
+    }
+    if (prohibited) {
+        throw new ExecRemoteConnectionError({
+            message: unsafeBuiltinWebSocketMessage(loadError),
+            status: 0,
+            code: 'REMOTE_SOCKET_UNAVAILABLE',
+            url: publicUrl(url),
+        });
     }
     const credential = Object.keys(headers).some((h) => !NON_CREDENTIAL_UPGRADE_HEADERS.has(h.toLowerCase()));
     const Ctor = globalThis.WebSocket;

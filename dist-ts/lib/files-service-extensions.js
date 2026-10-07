@@ -5,8 +5,9 @@
  * Architecture:
  *   This module extends the auto-generated service classes with convenience
  *   helpers (classify, getUrl, getZipUrl, images.getThumbnailUrl, list),
- *   value readers (readText, readJson, readBytes) and a JSON-default override
- *   (search) without modifying the generated code.
+ *   value readers (readText, readJson, readBytes), a boolean `exists` over
+ *   the generated HEAD call, and a JSON-default override (search) without
+ *   modifying the generated code.
  *
  *   It uses the same declare-module + prototype-patch pattern as
  *   lib/exec-scripts.ts and lib/terminal-exec.ts.
@@ -19,7 +20,7 @@
  */
 import { FilesService } from '../generated/files/files.service.js';
 import { UiService as FilesUiService } from '../generated/files/ui.service.js';
-import { ValidationError } from '../generated/errors.js';
+import { ValidationError, isApiError } from '../generated/errors.js';
 import { FilesService as NotesFilesService } from '../generated/notes/files.service.js';
 import { ImagesService } from '../generated/files/images.service.js';
 // Notes TUS upload helpers (upload / resumeUpload / uploads.getOffset /
@@ -168,6 +169,21 @@ async function readBytes(path, options, templateVars) {
     throw new TypeError(`files.readBytes(${path}): expected the file bytes, got ${describeValue(body)}`);
 }
 // ---------------------------------------------------------------------------
+// exists
+// ---------------------------------------------------------------------------
+/** `exists` as a boolean over the generated HEAD call: 404 is the answer "no", not a failure. */
+async function exists(path, options, templateVars) {
+    try {
+        await this.__exists(path, options, templateVars);
+        return true;
+    }
+    catch (err) {
+        if (isApiError(err) && err.status === 404)
+            return false;
+        throw err;
+    }
+}
+// ---------------------------------------------------------------------------
 // Prototype patching
 // ---------------------------------------------------------------------------
 function patchFilesService(proto, includeFilesKitHelpers) {
@@ -219,6 +235,7 @@ function patchFilesService(proto, includeFilesKitHelpers) {
     proto.readText = readText;
     proto.readJson = readJson;
     proto.readBytes = readBytes;
+    proto.exists = exists;
     {
         const origSearch = proto.search;
         if (typeof origSearch === 'function') {

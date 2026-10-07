@@ -2,7 +2,490 @@
  * HTTP Client
  * Handles API requests with authentication, middleware, retries, and timeouts.
  */
-import { ApiError, isApiError, } from './errors.js';
+import { ApiError, isApiError, RETRY_SAFE_CODES, } from './errors.js';
+/** undici 8, the version the SDK depends on, needs Node 22.19. */
+const _NODE_TRANSPORT_MIN_NODE = [22, 19];
+/** undici's own timers answer a little after the client's, so the client's timeout error is the one seen. */
+const _NODE_TRANSPORT_TIMEOUT_GRACE_MS = 1000;
+/** undici's default body idle timeout: a quiet stream keeps at least this long. */
+const _NODE_TRANSPORT_MIN_BODY_TIMEOUT_MS = 300000;
+/** The global fetch when this module loaded: a later replacement (a test double, an interceptor) is the caller's transport. */
+const _FETCH_AT_LOAD = globalThis.fetch;
+let _nodeTransport;
+/** True on a Node that can load the SDK's transport (22.19 or later; not Bun, not Deno). */
+export function nodeTransportSupported() {
+    const runtime = globalThis;
+    const versions = runtime.process?.versions;
+    if (!versions || typeof versions.node !== 'string' || versions.bun !== undefined || runtime.Deno !== undefined)
+        return false;
+    const parts = versions.node.split('.');
+    const major = Number.parseInt(parts[0] ?? '', 10);
+    const minor = Number.parseInt(parts[1] ?? '', 10);
+    if (!Number.isFinite(major) || !Number.isFinite(minor))
+        return false;
+    return major > _NODE_TRANSPORT_MIN_NODE[0] || (major === _NODE_TRANSPORT_MIN_NODE[0] && minor >= _NODE_TRANSPORT_MIN_NODE[1]);
+}
+const _GLOBAL_DISPATCHER_KEYS = [Symbol.for('undici.globalDispatcher.2'), Symbol.for('undici.globalDispatcher.1')];
+/** The slot the built-in fetch reads its dispatcher from, and what it holds. */
+function _readGlobalDispatcher(key) {
+    const slots = globalThis;
+    for (const candidate of key !== undefined ? [key] : _GLOBAL_DISPATCHER_KEYS) {
+        const dispatcher = slots[candidate];
+        if (dispatcher !== undefined && dispatcher !== null)
+            return { key: candidate, dispatcher };
+    }
+    return undefined;
+}
+/**
+ * A plain undici Agent constructed with no options: what Node creates for
+ * itself. Read off the instance (its class name and the options it kept), so
+ * it cannot see an Agent whose only difference is a custom `factory`, or a
+ * compose() wrapper around one.
+ */
+function _looksLikeUntouchedAgent(dispatcher) {
+    if (dispatcher === null || typeof dispatcher !== 'object')
+        return false;
+    if (dispatcher.constructor?.name !== 'Agent')
+        return false;
+    const optionsKey = Object.getOwnPropertySymbols(dispatcher).find((symbol) => symbol.description === 'options');
+    if (optionsKey === undefined)
+        return false;
+    const options = dispatcher[optionsKey];
+    if (options === null || typeof options !== 'object')
+        return false;
+    // What a no-argument Agent keeps (Node 22.19 to 26): `{ connect: undefined, interceptors: undefined }`
+    // or `{ maxOrigins: Infinity, connect: undefined }`. Any option that is set is the application's.
+    return Object.entries(options).every(([name, value]) => value === undefined || value === null || (name === 'maxOrigins' && value === Infinity));
+}
+/**
+ * The dispatcher of the built-in fetch as this module found it. The SDK's own
+ * transport stands in for the built-in fetch only while that dispatcher is
+ * Node's default, so that an application's dispatcher (a private CA, a client
+ * certificate, a proxy, interceptors) is never sent around.
+ *
+ * Node creates its dispatcher the first time a fetch class is touched. If the
+ * slot was empty when this module loaded, the object that appears when it
+ * touches one is Node's own (`ownedByNode`). If something was already there,
+ * it is judged by its look (_looksLikeUntouchedAgent). Either way a later
+ * replacement is a different object and is seen on the next request.
+ *
+ * With NODE_USE_ENV_PROXY and a proxy variable, Node's own dispatcher is an
+ * EnvHttpProxyAgent: not a plain Agent, so the built-in fetch (and the proxy)
+ * is used.
+ *
+ * The limit: a dispatcher that looks like an untouched Agent, installed before
+ * this module loaded and after something had touched fetch, is taken for the
+ * default. `transport: { useGlobalDispatcher: true }` (or an injected
+ * `fetch`) is the way to say so.
+ */
+const _DISPATCHER_AT_LOAD = (() => {
+    if (!nodeTransportSupported())
+        return undefined;
+    try {
+        const emptyBefore = _readGlobalDispatcher() === undefined;
+        void globalThis.Response;
+        const found = _readGlobalDispatcher();
+        if (!found)
+            return undefined;
+        const plainAgent = found.dispatcher.constructor?.name === 'Agent';
+        return { ...found, isDefault: plainAgent && (emptyBefore || _looksLikeUntouchedAgent(found.dispatcher)) };
+    }
+    catch {
+        return undefined;
+    }
+})();
+/** The dispatcher the built-in fetch uses is still the default one this module found at load. */
+function _globalDispatcherIsDefault() {
+    if (_DISPATCHER_AT_LOAD === undefined || !_DISPATCHER_AT_LOAD.isDefault)
+        return false;
+    return _readGlobalDispatcher(_DISPATCHER_AT_LOAD.key)?.dispatcher === _DISPATCHER_AT_LOAD.dispatcher;
+}
+/** Whether a request sent now, by a client with no injected fetch, goes through the SDK's own transport. */
+export function nodeTransportInUse() {
+    return nodeTransportSupported() && _globalDispatcherIsDefault();
+}
+/** An HTTP/2 session or stream failure anywhere in the cause chain. */
+function _isHttp2Failure(error) {
+    let current = error;
+    for (let depth = 0; depth < 6 && current && typeof current === 'object'; depth++) {
+        const code = current.code;
+        if (typeof code === 'string' && code.startsWith('ERR_HTTP2_'))
+            return true;
+        current = current.cause;
+    }
+    return false;
+}
+/** undici's own timeout, anywhere in the cause chain: which one. */
+function _undiciTimeoutOf(error) {
+    let current = error;
+    for (let depth = 0; depth < 6 && current && typeof current === 'object'; depth++) {
+        const code = current.code;
+        if (code === 'UND_ERR_HEADERS_TIMEOUT')
+            return 'headers';
+        if (code === 'UND_ERR_BODY_TIMEOUT')
+            return 'body';
+        if (code === 'UND_ERR_CONNECT_TIMEOUT')
+            return 'connect';
+        current = current.cause;
+    }
+    return undefined;
+}
+/** Methods shouldRetry() may send again after a lost connection. */
+const _IDEMPOTENT_METHODS = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
+/**
+ * The default retry policy, used when neither the request nor the client sets `retries`
+ * (IHttpClientConfig.retries): 2 more attempts (none for responseIsFinal), a 2 s backoff base,
+ * at most 10 s of waiting in all. Same values as lib/http-wire.ts.
+ */
+const _DEFAULT_RETRIES = 2;
+const _DEFAULT_RETRY_DELAY_MS = 2000;
+const _DEFAULT_RETRY_WAIT_CAP_MS = 10_000;
+/** Failures of opening the connection: the request was never written, so no server ran it. */
+const _CONNECT_FAILURE_CODES = ['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'EHOSTDOWN', 'ENETUNREACH', 'ENETDOWN', 'UND_ERR_CONNECT_TIMEOUT'];
+function _isConnectFailure(error) {
+    if (!error || typeof error !== 'object')
+        return false;
+    const failure = error;
+    return (typeof failure.code === 'string' && _CONNECT_FAILURE_CODES.includes(failure.code)) || failure.syscall === 'connect';
+}
+/**
+ * The request never reached a server: somewhere in the cause chain the connection failed to
+ * open. Node reports a host with several addresses as one AggregateError; it counts when every
+ * attempt in it failed that way.
+ */
+function _neverDispatched(error) {
+    let current = error?.cause;
+    for (let depth = 0; depth < 6 && current && typeof current === 'object'; depth++) {
+        // A failure on a redirect hop: the first hop was answered (sendConfined marks it).
+        if (current.afterDispatch === true)
+            return false;
+        if (_isConnectFailure(current))
+            return true;
+        const attempts = current.errors;
+        if (Array.isArray(attempts) && attempts.length > 0 && attempts.every(_isConnectFailure))
+            return true;
+        current = current.cause;
+    }
+    return false;
+}
+const _TEXT_SUBTYPES = new Set([
+    'json', 'x-ndjson', 'ndjson', 'jsonl', 'x-jsonlines', 'json-seq', 'json5',
+    'xml', 'javascript', 'x-javascript', 'ecmascript', 'yaml', 'x-yaml', 'yml', 'x-yml', 'csv',
+    'x-www-form-urlencoded',
+]);
+const _TEXT_SUFFIXES = ['+json', '+xml', '+yaml'];
+/**
+ * True for a media type whose body is text: text/*, or one of the subtypes or
+ * structured suffixes above. Matched on the exact subtype or suffix, never on
+ * a substring: `openxmlformats` (.docx, .xlsx, .pptx) contains "xml" and is a
+ * zip archive, which a substring test decoded as UTF-8 and corrupted. The same
+ * rule as the CLI client (cli/http-client.ts isTextMediaType).
+ */
+export function isTextMediaType(contentType) {
+    const type = (contentType ?? '').split(';')[0].trim().toLowerCase();
+    if (type.startsWith('text/'))
+        return true;
+    const slash = type.indexOf('/');
+    if (slash === -1)
+        return false;
+    const subtype = type.slice(slash + 1);
+    return _TEXT_SUBTYPES.has(subtype) || _TEXT_SUFFIXES.some((suffix) => subtype.endsWith(suffix));
+}
+const _BYTE_FAMILIES = ['application/', 'image/', 'audio/', 'video/', 'font/'];
+/**
+ * True for a media type whose body is bytes: any application/* type that is
+ * not text (isTextMediaType), and image/*, audio/*, video/*, font/*. Bytes are
+ * the default for application/*: an Office or other vendor file
+ * (vnd.openxmlformats-*, vnd.ms-*, vnd.oasis.opendocument.*) served without
+ * Content-Disposition: attachment was decoded as UTF-8 and corrupted. text/*,
+ * the text subtypes and a missing type are not bytes. The same rule as
+ * lib/http-wire.ts isBinaryMediaType.
+ */
+export function isBinaryMediaType(contentType) {
+    if (isTextMediaType(contentType))
+        return false;
+    const type = (contentType ?? '').split(';')[0].trim().toLowerCase();
+    return _BYTE_FAMILIES.some((family) => type.startsWith(family) && type.length > family.length);
+}
+/** An integer literal JSON.parse cannot hold exactly needs at least 16 digits. */
+const _LONG_DIGIT_RUN = /\d{16}/;
+/**
+ * JSON.parse, except that an integer literal outside the safe range becomes a
+ * bigint instead of the nearest double. Fractions and exponents are numbers,
+ * as in JSON.parse. A text with no 16-digit run goes straight to JSON.parse.
+ *
+ * The text is scanned once outside its strings; each unsafe integer is swapped
+ * for a tagged string that the reviver turns into the bigint. The tag carries
+ * a per-call random part, so a string of the document cannot be mistaken for
+ * one.
+ */
+export function parseJsonLossless(text) {
+    if (!_LONG_DIGIT_RUN.test(text))
+        return JSON.parse(text);
+    const tag = '\u0000int:' + Math.random().toString(36).slice(2) + ':';
+    let out = '';
+    let copied = 0;
+    let swapped = false;
+    const length = text.length;
+    for (let i = 0; i < length;) {
+        const ch = text.charCodeAt(i);
+        if (ch === 0x22) {
+            // A string: skip to its closing quote, minding escapes.
+            i += 1;
+            while (i < length) {
+                const inner = text.charCodeAt(i);
+                if (inner === 0x5c) {
+                    i += 2;
+                    continue;
+                }
+                i += 1;
+                if (inner === 0x22)
+                    break;
+            }
+            continue;
+        }
+        if (ch === 0x2d || (ch >= 0x30 && ch <= 0x39)) {
+            const start = i;
+            if (ch === 0x2d)
+                i += 1;
+            while (i < length && text.charCodeAt(i) >= 0x30 && text.charCodeAt(i) <= 0x39)
+                i += 1;
+            const next = i < length ? text.charCodeAt(i) : 0;
+            if (next === 0x2e || next === 0x65 || next === 0x45) {
+                // A fraction or an exponent: a double, as JSON.parse reads it.
+                while (i < length) {
+                    const c = text.charCodeAt(i);
+                    if ((c >= 0x30 && c <= 0x39) || c === 0x2e || c === 0x65 || c === 0x45 || c === 0x2b || c === 0x2d)
+                        i += 1;
+                    else
+                        break;
+                }
+                continue;
+            }
+            if (i - start >= 16) {
+                const literal = text.slice(start, i);
+                if (/^-?(0|[1-9]\d*)$/.test(literal) && !Number.isSafeInteger(Number(literal))) {
+                    out += text.slice(copied, start) + JSON.stringify(tag + literal);
+                    copied = i;
+                    swapped = true;
+                }
+            }
+            continue;
+        }
+        i += 1;
+    }
+    if (!swapped)
+        return JSON.parse(text);
+    out += text.slice(copied);
+    return JSON.parse(out, (_key, value) => typeof value === 'string' && value.startsWith(tag) ? BigInt(value.slice(tag.length)) : value);
+}
+/**
+ * JSON.stringify, except that a bigint is written as a plain integer literal
+ * instead of throwing. Only reached when the value holds a bigint.
+ */
+export function stringifyJsonLossless(value) {
+    const tag = '\u0000int:' + Math.random().toString(36).slice(2) + ':';
+    const text = JSON.stringify(value, (_key, entry) => typeof entry === 'bigint' ? tag + entry.toString() : entry);
+    if (text === undefined)
+        return text;
+    const quoted = JSON.stringify(tag).slice(1, -1);
+    return text.split('"' + quoted).map((part, index) => {
+        if (index === 0)
+            return part;
+        const end = part.indexOf('"');
+        return part.slice(0, end) + part.slice(end + 1);
+    }).join('');
+}
+function _stringifyBody(body) {
+    try {
+        return JSON.stringify(body);
+    }
+    catch (error) {
+        // JSON.stringify refuses a bigint with a TypeError; anything else (a cycle) is the caller's.
+        if (error instanceof TypeError && /bigint/i.test(error.message))
+            return stringifyJsonLossless(body);
+        throw error;
+    }
+}
+/**
+ * For an HTML document, a one-line message: the status line plus the page's
+ * <title> (or its first heading). undefined for anything that is not HTML.
+ */
+function _htmlErrorTitle(body, statusLine) {
+    const head = body.slice(0, 512).trimStart().toLowerCase();
+    if (!head.startsWith('<!doctype html') && !head.startsWith('<html'))
+        return undefined;
+    const found = /<title[^>]*>([^<]*)<\/title>/i.exec(body) ?? /<h1[^>]*>([^<]*)<\/h1>/i.exec(body);
+    const title = found ? found[1].replace(/\s+/g, ' ').trim().slice(0, 200) : '';
+    if (title.length === 0)
+        return statusLine;
+    return statusLine.endsWith(': ') || statusLine.endsWith(':') ? statusLine.trimEnd() + ' ' + title : statusLine + ' (' + title + ')';
+}
+/** Statuses whose Response takes no body. */
+const _NULL_BODY_STATUSES = [101, 103, 204, 205, 304];
+/**
+ * undici's Response as the runtime's own class, so `instanceof Response` and
+ * middleware written against the global keep working. The body is passed on
+ * unread.
+ */
+function _asRuntimeResponse(response) {
+    const RuntimeResponse = globalThis.Response;
+    // (Checked through unknown: to the type checker both are Response, and a plain instanceof
+    // would leave nothing to wrap.)
+    if (typeof RuntimeResponse !== 'function' || response instanceof RuntimeResponse)
+        return response;
+    let wrapped;
+    try {
+        // A status the constructor refuses (below 200) throws: that response is passed on as it is.
+        wrapped = new RuntimeResponse(_NULL_BODY_STATUSES.includes(response.status) ? null : response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+        });
+    }
+    catch {
+        return response;
+    }
+    Object.defineProperty(wrapped, 'url', { value: response.url });
+    Object.defineProperty(wrapped, 'redirected', { value: response.redirected });
+    Object.defineProperty(wrapped, 'type', { value: response.type });
+    return wrapped;
+}
+/**
+ * After the undici import: undo what the import itself installed, and nothing else.
+ *
+ * undici 8 installs a default only when its own slot (`.2`) is empty: a fresh no-option Agent
+ * there, and a Dispatcher1Wrapper of it in the legacy slot (`.1`), which is where the built-in
+ * fetch of Node 22 to 24 reads its dispatcher. The legacy slot is put back only when that is what
+ * it holds. Anything else in it was set by the application while the import was pending (or by an
+ * earlier undici load), and is left. The limit: an application dispatcher set in the legacy slot
+ * BEFORE undici evaluated is overwritten by undici itself, and what is put back is the one seen
+ * before the import.
+ */
+function _restoreDispatcherSlots(before, loaded) {
+    const slots = globalThis;
+    const [ownKey, legacyKey] = _GLOBAL_DISPATCHER_KEYS;
+    const ownBefore = before.find(([key]) => key === ownKey)?.[1];
+    const legacyBefore = before.find(([key]) => key === legacyKey)?.[1];
+    if (ownBefore !== undefined || legacyBefore === undefined)
+        return;
+    const undiciModule = (typeof loaded.Agent === 'function' ? loaded : loaded.default);
+    const Agent = undiciModule?.Agent;
+    const Wrapper = undiciModule?.Dispatcher1Wrapper;
+    if (typeof Agent !== 'function' || typeof Wrapper !== 'function')
+        return;
+    const installed = slots[ownKey];
+    if (!(installed instanceof Agent) || !_looksLikeUntouchedAgent(installed))
+        return;
+    const legacy = slots[legacyKey];
+    if (legacy !== legacyBefore && legacy instanceof Wrapper) {
+        try {
+            slots[legacyKey] = legacyBefore;
+        }
+        catch { /* not writable: left as undici set it */ }
+    }
+}
+async function _createNodeTransport() {
+    if (!nodeTransportSupported() || !_globalDispatcherIsDefault())
+        return null;
+    // Importing undici 8 on a Node that bundles an older one re-points the
+    // built-in fetch's dispatcher slot at undici 8's default Agent (HTTP/2 on).
+    // The built-in fetch belongs to the rest of the process: put its dispatcher back.
+    const slots = globalThis;
+    const before = _GLOBAL_DISPATCHER_KEYS.map((key) => [key, slots[key]]);
+    const specifier = 'undici';
+    const loaded = await import(specifier);
+    _restoreDispatcherSlots(before, loaded);
+    const candidate = (typeof loaded.fetch === 'function' ? loaded : loaded.default);
+    if (!candidate || typeof candidate.fetch !== 'function' || typeof candidate.Agent !== 'function' || typeof candidate.FormData !== 'function') {
+        return null;
+    }
+    const undici = candidate;
+    // HTTP/1.1 only. The timeouts are set per request (below); 0 here means a
+    // request sent with no budget has none.
+    const newAgent = () => new undici.Agent({ allowH2: false });
+    let agent = newAgent();
+    const withTimeouts = (dispatcher, timeoutMs) => {
+        if (timeoutMs === undefined)
+            return dispatcher;
+        const budget = Number.isFinite(timeoutMs) && timeoutMs > 0;
+        const headersTimeout = budget ? timeoutMs + _NODE_TRANSPORT_TIMEOUT_GRACE_MS : 0;
+        const bodyTimeout = budget ? Math.max(timeoutMs + _NODE_TRANSPORT_TIMEOUT_GRACE_MS, _NODE_TRANSPORT_MIN_BODY_TIMEOUT_MS) : 0;
+        return dispatcher.compose((dispatch) => (opts, handler) => dispatch({ ...opts, headersTimeout, bodyTimeout }, handler));
+    };
+    // undici's fetch reads only its own FormData: the runtime's would go out as
+    // the text "[object FormData]".
+    const toUndiciBody = (body) => {
+        if (typeof FormData === 'undefined' || !(body instanceof FormData) || body instanceof undici.FormData)
+            return body;
+        const form = new undici.FormData();
+        for (const [name, value] of body.entries()) {
+            if (typeof value === 'string')
+                form.append(name, value);
+            else
+                form.append(name, value, typeof value.name === 'string' ? value.name : undefined);
+        }
+        return form;
+    };
+    const reset = () => {
+        const stale = agent;
+        agent = newAgent();
+        void stale.close().catch(() => undefined);
+    };
+    return {
+        undici,
+        reset,
+        fetch: async (input, init, timeoutMs) => {
+            const own = init;
+            const options = { ...(own ?? {}) };
+            options.dispatcher = withTimeouts(own?.dispatcher ?? agent, timeoutMs);
+            if (own?.body !== undefined && own.body !== null)
+                options.body = toUndiciBody(own.body);
+            try {
+                return _asRuntimeResponse(await undici.fetch(input, options));
+            }
+            catch (error) {
+                // A broken HTTP/2 session is reused for every later request to its
+                // host: stop using the pool that holds it.
+                if (own?.dispatcher === undefined && _isHttp2Failure(error))
+                    reset();
+                throw error;
+            }
+        },
+    };
+}
+/**
+ * The SDK's Node transport, created once per process; null where the built-in
+ * fetch is used instead (see NodeTransport).
+ */
+export function loadNodeTransport() {
+    if (_nodeTransport === undefined) {
+        _nodeTransport = _createNodeTransport().catch(() => null);
+    }
+    return _nodeTransport;
+}
+/** The default transports that take a request's timeoutMs, by the fetch function the client holds. */
+const _BUDGETED_FETCH = new WeakMap();
+/**
+ * The default transport on Node: the SDK's own (NodeTransport) once it has
+ * loaded, the built-in fetch where it cannot be used.
+ */
+function _nodeDefaultFetch(builtin) {
+    const send = async (input, init, timeoutMs) => {
+        // undici's fetch does not read the runtime's Request class.
+        if (typeof input !== 'string' && !(input instanceof URL))
+            return builtin(input, init);
+        // Asked on every request: an application that installs its own dispatcher
+        // later is sent through it from then on.
+        if (!_globalDispatcherIsDefault())
+            return builtin(input, init);
+        const transport = await loadNodeTransport();
+        return transport ? transport.fetch(input, init, timeoutMs) : builtin(input, init);
+    };
+    const defaultFetch = (input, init) => send(input, init, undefined);
+    _BUDGETED_FETCH.set(defaultFetch, send);
+    return defaultFetch;
+}
 /**
  * Resolve the default transport once, at construction time.
  *
@@ -12,13 +495,20 @@ import { ApiError, isApiError, } from './errors.js';
  * returned transport throws on first use with an actionable message, so a
  * missing transport surfaces at the request, not as an undefined call.
  */
-function resolveDefaultFetch() {
+function resolveDefaultFetch(useGlobalDispatcher = false) {
     const globalFetch = globalThis.fetch;
     if (typeof globalFetch === 'function') {
-        return globalFetch.bind(globalThis);
+        const builtin = globalFetch.bind(globalThis);
+        if (useGlobalDispatcher)
+            return builtin;
+        // On Node the SDK sends through its own transport (NodeTransport), unless
+        // the global fetch was replaced after this module loaded: that replacement
+        // is the transport the caller chose.
+        return globalFetch === _FETCH_AT_LOAD && nodeTransportSupported() ? _nodeDefaultFetch(builtin) : builtin;
     }
     return () => {
-        throw new Error('No fetch implementation available in this runtime. Pass one explicitly: new HttpClient({ fetch: myFetch }).');
+        // FETCH_UNAVAILABLE: the same answer on every attempt, so shouldRetry treats it as final.
+        throw Object.assign(new Error('No fetch implementation available in this runtime. Pass one explicitly: new HttpClient({ fetch: myFetch }).'), { code: 'FETCH_UNAVAILABLE' });
     };
 }
 /**
@@ -50,7 +540,7 @@ function hashAuthHeaders(configHeaders, requestHeaders) {
     }
     // Mirrors lib/redact.ts SECRET_HEADER_RE so every credential-bearing
     // header contributes to the cache partition.
-    const AUTH_KEY_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/;
+    const AUTH_KEY_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/;
     const parts = [];
     for (const k of Object.keys(merged).sort()) {
         if (AUTH_KEY_RE.test(k))
@@ -77,7 +567,7 @@ function _isNonReplayableBody(body) {
  * Redaction helpers — keep in sync with lib/redact.ts.
  * Inlined here because generated/http-client.ts is self-contained.
  */
-const _SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
+const _SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
 /**
  * Headers that carry a credential, for the credential-scope check in
  * applyRequestMiddleware(): the redaction set plus the kit container claim.
@@ -283,7 +773,104 @@ export function isJsonContentType(contentType) {
     return type === 'application/json' || /^application[/][a-z0-9_.+-]+[+]json$/.test(type);
 }
 // Extended credential key set; keep in sync with lib/redact.ts.
-const _SECRET_FIELD_RE = /^(token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|code|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
+const _SECRET_FIELD_RE = /^(token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
+// (Keep in sync with lib/redact.ts isSecretFieldName.) _SECRET_FIELD_RE is a list of whole names, so it knows only the names someone
+// wrote down. The specs name credentials in many more ways (current_password,
+// key_file_pass, client_credentials, sse_customer_key, confirm_token, …), all
+// built the same way: qualifiers, then the noun that says what the value is.
+// _isSecretFieldName reads the noun.
+const _SECRET_NOUNS = ['password', 'passwd', 'pwd', 'pass', 'passphrase', 'secret', 'secrets', 'token', 'credential', 'credentials', 'cookie', 'cookies', 'jwt'];
+// A leading verb makes the field a switch about the secret, not the secret (has_password, persist_credentials).
+const _FLAG_PREFIXES = ['has', 'is', 'ask', 'persist', 'require', 'requires', 'cors', 'use', 'allow', 'remember'];
+// "..._token" that is a paging cursor.
+const _CURSOR_QUALIFIERS = ['page', 'next', 'prev', 'previous', 'continuation', 'pagination', 'cursor'];
+// "..._key" that is not key material.
+const _PLAIN_KEY_QUALIFIERS = ['public', 'idempotency', 'cache', 'logical', 'action', 'sort', 'partition', 'primary', 'foreign', 'host'];
+// "..._code" that is a one-time credential (a bare `code` is an error code; see _isOauthCodeContext).
+const _SECRET_CODE_QUALIFIERS = ['otp', 'totp', 'mfa', 'auth', 'authorization', 'device', 'verification', 'recovery', 'backup'];
+// A trailing encoding says how the value is written, not what it is (sse_customer_key_base64, key_pem).
+const _ENCODING_SUFFIXES = ['base64', 'b64', 'b64url', 'hex', 'pem'];
+// Keys that sit beside an OAuth authorization `code`.
+const _OAUTH_CODE_SIBLINGS = ['state', 'redirect_uri', 'redirecturi', 'code_verifier', 'codeverifier', 'grant_type', 'granttype', 'client_id', 'clientid'];
+/** snake_case, kebab-case and camelCase names as lower-case words. */
+function _nameWords(name) {
+    return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 0);
+}
+/**
+ * True for a body field or query parameter name that carries a credential:
+ * a name in _SECRET_FIELD_RE, or one whose last word is a secret noun
+ * (`current_password`, `key_file_pass`, `client_credentials`, `confirm_token`,
+ * `sse_customer_key`, `otp_code`, `approver_lease`). Names that only mention a
+ * secret are not (`has_password`, `token_url`, `max_tokens`, `public_key`,
+ * `idempotency_key`, `next_page_token`).
+ */
+function _isSecretFieldName(name) {
+    if (typeof name !== 'string' || name.length === 0)
+        return false;
+    if (_SECRET_FIELD_RE.test(name))
+        return true;
+    const words = _nameWords(name);
+    while (words.length > 1 && _ENCODING_SUFFIXES.includes(words[words.length - 1]))
+        words.pop();
+    if (words.length < 2)
+        return words.length === 1 && (words[0] === 'key' || _SECRET_NOUNS.includes(words[0]));
+    if (_FLAG_PREFIXES.includes(words[0]))
+        return false;
+    const noun = words[words.length - 1];
+    const qualifiers = words.slice(0, -1);
+    if (noun === 'token')
+        return !qualifiers.some((word) => _CURSOR_QUALIFIERS.includes(word));
+    if (_SECRET_NOUNS.includes(noun))
+        return true;
+    if (noun === 'key')
+        return !qualifiers.some((word) => _PLAIN_KEY_QUALIFIERS.includes(word));
+    if (noun === 'code')
+        return qualifiers.some((word) => _SECRET_CODE_QUALIFIERS.includes(word));
+    if (noun === 'lease')
+        return qualifiers.includes('approver');
+    return false;
+}
+/** In a URL a signature is the credential too (a presigned link: X-Amz-Signature, sig). */
+function _isSecretUrlParam(name) {
+    if (_isSecretFieldName(name))
+        return true;
+    const words = _nameWords(name);
+    const noun = words[words.length - 1];
+    return noun === 'signature' || noun === 'sig';
+}
+/**
+ * A bare `code` is an error code almost everywhere, and masking it hid every
+ * server error code that was printed through the redactor. It is a credential
+ * only as an OAuth authorization code, which travels with `state`,
+ * `redirect_uri`, `code_verifier`, `grant_type` or `client_id`.
+ */
+function _isOauthCodeContext(keys) {
+    return keys.some((key) => _OAUTH_CODE_SIBLINGS.includes(key.toLowerCase()));
+}
+/**
+ * A string that is one absolute URL carrying userinfo or a secret parameter is redacted as a URL.
+ * So is a relative one (it starts with `/` or `?`, has no whitespace and carries a query): its
+ * query gets _redactUrl's relative rule, the OAuth-context `code` included.
+ */
+function _scrubUrlValue(text, extra) {
+    if (/^[/?]\S*$/.test(text) && text.includes('?'))
+        return _redactUrl(text, extra);
+    if (!/^[a-z][a-z0-9+.-]*:\/\/\S+$/i.test(text))
+        return text;
+    if (text.length > 8192)
+        return _scrubLongUrl(text);
+    try {
+        const u = new URL(text);
+        const keys = Array.from(u.searchParams.keys());
+        const oauth = _isOauthCodeContext(keys);
+        const secret = u.username !== '' || u.password !== ''
+            || keys.some((key) => _isSecretUrlParam(key) || _isExtraName(key, extra) || (oauth && key.toLowerCase() === 'code'));
+        return secret ? _redactUrl(text, extra) : text;
+    }
+    catch {
+        return text;
+    }
+}
 // URL autologin token value-shape; keep in sync with lib/redact.ts HDY_TOKEN_VALUE_RE.
 // Scrubs an hdy_ token wherever it appears (path segment, non-secret param, or a
 // secret param the field-name pass missed) so a launch token is never logged whole.
@@ -361,6 +948,29 @@ function _scrubNamedParams(text, extra) {
         return _REDACT_PLACEHOLDER;
     }
 }
+/**
+ * An absolute URL too long to parse cheaply: its userinfo and its whole query
+ * string go, the rest stays. One pass over the text.
+ */
+function _scrubLongUrl(text) {
+    const authorityStart = text.indexOf('//') + 2;
+    let authorityEnd = authorityStart;
+    while (authorityEnd < text.length && text[authorityEnd] !== '/' && text[authorityEnd] !== '?' && text[authorityEnd] !== '#')
+        authorityEnd++;
+    const at = text.lastIndexOf('@', authorityEnd - 1);
+    const userinfo = at >= authorityStart;
+    const queryAt = text.indexOf('?', authorityEnd);
+    const hashAt = text.indexOf('#', authorityEnd);
+    const hasQuery = queryAt >= 0 && (hashAt < 0 || queryAt < hashAt);
+    if (!userinfo && !hasQuery)
+        return text.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER);
+    const head = text.slice(0, authorityStart) + (userinfo ? _REDACT_PLACEHOLDER + '@' + text.slice(at + 1, authorityEnd) : text.slice(authorityStart, authorityEnd));
+    const pathEnd = hasQuery ? queryAt : hashAt >= 0 ? hashAt : text.length;
+    const path = text.slice(authorityEnd, pathEnd);
+    const query = hasQuery ? '?' + encodeURIComponent(_REDACT_PLACEHOLDER) : '';
+    const fragment = hashAt >= 0 ? text.slice(hashAt) : '';
+    return (head + path + query + fragment).replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER);
+}
 function _redactUrl(url, extraParamNames) {
     if (typeof url !== 'string' || url.length === 0)
         return url;
@@ -370,8 +980,10 @@ function _redactUrl(url, extraParamNames) {
             u.username = _REDACT_PLACEHOLDER;
         if (u.password)
             u.password = _REDACT_PLACEHOLDER;
-        for (const key of Array.from(u.searchParams.keys())) {
-            if (_SECRET_FIELD_RE.test(key) || _isExtraName(key, extraParamNames))
+        const keys = Array.from(u.searchParams.keys());
+        const oauth = _isOauthCodeContext(keys);
+        for (const key of keys) {
+            if (_isSecretUrlParam(key) || _isExtraName(key, extraParamNames) || (oauth && key.toLowerCase() === 'code'))
                 u.searchParams.set(key, _REDACT_PLACEHOLDER);
         }
         // Belt-and-suspenders: scrub any hdy_-shaped value by shape (path segments,
@@ -392,14 +1004,26 @@ function _redactUrl(url, extraParamNames) {
         const tail = hashIdx >= 0 ? url.slice(hashIdx) : '';
         if (queryRaw.length === 0)
             return url;
-        const parts = queryRaw.split('&').map(pair => {
+        const pairs = queryRaw.split('&');
+        // The same OAuth-context rule as the absolute branch: a code beside state, redirect_uri, ...
+        // is a one-time credential.
+        const decodedKeys = [];
+        for (const pair of pairs) {
+            const eq = pair.indexOf('=');
+            try {
+                decodedKeys.push(decodeURIComponent((eq < 0 ? pair : pair.slice(0, eq)).replace(/\+/g, ' ')));
+            }
+            catch { /* not a key this rule can read */ }
+        }
+        const oauth = _isOauthCodeContext(decodedKeys);
+        const parts = pairs.map(pair => {
             const eq = pair.indexOf('=');
             if (eq < 0)
                 return pair;
             const k = pair.slice(0, eq);
             try {
                 const dk = decodeURIComponent(k);
-                if (_SECRET_FIELD_RE.test(dk) || _isExtraName(dk, extraParamNames))
+                if (_isSecretUrlParam(dk) || _isExtraName(dk, extraParamNames) || (oauth && dk.toLowerCase() === 'code'))
                     return k + '=' + encodeURIComponent(_REDACT_PLACEHOLDER);
             }
             catch { /* leave as-is on decode failure */ }
@@ -417,7 +1041,7 @@ function _redactSensitiveValue(v, _depth = 0, _seen = new WeakSet(), extraFieldN
     // recorded credential parameters in any URL-like string (keep in sync with
     // lib/redact.ts redactSensitiveValue).
     if (typeof v === 'string')
-        return _scrubNamedParams(v.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER), extraFieldNames);
+        return _scrubNamedParams(_scrubUrlValue(v.replace(_HDY_TOKEN_VALUE_RE, _REDACT_PLACEHOLDER), extraFieldNames), extraFieldNames);
     if (typeof v !== 'object')
         return v;
     if (_seen.has(v))
@@ -426,8 +1050,9 @@ function _redactSensitiveValue(v, _depth = 0, _seen = new WeakSet(), extraFieldN
     if (Array.isArray(v))
         return v.map((x) => _redactSensitiveValue(x, _depth + 1, _seen, extraFieldNames));
     const out = {};
+    const oauth = _isOauthCodeContext(Object.keys(v));
     for (const [k, val] of Object.entries(v)) {
-        out[k] = _SECRET_FIELD_RE.test(k) || _isExtraName(k, extraFieldNames)
+        out[k] = _isSecretFieldName(k) || _isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
             ? _REDACT_PLACEHOLDER
             : _redactSensitiveValue(val, _depth + 1, _seen, extraFieldNames);
     }
@@ -498,17 +1123,26 @@ const _STREAM_ERROR_SENTENCES = {
  * what is safe to act on (a fixed code from _STREAM_ERROR_SENTENCES, the
  * status, the client-redacted URL and the method, Retry-After) with a fixed
  * sentence. The original goes only to `options.onDiagnostic`.
+ *
+ * One more code is kept: on an HTTP error, a code the operation's spec
+ * documents (`documentedCodes`, from x-error-codes), with the spec's title for
+ * it as the message. The code is matched against that list and the text comes
+ * from the spec, so nothing the server wrote is passed on.
  */
-function _toStreamError(error, acceptedStatus) {
+function _toStreamError(error, acceptedStatus, documentedCodes) {
     if (typeof error === 'object' && error !== null && _cleanStreamErrors.has(error))
         return error;
     if (isApiError(error)) {
         const status = Number.isInteger(error.status) && error.status > 0 ? error.status : 0;
-        const code = typeof error.code === 'string' && Object.prototype.hasOwnProperty.call(_STREAM_ERROR_SENTENCES, error.code)
+        const documented = status > 0 && typeof error.code === 'string' && documentedCodes !== undefined
+            && Object.prototype.hasOwnProperty.call(documentedCodes, error.code) && typeof documentedCodes[error.code] === 'string';
+        const code = documented
             ? error.code
-            : status > 0 ? 'STREAM_HTTP_ERROR' : 'STREAM_REQUEST_FAILED';
+            : typeof error.code === 'string' && Object.prototype.hasOwnProperty.call(_STREAM_ERROR_SENTENCES, error.code)
+                ? error.code
+                : status > 0 ? 'STREAM_HTTP_ERROR' : 'STREAM_REQUEST_FAILED';
         const clean = new ApiError({
-            message: _STREAM_ERROR_SENTENCES[code],
+            message: documented ? (documentedCodes[code] || _STREAM_ERROR_SENTENCES.STREAM_HTTP_ERROR) : _STREAM_ERROR_SENTENCES[code],
             status,
             code,
             ...(typeof error.url === 'string' ? { url: error.url } : {}),
@@ -786,12 +1420,12 @@ export class HttpClient {
             // Resolved ONCE. Every later request reads this field, so the client's
             // transport cannot drift from the one the caller injected even if the
             // global is replaced mid-process.
-            fetch: config.fetch || resolveDefaultFetch(),
+            fetch: config.fetch || resolveDefaultFetch(config.transport?.useGlobalDispatcher === true),
             // Use ?? so explicit timeout: 0 (caller opt-out) survives the
             // constructor instead of being clobbered into 30s.
             timeout: config.timeout ?? 30000,
-            retries: config.retries || 0,
-            retryDelayMs: config.retryDelayMs || 250,
+            ...(config.retries !== undefined ? { retries: config.retries } : {}),
+            ...(config.retryDelayMs ? { retryDelayMs: config.retryDelayMs } : {}),
             retryOnStatuses: config.retryOnStatuses || [408, 425, 429, 500, 502, 503, 504],
             headers: config.headers || {},
             cache: config.cache || {},
@@ -897,7 +1531,8 @@ export class HttpClient {
         // followed by the same GET without it can serve the wrong shape to the
         // second caller (cache-shape poisoning).
         const cacheShape = isGet
-            ? (data.rawResponse === true ? 'R' : 'E') + ':' + (data.responseType || 'auto')
+            // ...and the integer reading: a lossless answer holds bigints, a plain one rounded numbers.
+            ? (data.rawResponse === true ? 'R' : 'E') + ':' + (data.responseType || 'auto') + (data.losslessIntegers === true ? ':L' : '')
             : '';
         const cacheKey = `${upperMethod}:${cacheIdentity}:${cacheShape}:${url}`;
         // Opt-in. A default-on cache answered repeated state reads and state-
@@ -922,9 +1557,13 @@ export class HttpClient {
             }
             this.cache.delete(cacheKey);
         }
-        const retries = Math.max(0, data.retries ?? this.config.retries);
+        // Nobody set retries: the default policy (_DEFAULT_RETRIES, see IHttpClientConfig.retries).
+        const explicitRetries = data.retries ?? this.config.retries;
+        const retryByDefault = explicitRetries === undefined;
+        const retries = Math.max(0, explicitRetries ?? (data.responseIsFinal === true ? 0 : _DEFAULT_RETRIES));
         const timeoutMs = data.timeoutMs ?? this.config.timeout;
-        const retryDelayMs = data.retryDelayMs ?? this.config.retryDelayMs;
+        const retryDelayMs = data.retryDelayMs ?? this.config.retryDelayMs ?? (retryByDefault ? _DEFAULT_RETRY_DELAY_MS : 250);
+        let retryWaitedMs = 0;
         const retryOnStatuses = data.retryOnStatuses ?? this.config.retryOnStatuses;
         const authRetryEnabled = data.authRetry ?? this.config.autoRetryAuth;
         const rawResponse = data.rawResponse === true;
@@ -941,11 +1580,14 @@ export class HttpClient {
         // the body would be empty on retry.
         const bodyIsNonReplayable = _isNonReplayableBody(data.body);
         for (let attempt = 1; attempt <= retries + 1; attempt++) {
+            // The token this attempt goes out with: a 401 is about THIS token, which may no longer be
+            // the client's by the time the answer arrives.
+            const tokenSent = this.config.token;
             const headers = this.buildHeaders(data.headers);
             if (isExternalUrl) {
                 // Every spelling: a lower-case authorization survived the exact-case
                 // delete.
-                this.deleteAuthorization(headers);
+                this.deleteAuthorization(headers, data.headers);
             }
             // No body, nothing to describe: the default JSON content type on an
             // empty DELETE or POST is refused by servers that parse by the type
@@ -988,7 +1630,10 @@ export class HttpClient {
                     console.error(`[HttpClient] ${middlewareRequest.method} ${_redactUrl(middlewareRequest.url, _credentialQueryParamsOf(middlewareRequest.middlewareContext))} (attempt ${attempt}/${retries + 1})`);
                 }
                 const startedAt = Date.now();
-                const received = await this.sendConfined(middlewareRequest.method, middlewareRequest.url, middlewareRequest.headers, _wireBody(middlewareRequest.body, middlewareRequest.headers, data.jsonStringBody), middlewareRequest.timeoutMs, data.signal, data.redirect, middlewareRequest.middlewareContext);
+                const received = await this.sendConfined(middlewareRequest.method, middlewareRequest.url, middlewareRequest.headers, _wireBody(middlewareRequest.body, middlewareRequest.headers, data.jsonStringBody), middlewareRequest.timeoutMs, data.signal, data.redirect, middlewareRequest.middlewareContext, 
+                // Follow redirects here, where a failure after an answered hop is marked, whenever
+                // "never dispatched" would send the request again where shouldRetry otherwise would not.
+                data.responseIsFinal === true || !_IDEMPOTENT_METHODS.includes(middlewareRequest.method.toUpperCase()));
                 // The body is read inside the caller's signal and the timeout; the
                 // transport lets go of both once the headers are in.
                 const chunks = await this.readBufferedBody(received, data.signal, middlewareRequest.timeoutMs, startedAt);
@@ -1000,7 +1645,7 @@ export class HttpClient {
                 // body parser can only say null.
                 const parsedResult = upperMethod === 'HEAD' && responseType === 'auto'
                     ? _headerRecord(response.headers)
-                    : await this.parseResponseBody(response, responseType, upperMethod);
+                    : await this.parseResponseBody(response, responseType, upperMethod, data.losslessIntegers === true);
                 const normalized = rawResponse
                     ? parsedResult
                     : this.normalizeResponseEnvelope(parsedResult, response.status, response.statusText);
@@ -1042,7 +1687,40 @@ export class HttpClient {
                     const msg = mwErr instanceof Error ? mwErr.message : String(mwErr);
                     console.error('[HttpClient] error-middleware threw (suppressed to preserve original error):', msg);
                 }
-                if (authRetryEnabled && !authRetried && apiError.status === 401 && !isExternalUrl && !bodyIsNonReplayable) {
+                // Every decision below reads the request as it was dispatched: a request middleware may
+                // have sent it to another destination (an API path to a kit host, whose 401 is the
+                // script's answer, not the account token's), with another method (a GET made a POST
+                // that ran) or with another body (one that cannot be sent twice).
+                const sentMethod = middlewareRequest.method.toUpperCase();
+                const sentExternal = middlewareRequest.url === url
+                    ? isExternalUrl
+                    : this.isExternalDestination(_isFullUrl(middlewareRequest.url), middlewareRequest.url);
+                const sentNonReplayable = bodyIsNonReplayable || _isNonReplayableBody(middlewareRequest.body);
+                // The ways back into this loop, and what each does with responseIsFinal:
+                //   a. 401, API scope, token already replaced  -> replay once (below)
+                //   b. 401, API scope, token refreshed         -> replay once (below)
+                //   c. 401, kit host, onKitAuthExpired         -> replay once; NOT for responseIsFinal
+                //   d. shouldRetry(): status, network, RETRY_SAFE_CODES -> honours responseIsFinal itself
+                //   e. onError returned true                   -> refused when responseIsFinal
+                // a and b replay a responseIsFinal request on purpose: hoody-api's auth layer answers
+                // the 401 before any handler runs. Each happens at most once per call, and only with a
+                // NEW token in hand. c does not: on a kit host the 401 may be the script's own answer,
+                // given after it did its work, so the renewed auth is stored (onKitAuthExpired ran) and
+                // the 401 goes back to the caller, who decides whether to send the request again.
+                if (authRetryEnabled && !authRetried && apiError.status === 401 && !sentExternal && !sentNonReplayable) {
+                    // The token that was refused has already been replaced: a sibling request's refresh
+                    // landed while this one was in flight. Replay with the current token; refreshing again
+                    // would spend a second refresh call (and, on a server that rotates the refresh token,
+                    // invalidate the pair the sibling just stored). A burst of 20 requests at expiry made
+                    // 2-3 refresh calls for this reason: the in-flight promise only joins the 401s that
+                    // arrive while the refresh is still running.
+                    if (typeof tokenSent === 'string' && tokenSent.length > 0
+                        && typeof this.config.token === 'string' && this.config.token.length > 0
+                        && this.config.token !== tokenSent) {
+                        authRetried = true;
+                        attempt -= 1;
+                        continue;
+                    }
                     const refreshedToken = await this.tryRefreshToken(apiError);
                     if (refreshedToken && this.config.acceptRefreshedToken(refreshedToken)) {
                         this.setToken(refreshedToken);
@@ -1052,14 +1730,27 @@ export class HttpClient {
                         continue;
                     }
                 }
-                if (!kitAuthRetried && apiError.status === 401 && isExternalUrl
+                let renewedNotReplayed;
+                if (!kitAuthRetried && apiError.status === 401 && sentExternal
                     && middlewareRequest.middlewareContext?._kitNamespace
                     && this.config.onKitAuthExpired
-                    && !bodyIsNonReplayable) {
+                    && !sentNonReplayable) {
                     try {
                         const ns = middlewareRequest.middlewareContext._kitNamespace;
                         const newAuth = await this.config.onKitAuthExpired(ns, apiError);
-                        if (newAuth) {
+                        if (newAuth && data.responseIsFinal === true) {
+                            renewedNotReplayed = new ApiError({
+                                message: apiError.message + ' (kit auth was renewed; the request was not repeated because it may have run)',
+                                status: apiError.status,
+                                ...(apiError.code !== undefined ? { code: apiError.code } : {}),
+                                ...(apiError.url !== undefined ? { url: apiError.url } : {}),
+                                ...(apiError.method !== undefined ? { method: apiError.method } : {}),
+                                ...(apiError.request !== undefined ? { request: apiError.request } : {}),
+                                response: apiError.response,
+                                cause: apiError,
+                            });
+                        }
+                        else if (newAuth) {
                             // Actually apply the returned auth for the next attempt.
                             // Without this the branch sets kitAuthRetried + continues
                             // with no hint to the middleware that credentials changed,
@@ -1079,13 +1770,22 @@ export class HttpClient {
                         const msg = cbErr instanceof Error ? cbErr.message : String(cbErr);
                         console.error('[HttpClient] onKitAuthExpired callback failed:', msg);
                     }
+                    if (renewedNotReplayed)
+                        throw renewedNotReplayed;
                 }
                 // Match browser http-client: both status-retry and onError-retry
                 // skip replay when the body is a single-consumption stream.
-                if (attempt <= retries && !bodyIsNonReplayable && this.shouldRetry(apiError, upperMethod, retryOnStatuses)) {
+                if (attempt <= retries && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, data.responseIsFinal === true, retryByDefault)) {
                     const retryAfterMs = apiError.retryAfterMs;
-                    await this.sleep(this.getRetryDelayMs(retryDelayMs, attempt, retryAfterMs));
-                    continue;
+                    const delayMs = this.getRetryDelayMs(retryDelayMs, attempt, retryAfterMs);
+                    // The default policy waits at most _DEFAULT_RETRY_WAIT_CAP_MS in all. A wait past it
+                    // (a long Retry-After) ends the retries: sending sooner than the server asked is not
+                    // honouring it.
+                    if (!retryByDefault || retryWaitedMs + delayMs <= _DEFAULT_RETRY_WAIT_CAP_MS) {
+                        retryWaitedMs += delayMs;
+                        await this.sleep(delayMs);
+                        continue;
+                    }
                 }
                 // Invoke onError on EVERY failure (including terminal ones) so
                 // observability hooks see the final outcome. shouldRetry result
@@ -1095,7 +1795,12 @@ export class HttpClient {
                 if (this.config.onError) {
                     try {
                         const shouldRetry = await this.config.onError(apiError);
-                        if (shouldRetry && attempt <= retries && !bodyIsNonReplayable) {
+                        // The hook asks; it does not overrule responseIsFinal. An answer (or a lost
+                        // connection) from a handler that is arbitrary code may follow a run, and a
+                        // hook that returns true for every error ran an exec script twice on its 500.
+                        // The one replay such a request may have, never dispatched, was taken above.
+                        // Nor does it spend the default budget: before the default policy there was none.
+                        if (shouldRetry && attempt <= retries && !sentNonReplayable && data.responseIsFinal !== true && !retryByDefault) {
                             await this.sleep(this.getRetryDelayMs(retryDelayMs, attempt));
                             continue;
                         }
@@ -1189,7 +1894,7 @@ export class HttpClient {
         const isExternalUrl = this.isExternalDestination(isFullUrl, url);
         const headers = this.buildHeaders(data.headers);
         if (isExternalUrl) {
-            this.deleteAuthorization(headers);
+            this.deleteAuthorization(headers, data.headers);
         }
         // A GET/HEAD stream has no body; the default JSON content type would be
         // a lie on the wire.
@@ -1504,7 +2209,7 @@ export class HttpClient {
         // original goes only to onDiagnostic, which must not break the stream.
         const diagnostic = options.onDiagnostic ?? this.config.onStreamDiagnostic;
         const toStreamError = (error) => {
-            const clean = _toStreamError(error, acceptedStatus);
+            const clean = _toStreamError(error, acceptedStatus, options.documentedErrorCodes);
             if (clean !== error && diagnostic) {
                 try {
                     diagnostic(error);
@@ -2030,7 +2735,7 @@ export class HttpClient {
         const isExternalUrl = this.isExternalDestination(isFullUrl, target);
         const headers = this.buildHeaders(data.headers);
         if (isExternalUrl) {
-            this.deleteAuthorization(headers);
+            this.deleteAuthorization(headers, data.headers);
         }
         // An upgrade has no body to describe.
         _deleteContentType(headers);
@@ -2051,7 +2756,7 @@ export class HttpClient {
     async logout(path, data = {}) {
         return this.request('LOGOUT', path, data);
     }
-    async parseResponseBody(response, responseType = 'auto', method) {
+    async parseResponseBody(response, responseType = 'auto', method, losslessIntegers = false) {
         // Parity with the browser http-client: HEAD / 204 / 205 / 304 /
         // Content-Length:0 have no body; calling response.json() on them
         // throws SyntaxError: Unexpected end of JSON input and surfaces as a
@@ -2072,7 +2777,7 @@ export class HttpClient {
             return null;
         }
         if (responseType === 'json') {
-            return response.json();
+            return losslessIntegers ? parseJsonLossless(await response.text()) : response.json();
         }
         if (responseType === 'text') {
             return response.text();
@@ -2087,7 +2792,9 @@ export class HttpClient {
         if (isJsonContentType(contentType)) {
             // An empty body under a JSON type reads as null, as in the CLI client.
             const text = await response.text();
-            return text.trim() === '' ? null : JSON.parse(text);
+            if (text.trim() === '')
+                return null;
+            return losslessIntegers ? parseJsonLossless(text) : JSON.parse(text);
         }
         if (this.isBinaryResponse(response, contentType)) {
             return response.arrayBuffer();
@@ -2095,41 +2802,17 @@ export class HttpClient {
         return response.text();
     }
     isBinaryResponse(response, contentType) {
+        // A text type is text however it is served: hoody-agent's log export is NDJSON
+        // with Content-Disposition: attachment, typed string in the spec, and the
+        // attachment rule used to win and hand back an ArrayBuffer.
+        if (isTextMediaType(contentType)) {
+            return false;
+        }
         const contentDisposition = response.headers.get('content-disposition');
         if (contentDisposition && /attachment/i.test(contentDisposition)) {
             return true;
         }
-        if (!contentType) {
-            return false;
-        }
-        const normalized = contentType.toLowerCase();
-        if (normalized.startsWith('text/')) {
-            return false;
-        }
-        if (normalized.includes('json')
-            || normalized.includes('xml')
-            || normalized.includes('javascript')
-            || normalized.includes('yaml')
-            || normalized.includes('yml')
-            || normalized.includes('csv')
-            || normalized.includes('x-www-form-urlencoded')) {
-            return false;
-        }
-        return (normalized.includes('application/octet-stream')
-            || normalized.includes('application/zip')
-            || normalized.includes('application/x-zip')
-            || normalized.includes('application/x-zip-compressed')
-            || normalized.includes('application/gzip')
-            || normalized.includes('application/x-gzip')
-            || normalized.includes('application/x-tar')
-            || normalized.includes('application/x-7z-compressed')
-            || normalized.includes('application/x-rar-compressed')
-            || normalized.includes('application/pdf')
-            || normalized.includes('application/wasm')
-            || normalized.startsWith('image/')
-            || normalized.startsWith('audio/')
-            || normalized.startsWith('video/')
-            || normalized.startsWith('font/'));
+        return isBinaryMediaType(contentType);
     }
     /**
      * Query parameters as wire pairs. An array value is sent as one pair per
@@ -2167,10 +2850,37 @@ export class HttpClient {
             return this.appendQueryParameters(this.joinRelativeUrl(baseUrl, normalizedPath), query);
         }
         const url = new URL(`${baseUrl}${normalizedPath}`);
-        for (const [key, value] of this.queryPairs(query)) {
-            url.searchParams.append(key, value);
-        }
+        this.mergeQueryPairs(url.searchParams, query);
         return url.toString();
+    }
+    /**
+     * Adds the query to the parameters the path already carries. A key the path
+     * holds itself (a route marker: `/{archive}?extract`, `/{directory}?zip`)
+     * is never sent twice: a non-empty value from the caller replaces the bare
+     * marker (`?extract=src%2F`), an empty one leaves it as it is. The request
+     * used to go out as `?extract=&extract=src%2F`, which only reads right on a
+     * server that keeps the last value of a repeated key.
+     */
+    mergeQueryPairs(target, query) {
+        const pairs = this.queryPairs(query);
+        if (pairs.length === 0)
+            return false;
+        const inPath = new Set();
+        for (const key of target.keys())
+            inPath.add(key);
+        const replaced = new Set();
+        for (const [key, value] of pairs) {
+            if (inPath.has(key)) {
+                if (value === '')
+                    continue;
+                if (!replaced.has(key)) {
+                    target.delete(key);
+                    replaced.add(key);
+                }
+            }
+            target.append(key, value);
+        }
+        return true;
     }
     hasAbsoluteUrlOrigin(value) {
         return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(value);
@@ -2188,16 +2898,14 @@ export class HttpClient {
         if (!query) {
             return pathOrUrl;
         }
-        const searchParams = new URLSearchParams();
-        for (const [key, value] of this.queryPairs(query)) {
-            searchParams.append(key, value);
-        }
-        const queryString = searchParams.toString();
-        if (!queryString) {
+        const mark = pathOrUrl.indexOf('?');
+        const searchParams = new URLSearchParams(mark === -1 ? '' : pathOrUrl.slice(mark + 1));
+        if (!this.mergeQueryPairs(searchParams, query)) {
             return pathOrUrl;
         }
-        const separator = pathOrUrl.includes('?') ? '&' : '?';
-        return `${pathOrUrl}${separator}${queryString}`;
+        const queryString = searchParams.toString();
+        const head = mark === -1 ? pathOrUrl : pathOrUrl.slice(0, mark);
+        return queryString ? `${head}?${queryString}` : head;
     }
     isVerboseLoggingEnabled() {
         const processRef = globalThis.process;
@@ -2205,9 +2913,7 @@ export class HttpClient {
     }
     buildUrlFromFull(fullUrl, query) {
         const url = new URL(fullUrl);
-        for (const [key, value] of this.queryPairs(query)) {
-            url.searchParams.append(key, value);
-        }
+        this.mergeQueryPairs(url.searchParams, query);
         return url.toString();
     }
     sanitizeHeaderValue(value, maxLength = 128) {
@@ -2294,7 +3000,7 @@ export class HttpClient {
             const bodyValue = body !== undefined
                 ? (body instanceof Blob || body instanceof FormData || typeof body === 'string' || body instanceof ArrayBuffer || body instanceof Uint8Array || (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)
                     ? body
-                    : JSON.stringify(body))
+                    : _stringifyBody(body))
                 : undefined;
             // Header names are case-insensitive: a request middleware that hands
             // back another spelling (a Headers round-trip lower-cases every name)
@@ -2315,15 +3021,17 @@ export class HttpClient {
                 // as soon as a binary request body became expressible (pipe.send).
                 _deleteDefaultJsonContentType(headers);
             }
-            const useKeepAlive = this.config.transport.keepAlive;
-            const requestHeaders = (!useKeepAlive && !headers['Connection'])
+            // transport.keepAlive: false asks the server to close the connection.
+            // The fetch `keepalive` flag is never set: it is a browser's "outlive
+            // the page" switch, not connection reuse, and with it Node refuses
+            // every ReadableStream body outright.
+            const requestHeaders = (!this.config.transport.keepAlive && !headers['Connection'])
                 ? { ...headers, Connection: 'close' }
                 : headers;
             const fetchOptions = {
                 method: method.toUpperCase(),
                 headers: requestHeaders,
                 signal: controller.signal,
-                keepalive: useKeepAlive,
             };
             if (redirect)
                 fetchOptions.redirect = redirect;
@@ -2337,6 +3045,11 @@ export class HttpClient {
             }
             // Instance transport, never the global. JSON, binary and streaming
             // requests all land here, so the injected transport sees all of them.
+            // The SDK's own Node transport takes the request's budget, so undici's
+            // timeouts follow timeoutMs instead of capping it at their defaults.
+            const budgeted = _BUDGETED_FETCH.get(this.config.fetch);
+            if (budgeted)
+                return await budgeted(requestUrl, fetchOptions, timeoutMs);
             return await this.config.fetch(requestUrl, fetchOptions);
         }
         catch (fetchError) {
@@ -2399,16 +3112,25 @@ export class HttpClient {
             responseDetails = parsed;
             if (parsed && typeof parsed === 'object') {
                 const record = parsed;
-                if (typeof record.message === 'string') {
+                const nested = record.error !== null && typeof record.error === 'object' && !Array.isArray(record.error)
+                    ? record.error
+                    : undefined;
+                if (typeof record.message === 'string' && record.message.length > 0) {
                     message = record.message;
                 }
-                else if (typeof record.error === 'string') {
+                else if (typeof record.error === 'string' && record.error.length > 0) {
                     message = record.error;
+                }
+                else if (nested && typeof nested.message === 'string' && nested.message.length > 0) {
+                    // { error: { code, message } }: the message is one level down.
+                    message = nested.message;
                 }
                 code = _apiErrorCode(record);
             }
             else if (typeof parsed === 'string' && parsed.trim().length > 0) {
-                message = parsed;
+                // An HTML error page (hoody-exec's 404 and 500) is not a message: its
+                // title is. The page itself stays on error.response.
+                message = _htmlErrorTitle(parsed, message) ?? parsed;
             }
         }
         catch {
@@ -2455,9 +3177,15 @@ export class HttpClient {
         }
         const isAbortError = (error instanceof Error && error.name === 'AbortError')
             || (typeof error === 'object' && error !== null && error.code === 'ABORT_ERR');
+        // undici's own timeouts arrive as "fetch failed" (or "terminated") with
+        // the reason two causes down: name them, with the client's timeout codes.
+        const transportTimeout = isAbortError ? undefined : _undiciTimeoutOf(error);
         const message = isAbortError
             ? `Request timed out after ${request.timeoutMs}ms`
-            : (error instanceof Error ? error.message : 'Request failed');
+            : transportTimeout === 'headers' ? 'Request timed out: the server sent no response headers in time'
+                : transportTimeout === 'body' ? 'Request timed out: the response body stalled'
+                    : transportTimeout === 'connect' ? 'Request timed out: the connection could not be opened in time'
+                        : (error instanceof Error ? error.message : 'Request failed');
         // Redact URL/body/query; attach PARSE_ERROR code for SyntaxError
         // (parity with the browser http-client).
         const isParseError = error instanceof SyntaxError;
@@ -2477,14 +3205,30 @@ export class HttpClient {
         return new ApiError({
             message,
             status: 0,
-            ...(isAbortError ? { code: 'ABORTED' } : isParseError ? { code: 'PARSE_ERROR' } : isBodyStall ? { code: 'ETIMEDOUT' } : {}),
+            ...(isAbortError || transportTimeout === 'headers' ? { code: 'ABORTED' }
+                : isParseError ? { code: 'PARSE_ERROR' }
+                    : isBodyStall || transportTimeout !== undefined ? { code: 'ETIMEDOUT' }
+                        : {}),
             url: redactedUrl,
             method: request.method,
             request: apiRequest,
             cause: error,
         });
     }
-    shouldRetry(error, method, retryOnStatuses) {
+    /**
+     * Whether a failed attempt may be sent again. One rule, in this order:
+     *   1. This client's own timeout or abort, a refused redirect and a missing fetch are final.
+     *   2. A request that never reached a server (the connection could not be opened) ran
+     *      nothing: any method goes again.
+     *   3. A refusal whose code says nothing was done (RETRY_SAFE_CODES): any method goes again.
+     *   4. A request marked responseIsFinal stops here: its handler is arbitrary code, so a status
+     *      it returned is an answer, and a lost connection may have followed a run.
+     *   5. Otherwise the request may have been handled. An idempotent method (GET, HEAD, OPTIONS,
+     *      PUT, DELETE) goes again on a lost connection or a status in retryOnStatuses; any
+     *      other method only on 429, which refuses before handling.
+     * `byDefault` (nobody set `retries`): a method that is not idempotent goes again only by rule 2.
+     */
+    shouldRetry(error, method, retryOnStatuses, responseIsFinal = false, byDefault = false) {
         // ABORTED at status 0 is this client's own timeout or caller abort: final. A
         // server's answer that names the code (body or X-Hoody-Error-Code) is retried
         // by its status like any other.
@@ -2495,9 +3239,25 @@ export class HttpClient {
         if (error.code === 'REDIRECT_REFUSED') {
             return false;
         }
-        const idempotentMethod = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'].includes(method);
-        // Network-level failures (status=0) may or may not have reached the
-        // server. For idempotent methods retrying is safe. For POST/PATCH and
+        // So is a runtime with no fetch.
+        if (error.status === 0 && error.cause?.code === 'FETCH_UNAVAILABLE') {
+            return false;
+        }
+        if (error.status === 0 && _neverDispatched(error)) {
+            return true;
+        }
+        if (byDefault && !_IDEMPOTENT_METHODS.includes(method)) {
+            return false;
+        }
+        if (error.status > 0 && !responseIsFinal && typeof error.code === 'string' && RETRY_SAFE_CODES.includes(error.code)) {
+            return true;
+        }
+        if (responseIsFinal) {
+            return false;
+        }
+        const idempotentMethod = _IDEMPOTENT_METHODS.includes(method);
+        // Any other network-level failure (status=0) may or may not have reached
+        // the server. For idempotent methods retrying is safe. For POST/PATCH and
         // other non-idempotent methods the request may already have mutated
         // state — retrying can double-apply. Gate on idempotency.
         if (error.status === 0) {
@@ -2649,14 +3409,26 @@ export class HttpClient {
         return (isFullUrl && !this.config.baseURL) || this.credentialScope(url) !== 'api';
     }
     /**
-     * Remove every spelling of Authorization. Header names are case-insensitive,
-     * so a configured or per-request "authorization" survived a delete of
-     * "Authorization" and rode out to an external host.
+     * Remove the client's own Authorization, in every spelling. Header names are
+     * case-insensitive, so a configured "authorization" survived a delete of
+     * "Authorization" and rode out to an external host. `callHeaders` are the
+     * request's own headers: an Authorization there is put back (see below).
      */
-    deleteAuthorization(headers) {
+    deleteAuthorization(headers, callHeaders) {
         for (const name of Object.keys(headers)) {
             if (name.toLowerCase() === 'authorization') {
                 delete headers[name];
+            }
+        }
+        // What is withheld from another host is the client's own credential (the
+        // account token, a configured Authorization header). An Authorization the
+        // caller put on THIS request is for this request's destination: a script
+        // behind hoody-exec that reads a Bearer token has no other way to get it.
+        if (callHeaders) {
+            for (const [name, value] of Object.entries(callHeaders)) {
+                if (name.toLowerCase() === 'authorization' && typeof value === 'string' && value.length > 0) {
+                    headers.Authorization = value;
+                }
             }
         }
     }
@@ -2837,14 +3609,22 @@ export class HttpClient {
      * Methods follow fetch: 303 turns anything but HEAD into a body-less GET,
      * 301 and 302 turn a POST into one, and 307 and 308 resend the method and
      * body (a streamed body, which cannot be sent twice, is refused).
-     * A request without credentials, or one sent with redirect: 'error', goes
-     * out unchanged.
+     * One sent with redirect: 'error' goes out unchanged.
+     *
+     * `trackHops` (request() sets it for a method that is not idempotent and
+     * for a responseIsFinal request): a request without credentials follows its
+     * redirects here too, wherever they lead, as fetch would (at most 20). A
+     * failure after the first hop was answered is marked `afterDispatch`: a
+     * script that ran and answered 3xx, whose destination then refused the
+     * connection, is not "never dispatched" and is not sent again. Any other
+     * request without credentials goes out unchanged.
      */
-    async sendConfined(method, url, headers, body, timeoutMs, signal, redirect, middlewareContext) {
-        if (redirect === 'error' || !this.carriesCredential(url, headers, middlewareContext)) {
+    async sendConfined(method, url, headers, body, timeoutMs, signal, redirect, middlewareContext, trackHops = false) {
+        const confined = redirect !== 'error' && this.carriesCredential(url, headers, middlewareContext);
+        if (redirect === 'error' || (!confined && !trackHops)) {
             return this.executeRequest(method, url, headers, body, timeoutMs, signal, redirect);
         }
-        const MAX_CREDENTIALED_HOPS = 5;
+        const MAX_CREDENTIALED_HOPS = confined ? 5 : 20;
         // One budget for the whole chain, not one per hop: each hop gets what is
         // left of timeoutMs, and a hop with nothing left is not sent.
         const hasBudget = Number.isFinite(timeoutMs) && timeoutMs > 0;
@@ -2860,7 +3640,21 @@ export class HttpClient {
                 expired.name = 'AbortError';
                 throw expired;
             }
-            const response = await this.executeRequest(hopMethod, hopUrl, { ...hopHeaders }, hopBody, hopTimeoutMs, signal, 'manual');
+            let response;
+            try {
+                response = await this.executeRequest(hopMethod, hopUrl, { ...hopHeaders }, hopBody, hopTimeoutMs, signal, 'manual');
+            }
+            catch (error) {
+                // A server already answered this request (the redirect): a failure on a later hop,
+                // even a refused connection, is after dispatch, never "nothing was sent".
+                if (hops > 0 && error !== null && typeof error === 'object') {
+                    try {
+                        Object.defineProperty(error, 'afterDispatch', { value: true, configurable: true });
+                    }
+                    catch { /* frozen */ }
+                }
+                throw error;
+            }
             if (response.type === 'opaqueredirect') {
                 throw this.redirectRefusal('the server answered with a redirect, and a browser does not reveal where it leads', response.status, hopMethod, hopUrl, middlewareContext);
             }
@@ -2886,7 +3680,8 @@ export class HttpClient {
             catch {
                 next = undefined;
             }
-            if (next === undefined || this.credentialScope(next.href) !== this.credentialScope(hopUrl)) {
+            if (next === undefined || (next.protocol !== 'http:' && next.protocol !== 'https:')
+                || (confined && this.credentialScope(next.href) !== this.credentialScope(hopUrl))) {
                 throw this.redirectRefusal('HTTP ' + status + ' points outside the destination the request was addressed to', status, hopMethod, hopUrl, middlewareContext);
             }
             if (hops + 1 > MAX_CREDENTIALED_HOPS) {

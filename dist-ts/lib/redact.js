@@ -16,7 +16,7 @@
 // Covers non-X-prefixed secret headers (Api-Key, Access-Token, Refresh-Token,
 // Secret-Key, Bearer, Session-Token, Id-Token, etc.) so they don't leak into
 // ApiError.request.headers and any middleware/onError log paths.
-const SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
+const SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-.*-lease|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/i;
 /**
  * Secret query-param / body-field key matcher. Anchored word list — does
  * NOT match substrings (e.g. `my_key_name` is not a key, but `apikey` is).
@@ -27,7 +27,127 @@ const SECRET_HEADER_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|
  *   secret_access_key, aws_secret, bearer_token, id_token, session_token,
  *   credential, ssh_pass*, socks5_pass*, proxy_password, db_password.
  */
-const SECRET_FIELD_RE = /^(token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|code|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
+const SECRET_FIELD_RE = /^(token|hdy[-_]?token|api[-_]?key|apikey|password|passwd|pwd|secret|auth|access[-_]?token|refresh[-_]?token|id[-_]?token|bearer[-_]?token|session[-_]?token|temp[-_]?token|kit[-_]?token|otp|device[-_]?code|code[-_]?verifier|code[-_]?challenge|authorization|cookie|private[-_]?key|client[-_]?secret|secret[-_]?access[-_]?key|aws[-_]?secret|ssh[-_]?pass(?:word)?|socks5[-_]?pass(?:word)?|proxy[-_]?pass(?:word)?|db[-_]?pass(?:word)?|kit[-_]?pass(?:word)?|local[-_]?pass(?:word)?|auth[-_]?pass(?:word)?|cur[-_]?pass(?:word)?|credential|credentials|key|jwt)$/i;
+// SECRET_FIELD_RE is a list of whole names, so it knows only the names someone
+// wrote down. The specs name credentials in many more ways (current_password,
+// key_file_pass, client_credentials, sse_customer_key, confirm_token, …), all
+// built the same way: qualifiers, then the noun that says what the value is.
+// isSecretFieldName reads the noun.
+const SECRET_NOUNS = ['password', 'passwd', 'pwd', 'pass', 'passphrase', 'secret', 'secrets', 'token', 'credential', 'credentials', 'cookie', 'cookies', 'jwt'];
+// A leading verb makes the field a switch about the secret, not the secret (has_password, persist_credentials).
+const FLAG_PREFIXES = ['has', 'is', 'ask', 'persist', 'require', 'requires', 'cors', 'use', 'allow', 'remember'];
+// "..._token" that is a paging cursor.
+const CURSOR_QUALIFIERS = ['page', 'next', 'prev', 'previous', 'continuation', 'pagination', 'cursor'];
+// "..._key" that is not key material.
+const PLAIN_KEY_QUALIFIERS = ['public', 'idempotency', 'cache', 'logical', 'action', 'sort', 'partition', 'primary', 'foreign', 'host'];
+// "..._code" that is a one-time credential (a bare `code` is an error code; see isOauthCodeContext).
+const SECRET_CODE_QUALIFIERS = ['otp', 'totp', 'mfa', 'auth', 'authorization', 'device', 'verification', 'recovery', 'backup'];
+// A trailing encoding says how the value is written, not what it is (sse_customer_key_base64, key_pem).
+const ENCODING_SUFFIXES = ['base64', 'b64', 'b64url', 'hex', 'pem'];
+// Keys that sit beside an OAuth authorization `code`.
+const OAUTH_CODE_SIBLINGS = ['state', 'redirect_uri', 'redirecturi', 'code_verifier', 'codeverifier', 'grant_type', 'granttype', 'client_id', 'clientid'];
+/** snake_case, kebab-case and camelCase names as lower-case words. */
+function nameWords(name) {
+    return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 0);
+}
+/**
+ * True for a body field or query parameter name that carries a credential:
+ * a name in SECRET_FIELD_RE, or one whose last word is a secret noun
+ * (`current_password`, `key_file_pass`, `client_credentials`, `confirm_token`,
+ * `sse_customer_key`, `otp_code`, `approver_lease`). Names that only mention a
+ * secret are not (`has_password`, `token_url`, `max_tokens`, `public_key`,
+ * `idempotency_key`, `next_page_token`).
+ */
+export function isSecretFieldName(name) {
+    if (typeof name !== 'string' || name.length === 0)
+        return false;
+    if (SECRET_FIELD_RE.test(name))
+        return true;
+    const words = nameWords(name);
+    while (words.length > 1 && ENCODING_SUFFIXES.includes(words[words.length - 1]))
+        words.pop();
+    if (words.length < 2)
+        return words.length === 1 && (words[0] === 'key' || SECRET_NOUNS.includes(words[0]));
+    if (FLAG_PREFIXES.includes(words[0]))
+        return false;
+    const noun = words[words.length - 1];
+    const qualifiers = words.slice(0, -1);
+    if (noun === 'token')
+        return !qualifiers.some((word) => CURSOR_QUALIFIERS.includes(word));
+    if (SECRET_NOUNS.includes(noun))
+        return true;
+    if (noun === 'key')
+        return !qualifiers.some((word) => PLAIN_KEY_QUALIFIERS.includes(word));
+    if (noun === 'code')
+        return qualifiers.some((word) => SECRET_CODE_QUALIFIERS.includes(word));
+    if (noun === 'lease')
+        return qualifiers.includes('approver');
+    return false;
+}
+/** In a URL a signature is the credential too (a presigned link: X-Amz-Signature, sig). */
+function isSecretUrlParam(name) {
+    if (isSecretFieldName(name))
+        return true;
+    const words = nameWords(name);
+    const noun = words[words.length - 1];
+    return noun === 'signature' || noun === 'sig';
+}
+/**
+ * A bare `code` is an error code almost everywhere, and masking it hid every
+ * server error code that was printed through the redactor. It is a credential
+ * only as an OAuth authorization code, which travels with `state`,
+ * `redirect_uri`, `code_verifier`, `grant_type` or `client_id`.
+ */
+function isOauthCodeContext(keys) {
+    return keys.some((key) => OAUTH_CODE_SIBLINGS.includes(key.toLowerCase()));
+}
+/**
+ * An absolute URL too long to parse cheaply: its userinfo and its whole query
+ * string go, the rest stays. One pass over the text.
+ */
+function scrubLongUrl(text) {
+    const authorityStart = text.indexOf('//') + 2;
+    let authorityEnd = authorityStart;
+    while (authorityEnd < text.length && text[authorityEnd] !== '/' && text[authorityEnd] !== '?' && text[authorityEnd] !== '#')
+        authorityEnd++;
+    const at = text.lastIndexOf('@', authorityEnd - 1);
+    const userinfo = at >= authorityStart;
+    const queryAt = text.indexOf('?', authorityEnd);
+    const hashAt = text.indexOf('#', authorityEnd);
+    const hasQuery = queryAt >= 0 && (hashAt < 0 || queryAt < hashAt);
+    if (!userinfo && !hasQuery)
+        return text.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER);
+    const head = text.slice(0, authorityStart) + (userinfo ? PLACEHOLDER + '@' + text.slice(at + 1, authorityEnd) : text.slice(authorityStart, authorityEnd));
+    const pathEnd = hasQuery ? queryAt : hashAt >= 0 ? hashAt : text.length;
+    const path = text.slice(authorityEnd, pathEnd);
+    const query = hasQuery ? '?' + encodeURIComponent(PLACEHOLDER) : '';
+    const fragment = hashAt >= 0 ? text.slice(hashAt) : '';
+    return (head + path + query + fragment).replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER);
+}
+/**
+ * A string that is one absolute URL carrying userinfo or a secret parameter is redacted as a URL.
+ * So is a relative one (it starts with `/` or `?`, has no whitespace and carries a query): its
+ * query gets redactUrl's relative rule, the OAuth-context `code` included.
+ */
+function scrubUrlValue(text, extra) {
+    if (/^[/?]\S*$/.test(text) && text.includes('?'))
+        return redactUrl(text, extra);
+    if (!/^[a-z][a-z0-9+.-]*:\/\/\S+$/i.test(text))
+        return text;
+    if (text.length > 8192)
+        return scrubLongUrl(text);
+    try {
+        const u = new URL(text);
+        const keys = Array.from(u.searchParams.keys());
+        const oauth = isOauthCodeContext(keys);
+        const secret = u.username !== '' || u.password !== ''
+            || keys.some((key) => isSecretUrlParam(key) || isExtraName(key, extra) || (oauth && key.toLowerCase() === 'code'));
+        return secret ? redactUrl(text, extra) : text;
+    }
+    catch {
+        return text;
+    }
+}
 // Value-shape matcher for a Hoody bearer carried in a URL by a NON-secret param
 // name (e.g. ?hdy_token=) or embedded in a path segment, so it is scrubbed by
 // SHAPE regardless of which key/surface carries it. Real token shape is
@@ -190,8 +310,10 @@ export function redactUrl(url, extraParamNames) {
             u.username = PLACEHOLDER;
         if (u.password)
             u.password = PLACEHOLDER;
-        for (const key of Array.from(u.searchParams.keys())) {
-            if (SECRET_FIELD_RE.test(key) || isExtraName(key, extraParamNames))
+        const keys = Array.from(u.searchParams.keys());
+        const oauth = isOauthCodeContext(keys);
+        for (const key of keys) {
+            if (isSecretUrlParam(key) || isExtraName(key, extraParamNames) || (oauth && key.toLowerCase() === 'code'))
                 u.searchParams.set(key, PLACEHOLDER);
         }
         // Belt-and-suspenders: scrub any hdy_-shaped value by shape (path segments,
@@ -211,14 +333,26 @@ export function redactUrl(url, extraParamNames) {
         const tail = hashIdx >= 0 ? url.slice(hashIdx) : '';
         if (queryRaw.length === 0)
             return url;
-        const parts = queryRaw.split('&').map(pair => {
+        const pairs = queryRaw.split('&');
+        // The same OAuth-context rule as the absolute branch: a code beside state, redirect_uri, ...
+        // is a one-time credential.
+        const decodedKeys = [];
+        for (const pair of pairs) {
+            const eq = pair.indexOf('=');
+            try {
+                decodedKeys.push(decodeURIComponent((eq < 0 ? pair : pair.slice(0, eq)).replace(/\+/g, ' ')));
+            }
+            catch { /* not a key this rule can read */ }
+        }
+        const oauth = isOauthCodeContext(decodedKeys);
+        const parts = pairs.map(pair => {
             const eq = pair.indexOf('=');
             if (eq < 0)
                 return pair;
             const k = pair.slice(0, eq);
             try {
                 const dk = decodeURIComponent(k);
-                if (SECRET_FIELD_RE.test(dk) || isExtraName(dk, extraParamNames))
+                if (isSecretUrlParam(dk) || isExtraName(dk, extraParamNames) || (oauth && dk.toLowerCase() === 'code'))
                     return `${k}=${encodeURIComponent(PLACEHOLDER)}`;
             }
             catch { /* leave as-is on decode failure */ }
@@ -246,8 +380,10 @@ export function redactSensitiveValue(v, _depth = 0, seen = new WeakSet(), extraF
     // redirect URL under a non-secret key) is invisible to the SECRET_FIELD_RE
     // name pass below, so scrub it by shape here — mirrors redactUrl's belt-and-
     // suspenders HDY_TOKEN_VALUE_RE pass (token value-shape).
+    // A credential inside a URL VALUE (`?token=`, `access_token=`, `X-Amz-Signature=`, userinfo)
+    // gets the scrub redactUrl gives the request URL.
     if (typeof v === 'string')
-        return scrubNamedParams(v.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER), extraFieldNames);
+        return scrubNamedParams(scrubUrlValue(v.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER), extraFieldNames), extraFieldNames);
     if (typeof v !== 'object')
         return v;
     if (seen.has(v))
@@ -256,8 +392,9 @@ export function redactSensitiveValue(v, _depth = 0, seen = new WeakSet(), extraF
     if (Array.isArray(v))
         return v.map((x) => redactSensitiveValue(x, _depth + 1, seen, extraFieldNames));
     const out = {};
+    const oauth = isOauthCodeContext(Object.keys(v));
     for (const [k, val] of Object.entries(v)) {
-        out[k] = SECRET_FIELD_RE.test(k) || isExtraName(k, extraFieldNames)
+        out[k] = isSecretFieldName(k) || isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
             ? PLACEHOLDER
             : redactSensitiveValue(val, _depth + 1, seen, extraFieldNames);
     }

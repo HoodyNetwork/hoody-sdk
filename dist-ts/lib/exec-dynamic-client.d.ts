@@ -28,7 +28,12 @@ export interface CallScriptOptions {
     headers?: Record<string, string> | undefined;
     /** Header timeout for the script call (ms). */
     timeoutMs?: number | undefined;
-    /** Retry budget for the script call (idempotent methods only). */
+    /**
+     * Retry budget for the script call. A script is arbitrary code, so whatever
+     * it answers is final (a 500, 502 or 429 included, for every method): only a
+     * call that never reached the container (the connection could not be opened)
+     * is sent again. Sending it again after an answer would run the script again.
+     */
     retries?: number | undefined;
     /** Context handed to request middleware. */
     middlewareContext?: Record<string, unknown> | undefined;

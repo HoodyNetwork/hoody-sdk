@@ -12,12 +12,49 @@
  * assignment in their current shell syntax (bash/zsh vs PowerShell vs cmd).
  */
 import { homedir } from 'node:os';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 export function hoodyHomeDir() {
     // Use `||` (truthy) not `??` (nullish) so an empty-string HOME also
     // falls through to homedir(). An empty HOME would otherwise resolve
     // `~/.hoody/...` to `.hoody/...` under the current working directory,
     // silently writing sessions into the shell's cwd.
     return process.env.HOME || homedir();
+}
+/**
+ * The API base URL of the account this process acts for, as the CLI resolves it without flags:
+ * HOODY_BASE_URL or HOODY_API_URL, else the CLI's saved config (`~/.hoody/config.json`: the
+ * default profile's `baseUrl`, else the top-level one). undefined when neither names an http(s)
+ * URL, or the file is missing or unreadable: the caller then uses the default platform.
+ *
+ * `hoody chat` uses it to reach the documentation assistant, and to link the documentation, of
+ * the platform the account is on (platformDomain in ../domain-utils.ts).
+ */
+export function accountApiBaseUrl(env = process.env) {
+    const usable = (value) => {
+        if (typeof value !== 'string' || value.trim() === '' || value.length > 256)
+            return undefined;
+        try {
+            const u = new URL(value.trim());
+            if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.username || u.password)
+                return undefined;
+            return u.toString().replace(/\/$/, '');
+        }
+        catch {
+            return undefined;
+        }
+    };
+    const fromEnv = usable(env.HOODY_BASE_URL) ?? usable(env.HOODY_API_URL);
+    if (fromEnv)
+        return fromEnv;
+    try {
+        const parsed = JSON.parse(readFileSync(join(env.HOME || hoodyHomeDir(), '.hoody', 'config.json'), 'utf-8'));
+        const selected = typeof parsed.defaultProfile === 'string' ? parsed.profiles?.[parsed.defaultProfile] : undefined;
+        return usable(selected?.baseUrl) ?? usable(parsed.baseUrl);
+    }
+    catch {
+        return undefined;
+    }
 }
 /**
  * Return a user-facing snippet to persist an env var in the CURRENT shell.

@@ -13,7 +13,7 @@
  *
  * `sources[]` entries are site-relative (`path`), never absolute — the browser
  * widget uses them as an href directly. A terminal cannot, so they are resolved
- * against DOCS_SITE_BASE here.
+ * against the docs site of the account's platform here (docsSiteBaseFor).
  *
  * Server-side limits this client is built against (chatbot's chat-handler.ts):
  *   message  ≤ 2000 chars   (CHATBOT_MAX_INPUT_LENGTH)
@@ -22,16 +22,32 @@
  */
 import { readSseFrames } from '../ai/openai-client.js';
 import { checkAcceptance } from './endpoint-accept.js';
-export const DEFAULT_SERVICE_URL = 'https://chatbot.hoody.com/api/chat';
+import { platformUrl } from '../domain-utils.js';
 /**
- * Public docs site, used to turn a citation into a clickable link. The service
- * emits site-relative paths and has never emitted an absolute URL.
- *
- * Treat this constant as generated: do not hand-edit it.
+ * The documentation assistant of the platform an account is on: `/api/chat` on the `chatbot.` host
+ * of the platform domain of its API base URL. One package serves every platform, so a fixed host
+ * sent every other platform's questions to a service the account is not on.
  */
-export const DOCS_SITE_BASE = 'https://docs.hoody.com';
+export function serviceUrlFor(apiBaseUrl) {
+    return platformUrl(apiBaseUrl, 'chatbot', '/api/chat');
+}
+/** The assistant of the default platform: what serviceUrlFor() answers when no account is known. */
+export const DEFAULT_SERVICE_URL = serviceUrlFor();
+/**
+ * Public docs site of the platform an account is on, used to turn a citation into a clickable
+ * link. The service emits site-relative paths and has never emitted an absolute URL.
+ */
+export function docsSiteBaseFor(apiBaseUrl) {
+    return platformUrl(apiBaseUrl, 'docs');
+}
+/** The docs site of the default platform: what docsSiteBaseFor() answers when no account is known. */
+export const DOCS_SITE_BASE = docsSiteBaseFor();
 /** Shown to the user when the answer hit the size cap. Never part of `text`. */
-export const TRUNCATION_NOTICE = `\n…[truncated, see ${DOCS_SITE_BASE} for full content]`;
+export function truncationNotice(docsSiteBase = DOCS_SITE_BASE) {
+    return `\n…[truncated, see ${docsSiteBase} for full content]`;
+}
+/** truncationNotice() for the default platform. */
+export const TRUNCATION_NOTICE = truncationNotice();
 export const DEFAULT_MAX_RESULT_BYTES = 16_384;
 export const DEFAULT_TIMEOUT_MS = 120_000;
 /**
@@ -105,14 +121,17 @@ function sanitizeTitle(title) {
  * as the answer), so both halves of the link are constrained: the path must be
  * a plain site-relative docs path, and the title cannot carry markdown-link
  * metacharacters or newlines that would break out of the `[…](…)`.
+ *
+ * `docsSiteBase` is the docs site the paths are resolved against: the default platform's, unless
+ * the caller passes the account's own (docsSiteBaseFor).
  */
-export function renderSources(sources) {
+export function renderSources(sources, docsSiteBase = DOCS_SITE_BASE) {
     const list = sources
         .filter(s => typeof s?.title === 'string' &&
         s.title.trim() !== '' &&
         typeof s?.path === 'string' &&
         SAFE_DOC_PATH.test(s.path))
-        .map(s => `- [${sanitizeTitle(s.title)}](${DOCS_SITE_BASE}${s.path})`)
+        .map(s => `- [${sanitizeTitle(s.title)}](${docsSiteBase}${s.path})`)
         .join('\n');
     return list ? `\n\nSources:\n${list}` : '';
 }
@@ -167,7 +186,8 @@ export function computeBackoffMs(attempt, retryAfterSec, rng = Math.random) {
  * re-issuing it would duplicate text the user has already seen.
  */
 export async function askHoody(opts) {
-    const url = opts.url ?? process.env.HOODY_CHAT_URL ?? DEFAULT_SERVICE_URL;
+    const platformService = serviceUrlFor(opts.apiBaseUrl);
+    const url = opts.url ?? process.env.HOODY_CHAT_URL ?? platformService;
     const maxBytes = opts.maxResultBytes ??
         (Number(process.env.HOODY_CHAT_MAX_RESULT_BYTES) || DEFAULT_MAX_RESULT_BYTES);
     const totalMs = opts.timeoutMs ?? (Number(process.env.HOODY_CHAT_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS);
@@ -182,6 +202,7 @@ export async function askHoody(opts) {
         envValue: opts.acceptEndpointEnv,
         isTty: opts.isTty,
         sessionOnly: opts.sessionOnly,
+        platformOrigin: platformService,
     });
     const ok = await resolveAcceptance(acceptance, opts.onTtyPrompt, opts.sessionOnly);
     if (ok.status !== 'ok') {

@@ -46,6 +46,35 @@ export interface KitWebSocketParts {
  * (Node) or a `?token=` query parameter (browser).
  */
 export declare function kitAuthWebSocketParts(url: string, auth: ProxyAuth | undefined, label: string, browser?: boolean): KitWebSocketParts;
+/** True in Node.js itself: not Bun, not Deno, not a browser or worker. */
+export declare function isNodeRuntime(): boolean;
+/**
+ * True when Node's built-in WebSocket must not be constructed: the bundled
+ * undici cannot be shown to carry the fix for CVE-2026-12151 (unbounded
+ * message fragments). Keyed on the undici version the runtime reports; a
+ * missing or non-release value counts as unsafe. The text between the
+ * sentinels is shared verbatim with the generated WebSocket clients and with
+ * hoody-curl's transport; a test compares the copies.
+ */
+export declare const nodeBuiltinWebSocketUnsafe: (v: Record<string, string | undefined> | undefined) => boolean;
+/** This process is Node and its built-in WebSocket must not be used. */
+export declare function builtinWebSocketProhibited(): boolean;
+/** Receive caps every `ws` socket the SDK constructs carries (the `ws` >= 8.21.1 defaults, stated). */
+export declare const SDK_WS_CAPS: Readonly<{
+    maxFragments: number;
+    maxBufferedChunks: 262144;
+}>;
+/**
+ * The error for a Node whose built-in WebSocket is prohibited when the `ws`
+ * package cannot be loaded either. Only a broken install gets here.
+ */
+export declare function unsafeBuiltinWebSocketMessage(cause: unknown): string;
+/**
+ * The local receive-cap code behind an error, or undefined. Looks at the error
+ * itself, an ErrorEvent's `.error`, and the `description` / `cause` chain that
+ * engine.io wraps a transport error in.
+ */
+export declare function localWebSocketCapCode(error: unknown): string | undefined;
 /**
  * The HTTP status a refused upgrade answered, for a socket opened with
  * `{ refusalStatus: true }` under Bun (its `ws` reports it only in an
@@ -61,6 +90,10 @@ export declare function refusedUpgradeStatus(socket: object): number | undefined
  * `refusalStatus: true` uses the `ws` package outside a browser even without
  * headers, so a refused upgrade's HTTP status can be read (see
  * `refusedUpgradeStatus`); if it cannot be loaded, the global WebSocket is used.
+ *
+ * On a Node whose built-in WebSocket is prohibited (`builtinWebSocketProhibited`)
+ * every one of those built-in choices becomes `ws`, a jsdom-style `window`
+ * included, and a `ws` that cannot be loaded throws.
  */
 export declare function openWebSocketWithHeaders<T>(url: string, protocols: string | string[] | undefined, headers: Record<string, string>, label: string, options?: {
     refusalStatus?: boolean;

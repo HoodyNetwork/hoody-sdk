@@ -5,10 +5,11 @@
  * the lower-level protocol pieces themselves.
  */
 import type { ProxyAuth, ProxyAuthPolicy } from "./proxy-auth.js";
-import { TunnelSession, type BindResult, type ResumedBind, type HelloResult } from "./tunnel-session.js";
+import { TunnelSession, type BindResult, type ResumedBind, type HelloResult, type TunnelCloseInfo } from "./tunnel-session.js";
 import { type LocalTarget } from "./tunnel-http-pump.js";
 export type { LocalTarget } from "./tunnel-http-pump.js";
-export type { ConnectOptions, BindOptions, BindResult, JoinTicket, ResumedBind, HelloResult } from "./tunnel-session.js";
+export type { ConnectOptions, BindOptions, BindResult, JoinTicket, ResumedBind, HelloResult, TunnelCloseInfo } from "./tunnel-session.js";
+export { TunnelSessionError } from "./tunnel-session.js";
 export interface ExposeOptions {
     /**
      * Tunnel kit hostname (`PROJECT-CONTAINER-tunnel-1.SERVER.containers.hoody.com`)
@@ -110,6 +111,26 @@ export interface ResumeExposeOptions {
     sessionId: string;
     /** Local target the resumed EXPOSE binds forward to. */
     to: LocalTarget;
+    /** Abort the attempt: see ResumeControl.signal. */
+    signal?: AbortSignal;
+    /** See ResumeControl.handshakeTimeoutMs. */
+    handshakeTimeoutMs?: number;
+}
+/** How a caller bounds and cancels one resume attempt. */
+export interface ResumeControl {
+    /**
+     * Aborting ends the attempt for good: its socket is closed and its timers
+     * cleared, and if the kit had already resumed the session its binds are
+     * released (UNBIND) without one stream reaching the local target. The call
+     * then rejects with `TunnelResumeAbortedError`.
+     */
+    signal?: AbortSignal;
+    /** Give up on HELLO_OK after this long (the session's own limit is 30 s). */
+    handshakeTimeoutMs?: number;
+}
+/** A resume attempt was aborted through its `signal`. */
+export declare class TunnelResumeAbortedError extends Error {
+    constructor();
 }
 export interface ResumedTunnel {
     session: TunnelSession;
@@ -140,8 +161,85 @@ export declare function resumeExpose(opts: ResumeExposeOptions): Promise<Resumed
  * High-level convenience: connect + pull in one call.
  */
 export declare function pull(opts: PullOptions): Promise<TunnelHandle>;
+export interface ResumePullOptions {
+    /** As PullOptions.container. */
+    container?: string;
+    /** Full WebSocket URL (overrides container). */
+    url?: string;
+    /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
+    kitAuth?: ProxyAuth | ProxyAuthPolicy;
+    /** The dropped session's id (`TunnelSession.id`, read while it was connected). */
+    sessionId: string;
+    /** Local TCP target the resumed PULL binds forward to. */
+    to: LocalTarget;
+    /** Abort the attempt: see ResumeControl.signal. */
+    signal?: AbortSignal;
+    /** See ResumeControl.handshakeTimeoutMs. */
+    handshakeTimeoutMs?: number;
+}
+/**
+ * resumeExpose() for a pull() session: reclaim a dropped session while the kit
+ * still parks it, and forward its resumed PULL binds' TCP streams to `to`.
+ * Resolves null when the kit answered but did not resume; throws when there
+ * was no HELLO_OK.
+ */
+export declare function resumePull(opts: ResumePullOptions): Promise<ResumedTunnel | null>;
+/** How long the kit parks a dropped session's binds by default (`--takeover-grace`). */
+export declare const TUNNEL_RESUME_WINDOW_MS = 60000;
+export interface KeepTunnelAliveOptions {
+    /** Which driver opened the tunnel: decides how resumed binds forward. */
+    mode: "expose" | "pull";
+    /** As ExposeOptions.container. */
+    container?: string;
+    /** Full WebSocket URL (overrides container). */
+    url?: string;
+    /** Kit credential for the proxy's tunnel permission rule (see ConnectOptions.kitAuth). */
+    kitAuth?: ProxyAuth | ProxyAuthPolicy;
+    /** Local target the binds forward to. */
+    to: LocalTarget;
+    /** How long after a drop to keep trying to resume. Default: the kit's 60 s hold. */
+    resumeWindowMs?: number;
+    /** First delay between attempts (default 500 ms); it doubles up to `maxRetryDelayMs` (default 5 s). */
+    retryDelayMs?: number;
+    maxRetryDelayMs?: number;
+    /** The connection dropped; a resume is about to be tried. */
+    onLost?: (info: TunnelCloseInfo) => void;
+    /** One resume attempt failed and another will follow. */
+    onRetry?: (attempt: number, error: Error) => void;
+    /** The session is back, with its binds. */
+    onResumed?: (session: TunnelSession) => void;
+}
+/** How a kept tunnel ended. */
+export interface TunnelEnd {
+    /** True when `close()` ended it. False when it dropped and could not be resumed. */
+    deliberate: boolean;
+    /** Why it ended, in words. */
+    reason: string;
+    /** `RESUME_EXPIRED` when a drop could not be resumed before the hold ran out. */
+    code?: "RESUME_EXPIRED";
+}
+export interface KeptTunnel {
+    /** The current session: replaced after each successful resume. */
+    readonly session: TunnelSession;
+    /** Settles (never rejects) when the tunnel is over. */
+    readonly ended: Promise<TunnelEnd>;
+    /** Close the tunnel for good, releasing its binds. */
+    close(): Promise<void>;
+}
+/**
+ * Keep an expose() / pull() tunnel up across connection drops. When the
+ * session drops without `close()`, the kit parks its binds for the takeover
+ * grace; this reconnects with the session id inside that window so the same
+ * ports keep serving. `ended` settles with the reason once the tunnel is over:
+ * a deliberate close, or a drop that could not be resumed in time.
+ */
+export declare function keepTunnelAlive(handle: {
+    session: TunnelSession;
+    close(): Promise<void>;
+}, opts: KeepTunnelAliveOptions): KeptTunnel;
 /**
  * High-level convenience: start a local Bun.serve + connect + expose.
+ * Bun only: it runs the handler with `Bun.serve`.
  */
 export declare function serve(opts: ServeOptions): Promise<TunnelHandle & {
     url: string;

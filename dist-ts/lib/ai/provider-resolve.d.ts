@@ -33,6 +33,13 @@ export interface ResolverError {
 export type ProviderResolution = ProviderConfig | ResolverError;
 export declare function isResolverError(r: ProviderResolution): r is ResolverError;
 /**
+ * Tier 2's default endpoint: the Hoody AI gateway of the account's own platform, `/api/v1` on the
+ * `ai.` host of the platform domain. The platform is read from the API base URL given, else from
+ * HOODY_BASE_URL / HOODY_API_URL in `env`, else it is the default platform. It was one fixed host,
+ * which an account on any other platform is not on.
+ */
+export declare function tier2DefaultUrl(apiBaseUrl?: string, env?: Record<string, string | undefined>): string;
+/**
  * Normalize a URL to a canonical origin (scheme://host[:port]) for comparison.
  * Lowercases host, strips default ports (80 for http, 443 for https),
  * drops trailing slashes and any path component.
@@ -51,10 +58,13 @@ export declare function isLocalOrigin(origin: string): boolean;
  *   profile='chat'    → cascade tier1 → tier2 → tier3 → no-config error.
  *   profile='ai-fix'  → lock to tier 2 defaults.
  *
+ * `apiBaseUrl` is the account's API base URL; tier 2's default endpoint is the
+ * AI gateway of that platform (see tier2DefaultUrl).
+ *
  * On success returns a ProviderConfig. On failure returns a ResolverError.
  * Never throws.
  */
-export declare function resolveProvider(profile: 'chat' | 'ai-fix', env?: Record<string, string | undefined>): ProviderResolution;
+export declare function resolveProvider(profile: 'chat' | 'ai-fix', env?: Record<string, string | undefined>, apiBaseUrl?: string): ProviderResolution;
 /**
  * Format a ResolverError into a stderr-friendly message with a usage hint.
  * Returns the full text; caller writes to stderr and decides exit code.

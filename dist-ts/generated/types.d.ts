@@ -45,6 +45,7 @@ export interface ApiAuthTokensListResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -140,6 +141,7 @@ export interface ApiAuthTokensCreateRequest {
                 snapshots?: boolean;
                 networking?: boolean;
                 kvm?: boolean;
+                env_values?: boolean;
             };
         };
         projects?: {
@@ -240,6 +242,7 @@ export interface ApiAuthTokensCreateResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -347,6 +350,7 @@ export interface ApiAuthTokensCopyResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -447,6 +451,7 @@ export interface ApiAuthTokensGetCurrentResponse {
                         snapshots?: boolean;
                         networking?: boolean;
                         kvm?: boolean;
+                        env_values?: boolean;
                     };
                 };
                 projects?: {
@@ -556,6 +561,7 @@ export interface ApiAuthTokensUpdatePublicProfileResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -654,6 +660,7 @@ export interface ApiAuthTokensGetResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -747,6 +754,7 @@ export interface ApiAuthTokensUpdateRequest {
                 snapshots?: boolean;
                 networking?: boolean;
                 kvm?: boolean;
+                env_values?: boolean;
             };
         };
         projects?: {
@@ -846,6 +854,7 @@ export interface ApiAuthTokensUpdateResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -956,6 +965,7 @@ export interface ApiAuthTokensAddRealmResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -1058,6 +1068,7 @@ export interface ApiAuthTokensRemoveRealmResponse {
                     snapshots?: boolean;
                     networking?: boolean;
                     kvm?: boolean;
+                    env_values?: boolean;
                 };
             };
             projects?: {
@@ -1157,7 +1168,7 @@ export interface ApiVaultGetResponse {
 export interface ApiVaultSetRequest {
     /** Value to store. Can be any UTF-8 string: JSON, encrypted data, plain text, etc. The API does NOT validate or verify the content - encryption is highly recommended for sensitive data such as secrets, passwords, or API keys. */
     value: string;
-    /** Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. This counts toward your total vault storage limit. */
+    /** Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. This counts toward your total vault storage limit. When updating an existing key: omit it to keep the stored metadata, send null to clear it, send an object to replace it. */
     metadata?: Record<string, unknown> | null;
 }
 export type ApiVaultSetResponse = {
@@ -1422,7 +1433,7 @@ export interface ApiAuthTwoFactorGetStatusResponse {
     data: {
         enabled: boolean;
         verified: boolean;
-        enabled_at?: string;
+        enabled_at?: string | null;
         backup_codes_remaining: number;
         require_for_tokens: boolean;
     };
@@ -1533,6 +1544,7 @@ export interface ApiAuthWhoamiResponse {
                             snapshots?: boolean;
                             networking?: boolean;
                             kvm?: boolean;
+                            env_values?: boolean;
                         };
                     };
                     projects?: {
@@ -1658,6 +1670,7 @@ export interface GetCurrentUserAliasResponse {
                             snapshots?: boolean;
                             networking?: boolean;
                             kvm?: boolean;
+                            env_values?: boolean;
                         };
                     };
                     projects?: {
@@ -2149,6 +2162,26 @@ export interface ApiContainersListByProjectResponse {
             server_id?: string | null;
             server_name?: string | null;
             subserver_name?: string;
+            server?: {
+                name?: string;
+                country?: string;
+                country_name?: string;
+                city?: string;
+                region?: string;
+                datacenter?: string;
+                is_free?: boolean;
+                paid_subserver?: boolean;
+                specs?: {
+                    cpu_cores?: number | null;
+                    ram_gb?: number | null;
+                    disk_gb?: number | null;
+                    shared_compute?: boolean;
+                } | null;
+                expires_at?: string | null;
+                kvm_supported?: boolean | null;
+                kvm_nested?: boolean | null;
+                kvm_checked_at?: string | null;
+            } | null;
             ssh_hostname?: string | null;
             env_sync?: {
                 pending?: boolean;
@@ -2169,6 +2202,10 @@ export interface ApiContainersListByProjectResponse {
             autostart?: boolean;
             is_default?: boolean;
             status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+            failure_reason?: {
+                code?: "CREATE_NOT_STARTED" | "CREATE_FAILED" | "COPY_FAILED";
+                message?: string;
+            } | null;
             environment_vars?: Record<string, unknown>;
             volumes?: Record<string, unknown>;
             ssh_public_key?: string | null;
@@ -2363,11 +2400,11 @@ export interface ApiContainersCreateResponse {
     statusCode: number;
     message: string;
     data: {
-        id?: string;
-        project_id?: string;
+        id: string;
+        project_id: string;
         project_alias?: string | null;
         server_id?: string | null;
-        server_name?: string | null;
+        server_name: string | null;
         subserver_name?: string;
         ssh_hostname?: string | null;
         env_sync?: {
@@ -2389,6 +2426,10 @@ export interface ApiContainersCreateResponse {
         kvm_note?: string;
         autostart?: boolean;
         status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+        failure_reason?: {
+            code?: "CREATE_NOT_STARTED" | "CREATE_FAILED" | "COPY_FAILED";
+            message?: string;
+        } | null;
         environment_vars?: Record<string, unknown>;
         volumes?: Record<string, unknown>;
         ssh_public_key?: string | null;
@@ -2427,6 +2468,9 @@ export interface ApiContainersListResponse {
                     shared_compute?: boolean;
                 } | null;
                 expires_at?: string | null;
+                kvm_supported?: boolean | null;
+                kvm_nested?: boolean | null;
+                kvm_checked_at?: string | null;
             } | null;
             ssh_hostname?: string | null;
             env_sync?: {
@@ -2450,6 +2494,10 @@ export interface ApiContainersListResponse {
             ramdisk?: boolean;
             is_default?: boolean;
             status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+            failure_reason?: {
+                code?: "CREATE_NOT_STARTED" | "CREATE_FAILED" | "COPY_FAILED";
+                message?: string;
+            } | null;
             environment_vars?: Record<string, unknown>;
             volumes?: Record<string, unknown>;
             ssh_public_key?: string | null;
@@ -2599,11 +2647,11 @@ export interface ApiContainersGetResponse {
     statusCode: number;
     message: string;
     data: {
-        id?: string;
-        project_id?: string;
+        id: string;
+        project_id: string;
         project_alias?: string | null;
         server_id?: string | null;
-        server_name?: string | null;
+        server_name: string | null;
         subserver_name?: string;
         server?: {
             name?: string;
@@ -2621,6 +2669,9 @@ export interface ApiContainersGetResponse {
                 shared_compute?: boolean;
             } | null;
             expires_at?: string | null;
+            kvm_supported?: boolean | null;
+            kvm_nested?: boolean | null;
+            kvm_checked_at?: string | null;
         } | null;
         ssh_hostname?: string | null;
         env_sync?: {
@@ -2644,6 +2695,10 @@ export interface ApiContainersGetResponse {
         ramdisk?: boolean;
         is_default?: boolean;
         status?: "creating" | "running" | "paused" | "stopped" | "failed" | "deleted" | "copying" | "deleting" | "claiming";
+        failure_reason?: {
+            code?: "CREATE_NOT_STARTED" | "CREATE_FAILED" | "COPY_FAILED";
+            message?: string;
+        } | null;
         environment_vars?: Record<string, unknown>;
         volumes?: Record<string, unknown>;
         ssh_public_key?: string | null;
@@ -2845,6 +2900,9 @@ export interface ApiContainersUpdateResponse {
                 shared_compute?: boolean;
             } | null;
             expires_at?: string | null;
+            kvm_supported?: boolean | null;
+            kvm_nested?: boolean | null;
+            kvm_checked_at?: string | null;
         } | null;
         ssh_hostname?: string | null;
         env_sync?: {
@@ -2919,7 +2977,7 @@ export interface ApiContainersListStatusHistoryResponse {
             to_status?: string;
             transition_time?: string;
             duration_ms?: number | null;
-            triggered_by?: string;
+            triggered_by?: "sync_scheduler" | "container_creation" | "container_deletion" | "manual_operation" | "server_expiration" | "server_reinstall";
             metadata?: Record<string, unknown> | null;
         })[];
         pagination?: {
@@ -2996,6 +3054,9 @@ export interface ApiContainersCopyResponse {
                 shared_compute?: boolean;
             } | null;
             expires_at?: string | null;
+            kvm_supported?: boolean | null;
+            kvm_nested?: boolean | null;
+            kvm_checked_at?: string | null;
         } | null;
         ssh_hostname?: string | null;
         env_sync?: {
@@ -3308,7 +3369,7 @@ export interface ApiSnapshotsListResponse {
 }
 export interface ApiSnapshotsCreateRequest {
     /**
-     * Optional user-friendly alias for the snapshot
+     * Optional user-friendly alias for the snapshot. It is kept as the alias and also becomes the snapshot name after sanitizing (letters, digits, underscore and hyphen kept; leading and trailing hyphens and underscores stripped; at most 64 characters). A sanitized name shorter than 2 characters is refused with 400.
      * @maxLength 100
      */
     alias?: string;
@@ -3443,12 +3504,12 @@ export interface ApiFirewallCreateIngressRuleRequest {
      */
     description: string;
     /**
-     * Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+     * Port number (1-65535), range with the lower port first (80-90), or comma-separated list (80,443). Required for TCP/UDP; not allowed with icmp4.
      * @maxLength 64
      */
     destination_port?: string;
     /**
-     * Source IPv4 address or CIDR range. Use 0.0.0.0/0 for any source.
+     * Source IPv4 address or CIDR range, or a comma-separated list of them. Use 0.0.0.0/0 for any source. IPv6 is not supported.
      * @maxLength 512
      */
     source?: string;
@@ -3641,7 +3702,7 @@ export interface ApiFirewallDeleteIngressRuleRequest {
      * @maxLength 255
      */
     description?: string;
-    /** Rule state */
+    /** Match only rules in this state. Omit to match rules in either state. */
     state?: "enabled" | "disabled";
     /**
      * ICMP type number for icmp4 protocol
@@ -3684,12 +3745,12 @@ export interface ApiFirewallCreateEgressRuleRequest {
      */
     description: string;
     /**
-     * Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+     * Port number (1-65535), range with the lower port first (80-90), or comma-separated list (80,443). Required for TCP/UDP; not allowed with icmp4.
      * @maxLength 64
      */
     destination_port?: string;
     /**
-     * Destination IPv4 address or CIDR range. Use 0.0.0.0/0 for any destination.
+     * Destination IPv4 address or CIDR range, or a comma-separated list of them. Use 0.0.0.0/0 for any destination. IPv6 is not supported.
      * @maxLength 512
      */
     destination?: string;
@@ -3882,7 +3943,7 @@ export interface ApiFirewallDeleteEgressRuleRequest {
      * @maxLength 255
      */
     description?: string;
-    /** Rule state */
+    /** Match only rules in this state. Omit to match rules in either state. */
     state?: "enabled" | "disabled";
     /**
      * ICMP type number for icmp4 protocol
@@ -3918,7 +3979,8 @@ export interface ApiContainersEnvListResponse {
     statusCode: number;
     message: string;
     data: {
-        environment_vars?: Record<string, string>;
+        environment_vars?: Record<string, string | null>;
+        values_redacted?: boolean;
         env_sync?: {
             pending?: boolean;
             revision?: number;
@@ -3938,7 +4000,8 @@ export interface ApiContainersEnvUpdateResponse {
     statusCode: number;
     message: string;
     data: {
-        environment_vars?: Record<string, string>;
+        environment_vars?: Record<string, string | null>;
+        values_redacted?: boolean;
         synced?: boolean;
         env_sync?: {
             pending?: boolean;
@@ -3963,7 +4026,8 @@ export interface ApiContainersEnvSetResponse {
     statusCode: number;
     message: string;
     data: {
-        environment_vars?: Record<string, string>;
+        environment_vars?: Record<string, string | null>;
+        values_redacted?: boolean;
         synced?: boolean;
         env_sync?: {
             pending?: boolean;
@@ -3980,7 +4044,8 @@ export interface ApiContainersEnvDeleteResponse {
     statusCode: number;
     message: string;
     data: {
-        environment_vars?: Record<string, string>;
+        environment_vars?: Record<string, string | null>;
+        values_redacted?: boolean;
         synced?: boolean;
         env_sync?: {
             pending?: boolean;
@@ -4005,11 +4070,12 @@ export interface ApiContainersGetStatsResponse {
         status: string;
         status_code: number;
         processes: number;
-        started_at: string;
+        started_at: string | null;
         cpu?: {
             usage?: number;
             allocated_time?: number;
-            usage_percent?: number;
+            usage_percent?: number | null;
+            usage_percent_raw?: number;
         } | null;
         memory?: {
             usage?: number;
@@ -4072,11 +4138,12 @@ export interface ApiProjectsGetStatsResponse {
             status?: string;
             status_code?: number;
             processes?: number;
-            started_at?: string;
+            started_at?: string | null;
             cpu?: {
                 usage?: number;
                 allocated_time?: number;
-                usage_percent?: number;
+                usage_percent?: number | null;
+                usage_percent_raw?: number;
             } | null;
             memory?: {
                 usage?: number;
@@ -5145,11 +5212,11 @@ export interface ApiProxyAliasesCreateRequest {
      */
     index?: number;
     /**
-     * Landing path served when https://{alias}.../ is requested with no path (a root request). A request that carries its own path is forwarded as-sent, resolved from the container root — this value is never used as a prefix. Auto-prefixed with / if missing.
+     * Landing path served when https://{alias}.../ is requested with no path (a root request); a query written in it is sent too. With allow_path_override true, a request that carries its own path is forwarded as-sent, resolved from the container root — this value is never used as a prefix. With allow_path_override false, it is the only path the alias serves. Auto-prefixed with / if missing.
      * @maxLength 2048
      */
     target_path?: string | null;
-    /** Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control. */
+    /** When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). A parameter written in target_path always keeps its value, the visitor's other parameters are passed on, and the method, request body and WebSocket upgrade are forwarded as sent. When true (the default), a root request lands on target_path with its query plus the visitor's parameters, and a request that carries its own path is forwarded as sent. Either way anyone who has the link can open the alias: use proxy permissions to restrict who may. */
     allow_path_override?: boolean;
     /** Optional ISO 8601 expiration date. Alias will be automatically disabled after this date. */
     expires_at?: string | null;
@@ -5232,11 +5299,11 @@ export interface ApiProxyAliasesUpdateRequest {
      */
     index?: number;
     /**
-     * Landing path served for root requests (requests carrying their own path are forwarded as-sent; never a prefix). Set to null to remove it.
+     * Landing path served for root requests, with its own query. With allow_path_override true, requests carrying their own path are forwarded as-sent (never a prefix); with false, it is the only path served. Set to null to remove it.
      * @maxLength 2048
      */
     target_path?: string | null;
-    /** Declared path-replacement intent; currently has no effect (non-root paths are always forwarded as sent) */
+    /** When false, only the root, or target_path itself, is served, as target_path; other paths 404, and target_path's own parameters cannot be overridden. When true, a request that carries its own path is forwarded as sent. */
     allow_path_override?: boolean;
     /** Expiration date (ISO string, Unix timestamp seconds/ms, or null to remove expiration) */
     expires_at?: string | null | number;
@@ -5741,17 +5808,17 @@ export interface ApiEventsPurgeResponse {
 export interface ApiActivityListResponse {
     statusCode: number;
     message: string;
-    data: {
+    data: ({
         id: string;
         user_id?: string;
-        realm_id?: string;
+        realm_id?: string | null;
         method?: string;
         path?: string;
         status_code?: number;
         ip_address?: string;
-        user_agent?: string;
+        user_agent?: string | null;
         created_at?: string;
-    }[];
+    })[];
 }
 export interface ApiActivityGetStatsResponse {
     statusCode: number;
@@ -7074,6 +7141,9 @@ export interface ApiServersListResponse {
                     ipv6_enabled?: boolean;
                 };
             };
+            kvm_supported?: boolean | null;
+            kvm_nested?: boolean | null;
+            kvm_checked_at?: string | null;
         } | null;
     })[];
 }
@@ -7143,6 +7213,9 @@ export interface ApiServersGetResponse {
                     ipv6_enabled?: boolean;
                 };
             };
+            kvm_supported?: boolean | null;
+            kvm_nested?: boolean | null;
+            kvm_checked_at?: string | null;
         } | null;
         transaction?: {
             id?: string;
@@ -7252,6 +7325,9 @@ export interface ListUserServersResponse {
                     ipv6_enabled?: boolean;
                 };
             };
+            kvm_supported?: boolean | null;
+            kvm_nested?: boolean | null;
+            kvm_checked_at?: string | null;
         } | null;
     })[];
 }
@@ -7321,6 +7397,9 @@ export interface GetUserServerByIdResponse {
                     ipv6_enabled?: boolean;
                 };
             };
+            kvm_supported?: boolean | null;
+            kvm_nested?: boolean | null;
+            kvm_checked_at?: string | null;
         } | null;
         transaction?: {
             id?: string;
@@ -8246,7 +8325,7 @@ export interface BrowserPageNavigateRequest {
     tabId?: number;
     waitUntil?: "commit" | "domcontentloaded" | "load";
     /**
-     * Omitted keeps legacy timing; present → budgeted navigation (504 on expiry).
+     * Omitted: the navigation may take up to 30000 ms. Present: the whole budget. Either way a navigation that runs out of time is a 504 TIMEOUT (phase navigation).
      * @minimum 1
      * @maximum 30000
      */
@@ -8292,6 +8371,12 @@ export interface BrowserPageEvaluateRequest {
     tabId?: number;
     /** Set to `true` when `script` is base64-encoded. */
     scriptBase64?: boolean;
+    /**
+     * Time limit for the script, in milliseconds (1 to 30000, default 30000). A script still running when it is spent is stopped and the answer is `504 TIMEOUT` (`details.phase` `evaluate`). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`timeoutMs must not be repeated`).
+     * @minimum 1
+     * @maximum 30000
+     */
+    timeoutMs?: number;
 }
 /**
  * Result of the evaluated JavaScript expression
@@ -8412,6 +8497,8 @@ export interface BrowserKitGetStatsResponse {
             };
             oldestInstance?: number;
             newestInstance?: number;
+            tabs?: number;
+            maxTabsPerInstance?: number;
         };
         system?: {
             uptime?: number;
@@ -8626,6 +8713,7 @@ export interface BrowserLogsListConsoleResponse {
             tabId?: number;
         }[];
         count: number;
+        dropped: number;
         capture: "available" | "partial";
         reason?: string;
     };
@@ -8634,7 +8722,7 @@ export interface BrowserLogsListNetworkResponse {
     statusCode: number;
     message: string;
     data: {
-        logs?: ({
+        logs: ({
             timestamp?: string;
             method?: string;
             url?: string;
@@ -8642,7 +8730,8 @@ export interface BrowserLogsListNetworkResponse {
             resourceType?: string;
             tabId?: number;
         })[];
-        count?: number;
+        count: number;
+        dropped: number;
     };
 }
 export interface BrowserHistoryListResponse {
@@ -8697,6 +8786,14 @@ export interface CodeKitGetStatusResponse {
             startedAt: string;
             uptime: number;
         }[];
+    };
+}
+export interface CodeStopResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        id: number;
+        state: "stopped";
     };
 }
 export interface CodeKitGetVersionResponse {
@@ -8949,6 +9046,8 @@ export interface DaemonHealthCheckResponse {
             nft?: boolean;
             systemd_run?: boolean;
             landlock_abi?: number;
+            bwrap_version?: string | null;
+            bwrap_tmpfs_size?: boolean;
             firewall?: "ok" | "degraded" | "none";
         };
     };
@@ -9048,7 +9147,10 @@ export interface DaemonProgramsStartResponse {
             status?: string;
             pid?: number;
             uptime?: string;
+            last_run?: LastRun;
         };
+        status?: "exited" | "stopped";
+        last_run?: LastRun;
     };
 }
 export interface DaemonProgramsStopRequest {
@@ -9134,39 +9236,45 @@ export interface DaemonEphemeralProgramsListResponse {
 }
 export type DaemonEphemeralProgramsStartRequest = EphemeralProgramInput;
 /**
- * Response from quick-start endpoint
+ * Response from the quick-start endpoints. A success carries `temporary_id`, `name`, `status` and `created_at`; an error carries `error`, and `temporary_id` whenever the program was created.
  */
 export interface DaemonEphemeralProgramsStartResponse {
     statusCode: number;
     message: string;
     data: {
         success: boolean;
-        temporary_id: string;
-        name: string;
+        temporary_id?: string;
+        name?: string;
         display?: string | null;
-        status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
+        status?: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown" | "failed";
         pid?: number | null;
         uptime?: string | null;
-        created_at: string;
+        created_at?: string;
         expires_at?: string | null;
+        supervisor_state?: string;
+        last_run?: LastRun;
+        error?: string;
     };
 }
 /**
- * Response from quick-start endpoint
+ * Response from the quick-start endpoints. A success carries `temporary_id`, `name`, `status` and `created_at`; an error carries `error`, and `temporary_id` whenever the program was created.
  */
 export interface DaemonEphemeralProgramsGetStatusResponse {
     statusCode: number;
     message: string;
     data: {
         success: boolean;
-        temporary_id: string;
-        name: string;
+        temporary_id?: string;
+        name?: string;
         display?: string | null;
-        status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
+        status?: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown" | "failed";
         pid?: number | null;
         uptime?: string | null;
-        created_at: string;
+        created_at?: string;
         expires_at?: string | null;
+        supervisor_state?: string;
+        last_run?: LastRun;
+        error?: string;
     };
 }
 export interface DaemonProgramsGetLogsResponse {
@@ -9762,13 +9870,14 @@ export interface ExecScriptsValidateTypesResponse {
     statusCode: number;
     message: string;
     data: {
-        valid: boolean;
+        valid: true;
+        typeChecked: false;
         javascript: string;
         originalLength: number;
         transpiledLength: number;
         normalized: boolean;
         transformations: string[];
-        message: "TypeScript validation successful";
+        message: "TypeScript transpiles; types are not checked";
     };
 }
 export interface ExecScriptsValidateSyntaxRequest {
@@ -9866,9 +9975,13 @@ export interface ExecScriptsValidateResponse {
             };
             typescript: {
                 valid: true;
+                typeChecked: false;
                 transpiledLength: number;
+                direct?: boolean;
+                message: "TypeScript transpiles; types are not checked";
             } | {
                 valid: false;
+                typeChecked: false;
                 error: string;
             } | null;
             dependencies: {
@@ -9899,7 +10012,14 @@ export interface ExecTemplatesListResponse {
     message: string;
     data: {
         count: number;
-        templates: Record<string, unknown>[];
+        templates: ({
+            name: string;
+            category: string;
+            description: string;
+            tags: string[];
+            params: string[];
+            type: "builtin" | "custom";
+        })[];
     };
 }
 export interface ExecTemplatesPreviewResponse {
@@ -9916,14 +10036,28 @@ export interface ExecTemplatesPreviewResponse {
     };
 }
 export interface ExecTemplatesGenerateRequest {
-    /** Name */
+    /** Template name: a built-in one or a custom template's (see templates/list). */
     name: string;
-    /** Variables */
+    /** Values for the template's `params`, substituted into its code. */
     variables?: Record<string, unknown>;
-    /** Output Path */
+    /** Where to save the script when `saveFile` is true, as scripts/write takes a path: under the call's scope (`execId` / `exec_id` / `subdomain`, else the Host's `[<subdomain>.]…-exec-<execId>`), as `<subdomain|default>/<execId>/<outputPath>` unless it already starts with that prefix; relative to the scripts directory only when the call has no scope. A script at the scripts root answers on every exec ID, so a saved template never lands there from an exec Host. The answer's `resolvedPath` names the file written. */
     outputPath?: string;
-    /** Save File */
+    /** When true, write the generated script to `outputPath` (required then). When false (the default), only return the code. */
     saveFile?: boolean;
+    /**
+     * Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+     * @maxLength 64
+     * @pattern ^[a-z0-9]+$
+     */
+    execId?: string;
+    /**
+     * Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+     * @maxLength 64
+     * @pattern ^[a-z0-9]+$
+     */
+    exec_id?: string;
+    /** Optional subdomain namespace used with execId for path resolution. */
+    subdomain?: string;
 }
 export interface ExecTemplatesGenerateResponse {
     statusCode: number;
@@ -9934,6 +10068,7 @@ export interface ExecTemplatesGenerateResponse {
         code: string;
         saved: boolean;
         path: string | null;
+        resolvedPath: string | null;
         variables: Record<string, unknown>;
     };
 }
@@ -10025,6 +10160,7 @@ export interface ExecScriptsReadResponse {
             };
             route: string | null;
             url: string | null;
+            routable: boolean;
             connect?: {
                 header: "X-Hoody-Remote";
                 ops: ("capabilities" | "send" | "events" | "call" | "eval")[];
@@ -10078,6 +10214,7 @@ export interface ExecScriptsWriteResponse {
         size: number;
         modified: string;
         validated: boolean;
+        routable?: false;
         remote?: {
             enabled: boolean;
             ops: {
@@ -10093,6 +10230,7 @@ export interface ExecScriptsWriteResponse {
             };
             route: string | null;
             url: string | null;
+            routable: boolean;
             connect?: {
                 header: "X-Hoody-Remote";
                 ops: ("capabilities" | "send" | "events" | "call" | "eval")[];
@@ -10105,6 +10243,11 @@ export interface ExecScriptsWriteResponse {
             action: string;
             reason?: string;
         };
+        magicCommentWarnings?: {
+            directive: string;
+            value: string;
+            message: string;
+        }[];
     };
 }
 export interface ExecScriptsDeleteResponse {
@@ -10457,14 +10600,30 @@ export interface ExecRoutesListRequest {
     baseDir?: string;
     /** Include Metadata */
     includeMetadata?: boolean;
+    /** Hostname */
+    hostname?: string;
+    /** Exec Id */
+    execId?: string;
 }
 export interface ExecRoutesListResponse {
     statusCode: number;
     message: string;
     data: {
         baseDir: string;
+        hostname: string;
+        execId: string | null;
         count: number;
-        routes: Record<string, unknown>[];
+        routes: ({
+            pattern: string;
+            route: string | null;
+            file: string;
+            type: "static" | "dynamic" | "catchall" | "optional-catchall";
+            parameters: string[];
+            metadata?: {
+                size?: number;
+                modified?: string;
+            };
+        })[];
     };
 }
 /**
@@ -10663,7 +10822,13 @@ export interface ExecModulesListBundledResponse {
     message: string;
     data: {
         total: number;
-        packages: Record<string, unknown>[];
+        packages: ({
+            name: string;
+            declaredVersion: string;
+            resolvedVersion: string | null;
+            available: boolean;
+            description: string;
+        })[];
         allAvailable: boolean;
     };
 }
@@ -10754,6 +10919,16 @@ export interface ExecPackagesGetManifestResponse {
         scripts: Record<string, unknown>;
         dependencyCount: number;
         devDependencyCount: number;
+        lastInstall: {
+            status: "running" | "succeeded" | "failed";
+            command: string;
+            packages: string[];
+            startedAt: string;
+            finishedAt?: string;
+            durationMs?: number;
+            error?: string;
+            incomplete?: string[];
+        } | null;
     };
 }
 export interface ExecPackagesUpdateManifestRequest {
@@ -10792,6 +10967,7 @@ export interface ExecPackagesInstallResponse {
     data: {
         status: "installing";
         command: string;
+        startedAt: string;
         message: string;
     };
 }
@@ -11206,12 +11382,13 @@ export interface ExecMagicCommentsGetResponse {
     message: string;
     data: {
         path: string;
+        resolvedPath: string;
         comments: Record<string, unknown>;
     };
 }
 export interface ExecMagicCommentsUpdateRequest {
     /**
-     * Script to edit, relative to the scripts directory.
+     * A script path resolved like scripts/read: under the call's scope first (`execId` / `exec_id` / `subdomain`, else the Host's `[<subdomain>.]…-exec-<execId>`), as `<subdomain|default>/<execId>/<path>` unless it already starts with that prefix; when no file is there, relative to the scripts directory (so `default/1/x.ts` still works from any Host). An absolute path inside the scripts directory is read relative to it. `resolvedPath` in the answer names the file used.
      * @minLength 1
      */
     path: string;
@@ -11264,6 +11441,20 @@ export interface ExecMagicCommentsUpdateRequest {
     };
     /** When true, the file is not written: the response returns its `current` and `proposed` magic comments. When false (the default), the change is written and the response returns `previous` and `updated`. */
     dry_run?: boolean | null;
+    /**
+     * Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+     * @maxLength 64
+     * @pattern ^[a-z0-9]+$
+     */
+    execId?: string;
+    /**
+     * Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+     * @maxLength 64
+     * @pattern ^[a-z0-9]+$
+     */
+    exec_id?: string;
+    /** Optional subdomain namespace used with execId for path resolution. */
+    subdomain?: string;
 }
 export interface ExecMagicCommentsUpdateResponse {
     statusCode: number;
@@ -11271,17 +11462,21 @@ export interface ExecMagicCommentsUpdateResponse {
     data: ({
         dry_run: boolean;
         path: string;
+        resolvedPath: string;
         current: Record<string, unknown> | null;
         proposed: Record<string, unknown> | null;
         changes: string[];
+        ignored: string[];
         message: "Preview only - set dry_run=false to apply changes";
     } & {
         message: "Preview only - set dry_run=false to apply changes";
     }) | ({
         dry_run: boolean;
         path: string;
+        resolvedPath: string;
         previous: Record<string, unknown> | null;
         updated: Record<string, unknown> | null;
+        ignored: string[];
         message: "Magic comments updated successfully";
     } & {
         message: "Magic comments updated successfully";
@@ -11289,12 +11484,12 @@ export interface ExecMagicCommentsUpdateResponse {
 }
 export interface ExecMagicCommentsUpdateManyRequest {
     /**
-     * Directory to edit, relative to the scripts directory. Ignored when `execId` is given.
+     * Directory to edit, resolved like a script path: under the scope scripts/write would use for the same call first (the body `execId`, with the Host's subdomain and execId filling what the body leaves out: `<subdomain|default>/<execId>`), as `<scope>/<directory>` unless it already starts with that prefix; when no directory is there, relative to the scripts directory. The answer's `directory` names the one edited.
      * @minLength 1
      */
     directory?: string | null;
     /**
-     * Edits `default/<execId>` (or `<subdomain>/<execId>` when taken from the Host). When neither `execId` nor `directory` is given, both are taken from the Host header; a supplied value is never replaced. An execId is 1 to 64 lowercase letters or digits.
+     * Without `directory`: edits the whole `default/<execId>` tree (or `<subdomain>/<execId>` when taken from the Host). With `directory`: the execId of the scope `directory` resolves under first (`<subdomain|default>/<execId>/<directory>`, the subdomain from the Host). When neither `execId` nor `directory` is given, both are taken from the Host header; a supplied value is never replaced. An execId is 1 to 64 lowercase letters or digits.
      * @maxLength 64
      * @pattern ^[a-z0-9]+$
      */
@@ -11362,6 +11557,7 @@ export interface ExecMagicCommentsUpdateManyResponse {
         execId: string;
         recursive: boolean;
         comments: Record<string, unknown> | null;
+        ignored: string[];
         would_affect: {
             total: number;
             files: ({
@@ -11395,6 +11591,7 @@ export interface ExecMagicCommentsUpdateManyResponse {
                 }[];
             };
         };
+        ignored: string[];
         message: "Magic comments updated successfully";
     } & {
         message: "Magic comments updated successfully";
@@ -11506,7 +11703,7 @@ export interface ListRootDirectoryResponse {
 /**
  * Historical record of completed and failed downloads
  */
-export interface FilesDownloadsListHistoryResponse {
+export interface GetDownloadHistoryResponse {
     statusCode: number;
     message: string;
     data: {
@@ -11528,7 +11725,7 @@ export interface FilesDownloadsListHistoryResponse {
 /**
  * Historical record of completed and failed extractions
  */
-export interface FilesExtractionsListHistoryResponse {
+export interface GetExtractionHistoryResponse {
     statusCode: number;
     message: string;
     data: {
@@ -11542,6 +11739,11 @@ export interface FilesExtractionsListHistoryResponse {
             id?: string;
             selective?: boolean;
             selective_path?: string | null;
+            skipped?: {
+                path: string;
+                reason: string;
+            }[];
+            skipped_count?: number;
             start_time?: number;
             status?: "active" | "completed" | "failed" | "cancelled" | "interrupted";
             total_bytes?: number | null;
@@ -13709,7 +13911,7 @@ export interface FilesBackendsCreateIclouddriveRequest {
     /** Password. */
     password: string;
     /** iCloud service to use. */
-    service: "drive" | "photos";
+    service?: "drive" | "photos";
     /** Trust token for session authentication. */
     trust_token?: string;
 }
@@ -14672,7 +14874,7 @@ export interface FilesBackendsCreatePikpakRequest {
   This avoids issues caused by invalid media links, but may reduce download speeds. */
     no_media_link?: boolean;
     /** Pikpak password. */
-    pass: string;
+    pass?: string;
     /** ID of the root folder.
   Leave blank normally.
   
@@ -14706,7 +14908,7 @@ export interface FilesBackendsCreatePikpakRequest {
   Use `--pikpak-use-trash=false` to delete files permanently instead. */
     use_trash?: boolean;
     /** Pikpak username. */
-    user: string;
+    user?: string;
     /** HTTP user agent for pikpak.
   
   Defaults to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" or "--pikpak-user-agent" provided on command line. */
@@ -14736,7 +14938,7 @@ export interface FilesBackendsCreatePixeldrainRequest {
     api_key?: string;
     /** The API endpoint to connect to. In the vast majority of cases it's fine to leave
   this at default. It is only intended to be changed for testing purposes. */
-    api_url: string;
+    api_url?: string;
     /** Description of the remote. */
     description?: string;
     /** Root of the filesystem to use.
@@ -14884,7 +15086,7 @@ export interface FilesBackendsCreateProtondriveRequest {
   two-factor authentication */
     otp_secret_key?: string;
     /** The password of your proton account. */
-    password: string;
+    password?: string;
     /** Create a new revision when filename conflict is detected
   
   When a file upload is cancelled or failed before completion, a draft will be
@@ -14902,7 +15104,7 @@ export interface FilesBackendsCreateProtondriveRequest {
   will be returned, and no upload will happen. */
     replace_existing_draft?: boolean;
     /** The username of your proton account */
-    username: string;
+    username?: string;
 }
 export interface FilesBackendsCreateProtondriveResponse {
     statusCode: number;
@@ -15688,7 +15890,7 @@ export interface FilesBackendsCreateSeafileRequest {
     /** URL of seafile host to connect to. */
     url: "https://cloud.seafile.com/";
     /** User name (usually email address). */
-    user: string;
+    user?: string;
 }
 export interface FilesBackendsCreateSeafileResponse {
     statusCode: number;
@@ -16900,6 +17102,11 @@ export interface FilesCopyResponse {
     message: string;
     data: {
         destination?: string;
+        skipped?: {
+            path: string;
+            reason: string;
+        }[];
+        skipped_count?: number;
         source?: string;
         success?: boolean;
     };
@@ -16988,7 +17195,7 @@ export interface FilesStatResponse {
         name: string;
         owner: string;
         path: string;
-        path_type: "File" | "Dir" | "SymlinkFile" | "SymlinkDir";
+        path_type: "File" | "Dir" | "SymlinkFile" | "SymlinkDir" | "Fifo" | "Socket" | "CharDevice" | "BlockDevice";
         permissions: string;
         revisions?: number | null;
         size: number;
@@ -17264,6 +17471,11 @@ export interface ExtractArchiveResponse {
         message?: string;
         selective?: boolean;
         selective_path?: string | null;
+        skipped?: {
+            path: string;
+            reason: string;
+        }[];
+        skipped_count?: number;
         success?: boolean;
     };
 }
@@ -17282,6 +17494,11 @@ export interface FilesArchivesExtractMemberResponse {
         message?: string;
         selective?: boolean;
         selective_path?: string | null;
+        skipped?: {
+            path: string;
+            reason: string;
+        }[];
+        skipped_count?: number;
         success?: boolean;
     };
 }
@@ -17828,23 +18045,57 @@ export interface TerminalHealthCheckResponse {
     data: Record<string, unknown>;
 }
 export interface TerminalCommandsRunRequest {
-    /** The command to execute */
+    /** The command to execute. In raw mode at most 131071 bytes */
     command: string;
-    /** Custom command ID (numeric 1-65535, auto-generated if not provided) */
+    /** pty (default): run in the terminal session and return cleaned terminal text. raw: run as a one-shot process on pipes and return the exact bytes in stdout_b64 and stderr_b64 */
+    mode?: "pty" | "raw";
+    /** Raw mode only: base64 of the bytes to write to the command's stdin, which is then closed. Without it stdin is /dev/null */
+    stdin_b64?: string;
+    /** Raw mode only: system user to run the command as (default: the user query parameter, else the server's default user). Switching users goes through sudo -n, or su where sudo is not installed */
+    user?: string;
+    /** Custom command ID (numeric 1-65535, auto-generated if not provided). Ignored in raw mode */
     id?: string;
-    /** Timeout in seconds (0 = no timeout, default: 0) */
+    /** Timeout in seconds. 0 or omitted means no timeout on a persistent session and 600 seconds on an ephemeral one. It counts from the request, also while the command waits for an earlier one on the same session; a command still waiting when it elapses is never run. When it elapses the result is status timed_out with exit_code 124; on a persistent session a command that was running keeps running in the shell (commands behind it wait until it has finished); on an ephemeral one the command's job and the shell get SIGTERM, then SIGKILL after 3 s. In raw mode 0 or omitted means the server's default (600 seconds); at the timeout the command's process group gets SIGTERM, then SIGKILL after 3 s, and the result is status timed_out with completion timeout */
     timeout?: number;
-    /** Whether to wait for completion (default: true; forced false when defer_pid is set) */
+    /** Whether to wait for completion (default: true; forced false when defer_pid is set). Raw mode refuses false */
     wait?: boolean;
-    /** Working directory for command execution (for local bash only) */
+    /** Working directory for command execution (for local bash only). The session stays in that directory afterwards */
     cwd?: string;
-    /** Environment variables as key-value pairs */
+    /** Environment variables for this command only, as string values. On a local session they do not persist into later commands, also after an abort, and a shadowed variable gets its earlier value back (on bash with its attributes) (a cd or export done by the command itself does persist). Keys must be shell variable names ([A-Za-z_][A-Za-z0-9_]*) not starting with __HOODY_ (any case), else 400. On an SSH session they are exported in the remote shell and persist */
     env?: Record<string, unknown>;
 }
 export interface TerminalCommandsRunResponse {
     statusCode: number;
     message: string;
-    data: Record<string, unknown>;
+    data: {
+        terminal_id?: string;
+        command_id: string;
+        mode?: string;
+        stdout_b64?: string;
+        stderr_b64?: string;
+        signal?: string | null;
+        duration_ms?: number;
+        status: string;
+        command?: string;
+        stdout?: string;
+        stderr?: string;
+        stdout_truncated?: boolean;
+        stderr_truncated?: boolean;
+        exit_code?: number | null;
+        completion?: string | null;
+        timed_out?: boolean;
+        cancelled?: boolean;
+        started: boolean;
+        ephemeral?: boolean;
+        message?: string;
+        pid?: number;
+        shell_pid?: number | null;
+        cwd?: string | null;
+        created_at?: number;
+        shell?: string;
+        user?: string | null;
+        home?: string | null;
+    };
 }
 export interface TerminalSessionsCreateRequest {
     /**
@@ -17907,7 +18158,29 @@ export interface TerminalSessionsCreateResponse {
 export interface TerminalCommandsGetResponse {
     statusCode: number;
     message: string;
-    data: Record<string, unknown>;
+    data: {
+        terminal_id: string;
+        command_id: string;
+        command: string;
+        status: string;
+        stdout: string;
+        stderr: string;
+        stdout_truncated: boolean;
+        stderr_truncated: boolean;
+        exit_code: number | null;
+        completion: string | null;
+        timed_out: boolean;
+        cancelled: boolean;
+        started: boolean;
+        ephemeral?: boolean;
+        pid: number;
+        shell_pid: number | null;
+        cwd: string | null;
+        created_at: number;
+        shell: string;
+        user: string | null;
+        home: string | null;
+    };
 }
 export interface TerminalCommandsListResponse {
     statusCode: number;
@@ -18124,16 +18397,22 @@ export interface TerminalDropsWriteChunkResponse {
     data: Record<string, unknown>;
 }
 export interface TerminalDropsCommitRequest {
-    /** Drop context: "drop" or "paste" */
-    ctx: string;
-    /** Drop cell row (Chat grid pane mapping) */
+    /** Drop context: `drop` for a drag-and-drop, `paste` for a clipboard paste */
+    ctx: "drop" | "paste";
+    /** Drop cell row (Chat grid pane mapping). Used only together with `c` */
     r?: number;
-    /** Drop cell column */
+    /** Drop cell column. Used only together with `r` */
     c?: number;
     /** Clip-read correlation nonce ([A-Za-z0-9_-]{1,64}); echoed verbatim as the injected frame's cr field so the TUI can match a clipboard-read landing. Invalid/oversized values are ignored. */
     cr?: string;
-    /** Manifest entries [{p,d,s,name,h?}] */
-    items: Record<string, unknown>[];
+    /** Manifest draft: one entry per staged file or empty directory */
+    items: ({
+        p: string;
+        d: 0 | 1;
+        s: number;
+        name?: string;
+        h?: string;
+    })[];
 }
 export interface TerminalDropsCommitResponse {
     statusCode: number;
@@ -18141,14 +18420,19 @@ export interface TerminalDropsCommitResponse {
     data: Record<string, unknown>;
 }
 export interface TerminalDropsSendRequest {
-    /** Drop context: "drop" or "paste" */
-    ctx: string;
-    /** Drop cell row */
+    /** Drop context: `drop` for a drag-and-drop, `paste` for a clipboard paste */
+    ctx: "drop" | "paste";
+    /** Drop cell row. Used only together with `c` */
     r?: number;
-    /** Drop cell column */
+    /** Drop cell column. Used only together with `r` */
     c?: number;
-    /** File/dir items ([{name,b64}|{name,dir:true,items:[...]}]) */
-    items: Record<string, unknown>[];
+    /** Files and directories to stage */
+    items: {
+        name: string;
+        b64?: string;
+        dir?: boolean;
+        items?: Record<string, unknown>[];
+    }[];
 }
 export interface TerminalDropsSendResponse {
     statusCode: number;
@@ -18322,6 +18606,7 @@ export interface CronEntriesCreateResponse {
         schedule_human: string;
         updated_at: string;
         user: string;
+        warnings?: string[];
     };
 }
 export interface CronEntriesGetResponse {
@@ -18340,6 +18625,7 @@ export interface CronEntriesGetResponse {
         schedule_human: string;
         updated_at: string;
         user: string;
+        warnings?: string[];
     };
 }
 export type CronEntriesUpdateRequest = UpdateEntryRequest;
@@ -18359,6 +18645,7 @@ export interface CronEntriesUpdateResponse {
         schedule_human: string;
         updated_at: string;
         user: string;
+        warnings?: string[];
     };
 }
 export interface CronEntriesDeleteResponse {
@@ -18386,7 +18673,7 @@ export interface PipeKitGetHealthResponse {
 /**
  * One snapshot of a pipe name, from `GET /{path}?status`. Every key is always present; `null` where it does not apply.
  */
-export interface PipeReceiveResponse {
+export interface PipeReceiveDataResponse {
     statusCode: number;
     message: string;
     data: {
@@ -18579,7 +18866,320 @@ export interface NotesNodesListResponse {
     statusCode: number;
     message: string;
     data: {
-        nodes: Record<string, unknown>[];
+        nodes: ({
+            id: string;
+            rootId: string;
+            parentId: string | null;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+            type?: unknown;
+        } | {
+            type: "section";
+            name: string;
+            description?: string | null;
+            avatar?: string | null;
+            collaborators: Record<string, "admin" | "editor" | "collaborator" | "viewer">;
+            visibility?: "public" | "private";
+            children?: Record<string, {
+                id: string;
+                index?: string | null;
+            }>;
+            id: string;
+            rootId: string;
+            parentId: string | null;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "channel";
+            name: string;
+            avatar?: string | null;
+            parentId: string | null;
+            collaborators?: Record<string, "admin" | "editor" | "collaborator" | "viewer">;
+            parentMessageId?: string;
+            parentChannelId?: string;
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "folder";
+            name: string;
+            avatar?: string | null;
+            parentId: string | null;
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "page";
+            name: string;
+            avatar?: string | null;
+            parentId: string | null;
+            alias?: string | null;
+            appearance?: {
+                themeMode?: "auto" | "light" | "dark";
+                background?: {
+                    mode: "none" | "preset" | "solid" | "gradient";
+                    presetId?: "paper" | "sunrise" | "ocean" | "forest" | "lavender" | "sand";
+                    solid?: string;
+                    gradient?: {
+                        type: "linear";
+                        angle: number;
+                        stops: {
+                            color: string;
+                            position: number;
+                        }[];
+                    };
+                    texture?: "none" | "paper" | "dots" | "grid";
+                    overlayOpacity?: number;
+                };
+                contentSurface?: "default" | "elevated" | "flat";
+                contentWidth?: "default" | "wide" | "full";
+            };
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "database";
+            name: string;
+            avatar?: string | null;
+            parentId: string | null;
+            fields: Record<string, {
+                id: string;
+                type: "boolean";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "collaborator";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "created_at";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "created_by";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "date";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "file";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "multi_select";
+                name: string;
+                index: string;
+                options?: Record<string, {
+                    id: string;
+                    name: string;
+                    color: string;
+                    index: string;
+                }>;
+            } | {
+                id: string;
+                type: "number";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "phone";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "relation";
+                name: string;
+                index: string;
+                databaseId?: string | null;
+            } | {
+                id: string;
+                type: "rollup";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "select";
+                name: string;
+                index: string;
+                options?: Record<string, {
+                    id: string;
+                    name: string;
+                    color: string;
+                    index: string;
+                }>;
+            } | {
+                id: string;
+                type: "text";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "url";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "updated_at";
+                name: string;
+                index: string;
+            } | {
+                id: string;
+                type: "updated_by";
+                name: string;
+                index: string;
+            }>;
+            nameField?: {
+                name?: string | null;
+            } | null;
+            locked?: boolean | null;
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "database_view";
+            parentId: string | null;
+            layout: "table" | "board" | "calendar";
+            name: string;
+            avatar?: string | null;
+            index: string;
+            fields?: Record<string, {
+                id: string;
+                width?: number | null;
+                display?: boolean | null;
+                index?: string | null;
+            }> | null;
+            filters?: Record<string, {
+                id: string;
+                fieldId: string;
+                type: "field";
+                operator: string;
+                value?: string | number | boolean | string[] | null;
+            } | {
+                id: string;
+                type: "group";
+                operator: "and" | "or";
+                filters: ({
+                    id: string;
+                    fieldId: string;
+                    type: "field";
+                    operator: string;
+                    value?: string | number | boolean | string[] | null;
+                })[];
+            }> | null;
+            sorts?: Record<string, {
+                id: string;
+                fieldId: string;
+                direction: "asc" | "desc";
+            }> | null;
+            recordOrder?: Record<string, string> | null;
+            groupBy?: string | null;
+            nameWidth?: number | null;
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "record";
+            parentId: string | null;
+            databaseId: string;
+            name: string;
+            avatar?: string | null;
+            fields: Record<string, {
+                type: "boolean";
+                value: boolean;
+            } | {
+                type: "string";
+                value: string;
+            } | {
+                type: "string_array";
+                value: string[];
+            } | {
+                type: "number";
+                value: number;
+            } | {
+                type: "text";
+                value: string;
+            }>;
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "message";
+            subtype: "standard" | "question" | "answer";
+            name?: string;
+            parentId: string | null;
+            referenceId?: string | null;
+            content?: Record<string, {
+                id: string;
+                type: string;
+                parentId: string;
+                content?: ({
+                    type: string;
+                    text?: string | null;
+                    attrs?: Record<string, unknown> | null;
+                    marks?: ({
+                        type: string;
+                        attrs?: Record<string, unknown> | null;
+                    })[] | null;
+                })[] | null;
+                attrs?: Record<string, unknown> | null;
+                index: string;
+            }> | null;
+            selectedContextNodeIds?: string[] | null;
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        } | {
+            type: "file";
+            subtype: "image" | "video" | "audio" | "pdf" | "other";
+            parentId: string | null;
+            index?: string;
+            name: string;
+            originalName: string;
+            mimeType: string;
+            extension: string;
+            size: number;
+            version: string;
+            status: number;
+            id: string;
+            rootId: string;
+            createdAt: string;
+            createdBy: string;
+            updatedAt: string | null;
+            updatedBy: string | null;
+        })[];
         total: number;
     };
 }
@@ -18602,7 +19202,320 @@ export interface NotesNodesResolveResponse {
 export interface NotesNodesGetResponse {
     statusCode: number;
     message: string;
-    data: Record<string, unknown>;
+    data: {
+        id: string;
+        rootId: string;
+        parentId: string | null;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+        type?: unknown;
+    } | {
+        type: "section";
+        name: string;
+        description?: string | null;
+        avatar?: string | null;
+        collaborators: Record<string, "admin" | "editor" | "collaborator" | "viewer">;
+        visibility?: "public" | "private";
+        children?: Record<string, {
+            id: string;
+            index?: string | null;
+        }>;
+        id: string;
+        rootId: string;
+        parentId: string | null;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "channel";
+        name: string;
+        avatar?: string | null;
+        parentId: string | null;
+        collaborators?: Record<string, "admin" | "editor" | "collaborator" | "viewer">;
+        parentMessageId?: string;
+        parentChannelId?: string;
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "folder";
+        name: string;
+        avatar?: string | null;
+        parentId: string | null;
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "page";
+        name: string;
+        avatar?: string | null;
+        parentId: string | null;
+        alias?: string | null;
+        appearance?: {
+            themeMode?: "auto" | "light" | "dark";
+            background?: {
+                mode: "none" | "preset" | "solid" | "gradient";
+                presetId?: "paper" | "sunrise" | "ocean" | "forest" | "lavender" | "sand";
+                solid?: string;
+                gradient?: {
+                    type: "linear";
+                    angle: number;
+                    stops: {
+                        color: string;
+                        position: number;
+                    }[];
+                };
+                texture?: "none" | "paper" | "dots" | "grid";
+                overlayOpacity?: number;
+            };
+            contentSurface?: "default" | "elevated" | "flat";
+            contentWidth?: "default" | "wide" | "full";
+        };
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "database";
+        name: string;
+        avatar?: string | null;
+        parentId: string | null;
+        fields: Record<string, {
+            id: string;
+            type: "boolean";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "collaborator";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "created_at";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "created_by";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "date";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "file";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "multi_select";
+            name: string;
+            index: string;
+            options?: Record<string, {
+                id: string;
+                name: string;
+                color: string;
+                index: string;
+            }>;
+        } | {
+            id: string;
+            type: "number";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "phone";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "relation";
+            name: string;
+            index: string;
+            databaseId?: string | null;
+        } | {
+            id: string;
+            type: "rollup";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "select";
+            name: string;
+            index: string;
+            options?: Record<string, {
+                id: string;
+                name: string;
+                color: string;
+                index: string;
+            }>;
+        } | {
+            id: string;
+            type: "text";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "url";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "updated_at";
+            name: string;
+            index: string;
+        } | {
+            id: string;
+            type: "updated_by";
+            name: string;
+            index: string;
+        }>;
+        nameField?: {
+            name?: string | null;
+        } | null;
+        locked?: boolean | null;
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "database_view";
+        parentId: string | null;
+        layout: "table" | "board" | "calendar";
+        name: string;
+        avatar?: string | null;
+        index: string;
+        fields?: Record<string, {
+            id: string;
+            width?: number | null;
+            display?: boolean | null;
+            index?: string | null;
+        }> | null;
+        filters?: Record<string, {
+            id: string;
+            fieldId: string;
+            type: "field";
+            operator: string;
+            value?: string | number | boolean | string[] | null;
+        } | {
+            id: string;
+            type: "group";
+            operator: "and" | "or";
+            filters: ({
+                id: string;
+                fieldId: string;
+                type: "field";
+                operator: string;
+                value?: string | number | boolean | string[] | null;
+            })[];
+        }> | null;
+        sorts?: Record<string, {
+            id: string;
+            fieldId: string;
+            direction: "asc" | "desc";
+        }> | null;
+        recordOrder?: Record<string, string> | null;
+        groupBy?: string | null;
+        nameWidth?: number | null;
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "record";
+        parentId: string | null;
+        databaseId: string;
+        name: string;
+        avatar?: string | null;
+        fields: Record<string, {
+            type: "boolean";
+            value: boolean;
+        } | {
+            type: "string";
+            value: string;
+        } | {
+            type: "string_array";
+            value: string[];
+        } | {
+            type: "number";
+            value: number;
+        } | {
+            type: "text";
+            value: string;
+        }>;
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "message";
+        subtype: "standard" | "question" | "answer";
+        name?: string;
+        parentId: string | null;
+        referenceId?: string | null;
+        content?: Record<string, {
+            id: string;
+            type: string;
+            parentId: string;
+            content?: ({
+                type: string;
+                text?: string | null;
+                attrs?: Record<string, unknown> | null;
+                marks?: ({
+                    type: string;
+                    attrs?: Record<string, unknown> | null;
+                })[] | null;
+            })[] | null;
+            attrs?: Record<string, unknown> | null;
+            index: string;
+        }> | null;
+        selectedContextNodeIds?: string[] | null;
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    } | {
+        type: "file";
+        subtype: "image" | "video" | "audio" | "pdf" | "other";
+        parentId: string | null;
+        index?: string;
+        name: string;
+        originalName: string;
+        mimeType: string;
+        extension: string;
+        size: number;
+        version: string;
+        status: number;
+        id: string;
+        rootId: string;
+        createdAt: string;
+        createdBy: string;
+        updatedAt: string | null;
+        updatedBy: string | null;
+    };
 }
 export interface NotesNodesUpdateRequest {
     attributes: Record<string, unknown>;
@@ -19142,7 +20055,22 @@ export interface NotesRecordsCreateRequest {
     id?: string;
     name?: string;
     avatar?: string | null;
-    fields?: Record<string, unknown>;
+    fields?: Record<string, {
+        type: "boolean";
+        value: boolean;
+    } | {
+        type: "string";
+        value: string;
+    } | {
+        type: "string_array";
+        value: string[];
+    } | {
+        type: "number";
+        value: number;
+    } | {
+        type: "text";
+        value: string;
+    }>;
 }
 export interface NotesRecordsCreateResponse {
     statusCode: number;
@@ -19412,6 +20340,7 @@ export interface EgressUpstreamGetResponse {
         port?: number;
         auth?: boolean;
         config_path: string;
+        lease?: UpstreamLease;
     };
 }
 /**
@@ -19428,6 +20357,7 @@ export interface EgressSetUpstreamPostResponse {
         port?: number;
         auth?: boolean;
         config_path: string;
+        lease?: UpstreamLease;
     };
 }
 /**
@@ -19444,6 +20374,7 @@ export interface EgressUpstreamSetResponse {
         port?: number;
         auth?: boolean;
         config_path: string;
+        lease?: UpstreamLease;
     };
 }
 /**
@@ -19460,6 +20391,24 @@ export interface EgressUpstreamDisableResponse {
         port?: number;
         auth?: boolean;
         config_path: string;
+        lease?: UpstreamLease;
+    };
+}
+/**
+ * Current upstream configuration. Credentials are never returned; `auth` reports only whether they are set.
+ */
+export interface EgressUpstreamRenewLeaseResponse {
+    statusCode: number;
+    message: string;
+    data: {
+        enabled: boolean;
+        state: "active" | "unavailable" | "direct";
+        scheme?: "socks5" | "socks5h" | "http" | "https";
+        host?: string;
+        port?: number;
+        auth?: boolean;
+        config_path: string;
+        lease?: UpstreamLease;
     };
 }
 /**
@@ -19471,6 +20420,7 @@ export interface RunSearchCandidatesResponse {
     data: {
         set_id: string;
         candidates: Candidate[];
+        warnings?: WarningEntry[];
     };
 }
 export type RunSearchRequest = PagedSearchRequest;
@@ -19482,6 +20432,7 @@ export interface RunSearchResponse {
         total_count: number;
         items: Candidate[];
         next_cursor?: string;
+        warnings?: WarningEntry[];
     };
 }
 export type RunJobsCreateSearchRequest = Selector;
@@ -19746,6 +20697,7 @@ export interface RunRecipesSearchResponse {
     data: {
         set_id: string;
         candidates: Candidate[];
+        warnings?: WarningEntry[];
     };
 }
 export type RunRecipesResolveRequest = RecipeExecutionRequest;
@@ -20161,6 +21113,8 @@ export interface AgentCreateCompletionRequest {
     };
     /** Deadline for the whole call, 1 to 600000 ms (default 120000). Reaching it is 504 timeout (an error frame once streaming). */
     timeout_ms?: number;
+    /** Alias of settings.max_tokens (output-token cap, 1 to 1000000), accepted at the top level as most chat-completion APIs take it. Sending both with different values is 400 bad_request (details.field max_tokens). */
+    max_tokens?: number;
 }
 /**
  * The finished completion, composed by the gateway from the daemon's llm.complete result.
@@ -20220,6 +21174,8 @@ export interface AgentStreamCompletionRequest {
     };
     /** Deadline for the whole call, 1 to 600000 ms (default 120000). Reaching it is 504 timeout (an error frame once streaming). */
     timeout_ms?: number;
+    /** Alias of settings.max_tokens (output-token cap, 1 to 1000000), accepted at the top level as most chat-completion APIs take it. Sending both with different values is 400 bad_request (details.field max_tokens). */
+    max_tokens?: number;
 }
 /**
  * Kit list envelope: a page of items plus pagination metadata.
@@ -20718,13 +21674,13 @@ export interface AgentKitGetHealthResponse {
         userAgent?: string | null;
     };
 }
-export interface AgentPlatformBootstrapTokenRequest {
+export interface AgentBootstrapHoodyTokenRequest {
     /** The raw Hoody platform token to install. Write-only; validated via the sidecar before install and never echoed. */
     token: string;
     /** The operator bootstrap capability, required only on deployments configured with one; a mismatch is answered 404. */
     capability?: string;
 }
-export type AgentPlatformBootstrapTokenResponse = {
+export type AgentBootstrapHoodyTokenResponse = {
     statusCode: number;
     message: string;
     data: Record<string, unknown>;
@@ -20734,7 +21690,7 @@ export type AgentPlatformBootstrapTokenResponse = {
     data: Record<string, unknown>;
 };
 /**
- * {connected, source, account_id?, username?, alias?, auth_active, owner_fingerprint?, identity_unavailable?, realm_isolation, realm_isolation_reason?, realm_isolation_realm?, realm_isolation_retry_at?, restricted?, realm_ids?, restriction?, restriction_reason?, realm_isolation_by_realm?, unconfirmed_revokes?, last_error?: {code, at, missing?, credential_rejected?}, realm: {id, pinned, blocked?}}. Fields marked ? are present only when known; blocked is reported for an unpinned agent. last_error is the latest refused login attempt (a launch or pasted token, or a bootstrap: its code, such as login_grant_insufficient, and what the token lacks) or, with credential_rejected, the platform refusing the account login on a call made with it (code hoody_auth_expired: it was revoked or expired, and a new login is needed; a realm token failing is not counted). connected reports the stored credential, so it stays true until then. last_error is dropped when the credential changes, and a rejection also when a later call with the same login succeeds.
+ * {connected, source, account_id?, username?, alias?, auth_active, owner_fingerprint?, identity_unavailable?, realm_isolation, realm_isolation_reason?, realm_isolation_realm?, realm_isolation_retry_at?, restricted?, realm_ids?, restriction?, restriction_reason?, realm_isolation_by_realm?, unconfirmed_revokes?, last_error?: {code, at, missing?, credential_rejected?}, realm: {id, pinned, blocked?, boot_hint?: {realm_id, outcome, at}}}. Fields marked ? are present only when known; blocked is reported for an unpinned agent. boot_hint (unpinned agents only) says what happened at startup to the realm the account last used (its hoody.last_realm hint, consulted when no realm was selected): outcome applied (the agent started in realm_id), skipped_not_member (this container is not tagged into realm_id, so the agent stayed on all realms) or skipped_membership_unknown (the container's realms could not be read, so the agent stayed on all realms); at is RFC3339. Absent when no hint was consulted. last_error is the latest refused login attempt (a launch or pasted token, or a bootstrap: its code, such as login_grant_insufficient, and what the token lacks) or, with credential_rejected, the platform refusing the account login on a call made with it (code hoody_auth_expired: it was revoked or expired, and a new login is needed; a realm token failing is not counted). connected reports the stored credential, so it stays true until then. last_error is dropped when the credential changes, and a rejection also when a later call with the same login succeeds.
  */
 export interface AgentWhoamiResponse {
     statusCode: number;
@@ -22061,7 +23017,7 @@ export interface AgentSessionsCreateRequest {
     dir_scope?: "home" | "full";
     /** Attach to an existing session instead of creating one; the value is that session's id. */
     attach?: string;
-    /** Fork from an existing session; the value is that session's id. */
+    /** Fork from an existing session; the value is that session's id. The source must be LIVE in the daemon: fork copies its in-memory state and does not load a saved record the way attach does. An unknown id, a session in another realm, or one that has ended (closed, reaped or lost to a restart) is refused 404 not_found and no session is created; attach the ended session first to reload it, then fork it. */
     fork?: string;
     /** Turn index to fork at (with fork). */
     fork_turn_idx?: number;
@@ -22198,6 +23154,8 @@ export interface AgentSessionsGetResponse {
             };
             live?: boolean;
             started?: boolean;
+            effort?: "low" | "medium" | "high" | "xhigh" | "max";
+            verbosity?: "normal" | "concise" | "terse" | "minimal";
         };
         attached?: boolean;
         started?: Record<string, unknown>;
@@ -22624,8 +23582,8 @@ export interface AgentConfirmGateResponse {
     };
 }
 export interface AgentSessionsSetEffortRequest {
-    /** low|medium|high|xhigh, or "" for the model default. */
-    effort?: string;
+    /** low|medium|high|xhigh|max, or "" for the model default. Any other value is 400 bad_request (details.field effort). */
+    effort?: "" | "low" | "medium" | "high" | "xhigh" | "max";
 }
 /**
  * Gateway acknowledgement that the setting was forwarded to the live session. Composed by the gateway, not a daemon reply.
@@ -22981,6 +23939,7 @@ export interface AgentSessionsGetSnapshotResponse {
             rules?: {
                 rule_ids: string[];
                 outcome: "ask" | "unchecked";
+                reason?: string;
             };
             question?: string;
             options?: string[] | null;
@@ -23004,6 +23963,8 @@ export interface AgentSessionsGetSnapshotResponse {
             }[];
         } | null;
         last_detach?: Record<string, unknown> | null;
+        effort?: "low" | "medium" | "high" | "xhigh" | "max";
+        verbosity?: "normal" | "concise" | "terse" | "minimal";
         incarnation?: string;
         seq?: number;
         pending_lead_gates?: Record<string, unknown>[];
@@ -23332,8 +24293,8 @@ export interface AgentSessionsTurnsGetResponse {
     };
 }
 export interface AgentSessionsSetVerbosityRequest {
-    /** normal|concise|terse|minimal. */
-    level?: string;
+    /** normal|concise|terse|minimal. Any other value is 400 bad_request (details.field level); the applied level is echoed on the stream as event.verbosity. */
+    level?: "normal" | "concise" | "terse" | "minimal";
 }
 /**
  * Gateway acknowledgement that the setting was forwarded to the live session. Composed by the gateway, not a daemon reply.
@@ -24801,9 +25762,9 @@ export interface ProxyAlias {
      * @minimum 1
      */
     index: number;
-    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1". Requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. */
+    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1"; a query written in it is sent too. With allow_path_override true, requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. With allow_path_override false, it is the only path the alias serves. */
     target_path?: string | null;
-    /** Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control. */
+    /** When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). A parameter written in target_path always keeps its value, the visitor's other parameters are passed on, and the method, request body and WebSocket upgrade are forwarded as sent. When true (the default), a root request lands on target_path with its query plus the visitor's parameters, and a request that carries its own path is forwarded as sent. Either way anyone who has the link can open the alias: use proxy permissions to restrict who may. */
     allow_path_override: boolean;
     /** ISO 8601 expiration date, or null if it never expires */
     expires_at?: string | null;
@@ -24857,9 +25818,9 @@ export interface ProxyAliasWithServer {
      * @minimum 1
      */
     index: number;
-    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1". Requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. */
+    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1"; a query written in it is sent too. With allow_path_override true, requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. With allow_path_override false, it is the only path the alias serves. */
     target_path?: string | null;
-    /** Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control. */
+    /** When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). A parameter written in target_path always keeps its value, the visitor's other parameters are passed on, and the method, request body and WebSocket upgrade are forwarded as sent. When true (the default), a root request lands on target_path with its query plus the visitor's parameters, and a request that carries its own path is forwarded as sent. Either way anyone who has the link can open the alias: use proxy permissions to restrict who may. */
     allow_path_override: boolean;
     /** ISO 8601 expiration date, or null if it never expires */
     expires_at?: string | null;
@@ -24913,9 +25874,9 @@ export interface ProxyAliasWithRelations {
      * @minimum 1
      */
     index?: number;
-    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1". Requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. */
+    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1"; a query written in it is sent too. With allow_path_override true, requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. With allow_path_override false, it is the only path the alias serves. */
     target_path?: string | null;
-    /** Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control. */
+    /** When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). A parameter written in target_path always keeps its value, the visitor's other parameters are passed on, and the method, request body and WebSocket upgrade are forwarded as sent. When true (the default), a root request lands on target_path with its query plus the visitor's parameters, and a request that carries its own path is forwarded as sent. Either way anyone who has the link can open the alias: use proxy permissions to restrict who may. */
     allow_path_override?: boolean;
     /** ISO 8601 expiration date, or null if it never expires */
     expires_at?: string | null;
@@ -24992,6 +25953,7 @@ export interface AuthToken {
                 snapshots?: boolean;
                 networking?: boolean;
                 kvm?: boolean;
+                env_values?: boolean;
             };
         };
         projects?: {
@@ -25326,9 +26288,9 @@ export interface def_10 {
      * @minimum 1
      */
     index: number;
-    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1". Requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. */
+    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1"; a query written in it is sent too. With allow_path_override true, requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. With allow_path_override false, it is the only path the alias serves. */
     target_path?: string | null;
-    /** Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control. */
+    /** When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). A parameter written in target_path always keeps its value, the visitor's other parameters are passed on, and the method, request body and WebSocket upgrade are forwarded as sent. When true (the default), a root request lands on target_path with its query plus the visitor's parameters, and a request that carries its own path is forwarded as sent. Either way anyone who has the link can open the alias: use proxy permissions to restrict who may. */
     allow_path_override: boolean;
     /** ISO 8601 expiration date, or null if it never expires */
     expires_at?: string | null;
@@ -25382,9 +26344,9 @@ export interface def_11 {
      * @minimum 1
      */
     index: number;
-    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1". Requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. */
+    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1"; a query written in it is sent too. With allow_path_override true, requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. With allow_path_override false, it is the only path the alias serves. */
     target_path?: string | null;
-    /** Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control. */
+    /** When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). A parameter written in target_path always keeps its value, the visitor's other parameters are passed on, and the method, request body and WebSocket upgrade are forwarded as sent. When true (the default), a root request lands on target_path with its query plus the visitor's parameters, and a request that carries its own path is forwarded as sent. Either way anyone who has the link can open the alias: use proxy permissions to restrict who may. */
     allow_path_override: boolean;
     /** ISO 8601 expiration date, or null if it never expires */
     expires_at?: string | null;
@@ -25438,9 +26400,9 @@ export interface def_12 {
      * @minimum 1
      */
     index?: number;
-    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1". Requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. */
+    /** Landing path served when the alias is opened with no path (a root request), e.g. "/api/v1"; a query written in it is sent too. With allow_path_override true, requests that carry their own path are forwarded as-sent, resolved from the container root — target_path is never used as a path prefix. With allow_path_override false, it is the only path the alias serves. */
     target_path?: string | null;
-    /** Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control. */
+    /** When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). A parameter written in target_path always keeps its value, the visitor's other parameters are passed on, and the method, request body and WebSocket upgrade are forwarded as sent. When true (the default), a root request lands on target_path with its query plus the visitor's parameters, and a request that carries its own path is forwarded as sent. Either way anyone who has the link can open the alias: use proxy permissions to restrict who may. */
     allow_path_override?: boolean;
     /** ISO 8601 expiration date, or null if it never expires */
     expires_at?: string | null;
@@ -25517,6 +26479,7 @@ export interface def_13 {
                 snapshots?: boolean;
                 networking?: boolean;
                 kvm?: boolean;
+                env_values?: boolean;
             };
         };
         projects?: {
@@ -25689,6 +26652,13 @@ export interface def_16 {
         index: number;
     };
 }
+export interface ApiValidationError {
+    statusCode: number;
+    error: string;
+    message: string;
+    /** The failing checks, when there are any (for a schema failure: one entry per failing field) */
+    data?: unknown;
+}
 /**
  * Fixed-viewport emulation settings. `null` means fixed-viewport emulation is disabled (`viewport=null` / `noViewport=true`) and the page follows the real browser window size.
  */
@@ -25716,7 +26686,7 @@ export interface Error {
     details?: Record<string, unknown>;
 }
 /**
- * Error envelope of the automation routes. Messages are server-authored (never raw engine text). Codes: 400 VALIDATION_ERROR; 404 TAB_NOT_FOUND | ELEMENT_NOT_FOUND | NOT_FOUND; 409 INSTANCE_CHANGED | STALE_SNAPSHOT | TAB_BUSY | AMBIGUOUS_TARGET | UNEXPECTED_DIALOG; 422 INVALID_ACTION_TARGET; 502 BROWSER_DISCONNECTED | PAGE_CRASHED | NAVIGATION_ERROR (child) | UPSTREAM_RESPONSE_TOO_LARGE | PROXY_ERROR (parent proxy); 504 TIMEOUT; 500 INTERNAL_ERROR.
+ * Error envelope of the automation routes. Messages are server-authored (never raw engine text). Codes: 400 VALIDATION_ERROR | INSTANCE_SELECTOR_CONFLICT; 404 TAB_NOT_FOUND | ELEMENT_NOT_FOUND | NOT_FOUND; 409 INSTANCE_CHANGED | STALE_SNAPSHOT | TAB_BUSY | AMBIGUOUS_TARGET | UNEXPECTED_DIALOG; 422 INVALID_ACTION_TARGET; 502 BROWSER_DISCONNECTED | PAGE_CRASHED | NAVIGATION_ERROR (child) | UPSTREAM_RESPONSE_TOO_LARGE | PROXY_ERROR (parent proxy); 504 TIMEOUT; 500 INTERNAL_ERROR.
  */
 export interface AutomationError {
     error: string;
@@ -25754,6 +26724,17 @@ export interface InstanceInfo {
      * @minimum 0
      */
     uptime: number;
+}
+/**
+ * The error shape of `DELETE /api/v1/code`. Branch on `error`; the
+message is written for a person and may be reworded.
+ */
+export interface InstanceError {
+    /** Stable machine-readable code. The set is closed and every value is
+  listed here. */
+    error: "invalid-selector" | "unknown-instance" | "internal-error";
+    /** Human-readable explanation. */
+    message: string;
 }
 /**
  * The error shape used by the extensions operations. It differs from
@@ -25797,12 +26778,17 @@ export interface CurlErrorResponse {
     statusCode: number;
     message: string;
     data: {
-        code: "INVALID_PARAMETER" | "INVALID_URL" | "INVALID_CRON_EXPRESSION" | "PAYLOAD_TOO_LARGE" | "ORIGIN_NOT_ALLOWED" | "JOB_NOT_FOUND" | "JOB_RESULT_NOT_READY" | "SESSION_NOT_FOUND" | "FILE_NOT_FOUND" | "SCHEDULE_NOT_FOUND" | "REQUEST_TIMEOUT" | "JOB_NOT_FINISHED" | "JOB_CANCELLED" | "STORAGE_ERROR" | "INTERNAL_ERROR" | "SSE_PARSE_ERROR" | "UPSTREAM_ERROR" | "DNS_RESOLUTION_FAILED" | "QUEUE_FULL" | "SSE_CAPACITY_EXHAUSTED" | "UPSTREAM_TIMEOUT";
+        code: "INVALID_PARAMETER" | "INVALID_URL" | "INVALID_CRON_EXPRESSION" | "PAYLOAD_TOO_LARGE" | "ORIGIN_NOT_ALLOWED" | "JOB_NOT_FOUND" | "JOB_RESULT_NOT_READY" | "SESSION_NOT_FOUND" | "FILE_NOT_FOUND" | "SCHEDULE_NOT_FOUND" | "REQUEST_TIMEOUT" | "JOB_NOT_FINISHED" | "JOB_CANCELLED" | "STORAGE_ERROR" | "INTERNAL_ERROR" | "SSE_PARSE_ERROR" | "UPSTREAM_ERROR" | "DNS_RESOLUTION_FAILED" | "RESPONSE_TOO_LARGE" | "QUEUE_FULL" | "SSE_CAPACITY_EXHAUSTED" | "UPSTREAM_TIMEOUT" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "REQUEST_HEADERS_TOO_LARGE";
         error: string;
     };
 }
 export interface CurlJobCompletedEvent {
     job_id: string;
+    /**
+     * Lifecycle sequence number (the `/ws` resume cursor)
+     * @minimum 1
+     */
+    seq?: number;
     status: "pending" | "running" | "completed" | "failed" | "cancelled";
     type: "jobcompleted";
 }
@@ -25811,8 +26797,16 @@ export interface CurlJobErrorEvent {
     type: "error";
 }
 export interface CurlJobLaggedEvent {
+    /** `replay_gap`: the resume cursor is older than what the server keeps, or from before a restart; `lagged`: this live stream fell behind */
+    code?: "replay_gap" | "lagged";
+    /** Identifies this server run; pass it back as `incarnation` when resuming */
+    incarnation?: string;
+    /** Newest lifecycle `seq` handed out */
+    max_seq?: number;
+    /** Oldest lifecycle `seq` the server still keeps */
+    min_seq?: number;
     /**
-     * Events dropped for this subscriber
+     * Events dropped for this subscriber (on a resume: a lower bound, 1 when unknown)
      * @minimum 1
      */
     missed: number;
@@ -25830,6 +26824,11 @@ export interface CurlJobStartedEvent {
     job_id: string;
     /** The job's `job_name`, when it has one */
     name?: string;
+    /**
+     * Lifecycle sequence number (the `/ws` resume cursor)
+     * @minimum 1
+     */
+    seq?: number;
     type: "jobstarted";
 }
 export interface Error3 {
@@ -25901,6 +26900,7 @@ export interface Error4 {
     details?: {
         message?: string;
         help?: string;
+        reason?: "dependency_missing: xpra" | "dependency_missing: jq" | "dependency_missing: imagemagick" | "dependency_missing: python3";
     };
 }
 export interface InputError {
@@ -25910,6 +26910,7 @@ export interface InputError {
     details?: {
         message?: string;
         help?: string;
+        reason?: "dependency_missing: xpra" | "dependency_missing: jq" | "dependency_missing: imagemagick" | "dependency_missing: python3";
     };
 }
 export interface Error5 {
@@ -25947,6 +26948,25 @@ export interface ErrorResponse {
     };
 }
 /**
+ * An error response. An extraction that ran and failed, or was cancelled, also names itself and the archive entries it had left out when it stopped; any other refusal carries only success, error and code.
+ */
+export interface ExtractionError {
+    /** The error code, one of those listed for the response. Only some responses carry it; where it is absent, rely on the status and the message. */
+    code?: string;
+    /** Error message */
+    error: string;
+    /** The extraction that failed, as extraction history lists it */
+    extraction_id?: string;
+    /** Archive entries that were left out: symbolic and hard links (links are never created from an archive), entries that are not a file or a folder (a pipe, a socket, a device), entries whose name is not valid UTF-8 (path shows the name with invalid bytes replaced) and later entries with a path an earlier entry already took, at most 1000 */
+    skipped?: {
+        path: string;
+        reason: string;
+    }[];
+    /** How many entries were left out, including any beyond those listed in skipped */
+    skipped_count?: number;
+    success: false;
+}
+/**
  * An error response. With DEDICATED_VFS_LIMIT, retiring also says how many connections of changed or removed mounts count against the limit.
  */
 export interface MountLimitError {
@@ -25966,6 +26986,8 @@ export interface Error6 {
     details?: string;
     /** Error type or category */
     error: string;
+    /** Stable machine-readable error code, when the error has one (see the response's `x-error-codes`) */
+    code?: string;
     success: boolean;
     /** Human-readable explanation, when the error has one */
     message?: string;
@@ -26285,6 +27307,8 @@ export interface Metrics {
         };
         oldestInstance?: number;
         newestInstance?: number;
+        tabs?: number;
+        maxTabsPerInstance?: number;
     };
     system?: {
         uptime?: number;
@@ -26373,6 +27397,16 @@ export interface NavigationRecord {
     created?: boolean;
     /** Whether an existing tab was reused */
     reused?: boolean;
+}
+export interface InstanceStopResult {
+    /**
+     * The instance that was stopped.
+     * @minimum 0
+     */
+    id: number;
+    /** Always `stopped`. The process has exited, or was killed after a
+  grace period, and the instance's port is free again. */
+    state: "stopped";
 }
 export interface VersionInfo {
     orchestrator: {
@@ -26477,6 +27511,11 @@ export interface Job {
     error?: string | null;
     id: string;
     name?: string | null;
+    /** The request as submitted. Serialized redacted: a job
+  record is only serialized to be shown or kept as history, never to be
+  executed again, so credentials read as `[REDACTED]` in `GET
+  /jobs/{id}` and in the job file. The in-memory copy the executor runs
+  keeps the clear values. */
     request: CurlRequest;
     response?: null | CurlResponse;
     /**
@@ -26595,6 +27634,8 @@ export interface HealthResponse {
             nft?: boolean;
             systemd_run?: boolean;
             landlock_abi?: number;
+            bwrap_version?: string | null;
+            bwrap_tmpfs_size?: boolean;
             firewall?: "ok" | "degraded" | "none";
         };
     };
@@ -26633,12 +27674,12 @@ export interface ProgramInput {
     /** Start automatically on system boot. A program with a `display` is started as soon as that display is ready. */
     boot?: boolean;
     /**
-     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting.
+     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. NOTE that 0 does NOT disable the window: the daemon writes `startsecs=1` when this is 0. Under `autorestart` `"unexpected"` or `"true"`, a non-zero exit or a signal inside the window is a FAILED start, retried up to `startretries` times and then `fatal`. An end that is not a crash under `autorestart` (any end under `"false"`, an exit 0 otherwise) is not a failed start, however quick: it is kept from supervisord until the window has passed, so a one-shot runs once. Under `"false"` and `"unexpected"` it is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`; under `"true"` it is not reported as `exited` and is started again once the window has passed. A stop, edit or removal sent in that window can take up to this long to return. Hoody Kit programs keep supervisord's own rule: the directive is omitted at 0 (supervisord's default of 1 second applies) and any exit inside the window is a failed start, whatever `autorestart` says.
      * @minimum 0
      * @maximum 4294967295
      */
     delay_seconds?: number;
-    /** Restart policy after a successful start: `"unexpected"` (default) restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always; `"false"` never. Booleans `true`/`false` are accepted too and are stored and returned as sent. It does not cover startup failures: a process that exits before `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) is a failed start and is retried up to `startretries` whatever this is, so a sub-second task can run several times and end `fatal`. */
+    /** Restart policy: `"unexpected"` (default) restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always; `"false"` never. Booleans `true`/`false` are accepted too and are stored and returned as sent. A program that exits on its own has finished, however quickly it exits: any end under `"false"`, and an exit 0 under `"unexpected"`, is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`, and is kept from supervisord until `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) has passed, so a one-shot runs once; under `"true"` an exit 0 is held the same way and then started again. Under `"unexpected"` and `"true"` a non-zero exit or a signal inside that window is still a failed start, retried up to `startretries` times and then `fatal`. Hoody Kit programs keep supervisord's time-based rule: any exit before `delay_seconds` is a failed start, retried whatever this is. */
     autorestart?: "true" | "false" | "unexpected" | boolean;
     /**
      * Working directory: an absolute path of ASCII letters and digits, `/`, `_`, `.`, `-`, space and tab, with no `..` path component, that must exist. Defaults to the user's home directory, or `/tmp`.
@@ -26674,10 +27715,12 @@ export interface ProgramInput {
      * @maximum 4294967295
      */
     log_backups?: number;
-    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). The stored map is not the whole process environment: by default an ordinary program also receives PID 1's environment (Kit programs only its `HOODY_*` variables), depending on the daemon's injection mode and on `/proc/1/environ` being readable. Explicit values override injected ones. */
+    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). Nor may a value hold both a double and a single quote, or begin or end with either: supervisord's environment line has no escape character, so the first has no delimiter and the second arrives with the quote stripped (refused with 400 naming the variable, unless the program has a `terminal_id`, no `port_range` and a `user` other than root, whose launcher carries such values on its command line). A value with a double quote and no single quote is written in single quotes, any other in double quotes. The stored map is not the whole process environment: with `inject_container_env` the program also receives PID 1's environment (Kit programs only its `HOODY_*` variables in the default mode), depending on the daemon's injection mode and on `/proc/1/environ` being readable; without it, only the variables its `command` names. Explicit values override injected ones. */
     environment?: Record<string, string>;
     /** Read-only. Server-derived: true when the program's directory is under `/hoody/plugins`, or when its name is a known Hoody Kit name AND its command is that kit program's. Any value supplied in a create or update request body is ignored. */
     hoody_kit?: boolean;
+    /** Whether the daemon adds the container's environment (PID 1's, read from `/proc/1/environ`) to the program's. When absent: true for a Hoody Kit program (see `hoody_kit`), false for every other program. When true, the daemon's injection mode applies: by default a Kit program gets only the `HOODY_*` variables and any other program all of them; `--inject-all-env` and `--inject-hoody-env-only` override that for every program. When false, nothing from PID 1 is added, `HOODY_*` included, except the variables the program's `command` names as `$X`, `${X}` or `%(ENV_X)s`: each of those is resolved from the program's `environment`, then PID 1, then (for `$X` and `${X}` in a program without `port_range`) the daemon's own environment, and only that variable is added. A named variable is filtered like any other source: for a sandboxed program a value that is not literal, or a loader name, is dropped; a named variable with no value anywhere is left alone. This controls the daemon's own injection only: the program still inherits supervisord's environment. */
+    inject_container_env?: boolean;
     /** Port range for multi-instance programs. Each port in the range creates a separate INSTANCE (running process). Example: {start:8000, end:8099} creates 100 instances. Independent from lazy_load - can use with boot:true (all instances auto-start) OR lazy_load:true (instances start on-demand). A range must not overlap any other stored program's range. When either side has an effective sandbox, its ports are also compared with enabled programs' declared listening sets, and ports held by active or draining sandbox firewall records are refused until those records are gone. On edit the object replaces the stored range and needs both `start` and `end`. */
     port_range?: {
         start: number;
@@ -26753,12 +27796,12 @@ export interface ProgramUpdate {
     /** Start automatically on system boot. A program with a `display` is started as soon as that display is ready. */
     boot?: boolean | null;
     /**
-     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting.
+     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. NOTE that 0 does NOT disable the window: the daemon writes `startsecs=1` when this is 0. Under `autorestart` `"unexpected"` or `"true"`, a non-zero exit or a signal inside the window is a FAILED start, retried up to `startretries` times and then `fatal`. An end that is not a crash under `autorestart` (any end under `"false"`, an exit 0 otherwise) is not a failed start, however quick: it is kept from supervisord until the window has passed, so a one-shot runs once. Under `"false"` and `"unexpected"` it is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`; under `"true"` it is not reported as `exited` and is started again once the window has passed. A stop, edit or removal sent in that window can take up to this long to return. Hoody Kit programs keep supervisord's own rule: the directive is omitted at 0 (supervisord's default of 1 second applies) and any exit inside the window is a failed start, whatever `autorestart` says.
      * @minimum 0
      * @maximum 4294967295
      */
     delay_seconds?: number | null;
-    /** Restart policy after a successful start: `"unexpected"` restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always; `"false"` never. Booleans `true`/`false` are accepted too and are stored and returned as sent. It does not cover startup failures: a process that exits before `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) is a failed start and is retried up to `startretries` whatever this is, so a sub-second task can run several times and end `fatal`. Omitted or null on edit, the stored policy is kept; the create default is `"unexpected"`. */
+    /** Restart policy: `"unexpected"` restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always; `"false"` never. Booleans `true`/`false` are accepted too and are stored and returned as sent. A program that exits on its own has finished, however quickly it exits: any end under `"false"`, and an exit 0 under `"unexpected"`, is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`, and is kept from supervisord until `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) has passed, so a one-shot runs once; under `"true"` an exit 0 is held the same way and then started again. Under `"unexpected"` and `"true"` a non-zero exit or a signal inside that window is still a failed start, retried up to `startretries` times and then `fatal`. Hoody Kit programs keep supervisord's time-based rule: any exit before `delay_seconds` is a failed start, retried whatever this is. Omitted or null on edit, the stored policy is kept; the create default is `"unexpected"`. */
     autorestart?: "true" | "false" | "unexpected" | boolean | null;
     /**
      * Working directory: an absolute path of ASCII letters and digits, `/`, `_`, `.`, `-`, space and tab, with no `..` path component, that must exist. Omitted, the stored directory is kept, even when `user` changes.
@@ -26794,10 +27837,12 @@ export interface ProgramUpdate {
      * @maximum 4294967295
      */
     log_backups?: number | null;
-    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). The stored map is not the whole process environment: by default an ordinary program also receives PID 1's environment (Kit programs only its `HOODY_*` variables), depending on the daemon's injection mode and on `/proc/1/environ` being readable. Explicit values override injected ones. On edit the map REPLACES the stored one: resend every variable you want kept; `{}` clears it. */
+    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). Nor may a value hold both a double and a single quote, or begin or end with either: supervisord's environment line has no escape character, so the first has no delimiter and the second arrives with the quote stripped (refused with 400 naming the variable, unless the program has a `terminal_id`, no `port_range` and a `user` other than root, whose launcher carries such values on its command line). A value with a double quote and no single quote is written in single quotes, any other in double quotes. The stored map is not the whole process environment: with `inject_container_env` the program also receives PID 1's environment (Kit programs only its `HOODY_*` variables in the default mode), depending on the daemon's injection mode and on `/proc/1/environ` being readable; without it, only the variables its `command` names. Explicit values override injected ones. On edit the map REPLACES the stored one: resend every variable you want kept; `{}` clears it. */
     environment?: Record<string, string> | null;
     /** Read-only. Server-derived: true when the program's directory is under `/hoody/plugins`, or when its name is a known Hoody Kit name AND its command is that kit program's. Any value supplied in a create or update request body is ignored. */
     hoody_kit?: boolean;
+    /** Whether the daemon adds the container's environment (PID 1's, read from `/proc/1/environ`) to the program's. When absent: true for a Hoody Kit program (see `hoody_kit`), false for every other program. When true, the daemon's injection mode applies: by default a Kit program gets only the `HOODY_*` variables and any other program all of them; `--inject-all-env` and `--inject-hoody-env-only` override that for every program. When false, nothing from PID 1 is added, `HOODY_*` included, except the variables the program's `command` names as `$X`, `${X}` or `%(ENV_X)s`: each of those is resolved from the program's `environment`, then PID 1, then (for `$X` and `${X}` in a program without `port_range`) the daemon's own environment, and only that variable is added. A named variable is filtered like any other source: for a sandboxed program a value that is not literal, or a loader name, is dropped; a named variable with no value anywhere is left alone. This controls the daemon's own injection only: the program still inherits supervisord's environment. On edit: absent leaves the stored value unchanged and there is no null; to return to the derived default, send the value it derives (true for a Hoody Kit program, false otherwise). */
+    inject_container_env?: boolean;
     /** Port range for multi-instance programs. Each port in the range creates a separate INSTANCE (running process). Example: {start:8000, end:8099} creates 100 instances. Independent from lazy_load - can use with boot:true (all instances auto-start) OR lazy_load:true (instances start on-demand). A range must not overlap any other stored program's range. When either side has an effective sandbox, its ports are also compared with enabled programs' declared listening sets, and ports held by active or draining sandbox firewall records are refused until those records are gone. On edit the object replaces the stored range and needs both `start` and `end`. */
     port_range?: {
         start: number;
@@ -26940,15 +27985,17 @@ export interface EphemeralProgramInput {
      * @pattern ^[a-zA-Z0-9][a-zA-Z0-9._-]*$
      */
     name?: string;
-    /** Restart policy after a successful start: `"unexpected"` (default) restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always; `"false"` never. Booleans `true`/`false` are accepted too and are stored and returned as sent. It does not cover startup failures: a process that exits before `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) is a failed start and is retried up to `startretries` whatever this is, so a sub-second task can run several times and end `fatal`. */
+    /** Restart policy: `"false"` (default for a quick-start) never restarts; `"unexpected"` restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always. Booleans `true`/`false` are accepted too and are stored and returned as sent. Omitted, a quick-start runs once: any end, whatever its exit code or signal, is reported as `exited` with the code or signal in `last_run` (with `wait: true`, a 200), and a command that cannot be executed fails once and is not retried. A quick-start that should be restarted after a crash, such as a temporary server, sets `"unexpected"` or `"true"`. Persistent programs keep `"unexpected"` as their default. A program that exits on its own has finished, however quickly it exits: any end under `"false"`, and an exit 0 under `"unexpected"`, is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`, and is kept from supervisord until `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) has passed, so a one-shot runs once; under `"true"` an exit 0 is held the same way and then started again. Under `"unexpected"` and `"true"` a non-zero exit or a signal inside that window is still a failed start, retried up to `startretries` times and then `fatal`. */
     autorestart?: "true" | "false" | "unexpected" | boolean;
     /**
      * Working directory: an absolute path of ASCII letters and digits, `/`, `_`, `.`, `-`, space and tab, with no `..` path component, that must exist. Defaults to the user's home directory, or `/tmp`.
      * @pattern ^/
      */
     directory?: string;
-    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). The stored map is not the whole process environment: by default an ordinary program also receives PID 1's environment (Kit programs only its `HOODY_*` variables), depending on the daemon's injection mode and on `/proc/1/environ` being readable. Explicit values override injected ones. */
+    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). Nor may a value hold both a double and a single quote, or begin or end with either: supervisord's environment line has no escape character, so the first has no delimiter and the second arrives with the quote stripped (refused with 400 naming the variable, unless the program has a `terminal_id`, no `port_range` and a `user` other than root, whose launcher carries such values on its command line). A value with a double quote and no single quote is written in single quotes, any other in double quotes. The stored map is not the whole process environment: with `inject_container_env: true` the program also receives PID 1's environment, depending on the daemon's injection mode and on `/proc/1/environ` being readable; without it, only the variables its `command` names. Explicit values override injected ones. */
     environment?: Record<string, string>;
+    /** Whether the daemon adds the container's environment (PID 1's) to the program's. Absent means false for a quick-start, whatever its directory. When true, the daemon's injection mode applies (all variables by default; `--inject-hoody-env-only` limits it to `HOODY_*`). When false, nothing from PID 1 is added except the variables the `command` names as `$X`, `${X}` or `%(ENV_X)s`, resolved from `environment`, then PID 1, then (for `$X` and `${X}`) the daemon's own environment. The program still inherits supervisord's environment. */
+    inject_container_env?: boolean;
     /**
      * Start priority, lower starts first. Defaults to 999. No range is enforced here either.
      * @minimum 0
@@ -26956,7 +28003,7 @@ export interface EphemeralProgramInput {
      */
     priority?: number;
     /**
-     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting.
+     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. NOTE that 0 does NOT disable the window: the daemon writes `startsecs=1` when this is 0. Under `autorestart` `"unexpected"` or `"true"`, a non-zero exit or a signal inside the window is a FAILED start, retried up to `startretries` times and then `fatal`. An end that is not a crash under `autorestart` (any end under `"false"`, an exit 0 otherwise) is not a failed start, however quick: it is kept from supervisord until the window has passed, so a one-shot runs once. Under `"false"` and `"unexpected"` it is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`; under `"true"` it is not reported as `exited` and is started again once the window has passed. A stop, edit or removal sent in that window can take up to this long to return.
      * @minimum 0
      * @maximum 4294967295
      */
@@ -26985,7 +28032,7 @@ export interface EphemeralProgramInput {
      */
     log_backups?: number;
     /**
-     * Time-to-live in seconds, counted from creation (a 64-bit unsigned integer on the wire, 0 to 18446744073709551615; a JavaScript number is exact only up to 2^53 - 1). Expiry is checked every 10 seconds, so it is not an exact deadline; `0` expires at the first check. Very large values can overflow the daemon's timestamp arithmetic; it does not check for that.
+     * Time-to-live in seconds, counted from launch (when the daemon dispatches the start) and bounding the whole execution, across retries and restarts (a 64-bit unsigned integer on the wire, 0 to 18446744073709551615; a JavaScript number is exact only up to 2^53 - 1). The deadline is returned as `expires_at`. Expiry is checked every 10 seconds, so it is not an exact deadline; `0` expires at the first check. The deadline arithmetic saturates, so a very large value means no practical expiry rather than an overflow.
      * @minimum 0
      */
     ttl?: number;
@@ -27011,26 +28058,32 @@ export interface EphemeralProgramInput {
     terminal_interactive?: boolean | null;
 }
 /**
- * Response from quick-start endpoint
+ * Response from the quick-start endpoints. A success carries `temporary_id`, `name`, `status` and `created_at`; an error carries `error`, and `temporary_id` whenever the program was created.
  */
 export interface QuickStartResponse2 {
     success: boolean;
     /** Unique temporary identifier for this ephemeral program */
-    temporary_id: string;
+    temporary_id?: string;
     /** Program name (auto-generated or custom) */
-    name: string;
+    name?: string;
     /** X11 DISPLAY number (normalized with ":" prefix) */
     display?: string | null;
-    /** Current program status */
-    status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
+    /** Current program status. A finished program answers the status it finished with (`exited`, `fatal`, `stopped`, or `failed` when its definition never loaded) for 10 minutes after it finished. */
+    status?: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown" | "failed";
     /** Process ID (if wait=true and running) */
     pid?: number | null;
     /** Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when not running. */
     uptime?: string | null;
     /** ISO timestamp when program was created */
-    created_at: string;
-    /** ISO timestamp when program will auto-stop (if TTL set) */
+    created_at?: string;
+    /** The absolute execution deadline: the launch time plus `ttl`. A program still running then is stopped, and its `last_run.error` reads `ttl expired`. Absent without a TTL. */
     expires_at?: string | null;
+    /** supervisord's own state, present only when it differs from `status`: a program whose run has ended but whose launcher is still finishing is `exited` while supervisord says `running` (or `starting`). */
+    supervisor_state?: string;
+    /** The program's last ended run. Present once it has finished, and on a launch error that has a result. */
+    last_run?: LastRun;
+    /** Present when `success` is false. Every error after the program is created comes with its `temporary_id`. */
+    error?: string;
 }
 export interface LogResponse {
     statusCode: number;
@@ -27632,6 +28685,11 @@ export interface ExtractionHistory {
         id?: string;
         selective?: boolean;
         selective_path?: string | null;
+        skipped?: {
+            path: string;
+            reason: string;
+        }[];
+        skipped_count?: number;
         start_time?: number;
         status?: "active" | "completed" | "failed" | "cancelled" | "interrupted";
         total_bytes?: number | null;
@@ -27667,7 +28725,7 @@ export interface FileStatResponse {
         name: string;
         owner: string;
         path: string;
-        path_type: "File" | "Dir" | "SymlinkFile" | "SymlinkDir";
+        path_type: "File" | "Dir" | "SymlinkFile" | "SymlinkDir" | "Fifo" | "Socket" | "CharDevice" | "BlockDevice";
         permissions: string;
         revisions?: number | null;
         size: number;
@@ -27737,6 +28795,11 @@ export interface CopyResponse {
     message: string;
     data: {
         destination?: string;
+        skipped?: {
+            path: string;
+            reason: string;
+        }[];
+        skipped_count?: number;
         source?: string;
         success?: boolean;
     };
@@ -27757,7 +28820,7 @@ export interface AppendResponse {
  * Request to move a file or directory to a new path
  */
 export interface MoveRequest {
-    /** Full destination path */
+    /** Full destination path, from the serve root. A path without a leading '/' is also taken from the serve root, not from the source's folder. */
     move_to: string;
 }
 /**
@@ -28008,6 +29071,13 @@ export interface ExtractionResult {
     selective?: boolean;
     /** The selective path used (only present for selective) */
     selective_path?: string | null;
+    /** Archive entries that were left out: symbolic and hard links (links are never created from an archive), entries that are not a file or a folder (a pipe, a socket, a device), entries whose name is not valid UTF-8 (path shows the name with invalid bytes replaced) and later entries with a path an earlier entry already took, at most 1000 */
+    skipped?: {
+        path: string;
+        reason: string;
+    }[];
+    /** How many entries were left out, including any beyond those listed in skipped */
+    skipped_count?: number;
     success?: boolean;
 }
 /**
@@ -28604,6 +29674,11 @@ export interface WatcherListResponse {
         total: number;
     };
 }
+/**
+ * Create a watcher. Only `paths` is required. A field the service does not
+know (a misspelt option such as `recursiv`) is refused with 400
+`INVALID_REQUEST` naming it, as on update, rather than ignored.
+ */
 export interface CreateWatcherRequest {
     /** Coalescing window in milliseconds. */
     coalesce_ms?: number | null;
@@ -28765,6 +29840,7 @@ export interface ManagedEntryResponse {
         schedule_human: string;
         updated_at: string;
         user: string;
+        warnings?: string[];
     };
 }
 export interface DeleteEntryResponse {
@@ -28896,6 +29972,7 @@ export interface UpstreamStatus {
     auth?: boolean;
     /** Path of the file the setting is persisted to */
     config_path: string;
+    lease?: UpstreamLease;
 }
 export interface HealthResponse9 {
     status: "ok";
@@ -28928,6 +30005,7 @@ export interface PagedSearchResponse {
         total_count: number;
         items: Candidate[];
         next_cursor?: string;
+        warnings?: WarningEntry[];
     };
 }
 export interface PreflightResponse {
@@ -28977,6 +30055,7 @@ export interface SourceDiagnostics {
     last_sync_job_id?: string;
     cache_hint?: string;
     effective_enabled_reason?: string;
+    /** Provider-specific runtime details. Nix sources report warm_up: flake, state (cold, warming, ready, backoff), running_ms and cap_ms while warming, last_error, failed_at and retry_in_ms in backoff, consecutive_failures, last_duration_ms. */
     provider_details?: Record<string, unknown>;
 }
 /**
@@ -28996,16 +30075,17 @@ export interface ConfigFile {
     webhooks?: WebhookConfig[];
 }
 /**
- * Partial profile update. Only the fields present in the body are applied; everything else keeps its stored value. The profile's name is taken from the path and cannot be changed here.
+ * Partial profile update, applied as a JSON merge patch (RFC 7396) onto the stored profile. Only the fields present in the body are applied; everything else keeps its stored value. Nested objects (defaults, policy) merge field by field; null resets a field to its default; arrays replace the stored list as a unit. The merged profile is validated before it is stored, and an invalid value or an unknown top-level field is a 400 with nothing stored (unknown keys inside a nested object are ignored, as on create). The profile's name is taken from the path and cannot be changed here.
  */
 export interface ProfileUpdate {
     /** Human-readable profile description. Send null to clear it. */
     description?: string | null;
-    defaults?: ProfileDefaults;
-    sources_mode?: ProfileSourceMode;
-    /** Per-source overrides (enable/disable/reprioritize). Replaces the stored list as a unit. */
-    sources?: ProfileSourceOverride[];
-    policy?: PolicyConfig;
+    defaults?: ProfileDefaultsUpdate;
+    /** Source mode. Send null to reset it to inherit. */
+    sources_mode?: "inherit" | "allowlist" | null;
+    /** Per-source overrides (enable/disable/reprioritize). Replaces the stored list as a unit; null clears it. */
+    sources?: ProfileSourceOverride[] | null;
+    policy?: PolicyConfigUpdate;
 }
 /**
  * Confirms which profile is currently selected as the active default profile.
@@ -29018,14 +30098,14 @@ export interface SelectedProfileResponse {
     };
 }
 /**
- * Partial recipe update. Only the fields present in the body are applied; everything else keeps its stored value. The recipe's name is taken from the path and cannot be changed here.
+ * Partial recipe update, applied as a JSON merge patch (RFC 7396) onto the stored recipe. Only the fields present in the body are applied; everything else keeps its stored value. selector_template merges field by field; null resets a field to its default; arrays replace the stored list as a unit. The merged recipe is validated before it is stored, and an invalid value or an unknown top-level field is a 400 with nothing stored (unknown keys inside a nested object are ignored, as on create). The recipe's name is taken from the path and cannot be changed here.
  */
 export interface RecipeUpdate {
     /** Human-readable recipe description. Send null to clear it. */
     description?: string | null;
-    selector_template?: SelectorTemplate;
-    /** Selector fields a caller may override when running this recipe. Replaces the stored list as a unit. */
-    allowed_overrides?: string[];
+    selector_template?: SelectorTemplateUpdate;
+    /** Selector fields a caller may override when running this recipe. Replaces the stored list as a unit; null clears it. */
+    allowed_overrides?: string[] | null;
 }
 export interface RecipeExecutionRequest {
     overrides?: SelectorTemplate;
@@ -29644,7 +30724,7 @@ export interface HealthMemory {
     heap?: number | null;
 }
 /**
- * In a list response requested with the proxy bypass header `X-Bypass-Local-Restrictions: true`, `command`, `environment`, `directory`, `user`, `webhooks`, `sandbox` and the log paths are removed.
+ * `command`, `environment`, `directory`, `user`, `webhooks`, `sandbox` and the log paths can be left out of a list response; a client must not rely on them being present there.
  */
 export interface Program {
     /**
@@ -29670,16 +30750,16 @@ export interface Program {
     /** Start automatically on system boot. A program with a `display` is started as soon as that display is ready. */
     boot: boolean;
     /**
-     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. A process that exits sooner than this counts as a FAILED start and is retried up to `startretries` times, so on a short-lived or non-idempotent command it can run repeatedly. NOTE that 0 does NOT disable the check: the daemon omits the directive entirely at 0, so supervisord applies its own default of 1 second. A command that finishes in under a second is therefore a failed start even at the default setting.
+     * Seconds the program must STAY RUNNING for supervisord to consider the start successful (supervisord's `startsecs`). Nothing is postponed — the program is launched immediately. NOTE that 0 does NOT disable the window: the daemon writes `startsecs=1` when this is 0. Under `autorestart` `"unexpected"` or `"true"`, a non-zero exit or a signal inside the window is a FAILED start, retried up to `startretries` times and then `fatal`. An end that is not a crash under `autorestart` (any end under `"false"`, an exit 0 otherwise) is not a failed start, however quick: it is kept from supervisord until the window has passed, so a one-shot runs once. Under `"false"` and `"unexpected"` it is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`; under `"true"` it is not reported as `exited` and is started again once the window has passed. A stop, edit or removal sent in that window can take up to this long to return. Hoody Kit programs keep supervisord's own rule: the directive is omitted at 0 (supervisord's default of 1 second applies) and any exit inside the window is a failed start, whatever `autorestart` says.
      * @minimum 0
      * @maximum 4294967295
      */
     delay_seconds: number;
-    /** Restart policy after a successful start: `"unexpected"` (default) restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always; `"false"` never. Booleans `true`/`false` are accepted too and are stored and returned as sent. It does not cover startup failures: a process that exits before `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) is a failed start and is retried up to `startretries` whatever this is, so a sub-second task can run several times and end `fatal`. */
+    /** Restart policy: `"unexpected"` (default) restarts after an exit code other than 0, including a deliberate nonzero exit; `"true"` always; `"false"` never. Booleans `true`/`false` are accepted too and are stored and returned as sent. A program that exits on its own has finished, however quickly it exits: any end under `"false"`, and an exit 0 under `"unexpected"`, is reported as `exited` as soon as it ends, with its exit code or its signal in `last_run`, and is kept from supervisord until `delay_seconds` (supervisord's `startsecs`, 1 second when `delay_seconds` is 0) has passed, so a one-shot runs once; under `"true"` an exit 0 is held the same way and then started again. Under `"unexpected"` and `"true"` a non-zero exit or a signal inside that window is still a failed start, retried up to `startretries` times and then `fatal`. Hoody Kit programs keep supervisord's time-based rule: any exit before `delay_seconds` is a failed start, retried whatever this is. */
     autorestart: "true" | "false" | "unexpected" | boolean;
     /** System user account to run the program as (must exist on the system). A Linux account name matched case-insensitively: starts with a letter or `_`, continues with letters, digits, `_` and `-`, may end in `$`, at most 32 bytes. A sandboxed program cannot run as an account resolving to uid 0. */
     user: string;
-    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). The stored map is not the whole process environment: by default an ordinary program also receives PID 1's environment (Kit programs only its `HOODY_*` variables), depending on the daemon's injection mode and on `/proc/1/environ` being readable. Explicit values override injected ones. */
+    /** Environment variables as key-value pairs. Names match `^[a-zA-Z_][a-zA-Z0-9_]*$` (up to 128 characters); values must not contain a line feed or carriage return, nor whitespace followed by `;` or `#` (supervisord reads the rest of the line as a comment and the program could not load; refused with 400 unless the program has a `terminal_id` and no `port_range`; judged after line feeds, carriage returns and NULs are stripped). Nor may a value hold both a double and a single quote, or begin or end with either: supervisord's environment line has no escape character, so the first has no delimiter and the second arrives with the quote stripped (refused with 400 naming the variable, unless the program has a `terminal_id`, no `port_range` and a `user` other than root, whose launcher carries such values on its command line). A value with a double quote and no single quote is written in single quotes, any other in double quotes. The stored map is not the whole process environment: with `inject_container_env` the program also receives PID 1's environment (Kit programs only its `HOODY_*` variables in the default mode), depending on the daemon's injection mode and on `/proc/1/environ` being readable; without it, only the variables its `command` names. Explicit values override injected ones. */
     environment?: Record<string, string>;
     /**
      * Working directory for the program (defaults to user home directory if not specified)
@@ -29717,6 +30797,8 @@ export interface Program {
     log_backups?: number;
     /** Indicates if this is a Hoody Kit program: its directory is under /hoody/plugins, or it carries an official kit name and its executable is under /hoody/plugins. Server-derived from the program's directory, name and command; not settable via the API. */
     hoody_kit?: boolean;
+    /** Whether the daemon adds the container's environment (PID 1's, read from `/proc/1/environ`) to the program's. When absent: true for a Hoody Kit program (see `hoody_kit`), false for every other program. When true, the daemon's injection mode applies: by default a Kit program gets only the `HOODY_*` variables and any other program all of them; `--inject-all-env` and `--inject-hoody-env-only` override that for every program. When false, nothing from PID 1 is added, `HOODY_*` included, except the variables the program's `command` names as `$X`, `${X}` or `%(ENV_X)s`: each of those is resolved from the program's `environment`, then PID 1, then (for `$X` and `${X}` in a program without `port_range`) the daemon's own environment, and only that variable is added. A named variable is filtered like any other source: for a sandboxed program a value that is not literal, or a loader name, is dropped; a named variable with no value anywhere is left alone. This controls the daemon's own injection only: the program still inherits supervisord's environment. Absent from the response when it was never set. */
+    inject_container_env?: boolean;
     /** Port range for multi-instance programs. Defines a range of ports where each port creates a separate INSTANCE (actual running process). Example: ports 8000-8099 creates 100 potential instances. Each instance runs the same command with a different --port argument. Can be combined with lazy_load for on-demand startup. A range must not overlap any other stored program's range. When either side has an effective sandbox, its ports are also compared with enabled programs' declared listening sets, and ports held by active or draining sandbox firewall records are refused until those records are gone. On edit the object replaces the stored range and needs both `start` and `end`. */
     port_range?: {
         start: number;
@@ -29761,7 +30843,7 @@ export interface Program {
     stats?: ProgramStats;
 }
 /**
- * Ephemeral (temporary) program configuration. Not stored in programs.json, only tracked in ephemeral.json. Cleanup is attempted when it is stopped, when its TTL expires, or at daemon startup.
+ * Ephemeral (temporary) program. Not stored in programs.json, only tracked in ephemeral.json. Its supervisord definition is withdrawn once it finishes, is stopped or expires; its entry (status, `last_run`) stays readable for 10 minutes after that, and its log files are never deleted.
  */
 export interface EphemeralProgram {
     /**
@@ -29783,15 +30865,19 @@ export interface EphemeralProgram {
     /** X11 DISPLAY number (normalized with ":" prefix) */
     display?: string | null;
     /** Current runtime status */
-    status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
+    status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown" | "failed";
     /** Process ID when running */
     pid?: number | null;
     /** Uptime as reported by supervisord, `H:MM:SS` or with a day prefix such as `1 day, 2:03:04`. */
     uptime?: string | null;
     /** ISO timestamp when program was created */
     created_at: string;
-    /** Creation time plus `ttl`: the threshold after which the periodic TTL check attempts to stop the program. Absent without a TTL. */
+    /** The absolute execution deadline: the launch time plus `ttl`. Absent without a TTL. */
     expires_at?: string | null;
+    /** supervisord's own state, present only when it differs from `status`: a program whose run has ended but whose launcher is still finishing is `exited` while supervisord says `running` (or `starting`). */
+    supervisor_state?: string;
+    /** The program's last ended run, once it has one. */
+    last_run?: LastRun;
 }
 export interface HealthMemory2 {
     /** Resident set size in bytes */
@@ -30387,6 +31473,7 @@ export type CrontabEntryView = {
     schedule_human: string;
     type: "managed";
     updated_at: string;
+    warnings?: string[];
 } | {
     line: string;
     type: "raw";
@@ -30445,6 +31532,19 @@ export interface HealthMemory8 {
     /** Language runtime heap in bytes (null for Rust) */
     heap?: number | null;
 }
+/**
+ * The time limit on an upstream set with `lease`. Absent when the upstream has none.
+ */
+export interface UpstreamLease {
+    /** Names the lease for `POST /api/v1/egress/upstream/renew`. Not a credential. */
+    id: string;
+    /** Seconds each renewal extends the lease by, as set with `lease` */
+    ttl: number;
+    /** Unix time (seconds) at which the upstream is disabled unless renewed */
+    expires_at: number;
+    /** Seconds left until `expires_at`, by the service's clock */
+    expires_in: number;
+}
 export interface HealthMemory9 {
     /** Resident set size in bytes */
     rss: number;
@@ -30481,8 +31581,9 @@ export interface BatchItemResult {
 }
 /**
  * Runtime health status for a source.
+- warming: a nix source whose first (cold) evaluation runs in the background; searches skip it until it finishes (see provider_details.warm_up)
  */
-export type SourceHealthStatus = "unknown" | "idle" | "ok" | "error" | "disabled" | "filtered";
+export type SourceHealthStatus = "unknown" | "idle" | "ok" | "error" | "disabled" | "filtered" | "warming";
 /**
  * Configuration for a package source including its type, provider, priority, and provider-specific settings.
  */
@@ -30528,6 +31629,96 @@ export interface WebhookConfig {
     timeout_ms?: number;
     max_retries?: number;
 }
+/**
+ * Merged field by field into the stored profile defaults. A null field resets it; null for the whole object resets every default.
+ */
+export type ProfileDefaultsUpdate = {
+    /** Target app runtime OS (not the host OS). Determines which candidates are eligible. */
+    os?: "linux" | "windows" | "any" | null;
+    /** Application kind filter - gui for graphical apps, cli for terminal apps, any for both. */
+    kind?: "gui" | "cli" | "any" | null;
+    /** Default source filter */
+    source?: SourceKind[] | null;
+    /** Candidate selection mode:
+  - ask: return candidate list without selecting (default)
+  - first: automatically select the highest-ranked candidate
+  - index: select by 0-based index (requires pick_index)
+  - id: select by candidate_id (requires candidate_id) */
+    pick?: "ask" | "first" | "index" | "id" | null;
+    /**
+     * Default terminal session ID
+     * @minimum 1
+     * @maximum 65535
+     */
+    terminal_id?: number | null;
+    /** Default X11 DISPLAY number */
+    display?: string | null;
+    /**
+     * Default maximum candidates to return
+     * @minimum 1
+     * @maximum 100
+     */
+    limit?: number | null;
+} | null;
+/**
+ * Merged field by field into the stored policy, so setting one flag keeps the deny lists. A null field resets it; the deny lists replace as a unit.
+ */
+export type PolicyConfigUpdate = {
+    require_verified?: boolean | null;
+    require_integrity?: boolean | null;
+    deny_providers?: SourceKind[] | null;
+    deny_source_ids?: string[] | null;
+} | null;
+/**
+ * Merged field by field into the stored selector template, so setting pick keeps app, source and the rest. A null field resets it; arrays replace as a unit.
+ */
+export type SelectorTemplateUpdate = {
+    app?: string | null;
+    /** Target app runtime OS (not the host OS). Determines which candidates are eligible. */
+    os?: "linux" | "windows" | "any" | null;
+    /** Application kind filter - gui for graphical apps, cli for terminal apps, any for both. */
+    kind?: "gui" | "cli" | "any" | null;
+    source?: SourceKind[] | null;
+    /** Target CPU architecture for filtering candidates. */
+    arch?: "amd64" | "arm64" | "any" | null;
+    tags?: string[] | null;
+    profile?: string | null;
+    channel?: string | null;
+    version?: string | null;
+    variant?: string | null;
+    publisher?: string | null;
+    repo?: string | null;
+    release?: string | null;
+    asset?: string | null;
+    /** Candidate selection mode:
+  - ask: return candidate list without selecting (default)
+  - first: automatically select the highest-ranked candidate
+  - index: select by 0-based index (requires pick_index)
+  - id: select by candidate_id (requires candidate_id) */
+    pick?: "ask" | "first" | "index" | "id" | null;
+    /** @minimum 0 */
+    pick_index?: number | null;
+    candidate_id?: string | null;
+    set_id?: string | null;
+    /**
+     * @minimum 1
+     * @maximum 65535
+     */
+    terminal_id?: number | null;
+    display?: string | null;
+    origin?: string | null;
+    /** Output format override. When set, takes precedence over Accept header content negotiation. */
+    format?: "json" | "html" | null;
+    dry_run?: boolean | null;
+    /** Curl command generation mode:
+  - hoody-run: generate curl for the hoody-run /api/v1/run/resolve endpoint */
+    print_curl?: "hoody-run" | null;
+    /**
+     * @minimum 1
+     * @maximum 100
+     */
+    limit?: number | null;
+} | null;
 /**
  * Background job type.
  */
@@ -30622,35 +31813,33 @@ export interface CurlRequest {
     auth_password?: string | null;
     auth_user?: string | null;
     bearer_token?: string | null;
-    cacert?: string | null;
-    cert?: string | null;
-    cert_type?: string | null;
     compressed?: boolean | null;
     connect_timeout?: number | null;
     cookie?: string | null;
+    /** Raw request body, sent as given (curl's `-d`). With no `method`, a
+  request that has a body is sent as `POST`. */
     data?: string | null;
     follow_redirects?: boolean | null;
+    /** Form fields, sent URL-encoded (`application/x-www-form-urlencoded`).
+  With no `method`, a request that has a body is sent as `POST`. */
     form?: Record<string, unknown> | null;
     headers?: Record<string, unknown> | null;
     insecure?: boolean | null;
     job_name?: string | null;
-    /** JSON request body. `None` means the field was absent; an explicit
-  `"json": null` is `Some(Value::Null)` and sends the four-byte document
-  `null` with `Content-Type: application/json`, matching `?json=null`
-  on the GET route. serde's default `Option` handling would fold
-  both into `None`, hence the custom deserializer; `None` is omitted on
-  the wire so a stored job round-trips to the same value. */
+    /** JSON request body, sent with `Content-Type: application/json`. An
+  explicit `"json": null` sends the document `null`, like `?json=null`
+  on the GET route; leave the field out for no JSON body. With no
+  `method`, a request that has a body is sent as `POST`. */
     json?: unknown;
     keepalive?: boolean | null;
     keepalive_time?: number | null;
-    key?: string | null;
     max_filesize?: number | null;
     max_redirects?: number | null;
+    /** HTTP method. When absent, `POST` if `data`, `json` or `form` is set,
+  otherwise `GET` (curl's `-d`/`--json` rule). An explicit value is
+  sent as given, including `GET` with a body. */
     method?: string | null;
     mode?: null | ExecutionMode;
-    proxy?: string | null;
-    proxy_password?: string | null;
-    proxy_user?: string | null;
     range?: string | null;
     referer?: string | null;
     response?: null | ResponseMode;
@@ -30660,7 +31849,6 @@ export interface CurlRequest {
     /** Relative path under this job's download directory (downloads/by-job/{job_id}).
   Must not be absolute or contain `..`. */
     save_path?: string | null;
-    schedule?: string | null;
     session_id?: string | null;
     speed_limit?: number | null;
     speed_time?: number | null;
@@ -30688,7 +31876,7 @@ export interface StoredCookie {
 /**
  * Per-program filesystem, network and process confinement.
 
-**When it applies.** The block is normalized first: defaults are filled, no-ops are dropped, and the block is EFFECTIVE only if a restriction remains (`read_only_root`, a non-empty `hidden`, `mode` other than `full`, a non-empty `ingress_allow_from`, `ingress_rate_limit`, `max_memory`, `max_pids`, `max_open_files` or `private_tmp`). A block that restricts nothing is stored as absent and the program is rendered exactly as it is today.
+**When it applies.** The block is normalized first: defaults are filled, no-ops are dropped, and the block is EFFECTIVE only if a restriction remains (`read_only_root`, a non-empty `hidden`, `mode` other than `full`, a non-empty `ingress_allow_from`, `ingress_rate_limit`, `udp: deny` (in every mode, `none` included), `max_memory`, `max_pids`, `max_open_files`, `max_cpu`, `max_file_size`, `tmp_size` or `private_tmp`). A block that restricts nothing is stored as absent and the program is rendered exactly as it is today.
 
 **What changes for an effective block.** The program is exec'd through a wrapper chain: a transient systemd scope, then bubblewrap in a user namespace with `--cap-drop ALL`, `--unshare-pid`, `--unshare-user`, `--unshare-ipc` and `no_new_privs`. Consequences that callers must expect — the pid supervisord tracks is the wrapper, not the program; a signal death reaches supervisord as exit code `128+n` rather than as a signal; and any edit that changes the RESOLVED policy replaces the loaded definition, stopping the instance that ran under the old one, because the policy revision is part of the supervisord command line; whether a new instance starts follows `boot` and `lazy_load` (an edit that resolves to the same policy keeps the revision and is byte-idempotent: merged port ranges compare equal, while `writable`, `hidden` and `ingress_allow_from` keep their submitted order; a disabled program is removed instead; a lazy or non-boot program is rendered with `autostart=false`, so the edit does not by itself start an instance).
 
@@ -30705,12 +31893,16 @@ export interface SandboxConfig {
 export interface ProgramStatus {
     /** Program identifier */
     id: number;
-    /** Current runtime status of the program. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed. */
+    /** Current runtime status of the program. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed. `exited` is also the logical status of a run that has ended while its launcher is still finishing; `supervisor_state` then carries supervisord's own state. */
     status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
     /** Process ID when running; omitted otherwise */
     pid?: number;
     /** Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when the program is not running. No `pattern` is declared: the day form is produced by Python's timedelta formatting and pinning a regex here would make valid responses invalid. */
     uptime?: string;
+    /** supervisord's own state, present only when it differs from `status`: a program whose run has ended but whose launcher is still finishing is `exited` while supervisord says `running` (or `starting`). */
+    supervisor_state?: string;
+    /** The last ended run. Absent before the first run ends. */
+    last_run?: LastRun;
 }
 /**
  * Runtime status of a port-range program: aggregate counts plus one entry per non-stopped instance.
@@ -30718,7 +31910,7 @@ export interface ProgramStatus {
 export interface ProgramPortRangeStatus {
     /** Discriminator. Present only on port-range status objects; standard programs carry `id`/`status` instead. */
     type: "port-range";
-    /** Number of instances currently reported as not stopped */
+    /** Number of instances that are `starting` or `running`; an instance whose run has ended is not counted, though it is listed. */
     running_instances: number;
     /** Total number of possible instances (port_range.end - port_range.start + 1) */
     total_instances: number;
@@ -30914,6 +32106,7 @@ export interface SearchResponse {
     data: {
         set_id: string;
         candidates: Candidate[];
+        warnings?: WarningEntry[];
     };
 }
 /**
@@ -30944,8 +32137,15 @@ export interface RunResponse {
 export interface ApiError {
     /** Human-readable error message */
     error: string;
-    /** HTTP status code associated with the error */
-    code: number;
+    /** Symbolic error code to branch on. Operation-specific codes are listed under each response's x-error-codes
+  (runBatch lists its per-item codes at operation level). The generic codes, which come from the layers around
+  the handlers (routing, the access check, request parsing, serialization), are listed here in x-error-codes:
+  INVALID_REQUEST (400), INVALID_JSON (400, malformed body), INVALID_BODY (400, the body does not fit the schema,
+  e.g. an unknown enum value), INVALID_QUERY (400), INVALID_PATH (400), UNSUPPORTED_MEDIA_TYPE (415),
+  NOT_FOUND (404), METHOD_NOT_ALLOWED (405), FORBIDDEN (403), INTERNAL_ERROR (500). */
+    code: string;
+    /** HTTP status code of the response */
+    status: number;
 }
 /**
  * Specific source implementation type. Determines how the source resolves and syncs candidates.
@@ -31070,10 +32270,10 @@ export interface SandboxFilesystem {
     hidden?: string[] | null;
 }
 /**
- * Network confinement. Outbound and bind restrictions are enforced per process by Landlock; inbound restrictions are enforced by one nftables table shared by every sandboxed program. Unknown keys are rejected with 400. Every field of this object, and the object itself, accepts an explicit `null`, which is treated exactly as if the field had been omitted (only the top-level `sandbox` key of an edit distinguishes `null` from omission).
+ * Network confinement. Outbound and bind restrictions are enforced per process by Landlock (TCP) and seccomp (`udp`); inbound restrictions are enforced by one nftables table shared by every sandboxed program. Unknown keys are rejected with 400. Every field of this object, and the object itself, accepts an explicit `null`, which is treated exactly as if the field had been omitted (only the top-level `sandbox` key of an edit distinguishes `null` from omission).
  */
 export interface SandboxNetwork {
-    /** `full` (default): no Landlock restriction on binding or connecting. Ingress settings still apply, so a `full` program can still carry an allowlist and a rate limit. `restricted`: Landlock (ABI 4 or higher; ABI 9 measured) confines TCP bind and connect to `bind_ports` and `connect_ports`. Landlock is TCP-only, so UDP, ICMP and raw sockets are unaffected by this mode. So that the port lists hold, a `restricted` program also cannot create MPTCP or SMC sockets, cannot use io_uring and cannot send with `MSG_FASTOPEN`: an MPTCP request answers `EPROTONOSUPPORT`, `io_uring_setup` answers `ENOSYS` and a Fast Open send answers `EOPNOTSUPP`, so software that falls back to plain TCP, to epoll or to connect-then-send keeps working, and a program that requires io_uring does not run in this mode. `none`: the program runs in an empty network namespace (`--unshare-net`), which closes IP and abstract unix sockets but NOT a unix socket reachable by filesystem path; `port_range`, `ready_port`, any non-null `bind_ports` (an empty list included), a non-empty `connect_ports` or `ingress_allow_from`, and any `ingress_rate_limit` are then rejected with 400; empty `connect_ports` / `ingress_allow_from` lists and `ingress_allow_platform` are accepted and inert. */
+    /** `full` (default): no Landlock restriction on binding or connecting. Ingress settings still apply, so a `full` program can still carry an allowlist and a rate limit. `restricted`: Landlock (ABI 4 or higher; ABI 9 measured) confines TCP bind and connect to `bind_ports` and `connect_ports`. Landlock is TCP-only, so UDP, ICMP and raw sockets are unaffected by this mode (`udp: deny` refuses UDP in every mode). So that the port lists hold, a `restricted` program also cannot create MPTCP or SMC sockets, cannot use io_uring and cannot send with `MSG_FASTOPEN`: an MPTCP request answers `EPROTONOSUPPORT`, `io_uring_setup` answers `ENOSYS` and a Fast Open send answers `EOPNOTSUPP`, so software that falls back to plain TCP, to epoll or to connect-then-send keeps working, and a program that requires io_uring does not run in this mode. `none`: the program runs in an empty network namespace (`--unshare-net`), which closes IP and abstract unix sockets but NOT a unix socket reachable by filesystem path; `port_range`, `ready_port`, any non-null `bind_ports` (an empty list included), a non-empty `connect_ports` or `ingress_allow_from`, and any `ingress_rate_limit` are then rejected with 400; empty `connect_ports` / `ingress_allow_from` lists and `ingress_allow_platform` are accepted and inert. */
     mode?: "full" | "restricted" | "none" | null;
     /** TCP ports the program may bind (Landlock `BIND_TCP`; connecting is a separate access bit governed by `connect_ports`, and neither covers a socket that begins listening without binding). Overlapping and adjacent items are merged into disjoint ranges. Defaults to the union of `port_range` and `ready_port` (whichever are set), else empty; it is required for `mode: restricted` when neither is set, and must cover `port_range` and `ready_port` when those are set. This is also the listening set used for ingress rules and for port ownership, for an EFFECTIVE block only (a block that restricts nothing claims no ports): a port is reserved container-wide across every local address, so a create or edit whose listening set overlaps another program's declared ports, a still-draining policy, the Hoody Kit ports or the daemon's own effective port is rejected with 400. Other programs' declared ports and installed firewall records are checked whenever a sandbox is involved on either side; two programs without a sandbox block keep the pre-sandbox rule (overlapping `port_range` values are refused, `ready_port` is not checked). Enabling a program re-checks ownership on the view it will have once enabled, whether or not it carries a sandbox block, so a program disabled while a sandboxed neighbour took its port is refused rather than brought back onto it. The Hoody Kit and daemon ports are reserved against sandboxed listening sets. Ports that an unsandboxed command opens without declaring them are unknowable and are not protected. */
     bind_ports?: (number | string)[] | null;
@@ -31091,9 +32291,11 @@ export interface SandboxNetwork {
      * @pattern ^\d+/[sm]$
      */
     ingress_rate_limit?: string | null;
+    /** `allow` (default): UDP is not restricted. `deny`: the program and everything it starts cannot create an IPv4 or IPv6 datagram socket — UDP, UDP-Lite and ICMP ping sockets all answer `EACCES` — nor an IPv4 or IPv6 SCTP socket of any type, including the one an IPv4 or IPv6 `SOCK_SEQPACKET` socket with protocol 0 selects (SCTP can carry itself in UDP) nor an `AF_RXRPC` socket (its transport is UDP), both `EACCES`, and cannot use io_uring (`io_uring_setup` answers `ENOSYS`, because a ring could create the socket without the system call). Raw sockets already need a capability no sandboxed program has. TCP and unix sockets are unaffected, and under `mode: restricted` every answer the restricted rules give is unchanged. Enforced by a seccomp filter loaded inside the sandbox; a socket handed in by a process outside the sandbox (inherited, or passed over a unix socket) is not covered. A 32-bit (i386) program that creates sockets through `socketcall` cannot create any socket under `deny`, TCP and unix included, because the filter cannot read that call's arguments; the direct 32-bit `socket` call gets the selective rule. **Name resolution:** glibc asks its name servers over UDP first and does not fall back to TCP when the socket is refused, so the program reads a per-launch copy of the container's `/etc/resolv.conf` with `options use-vc` added, which makes glibc ask over TCP; the copy is bound over the file `/etc/resolv.conf` resolves to as the last mount and removed when the launch ends. The launch is refused when `/etc/resolv.conf` is missing, not a regular file or larger than 64 KiB, or when it resolves through a private tmp, a `writable` path, a `hidden` path or a masked directory (`/run/user`, `/dev`). Under `mode: restricted` the name servers' TCP port 53 must be in `connect_ports`; it is not added for you. musl and resolvers that ignore `resolv.conf` options need their own TCP DNS configuration. Under `mode: none` the field is kept and the filter is loaded (an empty network namespace still lets a program create a UDP socket); no resolver copy is made, since there is no name server to reach. */
+    udp?: "allow" | "deny" | null;
 }
 /**
- * Process limits, applied by three different mechanisms: `max_memory` and `max_pids` by systemd on the transient scope that owns the program's cgroup, `max_open_files` as an in-process resource limit set just before the program is executed, and `private_tmp` as bubblewrap mounts. The program sees `/sys` read-only and cannot raise the cgroup limits. Unknown keys are rejected with 400. Every field of this object, and the object itself, accepts an explicit `null`, which is treated exactly as if the field had been omitted (only the top-level `sandbox` key of an edit distinguishes `null` from omission).
+ * Process limits, applied by three different mechanisms: `max_memory`, `max_pids` and `max_cpu` by systemd on the transient scope that owns the program's cgroup (each read back from the cgroup before the program runs; a limit that did not land refuses the launch), `max_open_files` and `max_file_size` as in-process resource limits set just before the program is executed, and `private_tmp` and `tmp_size` as bubblewrap mounts. The program sees `/sys` read-only and cannot raise the cgroup limits. Unknown keys are rejected with 400. Every field of this object, and the object itself, accepts an explicit `null`, which is treated exactly as if the field had been omitted (only the top-level `sandbox` key of an edit distinguishes `null` from omission).
  */
 export interface SandboxProcess {
     /**
@@ -31113,7 +32315,22 @@ export interface SandboxProcess {
      * @maximum 1048576
      */
     max_open_files?: number | null;
-    /** Give the program its own empty `/tmp` and `/var/tmp` (`--tmpfs`), invisible to the rest of the container. Rejected with 400 when a `filesystem.writable` entry equals, contains or is contained by `/tmp` or `/var/tmp`: the private mounts are applied first, so a writable bind over them would expose the container's shared directory. Also rejected when the program's `directory` lies strictly below `/tmp` or `/var/tmp`, or when the daemon itself is installed below either: the private mounts would hide them and the launch could not reach the program. */
+    /**
+     * CPU bandwidth of the program's scope, `"<n>%"` with n from 1 to 102400, where 100% is one CPU's worth (`"250%"` is two and a half CPUs). Written to the scope as `CPUQuota=<n>%`; before the program runs, the scope's `cpu.max` is read back and the launch is refused if it holds no limit or a share more than 1 % away from the request. It is a ceiling on the whole process tree, not a reservation. Per instance: a `port_range` program with N instances runs N scopes, so the instances together may use N × n%.
+     * @pattern ^[0-9]+%$
+     */
+    max_cpu?: string | null;
+    /**
+     * Largest size any single regular file the program writes may reach, from 1K to 1024G, in the size grammar of `max_memory` (`<n>[KMG]` in binary units or a plain byte count; there is no `T`, so a terabyte is `1024G`). Set as `RLIMIT_FSIZE`, soft and hard, immediately before the program is exec'd. A write past the limit fails with `EFBIG`. The kernel also sends `SIGXFSZ`, but programs started by supervisord inherit that signal ignored, so the usual outcome is a write error the program handles rather than a kill. It is not a disk quota: it bounds each file's growth, not the total written, and logs written by supervisord are not covered.
+     * @pattern ^\d+[KMG]?$
+     */
+    max_file_size?: string | null;
+    /**
+     * Size of EACH of the program's private `/tmp` and `/var/tmp`, from 1M to 64G, in the size grammar of `max_memory`. Requires `private_tmp: true`; on its own it is a 400. Applied as bubblewrap `--size` on the two private mounts only, so the two together may hold up to twice this value; a write past it fails with `ENOSPC`. tmpfs pages are charged to the scope's memory cgroup, so they also count against `max_memory`. Needs bubblewrap 0.10.0 or newer (`/health` reports `bwrap_tmpfs_size`); on an older one the launch is refused.
+     * @pattern ^\d+[KMG]?$
+     */
+    tmp_size?: string | null;
+    /** Give the program its own empty `/tmp` and `/var/tmp` (`--tmpfs`), invisible to the rest of the container. Rejected with 400 when a `filesystem.writable` entry equals, contains or is contained by `/tmp` or `/var/tmp`: the private mounts are applied first, so a writable bind over them would expose the container's shared directory. Also rejected when the program's `directory` lies strictly below `/tmp` or `/var/tmp`, or when the daemon itself is installed below either: the private mounts would hide them and the launch could not reach the program. Without `tmp_size` the two mounts take the kernel's tmpfs default size (half of RAM each). */
     private_tmp?: boolean | null;
 }
 /**
@@ -31124,12 +32341,16 @@ export interface ProgramInstance {
     port: number;
     /** Supervisord process name (format: programname_port) */
     instance_name: string;
-    /** Current runtime status of this instance. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed. */
+    /** Current runtime status of this instance. Lowercased supervisord state name; `stopped` is returned when supervisorctl cannot be executed at all; `unknown` when supervisord is unreachable or its output cannot be parsed. `exited` is also the logical status of a run that has ended while its launcher is still finishing; `supervisor_state` then carries supervisord's own state. */
     status: "running" | "stopped" | "starting" | "stopping" | "backoff" | "exited" | "fatal" | "unknown";
     /** Process ID when running; omitted otherwise */
     pid?: number;
     /** Uptime as supervisord renders it — "H:MM:SS", or "N day(s), H:MM:SS" once the process has been up for more than a day. Omitted when not running. */
     uptime?: string;
+    /** supervisord's own state, present only when it differs from `status`: a program whose run has ended but whose launcher is still finishing is `exited` while supervisord says `running` (or `starting`). */
+    supervisor_state?: string;
+    /** The last ended run. Absent before the first run ends. */
+    last_run?: LastRun;
     /** Resource stats for this instance's process tree. Only present when include_stats=true and the instance is running. */
     stats?: ProgramStats;
 }
@@ -31204,14 +32425,24 @@ export interface RunHandoff {
     state: HandoffState;
     terminal_id: number;
     display: string;
-    /** Preview display page URL — where the app will appear (present only when state=preview) */
+    /** Preview display page URL — where the app will appear; omitted when no URL can be determined (for example outside a Hoody container). */
     preview_display_url?: string;
-    /** Preview terminal viewer URL — where the app will appear (present only when state=preview) */
+    /** Preview terminal viewer URL — where the app will appear; omitted when no URL can be determined (for example outside a Hoody container). */
     preview_terminal_url?: string;
 }
+/**
+ * Non-fatal advisory. Source-level codes carry source_id:
+- SOURCE_WARMING: a nix source skipped while its first evaluation runs in the background
+- SOURCE_BACKOFF: a nix source skipped until its next warm-up attempt after a failed one
+- SOURCE_TIMEOUT: the source did not answer within the per-source timeout
+- SOURCE_FAILED: the source search failed (nixpkgs may still return its unchecked fallback candidate)
+Preflight adds NO_PICK and ASK_MODE.
+ */
 export interface WarningEntry {
     code: string;
     message: string;
+    /** Source the warning is about (source-level codes only) */
+    source_id?: string;
 }
 /**
  * Target app runtime OS (not the host OS). Determines which candidates are eligible.
@@ -31238,6 +32469,23 @@ export type OutputFormat = "json" | "html";
 - hoody-run: generate curl for the hoody-run /api/v1/run/resolve endpoint
  */
 export type PrintCurlMode = "hoody-run";
+/**
+ * The result of a program's last ended run: what the program's launcher reported, or what supervisord recorded when there is no report. Absent before the first run ends.
+ */
+export interface LastRun {
+    /** The program's exit code, or `null` when it was ended by a signal or never ran. A sandboxed or terminal program reports a signal death as `128+n` here, with `signal` null. */
+    exit_code: number | null;
+    /** Name of the signal that ended the program, such as `SIGKILL`, or `null`. */
+    signal: string | null;
+    /** Why the program never ran (a command that cannot be executed, a sandbox that cannot be set up), or the daemon's own reason: `ttl expired`, `daemon restarted before the program finished`. Otherwise `null`. */
+    error: string | null;
+    /** When the run ended, in milliseconds since the Unix epoch. */
+    ended_at: number | null;
+    /** `true` when no automatic restart or retry follows, whether the run succeeded or not; `false` while supervisord will start the program again. */
+    final: boolean;
+    /** Where the result came from: the launcher's report, or supervisord's record alone. */
+    source?: "launcher" | "supervisor";
+}
 /**
  * Aggregated resource stats for a program including its full process tree (root process + all child/descendant processes). Read from /proc filesystem.
  */
@@ -31405,12 +32653,14 @@ export interface DaemonHealthResponse {
     ingressReplyRoute?: "healthy" | "degraded" | "unverified" | "not_installed";
     ip: string;
     userAgent?: string | null;
-    /** Availability of the mechanisms the program sandbox needs, probed once and cached. Which ones a program needs depends on its policy: every effective sandbox needs `bwrap` and `systemd_run`; an ingress policy additionally needs `nft`; `network.mode: restricted` additionally needs `landlock_abi` of 4 or more. A program whose policy needs a missing mechanism fails closed: it never execs. Sandbox problems do not change this endpoint's HTTP status or its top-level `status`. */
+    /** Availability of the mechanisms the program sandbox needs, probed once and cached. Which ones a program needs depends on its policy: every effective sandbox needs `bwrap` and `systemd_run`; an ingress policy additionally needs `nft`; `network.mode: restricted` additionally needs `landlock_abi` of 4 or more; `process.tmp_size` additionally needs `bwrap_tmpfs_size`. A program whose policy needs a missing mechanism fails closed: it never execs. Sandbox problems do not change this endpoint's HTTP status or its top-level `status`. */
     sandbox?: {
         bwrap?: boolean;
         nft?: boolean;
         systemd_run?: boolean;
         landlock_abi?: number;
+        bwrap_version?: string | null;
+        bwrap_tmpfs_size?: boolean;
         firewall?: "ok" | "degraded" | "none";
     };
 }
@@ -31535,6 +32785,7 @@ export interface CurlJobsConnectEvents {
     "JobStarted": {
         job_id: string;
         name?: string;
+        seq?: number;
         type: string;
     };
     "JobProgress": {
@@ -31544,6 +32795,7 @@ export interface CurlJobsConnectEvents {
     };
     "JobCompleted": {
         job_id: string;
+        seq?: number;
         status: "pending" | "running" | "completed" | "failed" | "cancelled";
         type: string;
     };
@@ -31679,6 +32931,10 @@ export interface WatchEventsStreamEvents {
         requested_cursor?: Record<string, unknown>;
         skipped: number;
         type: "lag";
+    };
+    "Watcher gone": {
+        reason: "watcher_deleted" | "shutdown";
+        type: "end";
     };
 }
 /**
@@ -31961,6 +33217,7 @@ export interface AgentSessionsStartTurnAndStreamEvents {
         rules?: {
             rule_ids: string[];
             outcome: "ask" | "unchecked";
+            reason?: string;
         };
         helper_id?: string;
         parent_tool_call_id?: string;
@@ -32249,6 +33506,7 @@ export interface AgentSessionsStartTurnAndStreamEvents {
         rules?: {
             rule_ids: string[];
             outcome: "deny" | "unchecked";
+            reason?: string;
         };
     };
     /** The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. */
@@ -32436,6 +33694,7 @@ export interface AgentSessionsConnectEvents {
         rules?: {
             rule_ids: string[];
             outcome: "ask" | "unchecked";
+            reason?: string;
         };
         helper_id?: string;
         parent_tool_call_id?: string;
@@ -32724,6 +33983,7 @@ export interface AgentSessionsConnectEvents {
         rules?: {
             rule_ids: string[];
             outcome: "deny" | "unchecked";
+            reason?: string;
         };
     };
     /** The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. */

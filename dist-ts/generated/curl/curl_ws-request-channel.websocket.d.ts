@@ -110,6 +110,19 @@ export type IStreamFrame<TEvent = unknown> = IStreamEnvelope<TEvent> | IStreamCo
 export interface IWebSocketConnectionOptions {
     timeout?: number;
     reconnect?: boolean;
+    /**
+     * How many automatic reconnect attempts may follow one another before
+     * the client gives up and calls onReconnectFailed. Default: no limit.
+     * The count starts over after a connection that lasted
+     * reconnectStableMs, and on connect() and reconnect().
+     *
+     * Set a limit when the client may run on a browser WebSocket or on
+     * Node's built-in one. Those hide the HTTP status of a refused upgrade,
+     * so a route that is gone for good (401, 403, 404) looks like a network
+     * drop and is retried, one attempt per reconnectDelayMax (30 s by
+     * default), until this limit. With the `ws` package the status is
+     * visible and such a refusal ends the series at once.
+     */
     reconnectAttempts?: number;
     reconnectDelay?: number;
     reconnectDelayMax?: number;
@@ -128,6 +141,72 @@ export interface IWebSocketConnectionOptions {
      * rejects it at connect() instead of silently ignoring it.
      */
     webSocketFactory?: WebSocketFactory;
+    /**
+     * Reconnect after the SERVER closed the socket normally (code 1000).
+     * Off by default: a normal close means the server ended the stream on
+     * purpose (a deleted terminal session closes this way), and reconnecting
+     * to it can silently re-create what was just deleted.
+     */
+    reconnectOnNormalClose?: boolean;
+    /**
+     * How long a connection must stay open before the reconnect backoff
+     * starts over. Default 30000. A server that accepts and then closes
+     * sooner than this keeps the delay growing instead of being retried at
+     * the first step forever.
+     */
+    reconnectStableMs?: number;
+    /**
+     * Supplies the URL for every open AFTER the first one: each automatic
+     * reconnect, reconnect(), and a connect() that follows a disconnect().
+     * For routes whose URL holds a single-use value (a socket ticket): run
+     * the operation that issues it again and return the new URL. A provider
+     * that throws fails that attempt; an automatic reconnect tries again
+     * after the next backoff delay.
+     *
+     * A fresh URL does not reopen a refused connection: when the server
+     * answers the upgrade with a 4xx status (other than 408, 425 or 429)
+     * the reconnect series ends, even though the provider issued that URL
+     * a moment before. onError carries the status; call connect() to try again.
+     */
+    urlProvider?: (context: {
+        previousUrl: string;
+        attempt: number;
+        reconnect: boolean;
+    }) => string | Promise<string>;
+    /**
+     * Half-open detection: when nothing has arrived for this many
+     * milliseconds the link is treated as dead. The client reports
+     * disconnect (1006, "liveness timeout") and reconnects as after any
+     * other drop. Every received message counts as activity.
+     *
+     * Default: 75000 when the transport can send protocol pings (the `ws`
+     * package, used on Node whenever headers are sent); the client then
+     * pings on its own and counts pings and pongs too, so a quiet but
+     * healthy stream is never cut. A browser WebSocket, and Node's
+     * built-in one, hide pings: there the check is off unless you set this,
+     * and it should exceed the longest silence the server allows itself.
+     * 0 turns it off.
+     */
+    idleTimeoutMs?: number;
+    /**
+     * Find out why a reconnect keeps failing. A browser WebSocket and Node's
+     * built-in one hide the HTTP status of a refused upgrade: a 401, 403 or
+     * 404 looks like a network drop. After this many automatic attempts in
+     * a row that never opened (default 3; 0 turns it off), the client sends
+     * one plain GET to the same URL: the same query, the headers this
+     * transport may send (none in a browser, which sends its cookies
+     * instead), a 5 s timeout, redirects not followed. On 401, 403 or 404
+     * automatic reconnect stops: onError receives a
+     * WebSocketUpgradeRefusedError carrying the status and the server's
+     * error code, then onReconnectFailed. Any other answer, or none, and the
+     * backoff goes on; the next probe follows after as many failures again.
+     * With the `ws` package the status is visible at once and ends the
+     * series with the same error, without a probe. Not used with a
+     * webSocketFactory, which owns the network path. A server whose route
+     * answers a plain GET differently from an upgrade (400 or 426 before
+     * any permission check) cannot be told apart this way.
+     */
+    refusalProbeAfter?: number;
     /**
      * Cursor-preserving resume. When the client has seen a sequenced
      * envelope, every RECONNECT carries the last seq (and the incarnation
@@ -344,6 +423,19 @@ export interface ICurlWsRequestChannelWebSocket {
      */
     setCursor(seq: number | undefined, incarnation?: string): void;
 }
+/**
+ * The server refused the WebSocket upgrade for good: automatic reconnect has
+ * stopped. `status` is the HTTP status; `code` the server's error code when
+ * its answer named one, else "HTTP_<status>"; `via` says how it was learned:
+ * "upgrade" (the transport showed the status) or "probe" (a plain GET after
+ * repeated failures, see refusalProbeAfter).
+ */
+export interface WebSocketUpgradeRefusedError extends Error {
+    name: "WebSocketUpgradeRefusedError";
+    status: number;
+    code: string;
+    via: "upgrade" | "probe";
+}
 export declare class CurlWsRequestChannelWebSocket implements ICurlWsRequestChannelWebSocket {
     private ws;
     private eventHandlers;
@@ -353,6 +445,11 @@ export declare class CurlWsRequestChannelWebSocket implements ICurlWsRequestChan
     private reconnectTimer;
     private _reconnecting;
     private shouldReconnect;
+    private _urlSpent;
+    private _livenessTimer;
+    private _openAttempt;
+    private _unopenedFailures;
+    private _lastConnectUrl;
     private _frameQueue;
     private _dispatchAlive;
     private _socketGen;
@@ -373,9 +470,18 @@ export declare class CurlWsRequestChannelWebSocket implements ICurlWsRequestChan
      */
     private takeResumeSeed;
     /**
-     * Establish WebSocket connection
+     * Establish WebSocket connection.
+     *
+     * A second connect() (or reconnect()) made while this one is still
+     * opening replaces it: this one then rejects with "WebSocket connect
+     * superseded", and the new call owns the connection.
      */
     connect(options?: Partial<IWebSocketConnectionOptions>): Promise<void>;
+    /**
+     * Open one socket. `isRetry` is true for an automatic reconnect attempt and
+     * false for a connect the caller asked for.
+     */
+    private openSocket;
     private createRawSocket;
     /**
      * Manually trigger reconnection
@@ -400,6 +506,15 @@ export declare class CurlWsRequestChannelWebSocket implements ICurlWsRequestChan
      * Schedule reconnection with exponential backoff
      */
     private scheduleReconnect;
+    /**
+     * One plain GET to the URL the failing sockets used, to learn the status the
+     * transport hid. Ends the series on 401, 403 or 404; otherwise the backoff
+     * goes on. `attempt` is the open attempt that failed: a disconnect() or a
+     * new connect() meanwhile makes the answer irrelevant.
+     */
+    private probeRefusal;
+    /** Stop the liveness timer of the current socket. */
+    private stopLiveness;
     /**
      * Clear reconnection timer
      */
@@ -524,6 +639,14 @@ export declare class CurlWsRequestChannelWebSocket implements ICurlWsRequestChan
     close(code?: number, reason?: string): void;
     get readyState(): number;
     get url(): string;
+    /**
+     * The socket of the current connection, or null when there is none. It is
+     * replaced on every reconnect, so read it again after each `connect`
+     * event instead of keeping it. For code that needs what the transport
+     * offers beyond this client (the `ws` package: ping(), the ping and pong
+     * events); do not assign its on* handlers, the client owns them.
+     */
+    get rawSocket(): IRawWebSocketLike | null;
     get connected(): boolean;
     get reconnecting(): boolean;
     onEnvelope(callback: (envelope: IStreamEnvelope) => void): () => void;

@@ -81,4 +81,4 @@ export { HttpClient } from './http-client.js';
 export { createStreamFrameBuffer, parseSseChunk, finishSseStream, DEFAULT_MAX_STREAM_FRAME_BYTES } from './http-client.js';
 export type { HoodyFetch, IHttpClientConfig, IRequestData, IEventStream, IStreamEvent, IStreamEventsOptions, IStreamFrameBuffer, IStreamResponse, IHttpClientMiddleware, IHttpClientMiddlewareRequestContext, IHttpClientMiddlewareResponseContext, IHttpClientMiddlewareErrorContext, } from './http-client.js';
 export { HoodyClient } from './client.js';
-export { TwoFactorRequiredError, isRealmScopeError, type RealmScopeApiError, type HoodySessionTokens } from './client.js';
+export { TwoFactorRequiredError, isRealmScopeError, type RealmScopeApiError, type HoodySessionTokens, type HoodySessionUpdate } from './client.js';

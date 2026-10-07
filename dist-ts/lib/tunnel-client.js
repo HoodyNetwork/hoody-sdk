@@ -4,11 +4,12 @@
  * forwarding (HTTP fetch / TCP / Bun.serve) so callers don't have to wire
  * the lower-level protocol pieces themselves.
  */
-import { TunnelSession } from "./tunnel-session.js";
+import { TunnelSession, TunnelSessionError } from "./tunnel-session.js";
 import { setupAutoForwarding } from "./tunnel-http-pump.js";
 import { FrameType } from "./tunnel-protocol-types.js";
 import { decodeFrames } from "./tunnel-protocol-codec.js";
 import { handleTcpStream } from "./tunnel-http-pump.js";
+export { TunnelSessionError } from "./tunnel-session.js";
 const CONNECT_PATH = "/api/v1/tunnel/connect";
 /**
  * The tunnel WebSocket URL for a `container` option: a hostname, or an
@@ -114,6 +115,64 @@ export async function expose(opts) {
         throw err;
     }
 }
+/** A resume attempt was aborted through its `signal`. */
+export class TunnelResumeAbortedError extends Error {
+    constructor() {
+        super("tunnel: resume aborted");
+        this.name = "TunnelResumeAbortedError";
+    }
+}
+/**
+ * session.connect() for a resume attempt, under the caller's signal and
+ * handshake limit. Rejects after the session is fully closed when either ends
+ * the attempt, including an abort that lands after HELLO_OK.
+ */
+async function connectResume(session, control) {
+    const { signal } = control;
+    if (signal?.aborted)
+        throw new TunnelResumeAbortedError();
+    let timedOut = false;
+    let closed = null;
+    const stop = () => {
+        // No stream opened from here on reaches the local target; everything else
+        // (UNBIND_OK above all) still reaches the session so its close completes.
+        session.setInboundRouter((frame, ws) => {
+            if (frame.header.frameType === FrameType.StreamOpen) {
+                session.sendReset(frame.header.streamId, "tunnel-closed");
+                return;
+            }
+            session.dispatchFrame(frame, ws);
+        });
+        closed ??= session.close().catch(() => { });
+    };
+    const limit = control.handshakeTimeoutMs;
+    const timer = limit === undefined
+        ? null
+        : setTimeout(() => { timedOut = true; stop(); }, Math.max(0, limit));
+    signal?.addEventListener("abort", stop, { once: true });
+    try {
+        await session.connect();
+    }
+    catch (err) {
+        if (closed)
+            await closed;
+        if (signal?.aborted)
+            throw new TunnelResumeAbortedError();
+        if (timedOut)
+            throw new Error(`HELLO_OK: timed out after ${Math.max(0, limit)}ms`);
+        throw err;
+    }
+    finally {
+        if (timer)
+            clearTimeout(timer);
+        signal?.removeEventListener("abort", stop);
+    }
+    if (signal?.aborted) {
+        stop();
+        await closed;
+        throw new TunnelResumeAbortedError();
+    }
+}
 /**
  * Reclaim a dropped session while the kit still parks it with its bindings
  * (its `takeover_grace`, during which the port answers ALREADY_BOUND to anyone
@@ -139,7 +198,7 @@ export async function resumeExpose(opts) {
     // connect(), since code after `await connect()` runs too late for it.
     setupAutoForwarding(session, opts.to);
     try {
-        await session.connect();
+        await connectResume(session, opts);
         const hello = session.hello;
         if (!hello?.resumed) {
             await session.close().catch(() => { });
@@ -243,10 +302,238 @@ export async function pull(opts) {
         throw err;
     }
 }
+/** Routes a PULL session's inbound frames: tcp STREAM_OPEN to `to`, everything else to the session. */
+function pullRouter(session, to) {
+    return (frame, ws) => {
+        if (frame.header.frameType === FrameType.StreamOpen) {
+            let payload;
+            try {
+                payload = JSON.parse(new TextDecoder().decode(frame.payload));
+            }
+            catch {
+                session.sendReset(frame.header.streamId, "malformed-stream-open");
+                return;
+            }
+            if (payload.kind === "tcp") {
+                handleTcpStream(session, frame.header.streamId, to);
+                return;
+            }
+            session.sendReset(frame.header.streamId, "unsupported-stream-kind");
+            return;
+        }
+        session.dispatchFrame(frame, ws);
+    };
+}
+/**
+ * resumeExpose() for a pull() session: reclaim a dropped session while the kit
+ * still parks it, and forward its resumed PULL binds' TCP streams to `to`.
+ * Resolves null when the kit answered but did not resume; throws when there
+ * was no HELLO_OK.
+ */
+export async function resumePull(opts) {
+    if (!opts.url && !opts.container) {
+        throw new Error("tunnelResume: either `url` or `container` is required");
+    }
+    const url = opts.url ?? tunnelConnectUrl(opts.container);
+    const session = new TunnelSession({
+        url,
+        ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
+        resumeSessionId: opts.sessionId,
+    });
+    // Before connect(), as in resumeExpose(): a resumed bind's first STREAM_OPEN
+    // can arrive in the same read as HELLO_OK.
+    session.setInboundRouter(pullRouter(session, opts.to));
+    try {
+        await connectResume(session, opts);
+        const hello = session.hello;
+        if (!hello?.resumed) {
+            await session.close().catch(() => { });
+            return null;
+        }
+        return {
+            session,
+            hello,
+            binds: hello.resumedBinds.map((b) => ({ ...b })),
+            async close() { await session.close(); },
+            async [Symbol.asyncDispose]() { await session.close(); },
+        };
+    }
+    catch (err) {
+        await session.close().catch(() => { });
+        throw err;
+    }
+}
+/** How long the kit parks a dropped session's binds by default (`--takeover-grace`). */
+export const TUNNEL_RESUME_WINDOW_MS = 60_000;
+/**
+ * Keep an expose() / pull() tunnel up across connection drops. When the
+ * session drops without `close()`, the kit parks its binds for the takeover
+ * grace; this reconnects with the session id inside that window so the same
+ * ports keep serving. `ended` settles with the reason once the tunnel is over:
+ * a deliberate close, or a drop that could not be resumed in time.
+ */
+export function keepTunnelAlive(handle, opts) {
+    if (!opts.url && !opts.container) {
+        throw new Error("keepTunnelAlive: either `url` or `container` is required");
+    }
+    const url = opts.url ?? tunnelConnectUrl(opts.container);
+    const windowMs = opts.resumeWindowMs ?? TUNNEL_RESUME_WINDOW_MS;
+    const maxDelay = opts.maxRetryDelayMs ?? 5_000;
+    let current = handle;
+    let sessionId = handle.session.id;
+    let closedByCaller = false;
+    let over = false;
+    let wake = null;
+    /** The resume in flight: its abort handle, and the loop that ends once the attempt is torn down. */
+    let resumeAbort = null;
+    let resuming = null;
+    let finish;
+    const ended = new Promise((resolve) => { finish = resolve; });
+    const end = (e) => { if (!over) {
+        over = true;
+        finish(e);
+    } };
+    const sleep = (ms) => new Promise((resolve) => {
+        const timer = setTimeout(() => { wake = null; resolve(); }, ms);
+        wake = () => { clearTimeout(timer); wake = null; resolve(); };
+    });
+    const resume = async (lost, dropped) => {
+        // The dropped session is finished whatever comes next: close what it still
+        // holds (a v2 session keeps its secondary sockets open when only the
+        // primary drops), so neither a resume nor a failure leaves them behind.
+        await dropped.close().catch(() => { });
+        if (closedByCaller)
+            return;
+        try {
+            opts.onLost?.(lost);
+        }
+        catch { /* observer errors never stop the resume */ }
+        const deadline = Date.now() + windowMs;
+        let delay = opts.retryDelayMs ?? 500;
+        let attempt = 0;
+        let last = lost.reason;
+        while (!closedByCaller) {
+            // The hold is checked before every attempt, and an attempt gets only the
+            // time that is left of it: nothing is tried, or waited for, past the deadline.
+            const remaining = deadline - Date.now();
+            if (remaining <= 0)
+                break;
+            attempt++;
+            const abort = new AbortController();
+            resumeAbort = abort;
+            try {
+                const args = {
+                    url,
+                    ...(opts.kitAuth ? { kitAuth: opts.kitAuth } : {}),
+                    sessionId,
+                    to: opts.to,
+                    signal: abort.signal,
+                    handshakeTimeoutMs: remaining,
+                };
+                const resumed = opts.mode === "pull" ? await resumePull(args) : await resumeExpose(args);
+                if (resumed) {
+                    if (closedByCaller) {
+                        await resumed.close().catch(() => { });
+                        return;
+                    }
+                    current = resumed;
+                    sessionId = resumed.session.id;
+                    watch(resumed.session);
+                    try {
+                        opts.onResumed?.(resumed.session);
+                    }
+                    catch { /* observer */ }
+                    return;
+                }
+                // The kit answered but holds no parked session under that id: either its
+                // grace ran out, or it has not noticed the drop yet. Only time tells.
+                last = "the kit no longer holds the session (its resume grace is over)";
+            }
+            catch (err) {
+                if (closedByCaller)
+                    return;
+                const error = err instanceof Error ? err : new Error(String(err));
+                if (error instanceof TunnelSessionError && error.code === "RESUME_EXPIRED") {
+                    end({ deliberate: false, reason: `${lost.reason}; resume refused: ${error.message}`, code: "RESUME_EXPIRED" });
+                    return;
+                }
+                last = error.message;
+                try {
+                    opts.onRetry?.(attempt, error);
+                }
+                catch { /* observer */ }
+            }
+            finally {
+                if (resumeAbort === abort)
+                    resumeAbort = null;
+            }
+            if (closedByCaller)
+                return;
+            const left = deadline - Date.now();
+            if (left <= 0)
+                break;
+            await sleep(Math.min(delay, left));
+            delay = Math.min(delay * 2, maxDelay);
+        }
+        if (closedByCaller)
+            return;
+        end({
+            deliberate: false,
+            reason: `${lost.reason}; could not resume within ${Math.round(windowMs / 1000)} s: ${last}`,
+            code: "RESUME_EXPIRED",
+        });
+    };
+    const closed = (session, info) => {
+        if (closedByCaller || over)
+            return;
+        if (info.deliberate) {
+            end({ deliberate: true, reason: info.reason });
+            return;
+        }
+        const run = resume(info, session).finally(() => { if (resuming === run)
+            resuming = null; });
+        resuming = run;
+    };
+    const watch = (session) => {
+        // A session that ended before this point already told its listeners; one
+        // registered now would wait forever. Its recorded end is acted on instead.
+        const already = session.closeInfo;
+        if (already) {
+            closed(session, already);
+            return;
+        }
+        session.onClose((info) => closed(session, info));
+    };
+    watch(handle.session);
+    return {
+        get session() { return current.session; },
+        ended,
+        async close() {
+            closedByCaller = true;
+            // A resume in flight is ended here, not left to finish: its socket and
+            // handshake timer go now, the backoff sleep is cut short, and a session
+            // the kit had already resumed is unbound before `ended` settles.
+            resumeAbort?.abort();
+            wake?.();
+            try {
+                await current.close();
+                await resuming;
+            }
+            finally {
+                end({ deliberate: true, reason: "closed by client" });
+            }
+        },
+    };
+}
 /**
  * High-level convenience: start a local Bun.serve + connect + expose.
+ * Bun only: it runs the handler with `Bun.serve`.
  */
 export async function serve(opts) {
+    if (typeof Bun === "undefined") {
+        throw new Error("tunnel.serve() requires Bun (it runs the handler with Bun.serve). "
+            + "On Node, start your own server with http.createServer() and pass its port to expose().");
+    }
     // Start local server on random port
     const server = Bun.serve({
         port: 0,

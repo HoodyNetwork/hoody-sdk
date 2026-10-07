@@ -22,6 +22,17 @@
  * `responseType`, which choose what the call resolves to: pass those
  * positionally. The batch calls and `list` keep their shapes.
  *
+ * `set` stores every JS value as JSON. A string is sent quoted under
+ * `application/json`, so it reads back as the same string (`''` included),
+ * can be written at a `path`, and `'123'` stays a string. The generated call
+ * labelled a string `text/plain`, which the kit stores verbatim and refuses at
+ * a `path`. Raw text is still one option away: `contentType: 'text/plain'`,
+ * or a `Content-Type` in `headers`.
+ *
+ * `exists` answers a boolean: true, or false when the kit answers 404. The
+ * generated HEAD call (now the protected `__exists`) rejected a missing key
+ * with an ApiError, so "no" had to be caught. Any other failure still rejects.
+ *
  * The object forms of the generated calls are typed on the client's
  * `sqlite.kv` (`SqliteKvStore`), not on KvService: declaring them on
  * the class would widen its methods, and a consumer subclass that overrides
@@ -31,7 +42,7 @@
  * Same declare-module + prototype-patch pattern as lib/files-service-extensions.ts.
  */
 import { KvService } from '../generated/sqlite/kv.service.js';
-import { ValidationError } from '../generated/errors.js';
+import { ValidationError, isApiError } from '../generated/errors.js';
 const KV_HELPERS_PATCH_MARKER = Symbol.for('hoody.sdk.sqlite.kv.helpers');
 const KEY_METHODS = [
     'get', 'delete', 'exists', 'increment', 'decrement', 'pop', 'listHistory', 'rollback', 'getSnapshot',
@@ -78,6 +89,40 @@ function keyValueCall(method, positional) {
         return positional.call(this, key, body, options, rest[0]);
     };
 }
+/**
+ * `set` with a string stored as JSON. The generated call sends a string
+ * verbatim as `text/plain` unless a Content-Type is already set, and
+ * JSON-encodes it once when that type is JSON: so the type is set here.
+ * An explicit `contentType`, or a `Content-Type` among `headers`, keeps the
+ * string as raw text under that type. Every other value goes through untouched.
+ */
+function jsonStringSet(positional) {
+    return function (key, value, options, ...rest) {
+        if (typeof value !== 'string' || !isArgsObject(options))
+            return positional.call(this, key, value, options, ...rest);
+        const headers = isArgsObject(options.headers) ? options.headers : {};
+        if (Object.keys(headers).some((name) => name.toLowerCase() === 'content-type')) {
+            return positional.call(this, key, value, options, ...rest);
+        }
+        const contentType = typeof options.contentType === 'string' && options.contentType !== ''
+            ? options.contentType
+            : 'application/json';
+        return positional.call(this, key, value, { ...options, headers: { ...headers, 'Content-Type': contentType } }, ...rest);
+    };
+}
+/** `exists` as a boolean over the generated HEAD call: 404 is the answer "no", not a failure. */
+async function exists(key, options, templateVars) {
+    const head = this.__exists;
+    try {
+        // The generated HEAD resolves false itself on a 404 the kit marks KEY_NOT_FOUND / KEY_EXPIRED.
+        return (await head.call(this, key, options, templateVars)) !== false;
+    }
+    catch (err) {
+        if (isApiError(err) && err.status === 404)
+            return false;
+        throw err;
+    }
+}
 async function read(keyOrArgs, optionsOrTarget, templateVars) {
     let key = keyOrArgs;
     let options = optionsOrTarget;
@@ -109,6 +154,8 @@ export function patchKvHelpersPrototype() {
     // The positional method as the prototype chain has it now: the generated one,
     // or an override in the hand-written KvService.
     const positional = (method) => proto[method];
+    proto.exists = exists;
+    proto.set = jsonStringSet(positional('set'));
     for (const method of KEY_METHODS)
         proto[method] = keyCall(method, positional(method));
     for (const method of KEY_VALUE_METHODS)

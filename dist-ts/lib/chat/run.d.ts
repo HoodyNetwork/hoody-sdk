@@ -17,6 +17,13 @@ export interface RunChatOptions {
         private?: boolean;
         acceptEndpoint?: string;
     };
+    /**
+     * The API base URL the caller resolved for this invocation. The CLI passes the one its global
+     * options select (`--base-url`, `--profile`, `--config`, then the environment and the saved
+     * config), so the question goes to the assistant of the platform the command addresses. Left
+     * out (a program using this module directly), the environment and the saved config decide.
+     */
+    apiBaseUrl?: string;
 }
 /**
  * One-shot entry point. With no prompt argument, falls through to the REPL.

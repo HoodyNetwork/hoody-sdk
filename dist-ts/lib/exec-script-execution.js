@@ -63,6 +63,10 @@ export function dispatchExecScript(service, encodedPath, options = {}) {
     if (options.body !== undefined && method !== 'GET' && method !== 'HEAD') {
         requestData.body = options.body;
     }
+    // A script is arbitrary code: a status it returned cannot be told from a
+    // platform failure, and a retry would run it again. Its answer is final;
+    // `retries` covers only a request that never reached the container.
+    requestData.responseIsFinal = true;
     return internals.http.request(method, requestUrl, requestData);
 }
 // Global Symbol used as a once-guard so the prototype patch is idempotent.

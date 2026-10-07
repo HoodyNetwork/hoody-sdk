@@ -5,6 +5,28 @@
  */
 import { type Frame } from "./tunnel-protocol-types.js";
 import type { ProxyAuth, ProxyAuthPolicy } from "./proxy-auth.js";
+/** Why a tunnel session ended, as `onClose` listeners receive it. */
+export interface TunnelCloseInfo {
+    /** True when this side ended it: `close()`, or a superseding `connect()`. */
+    deliberate: boolean;
+    /** The WebSocket close code of the primary socket, when it closed first. */
+    code?: number;
+    /** What ended the session, in words. */
+    reason: string;
+}
+/**
+ * A tunnel session failure with a stable `code`:
+ *  - `SESSION_LIMIT`: the kit already holds its maximum number of sessions.
+ *  - `RESUME_EXPIRED`: the session to resume is no longer parked by the kit.
+ *  - `REFUSED`: the kit refused the handshake for another stated reason.
+ *  - `CLOSED_BEFORE_HELLO`: the socket closed with no HELLO_OK and no reason.
+ */
+export declare class TunnelSessionError extends Error {
+    readonly code: "SESSION_LIMIT" | "RESUME_EXPIRED" | "REFUSED" | "CLOSED_BEFORE_HELLO";
+    /** WebSocket close code, when the refusal came as (or with) a close. */
+    readonly closeCode?: number;
+    constructor(code: TunnelSessionError["code"], message: string, closeCode?: number);
+}
 export interface ConnectOptions {
     url: string;
     /**
@@ -145,6 +167,16 @@ export declare class TunnelSession {
      *  down resources tied to the session lifecycle rather than per-stream
      *  EOF frames, which never fire on an abrupt WS drop. */
     private closeListeners;
+    /** Set when the session ends (drop, kit end, close()); cleared by the next connect(). */
+    private endedInfo;
+    /** Binds this session holds on the kit: BIND_OK and resumed binds, minus confirmed UNBINDs. */
+    private liveBinds;
+    /** Resolves the UNBIND wait of an in-progress close(); null when none is waiting. */
+    private unbindSettled;
+    /** The in-progress close(), so concurrent calls share one teardown. */
+    private closing;
+    /** The kit's last GOAWAY message on this connection, for the close reason. */
+    private goawayReason;
     /** Set by setInboundRouter(). Configuration, not session state: connect()
      *  and close() keep it. */
     private inboundRouter;
@@ -163,8 +195,15 @@ export declare class TunnelSession {
     /** Register a listener fired exactly once on session close. Returns an
      *  unsubscribe function. Use for resources whose lifecycle is tied to the
      *  session itself (e.g. an upgrade socket forwarded through a stream that
-     *  may never receive an EOF frame if the peer aborts). */
-    onClose(fn: () => void): () => void;
+     *  may never receive an EOF frame if the peer aborts). The listener is
+     *  told why: `info.deliberate` is false for a drop or a kit-side end. */
+    /**
+     * Why this session ended, or null while it has not (never connected, or
+     * connected and up). `onClose` listeners registered after the end are never
+     * called: read this first when attaching to a session someone else opened.
+     */
+    get closeInfo(): TunnelCloseInfo | null;
+    onClose(fn: (info: TunnelCloseInfo) => void): () => void;
     /** Session id assigned by the kit in HELLO_OK. Available after `connect()` resolves. */
     get id(): string;
     /** Full HELLO_OK result including `resumed` and `resumedBinds`. Null before connect(). */
@@ -286,7 +325,19 @@ export declare class TunnelSession {
      * inherit the stale gate.
      */
     sendReset(streamId: number, reason: string): void;
+    /**
+     * Close the session for good. A session that holds binds first sends UNBIND
+     * for each and waits (briefly) for the kit to confirm: the kit otherwise
+     * parks the binds for its takeover grace, as it does for a dropped
+     * connection, and the port answers PORT_IN_USE until that runs out. The
+     * wait also keeps the frames from being lost when the caller exits right
+     * after `await close()`.
+     */
     close(): Promise<void>;
+    /** Send UNBIND for every live bind; resolve when all are answered, the primary closes, or the timeout runs out. */
+    private releaseBinds;
+    /** Synchronous teardown of every socket and every piece of session state. */
+    private teardown;
     /** Full session-scoped state wipe. Used by connect() to supersede a
      *  prior session cleanly. close() does its own richer teardown (flushes
      *  pending batches first); this path is the "throw everything away"

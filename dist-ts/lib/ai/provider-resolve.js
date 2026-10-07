@@ -18,6 +18,7 @@
  * Endpoint acceptance for non-allowlisted origins handled separately in
  * chat/endpoint-accept.ts.
  */
+import { platformUrl } from '../domain-utils.js';
 export function isResolverError(r) {
     return r.error !== undefined;
 }
@@ -26,7 +27,15 @@ export function isResolverError(r) {
 // end with it — so users can set either the base URL or the full endpoint.
 const TIER1_DEFAULT_URL = 'https://api.minimax.io/v1';
 const TIER1_DEFAULT_MODEL = 'MiniMax-M2.7-highspeed';
-const TIER2_DEFAULT_URL = 'https://ai.hoody.com/api/v1';
+/**
+ * Tier 2's default endpoint: the Hoody AI gateway of the account's own platform, `/api/v1` on the
+ * `ai.` host of the platform domain. The platform is read from the API base URL given, else from
+ * HOODY_BASE_URL / HOODY_API_URL in `env`, else it is the default platform. It was one fixed host,
+ * which an account on any other platform is not on.
+ */
+export function tier2DefaultUrl(apiBaseUrl, env = process.env) {
+    return platformUrl(apiBaseUrl || env.HOODY_BASE_URL || env.HOODY_API_URL, 'ai', '/api/v1');
+}
 // Hoody AI's free tier — the only model that runs without wallet credit. Keep in
 // sync with `cli/ai-fix.ts:DEFAULT_MODEL`; a paid catalog id here is refused
 // outright (403) on any account whose `ai_limit` is 0.00.
@@ -79,7 +88,7 @@ function readTier1(env) {
         model: model ?? TIER1_DEFAULT_MODEL,
     };
 }
-function readTier2(env) {
+function readTier2(env, apiBaseUrl) {
     const key = env.HOODY_CLI_AI_KEY || undefined;
     const url = env.HOODY_CLI_AI_URL || undefined;
     const model = env.HOODY_CLI_AI_MODEL || undefined;
@@ -88,7 +97,7 @@ function readTier2(env) {
     return {
         tier: 'cli-ai',
         key,
-        url: url ?? TIER2_DEFAULT_URL,
+        url: url ?? tier2DefaultUrl(apiBaseUrl, env),
         model: model ?? TIER2_DEFAULT_MODEL,
     };
 }
@@ -111,10 +120,13 @@ function readTier3(env) {
  *   profile='chat'    → cascade tier1 → tier2 → tier3 → no-config error.
  *   profile='ai-fix'  → lock to tier 2 defaults.
  *
+ * `apiBaseUrl` is the account's API base URL; tier 2's default endpoint is the
+ * AI gateway of that platform (see tier2DefaultUrl).
+ *
  * On success returns a ProviderConfig. On failure returns a ResolverError.
  * Never throws.
  */
-export function resolveProvider(profile, env = process.env) {
+export function resolveProvider(profile, env = process.env, apiBaseUrl) {
     if (profile === 'ai-fix') {
         // The ai-fix profile never cascades; it uses tier 2 defaults with optional
         // overrides. It also fills the cosmetic bearer that `cli/ai-fix.ts` uses
@@ -124,13 +136,13 @@ export function resolveProvider(profile, env = process.env) {
         // profile could not resolve its OWN defaults — it returned an error for the
         // exact configuration the shipped CLI runs on, so the two code paths
         // disagreed about whether the default setup is even valid.
-        const t2 = readTier2(env);
+        const t2 = readTier2(env, apiBaseUrl);
         if (t2)
             return finalizeTier({ ...t2, key: t2.key ?? AI_FIX_DEFAULT_KEY });
         return finalizeTier({
             tier: 'cli-ai',
             key: AI_FIX_DEFAULT_KEY,
-            url: TIER2_DEFAULT_URL,
+            url: tier2DefaultUrl(apiBaseUrl, env),
             model: TIER2_DEFAULT_MODEL,
         });
     }
@@ -138,7 +150,7 @@ export function resolveProvider(profile, env = process.env) {
     const t1 = readTier1(env);
     if (t1)
         return finalizeTier(t1);
-    const t2 = readTier2(env);
+    const t2 = readTier2(env, apiBaseUrl);
     if (t2)
         return finalizeTier(t2);
     const t3 = readTier3(env);

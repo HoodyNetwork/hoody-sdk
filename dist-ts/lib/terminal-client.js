@@ -33,17 +33,25 @@
 import { Duplex } from 'stream';
 import { TerminalConnectTerminalWebSocketWebSocket, } from '../generated/terminal/terminal_connect-terminal-web-socket.websocket.js';
 import { base64Encode } from './proxy-auth.js';
-/**
- * `agent` and `cmd` are mutually exclusive. Agent-capable kits neutralize
- * `cmd=` on agent sessions server-side, but a pre-agent kit ignores the
- * unknown `agent=` param and TYPES the decoded `cmd` into whatever spawned —
- * on such kits the pair would inject the command as keystrokes. Throwing
- * (instead of silently dropping `cmd`) surfaces the stale caller. Checked at
- * construction AND at URL serialization so a mutated snapshot can't sneak a
- * `cmd` in between. `agent` + `shell` stays legal — `shell=` is the
- * deliberate compatibility bridge (agent-mode kits ignore it; pre-agent kits
- * exec it directly as the session process).
- */
+function upgradeRefusedError(status, code, via) {
+    const error = new Error(`WebSocket upgrade refused: HTTP ${status}`);
+    error.name = 'WebSocketUpgradeRefusedError';
+    error.status = status;
+    error.code = code ?? `HTTP_${status}`;
+    error.via = via;
+    return error;
+}
+/** The generated client's refusal (via 'upgrade' on the `ws` transport), or ours. */
+export function isWebSocketUpgradeRefusedError(error) {
+    return error instanceof Error && error.name === 'WebSocketUpgradeRefusedError'
+        && typeof error.status === 'number';
+}
+function asLivenessSocket(socket) {
+    const s = socket;
+    return s && typeof s.ping === 'function' && typeof s.terminate === 'function'
+        && typeof s.on === 'function' && typeof s.off === 'function'
+        ? s : null;
+}
 function assertAgentCmdExclusive(options) {
     if (options.agent && options.cmd) {
         throw new TypeError('TerminalClient: options.agent and options.cmd are mutually exclusive — '
@@ -72,7 +80,35 @@ export class TerminalClient extends Duplex {
     _maxReconnectAttempts;
     _reconnectDelay;
     _timeout;
+    _livenessTimeout;
+    /** Stops the liveness check of the current socket; null when none runs. */
+    _stopLiveness = null;
+    /** Set when the liveness check tore the socket down, until its close is reported. */
+    _livenessTripped = false;
+    _lastActivityAt = 0;
     _handshakeSent = false;
+    /** holdSends() was called: every connection from the next one on opens held. */
+    _holdOnConnect = false;
+    /** The current connection is held: nothing is sent on it (see holdSends). */
+    _sendsHeld = false;
+    /** Sends the handshake of the current, held connection; null when none is owed. */
+    _heldHandshake = null;
+    /**
+     * A write that came while no connection could take it but one is coming
+     * (the socket closing before its close is reported, the reconnect
+     * backoff, a retry, a held connection). Its callback waits, so the
+     * stream buffers what follows in order; it goes out when a connection
+     * may send, or is refused with "Not connected" when none will.
+     */
+    _heldWrite = null;
+    /** Between an unplanned close and the end of the automatic reconnect it started. */
+    _autoReconnecting = false;
+    /** Automatic attempts in a row that never opened (see refusalProbeAfter). */
+    _unopenedFailures = 0;
+    /** URL and headers of the last attempt, for the refusal probe. */
+    _lastAttempt;
+    /** The last error the typed client reported through 'error', so it is not reported twice. */
+    _lastBridgedError;
     _options;
     _unsubscribers = [];
     /**
@@ -128,6 +164,7 @@ export class TerminalClient extends Duplex {
         this._maxReconnectAttempts = options.maxReconnectAttempts ?? 10;
         this._reconnectDelay = options.reconnectDelay ?? 1000;
         this._timeout = options.timeout ?? 30000;
+        this._livenessTimeout = options.livenessTimeout ?? 60000;
         if (options.autoConnect) {
             this.connect().catch((err) => {
                 if (this.listenerCount('error') > 0) {
@@ -157,6 +194,12 @@ export class TerminalClient extends Duplex {
     get rows() { return this._rows; }
     /** WebSocket URL */
     get url() { return this._url; }
+    /**
+     * When the server was last heard on the current connection (ms since the
+     * epoch; 0 before the first connect): the open, any frame, and, where the
+     * transport reports them, pings and pongs.
+     */
+    get lastActivityAt() { return this._lastActivityAt; }
     // ===========================================================================
     // Connection Management
     // ===========================================================================
@@ -390,6 +433,7 @@ export class TerminalClient extends Duplex {
         // instance starts with an empty cache, so we must send the
         // JSON_DATA handshake again on its first onConnect.
         this._handshakeSent = false;
+        this._lastAttempt = { url: wsUrl, headers: { ...headers }, browser: isBrowser };
         const client = new TerminalConnectTerminalWebSocketWebSocket(wsUrl, typedOptions);
         this.client = client;
         this.attachClient(client, handshakeToken);
@@ -432,6 +476,7 @@ export class TerminalClient extends Duplex {
         // during the reconnect-backoff window would still fire the next
         // retry once the timer expires.
         this._wrapperShouldReconnect = false;
+        this._autoReconnecting = false;
         this.clearWrapperReconnectTimer();
         this._wrapperReconnectAttempts = 0;
         // Bump generation so any stale callbacks queued from the old client
@@ -450,6 +495,8 @@ export class TerminalClient extends Duplex {
         // the typed client's onclose fires asynchronously).
         this.detachClient();
         this._state = 'disconnected';
+        this._sendsHeld = false;
+        this._heldHandshake = null;
         this._handshakeSent = false;
         // Drop any in-flight connect promise so future connect() calls
         // start a fresh attempt.
@@ -462,7 +509,62 @@ export class TerminalClient extends Duplex {
         // _destroy. _closeEmitted is reset on each connect cycle so legacy
         // parity is preserved across cycles.
         this.emit('close');
+        this.refuseHeldWrite();
     }
+    /**
+     * Point every later connect, automatic reconnects included, at another
+     * URL, with `options` merged over the ones given at construction. The
+     * current connection is not touched.
+     *
+     * For a session whose address is only known once the kit has named it: an
+     * ephemeral session is opened on the "no terminal id" host, and coming
+     * back to it means the host of the id the kit assigned, without
+     * `ephemeral` (which would be a request for another new session).
+     */
+    retarget(url, options = {}) {
+        const next = { ...this._options, ...options };
+        assertAgentCmdExclusive(next);
+        this._url = url;
+        this._options = next;
+    }
+    /**
+     * From the next connect on, open every connection HELD: the socket is up
+     * and frames from the kit are received, but this client sends nothing on
+     * it until releaseSends(). Not the handshake (which is what makes the kit
+     * start a session's process), no input, no resize, no pause or resume.
+     *
+     * For a caller that must first confirm what is behind a reconnect: the
+     * kit creates or joins whatever session the URL names, and until that is
+     * known to be the right one, a keystroke, a resize or a flow-control frame
+     * would land in someone else's shell. While held, a write waits (its
+     * callback with it) and goes out after the handshake at release, or is
+     * refused with "Not connected" if the connection ends first; resize()
+     * only records the size (the handshake at release carries it), and
+     * pause()/resume() act on the local stream only.
+     *
+     * What still goes out on a held connection is below the session: the
+     * upgrade request itself, WebSocket pings of the liveness check, and the
+     * close.
+     */
+    holdSends() {
+        this._holdOnConnect = true;
+    }
+    /**
+     * Release the current held connection: send its handshake (with the
+     * current size) and let everything through from here on. A no-op when the
+     * connection is not held. The next connection opens held again.
+     */
+    releaseSends() {
+        if (!this._sendsHeld)
+            return;
+        this._sendsHeld = false;
+        const handshake = this._heldHandshake;
+        this._heldHandshake = null;
+        handshake?.();
+        this.releaseHeldWrite();
+    }
+    /** Whether the current connection is held (see holdSends). */
+    get sendsHeld() { return this._sendsHeld; }
     /**
      * Force reconnect.
      */
@@ -482,9 +584,12 @@ export class TerminalClient extends Duplex {
         if (this._wrapperReconnectAttempts >= this._maxReconnectAttempts) {
             this._state = 'disconnected';
             this._wrapperShouldReconnect = false;
+            this._autoReconnecting = false;
             this.emit('reconnect-failed');
+            this.refuseHeldWrite();
             return;
         }
+        this._autoReconnecting = true;
         this._state = 'reconnecting';
         const delay = Math.min(this._reconnectDelay * Math.pow(1.5, this._wrapperReconnectAttempts), 30000);
         if (this._debug) {
@@ -515,8 +620,26 @@ export class TerminalClient extends Duplex {
                 if (this._pendingConnect === pending)
                     this._pendingConnect = null;
                 rejectPending(err);
-                // Failure → keep trying (subject to the cap).
-                if (this._wrapperShouldReconnect) {
+                if (!this._wrapperShouldReconnect) {
+                    this._autoReconnecting = false;
+                    this.refuseHeldWrite();
+                    return;
+                }
+                // The transport showed a refused upgrade: the same
+                // request gets the same answer.
+                if (isWebSocketUpgradeRefusedError(err)) {
+                    this.stopRefused(err, err !== this._lastBridgedError);
+                    return;
+                }
+                // Failure → keep trying (subject to the cap), but after
+                // `refusalProbeAfter` attempts in a row that never opened
+                // ask the server why first.
+                this._unopenedFailures++;
+                const probeAfter = this._options.refusalProbeAfter ?? 3;
+                if (probeAfter > 0 && this._unopenedFailures % probeAfter === 0) {
+                    void this.probeRefusal(this._connectGen);
+                }
+                else {
                     this.scheduleWrapperReconnect();
                 }
             });
@@ -525,6 +648,82 @@ export class TerminalClient extends Duplex {
             // auto-retry).
             pending.catch(() => undefined);
         }, delay);
+    }
+    /** The upgrade is refused for good: stop the automatic reconnect and say why. */
+    stopRefused(error, report) {
+        this.clearWrapperReconnectTimer();
+        this._state = 'disconnected';
+        this._wrapperShouldReconnect = false;
+        this._autoReconnecting = false;
+        this._unopenedFailures = 0;
+        if (report && this.listenerCount('error') > 0)
+            this.emit('error', error);
+        this.emit('reconnect-failed');
+        this.refuseHeldWrite();
+    }
+    /**
+     * One plain GET to the URL the failing attempts used, to learn the status
+     * the transport hid. Ends the series on 401, 403 or 404; otherwise the
+     * backoff goes on. `gen` is the connect generation of the failed attempt:
+     * a disconnect() or a new connect() meanwhile makes the answer irrelevant.
+     */
+    async probeRefusal(gen) {
+        let status = 0;
+        let code;
+        const fetchFn = globalThis.fetch;
+        const target = this._lastAttempt;
+        if (typeof fetchFn === 'function' && target) {
+            // A browser WebSocket sends no headers, only its cookies; elsewhere
+            // the socket carried these headers (kitAuth).
+            const headers = target.browser ? {} : { ...target.headers };
+            const controller = typeof AbortController === 'function' ? new AbortController() : undefined;
+            const timer = setTimeout(() => controller?.abort(), 5000);
+            timer.unref?.();
+            try {
+                const response = await fetchFn(target.url.replace(/^ws(s?):/i, 'http$1:'), {
+                    method: 'GET',
+                    headers,
+                    // A redirect is not followed, so the headers never reach another host.
+                    redirect: 'manual',
+                    credentials: target.browser ? 'include' : 'same-origin',
+                    ...(controller ? { signal: controller.signal } : {}),
+                });
+                status = response.status;
+                if (status === 401 || status === 403 || status === 404) {
+                    try {
+                        const body = JSON.parse((await response.text()).slice(0, 4096));
+                        const nested = body && typeof body.error === 'object' && body.error !== null ? body.error.code : undefined;
+                        if (typeof body?.code === 'string')
+                            code = body.code;
+                        else if (typeof nested === 'string')
+                            code = nested;
+                        else if (typeof body?.error === 'string' && /^[A-Z][A-Z0-9_]*$/.test(body.error))
+                            code = body.error;
+                    }
+                    catch { /* no JSON error code */ }
+                }
+                else {
+                    try {
+                        await response.body?.cancel();
+                    }
+                    catch { /* nothing to release */ }
+                }
+            }
+            catch {
+                // No answer (network still down, a browser refusing the request): nothing learned.
+                status = 0;
+            }
+            finally {
+                clearTimeout(timer);
+            }
+        }
+        if (gen !== this._connectGen || !this._wrapperShouldReconnect)
+            return;
+        if (status === 401 || status === 403 || status === 404) {
+            this.stopRefused(upgradeRefusedError(status, code, 'probe'), true);
+            return;
+        }
+        this.scheduleWrapperReconnect();
     }
     clearWrapperReconnectTimer() {
         if (this._wrapperReconnectTimer) {
@@ -555,7 +754,7 @@ export class TerminalClient extends Duplex {
     resize(cols, rows) {
         this._cols = cols;
         this._rows = rows;
-        if (this.connected && this.client) {
+        if (this.connected && this.client && !this._sendsHeld) {
             try {
                 this.client.sendResize({ command: '1', columns: cols, rows });
                 if (this._debug) {
@@ -572,7 +771,7 @@ export class TerminalClient extends Duplex {
     }
     /** Pause terminal output (flow control). */
     pause() {
-        if (this.connected && this.client) {
+        if (this.connected && this.client && !this._sendsHeld) {
             try {
                 this.client.sendPause();
             }
@@ -582,7 +781,7 @@ export class TerminalClient extends Duplex {
     }
     /** Resume terminal output (flow control). */
     resume() {
-        if (this.connected && this.client) {
+        if (this.connected && this.client && !this._sendsHeld) {
             try {
                 this.client.sendResume();
             }
@@ -595,12 +794,20 @@ export class TerminalClient extends Duplex {
     // ===========================================================================
     /** Writable: send keyboard input as INPUT byte-prefix frame. */
     _write(chunk, encoding, callback) {
-        if (!this.connected || !this.client) {
+        const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding);
+        if (!this.canSendNow()) {
+            // The socket may already be closing while its close is not
+            // reported yet. Failing the write here errored the stream, and
+            // destroying it cancelled the reconnect that close was about to
+            // start. Hold it while a connection is still to come.
+            if (this.connectionComing()) {
+                this._heldWrite = { data, callback };
+                return;
+            }
             callback(new Error('Not connected'));
             return;
         }
         try {
-            const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding);
             this.client.sendInput(data);
             if (this._debug) {
                 console.error('[TerminalClient] Sent input:', data.length, 'bytes');
@@ -610,6 +817,44 @@ export class TerminalClient extends Duplex {
         catch (error) {
             callback(error);
         }
+    }
+    /** A connection is up, open on the wire, and allowed to send. */
+    canSendNow() {
+        return this._state === 'connected' && this.client !== null && this.client.connected && !this._sendsHeld;
+    }
+    /**
+     * No connection can take a write now, but one is expected: the current
+     * one is held, or still reported connected while its socket closes (with
+     * automatic reconnect on), or an automatic reconnect is under way.
+     */
+    connectionComing() {
+        if (this._state === 'connected' && this.client !== null && this.client.connected)
+            return this._sendsHeld;
+        if (this._state === 'connected')
+            return this._wrapperShouldReconnect && this._reconnect;
+        return this._autoReconnecting && this._wrapperShouldReconnect;
+    }
+    /** Send the held write, if a connection may take it now. */
+    releaseHeldWrite() {
+        const held = this._heldWrite;
+        if (!held || !this.canSendNow())
+            return;
+        this._heldWrite = null;
+        try {
+            this.client.sendInput(held.data);
+            held.callback();
+        }
+        catch (error) {
+            held.callback(error);
+        }
+    }
+    /** No connection is coming for the held write: refuse it. */
+    refuseHeldWrite() {
+        const held = this._heldWrite;
+        if (!held)
+            return;
+        this._heldWrite = null;
+        held.callback(new Error('Not connected'));
     }
     /** Readable: data is pushed from onOutput / onUnknownFrame handlers. */
     _read(_size) { }
@@ -634,44 +879,80 @@ export class TerminalClient extends Duplex {
         // from leaking into our consumer event stream.
         const myGen = this._connectGen;
         const isStale = () => this._connectGen !== myGen;
+        // Whether this socket ever opened. One that did not is a failed
+        // attempt, which connect() rejects: it is not a disconnect, and its
+        // close must not start a second reconnect beside the one that
+        // rejection drives.
+        let opened = false;
         subs.push(client.onConnect(() => {
             if (isStale())
                 return;
+            opened = true;
+            this._unopenedFailures = 0;
             this._state = 'connected';
+            this._lastActivityAt = Date.now();
+            this._livenessTripped = false;
+            this.startLiveness(client, isStale);
             // The wrapper owns reconnect; every successful socket open is
             // either the FIRST attempt or a wrapper-driven retry that
             // constructed a fresh typed client. Either way, _handshakeSent
             // is false at attach time, so we always send a fresh JSON_DATA
             // (with the freshly-resolved handshakeToken from this attempt's
             // getToken provider call).
-            const payload = {
-                command: '{',
-                columns: this._cols,
-                rows: this._rows,
+            const sendHandshake = () => {
+                if (isStale())
+                    return;
+                // Built when it is sent, so a held connection's handshake
+                // carries the size of the moment it is released.
+                const payload = {
+                    command: '{',
+                    columns: this._cols,
+                    rows: this._rows,
+                };
+                if (handshakeToken)
+                    payload.token = handshakeToken;
+                try {
+                    client.sendJsonData(payload);
+                    this._handshakeSent = true;
+                    if (this._debug) {
+                        const safe = { ...payload };
+                        if ('token' in safe)
+                            safe.token = '[redacted]';
+                        console.error('[TerminalClient] Sent handshake:', safe);
+                    }
+                }
+                catch (err) {
+                    if (this.listenerCount('error') > 0) {
+                        this.emit('error', err instanceof Error ? err : new Error(String(err)));
+                    }
+                }
             };
-            if (handshakeToken)
-                payload.token = handshakeToken;
-            try {
-                client.sendJsonData(payload);
-                this._handshakeSent = true;
-                if (this._debug) {
-                    const safe = { ...payload };
-                    if ('token' in safe)
-                        safe.token = '[redacted]';
-                    console.error('[TerminalClient] Sent handshake:', safe);
-                }
+            this._autoReconnecting = false;
+            if (this._holdOnConnect) {
+                this._sendsHeld = true;
+                this._heldHandshake = sendHandshake;
             }
-            catch (err) {
-                if (this.listenerCount('error') > 0) {
-                    this.emit('error', err instanceof Error ? err : new Error(String(err)));
-                }
+            else {
+                sendHandshake();
+                this.releaseHeldWrite();
             }
             this.emit('connect');
         }));
         subs.push(client.onDisconnect((code, reason) => {
-            if (isStale())
+            if (isStale() || !opened)
                 return;
             this._state = 'disconnected';
+            this._sendsHeld = false;
+            this._heldHandshake = null;
+            this.stopLiveness();
+            // A socket the liveness check tore down closes with whatever the
+            // transport says about a local terminate (1006 and no reason on
+            // Node, "Connection ended" on Bun); report the cause instead.
+            if (this._livenessTripped) {
+                this._livenessTripped = false;
+                code = 1006;
+                reason = 'liveness timeout';
+            }
             this.emit('disconnect', code, reason);
             // Wrapper-owned reconnect: if the close wasn't terminal (4xxx
             // policy / 1002 / 1003 / 1008) and the wrapper is configured to
@@ -683,10 +964,15 @@ export class TerminalClient extends Duplex {
             if (this._wrapperShouldReconnect && this._reconnect && !isTerminal) {
                 this.scheduleWrapperReconnect();
             }
+            else {
+                this._autoReconnecting = false;
+                this.refuseHeldWrite();
+            }
         }));
         subs.push(client.onOutput((buf) => {
             if (isStale())
                 return;
+            this._lastActivityAt = Date.now();
             // The typed client allocates a fresh Uint8Array per frame, so
             // sharing memory via Buffer.from(buf.buffer, ...) is safe and
             // zero-copy.
@@ -750,14 +1036,108 @@ export class TerminalClient extends Duplex {
         subs.push(client.onError((err) => {
             if (isStale())
                 return;
+            this._lastBridgedError = err;
             if (this.listenerCount('error') > 0) {
                 this.emit('error', err);
             }
         }));
         this._unsubscribers = subs;
     }
+    /**
+     * Watch the socket of `client` for a dead link (see
+     * TerminalClientOptions.livenessTimeout). A no-op when the check is off or
+     * the transport exposes no ping/pong.
+     */
+    startLiveness(client, isStale) {
+        this.stopLiveness();
+        const timeout = this._livenessTimeout;
+        if (!(timeout > 0))
+            return;
+        // The typed client keeps its socket private and has no liveness hook of
+        // its own; the check needs the socket's ping/pong, so read it here.
+        // `rawSocket` is the generated client's public accessor; `ws` is the
+        // private field of clients generated before it existed.
+        const typed = client;
+        const socket = asLivenessSocket(typed.rawSocket ?? typed.ws);
+        if (!socket)
+            return;
+        const interval = Math.max(1, Math.floor(timeout / 2));
+        // Before the verdict, let pending socket reads run: a process that was
+        // suspended fires this timer before it has read what is already
+        // waiting in the socket buffer.
+        const grace = Math.min(1000, interval);
+        // Armed from the open: a link that dies right after the upgrade has
+        // shown nothing yet, and must still run into the deadline.
+        let lastInboundAt = Date.now();
+        let stopped = false;
+        let timer = null;
+        const inbound = () => { lastInboundAt = Date.now(); this._lastActivityAt = lastInboundAt; };
+        const silent = () => Date.now() - lastInboundAt >= timeout;
+        const schedule = (fn, ms) => {
+            timer = setTimeout(fn, ms);
+            timer.unref?.();
+        };
+        const stop = () => {
+            if (stopped)
+                return;
+            stopped = true;
+            if (timer)
+                clearTimeout(timer);
+            try {
+                socket.off('ping', inbound);
+                socket.off('pong', inbound);
+                socket.off('message', inbound);
+            }
+            catch { /* ignore */ }
+            if (this._stopLiveness === stop)
+                this._stopLiveness = null;
+        };
+        const verdict = () => {
+            if (stopped || isStale())
+                return;
+            if (!silent()) {
+                schedule(check, interval);
+                return;
+            }
+            if (this._debug)
+                console.error('[TerminalClient] liveness timeout: nothing inbound');
+            this._livenessTripped = true;
+            stop();
+            // terminate(), not close(): a close handshake cannot complete on a
+            // dead link. The socket's close event (1006) then takes the normal
+            // disconnect path, which reports it and reconnects.
+            try {
+                socket.terminate();
+            }
+            catch { /* ignore */ }
+        };
+        const check = () => {
+            if (stopped || isStale())
+                return;
+            if (silent()) {
+                schedule(verdict, grace);
+                return;
+            }
+            try {
+                socket.ping();
+            }
+            catch { /* the close path reports a dead socket */ }
+            schedule(check, interval);
+        };
+        socket.on('ping', inbound);
+        socket.on('pong', inbound);
+        socket.on('message', inbound);
+        this._stopLiveness = stop;
+        // First probe at open + interval; nothing inbound by open + timeout
+        // (the open itself does not count again) is the verdict.
+        schedule(check, interval);
+    }
+    stopLiveness() {
+        this._stopLiveness?.();
+    }
     /** Drop every listener registered against the previous typed client. */
     detachClient() {
+        this.stopLiveness();
         for (const off of this._unsubscribers) {
             try {
                 off();
@@ -786,6 +1166,8 @@ export class TerminalClient extends Duplex {
             params.append('user', options.user);
         if (options.terminal_id)
             params.append('terminal_id', options.terminal_id);
+        if (options.ephemeral)
+            params.append('ephemeral', 'true');
         if (options.display)
             params.append('display', options.display);
         if (options.pid !== undefined && options.pid !== '') {
@@ -870,13 +1252,13 @@ export class TerminalClient extends Duplex {
                         + 'remove one; the kit honors the first occurrence, so the base value would silently win.');
                 }
             }
-            // `agent` and `onboarding` are flag params appended ONLY when truthy —
+            // `agent`, `onboarding` and `ephemeral` are flag params appended ONLY when truthy —
             // emitting `agent=false` would read as PRESENT/agent-on to agent-capable
             // kits — so an explicit `{ agent:false }` / `{ onboarding:false }` never
             // reaches the options loop above. Catch the case where the base URL forces
             // the flag ON while the caller explicitly asked for it OFF; otherwise the
             // base value silently wins and defeats the caller's intent.
-            for (const flag of ['agent', 'onboarding']) {
+            for (const flag of ['agent', 'onboarding', 'ephemeral']) {
                 if (options[flag] === false && truthy(baseParams.get(flag))) {
                     throw new TypeError(`TerminalClient: '${flag}' is set on the base URL but false in options — `
                         + 'remove one; the kit honors the first occurrence, so the base value would silently win.');
@@ -899,7 +1281,8 @@ export class TerminalClient extends Duplex {
  * Custom Events:
  * - 'connect': when connected to server
  * - 'connecting': when a connection attempt starts
- * - 'disconnect' (code, reason): when disconnected from the wire
+ * - 'disconnect' (code, reason): when disconnected from the wire; a dead
+ *   link found by the liveness check is (1006, 'liveness timeout')
  * - 'output' (Buffer): terminal output data
  * - 'title' (string): window title changed
  * - 'preferences' (TerminalPreferences): server-pushed preferences

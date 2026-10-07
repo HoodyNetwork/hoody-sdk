@@ -195,6 +195,7 @@ export declare class HoodyClient extends GeneratedHoodyClient {
      */
     get events(): EventsClient;
     logout(): Promise<void>;
+    logoutAll(): Promise<void>;
     setSessionToken(token: string): void;
     login(...args: Parameters<GeneratedHoodyClient['login']>): ReturnType<GeneratedHoodyClient['login']>;
     adoptSession(...args: Parameters<GeneratedHoodyClient['adoptSession']>): string;

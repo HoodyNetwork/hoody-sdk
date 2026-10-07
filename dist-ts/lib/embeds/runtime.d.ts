@@ -24,8 +24,8 @@ export type EmbedQuery = Record<string, Scalar | ReadonlyArray<string>>;
  * when hand-built, the server-details object (`{ name, country, … }`) in a `containers.list` item.
  */
 export interface EmbedContainerTarget {
-    id: string;
-    project_id: string;
+    id?: string;
+    project_id?: string;
     server_name?: string | null;
     server?: string | {
         name?: string | null;

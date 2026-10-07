@@ -65,6 +65,8 @@ export { TwoFactorRequiredError, isRealmScopeError } from '../generated/client.j
 // The transport class, for the same parity with the browser entry (which
 // re-exports the whole generated index).
 export { HttpClient } from '../generated/http-client.js';
+// Whether this process sends through the SDK's own undici transport (Node 22.19+), as the README describes.
+export { nodeTransportInUse } from '../generated/http-client.js';
 export { listKits, } from './kit-catalog.js';
 export { normalizeContainerStatsResponse, normalizeProjectStatsResponse, } from './metrics.js';
 // -- Exec dynamic discovery & skills --
@@ -96,6 +98,8 @@ export { PipeWsError, PIPE_WS_MAX_MESSAGE_BYTES } from './pipe-ws.js';
 export { parseLocalTarget as parseTunnelTarget, parseContainerPort as parseTunnelPort, } from './tunnel-parse-target.js';
 // -- Tunnel client (WebSocket binary protocol + high-level expose/pull API) --
 export { expose as tunnelExpose, pull as tunnelPull, serve as tunnelServe, connect as tunnelConnect, tunnelConnectUrl, TunnelSession, } from './tunnel-client.js';
+// Keeping a tunnel up across drops, and resuming a dropped session by hand.
+export { keepTunnelAlive, resumeExpose as tunnelResumeExpose, resumePull as tunnelResumePull, TunnelSessionError, TunnelResumeAbortedError, } from './tunnel-client.js';
 export { FrameType as TunnelFrameType, ResetCode as TunnelResetCode, HEADER_SIZE as TUNNEL_HEADER_SIZE, MAX_PAYLOAD_SIZE as TUNNEL_MAX_PAYLOAD_SIZE, MAX_FRAME_SIZE as TUNNEL_MAX_FRAME_SIZE, isExtensionRange as isTunnelExtensionRange, isMandatoryUnknown as isTunnelMandatoryUnknown, isControlFrame as isTunnelControlFrame, } from './tunnel-protocol-types.js';
 // -- Tunnel protocol codec (low-level frame encode/decode) --
 export { encodeFrame as encodeTunnelFrame, encodeFrames as encodeTunnelFrames, decodeFrame as decodeTunnelFrame, decodeFrames as decodeTunnelFrames, dataFrame as tunnelDataFrame, pingFrame as tunnelPingFrame, pongFrame as tunnelPongFrame, windowFrame as tunnelWindowFrame, eofFrame as tunnelEofFrame, CodecError as TunnelCodecError, MAX_MESSAGE_SIZE as TUNNEL_MAX_MESSAGE_SIZE, MAX_FRAMES_PER_MESSAGE as TUNNEL_MAX_FRAMES_PER_MESSAGE, } from './tunnel-protocol-codec.js';

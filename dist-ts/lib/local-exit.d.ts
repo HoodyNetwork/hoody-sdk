@@ -18,15 +18,21 @@
  */
 import type { DestinationPolicy } from './net-destination-policy.js';
 import type { Socks5ConnectEvent } from './socks5-server.js';
-/** Minimal shape we need from a container, matching ContainerLike elsewhere. */
+/**
+ * The container to exit through: one of the SDK's own container responses (containers.get /
+ * create / a containers.list item) unchanged, or a hand-built object. Every field is optional
+ * in the type because the responses declare them so (`id?: string`, `project_id?: string`,
+ * `server_name?: string | null`, `server` a server-details object or null); id, a project id
+ * and a server name are required at runtime and their absence is refused before anything is wired.
+ */
 export interface LocalExitContainerLike {
-    id: string;
+    id?: string;
     project_id?: string;
     projectId?: string;
     server?: string | {
-        name?: string;
-    };
-    server_name?: string;
+        name?: string | null;
+    } | null;
+    server_name?: string | null;
 }
 export interface LocalExitOptions {
     /** Authenticated account client. */
@@ -37,7 +43,7 @@ export interface LocalExitOptions {
     policy?: DestinationPolicy;
     /** Create a proxy alias so the handed-out URL carries no container id. */
     alias?: string | true;
-    /** Confirm the exit IP through ip.hoody.com after wiring. Default true. */
+    /** Confirm the exit IP through the platform's IP service (the client's getIpUrl()) after wiring. Default true. */
     verify?: boolean;
     /**
      * Take over a container that already has an upstream configured.
@@ -59,7 +65,7 @@ export interface LocalExitOptions {
     }) => void;
 }
 export interface LocalExitVerification {
-    /** Exit IP as seen by ip.hoody.com THROUGH the proxy. */
+    /** Exit IP as seen by the platform's IP service THROUGH the proxy. */
     exitIp: string;
     /** This machine's IP measured directly, bypassing the proxy. */
     localIp: string;
@@ -142,6 +148,16 @@ export interface LocalExitHandle {
     forceStop(): Promise<LocalExitTeardownReport>;
     [Symbol.asyncDispose](): Promise<void>;
 }
+/**
+ * The IP service of the client's own platform: `https://ip.<platform domain>`.
+ *
+ * It was one fixed host, so an account on any other platform confirmed its exit against
+ * a different platform's service, from this machine and through the container. The client's own
+ * getIpUrl() is the answer when it has one (HoodyClient derives it from its base URL); a client
+ * without it gets the same derivation from the base URL every other URL here comes from.
+ * Exported for the unit test; not part of the package entry.
+ */
+export declare function ipServiceUrl(client: any, baseUrl: string): string;
 /**
  * Bring up the local exit.
  *

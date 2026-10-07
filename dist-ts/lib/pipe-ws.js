@@ -268,10 +268,10 @@ export async function openPipeDuplex(p) {
         if (status === 429)
             return 'too many WebSocket pairs on the server';
         if (status === 403)
-            return 'forbidden (private peer or edge permission)';
+            return 'forbidden (Source IP Guard or edge permission)';
         if (status !== undefined)
             return `HTTP ${status}`;
-        return 'refused (private peer, capacity, subprotocol or edge)';
+        return 'refused (Source IP Guard, capacity, subprotocol or edge)';
     }
     // An abort between the open and this line reached neither listener.
     if (opts.signal?.aborted) {

@@ -7,7 +7,6 @@
 export { KitService } from './kit.service.js';
 export { CommandsService } from './commands.service.js';
 export { SessionsService } from './sessions.service.js';
-export { UiService } from './ui.service.js';
 export { ProcessesService } from './processes.service.js';
 export { SystemService } from './system.service.js';
 export { AutomationService } from './automation.service.js';

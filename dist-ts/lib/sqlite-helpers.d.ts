@@ -27,12 +27,13 @@ type TemplateVars = {
     serverName?: string;
     server?: string;
 };
-/** A value one placeholder binds: a JSON scalar. */
-export type SqliteBindValue = string | number | boolean | null;
+/** A value one placeholder binds: a JSON scalar, or a bigint for an INTEGER past 2^53-1. */
+export type SqliteBindValue = string | number | bigint | boolean | null;
 /**
  * Placeholder values: an array for positional `?`, an object for named `:name` / `@name` / `$name`.
- * Each value is a string, a finite number, a boolean or null; anything else (NaN, Infinity,
- * undefined, a bigint, bytes, a nested value) is refused with a ValidationError before sending.
+ * Each value is a string, a finite number, a bigint within the signed 64-bit INTEGER range, a
+ * boolean or null; anything else (NaN, Infinity, undefined, a wider bigint, bytes, a nested
+ * value) is refused with a ValidationError before sending.
  */
 export type SqliteParams = readonly SqliteBindValue[] | Record<string, SqliteBindValue>;
 type TransactionOptions = Parameters<SqlServiceBase['runTransaction']>[1];

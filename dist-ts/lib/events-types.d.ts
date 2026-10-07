@@ -234,26 +234,13 @@ export type HoodyEvent<T extends EventType = EventType> = T extends EventType ? 
 export declare function toHoodyEvent(item: EventHistoryItem, replayed: boolean): HoodyEvent | null;
 /** True for a `message` frame the runtime should treat as a control frame. */
 export declare function isControlFrame(frame: unknown): frame is ServerControlFrame;
-/**
- * Socket.IO-backed WebSocket client for the Hoody Events stream.
- *
- * Wraps `socket.io-client` with the Hoody-specific surface that
- * {@link EventsManager} and {@link EventsClient} consume:
- *   - `connect()` resolves on the first `connect` event (or rejects on error)
- *   - `onEvent(cb)` normalises the server's `message` payload into
- *     {@link EventServerMessage} before invoking `cb`
- *   - `on*` lifecycle hooks return real unsubscribe functions
- *   - `disconnect()` tears down the transport
- *
- * Construction is cheap: the underlying socket is created with
- * `autoConnect: false` so consumers control when the network op starts. Call
- * `connect()` to open the transport.
- */
 export declare class ApiConnecteventstreamWebSocket {
     connected: boolean;
     private readonly url;
     private readonly defaultOptions;
-    private socket;
+    /** This wrapper's own Manager: never shared, never replaced. */
+    private readonly manager;
+    private readonly socket;
     constructor(url: string, options?: Record<string, any>);
     /**
      * Open the transport. Resolves on first `connect`, rejects on first
@@ -264,8 +251,13 @@ export declare class ApiConnecteventstreamWebSocket {
      * Per-call options (e.g. a freshly-refreshed `auth.token`) are merged onto
      * the constructor options for this connect attempt. This is how token
      * rotation before reconnect is supposed to flow through to the handshake.
+     * `parser`, `useNativeTimers`, `ackTimeout` and `retries` are fixed at
+     * construction: a per-call value that differs throws a ValidationError
+     * and changes nothing.
      */
     connect(options?: Record<string, any>): Promise<void>;
+    /** Apply per-call connect options to the Manager and Socket this wrapper already owns. */
+    private applyConnectOptions;
     disconnect(_reason?: string): void;
     on(event: string, callback: (...args: any[]) => void): void;
     emit(event: string, data?: any): void;
@@ -292,6 +284,14 @@ export declare class ApiConnecteventstreamWebSocket {
      * socket.io client event, so only a listener on it sees them.
      */
     onSocketError(callback: (frame: ErrorFrame) => void): () => void;
+    /**
+     * The cause of a transport failure, as engine.io reports it: the Manager's
+     * `error` (an engine.io TransportError whose `description` is the
+     * WebSocket's own error event) and the Socket's `connect_error`. Fires
+     * before the `disconnect` that follows, and may fire more than once for one
+     * failure.
+     */
+    onTransportError(callback: (cause: unknown) => void): () => void;
     /** Raw socket.io `disconnect`, with socket.io's reason string. */
     onClose(callback: (reason: string) => void): () => void;
 }

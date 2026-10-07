@@ -101,10 +101,13 @@ export function resolveKitUrl(target) {
         };
     }
     const c = target.container;
-    const server = typeof c.server_name === 'string'
+    // server_name, else server: a string when hand-built, the server-details object
+    // ({ name, country, … }) on a containers.list item, whose server_name is null.
+    const serverField = typeof c.server === 'object' && c.server !== null ? c.server.name : c.server;
+    const server = typeof c.server_name === 'string' && c.server_name !== ''
         ? c.server_name
-        : (typeof c.server === 'string' ? c.server : undefined);
-    if (!c.id || !c.project_id || !server) {
+        : (typeof serverField === 'string' ? serverField : undefined);
+    if (typeof c.id !== 'string' || !c.id || typeof c.project_id !== 'string' || !c.project_id || !server) {
         throw new Error('container must include id, project_id, and server_name (or server)');
     }
     const idx = target.serviceIndex ?? 1;

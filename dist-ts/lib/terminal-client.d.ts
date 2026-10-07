@@ -84,6 +84,42 @@ export interface TerminalClientOptions extends DuplexOptions {
     reconnectDelay?: number;
     /** Connection timeout in ms */
     timeout?: number;
+    /**
+     * Dead-link deadline in ms (default: 60000; 0 turns the check off).
+     *
+     * A network path that dies without a FIN or RST (laptop sleep, Wi-Fi or
+     * mobile handover, NAT expiry) leaves the socket open with nothing on it.
+     * The client sends a WebSocket ping every `livenessTimeout / 2`, the
+     * first one that long after the socket opens, and counts everything
+     * inbound as life: frames, pongs, the kit's own pings. When nothing at
+     * all has arrived for `livenessTimeout`, counted from the open, the
+     * socket is torn down and 'disconnect' fires with code 1006 and reason
+     * `liveness timeout`, then the normal reconnect path runs. An idle shell
+     * is not a dead link: the kit answers every ping.
+     *
+     * The check needs a transport that exposes pings and pongs, which is the
+     * `ws` package (the one in use whenever the connection carries headers, as
+     * with every `kitAuth` header form). A browser WebSocket and Node's
+     * built-in one expose neither, and there the check is inactive.
+     */
+    livenessTimeout?: number;
+    /**
+     * A browser WebSocket and Node's built-in one show no HTTP status: a
+     * server that refuses the upgrade (401, 403, 404) looks like a network
+     * drop, and the automatic reconnect would run to its attempt cap. After
+     * this many automatic attempts in a row that never opened (default 3;
+     * 0 turns it off), the client sends one plain GET to the same URL: the
+     * same query, the attempt's headers (none in a browser, which sends its
+     * cookies instead), a 5 s timeout, redirects not followed. On 401, 403
+     * or 404 the reconnect stops: 'error' carries a
+     * WebSocketUpgradeRefusedError with the status and the server's error
+     * code, then 'reconnect-failed'. Any other answer, or none, and the
+     * backoff goes on; the next probe follows after as many failures again.
+     * A transport that shows the status (the `ws` package) ends the series
+     * with the same error at once, without a probe. The same option, default
+     * and error as the generated WebSocket clients.
+     */
+    refusalProbeAfter?: number;
     /** Debug mode */
     debug?: boolean;
     /** Read-only mode — prevents input (optional) */
@@ -98,6 +134,14 @@ export interface TerminalClientOptions extends DuplexOptions {
     env?: string[] | Record<string, string>;
     /** Terminal session ID to reconnect to (optional) */
     terminal_id?: string;
+    /**
+     * Throwaway session (optional). Maps to the terminal kit's `?ephemeral=true`
+     * query param: a connection with no terminal id gets a fresh session of its
+     * own (id 40000-65535, reported by the 'terminal-id' event) instead of
+     * joining the shared terminal "1", and the kit cleans the session up once
+     * it is idle. Ignored by the kit together with `agent`.
+     */
+    ephemeral?: boolean;
     /** DISPLAY variable for X11 apps. Server defaults to terminal_id or '1' if omitted. */
     display?: string;
     /** Auto-create `cwd` when the requested working directory doesn't exist yet (optional) */
@@ -174,6 +218,22 @@ export interface TerminalPreferences {
  *  autocompletion; `(string & {})` admits every other server value without
  *  an unsound cast. */
 export type ShellType = 'bash' | 'zsh' | 'fish' | 'sh' | 'ssh' | 'tmux' | (string & {});
+/**
+ * The server refused the WebSocket upgrade for good: automatic reconnect has
+ * stopped. `status` is the HTTP status; `code` the server's error code when
+ * its answer named one, else "HTTP_<status>"; `via` says how it was learned:
+ * "upgrade" (the transport showed the status) or "probe" (a plain GET after
+ * repeated failures, see refusalProbeAfter). The same shape as the error of
+ * the generated WebSocket clients.
+ */
+export interface WebSocketUpgradeRefusedError extends Error {
+    name: 'WebSocketUpgradeRefusedError';
+    status: number;
+    code: string;
+    via: 'upgrade' | 'probe';
+}
+/** The generated client's refusal (via 'upgrade' on the `ws` transport), or ours. */
+export declare function isWebSocketUpgradeRefusedError(error: unknown): error is WebSocketUpgradeRefusedError;
 /** Terminal client connection state */
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 /**
@@ -198,7 +258,35 @@ export declare class TerminalClient extends Duplex {
     private _maxReconnectAttempts;
     private _reconnectDelay;
     private _timeout;
+    private _livenessTimeout;
+    /** Stops the liveness check of the current socket; null when none runs. */
+    private _stopLiveness;
+    /** Set when the liveness check tore the socket down, until its close is reported. */
+    private _livenessTripped;
+    private _lastActivityAt;
     private _handshakeSent;
+    /** holdSends() was called: every connection from the next one on opens held. */
+    private _holdOnConnect;
+    /** The current connection is held: nothing is sent on it (see holdSends). */
+    private _sendsHeld;
+    /** Sends the handshake of the current, held connection; null when none is owed. */
+    private _heldHandshake;
+    /**
+     * A write that came while no connection could take it but one is coming
+     * (the socket closing before its close is reported, the reconnect
+     * backoff, a retry, a held connection). Its callback waits, so the
+     * stream buffers what follows in order; it goes out when a connection
+     * may send, or is refused with "Not connected" when none will.
+     */
+    private _heldWrite;
+    /** Between an unplanned close and the end of the automatic reconnect it started. */
+    private _autoReconnecting;
+    /** Automatic attempts in a row that never opened (see refusalProbeAfter). */
+    private _unopenedFailures;
+    /** URL and headers of the last attempt, for the refusal probe. */
+    private _lastAttempt;
+    /** The last error the typed client reported through 'error', so it is not reported twice. */
+    private _lastBridgedError;
     private _options;
     private _unsubscribers;
     /**
@@ -253,6 +341,12 @@ export declare class TerminalClient extends Duplex {
     /** WebSocket URL */
     get url(): string;
     /**
+     * When the server was last heard on the current connection (ms since the
+     * epoch; 0 before the first connect): the open, any frame, and, where the
+     * transport reports them, pings and pongs.
+     */
+    get lastActivityAt(): number;
+    /**
      * Connect to the terminal server.
      *
      * Concurrent callers share the in-flight attempt; synchronous re-entrants
@@ -270,6 +364,45 @@ export declare class TerminalClient extends Duplex {
      */
     disconnect(reason?: string): void;
     /**
+     * Point every later connect, automatic reconnects included, at another
+     * URL, with `options` merged over the ones given at construction. The
+     * current connection is not touched.
+     *
+     * For a session whose address is only known once the kit has named it: an
+     * ephemeral session is opened on the "no terminal id" host, and coming
+     * back to it means the host of the id the kit assigned, without
+     * `ephemeral` (which would be a request for another new session).
+     */
+    retarget(url: string, options?: Partial<TerminalClientOptions>): void;
+    /**
+     * From the next connect on, open every connection HELD: the socket is up
+     * and frames from the kit are received, but this client sends nothing on
+     * it until releaseSends(). Not the handshake (which is what makes the kit
+     * start a session's process), no input, no resize, no pause or resume.
+     *
+     * For a caller that must first confirm what is behind a reconnect: the
+     * kit creates or joins whatever session the URL names, and until that is
+     * known to be the right one, a keystroke, a resize or a flow-control frame
+     * would land in someone else's shell. While held, a write waits (its
+     * callback with it) and goes out after the handshake at release, or is
+     * refused with "Not connected" if the connection ends first; resize()
+     * only records the size (the handshake at release carries it), and
+     * pause()/resume() act on the local stream only.
+     *
+     * What still goes out on a held connection is below the session: the
+     * upgrade request itself, WebSocket pings of the liveness check, and the
+     * close.
+     */
+    holdSends(): void;
+    /**
+     * Release the current held connection: send its handshake (with the
+     * current size) and let everything through from here on. A no-op when the
+     * connection is not held. The next connection opens held again.
+     */
+    releaseSends(): void;
+    /** Whether the current connection is held (see holdSends). */
+    get sendsHeld(): boolean;
+    /**
      * Force reconnect.
      */
     reconnect(): Promise<void>;
@@ -282,6 +415,15 @@ export declare class TerminalClient extends Duplex {
      * across retries).
      */
     private scheduleWrapperReconnect;
+    /** The upgrade is refused for good: stop the automatic reconnect and say why. */
+    private stopRefused;
+    /**
+     * One plain GET to the URL the failing attempts used, to learn the status
+     * the transport hid. Ends the series on 401, 403 or 404; otherwise the
+     * backoff goes on. `gen` is the connect generation of the failed attempt:
+     * a disconnect() or a new connect() meanwhile makes the answer irrelevant.
+     */
+    private probeRefusal;
     private clearWrapperReconnectTimer;
     /**
      * Per-cycle 'close' dedup. Within a single connect/disconnect cycle,
@@ -300,6 +442,18 @@ export declare class TerminalClient extends Duplex {
     resume(): this;
     /** Writable: send keyboard input as INPUT byte-prefix frame. */
     _write(chunk: Buffer | string, encoding: BufferEncoding, callback: (error?: Error | null) => void): void;
+    /** A connection is up, open on the wire, and allowed to send. */
+    private canSendNow;
+    /**
+     * No connection can take a write now, but one is expected: the current
+     * one is held, or still reported connected while its socket closes (with
+     * automatic reconnect on), or an automatic reconnect is under way.
+     */
+    private connectionComing;
+    /** Send the held write, if a connection may take it now. */
+    private releaseHeldWrite;
+    /** No connection is coming for the held write: refuse it. */
+    private refuseHeldWrite;
     /** Readable: data is pushed from onOutput / onUnknownFrame handlers. */
     _read(_size: number): void;
     /** Clean up on destroy. */
@@ -310,6 +464,13 @@ export declare class TerminalClient extends Duplex {
      * every listener cleanly when the underlying socket is replaced.
      */
     private attachClient;
+    /**
+     * Watch the socket of `client` for a dead link (see
+     * TerminalClientOptions.livenessTimeout). A no-op when the check is off or
+     * the transport exposes no ping/pong.
+     */
+    private startLiveness;
+    private stopLiveness;
     /** Drop every listener registered against the previous typed client. */
     private detachClient;
     /**
@@ -326,7 +487,8 @@ export declare class TerminalClient extends Duplex {
  * Custom Events:
  * - 'connect': when connected to server
  * - 'connecting': when a connection attempt starts
- * - 'disconnect' (code, reason): when disconnected from the wire
+ * - 'disconnect' (code, reason): when disconnected from the wire; a dead
+ *   link found by the liveness check is (1006, 'liveness timeout')
  * - 'output' (Buffer): terminal output data
  * - 'title' (string): window title changed
  * - 'preferences' (TerminalPreferences): server-pushed preferences

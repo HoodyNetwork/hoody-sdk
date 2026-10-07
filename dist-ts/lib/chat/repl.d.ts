@@ -23,6 +23,11 @@ export interface ReplOptions {
     markdown?: boolean;
     /** false when --no-stream was passed: buffer the answer, print it once. */
     stream?: boolean;
+    /**
+     * The API base URL the caller resolved for this invocation (see RunChatOptions.apiBaseUrl).
+     * Left out, the environment and the saved config decide, read on every turn.
+     */
+    apiBaseUrl?: string;
     /** For tests. */
     input?: NodeJS.ReadableStream;
     output?: NodeJS.WritableStream;

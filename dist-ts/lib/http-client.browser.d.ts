@@ -5,6 +5,7 @@
  * resolution of `http-client.js` imports.
  */
 import { ApiError } from '../generated/errors.js';
+export { isBinaryMediaType, isTextMediaType, parseJsonLossless, stringifyJsonLossless } from './http-wire.js';
 export interface IHttpClientMiddlewareRequestContext {
     requestId: string;
     attempt: number;
@@ -66,6 +67,18 @@ export interface IHttpClientConfig {
      */
     fetch?: HoodyFetch;
     timeout?: number;
+    /**
+     * How many more times a failed request may be sent. Absent (here and on the
+     * request): the default policy. An idempotent method (GET, HEAD, OPTIONS,
+     * PUT, DELETE) goes again up to 2 times on a status in `retryOnStatuses` and
+     * when it never reached a server; any other method only when it never
+     * reached a server; a `responseIsFinal` request and a streamed body never.
+     * Backoff about 2 s, then 4 s, plus jitter (`retryDelayMs` sets the base),
+     * Retry-After honoured, at most 10 s of waiting in all (a longer
+     * Retry-After ends the retries rather than being cut short); onError does
+     * not replay. Set it (0 included) and that budget applies under the full
+     * rule (see shouldRetry), 250 ms base, no total cap.
+     */
     retries?: number;
     retryDelayMs?: number;
     retryOnStatuses?: number[];
@@ -174,7 +187,9 @@ export interface IHttpClientConfig {
 }
 export interface IHttpClientTransportConfig {
     /**
-     * Mapped to fetch keepalive. Browser connection pooling is managed by the runtime.
+     * Node-only setting; accepted for config parity. Not mapped to fetch `keepalive`, which means
+     * "may outlive the page" and caps a request body at 64 KiB. Browser connection pooling is
+     * managed by the runtime.
      */
     keepAlive?: boolean;
     /**
@@ -262,6 +277,25 @@ export interface IRequestData {
      * request(), stream() and streamEvents() all honour it.
      */
     redirect?: 'follow' | 'error';
+    /**
+     * Any HTTP answer to this request is final, whatever its status. For a call whose handler is
+     * arbitrary code (an exec script): a 500, 502 or 429 it returned cannot be told from a
+     * platform failure, and sending the request again runs the code again. With this set,
+     * `retries` covers only a request that never reached a server (the connection could not be
+     * opened), which a browser's fetch never reports (see lib/http-wire.ts neverDispatched).
+     */
+    responseIsFinal?: boolean;
+    /**
+     * Read the JSON answer without rounding its integers. JSON.parse turns every
+     * number into a double, so an integer past Number.MAX_SAFE_INTEGER (2^53 - 1)
+     * comes back as a neighbouring value: 9007199254740993 reads as
+     * 9007199254740992. With this set, such an integer comes back as a
+     * `bigint`; every other number is a `number` as before. A `bigint` in a
+     * JSON request body is sent as a plain integer, so the value can go back.
+     * Generated methods of a service whose values are 64-bit integers (sqlite)
+     * set it.
+     */
+    losslessIntegers?: boolean;
 }
 /**
  * Whether a Content-Type names JSON: application/json or a structured-syntax
@@ -316,6 +350,17 @@ export interface IStreamEventsOptions {
      * `response.documented[name]`. Generated stream methods fill this in.
      */
     documentedHeaders?: Record<string, string>;
+    /**
+     * The error codes the operation's spec documents (x-error-codes), as
+     * `{ CODE: 'its title in the spec' }`. An HTTP error that carries one of
+     * them keeps that code, with the spec's title as its message, instead of
+     * becoming STREAM_HTTP_ERROR: a resuming client has to tell "your cursor is
+     * too old, re-read the state" (HISTORY_GAP, CHANGE_CURSOR_INVALID) from any
+     * other refusal. Both are fixed text from the spec; the server's own message
+     * and body still go only to `onDiagnostic`. Generated stream methods fill
+     * this in.
+     */
+    documentedErrorCodes?: Record<string, string>;
     /**
      * The largest frame this stream holds, in UTF-8 bytes of its field lines
      * (the `data:` payload and the rest of the frame). Overrides the client's
@@ -705,6 +750,10 @@ export declare class HttpClient {
     private executeRequest;
     private buildApiErrorFromResponse;
     private toApiError;
+    /**
+     * Whether a failed attempt may be sent again: the rule the generated Node
+     * client follows, from lib/http-wire.ts (shouldRetryFailure has the order).
+     */
     private shouldRetry;
     /**
      * Exponential backoff with bounded delay + jitter. `retryAfterMs` (from
@@ -759,9 +808,10 @@ export declare class HttpClient {
      */
     private isExternalDestination;
     /**
-     * Remove every spelling of Authorization. Header names are case-insensitive,
-     * so a configured or per-request "authorization" survived a delete of
-     * "Authorization" and rode out to an external host.
+     * Remove the client's own Authorization, in every spelling. Header names are
+     * case-insensitive, so a configured "authorization" survived a delete of
+     * "Authorization" and rode out to an external host. `callHeaders` are the
+     * request's own headers: an Authorization there is put back (see below).
      */
     private deleteAuthorization;
     /**
@@ -823,8 +873,15 @@ export declare class HttpClient {
      * Methods follow fetch: 303 turns anything but HEAD into a body-less GET,
      * 301 and 302 turn a POST into one, and 307 and 308 resend the method and
      * body (a streamed body, which cannot be sent twice, is refused).
-     * A request without credentials, or one sent with redirect: 'error', goes
-     * out unchanged.
+     * One sent with redirect: 'error' goes out unchanged.
+     *
+     * `trackHops` (request() sets it for a method that is not idempotent and
+     * for a responseIsFinal request): a request without credentials follows its
+     * redirects here too, wherever they lead, as fetch would (at most 20). A
+     * failure after the first hop was answered is marked `afterDispatch`: a
+     * script that ran and answered 3xx, whose destination then refused the
+     * connection, is not "never dispatched" and is not sent again. Any other
+     * request without credentials goes out unchanged.
      */
     private sendConfined;
     /** The ApiError sendConfined throws; the URL is redacted, the credentials never leave. */

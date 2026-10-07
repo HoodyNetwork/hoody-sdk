@@ -21,7 +21,7 @@ import { homedir } from 'node:os';
 import type { ProxyAuth } from './proxy-auth.js';
 import { type AliveState, type MountStateFile } from './mount-state.js';
 export interface ContainerLike {
-    id: string;
+    id?: string;
     project_id?: string;
     [key: string]: unknown;
 }

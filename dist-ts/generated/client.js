@@ -694,6 +694,8 @@ export class HoodyClient {
      */
     userOnTokenExpired;
     userRefreshToken;
+    /** The caller's onSession hook; derived clients inherit it like the two above. */
+    userOnSession;
     /**
      * The last recovery result handed to this client's transport, with the
      * generation it belongs to. The transport asks acceptRefreshedToken() right
@@ -746,7 +748,7 @@ export class HoodyClient {
         this.urlTemplates = _withServerNameAlias(config.urlTemplates);
         this.target = _resolveClientTarget(config);
         // An account client's HTTP client holds the ACCOUNT base URL; the realm is
-        // kept apart. A realm-host baseURL ({realmId}.api.example) is split here,
+        // kept apart. A realm-host baseURL ({realmId}.api.hoody.com) is split here,
         // so withRealm('all') can clear the realm it named and switching realms
         // keeps the bearer: credential scope is the account origin plus its realm
         // subdomains. The realm still reaches every request: the services build
@@ -769,6 +771,7 @@ export class HoodyClient {
         this.onKitAuthExpired = config.onKitAuthExpired;
         this.userOnTokenExpired = config.onTokenExpired;
         this.userRefreshToken = config.refreshToken;
+        this.userOnSession = typeof config.onSession === 'function' ? config.onSession : undefined;
         // Setup request error/auth handlers
         const configWithRetry = {
             ...config,
@@ -792,6 +795,8 @@ export class HoodyClient {
             acceptRefreshedToken: (token) => this.acceptRefreshedToken(token),
         };
         delete configWithRetry.refreshToken;
+        // A HoodyClient hook: the transport has no use for it.
+        delete configWithRetry.onSession;
         if (config.kitAuth || config.onKitAuthExpired) {
             const proxyAuthMiddleware = createProxyAuthMiddleware(() => this.kitAuth, // getter — always reads current value
             this.callerBaseURL);
@@ -884,7 +889,7 @@ export class HoodyClient {
         // inside the API's credential scope: withholding the header alone would
         // still post the credential in the body to wherever a middleware pointed
         // the request. The scope is the account host and EVERY subdomain of it,
-        // not only realm labels: the deployment owns the whole *.api.hoody.<tld>
+        // not only realm labels: the deployment owns the whole *.api.hoody.com
         // zone, and this check trusts it.
         const accountBaseURL = splitBase.baseURL;
         const refreshCredential = (context, routeTag) => {
@@ -1039,11 +1044,11 @@ export class HoodyClient {
             tabs: new browser.TabsService(kitHttp('browser'), 'browser', this.urlTemplates?.['browser'], this.getKitUrlTemplatePattern('browser')),
             viewport: new browser.ViewportService(kitHttp('browser'), 'browser', this.urlTemplates?.['browser'], this.getKitUrlTemplatePattern('browser')),
         };
-        this.code = {
+        this.code = Object.assign(new code.CodeService(kitHttp('code'), 'code', this.urlTemplates?.['code'], this.getKitUrlTemplatePattern('code')), {
             extensions: new code.ExtensionsService(kitHttp('code'), 'code', this.urlTemplates?.['code'], this.getKitUrlTemplatePattern('code')),
             kit: new code.KitService(kitHttp('code'), 'code', this.urlTemplates?.['code'], this.getKitUrlTemplatePattern('code')),
             ui: new code.UiService(kitHttp('code'), 'code', this.urlTemplates?.['code'], this.getKitUrlTemplatePattern('code')),
-        };
+        });
         this.curl = Object.assign(new curl.CurlService(kitHttp('curl'), 'curl', this.urlTemplates?.['curl'], this.getKitUrlTemplatePattern('curl')), {
             channel: new curl.ChannelService(kitHttp('curl'), 'curl', this.urlTemplates?.['curl'], this.getKitUrlTemplatePattern('curl')),
             jobs: new curl.JobsService(kitHttp('curl'), 'curl', this.urlTemplates?.['curl'], this.getKitUrlTemplatePattern('curl')),
@@ -1065,7 +1070,6 @@ export class HoodyClient {
             mouse: new display.MouseService(kitHttp('display'), 'display', this.urlTemplates?.['display'], this.getKitUrlTemplatePattern('display')),
             screenshots: new display.ScreenshotsService(kitHttp('display'), 'display', this.urlTemplates?.['display'], this.getKitUrlTemplatePattern('display')),
             thumbnails: new display.ThumbnailsService(kitHttp('display'), 'display', this.urlTemplates?.['display'], this.getKitUrlTemplatePattern('display')),
-            ui: new display.UiService(kitHttp('display'), 'display', this.urlTemplates?.['display'], this.getKitUrlTemplatePattern('display')),
             windows: new display.WindowsService(kitHttp('display'), 'display', this.urlTemplates?.['display'], this.getKitUrlTemplatePattern('display')),
         });
         this.exec = Object.assign(new exec.ExecService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'], this.getKitUrlTemplatePattern('exec')), {
@@ -1120,7 +1124,6 @@ export class HoodyClient {
             processes: new terminal.ProcessesService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             sessions: new terminal.SessionsService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
             system: new terminal.SystemService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
-            ui: new terminal.UiService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'], this.getKitUrlTemplatePattern('terminal')),
         };
         this.watch = {
             events: new watch.EventsService(kitHttp('watch'), 'watch', this.urlTemplates?.['watch'], this.getKitUrlTemplatePattern('watch')),
@@ -1134,7 +1137,6 @@ export class HoodyClient {
         };
         this.pipe = Object.assign(new pipe.PipeService(kitHttp('pipe'), 'pipe', this.urlTemplates?.['pipe'], this.getKitUrlTemplatePattern('pipe')), {
             kit: new pipe.KitService(kitHttp('pipe'), 'pipe', this.urlTemplates?.['pipe'], this.getKitUrlTemplatePattern('pipe')),
-            ui: new pipe.UiService(kitHttp('pipe'), 'pipe', this.urlTemplates?.['pipe'], this.getKitUrlTemplatePattern('pipe')),
         });
         this.notes = Object.assign(new notes.NotesService(kitHttp('notes'), 'notes', this.urlTemplates?.['notes'], this.getKitUrlTemplatePattern('notes')), {
             avatars: new notes.AvatarsService(kitHttp('notes'), 'notes', this.urlTemplates?.['notes'], this.getKitUrlTemplatePattern('notes')),
@@ -1433,14 +1435,18 @@ export class HoodyClient {
         return this.adoptSession(response);
     }
     /**
-     * Log out. hoody-api's logout revokes EVERY session of the account (all
-     * devices, the CLI, other apps), not only this client's token. Afterwards
-     * this client, and every client derived from it or from the same parent,
-     * drops its access token, refresh token, stored credentials and kit
-     * credential (kitAuth), and automatic re-authentication stays off until
-     * login(), adoptSession(), setSessionToken() or setToken() starts a new
-     * session. Local state is cleared even when the request fails; the failure
-     * is then rethrown.
+     * Log out THIS session: this client, and every client derived from it or
+     * from the same parent, drops its access token, refresh token, stored
+     * credentials and kit credential (kitAuth), and automatic
+     * re-authentication stays off until login(), adoptSession(),
+     * setSessionToken() or setToken() starts a new session. No request is
+     * made, so it cannot fail, and the account's other sessions (other
+     * devices, the CLI, other apps) stay signed in. It is what the CLI's
+     * hoody logout does.
+     *
+     * hoody-api has no call that revokes one session: the dropped access token
+     * stays valid on the server until it expires. Use logoutAll() when the
+     * token may have leaked, or to sign the account out everywhere.
      *
      * kitAuth is cleared because it is sent on the session's behalf (it often
      * holds the account token itself); pass it again with withContainer() when
@@ -1450,6 +1456,16 @@ export class HoodyClient {
      * EventsClient reconnects with the current (now empty) token.
      */
     async logout() {
+        this.clearSession();
+    }
+    /**
+     * Log out EVERYWHERE: api.auth.logoutAll() revokes every session of the
+     * account (all devices, the CLI, other apps), not only this client's
+     * token, and then this session is cleared as logout() clears it. Local
+     * state is cleared even when the request fails; the failure is then
+     * rethrown.
+     */
+    async logoutAll() {
         const auth = this.api && this.api.auth;
         try {
             if (auth && typeof auth.logoutAll === 'function') {
@@ -1567,7 +1583,7 @@ export class HoodyClient {
             const response = await this.api.auth.login(credentials);
             // A logout, adoption or newer login that landed meanwhile wins.
             if (this.isCurrentSession(generation))
-                this.updateTokensFromAuthResponse(response);
+                this.updateTokensFromAuthResponse(response, 'login');
             return response;
         }
         else {
@@ -1598,7 +1614,7 @@ export class HoodyClient {
     /**
      * Extract and persist auth tokens from login/refresh responses.
      */
-    updateTokensFromAuthResponse(response) {
+    updateTokensFromAuthResponse(response, reason) {
         const responseData = response?.data;
         if (!responseData || typeof responseData !== 'object') {
             return undefined;
@@ -1612,7 +1628,27 @@ export class HoodyClient {
         if (typeof responseData.refreshToken === 'string' && responseData.refreshToken.length > 0) {
             this.session.refreshToken = responseData.refreshToken;
         }
+        this.notifySession({ token, refreshToken: this.session.refreshToken, reason });
         return token;
+    }
+    /**
+     * Hand a pair the SDK just obtained to the caller's onSession hook. Never
+     * awaited and never allowed to throw: it runs inside login() and inside the
+     * 401 recovery, whose result must not depend on the caller's storage.
+     */
+    notifySession(update) {
+        const hook = this.userOnSession;
+        if (!hook)
+            return;
+        try {
+            const pending = hook(update);
+            if (pending && typeof pending.then === 'function') {
+                pending.then(undefined, () => undefined);
+            }
+        }
+        catch {
+            // See above: the hook's failure is the hook's to report.
+        }
     }
     /**
      * Internal auth refresh flow for 401 responses.
@@ -1651,7 +1687,7 @@ export class HoodyClient {
                 // in flight wins.
                 if (!this.isCurrentSession(generation))
                     return undefined;
-                const refreshed = this.updateTokensFromAuthResponse(refreshResponse);
+                const refreshed = this.updateTokensFromAuthResponse(refreshResponse, 'refresh');
                 if (refreshed) {
                     return refreshed;
                 }
@@ -1669,7 +1705,7 @@ export class HoodyClient {
                 const loginResponse = await this.api.auth.login(credentials, { authRetry: false });
                 if (!this.isCurrentSession(generation))
                     return undefined;
-                return this.updateTokensFromAuthResponse(loginResponse);
+                return this.updateTokensFromAuthResponse(loginResponse, 'relogin');
             }
             catch {
                 // Login failed
@@ -1823,6 +1859,7 @@ export class HoodyClient {
                 // its project or server) is looked up by id, and the API's answer routes the client.
                 // A routing field the caller did give must match that answer: it is checked, never
                 // replaced. A failed lookup throws the API's own error.
+                // _containerNeedsLookup() answered true, so id is a non-empty string (the type has it optional).
                 const response = await this.api.containers.get(containerOrId.id);
                 container = _containerFromLookup(containerOrId, response?.data);
             }
@@ -1872,6 +1909,8 @@ export class HoodyClient {
             newConfig.onTokenExpired = this.userOnTokenExpired;
         if (this.userRefreshToken)
             newConfig.refreshToken = this.userRefreshToken;
+        if (this.userOnSession)
+            newConfig.onSession = this.userOnSession;
         if (config.autoRetryAuth !== undefined)
             newConfig.autoRetryAuth = config.autoRetryAuth;
         // The CALLER's transport options, never the normalised `config.transport`: that one has every
@@ -2140,6 +2179,8 @@ export class HoodyClient {
             newConfig.onTokenExpired = this.userOnTokenExpired;
         if (this.userRefreshToken)
             newConfig.refreshToken = this.userRefreshToken;
+        if (this.userOnSession)
+            newConfig.onSession = this.userOnSession;
         if (config.autoRetryAuth !== undefined)
             newConfig.autoRetryAuth = config.autoRetryAuth;
         // The CALLER's transport options, never the normalised `config.transport`: that one has every
@@ -2347,7 +2388,13 @@ export class HoodyClient {
         if (!container || !container.id || !container.project_id || !containerServer) {
             throw new Error('Invalid container object');
         }
-        return `https://${container.project_id}-${container.id}-${serviceSegment}.${containerServer}.${containersDomain}`;
+        // A DNS label holds 63 characters. Two 24-character ids and terminal-<N> make 64 from
+        // N = 10000 up (every ephemeral terminal), a host no resolver accepts. The containers proxy
+        // answers to the short alias t-<N> with the same index handling, so the label switches to it
+        // only when the long one does not fit (the rule of lib/terminal-host.ts).
+        const kitLabel = `${container.project_id}-${container.id}-${serviceSegment}`;
+        const hostLabel = kitLabel.length > 63 ? kitLabel.replace(/-terminal-(\d+)$/, '-t-$1') : kitLabel;
+        return `https://${hostLabel}.${containerServer}.${containersDomain}`;
     }
     /**
      * Build a URL-template pattern for a specific kit namespace

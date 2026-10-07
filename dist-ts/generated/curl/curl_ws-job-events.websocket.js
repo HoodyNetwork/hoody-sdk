@@ -7,6 +7,55 @@
  */
 const RAW_WEBSOCKET_OPEN = 1;
 const RAW_WEBSOCKET_CLOSED = 3;
+function upgradeRefusedError(status, code, via, cause) {
+    const error = new Error(`WebSocket upgrade refused: HTTP ${status}`);
+    error.name = "WebSocketUpgradeRefusedError";
+    error.status = status;
+    error.code = code ?? `HTTP_${status}`;
+    error.via = via;
+    if (cause !== undefined)
+        error.cause = cause;
+    return error;
+}
+/**
+ * Close a socket nobody will use. The `ws` package reports closing a socket
+ * that is still connecting as an `error` event, a tick later; with no
+ * listener that event is thrown and ends a Node process. So the handlers are
+ * replaced first: errors swallowed, nothing else delivered.
+ */
+function discardSocket(socket) {
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onclose = null;
+    socket.onerror = () => { };
+    try {
+        socket.close();
+    }
+    catch { /* already closed */ }
+}
+/**
+ * True when the built-in WebSocket of this Node must not be constructed:
+ * its bundled undici cannot be shown to carry the CVE-2026-12151 fix. The
+ * client then opens its socket with the `ws` package instead.
+ */
+const nodeBuiltinWebSocketUnsafe = 
+// <node-builtin-ws-unsafe>
+(v) => {
+    if (!v?.node || v.bun || v.deno)
+        return false; // not Node: browser/worker/Bun/Deno keep their own
+    const m = /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})$/.exec(v.undici ?? ""); // canonical, no leading 0, finite
+    if (!m)
+        return true; // absent (shared/distro undici) or not a canonical release → ws
+    const [a, b, c] = [+m[1], +m[2], +m[3]];
+    const ge = (x, y, z) => a !== x ? a > x : b !== y ? b > y : c >= z;
+    if (a === 6)
+        return !ge(6, 27, 0);
+    if (a === 7)
+        return !ge(7, 28, 0);
+    if (a === 8)
+        return !ge(8, 5, 0);
+    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+};
 export class CurlWsJobEventsWebSocket {
     ws = null;
     eventHandlers = new Map();
@@ -16,6 +65,19 @@ export class CurlWsJobEventsWebSocket {
     reconnectTimer = null;
     _reconnecting = false;
     shouldReconnect = true;
+    // The URL has been handed to a socket once; with a urlProvider the next
+    // open asks it for a new one.
+    _urlSpent = false;
+    // Liveness timer of the CURRENT socket (see idleTimeoutMs).
+    _livenessTimer = null;
+    // Token of the open attempt in flight. Each openSocket() takes a new one
+    // and disconnect() retires it, so an attempt still awaiting its URL or its
+    // socket can tell it was abandoned and must install nothing.
+    _openAttempt = 0;
+    // Automatic attempts in a row that never opened (see refusalProbeAfter),
+    // and the URL the last socket was opened with, for the probe.
+    _unopenedFailures = 0;
+    _lastConnectUrl = undefined;
     // FIFO queue for message dispatch — preserves frame ordering even when
     // a Blob frame requires async arrayBuffer() decode and a later string/
     // ArrayBuffer frame arrives synchronously.
@@ -144,7 +206,11 @@ export class CurlWsJobEventsWebSocket {
         }
     }
     /**
-     * Establish WebSocket connection
+     * Establish WebSocket connection.
+     *
+     * A second connect() (or reconnect()) made while this one is still
+     * opening replaces it: this one then rejects with "WebSocket connect
+     * superseded", and the new call owns the connection.
      */
     async connect(options) {
         if (options) {
@@ -152,26 +218,118 @@ export class CurlWsJobEventsWebSocket {
             // map, so connect({ headers: { Authorization } }) silently dropped
             // every header the constructor set (claim headers, realm pin,
             // user-agent) and the socket opened unauthenticated-looking. Same
-            // for query and auth: a caller adding one key keeps the rest.
+            // for query and auth: a caller adding one key keeps the rest. And for
+            // streamResume: the service method presets the cursor parameter and
+            // field, and connect({ streamResume: { enabled: true } }) replaced the
+            // whole preset, so the cursor never moved and every reconnect replayed
+            // the stream from the top.
             this.options = {
                 ...this.options,
                 ...options,
                 ...(options.headers ? { headers: { ...(this.options.headers ?? {}), ...options.headers } } : {}),
                 ...(options.query ? { query: { ...(this.options.query ?? {}), ...options.query } } : {}),
                 ...(options.auth ? { auth: { ...(this.options.auth ?? {}), ...options.auth } } : {}),
+                ...(options.streamResume ? { streamResume: { ...(this.options.streamResume ?? {}), ...options.streamResume } } : {}),
             };
             // A resume point passed here seeds the cursor, like one given to the constructor.
             this.takeResumeSeed();
         }
         this.shouldReconnect = true;
+        // A connect the caller asked for starts a new backoff series, and a retry
+        // still pending from an earlier one must not open a second socket.
+        this.reconnectAttempts = 0;
+        this._reconnecting = false;
+        this.clearReconnectTimer();
+        return this.openSocket(false);
+    }
+    /**
+     * Open one socket. `isRetry` is true for an automatic reconnect attempt and
+     * false for a connect the caller asked for.
+     */
+    openSocket(isRetry) {
         return new Promise((resolve, reject) => {
+            // This attempt's token. connect(), reconnect(), the next automatic
+            // attempt and disconnect() all retire it; everything below re-checks it
+            // after each await, because the caller may have disconnected and
+            // connected again while this attempt was still waiting.
+            const attempt = ++this._openAttempt;
+            const superseded = () => attempt !== this._openAttempt;
+            let timedOut = false;
+            // The socket this attempt installed, once it has one.
+            let installed = null;
             const timeoutId = setTimeout(() => {
+                timedOut = true;
                 reject(new Error(`Connection timeout after ${this.options.timeout}ms`));
-                this.ws?.close();
+                if (superseded())
+                    return;
+                if (installed) {
+                    installed.close();
+                    return;
+                }
+                // Still waiting for the URL or for the socket itself: nothing is
+                // installed, so no close event will schedule the next attempt. Whatever
+                // arrives later is closed and dropped (see the checks below).
+                if (isRetry && this.shouldReconnect && this.options.reconnect)
+                    this.scheduleReconnect();
             }, this.options.timeout);
+            // True when this attempt must stop: it timed out, or it was retired.
+            const abandoned = () => {
+                if (!timedOut && !superseded())
+                    return false;
+                clearTimeout(timeoutId);
+                // A no-op after a timeout, which has already answered.
+                reject(new Error("WebSocket connect abandoned: the client was disconnected or connected again"));
+                return true;
+            };
             void (async () => {
                 try {
-                    this.ws = await this.createRawSocket();
+                    // With a urlProvider a URL is good for ONE socket: the first open uses
+                    // the URL the client was built with, every later one asks the provider.
+                    const urlProvider = this.options.urlProvider;
+                    if (urlProvider && this._urlSpent) {
+                        let nextUrl;
+                        try {
+                            nextUrl = await urlProvider({ previousUrl: this._url, attempt: this.reconnectAttempts, reconnect: isRetry });
+                            if (typeof nextUrl !== "string" || nextUrl.length === 0) {
+                                throw new Error("no URL returned");
+                            }
+                        }
+                        catch (cause) {
+                            if (abandoned())
+                                return;
+                            clearTimeout(timeoutId);
+                            const error = Object.assign(new Error("WebSocket urlProvider failed: " + (cause instanceof Error ? cause.message : String(cause))), { cause });
+                            this.emitEvent("error", error);
+                            reject(error);
+                            if (isRetry && this.shouldReconnect && this.options.reconnect)
+                                this.scheduleReconnect();
+                            return;
+                        }
+                        if (abandoned())
+                            return;
+                        this._url = nextUrl;
+                    }
+                    this._urlSpent = true;
+                    let created;
+                    try {
+                        created = await this.createRawSocket();
+                    }
+                    catch (error) {
+                        // An abandoned attempt reports nothing and ends no series.
+                        if (abandoned())
+                            return;
+                        throw error;
+                    }
+                    if (abandoned()) {
+                        // The socket arrived too late (a slow factory, or a slow `ws`
+                        // import): the connect() was already rejected, or a replacement
+                        // connection exists. Close it and install nothing.
+                        discardSocket(created);
+                        return;
+                    }
+                    this.ws = created;
+                    installed = created;
+                    const socket = created;
                     // Generation bump + capture happens synchronously, BEFORE
                     // onmessage is installed. Each socket\u2019s handlers close over
                     // their own installedGen — when disconnect()/reconnect() bumps
@@ -185,6 +343,16 @@ export class CurlWsJobEventsWebSocket {
                     this._frameQueue = Promise.resolve();
                     const dispatchAlive = { alive: true };
                     this._dispatchAlive = dispatchAlive;
+                    // State of THIS socket only. A replacement socket starts clean, so a
+                    // stale error can never stop the reconnects of a later one.
+                    let opened = false;
+                    let openedAt = 0;
+                    let closeHandled = false;
+                    let lastActivity = Date.now();
+                    // Set when this socket ended for a reason a reconnect cannot cure: a
+                    // local resource cap, or an upgrade the server refused for good.
+                    let finalError;
+                    this.stopLiveness();
                     // Request binary frames as ArrayBuffer rather than Blob.
                     // Browser default is "blob" which would force every binary frame
                     // through an async decode path. ArrayBuffer is synchronous.
@@ -196,16 +364,83 @@ export class CurlWsJobEventsWebSocket {
                     }
                     this.ws.onopen = () => {
                         clearTimeout(timeoutId);
-                        this.reconnectAttempts = 0;
+                        // A socket that was superseded before it opened (its connect() timed
+                        // out and the caller connected again) must not touch the client: it
+                        // would announce a connection nobody holds and take over the liveness
+                        // timer of the current socket. It only closes itself.
+                        if (this._socketGen !== installedGen || this.ws !== socket) {
+                            closeHandled = true;
+                            discardSocket(socket);
+                            // Its connect() is settled here: the timeout that would have
+                            // answered it was just cleared.
+                            reject(new Error("WebSocket connect superseded: a newer connect() replaced this attempt"));
+                            return;
+                        }
+                        // The backoff is NOT reset here. A server that accepts and then
+                        // closes (a connection limit, a deleted resource) would otherwise be
+                        // retried at the first delay forever; the close handler resets it
+                        // once a connection has lasted reconnectStableMs.
+                        opened = true;
+                        this._unopenedFailures = 0;
+                        openedAt = Date.now();
+                        lastActivity = openedAt;
                         this._reconnecting = false;
                         // The one-shot incarnation reached an open socket; reconnects use the live one.
                         this._firstIncarnation = undefined;
                         this.clearReconnectTimer();
+                        // Liveness. A link that dies without a FIN or RST (sleep, a network
+                        // handover, a NAT entry expiring) delivers no close event, so the
+                        // socket would stay "connected" with nothing arriving. When nothing
+                        // has been heard for idleMs the link is declared dead.
+                        const probe = socket;
+                        const canProbe = typeof probe.ping === "function" && typeof probe.on === "function";
+                        const configuredIdle = this.options.idleTimeoutMs;
+                        const idleMs = typeof configuredIdle === "number"
+                            ? (Number.isFinite(configuredIdle) && configuredIdle > 0 ? configuredIdle : 0)
+                            : (canProbe ? 75000 : 0);
+                        if (idleMs > 0) {
+                            if (canProbe) {
+                                // `ws` shows protocol pings and pongs; the client pings too, so
+                                // a quiet but healthy stream keeps answering.
+                                const touch = () => { lastActivity = Date.now(); };
+                                probe.on("ping", touch);
+                                probe.on("pong", touch);
+                            }
+                            const timer = setInterval(() => {
+                                if (closeHandled || this._socketGen !== installedGen) {
+                                    clearInterval(timer);
+                                    return;
+                                }
+                                if (Date.now() - lastActivity >= idleMs) {
+                                    clearInterval(timer);
+                                    // A dead link never completes a close handshake: drop the
+                                    // socket and report the close from here.
+                                    try {
+                                        if (typeof probe.terminate === "function")
+                                            probe.terminate();
+                                        else
+                                            socket.close();
+                                    }
+                                    catch { /* already closed */ }
+                                    finishClose(1006, "liveness timeout");
+                                    return;
+                                }
+                                if (canProbe && socket.readyState === RAW_WEBSOCKET_OPEN) {
+                                    try {
+                                        probe.ping();
+                                    }
+                                    catch { /* closing */ }
+                                }
+                            }, Math.max(50, Math.floor(idleMs / 3)));
+                            timer.unref?.();
+                            this._livenessTimer = timer;
+                        }
                         this.emitEvent("connect");
                         resolve();
                     };
                     this.ws.onmessage = (event) => {
                         const raw = event.data;
+                        lastActivity = Date.now();
                         // Every dispatch callback is exception-fenced: a throwing frame
                         // handler would otherwise leave _frameQueue REJECTED, and since the
                         // chain grows via .then(fn) every subsequent frame would be
@@ -284,7 +519,14 @@ export class CurlWsJobEventsWebSocket {
                             }
                         });
                     };
-                    this.ws.onclose = (event) => {
+                    const finishClose = (code, reason) => {
+                        // Once per socket: the liveness check reports a dead link itself,
+                        // and the transport's own close event may still follow.
+                        if (closeHandled)
+                            return;
+                        closeHandled = true;
+                        if (this._socketGen === installedGen)
+                            this.stopLiveness();
                         // Frame-settle barrier. Received frames dispatch through the
                         // _frameQueue microtask chain, so a close arriving in the same tick
                         // as the final data frames (typical when the remote process exits:
@@ -306,27 +548,102 @@ export class CurlWsJobEventsWebSocket {
                             dispatchAlive.alive = false;
                             if (this._socketGen !== installedGen)
                                 return;
-                            this.emitEvent("disconnect", event.code, event.reason);
+                            this.emitEvent("disconnect", code, reason);
+                            // The backoff starts over only after a connection that lasted.
+                            if (opened && Date.now() - openedAt >= (this.options.reconnectStableMs ?? 30000)) {
+                                this.reconnectAttempts = 0;
+                            }
                             // Close-code filter. Do NOT reconnect on server-sent policy
                             // closes — 4xxx codes mean "stop trying" (auth failed, permission
                             // denied, bad request), and 1008/1003 are explicit policy rejections.
                             // Reconnecting against these would loop forever against a server that
                             // already told us to go away.
-                            const isTerminal = event.code === 1008 || event.code === 1003 || event.code === 1002 || (event.code >= 4000 && event.code < 5000);
-                            if (this.shouldReconnect && this.options.reconnect && !isTerminal) {
-                                this.scheduleReconnect();
+                            //
+                            // A normal close (1000) from the server is final too, unless the
+                            // caller opted in: the server ended the stream on purpose, and a
+                            // reconnect to a deleted terminal session re-creates it.
+                            //
+                            // finalError: this socket hit a local resource cap, or the server
+                            // refused the upgrade for good. Both arrive as 1006, and neither
+                            // is cured by trying again.
+                            const isTerminal = code === 1008 || code === 1003 || code === 1002 || (code >= 4000 && code < 5000)
+                                || (code === 1000 && this.options.reconnectOnNormalClose !== true)
+                                || finalError !== undefined;
+                            // A connect() the caller made that never opened was rejected to
+                            // the caller. It must not leave a reconnect loop running behind
+                            // that rejection; the caller decides whether to connect again.
+                            const rejectedToCaller = !opened && !isRetry;
+                            if (this.shouldReconnect && this.options.reconnect && !isTerminal && !rejectedToCaller) {
+                                // Repeated failures before open, on a transport that hides the
+                                // status: ask the server why before trying again.
+                                if (!opened)
+                                    this._unopenedFailures++;
+                                const probeAfter = this.options.refusalProbeAfter ?? 3;
+                                if (!opened && probeAfter > 0 && this._unopenedFailures % probeAfter === 0 && !this.options.webSocketFactory) {
+                                    this._reconnecting = true;
+                                    void this.probeRefusal(attempt);
+                                }
+                                else {
+                                    this.scheduleReconnect();
+                                }
+                            }
+                            else if (this._reconnecting) {
+                                // A reconnect attempt that will not be followed by another.
+                                this._reconnecting = false;
+                                if (this.shouldReconnect && this.options.reconnect)
+                                    this.emitEvent("reconnect_failed");
                             }
                         });
                     };
-                    this.ws.onerror = () => {
+                    this.ws.onclose = (event) => {
+                        finishClose(event.code, event.reason);
+                    };
+                    this.ws.onerror = (event) => {
+                        // Noise from a socket the liveness check already gave up on.
+                        if (closeHandled)
+                            return;
                         clearTimeout(timeoutId);
-                        const error = new Error("WebSocket connection error");
+                        // The transport's own error when it exposes one: `ws` does, a
+                        // browser socket and Node's built-in one do not.
+                        const cause = event instanceof Error ? event : event?.error;
+                        const causeCode = cause?.code;
+                        let error;
+                        if (causeCode === "WS_ERR_TOO_MANY_BUFFERED_PARTS" || causeCode === "WS_ERR_UNSUPPORTED_MESSAGE_LENGTH" || causeCode === "WS_ERR_UNSUPPORTED_DATA_PAYLOAD_LENGTH") {
+                            // `ws` stopped reading because a local cap was hit (too many
+                            // fragments or buffered chunks, or a message over a size limit).
+                            error = new Error(`WebSocket closed by a local resource limit (${String(causeCode)}); automatic reconnect stopped`);
+                            finalError = error;
+                        }
+                        else {
+                            // `ws` reports a refused upgrade with the HTTP status in its message.
+                            const refused = opened || !(cause instanceof Error) ? null : /^Unexpected server response: (\d{3})$/.exec(cause.message);
+                            const status = refused ? Number(refused[1]) : 0;
+                            if (status >= 400 && status < 500 && status !== 408 && status !== 425 && status !== 429) {
+                                // The server answered the upgrade with a client error (the
+                                // resource is gone, or the credential is refused). The same
+                                // request gets the same answer.
+                                error = upgradeRefusedError(status, undefined, "upgrade");
+                                finalError = error;
+                            }
+                            else {
+                                error = new Error("WebSocket connection error");
+                            }
+                        }
+                        if (cause !== undefined)
+                            error.cause = cause;
                         this.emitEvent("error", error);
                         reject(error);
                     };
                 }
                 catch (error) {
                     clearTimeout(timeoutId);
+                    if (isRetry) {
+                        // No socket was created, so no close event follows: report the
+                        // failure and end the series instead of leaving it silently stuck.
+                        this.emitEvent("error", error instanceof Error ? error : new Error(String(error)));
+                        this._reconnecting = false;
+                        this.emitEvent("reconnect_failed");
+                    }
                     reject(error);
                 }
             })();
@@ -385,6 +702,7 @@ export class CurlWsJobEventsWebSocket {
             }
         };
         const connectUrl = buildConnectUrl();
+        this._lastConnectUrl = connectUrl;
         // Injected transport wins outright. No global-WebSocket probe, no `ws`
         // import, no degraded path: if the factory throws or returns something
         // unusable the connect fails loudly. A silent fallback here would send
@@ -410,7 +728,20 @@ export class CurlWsJobEventsWebSocket {
         const isBrowserRuntime = typeof globalThis.window !== "undefined"
             && typeof globalThis.document !== "undefined";
         const globalCtor = globalThis.WebSocket;
-        if (typeof globalCtor === "function" && (isBrowserRuntime || !hasHeaders)) {
+        // CVE-2026-12151. On a Node whose bundled undici cannot be shown to be
+        // patched, the built-in WebSocket is never constructed: every path below
+        // that would have chosen it takes `ws` instead, and fails loudly when `ws`
+        // cannot be loaded. This is decided BEFORE the browser test, because a Node
+        // process with a jsdom-style window + document is still Node. Bun, Deno,
+        // browsers and workers are not Node and keep their own socket.
+        const runtime = globalThis.process;
+        const runtimeVersions = runtime?.versions;
+        const builtinUnsafe = nodeBuiltinWebSocketUnsafe(runtimeVersions);
+        const builtinRefused = (cause) => Object.assign(new Error(`The built-in WebSocket of Node ${runtimeVersions?.node ?? "unknown"} (${runtimeVersions?.undici ? "undici " + runtimeVersions.undici : "undici version not reported"}) `
+            + "cannot be shown to be free of CVE-2026-12151 and the `ws` package could not be loaded ("
+            + (cause instanceof Error ? cause.message : String(cause))
+            + "). Reinstall hoody-sdk, or use an official Node 22.23.0+, 24.17.0+ or 26.3.1+."), { cause });
+        if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || !hasHeaders)) {
             if (isBrowserRuntime && hasHeaders) {
                 // A browser WebSocket cannot send headers, so kitAuth password, jwt
                 // and identity headers never reach the upgrade. The proxy accepts two
@@ -430,7 +761,9 @@ export class CurlWsJobEventsWebSocket {
         try {
             wsModule = await import(specifier);
         }
-        catch {
+        catch (cause) {
+            if (builtinUnsafe)
+                throw builtinRefused(cause);
             // `ws` not installed — fall back to global WS, losing headers. This is
             // the same degraded path as when the module exists but has no default.
             if (typeof globalCtor === "function") {
@@ -439,13 +772,17 @@ export class CurlWsJobEventsWebSocket {
             throw new Error("WebSocket implementation unavailable in this runtime");
         }
         if (typeof wsModule.default !== "function") {
+            if (builtinUnsafe)
+                throw builtinRefused(new Error("the module has no WebSocket constructor export"));
             if (typeof globalCtor === "function") {
                 return new globalCtor(connectUrl, this.options.protocols);
             }
             throw new Error("WebSocket implementation unavailable in this runtime");
         }
         // Node `ws` supports `headers` via a 3rd arg; surface caller headers there.
-        const wsOptions = {};
+        // The fragment and buffered-chunk caps are passed explicitly, so they hold
+        // whatever defaults the installed `ws` has.
+        const wsOptions = { maxFragments: 16384, maxBufferedChunks: 262144 };
         if (hasHeaders) {
             wsOptions.headers = this.options.headers;
         }
@@ -484,6 +821,11 @@ export class CurlWsJobEventsWebSocket {
     disconnect(reason) {
         this.shouldReconnect = false;
         this.clearReconnectTimer();
+        // Retire an open attempt still waiting for its URL or its socket.
+        this._openAttempt++;
+        // A disconnect during a backoff wait ends the series: nothing is pending.
+        this._reconnecting = false;
+        this.stopLiveness();
         // Kill the dispatch token synchronously — any in-flight queued task
         // (especially Blob arrayBuffer() microtasks) bails via the token
         // check. Deliberately NOT a _socketGen bump: the generation guard
@@ -511,13 +853,91 @@ export class CurlWsJobEventsWebSocket {
         const randomizedDelay = Math.max(0, delay + jitter);
         this.reconnectTimer = setTimeout(() => {
             this.reconnectAttempts++;
-            this.emitEvent("reconnect_attempt", this.reconnectAttempts);
-            this.connect().then(() => {
-                this.emitEvent("reconnect", this.reconnectAttempts);
+            const attempt = this.reconnectAttempts;
+            this.emitEvent("reconnect_attempt", attempt);
+            this.openSocket(true).then(() => {
+                this.emitEvent("reconnect", attempt);
             }).catch(() => {
-                // Error already emitted, will retry
+                // Reported through onError. The close handler (or openSocket, when no
+                // socket was created) decides whether another attempt follows.
             });
         }, randomizedDelay);
+    }
+    /**
+     * One plain GET to the URL the failing sockets used, to learn the status the
+     * transport hid. Ends the series on 401, 403 or 404; otherwise the backoff
+     * goes on. `attempt` is the open attempt that failed: a disconnect() or a
+     * new connect() meanwhile makes the answer irrelevant.
+     */
+    async probeRefusal(attempt) {
+        let status = 0;
+        let code;
+        const fetchFn = globalThis.fetch;
+        const target = this._lastConnectUrl;
+        if (typeof fetchFn === "function" && target) {
+            const isBrowserRuntime = typeof globalThis.window !== "undefined"
+                && typeof globalThis.document !== "undefined";
+            // A browser WebSocket sends no headers, only its cookies; elsewhere the
+            // socket carried these headers (kitAuth, realm pin).
+            const headers = isBrowserRuntime ? {} : { ...(this.options.headers ?? {}) };
+            const controller = typeof AbortController === "function" ? new AbortController() : undefined;
+            const timer = setTimeout(() => controller?.abort(), 5000);
+            timer.unref?.();
+            try {
+                const response = await fetchFn(target.replace(/^ws(s?):/i, "http$1:"), {
+                    method: "GET",
+                    headers,
+                    // A redirect is not followed, so the headers never reach another host.
+                    redirect: "manual",
+                    credentials: isBrowserRuntime ? "include" : "same-origin",
+                    ...(controller ? { signal: controller.signal } : {}),
+                });
+                status = response.status;
+                if (status === 401 || status === 403 || status === 404) {
+                    try {
+                        const body = JSON.parse((await response.text()).slice(0, 4096));
+                        const nested = body && typeof body.error === "object" && body.error !== null ? body.error.code : undefined;
+                        if (typeof body?.code === "string")
+                            code = body.code;
+                        else if (typeof nested === "string")
+                            code = nested;
+                        else if (typeof body?.error === "string" && /^[A-Z][A-Z0-9_]*$/.test(body.error))
+                            code = body.error;
+                    }
+                    catch { /* no JSON error code */ }
+                }
+                else {
+                    try {
+                        await response.body?.cancel();
+                    }
+                    catch { /* nothing to release */ }
+                }
+            }
+            catch {
+                // No answer (network still down, a browser refusing the request):
+                // nothing learned.
+                status = 0;
+            }
+            finally {
+                clearTimeout(timer);
+            }
+        }
+        if (attempt !== this._openAttempt || !this.shouldReconnect || !this.options.reconnect)
+            return;
+        if (status === 401 || status === 403 || status === 404) {
+            this._reconnecting = false;
+            this.emitEvent("error", upgradeRefusedError(status, code, "probe"));
+            this.emitEvent("reconnect_failed");
+            return;
+        }
+        this.scheduleReconnect();
+    }
+    /** Stop the liveness timer of the current socket. */
+    stopLiveness() {
+        if (this._livenessTimer) {
+            clearInterval(this._livenessTimer);
+            this._livenessTimer = null;
+        }
     }
     /**
      * Clear reconnection timer
@@ -835,6 +1255,16 @@ export class CurlWsJobEventsWebSocket {
     }
     get url() {
         return this._url;
+    }
+    /**
+     * The socket of the current connection, or null when there is none. It is
+     * replaced on every reconnect, so read it again after each `connect`
+     * event instead of keeping it. For code that needs what the transport
+     * offers beyond this client (the `ws` package: ping(), the ping and pong
+     * events); do not assign its on* handlers, the client owns them.
+     */
+    get rawSocket() {
+        return this.ws;
     }
     get connected() {
         return this.ws?.readyState === RAW_WEBSOCKET_OPEN;
