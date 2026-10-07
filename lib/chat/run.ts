@@ -9,7 +9,8 @@
 
 import { prepareChatsDir } from './prepare-dir.js';
 import { createRenderer } from './markdown-renderer.js';
-import { askHoody, renderSources, TRUNCATION_NOTICE } from './service-client.js';
+import { askHoody, renderSources, truncationNotice, docsSiteBaseFor } from './service-client.js';
+import { accountApiBaseUrl } from './home-dir.js';
 import { docsLimiter } from './docs-singletons.js';
 
 export interface RunChatOptions {
@@ -23,6 +24,13 @@ export interface RunChatOptions {
     private?: boolean;
     acceptEndpoint?: string;
   };
+  /**
+   * The API base URL the caller resolved for this invocation. The CLI passes the one its global
+   * options select (`--base-url`, `--profile`, `--config`, then the environment and the saved
+   * config), so the question goes to the assistant of the platform the command addresses. Left
+   * out (a program using this module directly), the environment and the saved config decide.
+   */
+  apiBaseUrl?: string;
 }
 
 /**
@@ -70,6 +78,7 @@ export async function runChat(args: RunChatOptions): Promise<void> {
         acceptEndpointEnv: process.env.HOODY_CHAT_ACCEPT_ENDPOINT,
         markdown: args.opts.markdown !== false,
         stream: args.opts.stream !== false,
+        ...(args.apiBaseUrl !== undefined ? { apiBaseUrl: args.apiBaseUrl } : {}),
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -96,8 +105,12 @@ export async function runChat(args: RunChatOptions): Promise<void> {
     }
   };
 
+  // The platform the account is on decides which assistant answers and which docs site is linked.
+  const apiBaseUrl = args.apiBaseUrl ?? accountApiBaseUrl();
+  const docsSiteBase = docsSiteBaseFor(apiBaseUrl);
   const result = await askHoody({
     message: prompt,
+    apiBaseUrl,
     limiter: docsLimiter,
     acceptEndpointFlag: args.opts.acceptEndpoint,
     acceptEndpointEnv: process.env.HOODY_CHAT_ACCEPT_ENDPOINT,
@@ -144,8 +157,8 @@ export async function runChat(args: RunChatOptions): Promise<void> {
   if (noStream) renderer.write(result.text);
   // The notice is signalled by the flag, never streamed — otherwise it ends up
   // inside the caller's accumulated answer text.
-  if (result.truncated) renderer.write(TRUNCATION_NOTICE);
-  const citations = renderSources(result.sources);
+  if (result.truncated) renderer.write(truncationNotice(docsSiteBase));
+  const citations = renderSources(result.sources, docsSiteBase);
   if (citations) renderer.write(citations);
   renderer.end();
 }

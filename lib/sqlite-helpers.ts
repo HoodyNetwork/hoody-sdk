@@ -22,7 +22,7 @@
 
 import { SqlService } from '../generated/sqlite/sql.service.js';
 import type { SqlServiceBase } from '../generated/sqlite/sql.service.generated.js';
-import type { main_responseItem } from '../generated/types.js';
+import type { main_requestItem, main_responseItem } from '../generated/types.js';
 import { ValidationError } from '../generated/errors.js';
 
 const SQLITE_HELPERS_PATCH_MARKER = Symbol.for('hoody.sdk.sqlite.sql.helpers');
@@ -35,13 +35,14 @@ type TemplateVars = {
   server?: string;
 };
 
-/** A value one placeholder binds: a JSON scalar. */
-export type SqliteBindValue = string | number | boolean | null;
+/** A value one placeholder binds: a JSON scalar, or a bigint for an INTEGER past 2^53-1. */
+export type SqliteBindValue = string | number | bigint | boolean | null;
 
 /**
  * Placeholder values: an array for positional `?`, an object for named `:name` / `@name` / `$name`.
- * Each value is a string, a finite number, a boolean or null; anything else (NaN, Infinity,
- * undefined, a bigint, bytes, a nested value) is refused with a ValidationError before sending.
+ * Each value is a string, a finite number, a bigint within the signed 64-bit INTEGER range, a
+ * boolean or null; anything else (NaN, Infinity, undefined, a wider bigint, bytes, a nested
+ * value) is refused with a ValidationError before sending.
  */
 export type SqliteParams = readonly SqliteBindValue[] | Record<string, SqliteBindValue>;
 
@@ -114,10 +115,14 @@ declare module '../generated/sqlite/sql.service.js' {
 
 type ItemKind = 'query' | 'statement';
 
+/** sqlite's INTEGER is a signed 64-bit value: a bigint past either end has no column form. */
+const INT64_MIN = -(2n ** 63n);
+const INT64_MAX = 2n ** 63n - 1n;
+
 function describeBinding(value: unknown): string {
   if (value === undefined) return 'undefined (pass null for SQL NULL)';
   if (typeof value === 'number') return `${value} (JSON would send it as null)`;
-  if (typeof value === 'bigint') return 'a bigint (JSON cannot carry it: pass a number, or a string for an INTEGER column)';
+  if (typeof value === 'bigint') return `${value}n, outside the 64-bit INTEGER range (pass a string to store it as text)`;
   if (typeof value !== 'object' || value === null) return typeof value;
   if (ArrayBuffer.isView(value) || Object.prototype.toString.call(value) === '[object ArrayBuffer]') {
     return 'bytes (the kit binds JSON values only, no blobs)';
@@ -127,7 +132,10 @@ function describeBinding(value: unknown): string {
 
 /**
  * Each placeholder value must be one the kit binds as sent: a string, a
- * finite number, a boolean or null. The kit reads `values` as JSON
+ * finite number, a bigint inside sqlite's signed 64-bit INTEGER, a boolean or
+ * null. The client writes a bigint in the JSON body as an integer, and
+ * returns an INTEGER above 2^53-1 as one, so a value read back binds again.
+ * The kit reads `values` as JSON
  * (hoody-sqlite raw2params), and JSON.stringify turns NaN and Infinity into
  * null and drops an undefined key, so an INSERT would store NULL without an
  * error; a nested value or bytes would bind as a JSON array or map.
@@ -146,8 +154,9 @@ function checkBindings(label: string, field: 'params' | 'values', bind: unknown)
   for (const [slot, v] of entries) {
     if (v === null || typeof v === 'string' || typeof v === 'boolean') continue;
     if (typeof v === 'number' && Number.isFinite(v)) continue;
+    if (typeof v === 'bigint' && v >= INT64_MIN && v <= INT64_MAX) continue;
     throw new ValidationError(
-      `${label}: ${field}${slot} must be a string, a finite number, a boolean or null, got ${describeBinding(v)}`,
+      `${label}: ${field}${slot} must be a string, a finite number, a bigint, a boolean or null, got ${describeBinding(v)}`,
       field,
     );
   }
@@ -183,7 +192,11 @@ async function sendOne(
 
   const item = kind === 'query' ? { query: statement } : { statement };
   const response = await sql.runTransaction(
-    { transaction: [bind == null ? item : { ...item, values: bind as Record<string, SqliteBindValue> }] },
+    { transaction: [bind == null ? item : {
+      ...item,
+      // The generated type lists the JSON scalars; a bigint goes out as a JSON integer.
+      values: bind as NonNullable<main_requestItem['values']>,
+    }] },
     // Forced after the caller's options: the result is read from the envelope.
     { ...rest, rawResponse: false, responseType: 'json' },
     templateVars,

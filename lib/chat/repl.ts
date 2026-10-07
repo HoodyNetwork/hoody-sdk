@@ -21,7 +21,8 @@ import { createRenderer } from './markdown-renderer.js';
 import {
   askHoody,
   renderSources,
-  TRUNCATION_NOTICE,
+  truncationNotice,
+  docsSiteBaseFor,
   SERVICE_MODEL_LABEL,
   SERVICE_TIER_LABEL,
 } from './service-client.js';
@@ -41,6 +42,7 @@ import {
 } from './sessions.js';
 import { showBannerIfNeeded } from './first-run-banner.js';
 import { redactForDisk } from './redact.js';
+import { accountApiBaseUrl } from './home-dir.js';
 
 export interface ReplOptions {
   initialPrivate: boolean;
@@ -52,6 +54,11 @@ export interface ReplOptions {
   markdown?: boolean;
   /** false when --no-stream was passed: buffer the answer, print it once. */
   stream?: boolean;
+  /**
+   * The API base URL the caller resolved for this invocation (see RunChatOptions.apiBaseUrl).
+   * Left out, the environment and the saved config decide, read on every turn.
+   */
+  apiBaseUrl?: string;
   /** For tests. */
   input?: NodeJS.ReadableStream;
   output?: NodeJS.WritableStream;
@@ -415,8 +422,13 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
     // real TTY so piped output stays clean. Auto-clears on the first stream
     // byte and on turn end / abort / error.
     const spinner = isInteractive ? startSpinner(output) : null;
+    // Read per turn: the platform the account is on decides which assistant answers and which
+    // docs site is linked.
+    const apiBaseUrl = opts.apiBaseUrl ?? accountApiBaseUrl();
+    const docsSiteBase = docsSiteBaseFor(apiBaseUrl);
     const result = await askHoody({
       message: userMsg,
+      apiBaseUrl,
       history,
       limiter: docsLimiter,
       acceptEndpointFlag: opts.acceptEndpointFlag,
@@ -460,14 +472,14 @@ export async function runRepl(opts: ReplOptions): Promise<void> {
         assistantText = result.text;
         renderer.write(result.text);
       }
-      if (result.truncated) renderer.write(TRUNCATION_NOTICE);
+      if (result.truncated) renderer.write(truncationNotice(docsSiteBase));
       // Citations are RENDERED, never folded back into `assistantText`.
       // That text is replayed to the service as conversation history, and a
       // model shown a hand-written "Sources:" list in a prior assistant turn
       // copies the pattern — inventing doc links on later turns, which the
       // service's own instructions forbid. Keep history to what the model
       // actually said; the links are ours, derived from the `sources` frame.
-      const citations = renderSources(result.sources);
+      const citations = renderSources(result.sources, docsSiteBase);
       if (citations) renderer.write(citations);
     }
     renderer.end();

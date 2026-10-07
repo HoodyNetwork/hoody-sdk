@@ -50,11 +50,12 @@ const execFile = promisify(execFileCb);
 const RCLONE_HEADERS_MIN_VERSION: readonly [number, number] = [1, 61];
 
 export interface ContainerLike {
-  id: string;
-  // project_id is optional and server / server_name flow through the index
-  // signature so a raw API container object (project_id?: string, server_name
-  // string | null, `server` possibly an object) is assignable. The mount helpers
-  // validate id + project_id + a resolvable server at runtime before building a URL.
+  // Every field is optional in the type and server / server_name flow through the index
+  // signature, so the SDK's own container responses (containers.get / create: `id?: string;
+  // project_id?: string; server_name?: string | null`; a containers.list item: `server` an
+  // object) are assignable unchanged. The mount helpers validate id + project_id + a
+  // resolvable server at runtime before building a URL.
+  id?: string;
   project_id?: string;
   [key: string]: unknown;
 }
@@ -188,10 +189,13 @@ export function resolveKitUrl(target: MountTarget): { kitUrl: string; subpath: s
     };
   }
   const c = target.container;
-  const server = typeof c.server_name === 'string'
+  // server_name, else server: a string when hand-built, the server-details object
+  // ({ name, country, … }) on a containers.list item, whose server_name is null.
+  const serverField = typeof c.server === 'object' && c.server !== null ? (c.server as { name?: unknown }).name : c.server;
+  const server = typeof c.server_name === 'string' && c.server_name !== ''
     ? c.server_name
-    : (typeof c.server === 'string' ? c.server : undefined);
-  if (!c.id || !c.project_id || !server) {
+    : (typeof serverField === 'string' ? serverField : undefined);
+  if (typeof c.id !== 'string' || !c.id || typeof c.project_id !== 'string' || !c.project_id || !server) {
     throw new Error('container must include id, project_id, and server_name (or server)');
   }
   const idx = target.serviceIndex ?? 1;

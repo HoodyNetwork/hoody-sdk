@@ -117,6 +117,85 @@ export function kitAuthWebSocketParts(
   return { url: u.toString(), headers, credentialQueryParams };
 }
 
+/** True in Node.js itself: not Bun, not Deno, not a browser or worker. */
+export function isNodeRuntime(): boolean {
+  if (typeof process === 'undefined') return false;
+  const v = (process as { versions?: Record<string, string | undefined> }).versions;
+  return !!v?.node && !v.bun && !v.deno;
+}
+
+/**
+ * True when Node's built-in WebSocket must not be constructed: the bundled
+ * undici cannot be shown to carry the fix for CVE-2026-12151 (unbounded
+ * message fragments). Keyed on the undici version the runtime reports; a
+ * missing or non-release value counts as unsafe. The text between the
+ * sentinels is shared verbatim with the generated WebSocket clients and with
+ * hoody-curl's transport; a test compares the copies.
+ */
+export const nodeBuiltinWebSocketUnsafe =
+// <node-builtin-ws-unsafe>
+(v: Record<string, string | undefined> | undefined): boolean => {
+  if (!v?.node || v.bun || v.deno) return false;      // not Node: browser/worker/Bun/Deno keep their own
+  const m = /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})$/.exec(v.undici ?? "");  // canonical, no leading 0, finite
+  if (!m) return true;                                  // absent (shared/distro undici) or not a canonical release → ws
+  const [a, b, c] = [+m[1]!, +m[2]!, +m[3]!];
+  const ge = (x: number, y: number, z: number) => a !== x ? a > x : b !== y ? b > y : c >= z;
+  if (a === 6) return !ge(6, 27, 0);
+  if (a === 7) return !ge(7, 28, 0);
+  if (a === 8) return !ge(8, 5, 0);
+  return a < 6;                                         // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+}
+// </node-builtin-ws-unsafe>
+;
+
+/** This process is Node and its built-in WebSocket must not be used. */
+export function builtinWebSocketProhibited(): boolean {
+  return isNodeRuntime()
+    && nodeBuiltinWebSocketUnsafe((process as { versions?: Record<string, string | undefined> }).versions);
+}
+
+/** Receive caps every `ws` socket the SDK constructs carries (the `ws` >= 8.21.1 defaults, stated). */
+export const SDK_WS_CAPS = Object.freeze({ maxFragments: 16 * 1024, maxBufferedChunks: 262_144 });
+
+/**
+ * The error for a Node whose built-in WebSocket is prohibited when the `ws`
+ * package cannot be loaded either. Only a broken install gets here.
+ */
+export function unsafeBuiltinWebSocketMessage(cause: unknown): string {
+  const v = (typeof process !== 'undefined' ? (process as { versions?: Record<string, string | undefined> }).versions : undefined) ?? {};
+  const undici = v.undici ? `undici ${v.undici}` : 'undici version not reported';
+  const why = cause instanceof Error ? cause.message : String(cause);
+  return `The built-in WebSocket of Node ${v.node ?? 'unknown'} (${undici}) cannot be shown to be free of `
+    + `CVE-2026-12151 and the \`ws\` package could not be loaded (${why}). Reinstall hoody-sdk, or use an `
+    + 'official Node 22.23.0+, 24.17.0+ or 26.3.1+.';
+}
+
+/**
+ * The codes `ws` puts on an error it raises itself because a frame or message
+ * broke one of its own receive limits. The socket is torn down locally; the
+ * peer will do the same thing again, so reconnecting is pointless.
+ */
+const LOCAL_WS_CAP_CODES: ReadonlySet<string> = new Set([
+  'WS_ERR_TOO_MANY_BUFFERED_PARTS',
+  'WS_ERR_UNSUPPORTED_MESSAGE_LENGTH',
+  'WS_ERR_UNSUPPORTED_DATA_PAYLOAD_LENGTH',
+]);
+
+/**
+ * The local receive-cap code behind an error, or undefined. Looks at the error
+ * itself, an ErrorEvent's `.error`, and the `description` / `cause` chain that
+ * engine.io wraps a transport error in.
+ */
+export function localWebSocketCapCode(error: unknown): string | undefined {
+  let cur: unknown = error;
+  for (let depth = 0; depth < 6 && cur && typeof cur === 'object'; depth++) {
+    const o = cur as { code?: unknown; error?: unknown; description?: unknown; cause?: unknown };
+    if (typeof o.code === 'string' && LOCAL_WS_CAP_CODES.has(o.code)) return o.code;
+    cur = o.error ?? o.description ?? o.cause;
+  }
+  return undefined;
+}
+
 /** Minimal constructor shape shared by the global WebSocket and `ws`. */
 type WsCtor<T> = new (url: string, protocols?: string | string[], options?: unknown) => T;
 
@@ -140,6 +219,10 @@ export function refusedUpgradeStatus(socket: object): number | undefined {
  * `refusalStatus: true` uses the `ws` package outside a browser even without
  * headers, so a refused upgrade's HTTP status can be read (see
  * `refusedUpgradeStatus`); if it cannot be loaded, the global WebSocket is used.
+ *
+ * On a Node whose built-in WebSocket is prohibited (`builtinWebSocketProhibited`)
+ * every one of those built-in choices becomes `ws`, a jsdom-style `window`
+ * included, and a `ws` that cannot be loaded throws.
  */
 export async function openWebSocketWithHeaders<T>(
   url: string,
@@ -150,7 +233,9 @@ export async function openWebSocketWithHeaders<T>(
 ): Promise<T> {
   const globalCtor = (globalThis as unknown as { WebSocket?: WsCtor<T> }).WebSocket;
   const hasHeaders = Object.keys(headers).length > 0;
-  if ((!hasHeaders && options.refusalStatus !== true) || isBrowserRuntime()) {
+  // Checked before the browser test: a Node process with DOM globals is still Node.
+  const prohibited = builtinWebSocketProhibited();
+  if (!prohibited && ((!hasHeaders && options.refusalStatus !== true) || isBrowserRuntime())) {
     if (typeof globalCtor === 'function') {
       return protocols === undefined ? new globalCtor(url) : new globalCtor(url, protocols);
     }
@@ -160,6 +245,7 @@ export async function openWebSocketWithHeaders<T>(
   try {
     mod = (await import(/* @vite-ignore */ specifier)) as { default?: WsCtor<T>; WebSocket?: WsCtor<T> };
   } catch (err) {
+    if (prohibited) throw new Error(`${label}: ${unsafeBuiltinWebSocketMessage(err)}`);
     if (!hasHeaders && typeof globalCtor === 'function') {
       return protocols === undefined ? new globalCtor(url) : new globalCtor(url, protocols);
     }
@@ -170,9 +256,10 @@ export async function openWebSocketWithHeaders<T>(
   }
   const Ctor = mod.default ?? mod.WebSocket;
   if (typeof Ctor !== 'function') {
+    if (prohibited) throw new Error(`${label}: ${unsafeBuiltinWebSocketMessage('no WebSocket constructor exported')}`);
     throw new Error(`${label}: the \`ws\` package has no WebSocket constructor`);
   }
-  const socket = new Ctor(url, protocols, hasHeaders ? { headers } : undefined);
+  const socket = new Ctor(url, protocols, hasHeaders ? { headers, ...SDK_WS_CAPS } : { ...SDK_WS_CAPS });
   // Under Bun only: Node's `ws` names the status in its error. With this listener neither emits
   // `error` for the refusal (Bun still emits `close`), so callers must treat `close` as a refusal too.
   const onEvent = (socket as { on?: (ev: string, fn: (req: unknown, res: { statusCode?: number }) => void) => unknown }).on;

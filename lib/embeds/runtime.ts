@@ -58,8 +58,11 @@ export type EmbedQuery = Record<string, Scalar | ReadonlyArray<string>>;
  * when hand-built, the server-details object (`{ name, country, … }`) in a `containers.list` item.
  */
 export interface EmbedContainerTarget {
-  id: string;
-  project_id: string;
+  // Optional in the type because the SDK's own container responses declare them so (containers.get / create:
+  // `id?: string; project_id?: string`); a response is a target unchanged. Both are required at runtime: a target
+  // without either is refused with TARGET_INVALID before any URL is built.
+  id?: string;
+  project_id?: string;
   server_name?: string | null;
   server?: string | { name?: string | null } | null;
 }

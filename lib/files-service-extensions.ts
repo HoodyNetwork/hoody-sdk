@@ -5,8 +5,9 @@
  * Architecture:
  *   This module extends the auto-generated service classes with convenience
  *   helpers (classify, getUrl, getZipUrl, images.getThumbnailUrl, list),
- *   value readers (readText, readJson, readBytes) and a JSON-default override
- *   (search) without modifying the generated code.
+ *   value readers (readText, readJson, readBytes), a boolean `exists` over
+ *   the generated HEAD call, and a JSON-default override (search) without
+ *   modifying the generated code.
  *
  *   It uses the same declare-module + prototype-patch pattern as
  *   lib/exec-scripts.ts and lib/terminal-exec.ts.
@@ -21,7 +22,7 @@
 import { FilesService } from '../generated/files/files.service.js';
 import { UiService as FilesUiService } from '../generated/files/ui.service.js';
 import type { FilesServiceBase } from '../generated/files/files.service.generated.js';
-import { ValidationError } from '../generated/errors.js';
+import { ValidationError, isApiError } from '../generated/errors.js';
 import { FilesService as NotesFilesService } from '../generated/notes/files.service.js';
 import { ImagesService } from '../generated/files/images.service.js';
 // Notes TUS upload helpers (upload / resumeUpload / uploads.getOffset /
@@ -59,6 +60,16 @@ export type FilesReadOptions = Omit<
 
 /** The per-call host overrides of the readers: the third argument of `files.get`. */
 type FilesReadTarget = Parameters<FilesServiceBase['get']>[2];
+
+/**
+ * Options of `files.exists`: those of the HEAD request (the revision
+ * selectors and per-call request options) without `responseType` /
+ * `rawResponse`: the answer is a boolean.
+ */
+export type FilesExistsOptions = Omit<
+  NonNullable<Parameters<FilesServiceBase['__exists']>[1]>,
+  'responseType' | 'rawResponse'
+>;
 
 // ---------------------------------------------------------------------------
 // Module augmentation — files namespace
@@ -102,6 +113,17 @@ declare module '../generated/files/files.service.js' {
      * (`Buffer.from(bytes)` when Buffer methods are needed).
      */
     readBytes(path: string, options?: FilesReadOptions, templateVars?: FilesReadTarget): Promise<Uint8Array>;
+    /**
+     * Whether a file or directory exists at `path`: true, or false when the
+     * kit answers 404. Any other failure (a refused path, no access, the kit
+     * unreachable) rejects with its `ApiError`. For the size and times of an
+     * existing path use `stat`.
+     */
+    exists(
+      path: string,
+      options?: FilesExistsOptions,
+      templateVars?: FilesReadTarget,
+    ): Promise<boolean>;
   }
 }
 
@@ -311,6 +333,26 @@ async function readBytes(
 }
 
 // ---------------------------------------------------------------------------
+// exists
+// ---------------------------------------------------------------------------
+
+/** `exists` as a boolean over the generated HEAD call: 404 is the answer "no", not a failure. */
+async function exists(
+  this: { __exists: (path: string, options?: unknown, templateVars?: unknown) => Promise<unknown> },
+  path: string,
+  options?: FilesExistsOptions,
+  templateVars?: unknown,
+): Promise<boolean> {
+  try {
+    await this.__exists(path, options, templateVars);
+    return true;
+  } catch (err) {
+    if (isApiError(err) && err.status === 404) return false;
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Prototype patching
 // ---------------------------------------------------------------------------
 
@@ -385,6 +427,7 @@ function patchFilesService(proto: any, includeFilesKitHelpers: boolean): void {
   proto.readText = readText;
   proto.readJson = readJson;
   proto.readBytes = readBytes;
+  proto.exists = exists;
 
   {
     const origSearch = proto.search;

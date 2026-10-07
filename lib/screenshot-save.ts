@@ -32,6 +32,7 @@ import { ScreenshotsService } from '../generated/display/screenshots.service.js'
 import { PageService } from '../generated/browser/page.service.js';
 import { SessionsService } from '../generated/terminal/sessions.service.js';
 import { ownerOf } from './service-owner.js';
+import { terminalHostLabel } from './terminal-host.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -521,7 +522,7 @@ function terminalCaptureTemplateVars(client: any, terminalId: string): { service
     );
   }
   const t = client?.urlTemplates?.['terminal'];
-  const label = `${t?.projectId ?? ''}-${t?.containerId ?? ''}-terminal-${terminalId}`;
+  const label = terminalHostLabel(t?.projectId ?? '', t?.containerId ?? '', terminalId);
   if (t?.projectId && t?.containerId && label.length > 63) {
     throw new ScreenshotSaveError(
       'CAPTURE_FAILED',

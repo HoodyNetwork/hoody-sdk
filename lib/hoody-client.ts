@@ -41,6 +41,7 @@ import { patchFilesServiceExtensions } from './files-service-extensions.js';
 import { patchExecRemotePrototype, type ExecRemoteConnect } from './exec-remote.js';
 import { patchSqliteHelpersPrototype } from './sqlite-helpers.js';
 import { patchKvHelpersPrototype, type SqliteKvStore } from './kv-helpers.js';
+import { patchPipeServiceHelpers } from './pipe-service-helpers.js';
 import { claimOwnedServices, ownerOf } from './service-owner.js';
 import { ProgramsService } from '../generated/daemon/programs.service.js';
 // NOTE: patchScreenshotSavePrototype is called from index.ts (not here)
@@ -280,6 +281,7 @@ export function patchHoodyClientMetrics<T extends GeneratedHoodyClient>(client: 
   patchExecRemotePrototype();
   patchSqliteHelpersPrototype();
   patchKvHelpersPrototype();
+  patchPipeServiceHelpers();
   patchDaemonProgramsPrototype();
   // The helpers that live on a service read their client back from it.
   claimOwnedServices(client);
@@ -596,6 +598,18 @@ export class HoodyClient extends GeneratedHoodyClient {
     IN_CLIENT_LOGOUT.add(this);
     try {
       await super.logout();
+    } finally {
+      IN_CLIENT_LOGOUT.delete(this);
+      bumpEventsSession(this, 'shared');
+    }
+  }
+
+  // The generated logoutAll() clears the credentials even when the request fails, so the events
+  // session ends either way. The endpoint hook bumps only after a successful revoke.
+  override async logoutAll(): Promise<void> {
+    IN_CLIENT_LOGOUT.add(this);
+    try {
+      await super.logoutAll();
     } finally {
       IN_CLIENT_LOGOUT.delete(this);
       bumpEventsSession(this, 'shared');

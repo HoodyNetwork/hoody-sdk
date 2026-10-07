@@ -7,7 +7,10 @@
  * Socket.IO-based message format.
  */
 
-import { io, type Socket } from 'socket.io-client';
+import { parse as parseEngineUri } from 'engine.io-client';
+import { Manager, type Socket } from 'socket.io-client';
+import { ValidationError } from '../generated/errors.js';
+import { normalizeEventsTransports } from './socketio-node-transport.js';
 import {
     isEphemeralEventType,
     type EphemeralEventType,
@@ -375,12 +378,56 @@ export function isControlFrame(frame: unknown): frame is ServerControlFrame {
  * `autoConnect: false` so consumers control when the network op starts. Call
  * `connect()` to open the transport.
  */
+/**
+ * Per-call `connect(options)` keys socket.io reads once, at construction: the
+ * packet parser, the Manager's timer functions, and the Socket's copied
+ * `ackTimeout` / `retries`. A per-call value that differs is refused.
+ */
+const CONSTRUCTION_ONLY_OPTIONS = ['parser', 'useNativeTimers', 'ackTimeout', 'retries'] as const;
+/** Per-call keys the Manager holds behind a setter; `Manager.opts` alone would not move them. */
+const MANAGER_SETTER_OPTIONS = [
+    'timeout', 'reconnection', 'reconnectionAttempts', 'reconnectionDelay', 'reconnectionDelayMax', 'randomizationFactor',
+] as const;
+
+/**
+ * What `io(url, options)` derives from the URL (socket.io-client `url.js` and
+ * `lookup`): the Manager endpoint is the URL as given, query included; the
+ * namespace is the URL's path, `/` for an origin-only URL. The engine.io `path`
+ * option is never the namespace.
+ */
+function parseEventsUrl(url: string): { source: string; namespace: string; query: string; queryKey: Record<string, string> } {
+    // socket.io-client's own resolution (its `url()`), shape for shape: a URL that starts
+    // with `//` takes the page's protocol, one that starts with `/` the page's host, and
+    // one without a scheme the page's protocol (https where there is no page).
+    const loc = typeof location !== 'undefined' && location ? location : undefined;
+    let uri = url;
+    if (uri.charAt(0) === '/') {
+        if (!loc) {
+            throw new ValidationError(
+                `events: "${url}" has no host. A relative events URL only works in a browser page; pass an absolute URL.`,
+                'url',
+            );
+        }
+        uri = uri.charAt(1) === '/' ? loc.protocol + uri : loc.host + uri;
+    }
+    if (!/^(https?|wss?):\/\//.test(uri)) uri = (loc ? loc.protocol + '//' : 'https://') + uri;
+    const parsed = parseEngineUri(uri) as { source: string; host?: string; path?: string; query?: string; queryKey?: Record<string, string> };
+    // Never connect on an empty host: engine.io would fall back to the page's own host,
+    // and the connection and its credential would go there.
+    if (!parsed.host) {
+        throw new ValidationError(`events: "${url}" has no host; pass an absolute URL.`, 'url');
+    }
+    return { source: parsed.source, namespace: parsed.path || '/', query: parsed.query || '', queryKey: parsed.queryKey || {} };
+}
+
 export class ApiConnecteventstreamWebSocket {
     public connected: boolean = false;
 
     private readonly url: string;
     private readonly defaultOptions: Record<string, any>;
-    private socket: Socket;
+    /** This wrapper's own Manager: never shared, never replaced. */
+    private readonly manager: Manager;
+    private readonly socket: Socket;
 
     constructor(url: string, options: Record<string, any> = {}) {
         this.url = url;
@@ -392,12 +439,29 @@ export class ApiConnecteventstreamWebSocket {
         // unless `tryAllTransports` is set — so a polling-first client never connects there.
         // A caller who fronts the API with a sid-affine proxy can still pass `transports` explicitly.
         //
+        // Outside a browser the list is normalised to transport classes, with the SDK's own
+        // WebSocket transport in the websocket slot (socketio-node-transport.ts).
+        //
         // `reconnection: false` by default: socket.io-client does not reconnect after a server
         // namespace disconnect anyway (every refusal and revocation is one), and a client-side
         // retry loop racing the runtime's own loop reconnected with a stale token.
         // EventsManager owns every retry (`reconnection: false`).
-        this.defaultOptions = { transports: ['websocket'], reconnection: false, ...options, autoConnect: false };
-        this.socket = io(this.url, this.defaultOptions);
+        this.defaultOptions = {
+            reconnection: false,
+            ...options,
+            transports: normalizeEventsTransports(options.transports),
+            autoConnect: false,
+        };
+        // Not `io()`: it reuses a cached Manager per origin + path and then ignores the new
+        // options, so a raw `io()` elsewhere in the process could decide which transport SDK
+        // events open with. This is what `io(url, options)` does, minus the cache.
+        const parsed = parseEventsUrl(this.url);
+        const managerOptions: Record<string, any> = { ...this.defaultOptions };
+        this.manager = new Manager(parsed.source, managerOptions);
+        if (parsed.query && !managerOptions.query) managerOptions.query = parsed.queryKey;
+        // The Socket gets the same option bag `io()` passes it: `auth` (the caller's callback
+        // by identity, so it is read on every CONNECT), `ackTimeout`, `retries`.
+        this.socket = this.manager.socket(parsed.namespace, managerOptions);
         // Keep `connected` in sync with the transport.
         this.socket.on('connect', () => { this.connected = true; });
         this.socket.on('disconnect', () => { this.connected = false; });
@@ -412,22 +476,16 @@ export class ApiConnecteventstreamWebSocket {
      * Per-call options (e.g. a freshly-refreshed `auth.token`) are merged onto
      * the constructor options for this connect attempt. This is how token
      * rotation before reconnect is supposed to flow through to the handshake.
+     * `parser`, `useNativeTimers`, `ackTimeout` and `retries` are fixed at
+     * construction: a per-call value that differs throws a ValidationError
+     * and changes nothing.
      */
     connect(options: Record<string, any> = {}): Promise<void> {
         if (this.socket.connected) {
             this.connected = true;
             return Promise.resolve();
         }
-        if (options && Object.keys(options).length > 0) {
-            // Merge auth / query overrides onto the managed socket's options.
-            // `io.opts` is the option bag used on the next connect attempt.
-            const mergedAuth = { ...(this.socket.io.opts as any)?.auth, ...options.auth };
-            Object.assign(this.socket.io.opts, options);
-            if (options.auth) (this.socket.io.opts as any).auth = mergedAuth;
-            // The Socket instance also carries its own `.auth` mirror used by
-            // engine.io to populate handshake auth; update both.
-            if (options.auth) (this.socket as any).auth = mergedAuth;
-        }
+        if (options && Object.keys(options).length > 0) this.applyConnectOptions(options);
         return new Promise<void>((resolve, reject) => {
             const onConnect = () => {
                 this.socket.off('connect', onConnect);
@@ -444,6 +502,43 @@ export class ApiConnecteventstreamWebSocket {
             this.socket.on('connect_error', onConnectError);
             this.socket.connect();
         });
+    }
+
+    /** Apply per-call connect options to the Manager and Socket this wrapper already owns. */
+    private applyConnectOptions(options: Record<string, any>): void {
+        // Everything that can refuse is checked before anything is changed.
+        for (const key of CONSTRUCTION_ONLY_OPTIONS) {
+            if (key in options && !Object.is(options[key], this.defaultOptions[key])) {
+                throw new ValidationError(
+                    `events: \`${key}\` is fixed when the socket is constructed; pass it to the constructor, not to connect()`,
+                    key,
+                );
+            }
+        }
+        const transports = 'transports' in options ? normalizeEventsTransports(options.transports) : undefined;
+
+        const managerOpts = this.manager.opts as Record<string, any>;
+        const setters = this.manager as unknown as Record<string, (value: unknown) => unknown>;
+        for (const [key, value] of Object.entries(options)) {
+            if (key === 'autoConnect' || key === 'auth' || key === 'transports') continue;
+            if ((CONSTRUCTION_ONLY_OPTIONS as readonly string[]).includes(key)) continue;
+            // Read at the next engine.io construction: path, query, extraHeaders, …
+            managerOpts[key] = value;
+            if ((MANAGER_SETTER_OPTIONS as readonly string[]).includes(key) && value !== undefined) {
+                setters[key]!.call(this.manager, value);
+            }
+        }
+        if (transports) managerOpts.transports = transports;
+        if (options.auth) {
+            // A callback is kept by identity: socket.io calls it on every CONNECT. An object
+            // is merged over the current object auth.
+            const current = (this.socket as any).auth;
+            const auth = typeof options.auth === 'function'
+                ? options.auth
+                : { ...(current && typeof current === 'object' ? current : {}), ...options.auth };
+            managerOpts.auth = auth;
+            (this.socket as any).auth = auth;
+        }
     }
 
     disconnect(_reason?: string): void {
@@ -494,14 +589,14 @@ export class ApiConnecteventstreamWebSocket {
 
     onReconnectAttempt(callback: (attempt: number) => void): () => void {
         const handler = (attempt: number) => callback(attempt);
-        this.socket.io.on('reconnect_attempt', handler);
-        return () => this.socket.io.off('reconnect_attempt', handler);
+        this.manager.on('reconnect_attempt', handler);
+        return () => this.manager.off('reconnect_attempt', handler);
     }
 
     onReconnect(callback: (attempt: number) => void): () => void {
         const handler = (attempt: number) => callback(attempt);
-        this.socket.io.on('reconnect', handler);
-        return () => this.socket.io.off('reconnect', handler);
+        this.manager.on('reconnect', handler);
+        return () => this.manager.off('reconnect', handler);
     }
 
     onError(callback: (error: Error) => void): () => void {
@@ -509,10 +604,10 @@ export class ApiConnecteventstreamWebSocket {
             callback(err instanceof Error ? err : new Error(String(err)));
         };
         this.socket.on('connect_error', handler);
-        this.socket.io.on('error', handler);
+        this.manager.on('error', handler);
         return () => {
             this.socket.off('connect_error', handler);
-            this.socket.io.off('error', handler);
+            this.manager.off('error', handler);
         };
     }
 
@@ -561,6 +656,23 @@ export class ApiConnecteventstreamWebSocket {
         };
         this.socket.on('error' as any, handler as any);
         return () => this.socket.off('error' as any, handler as any);
+    }
+
+    /**
+     * The cause of a transport failure, as engine.io reports it: the Manager's
+     * `error` (an engine.io TransportError whose `description` is the
+     * WebSocket's own error event) and the Socket's `connect_error`. Fires
+     * before the `disconnect` that follows, and may fire more than once for one
+     * failure.
+     */
+    onTransportError(callback: (cause: unknown) => void): () => void {
+        const handler = (cause: unknown) => callback(cause);
+        this.manager.on('error', handler as any);
+        this.socket.on('connect_error', handler as any);
+        return () => {
+            this.manager.off('error', handler as any);
+            this.socket.off('connect_error', handler as any);
+        };
     }
 
     /** Raw socket.io `disconnect`, with socket.io's reason string. */

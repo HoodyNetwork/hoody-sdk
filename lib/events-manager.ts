@@ -40,12 +40,13 @@ import {
 } from './events-errors.js';
 import { EventIdLru, EventsRecovery, HISTORY_BACKOFF_FLOOR_MS, type EventsHistoryReader } from './events-replay.js';
 import type { EventsSession } from './events-session.js';
+import { localWebSocketCapCode } from './kit-ws-auth.js';
 
 /** The transport surface the runtime needs; ApiConnecteventstreamWebSocket implements it. */
 export type EventsTransport = Pick<
     ApiConnecteventstreamWebSocket,
     'connect' | 'disconnect' | 'removeAllListeners' | 'emit' | 'onFrame' | 'onSocketError' | 'onClose'
->;
+> & Partial<Pick<ApiConnecteventstreamWebSocket, 'onTransportError'>>;
 
 /** Connection state. */
 export type EventsConnectionState = 'idle' | 'connecting' | 'recovering' | 'live' | 'offline' | 'closed';
@@ -172,6 +173,8 @@ interface Attempt {
     preWelcome: EventWireFrame[];
     welcomeTimer: ReturnType<typeof setTimeout> | null;
     unsubscribers: Array<() => void>;
+    /** The first transport-level failure cause this attempt's socket reported, if any. */
+    transportCause?: unknown;
     /** The last tick latest_cursor this connection caught up against. */
     tickReconciled: string | null;
 }
@@ -1030,6 +1033,13 @@ export class EventsManager {
         try {
             attempt.unsubscribers.push(ws.onFrame((frame) => this.onFrame(attempt, frame)));
             attempt.unsubscribers.push(ws.onSocketError((frame) => this.onCode(attempt, frame.error, frame.message, 'error')));
+            if (ws.onTransportError) {
+                // Bound to this attempt: a cause reported by an earlier socket never
+                // reaches a later one. The hook can fire twice for one failure.
+                attempt.unsubscribers.push(ws.onTransportError((cause) => {
+                    if (!attempt.dead && attempt.transportCause === undefined) attempt.transportCause = cause;
+                }));
+            }
             attempt.unsubscribers.push(ws.onClose((reason) => {
                 if (!attempt.dead) this.transportLost(attempt, new EventsError('EVENTS_DISCONNECTED', `Events socket closed: ${reason}`));
             }));
@@ -1257,6 +1267,33 @@ export class EventsManager {
     private transportLost(attempt: Attempt, error: unknown): void {
         if (attempt !== this.attempt) return;
         const wasWelcomed = attempt.welcomed;
+        // A receive limit of the local WebSocket ended this socket (the cause engine.io
+        // reported for THIS attempt, or the error itself). The server would send the same
+        // message again, so this is final until the caller asks again.
+        const capCode = localWebSocketCapCode(attempt.transportCause) ?? localWebSocketCapCode(error);
+        if (capCode) {
+            const cause = attempt.transportCause ?? error;
+            const capError = new EventsError(
+                'EVENTS_LOCAL_LIMIT',
+                `Events socket closed: a server message exceeded a local WebSocket receive limit (${capCode}). Not reconnecting.`,
+                { cause },
+            );
+            this.dropAttempt(attempt, 'lost');
+            this.emitLifecycle('disconnected', 1006, capError.message);
+            this.emitLifecycle('error', capError);
+            if (this.state === 'closed') return;
+            if (this.retryTimer) { clearTimeout(this.retryTimer); this.retryTimer = null; }
+            const waiters = this.welcomeWaiters;
+            this.welcomeWaiters = new Set();
+            for (const w of waiters) w.reject(capError);
+            const ready = this.ready;
+            this.ready = deferred<void>();
+            ready.reject(capError);
+            for (const hold of [...this.holds]) hold.fail(capError);
+            // Idle, not closed: a new subscription or wait connects again.
+            this.setState('idle', capError);
+            return;
+        }
         this.dropAttempt(attempt, 'lost');
         this.emitLifecycle('disconnected', 1006, error instanceof Error ? error.message : String(error));
         if (!wasWelcomed) this.emitLifecycle('error', error instanceof Error ? error : new Error(String(error)));

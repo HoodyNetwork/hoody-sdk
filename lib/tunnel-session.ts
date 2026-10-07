@@ -21,6 +21,7 @@ import {
   kitAuthForNamespace,
   kitAuthWebSocketParts,
   openWebSocketWithHeaders,
+  builtinWebSocketProhibited,
 } from "./kit-ws-auth.js";
 
 /**
@@ -37,6 +38,66 @@ import {
 function guardSocketErrors(ws: WebSocket): WebSocket {
   try { ws.addEventListener("error", () => {}); } catch { /* no EventTarget API: nothing to guard */ }
   return ws;
+}
+
+/** Why a tunnel session ended, as `onClose` listeners receive it. */
+export interface TunnelCloseInfo {
+  /** True when this side ended it: `close()`, or a superseding `connect()`. */
+  deliberate: boolean;
+  /** The WebSocket close code of the primary socket, when it closed first. */
+  code?: number;
+  /** What ended the session, in words. */
+  reason: string;
+}
+
+/**
+ * A tunnel session failure with a stable `code`:
+ *  - `SESSION_LIMIT`: the kit already holds its maximum number of sessions.
+ *  - `RESUME_EXPIRED`: the session to resume is no longer parked by the kit.
+ *  - `REFUSED`: the kit refused the handshake for another stated reason.
+ *  - `CLOSED_BEFORE_HELLO`: the socket closed with no HELLO_OK and no reason.
+ */
+export class TunnelSessionError extends Error {
+  readonly code: "SESSION_LIMIT" | "RESUME_EXPIRED" | "REFUSED" | "CLOSED_BEFORE_HELLO";
+  /** WebSocket close code, when the refusal came as (or with) a close. */
+  readonly closeCode?: number;
+  constructor(code: TunnelSessionError["code"], message: string, closeCode?: number) {
+    super(message);
+    this.name = "TunnelSessionError";
+    this.code = code;
+    if (closeCode !== undefined) this.closeCode = closeCode;
+  }
+}
+
+/** RESOURCE_EXHAUSTED: the reset code the kit's GOAWAY carries for a full session cap. */
+const GOAWAY_RESOURCE_EXHAUSTED = 0x000e;
+/** How long close() waits for the kit to confirm its UNBINDs before closing anyway. */
+const UNBIND_ON_CLOSE_TIMEOUT_MS = 2_000;
+
+/** The error for a kit GOAWAY (and/or close) that refuses the handshake. */
+function handshakeRefusal(
+  goaway: { code?: unknown; message?: unknown } | null,
+  closeCode: number | undefined,
+  closeReason: string | undefined,
+  resuming: boolean,
+): TunnelSessionError {
+  const message = typeof goaway?.message === "string" && goaway.message ? goaway.message : (closeReason || "");
+  const hint = "list the open sessions with tunnel.sessions.list() and close one, or wait for it to end";
+  if (goaway?.code === GOAWAY_RESOURCE_EXHAUSTED || (closeCode === 1013 && /session limit/i.test(message))) {
+    return new TunnelSessionError("SESSION_LIMIT", `tunnel: ${message || "tunnel session limit reached"} (${hint})`, closeCode);
+  }
+  if (/resume (grace )?expired/i.test(message) || (resuming && closeCode === 1008)) {
+    return new TunnelSessionError("RESUME_EXPIRED", `tunnel: ${message || "resume expired"}: the kit no longer holds that session`, closeCode);
+  }
+  if (message) return new TunnelSessionError("REFUSED", `tunnel: the kit refused the session: ${message}`, closeCode);
+  // No GOAWAY and no close reason. A kit that predates the named refusal closes this way
+  // when its session cap is full, so say so instead of leaving a bare "closed".
+  return new TunnelSessionError(
+    "CLOSED_BEFORE_HELLO",
+    `tunnel: the WebSocket closed before HELLO_OK${closeCode !== undefined ? ` (code ${closeCode})` : ""}. `
+      + `If other tunnel sessions are open on this container, its session limit may be reached: ${hint}.`,
+    closeCode,
+  );
 }
 
 export interface ConnectOptions {
@@ -195,7 +256,17 @@ export class TunnelSession {
    *  (e.g. the upgrade forwarder that owns an upstream TCP socket) can tear
    *  down resources tied to the session lifecycle rather than per-stream
    *  EOF frames, which never fire on an abrupt WS drop. */
-  private closeListeners = new Set<() => void>();
+  private closeListeners = new Set<(info: TunnelCloseInfo) => void>();
+  /** Set when the session ends (drop, kit end, close()); cleared by the next connect(). */
+  private endedInfo: TunnelCloseInfo | null = null;
+  /** Binds this session holds on the kit: BIND_OK and resumed binds, minus confirmed UNBINDs. */
+  private liveBinds = new Set<number>();
+  /** Resolves the UNBIND wait of an in-progress close(); null when none is waiting. */
+  private unbindSettled: (() => void) | null = null;
+  /** The in-progress close(), so concurrent calls share one teardown. */
+  private closing: Promise<void> | null = null;
+  /** The kit's last GOAWAY message on this connection, for the close reason. */
+  private goawayReason: string | null = null;
   /** Set by setInboundRouter(). Configuration, not session state: connect()
    *  and close() keep it. */
   private inboundRouter: InboundRouter | null = null;
@@ -223,8 +294,18 @@ export class TunnelSession {
   /** Register a listener fired exactly once on session close. Returns an
    *  unsubscribe function. Use for resources whose lifecycle is tied to the
    *  session itself (e.g. an upgrade socket forwarded through a stream that
-   *  may never receive an EOF frame if the peer aborts). */
-  onClose(fn: () => void): () => void {
+   *  may never receive an EOF frame if the peer aborts). The listener is
+   *  told why: `info.deliberate` is false for a drop or a kit-side end. */
+  /**
+   * Why this session ended, or null while it has not (never connected, or
+   * connected and up). `onClose` listeners registered after the end are never
+   * called: read this first when attaching to a session someone else opened.
+   */
+  get closeInfo(): TunnelCloseInfo | null {
+    return this.endedInfo;
+  }
+
+  onClose(fn: (info: TunnelCloseInfo) => void): () => void {
     this.closeListeners.add(fn);
     return () => { this.closeListeners.delete(fn); };
   }
@@ -250,7 +331,10 @@ export class TunnelSession {
       kitAuthForNamespace(this.options.kitAuth, "tunnel"),
       "tunnel",
     );
-    if (Object.keys(parts.headers).length === 0) {
+    // The synchronous path constructs the runtime's own WebSocket, so it is
+    // taken only where that is allowed: on a Node whose built-in is prohibited
+    // (kit-ws-auth) the socket comes from `ws`, through the async path below.
+    if (Object.keys(parts.headers).length === 0 && !builtinWebSocketProhibited()) {
       const ws = new WebSocket(parts.url, subprotocol);
       ws.binaryType = "arraybuffer";
       return guardSocketErrors(ws);
@@ -313,7 +397,9 @@ export class TunnelSession {
       reject = (e: any) => { clearTimeout(helloTimeoutId); origReject(e); };
       this.connectReject = reject;
 
+      let helloSent = false;
       ws.onopen = () => {
+        helloSent = true;
         const helloPayload: any = {
           version: helloVersion,
           // No `auth` field: the kit ignores it, and the proxy authenticates
@@ -348,6 +434,15 @@ export class TunnelSession {
         try { result = decodeFrames(data); } catch { return; }
         for (const frame of result.frames) {
           if (!this.connected) {
+            if (frame.header.frameType === FrameType.Goaway) {
+              // The kit refuses the session and says why (a full session cap, an
+              // expired resume). Its close follows; the reason is in this frame.
+              let goaway: { code?: unknown; message?: unknown } | null = null;
+              try { goaway = JSON.parse(new TextDecoder().decode(frame.payload)); } catch { /* reason unknown */ }
+              reject(handshakeRefusal(goaway, undefined, undefined, !!this.options.resumeSessionId));
+              try { ws.close(); } catch {}
+              return;
+            }
             if (frame.header.frameType === FrameType.HelloOk) {
               let payload: any;
               try {
@@ -399,6 +494,10 @@ export class TunnelSession {
                 streamWindow,
                 sessionWindow,
               };
+              this.liveBinds = new Set(
+                this.lastHello.resumedBinds.map((b) => b.bindId).filter((id): id is number => typeof id === "number"),
+              );
+              this.goawayReason = null;
               this.connected = true;
               this.ws = ws;
               this.wsAll = [ws];
@@ -413,10 +512,20 @@ export class TunnelSession {
         }
       };
 
-      ws.onerror = () => reject(new Error("WebSocket error"));
-      ws.onclose = () => {
+      // An error before the socket opened is a failed connection. One after it opened
+      // (the HELLO is out) and before HELLO_OK is the kit dropping the handshake: the
+      // same refusal as a close with no reason, whichever event the runtime fires first.
+      ws.onerror = () => reject(
+        helloSent
+          ? handshakeRefusal(null, undefined, undefined, !!this.options.resumeSessionId)
+          : new Error("WebSocket error"),
+      );
+      ws.onclose = (event?: CloseEvent) => {
+        const closeCode = typeof event?.code === "number" ? event.code : undefined;
+        const closeReason = typeof event?.reason === "string" ? event.reason : "";
         if (!this.connected) {
-          reject(new Error("WebSocket closed before HELLO_OK"));
+          // No effect once connect() has settled (a GOAWAY, an error or a timeout came first).
+          reject(handshakeRefusal(null, closeCode === 1005 || closeCode === 1006 ? undefined : closeCode, closeReason, !!this.options.resumeSessionId));
           return;
         }
         // Post-connect: only the CURRENT primary's onclose should mutate
@@ -451,10 +560,21 @@ export class TunnelSession {
         // notification on ANY path that renders the session dead, not just
         // explicit close(). Snapshot + drain so a reconnect attaches a fresh
         // set.
+        this.liveBinds.clear();
+        this.unbindSettled?.();
+        const info: TunnelCloseInfo = {
+          // A drop while close() waits for its UNBINDs is still the caller's close.
+          deliberate: this.closing !== null,
+          ...(closeCode !== undefined ? { code: closeCode } : {}),
+          reason: this.goawayReason
+            ? `the kit ended the session: ${this.goawayReason}`
+            : `connection lost${closeCode !== undefined ? ` (WebSocket close ${closeCode}${closeReason ? `: ${closeReason}` : ""})` : ""}`,
+        };
+        this.endedInfo = info;
         const closeListeners = [...this.closeListeners];
         this.closeListeners.clear();
         for (const fn of closeListeners) {
-          try { fn(); } catch { /* listener errors must not block teardown */ }
+          try { fn(info); } catch { /* listener errors must not block teardown */ }
         }
       };
     });
@@ -605,6 +725,7 @@ export class TunnelSession {
         const pending = this.bindPromises.get(ref_);
         if (pending) {
           this.bindPromises.delete(ref_);
+          if (typeof payload.bindId === "number") this.liveBinds.add(payload.bindId);
           pending.resolve({
             bindId: payload.bindId,
             containerPort: payload.containerPort,
@@ -634,12 +755,29 @@ export class TunnelSession {
         }
         break;
       }
+      case FrameType.UnbindOk:
+      case FrameType.UnbindErr: {
+        // The kit's answer to an UNBIND. Either way this session no longer
+        // holds the bind (UNBIND_ERR is "not owned by this session").
+        let payload: any;
+        try { payload = JSON.parse(new TextDecoder().decode(frame.payload)); } catch { break; }
+        if (typeof payload?.bindId === "number") this.liveBinds.delete(payload.bindId);
+        if (this.liveBinds.size === 0) this.unbindSettled?.();
+        break;
+      }
       case FrameType.Goaway: {
         // Kit-initiated session shutdown. Close the session so pending
         // sendData()/bind() calls reject cleanly rather than hanging on a
         // connection the kit has already disowned. The kit is already
-        // teardown-in-progress, so we don't need to emit anything back.
-        void this.close();
+        // teardown-in-progress, so we don't need to emit anything back
+        // (no UNBIND either: the kit is releasing the binds itself).
+        let reason = "GOAWAY";
+        try {
+          const goaway = JSON.parse(new TextDecoder().decode(frame.payload));
+          if (typeof goaway?.message === "string" && goaway.message) reason = goaway.message;
+        } catch { /* reason unknown */ }
+        this.goawayReason = reason;
+        this.teardown({ deliberate: false, reason: `the kit ended the session: ${reason}` });
         break;
       }
       case FrameType.StreamOpen:
@@ -671,7 +809,7 @@ export class TunnelSession {
           const n = increment >>> 0;  // force u32
           if (n === 0) {
             // Protocol violation — close session.
-            void this.close();
+            this.teardown({ deliberate: false, reason: "protocol error: WINDOW with a zero increment" });
             return;
           }
           if (streamId === 0) {
@@ -1216,7 +1354,53 @@ export class TunnelSession {
     }
   }
 
-  async close() {
+  /**
+   * Close the session for good. A session that holds binds first sends UNBIND
+   * for each and waits (briefly) for the kit to confirm: the kit otherwise
+   * parks the binds for its takeover grace, as it does for a dropped
+   * connection, and the port answers PORT_IN_USE until that runs out. The
+   * wait also keeps the frames from being lost when the caller exits right
+   * after `await close()`.
+   */
+  async close(): Promise<void> {
+    if (this.closing) return this.closing;
+    const primary = this.ws;
+    if (this.connected && primary && primary.readyState === WebSocket.OPEN && this.liveBinds.size > 0) {
+      const generation = this.connectGeneration;
+      this.closing = this.releaseBinds().then(() => {
+        this.closing = null;
+        // A connect() that superseded this session during the wait already
+        // tore it down; its new session is not this close()'s to end.
+        if (this.connectGeneration === generation) this.teardown({ deliberate: true, reason: "closed by client" });
+      });
+      return this.closing;
+    }
+    this.teardown({ deliberate: true, reason: "closed by client" });
+  }
+
+  /** Send UNBIND for every live bind; resolve when all are answered, the primary closes, or the timeout runs out. */
+  private releaseBinds(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const settle = () => {
+        if (this.unbindSettled !== settle) return;
+        this.unbindSettled = null;
+        if (timer) clearTimeout(timer);
+        resolve();
+      };
+      this.unbindSettled = settle;
+      timer = setTimeout(settle, UNBIND_ON_CLOSE_TIMEOUT_MS);
+      for (const bindId of this.liveBinds) {
+        const payload = new TextEncoder().encode(JSON.stringify({ bindId }));
+        this.sendFrame({ header: { frameType: FrameType.Unbind, streamId: 0, length: payload.length }, payload });
+      }
+    });
+  }
+
+  /** Synchronous teardown of every socket and every piece of session state. */
+  private teardown(info: TunnelCloseInfo): void {
+    this.liveBinds.clear();
+    this.unbindSettled?.();
     // Bump generation so any in-flight HELLO_OK / JOIN_OK handler from
     // a connect() that's still mid-handshake no-ops rather than writing
     // into a session that's being torn down.
@@ -1300,10 +1484,11 @@ export class TunnelSession {
     // Fire external close listeners last, after internal teardown, so
     // listeners observe the session in its final closed state. Snapshot
     // before iterate — a listener may remove itself.
+    this.endedInfo = info;
     const listeners = [...this.closeListeners];
     this.closeListeners.clear();
     for (const fn of listeners) {
-      try { fn(); } catch { /* listener errors must not block teardown */ }
+      try { fn(info); } catch { /* listener errors must not block teardown */ }
     }
   }
 
@@ -1342,6 +1527,9 @@ export class TunnelSession {
     }
     this.pendingSecondaries.clear();
 
+    this.liveBinds.clear();
+    this.goawayReason = null;
+    this.unbindSettled?.();
     this.sessionCredit?.close(reason);
     this.sessionCredit = null;
     for (const [, gate] of this.streamCredit) gate.close(reason);
@@ -1367,10 +1555,11 @@ export class TunnelSession {
     // would clear stream handlers without notifying close listeners
     // registered via session.onClose(), and local sockets pinned by
     // tunnel-http-pump (expose/pull) would leak until the target's idle timeout.
+    this.endedInfo = null;
     const supersedeListeners = [...this.closeListeners];
     this.closeListeners.clear();
     for (const fn of supersedeListeners) {
-      try { fn(); } catch {}
+      try { fn({ deliberate: true, reason: reason.message }); } catch {}
     }
   }
 }

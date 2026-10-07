@@ -127,10 +127,12 @@ export type { HoodyCredentials } from '../generated/client.js';
 // Session lifecycle: the two-factor challenge HoodyClient.login() raises, the token
 // shape adoptSession() takes, and the enriched realm-scope 403.
 export { TwoFactorRequiredError, isRealmScopeError } from '../generated/client.js';
-export type { HoodySessionTokens, RealmScopeApiError, ContainerLike } from '../generated/client.js';
+export type { HoodySessionTokens, HoodySessionUpdate, RealmScopeApiError, ContainerLike } from '../generated/client.js';
 // The transport class, for the same parity with the browser entry (which
 // re-exports the whole generated index).
 export { HttpClient } from '../generated/http-client.js';
+// Whether this process sends through the SDK's own undici transport (Node 22.19+), as the README describes.
+export { nodeTransportInUse } from '../generated/http-client.js';
 export type { HoodyFetch, IEventStream, IStreamEvent, IStreamEventsOptions, IStreamResponse } from '../generated/http-client.js';
 // Every generated request/response/schema type, type-only so it adds nothing
 // at runtime: `import type { DaemonProgramsAddRequest } from 'hoody-sdk'`.
@@ -240,7 +242,7 @@ export type {
 } from './screenshot-save.js';
 
 // -- Files service extensions (classifyFile, getFileUrl, readText/readJson/readBytes, etc.) --
-export type { FilesReadOptions } from './files-service-extensions.js';
+export type { FilesReadOptions, FilesExistsOptions } from './files-service-extensions.js';
 
 // -- SQLite SQL helpers (sqlite.sql.query / run) --
 export type {
@@ -252,7 +254,7 @@ export type {
 } from './sqlite-helpers.js';
 
 // -- SQLite KV helper (sqlite.kv.read) --
-export type { KvReadOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
+export type { KvReadOptions, KvExistsOptions, KvSetTextOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
 
 // -- Mount module (rclone+WebDAV filesystem mount) --
 export {
@@ -432,6 +434,24 @@ export {
   connect as tunnelConnect,
   tunnelConnectUrl,
   TunnelSession,
+} from './tunnel-client.js';
+// Keeping a tunnel up across drops, and resuming a dropped session by hand.
+export {
+  keepTunnelAlive,
+  resumeExpose as tunnelResumeExpose,
+  resumePull as tunnelResumePull,
+  TunnelSessionError,
+  TunnelResumeAbortedError,
+} from './tunnel-client.js';
+export type {
+  TunnelCloseInfo,
+  KeepTunnelAliveOptions,
+  KeptTunnel,
+  TunnelEnd,
+  ResumeControl,
+  ResumeExposeOptions,
+  ResumePullOptions,
+  ResumedTunnel,
 } from './tunnel-client.js';
 export type {
   ScopedTunnelExposeOptions,

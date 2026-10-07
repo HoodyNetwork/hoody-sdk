@@ -19,17 +19,23 @@
 
 import { randomBytes } from 'node:crypto';
 import { tunnelSocks5, type TunnelSocks5Handle } from './tunnel-socks5.js';
-import { deriveSiblingDomain } from './domain-utils.js';
+import { deriveSiblingDomain, platformUrl } from './domain-utils.js';
 import type { DestinationPolicy } from './net-destination-policy.js';
 import type { Socks5ConnectEvent } from './socks5-server.js';
 
-/** Minimal shape we need from a container, matching ContainerLike elsewhere. */
+/**
+ * The container to exit through: one of the SDK's own container responses (containers.get /
+ * create / a containers.list item) unchanged, or a hand-built object. Every field is optional
+ * in the type because the responses declare them so (`id?: string`, `project_id?: string`,
+ * `server_name?: string | null`, `server` a server-details object or null); id, a project id
+ * and a server name are required at runtime and their absence is refused before anything is wired.
+ */
 export interface LocalExitContainerLike {
-  id: string;
+  id?: string;
   project_id?: string;
   projectId?: string;
-  server?: string | { name?: string };
-  server_name?: string;
+  server?: string | { name?: string | null } | null;
+  server_name?: string | null;
 }
 
 export interface LocalExitOptions {
@@ -41,7 +47,7 @@ export interface LocalExitOptions {
   policy?: DestinationPolicy;
   /** Create a proxy alias so the handed-out URL carries no container id. */
   alias?: string | true;
-  /** Confirm the exit IP through ip.hoody.com after wiring. Default true. */
+  /** Confirm the exit IP through the platform's IP service (the client's getIpUrl()) after wiring. Default true. */
   verify?: boolean;
   /**
    * Take over a container that already has an upstream configured.
@@ -62,7 +68,7 @@ export interface LocalExitOptions {
 }
 
 export interface LocalExitVerification {
-  /** Exit IP as seen by ip.hoody.com THROUGH the proxy. */
+  /** Exit IP as seen by the platform's IP service THROUGH the proxy. */
   exitIp: string;
   /** This machine's IP measured directly, bypassing the proxy. */
   localIp: string;
@@ -151,7 +157,22 @@ export interface LocalExitHandle {
   [Symbol.asyncDispose](): Promise<void>;
 }
 
-const IP_SERVICE = 'https://ip.hoody.com';
+/**
+ * The IP service of the client's own platform: `https://ip.<platform domain>`.
+ *
+ * It was one fixed host, so an account on any other platform confirmed its exit against
+ * a different platform's service, from this machine and through the container. The client's own
+ * getIpUrl() is the answer when it has one (HoodyClient derives it from its base URL); a client
+ * without it gets the same derivation from the base URL every other URL here comes from.
+ * Exported for the unit test; not part of the package entry.
+ */
+export function ipServiceUrl(client: any, baseUrl: string): string {
+  if (typeof client?.getIpUrl === 'function') {
+    const own: unknown = client.getIpUrl();
+    if (typeof own === 'string' && /^https:\/\/[A-Za-z0-9.-]+\/?$/.test(own)) return own.replace(/\/$/, '');
+  }
+  return platformUrl(baseUrl, 'ip');
+}
 
 /**
  * Deadline for the calls that unwire the container.
@@ -162,6 +183,11 @@ const IP_SERVICE = 'https://ip.hoody.com';
  * which is the one way to guarantee the container is left dirty.
  */
 const TEARDOWN_TIMEOUT_MS = 15_000;
+
+function containerIdOf(c: LocalExitContainerLike): string {
+  if (typeof c?.id !== 'string' || c.id === '') throw new Error('local exit: container is missing id');
+  return c.id;
+}
 
 function projectIdOf(c: LocalExitContainerLike): string {
   const id = c.project_id ?? c.projectId;
@@ -310,8 +336,8 @@ function containersDomain(baseUrl: string): string {
   return deriveSiblingDomain(baseUrl, 'containers');
 }
 
-/** Query ip.hoody.com, optionally through the proxy, and normalize the payload. */
-async function readIpService(dispatcherUrl?: string): Promise<{
+/** Query the platform's IP service, optionally through the proxy, and normalize the payload. */
+async function readIpService(ipService: string, dispatcherUrl?: string): Promise<{
   ip: string; country?: string | undefined; asn?: string | undefined;
 }> {
   // Bounded. Without a deadline this call is the one unbounded await in startup:
@@ -327,13 +353,14 @@ async function readIpService(dispatcherUrl?: string): Promise<{
   if (dispatcherUrl) {
     throw new Error('readIpService: per-request proxying is handled by the caller');
   }
-  const res = await fetch(IP_SERVICE, init);
-  if (!res.ok) throw new Error(`ip.hoody.com returned ${res.status}`);
+  const ipHost = new URL(ipService).host;
+  const res = await fetch(ipService, init);
+  if (!res.ok) throw new Error(`${ipHost} returned ${res.status}`);
   const body: any = await res.json();
   const data = body?.data ?? body;
   const ip = data?.ip;
   if (typeof ip !== 'string' || ip.length === 0) {
-    throw new Error('ip.hoody.com response had no data.ip');
+    throw new Error(`${ipHost} response had no data.ip`);
   }
   return { ip, country: data?.ip_info?.country, asn: data?.ip_info?.asn?.name };
 }
@@ -349,19 +376,21 @@ export async function startLocalExit(
   opts: LocalExitOptions,
 ): Promise<LocalExitHandle> {
   const { client, container } = opts;
+  const containerId = containerIdOf(container);
   const projectId = projectIdOf(container);
   const server = serverNameOf(container);
   const baseUrl = resolveClientBaseUrl(client);
   const domain = containersDomain(baseUrl);
+  const ipService = ipServiceUrl(client, baseUrl);
 
   const tunnelWs =
-    `wss://${projectId}-${container.id}-tunnel-1.${server}.${domain}/api/v1/tunnel/connect`;
+    `wss://${projectId}-${containerId}-tunnel-1.${server}.${domain}/api/v1/tunnel/connect`;
   // Unsuffixed, matching `getKitUrl('egress', …)`, the CLI's getKitBaseUrl and
   // the docs. The edge normalizes a missing index to 1, so this IS index 1 —
   // including for proxy permissions, which are evaluated per index. Emitting
   // `-egress-1` here instead would route identically but break the parity
   // between the SDK, the CLI and the docs, which a rename once already split.
-  const egressBase = `https://${projectId}-${container.id}-egress.${server}.${domain}`;
+  const egressBase = `https://${projectId}-${containerId}-egress.${server}.${domain}`;
 
   const token: string = await client.getAuthToken();
   if (!token) throw new Error('local exit: client is not authenticated');
@@ -578,7 +607,7 @@ export async function startLocalExit(
         ? `exit-${randomBytes(4).toString('hex')}`
         : opts.alias;
       const created: any = await client.api.proxy.aliases.create({
-        container_id: container.id,
+        container_id: containerId,
         program: 'egress',
         alias: name,
       });
@@ -598,10 +627,10 @@ export async function startLocalExit(
     const proxyUrl = aliasUrl ?? egressBase;
 
     const verifyExit = async (): Promise<LocalExitVerification> => {
-      const local = await readIpService();
+      const local = await readIpService(ipService);
       // Route the probe through the proxy itself by asking the container's egress
       // to fetch it: a CONNECT through proxyUrl is what a real consumer does.
-      const exit = await fetchThroughProxy(proxyUrl, IP_SERVICE);
+      const exit = await fetchThroughProxy(proxyUrl, ipService);
       const data = exit?.data ?? exit;
       return {
         exitIp: data?.ip,

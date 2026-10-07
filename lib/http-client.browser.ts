@@ -11,6 +11,22 @@ import {
   type ApiErrorRequestContext,
   type ApiErrorResponseDetails,
 } from '../generated/errors.js';
+import {
+  isBinaryMediaType,
+  DEFAULT_RETRIES,
+  DEFAULT_RETRY_DELAY_MS,
+  DEFAULT_RETRY_WAIT_CAP_MS,
+  IDEMPOTENT_METHODS,
+  inWebBrowser,
+  isTextMediaType,
+  mergeQueryPairs,
+  parseJsonLossless,
+  shouldRetryFailure,
+  stringifyBody,
+} from './http-wire.js';
+
+// The Node client module exports these wire helpers; the browser client re-exports the shared copies.
+export { isBinaryMediaType, isTextMediaType, parseJsonLossless, stringifyJsonLossless } from './http-wire.js';
 
 export interface IHttpClientMiddlewareRequestContext {
   requestId: string;
@@ -92,6 +108,18 @@ export interface IHttpClientConfig {
    */
   fetch?: HoodyFetch;
   timeout?: number;
+  /**
+   * How many more times a failed request may be sent. Absent (here and on the
+   * request): the default policy. An idempotent method (GET, HEAD, OPTIONS,
+   * PUT, DELETE) goes again up to 2 times on a status in `retryOnStatuses` and
+   * when it never reached a server; any other method only when it never
+   * reached a server; a `responseIsFinal` request and a streamed body never.
+   * Backoff about 2 s, then 4 s, plus jitter (`retryDelayMs` sets the base),
+   * Retry-After honoured, at most 10 s of waiting in all (a longer
+   * Retry-After ends the retries rather than being cut short); onError does
+   * not replay. Set it (0 included) and that budget applies under the full
+   * rule (see shouldRetry), 250 ms base, no total cap.
+   */
   retries?: number;
   retryDelayMs?: number;
   retryOnStatuses?: number[];
@@ -204,7 +232,9 @@ export interface IHttpClientConfig {
 
 export interface IHttpClientTransportConfig {
   /**
-   * Mapped to fetch keepalive. Browser connection pooling is managed by the runtime.
+   * Node-only setting; accepted for config parity. Not mapped to fetch `keepalive`, which means
+   * "may outlive the page" and caps a request body at 64 KiB. Browser connection pooling is
+   * managed by the runtime.
    */
   keepAlive?: boolean;
   /**
@@ -294,6 +324,25 @@ export interface IRequestData {
    * request(), stream() and streamEvents() all honour it.
    */
   redirect?: 'follow' | 'error';
+  /**
+   * Any HTTP answer to this request is final, whatever its status. For a call whose handler is
+   * arbitrary code (an exec script): a 500, 502 or 429 it returned cannot be told from a
+   * platform failure, and sending the request again runs the code again. With this set,
+   * `retries` covers only a request that never reached a server (the connection could not be
+   * opened), which a browser's fetch never reports (see lib/http-wire.ts neverDispatched).
+   */
+  responseIsFinal?: boolean;
+  /**
+   * Read the JSON answer without rounding its integers. JSON.parse turns every
+   * number into a double, so an integer past Number.MAX_SAFE_INTEGER (2^53 - 1)
+   * comes back as a neighbouring value: 9007199254740993 reads as
+   * 9007199254740992. With this set, such an integer comes back as a
+   * `bigint`; every other number is a `number` as before. A `bigint` in a
+   * JSON request body is sent as a plain integer, so the value can go back.
+   * Generated methods of a service whose values are 64-bit integers (sqlite)
+   * set it.
+   */
+  losslessIntegers?: boolean;
 }
 
 interface ICacheEntry {
@@ -301,7 +350,10 @@ interface ICacheEntry {
   timestamp: number;
 }
 
-type RequiredHttpClientConfig = Required<Omit<IHttpClientConfig, 'fetch' | 'middlewares' | 'finalizers' | 'onKitAuthExpired' | 'onStreamDiagnostic'>> & {
+type RequiredHttpClientConfig = Required<Omit<IHttpClientConfig, 'fetch' | 'middlewares' | 'finalizers' | 'onKitAuthExpired' | 'onStreamDiagnostic' | 'retries' | 'retryDelayMs'>> & {
+  /** Absent: the default policy (IHttpClientConfig.retries). */
+  retries?: number;
+  retryDelayMs?: number;
   onStreamDiagnostic?: (error: unknown) => void;
   middlewares: IHttpClientMiddleware[];
   onKitAuthExpired?: (namespace: string, error: ApiError) => Promise<unknown>;
@@ -338,14 +390,13 @@ function hashAuthHeaders(
     if (!src) continue;
     for (const [k, v] of Object.entries(src)) merged[k.toLowerCase()] = v;
   }
-  // Mirror lib/redact.ts SECRET_HEADER_RE so any credential-bearing header
-  // contributes to the cache partition. A narrower AUTH_KEY_RE would allow
-  // cross-identity cache reuse when the only differing header was e.g.
-  // `private-key`, `x-*-secret`, or `x-*-credential(s)`.
-  const AUTH_KEY_RE = /^(authorization|cookie|proxy-authorization|x-.*-token|x-.*-key|x-.*-secret|x-.*-credential(?:s)?|x-auth(?:-.*)?|api[-_]?key|apikey|bearer|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|bearer[-_]?token|secret[-_]?key|client[-_]?secret|private[-_]?key|proxy[-_]?authorization|set[-_]?cookie)$/;
+  // lib/redact.ts's secret-header rule, so any credential-bearing header
+  // contributes to the cache partition. A private copy of the pattern fell
+  // behind it (it lacked x-*-lease), and two callers differing only in that
+  // header shared one cached answer.
   const parts: string[] = [];
   for (const k of Object.keys(merged).sort()) {
-    if (AUTH_KEY_RE.test(k)) parts.push(`${k}=${merged[k]}`);
+    if (_isSecretHeaderName(k)) parts.push(`${k}=${merged[k]}`);
   }
   return parts.length ? parts.join('\n') : '';
 }
@@ -641,6 +692,17 @@ export interface IStreamEventsOptions {
    */
   documentedHeaders?: Record<string, string>;
   /**
+   * The error codes the operation's spec documents (x-error-codes), as
+   * `{ CODE: 'its title in the spec' }`. An HTTP error that carries one of
+   * them keeps that code, with the spec's title as its message, instead of
+   * becoming STREAM_HTTP_ERROR: a resuming client has to tell "your cursor is
+   * too old, re-read the state" (HISTORY_GAP, CHANGE_CURSOR_INVALID) from any
+   * other refusal. Both are fixed text from the spec; the server's own message
+   * and body still go only to `onDiagnostic`. Generated stream methods fill
+   * this in.
+   */
+  documentedErrorCodes?: Record<string, string>;
+  /**
    * The largest frame this stream holds, in UTF-8 bytes of its field lines
    * (the `data:` payload and the rest of the frame). Overrides the client's
    * `maxStreamFrameBytes` when it is a whole number above 0 (anything else
@@ -727,16 +789,25 @@ const _STREAM_ERROR_SENTENCES: Record<string, string> = {
  * what is safe to act on (a fixed code from _STREAM_ERROR_SENTENCES, the
  * status, the client-redacted URL and the method, Retry-After) with a fixed
  * sentence. The original goes only to `options.onDiagnostic`.
+ *
+ * One more code is kept: on an HTTP error, a code the operation's spec
+ * documents (`documentedCodes`, from x-error-codes), with the spec's title for
+ * it as the message. The code is matched against that list and the text comes
+ * from the spec, so nothing the server wrote is passed on.
  */
-function _toStreamError(error: unknown, acceptedStatus: number | undefined): unknown {
+function _toStreamError(error: unknown, acceptedStatus: number | undefined, documentedCodes?: Record<string, string>): unknown {
   if (typeof error === 'object' && error !== null && _cleanStreamErrors.has(error)) return error;
   if (isApiError(error)) {
     const status = Number.isInteger(error.status) && error.status > 0 ? error.status : 0;
-    const code = typeof error.code === 'string' && Object.prototype.hasOwnProperty.call(_STREAM_ERROR_SENTENCES, error.code)
+    const documented = status > 0 && typeof error.code === 'string' && documentedCodes !== undefined
+      && Object.prototype.hasOwnProperty.call(documentedCodes, error.code) && typeof documentedCodes[error.code] === 'string';
+    const code = documented
+      ? error.code as string
+      : typeof error.code === 'string' && Object.prototype.hasOwnProperty.call(_STREAM_ERROR_SENTENCES, error.code)
       ? error.code
       : status > 0 ? 'STREAM_HTTP_ERROR' : 'STREAM_REQUEST_FAILED';
     const clean = new ApiError({
-      message: _STREAM_ERROR_SENTENCES[code]!,
+      message: documented ? (documentedCodes![code] || _STREAM_ERROR_SENTENCES.STREAM_HTTP_ERROR!) : _STREAM_ERROR_SENTENCES[code]!,
       status,
       code,
       ...(typeof error.url === 'string' ? { url: error.url } : {}),
@@ -1125,8 +1196,8 @@ export class HttpClient {
       // `??` (not `||`) so `timeout: 0` survives — callers use 0 to mean
       // "no timeout, rely on upstream"; `||` would silently promote it to 30s.
       timeout: config.timeout ?? 30000,
-      retries: config.retries || 0,
-      retryDelayMs: config.retryDelayMs || 250,
+      ...(config.retries !== undefined ? { retries: config.retries } : {}),
+      ...(config.retryDelayMs ? { retryDelayMs: config.retryDelayMs } : {}),
       retryOnStatuses: config.retryOnStatuses || [408, 425, 429, 500, 502, 503, 504],
       headers: config.headers || {},
       cache: config.cache || {},
@@ -1182,7 +1253,8 @@ export class HttpClient {
   getFetch(): HoodyFetch {
     if (this.fetchImpl !== null) return this.fetchImpl;
     const globalFetch = (globalThis as { fetch?: HoodyFetch }).fetch;
-    if (globalFetch === undefined) throw new Error('No fetch implementation available in this runtime. Pass one explicitly: new HttpClient({ fetch: myFetch }).');
+    // FETCH_UNAVAILABLE: the same answer on every attempt, so shouldRetry treats it as final.
+    if (globalFetch === undefined) throw Object.assign(new Error('No fetch implementation available in this runtime. Pass one explicitly: new HttpClient({ fetch: myFetch }).'), { code: 'FETCH_UNAVAILABLE' });
     return globalFetch;
   }
 
@@ -1269,7 +1341,7 @@ export class HttpClient {
     // parser (json/text/arrayBuffer/blob): a GET with `rawResponse:true`
     // followed by the same GET without it would otherwise cross-pollute shapes.
     const cacheShape = isGet
-      ? (data.rawResponse === true ? 'R' : 'E') + ':' + (data.responseType || 'auto')
+      ? (data.rawResponse === true ? 'R' : 'E') + ':' + (data.responseType || 'auto') + (data.losslessIntegers === true ? ':L' : '')
       : '';
     const cacheKey = `${upperMethod}:${cacheIdentity}:${cacheShape}:${url}`;
     // Opt-in. A default-on cache answered repeated state reads and state-
@@ -1301,9 +1373,13 @@ export class HttpClient {
       this.cache.delete(cacheKey);
     }
 
-    const retries = Math.max(0, data.retries ?? this.config.retries);
+    // Nobody set retries: the default policy (DEFAULT_RETRIES, see IHttpClientConfig.retries).
+    const explicitRetries = data.retries ?? this.config.retries;
+    const retryByDefault = explicitRetries === undefined;
+    const retries = Math.max(0, explicitRetries ?? (data.responseIsFinal === true ? 0 : DEFAULT_RETRIES));
     const timeoutMs = data.timeoutMs ?? this.config.timeout;
-    const retryDelayMs = data.retryDelayMs ?? this.config.retryDelayMs;
+    const retryDelayMs = data.retryDelayMs ?? this.config.retryDelayMs ?? (retryByDefault ? DEFAULT_RETRY_DELAY_MS : 250);
+    let retryWaitedMs = 0;
     const retryOnStatuses = data.retryOnStatuses ?? this.config.retryOnStatuses;
     const authRetryEnabled = data.authRetry ?? this.config.autoRetryAuth;
     const rawResponse = data.rawResponse === true;
@@ -1324,11 +1400,14 @@ export class HttpClient {
     const bodyIsNonReplayable = isNonReplayableBody(data.body);
 
     for (let attempt = 1; attempt <= retries + 1; attempt++) {
+      // The token this attempt goes out with: a 401 is about THIS token, which may no longer be
+      // the client's by the time the answer arrives.
+      const tokenSent = this.config.token;
       const headers = this.buildHeaders(data.headers);
       if (isExternalUrl) {
         // Every spelling: a lower-case authorization survived the exact-case
-        // delete.
-        this.deleteAuthorization(headers);
+        // delete. The caller's own per-request Authorization is put back.
+        this.deleteAuthorization(headers, data.headers);
       }
       // No body, nothing to describe: the default JSON content type on an
       // empty DELETE or POST is refused by servers that parse by the type
@@ -1371,7 +1450,12 @@ export class HttpClient {
           middlewareRequest.timeoutMs,
           data.signal,
           data.redirect,
-          middlewareRequest.middlewareContext
+          middlewareRequest.middlewareContext,
+          // Follow redirects here, where a failure after an answered hop is marked, whenever
+          // "never dispatched" would send the request again where shouldRetry otherwise would
+          // not. Not in a web browser (see inWebBrowser).
+          (data.responseIsFinal === true || !IDEMPOTENT_METHODS.includes(middlewareRequest.method.toUpperCase()))
+            && !inWebBrowser()
         );
         // The body is read inside the caller's signal and the timeout; the
         // transport lets go of both once the headers are in.
@@ -1386,7 +1470,7 @@ export class HttpClient {
         // body parser can only say null.
         const parsedResult = upperMethod === 'HEAD' && responseType === 'auto'
           ? _headerRecord(response.headers)
-          : await this.parseResponseBody(response, responseType, upperMethod);
+          : await this.parseResponseBody(response, responseType, upperMethod, data.losslessIntegers === true);
         const normalized = rawResponse
           ? (parsedResult as T)
           : this.normalizeResponseEnvelope(
@@ -1432,7 +1516,40 @@ export class HttpClient {
           // Middleware errors must not mask the original API error
         }
 
-        if (authRetryEnabled && !authRetried && apiError.status === 401 && !isExternalUrl && !bodyIsNonReplayable) {
+        // Every decision below reads the request as it was dispatched: a request middleware may
+        // have sent it to another destination (an API path to a kit host, whose 401 is the
+        // script's answer, not the account token's), with another method (a GET made a POST
+        // that ran) or with another body (one that cannot be sent twice).
+        const sentMethod = middlewareRequest.method.toUpperCase();
+        const sentExternal = middlewareRequest.url === url
+          ? isExternalUrl
+          : this.isExternalDestination(_isFullUrl(middlewareRequest.url), middlewareRequest.url);
+        const sentNonReplayable = bodyIsNonReplayable || isNonReplayableBody(middlewareRequest.body);
+
+        // The ways back into this loop, and what each does with responseIsFinal:
+        //   a. 401, API scope, token already replaced  -> replay once (below)
+        //   b. 401, API scope, token refreshed         -> replay once (below)
+        //   c. 401, kit host, onKitAuthExpired         -> replay once; NOT for responseIsFinal
+        //   d. shouldRetry(): status, network, RETRY_SAFE_CODES -> honours responseIsFinal itself
+        //   e. onError returned true                   -> refused when responseIsFinal
+        // a and b replay a responseIsFinal request on purpose: hoody-api's auth layer answers
+        // the 401 before any handler runs. Each happens at most once per call, and only with a
+        // NEW token in hand. c does not: on a kit host the 401 may be the script's own answer,
+        // given after it did its work, so the renewed auth is stored (onKitAuthExpired ran) and
+        // the 401 goes back to the caller, who decides whether to send the request again.
+        // Same rule as the generated Node client.
+        if (authRetryEnabled && !authRetried && apiError.status === 401 && !sentExternal && !sentNonReplayable) {
+          // The token that was refused has already been replaced: a sibling request's refresh
+          // landed while this one was in flight. Replay with the current token; refreshing again
+          // would spend a second refresh call (and, on a server that rotates the refresh token,
+          // invalidate the pair the sibling just stored).
+          if (typeof tokenSent === 'string' && tokenSent.length > 0
+              && typeof this.config.token === 'string' && this.config.token.length > 0
+              && this.config.token !== tokenSent) {
+            authRetried = true;
+            attempt -= 1;
+            continue;
+          }
           const refreshedToken = await this.tryRefreshToken(apiError);
           if (refreshedToken && this.config.acceptRefreshedToken(refreshedToken)) {
             this.setToken(refreshedToken);
@@ -1443,14 +1560,26 @@ export class HttpClient {
           }
         }
 
-        if (!kitAuthRetried && apiError.status === 401 && isExternalUrl
+        let renewedNotReplayed: ApiError | undefined;
+        if (!kitAuthRetried && apiError.status === 401 && sentExternal
             && middlewareRequest.middlewareContext?._kitNamespace
             && this.config.onKitAuthExpired
-            && !bodyIsNonReplayable) {
+            && !sentNonReplayable) {
           try {
             const ns = middlewareRequest.middlewareContext._kitNamespace as string;
             const newAuth = await this.config.onKitAuthExpired(ns, apiError);
-            if (newAuth) {
+            if (newAuth && data.responseIsFinal === true) {
+              renewedNotReplayed = new ApiError({
+                message: apiError.message + ' (kit auth was renewed; the request was not repeated because it may have run)',
+                status: apiError.status,
+                ...(apiError.code !== undefined ? { code: apiError.code } : {}),
+                ...(apiError.url !== undefined ? { url: apiError.url } : {}),
+                ...(apiError.method !== undefined ? { method: apiError.method } : {}),
+                ...(apiError.request !== undefined ? { request: apiError.request } : {}),
+                response: apiError.response,
+                cause: apiError,
+              });
+            } else if (newAuth) {
               // Stash the returned auth — the retry picks it up via
               // pendingKitAuthOverride below; just setting kitAuthRetried
               // would let the middleware keep injecting the stale credentials.
@@ -1465,17 +1594,24 @@ export class HttpClient {
             const msg = cbErr instanceof Error ? cbErr.message : String(cbErr);
             console.error('[HttpClient] onKitAuthExpired callback failed:', msg);
           }
+          if (renewedNotReplayed) throw renewedNotReplayed;
         }
 
         // Don't retry when the body is a single-consumption stream
         // (ReadableStream / AsyncIterable). The first fetch() drained it,
         // so a replay would send an empty body to the server → silent data
         // loss on idempotent PUT/DELETE uploads. Surface the error now.
-        if (attempt <= retries && !bodyIsNonReplayable && this.shouldRetry(apiError, upperMethod, retryOnStatuses)) {
-          // Honor Retry-After when the error carries a parsed value.
+        if (attempt <= retries && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, data.responseIsFinal === true, retryByDefault)) {
           const retryAfterMs = (apiError as ApiError & { retryAfterMs?: number }).retryAfterMs;
-          await this.sleep(this.getRetryDelayMs(retryDelayMs, attempt, retryAfterMs));
-          continue;
+          const delayMs = this.getRetryDelayMs(retryDelayMs, attempt, retryAfterMs);
+          // The default policy waits at most DEFAULT_RETRY_WAIT_CAP_MS in all. A wait past it
+          // (a long Retry-After) ends the retries: sending sooner than the server asked is not
+          // honouring it.
+          if (!retryByDefault || retryWaitedMs + delayMs <= DEFAULT_RETRY_WAIT_CAP_MS) {
+            retryWaitedMs += delayMs;
+            await this.sleep(delayMs);
+            continue;
+          }
         }
 
         // Invoke onError on EVERY failure including terminal ones — hiding
@@ -1486,8 +1622,11 @@ export class HttpClient {
         if (this.config.onError) {
           try {
             const shouldRetry = await this.config.onError(apiError);
-            // Same stream-safety guard: do not replay a consumed body.
-            if (shouldRetry && attempt <= retries && !bodyIsNonReplayable) {
+            // Same stream-safety guard: do not replay a consumed body. The hook asks; it does
+            // not overrule responseIsFinal (a hook that returns true for every error ran an
+            // exec script twice on its 500).
+            // Nor does it spend the default budget: before the default policy there was none.
+            if (shouldRetry && attempt <= retries && !sentNonReplayable && data.responseIsFinal !== true && !retryByDefault) {
               await this.sleep(this.getRetryDelayMs(retryDelayMs, attempt));
               continue;
             }
@@ -1603,7 +1742,7 @@ export class HttpClient {
 
     const headers = this.buildHeaders(data.headers);
     if (isExternalUrl) {
-      this.deleteAuthorization(headers);
+      this.deleteAuthorization(headers, data.headers);
     }
     // A GET/HEAD stream has no body; the default JSON content type would be
     // a lie on the wire.
@@ -1925,7 +2064,7 @@ export class HttpClient {
     // original goes only to onDiagnostic, which must not break the stream.
     const diagnostic = options.onDiagnostic ?? this.config.onStreamDiagnostic;
     const toStreamError = (error: unknown): unknown => {
-      const clean = _toStreamError(error, acceptedStatus);
+      const clean = _toStreamError(error, acceptedStatus, options.documentedErrorCodes);
       if (clean !== error && diagnostic) {
         try {
           diagnostic(error);
@@ -2451,7 +2590,7 @@ export class HttpClient {
     const isExternalUrl = this.isExternalDestination(isFullUrl, target);
     const headers = this.buildHeaders(data.headers);
     if (isExternalUrl) {
-      this.deleteAuthorization(headers);
+      this.deleteAuthorization(headers, data.headers);
     }
     // An upgrade has no body to describe.
     _deleteContentType(headers);
@@ -2478,6 +2617,7 @@ export class HttpClient {
     response: Response,
     responseType: 'auto' | 'json' | 'text' | 'arrayBuffer' | 'blob' = 'auto',
     method?: string,
+    losslessIntegers = false,
   ): Promise<unknown> {
     // HEAD and 204/205/304 responses have no body by spec; `response.json()`
     // on an empty body throws SyntaxError. Short-circuit to null so typed
@@ -2494,7 +2634,7 @@ export class HttpClient {
 
     if (responseType === 'json') {
       if (hasNoBody) return null;
-      return response.json();
+      return losslessIntegers ? parseJsonLossless(await response.text()) : response.json();
     }
 
     if (responseType === 'text') {
@@ -2515,7 +2655,8 @@ export class HttpClient {
       if (hasNoBody) return null;
       // An empty body under a JSON type reads as null, as in the CLI client.
       const text = await response.text();
-      return text.trim() === '' ? null : JSON.parse(text);
+      if (text.trim() === '') return null;
+      return losslessIntegers ? parseJsonLossless(text) : JSON.parse(text);
     }
 
     if (this.isBinaryResponse(response, contentType)) {
@@ -2526,49 +2667,20 @@ export class HttpClient {
   }
 
   private isBinaryResponse(response: Response, contentType: string | null): boolean {
+    // A text type is text however it is served: hoody-agent's log export is NDJSON
+    // with Content-Disposition: attachment, and the attachment rule used to win and
+    // hand back an ArrayBuffer. Matched on the exact subtype (lib/http-wire.ts): a
+    // substring test read a .docx (openxmlformats) as text.
+    if (isTextMediaType(contentType)) {
+      return false;
+    }
+
     const contentDisposition = response.headers.get('content-disposition');
     if (contentDisposition && /attachment/i.test(contentDisposition)) {
       return true;
     }
 
-    if (!contentType) {
-      return false;
-    }
-
-    const normalized = contentType.toLowerCase();
-    if (normalized.startsWith('text/')) {
-      return false;
-    }
-
-    if (
-      normalized.includes('json')
-      || normalized.includes('xml')
-      || normalized.includes('javascript')
-      || normalized.includes('yaml')
-      || normalized.includes('yml')
-      || normalized.includes('csv')
-      || normalized.includes('x-www-form-urlencoded')
-    ) {
-      return false;
-    }
-
-    return (
-      normalized.includes('application/octet-stream')
-      || normalized.includes('application/zip')
-      || normalized.includes('application/x-zip')
-      || normalized.includes('application/x-zip-compressed')
-      || normalized.includes('application/gzip')
-      || normalized.includes('application/x-gzip')
-      || normalized.includes('application/x-tar')
-      || normalized.includes('application/x-7z-compressed')
-      || normalized.includes('application/x-rar-compressed')
-      || normalized.includes('application/pdf')
-      || normalized.includes('application/wasm')
-      || normalized.startsWith('image/')
-      || normalized.startsWith('audio/')
-      || normalized.startsWith('video/')
-      || normalized.startsWith('font/')
-    );
+    return isBinaryMediaType(contentType);
   }
 
   /**
@@ -2609,18 +2721,24 @@ export class HttpClient {
           : '';
       if (origin) {
         const url = new URL(`/${cleanPath}`, origin);
-        for (const [key, value] of this.queryPairs(query)) {
-          url.searchParams.append(key, value);
-        }
+        mergeQueryPairs(url.searchParams, this.queryPairs(query));
         return url.toString();
       }
       // No origin available — emit path + manual query string. Kept on
       // encodeURIComponent (%20, not URLSearchParams' +): a path-only URL is
       // resolved by whatever the caller prepends, and DC2-18 pins this form.
-      const qs = this.queryPairs(query)
+      // A path that carries its own query (a route marker) is merged with it.
+      const mark = cleanPath.indexOf('?');
+      const pathOnly = mark === -1 ? cleanPath : cleanPath.slice(0, mark);
+      const merged = new URLSearchParams(mark === -1 ? '' : cleanPath.slice(mark + 1));
+      if (mark !== -1 && !mergeQueryPairs(merged, this.queryPairs(query))) {
+        return `/${cleanPath}`;
+      }
+      const pairs = mark === -1 ? this.queryPairs(query) : [...merged];
+      const qs = pairs
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
         .join('&');
-      return `/${cleanPath}${qs ? `?${qs}` : ''}`;
+      return `/${pathOnly}${qs ? `?${qs}` : ''}`;
     }
     // A relative baseURL ('/api') is joined as a path, as the Node client does;
     // `new URL('/api/x')` has no authority and threw here.
@@ -2628,9 +2746,7 @@ export class HttpClient {
       return this.appendQueryParameters(`${baseUrl}/${cleanPath}`, query);
     }
     const url = new URL(`${baseUrl}/${cleanPath}`);
-    for (const [key, value] of this.queryPairs(query)) {
-      url.searchParams.append(key, value);
-    }
+    mergeQueryPairs(url.searchParams, this.queryPairs(query));
     return url.toString();
   }
 
@@ -2639,23 +2755,19 @@ export class HttpClient {
   }
 
   private appendQueryParameters(pathOrUrl: string, query?: Record<string, unknown>): string {
-    const searchParams = new URLSearchParams();
-    for (const [key, value] of this.queryPairs(query)) {
-      searchParams.append(key, value);
-    }
-    const queryString = searchParams.toString();
-    if (!queryString) {
+    const mark = pathOrUrl.indexOf('?');
+    const searchParams = new URLSearchParams(mark === -1 ? '' : pathOrUrl.slice(mark + 1));
+    if (!mergeQueryPairs(searchParams, this.queryPairs(query))) {
       return pathOrUrl;
     }
-    const separator = pathOrUrl.includes('?') ? '&' : '?';
-    return `${pathOrUrl}${separator}${queryString}`;
+    const queryString = searchParams.toString();
+    const head = mark === -1 ? pathOrUrl : pathOrUrl.slice(0, mark);
+    return queryString ? `${head}?${queryString}` : head;
   }
 
   private buildUrlFromFull(fullUrl: string, query?: Record<string, unknown>): string {
     const url = new URL(fullUrl);
-    for (const [key, value] of this.queryPairs(query)) {
-      url.searchParams.append(key, value);
-    }
+    mergeQueryPairs(url.searchParams, this.queryPairs(query));
     return url.toString();
   }
 
@@ -2721,7 +2833,7 @@ export class HttpClient {
       const bodyValue = body !== undefined
         ? (body instanceof Blob || body instanceof FormData || typeof body === 'string' || body instanceof ArrayBuffer || body instanceof Uint8Array || (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)
           ? body as BodyInit
-          : JSON.stringify(body))
+          : stringifyBody(body))
         : undefined;
       // Header names are case-insensitive: a request middleware that hands
       // back another spelling (a Headers round-trip lower-cases every name)
@@ -2745,10 +2857,10 @@ export class HttpClient {
         signal: controller.signal,
       };
       if (redirect) fetchOptions.redirect = redirect;
-
-      if (this.config.transport.keepAlive !== undefined) {
-        fetchOptions.keepalive = this.config.transport.keepAlive;
-      }
+      // transport.keepAlive is NOT passed as fetch `keepalive`. In fetch that flag means "this
+      // request may outlive the page" (the beacon use), not connection reuse, and a browser
+      // refuses a keepalive request whose body is over 64 KiB: an upload or a long script failed
+      // outright. Connection reuse is the runtime's in a browser, as in the Node client.
 
       if (bodyValue !== undefined) {
         fetchOptions.body = bodyValue;
@@ -2758,7 +2870,8 @@ export class HttpClient {
         }
       }
 
-      return await (this.fetchImpl !== null ? this.fetchImpl(url, fetchOptions) : fetch(url, fetchOptions));
+      // No fetch at all: getFetch() throws the actionable error (a bare `fetch` was a ReferenceError).
+      return await (this.fetchImpl !== null ? this.fetchImpl(url, fetchOptions) : typeof fetch === 'function' ? fetch(url, fetchOptions) : this.getFetch()(url, fetchOptions));
     } finally {
       if (timeout) clearTimeout(timeout);
       if (externalSignal && externalAbortListener) {
@@ -2875,37 +2988,18 @@ export class HttpClient {
     });
   }
 
+  /**
+   * Whether a failed attempt may be sent again: the rule the generated Node
+   * client follows, from lib/http-wire.ts (shouldRetryFailure has the order).
+   */
   private shouldRetry(
     error: ApiError,
     method: string,
-    retryOnStatuses: number[]
+    retryOnStatuses: number[],
+    responseIsFinal = false,
+    byDefault = false
   ): boolean {
-    // ABORTED at status 0 is this client's own timeout or caller abort: final. A
-    // server's answer that names the code (body or X-Hoody-Error-Code) is retried
-    // by its status like any other.
-    if (error.status === 0 && error.code === 'ABORTED') {
-      return false;
-    }
-    // A redirect this client refused to follow is the same answer on every attempt.
-    if (error.code === 'REDIRECT_REFUSED') {
-      return false;
-    }
-
-    const idempotentMethod = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'].includes(method);
-
-    // Network-level failures (status=0) may or may not have reached the
-    // server. For idempotent methods retrying is safe. For POST/PATCH and
-    // other non-idempotent methods the request may already have mutated state
-    // — retrying can double-apply. Gate on idempotency.
-    if (error.status === 0) {
-      return idempotentMethod;
-    }
-
-    if (!idempotentMethod && error.status !== 429) {
-      return false;
-    }
-
-    return retryOnStatuses.includes(error.status);
+    return shouldRetryFailure(error, method, retryOnStatuses, responseIsFinal, byDefault);
   }
 
   /**
@@ -3058,14 +3152,26 @@ export class HttpClient {
   }
 
   /**
-   * Remove every spelling of Authorization. Header names are case-insensitive,
-   * so a configured or per-request "authorization" survived a delete of
-   * "Authorization" and rode out to an external host.
+   * Remove the client's own Authorization, in every spelling. Header names are
+   * case-insensitive, so a configured "authorization" survived a delete of
+   * "Authorization" and rode out to an external host. `callHeaders` are the
+   * request's own headers: an Authorization there is put back (see below).
    */
-  private deleteAuthorization(headers: Record<string, string>): void {
+  private deleteAuthorization(headers: Record<string, string>, callHeaders?: Record<string, string>): void {
     for (const name of Object.keys(headers)) {
       if (name.toLowerCase() === 'authorization') {
         delete headers[name];
+      }
+    }
+    // What is withheld from another host is the client's own credential (the
+    // account token, a configured Authorization header). An Authorization the
+    // caller put on THIS request is for this request's destination: a script
+    // behind hoody-exec that reads a Bearer token has no other way to get it.
+    if (callHeaders) {
+      for (const [name, value] of Object.entries(callHeaders)) {
+        if (name.toLowerCase() === 'authorization' && typeof value === 'string' && value.length > 0) {
+          headers.Authorization = value;
+        }
       }
     }
   }
@@ -3262,8 +3368,15 @@ export class HttpClient {
    * Methods follow fetch: 303 turns anything but HEAD into a body-less GET,
    * 301 and 302 turn a POST into one, and 307 and 308 resend the method and
    * body (a streamed body, which cannot be sent twice, is refused).
-   * A request without credentials, or one sent with redirect: 'error', goes
-   * out unchanged.
+   * One sent with redirect: 'error' goes out unchanged.
+   *
+   * `trackHops` (request() sets it for a method that is not idempotent and
+   * for a responseIsFinal request): a request without credentials follows its
+   * redirects here too, wherever they lead, as fetch would (at most 20). A
+   * failure after the first hop was answered is marked `afterDispatch`: a
+   * script that ran and answered 3xx, whose destination then refused the
+   * connection, is not "never dispatched" and is not sent again. Any other
+   * request without credentials goes out unchanged.
    */
   private async sendConfined(
     method: string,
@@ -3273,12 +3386,14 @@ export class HttpClient {
     timeoutMs: number,
     signal: AbortSignal | undefined,
     redirect: 'follow' | 'error' | undefined,
-    middlewareContext: unknown
+    middlewareContext: unknown,
+    trackHops = false
   ): Promise<Response> {
-    if (redirect === 'error' || !this.carriesCredential(url, headers, middlewareContext)) {
+    const confined = redirect !== 'error' && this.carriesCredential(url, headers, middlewareContext);
+    if (redirect === 'error' || (!confined && !trackHops)) {
       return this.executeRequest(method, url, headers, body, timeoutMs, signal, redirect);
     }
-    const MAX_CREDENTIALED_HOPS = 5;
+    const MAX_CREDENTIALED_HOPS = confined ? 5 : 20;
     // One budget for the whole chain, not one per hop: each hop gets what is
     // left of timeoutMs, and a hop with nothing left is not sent.
     const hasBudget = Number.isFinite(timeoutMs) && timeoutMs > 0;
@@ -3294,9 +3409,19 @@ export class HttpClient {
         expired.name = 'AbortError';
         throw expired;
       }
-      const response = await this.executeRequest(
-        hopMethod, hopUrl, { ...hopHeaders }, hopBody, hopTimeoutMs, signal, 'manual'
-      );
+      let response: Response;
+      try {
+        response = await this.executeRequest(
+          hopMethod, hopUrl, { ...hopHeaders }, hopBody, hopTimeoutMs, signal, 'manual'
+        );
+      } catch (error) {
+        // A server already answered this request (the redirect): a failure on a later hop,
+        // even a refused connection, is after dispatch, never "nothing was sent".
+        if (hops > 0 && error !== null && typeof error === 'object') {
+          try { Object.defineProperty(error, 'afterDispatch', { value: true, configurable: true }); } catch { /* frozen */ }
+        }
+        throw error;
+      }
       if (response.type === 'opaqueredirect') {
         throw this.redirectRefusal(
           'the server answered with a redirect, and a browser does not reveal where it leads',
@@ -3323,7 +3448,8 @@ export class HttpClient {
       } catch {
         next = undefined;
       }
-      if (next === undefined || this.credentialScope(next.href) !== this.credentialScope(hopUrl)) {
+      if (next === undefined || (next.protocol !== 'http:' && next.protocol !== 'https:')
+        || (confined && this.credentialScope(next.href) !== this.credentialScope(hopUrl))) {
         throw this.redirectRefusal(
           'HTTP ' + status + ' points outside the destination the request was addressed to',
           status, hopMethod, hopUrl, middlewareContext

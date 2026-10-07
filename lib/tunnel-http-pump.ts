@@ -490,7 +490,7 @@ function forwardUpgradeToLocal(
     if (f.header.frameType === FrameType.Reset) {
       end.peerReset();
       end.off();
-      // Destroy, never end: a half-closed local peer that stays silent would keep the
+      // Destroy, never end: a half-closed local socket that stays silent would keep the
       // connection, and the session's close listener, for the life of the session.
       socket.destroy();
       return;
@@ -671,7 +671,7 @@ export function handleTcpStream(
 
   end.on((frame) => {
     // A RESET ends both directions, even after the visitor's EOF: destroy, never end, as a
-    // half-closed local peer that stays silent would keep the socket. The socket itself,
+    // half-closed local socket that stays silent would keep the socket. The socket itself,
     // not `localSocket`: a connect still pending is cancelled too.
     if (frame.header.frameType === FrameType.Reset) {
       end.peerReset();

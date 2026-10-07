@@ -7,7 +7,8 @@
  * 'wx', 0o600) + rename; parent dir prepared by prepareChatsDir.
  *
  * Built-in allowlist (no prompt needed, always accepted):
- *   - chatbot.hoody.com         (docs-chatbot service)
+ *   - the docs-chatbot service of the default platform, and of the platform the
+ *     account is on when the caller names it (`platformOrigin`)
  *   - localhost / 127.0.0.1 / ::1 / RFC1918 (local/LAN endpoints)
  *
  * For any other origin, a caller must pass `--accept-endpoint <origin>`
@@ -20,6 +21,7 @@ import { randomBytes } from 'node:crypto';
 import { hoodyHomeDir, platformEnvHint } from './home-dir.js';
 import { join } from 'node:path';
 import { normalizeOrigin, isLocalOrigin } from '../ai/provider-resolve.js';
+import { platformUrl } from '../domain-utils.js';
 import { prepareChatsDir } from './prepare-dir.js';
 
 /**
@@ -27,7 +29,7 @@ import { prepareChatsDir } from './prepare-dir.js';
  * origins (scheme + lowercase host + non-default port).
  */
 export const BUILTIN_ACCEPTED_ORIGINS: ReadonlySet<string> = new Set([
-  'https://chatbot.hoody.com',
+  platformUrl(undefined, 'chatbot'),
 ]);
 
 export interface AcceptFileEntry {
@@ -189,7 +191,7 @@ export type AcceptanceStatus =
  *
  *   1. Normalize to an origin. Invalid URL → refused.
  *   2. Local/RFC1918 → ok (no prompt).
- *   3. Built-in allowlist → ok.
+ *   3. Built-in allowlist, or the platform's own service (`platformOrigin`) → ok.
  *   4. Accept file → ok.
  *   5. `flag` override (from `--accept-endpoint`) matches this origin → ok,
  *      and persist to the accept file.
@@ -210,6 +212,13 @@ export async function checkAcceptance(
      * allowlist + local/RFC1918 + flag/env still pass as 'ok' (in-memory only).
      */
     sessionOnly?: boolean | undefined;
+    /**
+     * The chat service of the platform the account is on (its URL or origin), accepted as
+     * built-in. One package serves every platform, so the fixed allowlist names only the default
+     * one. It is derived from the account's API base URL, and whoever sets that URL is already
+     * sent the account's credentials: accepting its chat service gives away nothing more.
+     */
+    platformOrigin?: string | undefined;
   } = {},
 ): Promise<AcceptanceStatus> {
   let origin: string;
@@ -225,6 +234,7 @@ export async function checkAcceptance(
 
   if (isLocalOrigin(origin)) return { status: 'ok', origin, reason: 'local' };
   if (BUILTIN_ACCEPTED_ORIGINS.has(origin)) return { status: 'ok', origin, reason: 'builtin' };
+  if (opts.platformOrigin && matchesOrigin(opts.platformOrigin, origin)) return { status: 'ok', origin, reason: 'builtin' };
 
   if (!opts.sessionOnly) {
     const file = await readAcceptFile();

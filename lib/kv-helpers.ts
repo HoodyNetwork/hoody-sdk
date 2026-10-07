@@ -22,6 +22,17 @@
  * `responseType`, which choose what the call resolves to: pass those
  * positionally. The batch calls and `list` keep their shapes.
  *
+ * `set` stores every JS value as JSON. A string is sent quoted under
+ * `application/json`, so it reads back as the same string (`''` included),
+ * can be written at a `path`, and `'123'` stays a string. The generated call
+ * labelled a string `text/plain`, which the kit stores verbatim and refuses at
+ * a `path`. Raw text is still one option away: `contentType: 'text/plain'`,
+ * or a `Content-Type` in `headers`.
+ *
+ * `exists` answers a boolean: true, or false when the kit answers 404. The
+ * generated HEAD call (now the protected `__exists`) rejected a missing key
+ * with an ApiError, so "no" had to be caught. Any other failure still rejects.
+ *
  * The object forms of the generated calls are typed on the client's
  * `sqlite.kv` (`SqliteKvStore`), not on KvService: declaring them on
  * the class would widen its methods, and a consumer subclass that overrides
@@ -33,7 +44,7 @@
 
 import { KvService } from '../generated/sqlite/kv.service.js';
 import type { KvServiceBase } from '../generated/sqlite/kv.service.generated.js';
-import { ValidationError } from '../generated/errors.js';
+import { ValidationError, isApiError } from '../generated/errors.js';
 
 const KV_HELPERS_PATCH_MARKER = Symbol.for('hoody.sdk.sqlite.kv.helpers');
 
@@ -50,16 +61,36 @@ export type KvReadOptions = Omit<GetOptions, 'rawResponse' | 'responseType'>;
 /** The response-shape options, which only the positional form takes. */
 type ShapeOptions = 'rawResponse' | 'responseType';
 
+/**
+ * The options of `kv.exists`: those of the HEAD request (`db` required;
+ * `table`, `timeout`, request options), without the response-shape options:
+ * the answer is a boolean.
+ */
+export type KvExistsOptions = Omit<Parameters<KvServiceBase['__exists']>[1], ShapeOptions>;
+type ExistsTarget = Parameters<KvServiceBase['__exists']>[2];
+
+/**
+ * The options of a raw-text `kv.set`: those of `set`, with the media type the
+ * string is stored under (`text/plain`, `text/markdown`, ...). Without
+ * `contentType` a string is stored as a JSON string.
+ */
+export type KvSetTextOptions = Omit<Parameters<KvServiceBase['set']>[2], 'contentType'> & { contentType: string };
+
 /** The KV calls whose positional form is `(key, options, templateVars?)`. */
 export type KvKeyMethod =
   | 'get' | 'delete' | 'exists' | 'increment' | 'decrement' | 'pop' | 'listHistory' | 'rollback' | 'getSnapshot';
+
+/** The positional form of a key call: the generated one, or the hand-written `exists`. */
+type KvKeyCall<M extends KvKeyMethod> = M extends 'exists'
+  ? (key: string, options: KvExistsOptions, templateVars?: ExistsTarget) => Promise<boolean>
+  : KvServiceBase[Exclude<M, 'exists'>];
 
 /** The KV calls whose positional form is `(key, value, options, templateVars?)`. */
 export type KvKeyValueMethod = 'set' | 'push' | 'remove';
 
 /** The object form of a key call: `{ key, ...options }`, e.g. `get({ db: 'app', key: 'prefs' })`. */
 export type KvKeyArgs<M extends KvKeyMethod> =
-  { key: string } & Omit<Parameters<KvServiceBase[M]>[1], ShapeOptions>;
+  { key: string } & Omit<Parameters<KvKeyCall<M>>[1], ShapeOptions>;
 
 /**
  * The object form of `set`, `push` and `remove`: `{ key, value, ...options }`.
@@ -72,19 +103,22 @@ export type KvKeyValueArgs<M extends KvKeyValueMethod> =
   (M extends 'remove'
     ? { key: string; value?: unknown }
     : { key: string; value: Parameters<KvServiceBase[M]>[1] })
-  & Omit<Parameters<KvServiceBase[M]>[2], ShapeOptions>;
+  & (M extends 'set'
+    // A string value may name its own media type (raw text); every other value is JSON or bytes.
+    ? Omit<Parameters<KvServiceBase[M]>[2], ShapeOptions | 'contentType'> & { contentType?: string }
+    : Omit<Parameters<KvServiceBase[M]>[2], ShapeOptions>);
 
 /** The object form of `read`: `{ key, ...options }`. */
 export type KvReadArgs = { key: string } & KvReadOptions;
 
-type KeyTarget<M extends KvKeyMethod> = Parameters<KvServiceBase[M]>[2];
+type KeyTarget<M extends KvKeyMethod> = Parameters<KvKeyCall<M>>[2];
 type KeyValueTarget<M extends KvKeyValueMethod> = Parameters<KvServiceBase[M]>[3];
 
 /** The object form of each generated key call, e.g. `get({ db: 'app', key: 'prefs' })`. */
 export interface KvStoreObjectForms {
   get(args: KvKeyArgs<'get'>, templateVars?: KeyTarget<'get'>): ReturnType<KvServiceBase['get']>;
   delete(args: KvKeyArgs<'delete'>, templateVars?: KeyTarget<'delete'>): ReturnType<KvServiceBase['delete']>;
-  exists(args: KvKeyArgs<'exists'>, templateVars?: KeyTarget<'exists'>): ReturnType<KvServiceBase['exists']>;
+  exists(args: KvKeyArgs<'exists'>, templateVars?: KeyTarget<'exists'>): Promise<boolean>;
   increment(args: KvKeyArgs<'increment'>, templateVars?: KeyTarget<'increment'>): ReturnType<KvServiceBase['increment']>;
   decrement(args: KvKeyArgs<'decrement'>, templateVars?: KeyTarget<'decrement'>): ReturnType<KvServiceBase['decrement']>;
   pop(args: KvKeyArgs<'pop'>, templateVars?: KeyTarget<'pop'>): ReturnType<KvServiceBase['pop']>;
@@ -92,6 +126,8 @@ export interface KvStoreObjectForms {
   rollback(args: KvKeyArgs<'rollback'>, templateVars?: KeyTarget<'rollback'>): ReturnType<KvServiceBase['rollback']>;
   getSnapshot(args: KvKeyArgs<'getSnapshot'>, templateVars?: KeyTarget<'getSnapshot'>): ReturnType<KvServiceBase['getSnapshot']>;
   set(args: KvKeyValueArgs<'set'>, templateVars?: KeyValueTarget<'set'>): ReturnType<KvServiceBase['set']>;
+  /** Raw text: the string is stored verbatim under `contentType`, not as a JSON string. */
+  set(key: string, value: string, options: KvSetTextOptions, templateVars?: KeyValueTarget<'set'>): ReturnType<KvServiceBase['set']>;
   push(args: KvKeyValueArgs<'push'>, templateVars?: KeyValueTarget<'push'>): ReturnType<KvServiceBase['push']>;
   remove(args: KvKeyValueArgs<'remove'>, templateVars?: KeyValueTarget<'remove'>): ReturnType<KvServiceBase['remove']>;
 }
@@ -115,6 +151,13 @@ declare module '../generated/sqlite/kv.service.js' {
     read<T = unknown>(key: string, options: KvReadOptions, templateVars?: GetTarget): Promise<T>;
     /** `read({ db, key, ...options })`: the object form of `read(key, { db, ...options })`. */
     read<T = unknown>(args: KvReadArgs, templateVars?: GetTarget): Promise<T>;
+    /**
+     * Whether `key` exists: true, or false when the kit answers 404. Any other
+     * failure rejects with its ApiError.
+     *
+     *   if (await box.sqlite.kv.exists('prefs:ada', { db: 'app' })) { ... }
+     */
+    exists(key: string, options: KvExistsOptions, templateVars?: ExistsTarget): Promise<boolean>;
   }
 }
 
@@ -171,6 +214,39 @@ function keyValueCall(method: KvKeyValueMethod, positional: Positional): Positio
   };
 }
 
+/**
+ * `set` with a string stored as JSON. The generated call sends a string
+ * verbatim as `text/plain` unless a Content-Type is already set, and
+ * JSON-encodes it once when that type is JSON: so the type is set here.
+ * An explicit `contentType`, or a `Content-Type` among `headers`, keeps the
+ * string as raw text under that type. Every other value goes through untouched.
+ */
+function jsonStringSet(positional: Positional): Positional {
+  return function (this: unknown, key: unknown, value: unknown, options: unknown, ...rest: unknown[]) {
+    if (typeof value !== 'string' || !isArgsObject(options)) return positional.call(this, key, value, options, ...rest);
+    const headers = isArgsObject(options.headers) ? options.headers : {};
+    if (Object.keys(headers).some((name) => name.toLowerCase() === 'content-type')) {
+      return positional.call(this, key, value, options, ...rest);
+    }
+    const contentType = typeof options.contentType === 'string' && options.contentType !== ''
+      ? options.contentType
+      : 'application/json';
+    return positional.call(this, key, value, { ...options, headers: { ...headers, 'Content-Type': contentType } }, ...rest);
+  };
+}
+
+/** `exists` as a boolean over the generated HEAD call: 404 is the answer "no", not a failure. */
+async function exists(this: unknown, key: unknown, options: unknown, templateVars?: unknown): Promise<boolean> {
+  const head = (this as { __exists: Positional }).__exists;
+  try {
+    // The generated HEAD resolves false itself on a 404 the kit marks KEY_NOT_FOUND / KEY_EXPIRED.
+    return (await head.call(this, key, options, templateVars)) !== false;
+  } catch (err) {
+    if (isApiError(err) && err.status === 404) return false;
+    throw err;
+  }
+}
+
 async function read<T = unknown>(
   this: KvServiceBase,
   keyOrArgs: string | KvReadArgs,
@@ -207,6 +283,8 @@ export function patchKvHelpersPrototype(): void {
   // The positional method as the prototype chain has it now: the generated one,
   // or an override in the hand-written KvService.
   const positional = (method: string) => proto[method] as Positional;
+  proto.exists = exists;
+  proto.set = jsonStringSet(positional('set'));
   for (const method of KEY_METHODS) proto[method] = keyCall(method, positional(method));
   for (const method of KEY_VALUE_METHODS) proto[method] = keyValueCall(method, positional(method));
   proto.read = read;

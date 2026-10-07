@@ -301,7 +301,7 @@ export type {
 // from here keeps their `declare module` augmentations (readText/readJson/
 // readBytes, sqlite.sql.query/run, sqlite.kv.read) in the browser
 // declarations.
-export type { FilesReadOptions } from './files-service-extensions.js';
+export type { FilesReadOptions, FilesExistsOptions } from './files-service-extensions.js';
 export type {
   SqliteBindValue,
   SqliteParams,
@@ -309,7 +309,7 @@ export type {
   SqliteQueryResult,
   SqliteRunResult,
 } from './sqlite-helpers.js';
-export type { KvReadOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
+export type { KvReadOptions, KvExistsOptions, KvSetTextOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
 
 // -- Notes TUS upload (box.notes.files.upload / resumeUpload / …) --
 export {
