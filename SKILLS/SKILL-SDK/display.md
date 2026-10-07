@@ -1,4 +1,4 @@
-> _**SDK skill · `display` namespace** · ~16,073 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `display` namespace** · ~14,050 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 
@@ -76,10 +76,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `input.click` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `windows.list` response) to a point picked on the screenshot, or use `windows.getGeometry` to target a window directly.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
-- Window IDs are accepted as decimal or hex (`0x...`). `windows.list`, `windows.search` and `windows.getActive` return decimal numbers; the path-parameter routes (`windows.get`, `windows.getGeometry`, `windows.getTitle`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.
+- Window IDs are accepted as decimal or hex (`0x...`). `windows.list`, `windows.search` and `windows.getActive` return decimal numbers; the path-parameter routes (`windows.get`, `windows.getGeometry`, `windows.getTitle`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
 - `windows.focus` activates the window and then tries to give it X input focus. The second step fails on a window that is not viewable, and the call still answers `success: true` with `details.inputFocus: false` and a `warning`; untargeted keyboard input then does not reach that window. `windows.getActive` confirms the activation only.
-- `ui.getPage` returns HTML, browser-only.
-- The screenshot-list accessor hangs off the namespace root (`client.display.screenshots.list`), not the `screenshots` service — there is no `screenshots.list`.
+- The HTML5 client page has no SDK method. Build its URL with `client.embeds.display.client()` and open it or put it in an iframe.
+- List stored screenshots with `client.display.screenshots.list({ displayId: 1 })`; the list method belongs to the `screenshots` service.
 - `display.get` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `display.getGeometry`). Its declared response type has only `display` and `screenshots`; read the other fields through a cast.
 - `input.reset` clears stuck modifiers/buttons.
 - `windows.wait` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
@@ -89,7 +89,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 - `400 NO_DISPLAY_CONTEXT` — supply `?displayId=N` or `*-display-N.*`.
 - `DISPLAY_NOT_AVAILABLE` — the X server for that `displayId` is unreachable. Returned by the input, clipboard and window routes alike.
-- `404 SCREENSHOT_NOT_FOUND` on `screenshots.get` — no stored capture has that timestamp. Refresh by calling `screenshots.capture`, which **takes a fresh screenshot** and returns its metadata, not just a timestamp lookup; then retry `screenshots.get` with the new timestamp. (`screenshots.getLatest` only returns metadata for the *latest* stored screenshot, which is not a replacement for a missed timestamp.)
+- `404 SCREENSHOT_NOT_FOUND` on `screenshots.get` — no stored capture has that timestamp. Refresh by calling `screenshots.capture`, which **takes a fresh screenshot** (with `base64` on, the response carries its `info.timestamp`), then retry `screenshots.get` with the new timestamp. `screenshots.getLatest` returns the latest stored image by default; its metadata-only form (`getLatest({ metadata: true })`) returns only that image's metadata. Neither takes a fresh screenshot, so neither replaces a missed timestamp.
 
 ## Related namespaces
 
@@ -117,7 +117,7 @@ const b64 = before.image.data;
 await client.display.input.click({ x: 75, y: 50, button: 1 }, { displayId: 1 });
 ```
 
-**Step 3 — capture again and give the new image to the vision model.** `screenshots.capture` is not a cheaper probe: it takes a full capture too and only leaves the image bytes out of the response.
+**Step 3 — capture again and give the new image to the vision model.** With `base64` on, `screenshots.capture` returns the fresh image and its metadata. There is no cheaper probe: the metadata-only form (`metadata: true`) still takes a full screenshot and only leaves the image bytes out.
 
 ```typescript
 const fresh = await client.display.screenshots.capture({ displayId: 1, base64: true });
@@ -260,7 +260,7 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 
 **Accessor:** `client.display`  |  **Import:** `import * as display from 'hoody-sdk/display'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.display.clipboard` (2) — Display information and management
 
@@ -680,18 +680,20 @@ client.display.mouse.up(data?: DisplayMouseUpRequest, options?: { displayId?: nu
 #### `capture` — Capture a new screenshot
 
 ```typescript
-client.display.screenshots.capture(options: NonNullable<Parameters<ScreenshotsServiceBase['__captureDisplayScreenshotMetadata']>[0]> & { metadata: true })
+client.display.screenshots.capture(options: { displayId?: number; metadata: true })  // → Promise<CaptureDisplayScreenshotMetadataResponse>
+client.display.screenshots.capture(options?: { base64?: boolean; displayId?: number; region?: string; cursor?: boolean; metadata?: false })  // → Promise<ApiResponse<ArrayBuffer> | CaptureDisplayScreenshotResponse>
+client.display.screenshots.capture(options?: { base64?: boolean; displayId?: number; region?: string; cursor?: boolean; metadata?: boolean })  // → Promise<CaptureDisplayScreenshotMetadataResponse> | Promise<ApiResponse<ArrayBuffer> | CaptureDisplayScreenshotResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `base64` | `boolean` | query | No | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: `true`, `1`, `` (empty) - Return base64 JSON; `false`, `0` - Return binary (default) |
-| `displayId` | `integer` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
+| `displayId` | `number` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 | `region` | `string` | query | No | Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 > x1` and `y2 > y1`; anything else is a 400. The coordinates are **capture coordinates**, not root-window coordinates. A seamless session composites only the windows it is showing, so the capture's origin is the bounding box of those windows. Crop against the width and height reported for the capture itself, not against the geometry from `GET /input/display-geometry`. |
 | `cursor` | `boolean` | query | No | Include the pointer position in the response. Only has an effect on the base64 JSON form, which gains a `cursor` object; a binary PNG response has nowhere to put it. Accepted values: `true`, `1`, `` (empty). Anything else is off. |
 | `metadata` | `boolean` | option | No | Answer the screenshot metadata instead of the image. |
 
-**Returns:** `ReturnType<ScreenshotsServiceBase['__captureDisplayScreenshotMetadata']>`  |  **HTTP:** `GET /api/v1/display/screenshot`
+**Returns:** see each form above  |  **HTTP:** `GET /api/v1/display/screenshot`
 **CLI:** `hoody display screenshots capture`
 
 ---
@@ -716,16 +718,18 @@ client.display.screenshots.get(timestamp: string, options?: { base64?: boolean; 
 #### `getLatest` — Retrieve the most recent screenshot
 
 ```typescript
-client.display.screenshots.getLatest(options: NonNullable<Parameters<ScreenshotsServiceBase['__getDisplayLatestScreenshotMetadata']>[0]> & { metadata: true })
+client.display.screenshots.getLatest(options: { displayId?: number; metadata: true })  // → Promise<GetDisplayLatestScreenshotMetadataResponse>
+client.display.screenshots.getLatest(options?: { base64?: boolean; displayId?: number; metadata?: false })  // → Promise<ApiResponse<ArrayBuffer> | GetDisplayLatestScreenshotResponse>
+client.display.screenshots.getLatest(options?: { base64?: boolean; displayId?: number; metadata?: boolean })  // → Promise<GetDisplayLatestScreenshotMetadataResponse> | Promise<ApiResponse<ArrayBuffer> | GetDisplayLatestScreenshotResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `base64` | `boolean` | query | No | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: `true`, `1`, `` (empty) - Return base64 JSON; `false`, `0` - Return binary (default) |
-| `displayId` | `integer` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
+| `displayId` | `number` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 | `metadata` | `boolean` | option | No | Answer the latest screenshot metadata instead of the image. |
 
-**Returns:** `ReturnType<ScreenshotsServiceBase['__getDisplayLatestScreenshotMetadata']>`  |  **HTTP:** `GET /api/v1/display/screenshot/last`
+**Returns:** see each form above  |  **HTTP:** `GET /api/v1/display/screenshot/last`
 **CLI:** `hoody display screenshots latest get`
 
 ---
@@ -803,82 +807,6 @@ client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: nu
 
 **Returns:** `Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsGetLatestResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /api/v1/display/thumbnail/last`
 **CLI:** `hoody display thumbnails latest get`
-
----
-
-### `client.display.ui` (1) — Display information and management
-
-#### `getPage` — Access the HTML5 Display client interface
-
-```typescript
-client.display.ui.getPage(options?: { displayId?: number; decorations?: boolean; toolbar?: boolean; menu?: boolean; maximize_new_windows?: boolean; readonly?: boolean; dark_mode?: boolean; node?: string; project_id?: string; container_id?: string; url_display_id?: string; ssl?: boolean; webtransport?: boolean; path?: string; action?: "connect" | "start" | "shadow"; display?: string; encoding?: string; offscreen?: boolean; bandwidth_limit?: number; override_width?: string; override_height?: string; vrefresh?: number; suspend_inactive_tab?: boolean; sound?: boolean; audio_codec?: string; keyboard?: boolean; keyboard_layout?: string; swap_keys?: boolean; clipboard?: boolean; clipboard_preferred_format?: "text/plain" | "text/html" | "UTF8_STRING"; clipboard_poll?: boolean; printing?: boolean; file_transfer?: boolean; video?: boolean; mediasource_video?: boolean; open_url?: boolean; notification_server_url?: string; web_notifications?: boolean; display_notifications?: boolean; notification_connection_type?: "websocket" | "polling"; sharing?: boolean; steal?: boolean; reconnect?: boolean; floating_menu?: boolean; clock?: boolean; scroll_reverse_y?: "auto" | "true" | "false"; scroll_reverse_x?: boolean; title_show_hoody?: boolean; title_show_display_id?: boolean; app?: string; remote_logging?: boolean; insecure?: boolean; debug_main?: boolean; debug_keyboard?: boolean; debug_geometry?: boolean; debug_mouse?: boolean; debug_clipboard?: boolean; debug_draw?: boolean; debug_audio?: boolean; debug_network?: boolean; debug_file?: boolean })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `displayId` | `number` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `decorations` | `boolean` | query | No | Show window decorations (title bar with close/minimize/maximize buttons). Set to false for headless/kiosk mode. |
-| `toolbar` | `boolean` | query | No | Show entire toolbar/menu area (menu trigger + menu). Set to false to hide all menu UI elements. Takes precedence over the menu parameter. |
-| `menu` | `boolean` | query | No | Show Hoody menu trigger icon. Set to false to hide menu completely. Note: toolbar parameter takes precedence over this. |
-| `maximize_new_windows` | `boolean` | query | No | Open new top-level application windows maximized instead of centered at the default size (max 1024x1024). Only applies to windows that do not request their own position, and skips override-redirect windows, dialogs, other non-NORMAL window types, and windows the app itself marks undecorated via metadata (which would have no title bar to un-maximize from). Windows can still be un-maximized from their title bar. Combining with the global decorations=false parameter is honoured as explicit kiosk intent: windows open maximized without a title bar. |
-| `readonly` | `boolean` | query | No | Enable read-only/view-only mode. Blocks all keyboard and mouse input from the client. Perfect for dashboards, monitoring, or demo scenarios. Works independently or combines with server readonly setting. |
-| `dark_mode` | `boolean` | query | No | Enable dark mode theme |
-| `node` | `string` | query | No | Hoody node identifier (e.g., node-example-1) |
-| `project_id` | `string` | query | No | Hoody project ID |
-| `container_id` | `string` | query | No | Hoody container ID |
-| `url_display_id` | `string` | query | No | Display ID for URL construction |
-| `ssl` | `boolean` | query | No | Use SSL/TLS for WebSocket connection |
-| `webtransport` | `boolean` | query | No | Use WebTransport (HTTP3) instead of WebSocket |
-| `path` | `string` | query | No | Connection path for the display server |
-| `action` | `"connect" \| "start" \| "shadow"` | query | No | Connection action type. `connect` - Connect to existing session; `start` - Start new session; `shadow` - Shadow existing display |
-| `display` | `string` | query | No | Display number to connect to |
-| `encoding` | `string` | query | No | Pre-selects the encoding in the settings dialog; does not change the stream encoding. |
-| `offscreen` | `boolean` | query | No | Use offscreen canvas for rendering |
-| `bandwidth_limit` | `number` | query | No | Bandwidth limit in bits per second (0 = unlimited) |
-| `override_width` | `string` | query | No | Override virtual desktop width (auto or numeric value) |
-| `override_height` | `string` | query | No | Override virtual desktop height (auto or numeric value 480-4320) |
-| `vrefresh` | `number` | query | No | Vertical refresh rate in Hz. Use -1 for auto-detect. Minimum 30 when explicitly set. |
-| `suspend_inactive_tab` | `boolean` | query | No | Suspend client updates when browser tab is inactive. Enables power saving by calling client.suspend() on tab hide and client.resume() on tab show. Recommended to keep enabled for better performance. |
-| `sound` | `boolean` | query | No | Enable audio forwarding |
-| `audio_codec` | `string` | query | No | Preferred audio codec |
-| `keyboard` | `boolean` | query | No | Show on-screen virtual keyboard |
-| `keyboard_layout` | `string` | query | No | Keyboard layout (us, gb, fr, de, etc.) |
-| `swap_keys` | `boolean` | query | No | Swap Cmd/Ctrl keys (useful for macOS) |
-| `clipboard` | `boolean` | query | No | Enable clipboard sharing |
-| `clipboard_preferred_format` | `"text/plain" \| "text/html" \| "UTF8_STRING"` | query | No | Preferred clipboard format |
-| `clipboard_poll` | `boolean` | query | No | Enable clipboard polling (browser-dependent default) |
-| `printing` | `boolean` | query | No | Enable printing support |
-| `file_transfer` | `boolean` | query | No | Enable file transfer support |
-| `video` | `boolean` | query | No | Enable video encoding support |
-| `mediasource_video` | `boolean` | query | No | Enable MediaSource API for video |
-| `open_url` | `boolean` | query | No | Allow opening URLs from the remote session in the local browser |
-| `notification_server_url` | `string` | query | No | External notification server URL for real-time notification integration. **URL Format:** `https://{project}-{container}-n-{display}.{node}.containers.hoody.com/notification-client.js` **Auto-detection:** If not provided, the client will attempt to auto-detect from the current hostname pattern. The client transforms the display URL pattern by replacing 'display' with 'n'. **Examples:** Manual: `?notification_server_url=https://my-project-container-n-6.node.containers.hoody.com/notification-client.js`; Auto-detected from: `https://my-project-container-display-6.node.containers.hoody.com` **Integration:** The notification server (port 3999) provides: Historical notification retrieval; Real-time WebSocket notification updates; Notification icons serving; Desktop notification triggering See external notification server OpenAPI spec for complete API documentation. |
-| `web_notifications` | `boolean` | query | No | Enable browser web notifications (native OS notifications) |
-| `display_notifications` | `boolean` | query | No | Show notifications within display UI |
-| `notification_connection_type` | `"websocket" \| "polling"` | query | No | Notification server connection type. websocket: Real-time updates via WebSocket (recommended); polling: Periodic HTTP polling (fallback) |
-| `sharing` | `boolean` | query | No | Allow session sharing |
-| `steal` | `boolean` | query | No | Steal existing sessions |
-| `reconnect` | `boolean` | query | No | Auto-reconnect on connection loss |
-| `floating_menu` | `boolean` | query | No | Show floating menu |
-| `clock` | `boolean` | query | No | Show server clock |
-| `scroll_reverse_y` | `"auto" \| "true" \| "false"` | query | No | Reverse vertical scrolling direction (auto, true, false) |
-| `scroll_reverse_x` | `boolean` | query | No | Reverse horizontal scrolling direction |
-| `title_show_hoody` | `boolean` | query | No | Show "Hoody" in browser title |
-| `title_show_display_id` | `boolean` | query | No | Show display ID in browser title |
-| `app` | `string` | query | No | Target application to launch or focus. Can be an application name, a REGEX pattern, or a window ID. |
-| `remote_logging` | `boolean` | query | No | Enable remote logging to the display server |
-| `insecure` | `boolean` | query | No | Allow insecure authentication (not recommended for production) |
-| `debug_main` | `boolean` | query | No | Enable main debug logging |
-| `debug_keyboard` | `boolean` | query | No | Enable keyboard debug logging |
-| `debug_geometry` | `boolean` | query | No | Enable geometry debug logging |
-| `debug_mouse` | `boolean` | query | No | Enable mouse debug logging |
-| `debug_clipboard` | `boolean` | query | No | Enable clipboard debug logging |
-| `debug_draw` | `boolean` | query | No | Enable draw debug logging |
-| `debug_audio` | `boolean` | query | No | Enable audio debug logging |
-| `debug_network` | `boolean` | query | No | Enable network debug logging |
-| `debug_file` | `boolean` | query | No | Enable file transfer debug logging |
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/display/`
 
 ---
 

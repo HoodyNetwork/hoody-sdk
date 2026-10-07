@@ -1,4 +1,4 @@
-> _**HTTP skill · `cron` namespace** · ~5,436 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `cron` namespace** · ~5,717 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `cron` — managed crontab entries per system user
 
@@ -59,11 +59,12 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `user`: matches `^[A-Za-z0-9_.-]{1,32}$` for the character class, but the validator additionally rejects a **leading** `-` (trailing `-` is allowed).
 - Vixie 5-field plus standard `@`-macros; Quartz rejected.
 - `command`/`name`/`comment` reject newline/null/VT/FF/NEL/LS/PS; caps 4096/120/500.
-- The kit collapses runs of whitespace inside the command of a managed entry with a 5-field schedule: when the spool is parsed back, the command is split on whitespace and re-joined with single spaces, and the next write for that user stores the collapsed text. `echo "a  b"` becomes `echo "a b"`. An `@macro` schedule keeps the command as written. Put commands that depend on exact spacing in a script and schedule the script.
+- Send a managed entry's command exactly as a shell would run it, and do not escape `%`: the kit writes it into the crontab as `\%` so cron runs the command unchanged and reads it back the same way. A `\%` you send is escaped again and runs as `\%`, backslash included. Raw lines in a `PUT /users/{user}/crontab` body are written as given, so a `%` there follows crontab rules: a bare `%` ends the command, and `\%` is a literal `%`.
+- A managed entry's command is read back from the spool exactly as written, runs of whitespace included, so a later write for that user stores it unchanged: `echo "a  b"` stays `echo "a  b"`.
 - `expires_at` RFC 3339, strictly future.
 - Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
 - **`PUT /users/{user}/crontab` replaces the whole crontab.** `GET /users/{user}/crontab` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `GET /users/{user}/crontab` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
-- A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line.
+- A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line. Every other non-comment line gets the syntax check of `crontab(1)`: a line it would refuse is `400 INVALID_CRONTAB` naming that line, and nothing is written.
 - `GET /users/{user}/entries`/`GET /users/{user}/entries/{id}` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
 - `GET /users/{user}/entries` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
 - Sweep every 60s default; per-user lock.
@@ -78,10 +79,10 @@ Error bodies are `{ code, message, details }`, except where noted.
 - `400 INVALID_ID` `Entry id must be a UUID`: the `{id}` path segment is not a UUID.
 - `400 INVALID_PAGINATION`: `page` must be 1 or more and `limit` 1 to 200 (default 50).
 - `404 USER_NOT_FOUND`: the user is not in `/etc/passwd`. `404 ENTRY_NOT_FOUND`: no managed entry has that id (it may have expired and been swept).
-- `413`: a request body over the size cap (256 KiB by default) is rejected by the HTTP layer before the handler runs, with a plain-text body, not JSON. The JSON `PAYLOAD_TOO_LARGE` comes from the crontab parser: for a crontab over 10,000 lines, or over its separate byte ceiling of about 40 MB, which only a deployment that raised the size cap can reach.
-- `415` (the body is not `application/json`) and `422` (the JSON does not match the request schema) come from the JSON extractor, with a plain-text body.
+- `413 PAYLOAD_TOO_LARGE`: a request body over the size cap (256 KiB by default), or a crontab over 10,000 lines or over its separate byte ceiling of about 40 MB, which only a deployment that raised the size cap can reach.
+- `415 UNSUPPORTED_MEDIA_TYPE`: the Content-Type is neither `application/json` nor an `application/*+json` type. `400 INVALID_JSON`: the body is not valid JSON. `400 INVALID_BODY`: the JSON does not match the request fields (a missing or mistyped field).
 - `500 BACKEND_ERROR` — `crontab(1)` fail / 30s timeout.
-- `403 Forbidden` — private IP, no dev-server.
+- `403 Forbidden` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON.
 
 ## Related namespaces
 
@@ -104,7 +105,7 @@ ID=$(curl -sX POST "$KIT/users/root/entries" \
   -H 'Content-Type: application/json' \
   -d "$(jq -nc --arg e "$EXP" '{
     schedule: "0 2 * * *",
-    command: "pg_dump -U postgres mydb | gzip > /backups/db-$(date +\\%F).sql.gz",
+    command: "pg_dump -U postgres mydb | gzip > /backups/db-$(date +%F).sql.gz",
     name: "nightly-db-backup",
     expires_at: $e
   }')" | jq -r '.id')
@@ -169,17 +170,19 @@ done
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
-# Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO=, ...).
+# Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO = ..., "A B" = c).
 : > /tmp/cron-migrate.txt; page=1
 while :; do
   body=$(curl -sf "$KIT/users/root/entries?page=$page&limit=200") || exit 1
   jq -r '.entries[] | select(.type=="raw") | .line' <<<"$body" \
-    | grep -Ev '^[[:space:]]*($|#|[A-Za-z_][A-Za-z0-9_]*=)' >> /tmp/cron-migrate.txt
+    | grep -Ev "^[[:space:]]*(\$|#|([A-Za-z_][A-Za-z0-9_]*|\"[^\"]*\"|'[^']*')[[:space:]]*=)" >> /tmp/cron-migrate.txt
   [ $((page * 200)) -lt "$(jq -r .total <<<"$body")" ] || break
   page=$((page + 1))
 done
 cat /tmp/cron-migrate.txt
 ```
+
+**Before step 2 — check every line for `%` and `\`.** A raw line is in crontab syntax and a managed command is not: in a raw line a bare `%` ends the command and sends the rest to its stdin, and `\%` and `\\` stand for `%` and `\`, while the kit escapes a managed command itself (see Quirks). The scripts below copy the command text as it is, so they keep a line's meaning only when it contains neither `%` nor `\`. Take any other line out of the step 1 list and migrate it by hand: write the command cron actually runs (`\%` becomes `%`, `\\` becomes `\`, and a `%`-delimited stdin becomes a pipe or a here-string) and create its entry from that. Step 3 drops only the lines still in the list, so remove the raw lines you migrated by hand the same way, or each of those jobs runs twice.
 
 **Step 2 — create a managed entry per line.** An `@macro` line (`@daily`, `@reboot`, ...) has a one-field schedule; any other line has five fields. The rest of the line is the command.
 
@@ -337,7 +340,7 @@ KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
 curl -sf "$KIT/users/root/crontab" > /tmp/cron-snapshot.json
 ```
 
-**Step 2 — push the canonical config.** Body MUST be `application/json` (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
+**Step 2 — push the canonical config.** Body MUST use `application/json` or an `application/*+json` Content-Type (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
 
 ```bash
 NEW=$(cat /etc/iac/canonical-crontab.txt)
@@ -348,7 +351,7 @@ curl -sX PUT "$KIT/users/root/crontab" \
 
 ### 9. Update only the comment / metadata, leave the schedule untouched
 
-**Goal:** add a runbook URL or owner tag without changing the schedule or the enabled state. PATCH is partial — fields you don't pass are not assigned. The write still rewrites the user's whole crontab, so runs of whitespace inside a five-field managed entry's command are collapsed (see Quirks).
+**Goal:** add a runbook URL or owner tag without changing the schedule or the enabled state. PATCH is partial — fields you don't pass are not assigned.
 
 ```bash
 KIT="https://${P}-${C}-cron-1.${N}.containers.hoody.com"
@@ -357,7 +360,7 @@ curl -sX PATCH "$KIT/users/root/entries/$ID" \
   -d '{"comment":"owner: @team · runbook: https://wiki.example.com/cron-x"}'
 ```
 
-`updated_at` advances; `schedule` and `enabled` are unchanged, and `command` is unchanged unless it contained runs of whitespace, which the rewrite collapses.
+`updated_at` advances; `schedule`, `enabled` and `command` are unchanged.
 
 ### 10. Rotate-and-replace pattern — read, edit text, write back
 
@@ -390,8 +393,8 @@ curl -sX PUT "$KIT/users/root/crontab" \
 **Param notes:**
 
 - `user` — System username
-- `page` — Page number (1-based)
-- `limit` — Items per page (max 200)
+- `page` — Page number (1-based, default 1)
+- `limit` — Items per page (default 50, max 200)
 
 ### `entries` (5) — Managed entry CRUD
 
@@ -406,8 +409,8 @@ curl -sX PUT "$KIT/users/root/crontab" \
 **Param notes:**
 
 - `user` — System username
-- `page` — Page number (1-based)
-- `limit` — Items per page (max 200)
+- `page` — Page number (1-based, default 1)
+- `limit` — Items per page (default 50, max 200)
 
 ### `kit` (1) — System endpoints
 

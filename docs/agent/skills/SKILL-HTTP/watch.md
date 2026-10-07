@@ -1,4 +1,4 @@
-> _**HTTP skill · `watch` namespace** · ~5,870 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `watch` namespace** · ~5,939 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `watch` — Linux inotify file-change streams with replay history
 
@@ -77,7 +77,7 @@ List with `GET /watchers`, inspect with `GET /watchers/{id}`, reconfigure in pla
 
 ## Common errors
 
-- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` is rejected earlier, while the query string is parsed: still HTTP 400, but without the `INVALID_PAGINATION` code
+- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` also answers HTTP 400 `INVALID_PAGINATION`; the message names the parameter
 - `400 INVALID_REQUEST` — empty `paths`, an invalid or missing path, a glob that does not compile, or an invalid `ignore_dirs` entry. All of these answer the same code, so read the message, not the code, to tell them apart
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
@@ -243,7 +243,7 @@ curl -sw '\n%{http_code}\n' "$KIT/watchers/$WID/events"   # → 404 WATCHER_NOT_
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `since_id` set to the last id received. A 409 on one of those later `since_id` pages means the buffer rolled past the cursor while paging: the events between two pages are lost, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
 
 ```bash
 KIT="https://${P}-${C}-watch-1.${N}.containers.hoody.com"
@@ -255,12 +255,12 @@ while :; do
   # 409 HISTORY_GAP on the timestamp query: every retained event is newer than $TS,
   # so read them all (since_id=0 never gaps). No timestamp filter is needed.
   if [ "$CODE" = 409 ] && [ "${Q%%=*}" = since_timestamp ]; then Q="since_id=0"; continue; fi
-  # Any other non-200, including a 409 on a later since_id page (the buffer rolled
-  # past the cursor while paging), leaves the history incomplete: fail, then rerun.
+  # Any other non-200, including a 409 on a later after_id page (an event after the
+  # cursor was lost while paging), leaves the history incomplete: fail, then rerun.
   [ "$CODE" = 200 ] || { echo "HTTP $CODE: $R (history incomplete, run the recovery again)" >&2; exit 1; }
   jq -c '.items[] | {id, kind, path, timestamp}' <<< "$R"
   [ "$(jq '.items | length' <<< "$R")" -lt 200 ] && break
-  Q="since_id=$(jq '.items[-1].id' <<< "$R")"   # next page: continue after the last id
+  Q="after_id=$(jq '.items[-1].id' <<< "$R")"   # next page: after_id detects unread evictions
 done
 ```
 
@@ -309,6 +309,7 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 ### Body schemas
 
 - `watch_CreateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths*: string[], recursive: bool|null, skip_hidden: bool|null }`
+  - Create a watcher. Only `paths` is required. A field the service does not know (a misspelt option such as `recursiv`) is refused with 400 `INVALID_REQUEST` naming it, as on update, rather than ignored.
   - `include` — Optional include glob patterns. If present, path must match one include.
 - `watch_UpdateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths: string[]|null, recursive: bool|null, skip_hidden: bool|null }`
   - Reconfigure a live watcher. Every field is optional; an omitted field keeps the watcher's current value, but at least one field must be given. The watcher keeps its id, its replay history (so `since_id` / `since_timestamp` cursors stay valid) and its connected SSE/WebSocket clients.

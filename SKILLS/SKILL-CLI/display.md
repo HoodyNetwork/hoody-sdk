@@ -1,4 +1,4 @@
-> _**CLI skill · `display` namespace** · ~6,452 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `display` namespace** · ~6,478 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 
@@ -76,9 +76,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `hoody display input click` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `hoody display windows list` response) to a point picked on the screenshot, or use `hoody display windows geometry get` to target a window directly.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
-- Window IDs are accepted as decimal or hex (`0x...`). `hoody display windows list`, `hoody display windows search` and `hoody display windows active get` return decimal numbers; the path-parameter routes (`hoody display windows get`, `hoody display windows geometry get`, `hoody display windows title get`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.
+- Window IDs are accepted as decimal or hex (`0x...`). `hoody display windows list`, `hoody display windows search` and `hoody display windows active get` return decimal numbers; the path-parameter routes (`hoody display windows get`, `hoody display windows geometry get`, `hoody display windows title get`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
 - `hoody display windows focus` activates the window and then tries to give it X input focus. The second step fails on a window that is not viewable, and the call still answers `success: true` with `details.inputFocus: false` and a `warning`; untargeted keyboard input then does not reach that window. `hoody display windows active get` confirms the activation only.
-- `GET /api/v1/display/` (HTTP only; no CLI command) returns HTML, browser-only.
 - `hoody display get` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `hoody display geometry get`). 
 - `hoody display input reset` clears stuck modifiers/buttons.
 - `hoody display windows wait` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
@@ -88,7 +87,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 - `400 NO_DISPLAY_CONTEXT` — supply `?displayId=N` or `*-display-N.*`.
 - `DISPLAY_NOT_AVAILABLE` — the X server for that `displayId` is unreachable. Returned by the input, clipboard and window routes alike.
-- `404 SCREENSHOT_NOT_FOUND` on `hoody display screenshots get` — no stored capture has that timestamp. Refresh by calling `hoody display screenshots capture`, which **takes a fresh screenshot** and returns its metadata, not just a timestamp lookup; then retry `hoody display screenshots get` with the new timestamp. (`hoody display screenshots latest get` only returns metadata for the *latest* stored screenshot, which is not a replacement for a missed timestamp.)
+- `404 SCREENSHOT_NOT_FOUND` on `hoody display screenshots get` — no stored capture has that timestamp. Refresh by calling `hoody display screenshots capture`, which **takes a fresh screenshot** (with `base64` on, the response carries its `info.timestamp`), then retry `hoody display screenshots get` with the new timestamp. `hoody display screenshots latest get` returns the latest stored image by default; its metadata-only form (`--metadata`) returns only that image's metadata. Neither takes a fresh screenshot, so neither replaces a missed timestamp.
 
 ## Related namespaces
 
@@ -116,7 +115,7 @@ jq -r .image.data /tmp/before.json > /tmp/before.b64
 hoody --container "$C" display input click --display-id 1 --x 75 --y 50 --button 1
 ```
 
-**Step 3 — capture again and give the new image to the vision model.** `hoody display screenshots capture` is not a cheaper probe: it takes a full capture too and only leaves the image bytes out of the response.
+**Step 3 — capture again and give the new image to the vision model.** With `base64` on, `hoody display screenshots capture` returns the fresh image and its metadata. There is no cheaper probe: the metadata-only form (`--metadata`) still takes a full screenshot and only leaves the image bytes out.
 
 ```bash
 hoody --container "$C" display screenshots capture --display-id 1 --base64 -o json | jq -r .image.data > /tmp/after.b64

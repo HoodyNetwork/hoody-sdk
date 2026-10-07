@@ -1,4 +1,4 @@
-> _**HTTP skill · `terminal` namespace** · ~16,765 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `terminal` namespace** · ~15,482 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 
@@ -65,7 +65,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 For interactive coding agents and other long-lived TUIs the user may detach from and come back to:
 
 1. Pick an unused `terminal_id` (1–39999, **never** the ephemeral range 40000–65535, **never** re-use one another program is on).
-2. `POST /api/v1/terminal/create` with that pinned id, `ephemeral: false`, `shell: '/bin/bash'`, `cwd: '/workspace'` (or wherever).
+2. `POST /api/v1/terminal/create` with that pinned id, `ephemeral: false`, `shell: '/bin/bash'`, `cwd: '/home/user'` (or wherever).
 3. `POST /api/v1/terminal/execute` with body `command: 'claude'` (or `codex`, `aider`, `gemini …`) and body `wait: false` so the agent stays alive in the PTY rather than being treated as a sync request. 
 4. Reattach any time: open the WebSocket at `/api/v1/terminal/ws?terminal_id=<id>` and send the initial dimensions message (multiplayer — multiple viewers / scripts can attach to the same PTY simultaneously), or drive it over REST with `/press` / `/paste`.
 5. Tear down only when really done: `DELETE /api/v1/terminal/{terminal_id}`. The session persists until explicitly deleted or hit by `terminal-idle-timeout` (300 s default with zero attached clients and no running process). Sessions are in-memory only — a container reboot kills the PTY and drops the session; re-create after a reboot.
@@ -103,15 +103,15 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 ## Quirks & gotchas
 
-- **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script or a read-only `display` stream over a live PTY.
+- **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script over a live PTY (a `display` URL is no read-only alternative: its readonly setting is client-side only, and its holder can still send input).
 - `terminal_id` numeric **1–65535**. **40000–65535 reserved for ephemeral**; pin manual IDs in 1–39999.
 - `terminal_id=0` = sentinel "treat as absent".
 - **Display pairing.** `POST /api/v1/terminal/create` builds the session's `DISPLAY` from its `display` field and ignores any `display` in the request URL, so there is no automatic `terminal_id=N ⇒ DISPLAY=:N` mapping — pass `display` explicitly (either `"N"` or `":N"` — the kit normalises a bare number to `:N`). `POST /api/v1/terminal/execute` differs: a session it has to create is configured from the request URL, where `display=N` (or the `display_id=N` alias) sets `DISPLAY=:N` — and on a `terminal-N` host that parameter is supplied for you, so a session first created that way already renders on `:N`. `ephemeral=true` still strips it, and an already-running session keeps the `DISPLAY` it spawned with. The `display-N` kit URL surface is independent of session id.
 - `ephemeral=true` strips `DISPLAY`, skips display/dbus init — X11 won't render.
 - `defer_pid` returns `/execute` immediately even with `wait=true`; queues until named PID exits (TUI-safe), for at most `defer_timeout_ms` (60000 ms default) — on expiry the command never runs.
 - **`/execute` body field is `command` (NOT `cmd`); request fails `400 Missing 'command' field` if you send `cmd`. The value is plain UTF-8, not base64; only the URL-form `?cmd=<base64>` is base64-decoded.** The kit wraps the command with shell bookkeeping (optional `cd`, environment prefix, exit-code capture, completion-marker echo) before it reaches the PTY; for direct interactive input use `POST /api/v1/terminal/write`, `POST /api/v1/terminal/paste` or `POST /api/v1/terminal/press`.
-- **`/execute` REQUIRES `?terminal_id=<n>` as a query parameter** unless `?ephemeral=true`; missing/non-numeric returns `400`. A `terminal_id` in the body is ignored; with no `?terminal_id` the request is `400 terminal_id parameter required`.
-- Completion normally comes from the `COMMAND_COMPLETED_MARKER_{id}` tail, stripped before `/result/{id}`. A command is also marked completed when the session's process has died (exit code 1), or — on a non-ephemeral session with no explicit `timeout` — after 10 s of output silence once some output was captured (exit code 0, marker never seen). A `completed` result therefore does not prove a long-running program exited; a program that swallows the marker and never falls silent keeps `wait=true` waiting.
+- **`/execute` REQUIRES `?terminal_id=<n>` as a query parameter** unless `?ephemeral=true`; missing/non-numeric returns `400`. A `terminal_id` in the body is ignored; with no `?terminal_id` the request is `400 terminal_id parameter required`. With body `mode: "raw"` the command runs as a one-shot process with no terminal session, and `terminal_id` is ignored.
+- Completion normally comes from the `COMMAND_COMPLETED_MARKER_{id}` tail, stripped before `/result/{id}`. A command is also marked completed when the session's process has died (exit code 1, `completion: "ended"`), or — on a non-ephemeral session with no explicit `timeout` — after 10 s without output once stdout was captured or the command's start marker was seen (`completion: "output_quiet"`, `exit_code: null`: the exit status is unknown and the program may still be running). A `completed` result therefore does not prove a long-running program exited; check `completion`; a program that swallows the marker and never falls silent keeps `wait=true` waiting.
 - **`wait=false` returns `status:"queued"` or `"running"` immediately** (NOT `"completed"`) — the kit tracks the command through its marker and output, not the underlying PID. Re-check actual output via `GET /api/v1/terminal/raw` / `GET /api/v1/terminal/snapshot`.
 - **Screenshot `?format=` accepts `png | jpeg | jpg | gif`** at the kit level — `json` is invalid. (Note: the generated SDK type only allows `png | jpeg | gif`, so `jpg` works only via raw HTTP.)
 - **`POST /api/v1/system/process/signal` with `{name}` targets EVERY process matching that name** (returns `affected_pids`); use `{pid}` for surgical kills.
@@ -121,7 +121,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 ## Common errors
 
-- `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id; the lower-level validator logs a near-identical `0-65535` warning.
+- `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id.
 - `400` config-error on `POST /api/v1/terminal/create` — SSH/SOCKS5 partial validation (e.g. `ssh_user` without `ssh_host`, `socks5_port` out of range). The kit does NOT enforce mutual exclusion of `ssh_password` + `ssh_key`; both can coexist on a single session.
 - `404` on `GET /api/v1/terminal/result/{command_id}` once the result is gone: its session was removed (an ephemeral session holding results goes after `ephemeral-result-timeout` of inactivity with no attached client), or the session's result buffer filled and evicted it.
 - `Unknown program name "<name>"` (400) on `POST /api/v1/proxy/aliases` → the `program` is not in the platform's program catalog. For a terminal alias use `program=terminal` (not `hoody-terminal` or `terminal-N`); pick the instance with `index`.
@@ -134,7 +134,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first.
 
-⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). In the SDK that is `_templateVars: { serviceIndex: N }` (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body parser only consumes the `command`, `id`, `timeout`, the boolean wait sync flag, `cwd` and `env` keys); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output, provided some stdout has already been captured, and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `GET /api/v1/terminal/raw` if in doubt. 
+⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). A DNS label holds at most 63 characters, so from id 10000 up the `<projectId>-<containerId>-terminal-<N>` label is too long: use the short alias `t-<N>` (`<projectId>-<containerId>-t-<N>.<server>.containers.hoody.com`), which selects the same terminal. The SDK and CLI switch to it automatically."] In the SDK, pass `{ serviceIndex: N }` as the last, template-vars argument (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body carries `command`, `wait`, `mode` (`pty` by default, or `raw` for a one-shot process with no terminal session), `stdin_b64` and `user` (raw mode only), `id`, `timeout`, `cwd` and `env`); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output once stdout was captured or its start marker was seen (`completion: "output_quiet"`, `exit_code: null`; the program may still be running), and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `GET /api/v1/terminal/raw` if in doubt. 
 
 ### 1. Persistent interactive session — create, run, capture, tear down
 
@@ -318,7 +318,7 @@ To route the SSH connection through a SOCKS5 proxy, keep `ssh_host` and `ssh_use
 ```bash
 KIT="https://${P}-${C}-terminal-50.${N}.containers.hoody.com"
 # No /create call: this request creates session 50 and its missing working directory.
-curl -sX POST "$KIT/api/v1/terminal/execute?terminal_id=50&shell=bash&cwd=/workspace/agent&cwd_auto_create=true" \
+curl -sX POST "$KIT/api/v1/terminal/execute?terminal_id=50&shell=bash&cwd=/home/user/agent&cwd_auto_create=true" \
   -H 'Content-Type: application/json' \
   -d '{"command":"sleep 600; echo agent-stopped","wait":false}'   # placeholder for `claude`/`codex`
 ```
@@ -411,14 +411,14 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 - `defer_timeout_ms` — Max time to wait for defer_pid exit before failing (default: 60000)
 - `defer_poll_ms` — Poll interval while waiting for defer_pid exit (default: 50, minimum: 10)
 - `reset` — Reset existing session and reconfigure (kills current process, clears state, allows switching from bash to SSH or changing any parameter) - Use 'true', '1', or no value
-- `cwd` — Working directory for local bash sessions (ignored for SSH)
+- `cwd` — Working directory for local bash sessions (ignored for SSH). In raw mode: the command's working directory, when the body has no cwd
 - `cwd_auto_create` — Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new or reset local session. Enable with 'true', '1', or no value (default: false)
 - `shell` — Shell to use for local sessions: bash (case-insensitive), zsh, fish, sh, etc. (default: server startup command, only applies to new sessions or after reset)
-- `user` — System user to spawn shell as (requires su permissions, only applies to new sessions or after reset)
+- `user` — System user to spawn shell as (requires su permissions, only applies to new sessions or after reset). In raw mode: the user the command runs as, when the body has no user
 - `cmd` — Base64-encoded command to execute automatically (works with both new and active shells, executes every time URL is visited)
 - `env` — Environment variable in KEY=VALUE format (can be repeated for multiple variables, e.g., ?env=DEBUG=1&env=API_KEY=abc)
-- `skip_display_wait` — Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the endpoint blocks until the session's display server is ready (default: false)
-- `display_wait_timeout` — Timeout in seconds for display readiness wait (default: 10, capped at 10 seconds to prevent event-loop pin; values <=0 or malformed also map to the 10-second cap). Ignored if skip_display_wait=true
+- `skip_display_wait` — Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the request waits until the session's display server is ready, unless no X server holds the display and none can be started, or a wait for it already timed out on the same shell within the last 30 seconds. Commands of one terminal still run in arrival order, so a request with skip_display_wait=true runs after earlier ones still waiting (default: false)
+- `display_wait_timeout` — Timeout in seconds for display readiness wait, counted from the request (default: 10, capped at 10 seconds; values <=0 or malformed also map to the 10-second cap). When it elapses the command runs anyway. Ignored if skip_display_wait=true
 - `display` — DISPLAY environment variable for X11 applications (auto-formats :display if number provided, e.g., ?display=1 becomes DISPLAY=:1)
 - `ssh_host` — SSH server hostname or IP address (creates SSH session if provided with ssh_user)
 - `ssh_user` — SSH username (required if ssh_host is provided)
@@ -434,13 +434,16 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 
 - `POST /api/v1/terminal/execute/{command_id}/abort` body — `{ force: bool }` — Abort parameters
   - `force` — Send SIGKILL to process group instead of SIGINT (default: false)
-- `POST /api/v1/terminal/execute` body — `{ command*: string, id: string, timeout: int, wait: bool, cwd: string, env: object }` — Command execution parameters
-  - `command` — The command to execute
-  - `id` — Custom command ID (numeric 1-65535, auto-generated if not provided)
-  - `timeout` — Timeout in seconds (0 = no timeout, default: 0)
-  - `wait` — Whether to wait for completion (default: true; forced false when defer_pid is set)
-  - `cwd` — Working directory for command execution (for local bash only)
-  - `env` — Environment variables as key-value pairs
+- `POST /api/v1/terminal/execute` body — `{ command*: string, mode: "pty" | "raw", stdin_b64: string, user: string, id: string, timeout: int, wait: bool, cwd: string, env: object }` — Command execution parameters
+  - `command` — The command to execute. In raw mode at most 131071 bytes
+  - `mode` — pty (default): run in the terminal session and return cleaned terminal text. raw: run as a one-shot process on pipes and return the exact bytes in stdout_b64 and stderr_b64
+  - `stdin_b64` — Raw mode only: base64 of the bytes to write to the command's stdin, which is then closed. Without it stdin is /dev/null
+  - `user` — Raw mode only: system user to run the command as (default: the user query parameter, else the server's default user). Switching users goes through sudo -n, or su where sudo is not installed
+  - `id` — Custom command ID (numeric 1-65535, auto-generated if not provided). Ignored in raw mode
+  - `timeout` — Timeout in seconds. 0 or omitted means no timeout on a persistent session and 600 seconds on an ephemeral one. It counts from the request, also while the command waits for an earlier one on the same session; a command still waiting when it elapses is never run. …
+  - `wait` — Whether to wait for completion (default: true; forced false when defer_pid is set). Raw mode refuses false
+  - `cwd` — Working directory for command execution (for local bash only). The session stays in that directory afterwards
+  - `env` — Environment variables for this command only, as string values. … Keys must be shell variable names ([A-Za-z_][A-Za-z0-9_]*) not starting with __HOODY_ (any case), else 400. …
 
 ### `drops` (4) — Terminal Drag-and-Drop
 
@@ -461,15 +464,15 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 
 **Body shapes:**
 
-- `POST /api/v1/terminal/drop-commit` body — `{ ctx*: string, r: int, c: int, cr: string, items*: object[] }` — Manifest draft
-  - `ctx` — Drop context: "drop" or "paste"
-  - `r` — Drop cell row (Chat grid pane mapping)
-  - `c` — Drop cell column
+- `POST /api/v1/terminal/drop-commit` body — `{ ctx*: "drop" | "paste", r: int, c: int, cr: string, items*: { p*: string, d*: 0 | 1, s*: int, name: string, h: string }[] }` — Manifest draft
+  - `ctx` — Drop context: `drop` for a drag-and-drop, `paste` for a clipboard paste
+  - `r` — Drop cell row (Chat grid pane mapping). Used only together with `c`
+  - `c` — Drop cell column. Used only together with `r`
   - `cr` — Clip-read correlation nonce ([A-Za-z0-9_-]{1,64}); echoed verbatim as the injected frame's cr field so the TUI can match a clipboard-read landing. Invalid/oversized values are ignored.
-  - `items` — Manifest entries [{p,d,s,name,h?}]
-- `POST /api/v1/terminal/drop` body — `{ ctx*: string, r: int, c: int, items*: object[] }` — One-shot drop payload
-  - `r` — Drop cell row
-  - `items` — File/dir items ([{name,b64}|{name,dir:true,items:[...]}])
+  - `items` — Manifest draft: one entry per staged file or empty directory
+- `POST /api/v1/terminal/drop` body — `{ ctx*: "drop" | "paste", r: int, c: int, items*: { name*: string, b64: string, dir: bool, items: object[] }[] }` — One-shot drop payload
+  - `r` — Drop cell row. Used only together with `c`
+  - `items` — Files and directories to stage
 
 ### `keys` (1) — Agent-facing automation primitives: screen snapshot, regex find, named key presses, text paste, and async wait conditions backed by a server-side terminal emulator
 
@@ -496,8 +499,8 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 **Param notes:**
 
 - `sort` — Sort by field: cpu, memory, pid, name (default: pid)
-- `limit` — Maximum number of processes to return (default: all)
-- `filter` — Filter by process name (substring match, case-insensitive)
+- `limit` — Maximum number of processes to return (default: 1000)
+- `filter` — Keep processes whose name or command line contains this text (case-sensitive)
 
 **Body shapes:**
 
@@ -663,77 +666,6 @@ Cleanup: `DELETE /api/v1/terminal/{terminal_id}`. ⚠ Never call `POST /api/v1/s
 - `delay` — Delay in seconds before reboot, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. _(on `POST /api/v1/system/reboot`)_
 - `delay` — Delay in seconds before shutdown, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. _(on `POST /api/v1/system/shutdown`)_
 - `display` — Display number (the N in :N), 0-65535
-
-### `ui` (1) — Web-based terminal interface with customizable display and session parameters
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `GET /` | Get web terminal interface | `?terminal_id` `?cwd` `?cwd_auto_create` `?shell` `?user` `?cmd` `?readonly` `?title` `?fontSize` `?backgroundColor` `?panel` `?panel-visible` `?panel-position` `?panel-width` `?panel-resizable` `?hide-toolbar` `?ssh_host` `?ssh_user` `?ssh_port` `?ssh_password` `?socks5_host` `?socks5_port` `?socks5_user` `?socks5_pass` `?desktop` `?desktop_env` `?redirect` `?redirect_delay` `?arg` `?welcome` `?debug` `?reset` `?pid` `?env` `?display` `?env_inject` `?startup_script` `?ssh_key` `?panel-height` `?panel-width-pct` `?panel-height-pct` `?wait_timeout` `?rendererType` `?fontFamily` `?fontWeight` `?fontWeightBold` `?lineHeight` `?letterSpacing` `?cursorBlink` `?cursorStyle` `?cursorWidth` `?cursorInactiveStyle` `?theme` `?minimumContrastRatio` `?drawBoldTextInBrightColors` `?scrollback` `?scrollSensitivity` `?fastScrollSensitivity` `?smoothScrollDuration` `?screenReaderMode` `?disableResizeOverlay` `?unicodeVersion` |
-
-**Param notes:**
-
-- `terminal_id` — Terminal session ID (numeric 1-65535, auto-generated if not provided) - Allows multiple clients to share the same terminal session. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send
-- `cwd` — Initial working directory for new terminal sessions (only applied when session is first created)
-- `cwd_auto_create` — Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new session. Enable with 'true', '1', or no value (default: false)
-- `shell` — Shell to use: bash, zsh, fish, sh, etc. (default: server startup command, only applies to new sessions)
-- `user` — System user to spawn shell as (requires su permissions, only applies to new sessions, user must exist on system)
-- `cmd` — Base64-encoded command to execute automatically on spawn (executes once when shell starts)
-- `readonly` — Enable read-only mode (blocks keyboard input, allows viewing only) - Use 'true', '1', or no value
-- `title` — Browser window/tab title (default: application default) - HTML tags removed, max 200 characters, useful for organizing multiple terminal tabs
-- `fontSize` — Terminal font size in pixels (default: 13, range: 8-72) - Accepts 'px' suffix (e.g., 16px), applied immediately when terminal loads
-- `backgroundColor` — Terminal background color (default: #2b2b2b) - Supports hex colors (#RGB, #RRGGBB, #RRGGBBAA) or CSS named colors (black, white, red, blue, green, navy, etc.)
-- `panel` — URL to display in side panel iframe (enables panel feature)
-- `panel-visible` — Show panel on load (default: true if panel URL provided, false otherwise)
-- `panel-position` — Panel position: 'left' or 'right' (default: right)
-- `panel-width` — Initial panel width in pixels or percentage (default: 400px)
-- `panel-resizable` — Allow panel resizing via drag handle (default: true)
-- `hide-toolbar` — Hide the terminal toolbar (default: false)
-- `ssh_host` — SSH server hostname or IP address (creates SSH session if provided with ssh_user)
-- `ssh_user` — SSH username (required if ssh_host is provided)
-- `ssh_port` — SSH port number (default: 22)
-- `ssh_password` — SSH password for authentication (use with caution, prefer key-based auth)
-- `socks5_host` — SOCKS5 proxy hostname for SSH connection
-- `socks5_port` — SOCKS5 proxy port (default: 1080)
-- `socks5_user` — SOCKS5 proxy username for authentication
-- `socks5_pass` — SOCKS5 proxy password for authentication
-- `desktop` — Enable Hoody Display desktop mode. Provides a full desktop environment instead of seamless individual windows (default: false)
-- `desktop_env` — Desktop environment to launch (implies desktop=true). Starts the specified DE session after the display is ready. Valid values: xfce, mate. Not started again when a window manager already runs on the display; it keeps running after the session is deleted (POST /api/v1/system/displays/{display}/stop ends it)
-- `redirect` — Redirect mode. When set to "display", creates/ensures the terminal session, waits for X11 display readiness, then returns HTTP 302 redirect to the display URL. Requires terminal_id and display params
-- `redirect_delay` — Extra delay in seconds after display is ready before redirecting. Only used when redirect=display (default: 0)
-- `arg` — Command-line arguments to pass to shell; accepted only where the deployment enabled shell arguments, and can be repeated
-- `welcome` — Show welcome message on startup (default: false). Supports ?welcome=true, ?welcome=1, or ?welcome (no value = true)
-- `debug` — Enable debug output in wrapper script (default: false)
-- `reset` — Kill existing terminal process and reconfigure session (default: false). Use to switch shell, user, or from shell to SSH
-- `pid` — Attach to an existing process by PID instead of spawning a new shell. Implies reset
-- `env` — Inject environment variable as KEY=VALUE. Can be repeated for multiple variables (e.g., ?env=FOO=bar&env=BAZ=qux)
-- `display` — X11 display number for GUI applications. Accepts number (e.g., 1) or :number (e.g., :1). Shorthand for ?env=DISPLAY=:N
-- `env_inject` — Inject HOODY_* environment variables into shell session (default: true). Set to false to disable
-- `startup_script` — Path to startup script to execute before shell launch (only applied on first session creation)
-- `ssh_key` — Base64-encoded SSH private key for key-based authentication (prefer over password-based auth)
-- `panel-height` — Initial panel height for top/bottom positioned panels (default: 300px)
-- `panel-width-pct` — Initial panel width as a percentage of the window, 5-95. Takes precedence over panel-width
-- `panel-height-pct` — Initial panel height as a percentage of the window for top/bottom panels, 5-95. Takes precedence over panel-height
-- `wait_timeout` — Seconds to wait for the display to become ready before redirecting (default: 60, capped at 300). Only used when redirect=display
-- `rendererType` — Terminal renderer: dom, canvas or webgl (default: webgl, or dom in Firefox)
-- `fontFamily` — Terminal font family, as a CSS font-family list
-- `fontWeight` — Font weight of normal text: normal, bold, or 100 to 900
-- `fontWeightBold` — Font weight of bold text: normal, bold, or 100 to 900
-- `lineHeight` — Line height as a multiple of the font size (read as a whole number)
-- `letterSpacing` — Extra space between characters, in whole pixels
-- `cursorBlink` — Blink the cursor. Use 'true' or '1'
-- `cursorStyle` — Cursor shape: block, underline or bar
-- `cursorWidth` — Width of the bar cursor in pixels
-- `cursorInactiveStyle` — Cursor shape while the terminal is not focused: outline, block, bar, underline or none
-- `theme` — Color theme as a JSON object of xterm theme keys, e.g. {"background":"#000000","foreground":"#ffffff"}
-- `minimumContrastRatio` — Minimum contrast ratio between text and background, 1 (no adjustment) to 21
-- `drawBoldTextInBrightColors` — Draw bold text in the bright ANSI colors. Use 'true' or '1'
-- `scrollback` — Number of lines kept in the scrollback buffer
-- `scrollSensitivity` — Scroll speed multiplier
-- `fastScrollSensitivity` — Scroll speed multiplier while the fast-scroll modifier key is held
-- `smoothScrollDuration` — Smooth scrolling duration in milliseconds (0 turns it off)
-- `screenReaderMode` — Turn on screen reader support. Use 'true' or '1'
-- `disableResizeOverlay` — Hide the size overlay shown while the terminal is resized. Use 'true' or '1'
-- `unicodeVersion` — Character width tables: graphemes (default) or 11
 
 
 ### Body schemas

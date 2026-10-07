@@ -1,4 +1,4 @@
-> _**routing manifest (full INDEX with routing-hints appendix, on-demand)** · ~9,129 tokens · hoody-sdk v1.0.0-beta.15_
+> _**routing manifest (full INDEX with routing-hints appendix, on-demand)** · ~9,218 tokens · hoody-sdk v1.0.0-beta.16_
 
 # Hoody — surface index
 
@@ -56,9 +56,9 @@ await box.display.input.type({ x: 640, y: 360, text: 'hello' }, { displayId: 1 }
 ```ts
 // Read (plain values: readText → string, readJson → parsed, readBytes → Uint8Array), write, time-travel
 const text = await box.files.readText('/etc/hostname');
-await box.files.upload('/workspace/hello.txt', Buffer.from('hello'));   // the body is bytes
-const old = await box.files.get('/workspace/hello.txt', { revision: 12 });   // history
-const diff = await box.files.get('/workspace/hello.txt', { diff: '', from_seq: 12 });  // `diff` is a valueless flag: pass ''
+await box.files.upload('/home/user/hello.txt', Buffer.from('hello'));   // the body is bytes
+const old = await box.files.get('/home/user/hello.txt', { revision: 12 });   // history
+const diff = await box.files.get('/home/user/hello.txt', { diff: '', from_seq: 12 });  // `diff` is a valueless flag: pass ''
 ```
 
 **Client-level helper** (built on files): `box.agent.importLocalConfig(tool, opts)` pushes a
@@ -80,7 +80,7 @@ container — pairs with the dev-kit AI CLIs. See SDK core-ops § "Sync agent co
 await box.terminal.commands.run({ command: 'uname -a' }, { ephemeral: true }, { serviceIndex: 0 });
 // Persistent session
 await box.terminal.sessions.create({ terminal_id: '1', shell: 'bash', user: 'user' });
-await box.terminal.commands.run({ command: 'cd /workspace && ls' }, { terminal_id: '1' });
+await box.terminal.commands.run({ command: 'cd /home/user && ls' }, { terminal_id: '1' });
 ```
 
 **Ops**: `sessions.{create, list, delete, read, write}` · `commands.{run, get, list, cancel}` · WS stream
@@ -117,11 +117,11 @@ await box.sqlite.kv.set('user:42', { name: 'Ada' }, {   // objects are JSON-enco
   db: '/hoody/databases/app.db', create_db_if_missing: true,
 });
 const r = await box.sqlite.kv.get('user:42', { db: '/hoody/databases/app.db' });  // JSON value → decoded object in r.data
-// One statement, plain values: execute → { rows, columns, truncated }; run → { rowsUpdated }
+// One statement, plain values: query → { rows, columns, truncated }; run → { rowsUpdated }
 await box.sqlite.sql.run({ db: 'app', create_db_if_missing: true, sql: 'CREATE TABLE IF NOT EXISTS t (v INTEGER)' });
 const { rows } = await box.sqlite.sql.query({ db: 'app', sql: 'SELECT v FROM t WHERE v > ?', params: [0] });
-// Multi-statement transaction (body = statements, options = db). Writes go under
-// `statement`; a SELECT goes under `query`, or it returns no rows.
+// Multi-statement transaction (body = statements, options = db). Prefer `statement`
+// for writes and `query` for SELECTs. SQL producing columns returns resultSet under either item kind.
 await box.sqlite.sql.runTransaction(
   { transaction: [
     { statement: 'CREATE TABLE IF NOT EXISTS t (v INTEGER)' },
@@ -141,7 +141,7 @@ await box.sqlite.sql.runTransaction(
 - **Docs**: <https://docs.hoody.com/kit/browser/>
 
 ```ts
-// The browser-N kit host picks the instance (default browser-1); `browser_id` does not.
+// The browser-N kit host picks the instance (default browser-1); a `browser_id` option picks it too.
 await box.browser.instances.start();
 await box.browser.page.navigate({ url: 'https://example.com' });
 const snap = await box.browser.page.getSnapshot();   // accessibility tree with [ref=eN] markers
@@ -152,7 +152,7 @@ await box.browser.page.navigate({ url: 'https://example.org' }, {}, { serviceInd
 ```
 
 **Ops**: `instances.{start, stop, restart, get, shutdown, getDevtoolsUrls}` · `page.{navigate, evaluate, captureScreenshot, getSnapshot, act, wait, getHtml, getText, exportPdf}` · `cookies.{list, setMany, clear}` · `history.{list, clear}` · `logs.{listConsole, listNetwork}` · CDP via `instances.getDevtoolsUrls`
-**Gotcha**: each long-lived browser is its own `browser-N` host (`_templateVars.serviceIndex` in the SDK); the `browser_id` parameter does not select an instance. The browser is headful by default. `stealth=true` switches to the anti-fingerprint engine. Chromium ships `webSocketDebuggerUrl` ON by default.
+**Gotcha**: each long-lived browser is its own `browser-N` host (`_templateVars.serviceIndex` or `browser_id` in the SDK); a `browser_id` that names another instance than the host is refused with 400 `INSTANCE_SELECTOR_CONFLICT`. The browser is headful by default. `stealth=true` switches to the anti-fingerprint engine. Chromium ships `webSocketDebuggerUrl` ON by default.
 
 ## code — VS Code in a browser tab (and as an iframable single-extension surface)
 
@@ -180,7 +180,7 @@ await box.code.extensions.install({ url: 'https://example.com/claude-dev.vsix' }
 // The system user is the first argument; the entry is the second.
 await box.cron.entries.create('user', {
   name: 'nightly-build',
-  schedule: '0 3 * * *', command: 'bash /workspace/build.sh',
+  schedule: '0 3 * * *', command: 'bash /home/user/build.sh',
   // optional; RFC 3339, must be in the future (here: 30 days from now)
   expires_at: new Date(Date.now() + 30 * 86_400_000).toISOString(),
 });
@@ -232,7 +232,7 @@ await box.daemon.programs.start(prog.data!.id!, { wait: true });  // start takes
 ```
 
 **Ops**: `ephemeralPrograms.{start, getLogs, stop}` · `programs.{create, list, get, update, delete}` · `programs.{start, stop, enable, disable}` · `programs.{getStatus, getLogs}` · port-range fan-out · lazy-load
-**Gotcha**: prefer `ephemeralPrograms` for one-offs (no config write), `programs` when the process should survive container restarts. Logs always persist even after the process exits.
+**Gotcha**: prefer `ephemeralPrograms` for one-offs (temporary configuration and tracking are written, then cleaned up), `programs` when the process should survive container restarts. Logs always persist even after the process exits.
 
 ## pipe — zero-storage streaming HTTP rendezvous
 
@@ -314,7 +314,7 @@ const p = await box.tunnel.pull({ containerPort: 5432, to: { host: 'localhost', 
 ```ts
 const w = await box.watch.watchers.create({
   // globs match the absolute path, so lead with `**/`
-  paths: ['/workspace'], include: ['**/*.ts'], exclude: ['**/node_modules/**'],
+  paths: ['/home/user'], include: ['**/*.ts'], exclude: ['**/node_modules/**'],
   coalesce_ms: 100, kinds: ['created', 'modified'],
 });
 // Paginated history + resume from the last event id you processed
@@ -360,12 +360,12 @@ const pageId = (page.data as any).id as string;
 // write content via append — the server assigns block id/parentId/index
 await box.notes.document.append(me.notebookId, pageId, { type: 'heading1', text: 'Day 1' });
 await box.notes.comments.create(me.notebookId, pageId, { content: 'looks good' });
-// a database node holds typed columns under attributes.fields; records via databases.create
+// a database node holds typed columns under attributes.fields; records via `box.notes.records.create(notebookId, databaseId, body)`
 const db = await box.notes.nodes.create(me.notebookId, { type: 'database', parentId: home.id, attributes: { name: 'Tasks', fields: { /* … */ } } });
 ```
 
 **Ops**: `nodes.{create, get, list, update, delete}` (sections/pages/channels/messages/databases/records) · `document.{get, set, update, append}` · `records.{create, list, get, update, delete, search}` · `comments.*` · `reactions.*` · `versions.*` · `collaborators.*` · `files.uploads.*` (TUS attachments) · WS mutation feed
-**Gotcha**: hierarchical — every node has a `parentId` chain; pages need a parent (use the auto-created `Home` section). Documents attach only to `page`/`record` nodes. To write a doc prefer `document.append` (server assigns block id/parentId/index); building `documents.put` blocks by hand requires the real block-type strings and the `attrs` key, and container blocks (lists/tables) hold their text in a child `paragraph`.
+**Gotcha**: hierarchical — every node has a `parentId` chain; pages need a parent (use the auto-created `Home` section). Documents attach only to `page`/`record` nodes. To write a doc prefer `document.append` (server assigns block id/parentId/index); building `box.notes.document.set` blocks by hand requires the real block-type strings and the `attrs` key, and container blocks (lists/tables) hold their text in a child `paragraph`.
 
 ## run — resolve apps to shell commands (Hoody Run, cross-source package resolver)
 
@@ -374,14 +374,14 @@ const db = await box.notes.nodes.create(me.notebookId, { type: 'database', paren
 
 ```ts
 const r = await box.run.search({ selector: { app: 'firefox', kind: 'any', limit: 5 } });
-// → { set_id: '…', total_count, items: [{ candidate_id: '…', provider: 'nix', kind: 'any', shell_command: '…', … }, …] }
+// r.data → { set_id: '…', total_count, items: [{ candidate_id: '…', provider: 'nix', kind: 'any', shell_command: '…', … }, …] }
 const r2 = await box.run.search({ selector: { app: 'owner/repo', source: ['oci'] } });
 // Resolve to a command (preview)
 const cmd = await box.run.resolve({ app: 'firefox', kind: 'any', pick: 'first' });
 ```
 
 **Ops**: `run.search`, `run.resolve`, `run.resolveMany`, `run.test` (trusted-list + system-path + nixpkgs + pkgx + AppImage + OCI + manifests) · `profiles.*` · `recipes.*` · `print_curl`
-**Gotcha**: returns ranked *candidates* with `shell_command` and a `kind` (`gui`/`cli`/`any`); resolve produces a command + preview, it doesn't launch — pair with `terminal` or `daemon` to actually execute. `set_id` is top-level in the response and stays valid for 300 s; resolving from an expired set returns 409.
+**Gotcha**: returns ranked *candidates* with `shell_command` and a `kind` (`gui`/`cli`/`any`); resolve produces a command + preview, it doesn't launch — pair with `terminal` or `daemon` to actually execute. `set_id` is in `r.data.set_id` and stays valid for 300 s; an index pick (`pick: 'index'` + `pick_index`) from an expired set returns `409 SET_EXPIRED`, while a pick by `candidate_id` falls back to the fresh results (the id is a content hash).
 
 ## api — control plane (identity, projects, containers, billing, vault)
 

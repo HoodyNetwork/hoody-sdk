@@ -1,10 +1,10 @@
-> _**CLI skill · `files` namespace** · ~14,009 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `files` namespace** · ~14,210 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 
 ## Purpose
 
-**Default surface: the container's own filesystem, exposed over HTTP — with automatic mutation journaling when the deployment enabled it.** Read, write, copy, move, delete, stat, chmod, list, glob, grep, archive-preview/extract, fetch URLs into the FS, resumable upload — all on absolute container paths (`/workspace/main.py`, `/etc/hostname`, `/hoody/databases/foo.db`). No backend flag needed.
+**Default surface: the container's own filesystem, exposed over HTTP — with automatic mutation journaling when the deployment enabled it.** Read, write, copy, move, delete, stat, chmod, list, glob, grep, archive-preview/extract, fetch URLs into the FS, resumable upload — all on absolute container paths (`/home/user/main.py`, `/etc/hostname`, `/hoody/databases/foo.db`). No backend flag needed.
 
 **Headline feature when journaling is on — automatic change history (think Git, but for every file write).** With the journal enabled, every `PUT` / `PATCH` / `DELETE` / `MOVE` / `COPY` is appended to a per-container mutation log: monotonic sequence number, timestamp, path, op, size, hash. **History is kept for journaled paths, within limits:** retention prunes old entries (90 days or 2 GiB of journal storage by default), bodies over 2 MiB keep only their hash and size, and excluded paths (dev dirs such as `node_modules`, and `.git`) are never recorded. The journal lets you:
 
@@ -17,7 +17,7 @@
 When the deployment turned journaling on, no per-write setup is needed — every covered write is recorded. Exposing the journal query endpoints — history, revision, diff, stats, flush — over the API is a second deployment-side switch; where it is off those endpoints return `403`. Where API access is on but recording itself is off, they return `404 Journal is not enabled`. It is not a complete undo: retention pruning, the 2 MiB body cap, the exclude lists and write paths with no journal hook (URL downloads, archive extraction) all leave gaps, so check `?history` before relying on a restore. Journaling is ON in the standard `hoody_kit: true` container image; raw kit deployments that did not turn it on will accept writes but skip recording.
 
 **Optional add-ons (per-request, opt-in):**
-- **Remote backends** — append `?backend=<id>` (or `?type=<rclone-type>`) to operate against any of the 60+ rclone backend types you've connected (Mega, SFTP, S3, GDrive, Dropbox, Backblaze B2, WebDAV, Git, …) instead of the local FS. Only where the deployment enabled remote backends; otherwise `403`. Note: the journal records local-FS mutations; remote-backend ops go to the remote and aren't replayable from the journal.
+- **Remote backends** — append `?backend=<id>` to operate against a backend you've connected, of any of the 49 allowed rclone backend types (Mega, SFTP, S3, GDrive, Dropbox, Backblaze B2, WebDAV, …), instead of the local FS. A `?type=` parameter does not select a connected backend: on `/api/v1/files/{path}` it is ignored and the request runs on the local FS. = &["] Only where the deployment enabled remote backends; otherwise `403`. Note: the journal records local-FS mutations; remote-backend ops go to the remote and aren't replayable from the journal.
 - **FUSE mounts** — `hoody files mounts create` to surface a remote backend AS a path in the local FS. Same deployment-side requirement.
 - **chmod / chown** — Unix-only, and only where the deployment enabled them; otherwise `403`.
 
@@ -26,7 +26,7 @@ When the deployment turned journaling on, no per-write setup is needed — every
 - **Local container FS (the 90% case)** — CRUD, archive entry / extract, cross-binary search (glob, grep), download a URL into a path, resumable upload. Local works out of the box.
 - **Recover / inspect a previous version of any file** — `?history=1`, `?revision=<seq>`, `?at=<unix-ms>`, `?diff=1&from_seq=<N>`. Available where journaling and journal API access are on (`403` when API access is off, `404` when recording is off), for writes the journal recorded and still retains (see Quirks for what is excluded).
 - **Audit / replay every change to the filesystem** — `hoody files journal list` for the full event stream (sequence, timestamp, path, op, size, hash).
-- **Remote cloud / SSH / S3 / Git** — append `?backend=<id>` to read (`hoody files get`), upload (`hoody files upload`, not with `append`), delete (`hoody files delete`) or create a directory (`hoody files mkdir`). `backend` is refused with `400` on patch, append, extract, URL download, copy and move.
+- **Remote cloud / SSH / S3** — append `?backend=<id>` to read (`hoody files get`), upload (`hoody files upload`, not with `append`), delete (`hoody files delete`) or create a directory (`hoody files mkdir`). Only `get`, `upload`, `delete` and `mkdir` take `--backend`; `update`, `append`, `copy`, `move`, `archives extract` and `downloads create` have no such flag and refuse it as an unknown option, and `upload --append` with `--backend` is refused with `400`.
 - **FUSE-mount a remote into the local FS** — when downstream code needs to read the remote as a regular path (under the mount directory, `/hoody/mounts/permanent/…` by default).
 
 ## When NOT to use
@@ -35,7 +35,7 @@ Run binaries -> `terminal`/`exec`, live events -> `watch`, TS/JS gen -> `exec`, 
 
 ## Prerequisites
 
-- **For plain read/stat/list**: no deployment switch, but any authentication and per-path access rules configured on the kit still apply (`401` without credentials, `403` for a path outside your rules). **Writes are enabled by the deployment, not per request**: upload/write/append and copy need write enabled, delete needs delete enabled, move needs both (403 otherwise; all enabled in the standard hoody_kit container image, off on a raw kit deployment that did not turn them on). Paths are absolute container paths; the namespace is not workspace-scoped, so use `/workspace/...`, `/home/user/...`, etc.
+- **For plain read/stat/list**: no deployment switch, but any authentication and per-path access rules configured on the kit still apply (`401` without credentials, `403` for a path outside your rules). **Writes are enabled by the deployment, not per request**: upload/write/append and copy need write enabled, delete needs delete enabled, move needs both (403 otherwise; all enabled in the standard hoody_kit container image, off on a raw kit deployment that did not turn them on). Paths are absolute container paths; the namespace is not workspace-scoped, so use `/home/user/...`, `/etc/...`, etc.
 - **For glob / grep**: gated separately — glob needs search enabled, grep needs grep enabled (403 "not allowed" otherwise; both enabled in the standard hoody_kit container image).
 - **For remote backends** (`?backend=` / `?type=` / FUSE mounts): the deployment must have enabled remote backends; otherwise `403`.
 - **For chmod / chown**: the deployment must have enabled them, and the container is Unix.
@@ -64,7 +64,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `hoody files downloads create <dir> --download <url>`; `hoody files downloads list <dir> --downloads` to poll.
 2. `hoody files archives preview <archive>`; `hoody files archives extract <archive> --extract src/ --dest work-src` (`--extract` is an exact entry name, or a directory prefix ending in `/`; no globs. `--dest` MUST be relative).
-3. `hoody files backends s3 create` (60+ backend types) -> `hoody files get <path> --backend <id>` for one-shot reads OR `hoody files mounts create` -> `hoody files get /hoody/mounts/permanent/...` for a regular FS view -> `hoody files mounts delete`, then `hoody files backends delete`. (A mounted path needs no `--backend`; `hoody files get`/`upload`/`delete` take it for a backend read.)
+3. `hoody files backends s3 create` (49 backend types) -> `hoody files get <path> --backend <id>` for one-shot reads OR `hoody files mounts create` -> `hoody files get /hoody/mounts/permanent/...` for a regular FS view -> `hoody files mounts delete`, then `hoody files backends delete`. (A mounted path needs no `--backend`; `hoody files get`/`upload`/`delete` take it for a backend read.)
 
 ### 3. Journal time-travel + TUS-like upload
 
@@ -77,7 +77,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - Reserved sub-prefixes (stat, chmod, chown, realpath, glob, grep, copy, move, append) dispatch by URL prefix, each scoped to a specific HTTP method (stat/grep/glob/realpath→GET, chmod/chown→PATCH, copy/move→POST, append→PUT) to prevent method bleeding -- so `DELETE /api/v1/files/stat/foo` does NOT trigger the stat dispatcher; it removes the literal path `/stat/foo`. `/api/v1/files/health` is a route of its own and never reaches the dispatcher.
 - `hoody files glob`/`hoody files grep`/`hoody files realpath`/`?lines=` local-only; `?backend=` -> 400.
 - `?backend=` and `?type=` need remote backends enabled deployment-side.
-- `?backend=` on `/api/v1/files/{path}` is served only for GET, DELETE, PUT without `append`, and POST that creates a directory; on any other method or operation it returns `400` ("only supported for reading, uploading and deleting files and for creating directories"). `hoody files mkdir --backend <id>` creates the directory on the remote backend; patch, append, extract, URL download, copy and move refuse `--backend` with `400`.
+- `?backend=` on `/api/v1/files/{path}` is served only for GET, DELETE, PUT without `append`, and POST that creates a directory; on any other method or operation it returns `400` ("only supported for reading, uploading and deleting files and for creating directories"). `hoody files mkdir --backend <id>` creates the directory on the remote backend; `update`, `append`, `archives extract`, `downloads create`, `copy` and `move` have no `--backend` flag and reject it as an unknown option before any request is sent.
 - `hoody files chmod`/`hoody files chown` Unix-only, and only where the deployment enabled them.
 - WebDAV verbs on `/{path}`: PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK, CHECKAUTH, LOGOUT.
 - `hoody files realpath` resolves symlinks whether or not symlink following is enabled, but still returns `403` when the resolved target is outside the serve root or outside your access rules.
@@ -89,7 +89,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Exclusions decide which paths are journalled.** Built-in dev-dir excludes (`node_modules`, `target`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `__pycache__`, `.venv`, `venv`, `env`, `__pypackages__`, `.tox`, `.nox`, `bower_components`, …) skip journaling unless the deployment turned the dev-dir exclusions off. `.git` is always excluded regardless of that setting (separate hardcoded check, not part of the toggleable list). The deployment can add further excludes of its own. This is why "I wrote to `node_modules/x` and saw no journal entry" is expected.
 - **Journal does NOT cover everything by default.** Live behaviour observed: a fresh `PUT` (create) and an overwriting `PUT` (write) on `/home/user/...` produce entries; URL downloads (`?download=`) and archive extraction are NOT journaled — those write through paths with no journal hook. `hoody files chmod`, `hoody files chown`, `hoody files touch`, `?append=true` and copy/move ARE recorded. Always call `hoody files journal flush` then `hoody files journal list` (or `?history=1`) to inspect what was actually recorded — don't assume coverage.
 - **Built-in dev-dir exclude list always skips journaling** for `node_modules`, `__pycache__`, `.venv`, `target`, `.next`, `.nuxt`, etc. — even on `/home/user/...` paths. Only the deployment can turn these off, at kit start. `.git` is hardcoded to ALWAYS be excluded and stays excluded even then.
-- **`HEAD /api/v1/files/{path}` returns `405`**; `HEAD` is served only on the WebDAV root route (`HEAD /{path}`, no `/api/v1/files/` prefix). For a JSON metadata envelope use `hoody files stat`.
+- **`HEAD` answers like `GET` with no body** on both routes: `HEAD /api/v1/files/{path}` returns the status and headers its `GET` would, and so does `HEAD /{path}`. It carries no metadata body; for a JSON metadata envelope use `hoody files stat`.
 - **`hoody files chown` to root is rejected** with `400 Cannot change ownership to root (UID 0)` (owner) or `400 Cannot change group to root (GID 0)` (group) — even where the deployment enabled chown. Use a non-root user (`nobody`, `user`, …).
 - **FUSE mount paths live under a configured mount directory** (`/hoody/mounts/permanent` by default, fixed by the deployment at kit start). An absolute `mount_path` must be under it (`400 Mount path must be under the configured mount directory` otherwise); a relative `mount_path` is resolved under it; an omitted one becomes `<mount dir>/mount_<id>`. If the path already exists and is not a symlink, the create fails with `409 Mount path already exists and is not a symlink`.
 - **Listing-style query params (`?downloads`, `?download_history`, `?extractions`, `?extraction_history`) are honoured on the WebDAV root route, NOT on `/api/v1/files/...`** — calling `GET /api/v1/files/<dir>?downloads` returns a regular directory listing (the query is ignored). Use `GET /<dir>?downloads` (or `GET /?download_history` for the global feed).
@@ -107,9 +107,9 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - 400 Cannot combine realpath with other ops.
 - 400 Cannot preview a directory as archive.
 - 400 Unknown operation -- POST needs one query op.
-- 400 Missing query or body -- PATCH needs op or body.
-- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` most refusals carry no `code` at all — an invalid path is 400 `{success: false, error: "Invalid path"}`, and a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
-- Cancelling a URL download removes the partial file only where the file's inode proves it is still the one the download created (local filesystems such as ext4, xfs, btrfs, tmpfs). On a FUSE mount, NFS, CIFS or overlayfs the partial file is kept, because the name could by then belong to a file of yours.
+- 400 Missing query parameter or request body -- PATCH needs op or body.
+- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
+- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file: where inode numbers identify a file (local filesystems such as ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created, and elsewhere (FUSE mounts, network filesystems) by its download-specific name while it is a regular file.
 
 ## Related namespaces
 
@@ -172,6 +172,7 @@ hoody --container "$C" files grep /home/user --pattern TODO \
 **Step 1 — first chunk via PUT.** Creates the file with the first slab.
 
 ```bash
+head -c $((8*1024*1024)) /dev/urandom > /tmp/chunk1.bin
 hoody --container "$C" files upload /home/user/upload-test.bin < /tmp/chunk1.bin
 ```
 
@@ -183,7 +184,7 @@ hoody --container "$C" files append /home/user/upload-test.bin --input /tmp/chun
 hoody --container "$C" files stat /home/user/upload-test.bin
 ```
 
-**Step 3 — resume after a network drop.** An append is written as it arrives, so a request that broke off may already have added part of its chunk. Do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The CLI sends only appends (`hoody files append`); explicit byte ranges need raw HTTP.
+**Step 3 — resume after a network drop.** A WebDAV append (`PATCH /{path}` with `X-Update-Range: append`) writes bytes as they arrive, so a request that broke off may already have added part of its chunk. A REST append (`PUT /api/v1/files/append/{path}`, or an upload with `append`) stages the whole body first, so a body that broke off leaves the file unchanged, although a failure during the write that follows can still leave part of the chunk appended. Either way, do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The CLI sends only appends (`hoody files append`); explicit byte ranges need raw HTTP.
 
 ### 4. Time-travel a single file — history → revision N → diff
 
@@ -407,7 +408,7 @@ hoody --container "$C" files journal list --path /home/user/files-examples-clean
 | `hoody files backends hdfs create` |  | write | Connect to hdfs backend | `files.backends.createHdfs` | `hoody files backends hdfs create --description 'My description' --encoding 50430082 --namenode namenode-1:8020,namenode-2:8020` |
 | `hoody files backends hidrive create` |  | write | Connect to hidrive backend | `files.backends.createHidrive` | `hoody files backends hidrive create --auth-url https://example.com/auth --chunk-size 50331648` |
 | `hoody files backends http create` |  | write | Connect to http backend | `files.backends.createHttp` | `hoody files backends http create --description 'My description' --headers '{}' --url https://example.com` |
-| `hoody files backends iclouddrive create` |  | write | Connect to iclouddrive backend | `files.backends.createIclouddrive` | `hoody files backends iclouddrive create --apple-id abc-123 --client-id d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d --description 'My description' --password <password> --service drive` |
+| `hoody files backends iclouddrive create` |  | write | Connect to iclouddrive backend | `files.backends.createIclouddrive` | `hoody files backends iclouddrive create --apple-id abc-123 --client-id d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d --description 'My description' --password <password>` |
 | `hoody files backends imagekit create` |  | write | Connect to imagekit backend | `files.backends.createImagekit` | `hoody files backends imagekit create --description 'My description' --encoding 117553486 --endpoint https://example.com --private-key <private_key> --public-key pk_abc123` |
 | `hoody files backends internetarchive create` |  | write | Connect to internetarchive backend | `files.backends.createInternetarchive` | `hoody files backends internetarchive create --description 'My description' --disable-checksum` |
 | `hoody files backends jottacloud create` |  | write | Connect to jottacloud backend | `files.backends.createJottacloud` | `hoody files backends jottacloud create --auth-url https://example.com/auth --client-credentials` |
@@ -421,15 +422,15 @@ hoody --container "$C" files journal list --path /home/user/files-examples-clean
 | `hoody files backends opendrive create` |  | write | Connect to opendrive backend | `files.backends.createOpendrive` | `hoody files backends opendrive create --access private --chunk-size 10485760 --password <password> --username alice` |
 | `hoody files backends oracleobjectstorage create` |  | write | Connect to oracleobjectstorage backend | `files.backends.createOracleobjectstorage` | `hoody files backends oracleobjectstorage create --attempt-resume-upload --chunk-size 5242880 --namespace <namespace> --provider no_auth --region eu-west-1` |
 | `hoody files backends pcloud create` |  | write | Connect to pcloud backend | `files.backends.createPcloud` | `hoody files backends pcloud create --auth-url https://example.com/auth --client-credentials` |
-| `hoody files backends pikpak create` |  | write | Connect to pikpak backend | `files.backends.createPikpak` | `hoody files backends pikpak create --chunk-size 5242880 --description 'My description' --pass <pass> --user alice` |
-| `hoody files backends pixeldrain create` |  | write | Connect to pixeldrain backend | `files.backends.createPixeldrain` | `hoody files backends pixeldrain create --api-url https://pixeldrain.com/api --description 'My description' --root-folder-id me` |
+| `hoody files backends pikpak create` |  | write | Connect to pikpak backend | `files.backends.createPikpak` | `hoody files backends pikpak create --chunk-size 5242880 --description 'My description'` |
+| `hoody files backends pixeldrain create` |  | write | Connect to pixeldrain backend | `files.backends.createPixeldrain` | `hoody files backends pixeldrain create --api-url https://pixeldrain.com/api --description 'My description'` |
 | `hoody files backends premiumizeme create` |  | write | Connect to premiumizeme backend | `files.backends.createPremiumizeme` | `hoody files backends premiumizeme create --auth-url https://example.com/auth --client-credentials` |
-| `hoody files backends protondrive create` |  | write | Connect to protondrive backend | `files.backends.createProtondrive` | `hoody files backends protondrive create --description 'My description' --enable-caching --password <password> --username alice` |
+| `hoody files backends protondrive create` |  | write | Connect to protondrive backend | `files.backends.createProtondrive` | `hoody files backends protondrive create --description 'My description' --enable-caching` |
 | `hoody files backends putio create` |  | write | Connect to putio backend | `files.backends.createPutio` | `hoody files backends putio create --auth-url https://example.com/auth --client-credentials` |
 | `hoody files backends qingstor create` |  | write | Connect to qingstor backend | `files.backends.createQingstor` | `hoody files backends qingstor create --chunk-size 4194304 --connection-retries 3` |
 | `hoody files backends quatrix create` |  | write | Connect to quatrix backend | `files.backends.createQuatrix` | `hoody files backends quatrix create --api-key <api_key> --description 'My description' --effective-upload-time 4s --host example.com` |
 | `hoody files backends s3 create` |  | write | Connect to s3 backend | `files.backends.createS3` | `hoody files backends s3 create --bucket-object-lock-enabled --bypass-governance-retention` |
-| `hoody files backends seafile create` |  | write | Connect to seafile backend | `files.backends.createSeafile` | `hoody files backends seafile create --2fa --create-library --url https://cloud.seafile.com/ --user alice` |
+| `hoody files backends seafile create` |  | write | Connect to seafile backend | `files.backends.createSeafile` | `hoody files backends seafile create --2fa --create-library --url https://cloud.seafile.com/` |
 | `hoody files backends sftp create` |  | write | Connect to sftp backend | `files.backends.createSftp` | `hoody files backends sftp create --ask-password --chunk-size 32768 --host example.com --user user` |
 | `hoody files backends sharefile create` |  | write | Connect to sharefile backend | `files.backends.createSharefile` | `hoody files backends sharefile create --auth-url https://example.com/auth --chunk-size 67108864` |
 | `hoody files backends sia create` |  | write | Connect to sia backend | `files.backends.createSia` | `hoody files backends sia create --api-url https://example.com --description 'My description' --encoding 50436354` |
@@ -448,21 +449,21 @@ hoody --container "$C" files journal list --path /home/user/files-examples-clean
 | `hoody files copy` |  | write | Copy file or directory | `files.copy` | `hoody files copy /home/user/file.txt --copy-to <copy_to> --overwrite true` |
 | `hoody files delete` |  | destructive | Delete file or directory | `files.delete` | `hoody files delete /home/user/file.txt -y` |
 | `hoody files downloads cancel` |  | action | Cancel a running download | `files.downloads.cancel` | `hoody files downloads cancel 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody files downloads create` |  | write | Download a file from a URL into a directory (--owner sets the owner of the new file; the reply is then shorter) | `files.downloads.create` | `hoody files downloads create /home/user/src --download <download_from> --timeout 300 --owner <owner>` |
-| `hoody files downloads create` |  | write | Download a file from a URL with an owner for the new file (answers success and message only) | `files.mkdir` | `hoody files downloads create /home/user/src --download <download_from> --timeout 300 --owner <owner>` |
-| `hoody files downloads history list` |  | read | Download history | `files.downloads.listHistory` | `hoody files downloads history list --download-history` |
-| `hoody files downloads list` |  | read | List all active downloads | `files.downloads.list` | `hoody files downloads list --downloads` |
-| `hoody files downloads list` |  | read | List active downloads of a directory | `files.downloads.listByDirectory` | `hoody files downloads list --downloads` |
+| `hoody files downloads create` |  | write | Download a file from a URL into a directory (--owner sets the owner of the new file; the reply is then shorter) | `files.downloads.create` | `hoody files downloads create /home/user/src --download <download_from> --timeout 10 --owner <owner>` |
+| `hoody files downloads create` |  | write | Download a file from a URL with an owner for the new file (answers success and message only) | `files.mkdir` | `hoody files downloads create /home/user/src --download <download_from> --timeout 10 --owner <owner>` |
+| `hoody files downloads history list` |  | read | Download history | `files.downloads.listHistory` | `hoody files downloads history list` |
+| `hoody files downloads list` |  | read | List all active downloads | `files.downloads.list` | `hoody files downloads list` |
+| `hoody files downloads list` |  | read | List active downloads of a directory | `files.downloads.listByDirectory` | `hoody files downloads list` |
 | `hoody files exists` |  | read | Get file metadata | `files.exists` | `hoody files exists /home/user/file.txt --history` |
 | `hoody files extractions cancel` |  | action | Cancel a running extraction | `files.extractions.cancel` | `hoody files extractions cancel 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody files extractions history list` |  | read | Extraction history | `files.extractions.listHistory` | `hoody files extractions history list --extraction-history` |
+| `hoody files extractions history list` |  | read | Extraction history | `files.extractions.listHistory` | `hoody files extractions history list` |
 | `hoody files extractions list` |  | read | List active extractions | `files.extractions.list` | `hoody files extractions list` |
 | `hoody files ftp get` |  | read | Access file via FTP | `files.ftp.get` | `hoody files ftp get /home/user/file.txt --type ftp --server ftp.example.com:21 --user anonymous --ftp-secure` |
 | `hoody files get` |  | read | List directory or download file | `files.get` | `hoody files get /home/user/file.txt --hash --size 800x600` |
 | `hoody files glob` |  | read | Find files by glob pattern | `files.glob` | `hoody files glob /home/user/src --pattern '*.ts' --max-results 1000 --max-depth 50` |
 | `hoody files grep` |  | read | Search file contents (grep) | `files.grep` | `hoody files grep /home/user/file.txt --pattern TODO --ignore-case --fixed-string` |
 | `hoody files health` |  | read | Service health check | `files.kit.getHealth` | `hoody files health` |
-| `hoody files images convert` |  | read | Process and convert images | `files.images.convert` | `hoody files images convert img-abc --thumbnail --format jpeg --size 800x600` |
+| `hoody files images convert` |  | read | Process and convert images | `files.images.convert` | `hoody files images convert img-abc --format jpeg --size 800x600` |
 | `hoody files journal flush` |  | write | Flush journal to disk | `files.journal.flush` | `hoody files journal flush` |
 | `hoody files journal list` |  | read | Query journal entries | `files.journal.list` | `hoody files journal list --path /home/user/file.txt --op write,delete` |
 | `hoody files journal stats` |  | read | Get journal statistics | `files.journal.getStats` | `hoody files journal stats` |
@@ -480,7 +481,7 @@ hoody --container "$C" files journal list --path /home/user/files-examples-clean
 | `hoody files ssh get` |  | read | Access file via SSH/SFTP | `files.ssh.get` | `hoody files ssh get /home/user/file.txt --type ssh --server nas.local:22 --user alice` |
 | `hoody files ssh upload` |  | write | Upload file via SSH/SFTP | `files.ssh.upload` | `hoody files ssh upload /home/user/file.txt --server nas.local:22 --user alice --input ./local-file` |
 | `hoody files stat` |  | read | Get file metadata (stat) | `files.stat` | `hoody files stat /home/user/file.txt` |
-| `hoody files touch` |  | write | Touch file (create or update mtime) | `files.touch` | `hoody files touch /home/user/file.txt --touch` |
+| `hoody files touch` |  | write | Touch file (create or update mtime) | `files.touch` | `hoody files touch /home/user/file.txt` |
 | `hoody files update` |  | write | Modify file properties or move/rename | `files.update` | `hoody files update /home/user/file.txt --body '{"move_to":"/new/dir/file.txt"}'` |
 | `hoody files upload` |  | write | Upload or append file | `files.upload` | `hoody files upload /home/user/file.txt --append --input ./local-file` |
 | `hoody files uploads delete` |  | destructive | Delete every held file of a pending upload. They are the only copy of those changes; the backend is not touched | `files.uploads.delete` | `hoody files uploads delete abc-123 -y` |
@@ -494,5 +495,5 @@ hoody --container "$C" files journal list --path /home/user/files-examples-clean
 | `hoody files version` |  | read | Get API version | `files.kit.getVersion` | `hoody files version` |
 | `hoody files webdav get` |  | read | Access file via WebDAV | `files.webdav.get` | `hoody files webdav get /home/user/file.txt --type webdav --server cloud.nextcloud.com --user alice --webdav-path /` |
 | `hoody files whoami` |  | read | Show the user your credentials authenticate as | `files.whoami` | `hoody files whoami /home/user/file.txt` |
-| `hoody files zip` |  | read | Download directory as ZIP | `files.zip` | `hoody files zip /home/user/src --zip` |
+| `hoody files zip` |  | read | Download directory as ZIP | `files.zip` | `hoody files zip /home/user/src` |
 

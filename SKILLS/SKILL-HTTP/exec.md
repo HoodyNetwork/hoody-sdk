@@ -1,4 +1,4 @@
-> _**HTTP skill · `exec` namespace** · ~19,089 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `exec` namespace** · ~20,267 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `exec` — micro-services: any script or API as an instant HTTP endpoint
 
@@ -8,7 +8,7 @@
 
 **Routes only auto-mount for `.ts` / `.js` files.** Bare `.sh` / `.py` files dropped in the scripts dir are NOT exposed as HTTP — wrap them by writing a thin `.ts` handler that shells out via `Bun.$`. From a `.ts` handler you can run anything on `$PATH` (curl, ffmpeg, Python, native binaries) in one line.
 
-To give a script a **public** address: create an alias with `POST /api/v1/proxy/aliases` (`program: 'exec'`, and `target_path: '/<your-script>'` as the landing page) and you get back `https://<alias>.{server_name}.containers.hoody.com` with no `containerId` in the URL. The alias points at the WHOLE exec kit, not at one script: `target_path` only answers a request with no path, and every other path is forwarded as sent whatever `allow_path_override` says. That can include the kit's own management API under `/api/v1/exec/` (`POST /api/v1/exec/scripts/write`, `DELETE /api/v1/exec/scripts/delete`, …), so anyone holding the link may be able to write and run code in the container. Before sharing the alias, gate it with `* /api/v1/containers/{id}/proxy/permissions*` (a password, token, JWT or IP group, plus a `default` policy that denies what the group does not allow), exactly as for any kit URL.
+To give a script a **public** address: create an alias with `POST /api/v1/proxy/aliases` (`program: 'exec'`, and `target_path: '/<your-script>'` as the landing page) and you get back `https://<alias>.{server_name}.containers.hoody.com` with no `containerId` in the URL. With the default `allow_path_override: true` the alias points at the WHOLE exec kit, not at one script: `target_path` only answers a request with no path, and every other path is forwarded as sent. That includes the kit's own management API under `/api/v1/exec/` (`POST /api/v1/exec/scripts/write`, `DELETE /api/v1/exec/scripts/delete`, …), so anyone holding the link may be able to write and run code in the container. Set `allow_path_override: false` to serve only the script: it is served at the alias root AND at `/<your-script>`, while any other path (sub-paths, assets and the management API under `/api/v1/exec/` included) is refused with `404 ALIAS_PATH_PINNED`, and the visitor's method, body and query keys the target does not set still reach the script. Either way, before sharing the alias, gate it with `* /api/v1/containers/{id}/proxy/permissions*` (a password, token, JWT or IP group, plus a `default` policy that denies what the group does not allow), exactly as for any kit URL.
 
 **Trust model — read carefully.** Scripts run inside the container with full container privileges. They are NOT a sandbox for untrusted user code. Anyone who can invoke a script can do everything the script can do (read files, hit other kits, spawn processes). Use them for *your* APIs / cron logic / webhooks / ETL — don't expose them as an arbitrary code-execution surface to anonymous internet users without thinking through the gate stack first.
 
@@ -31,7 +31,7 @@ To give a script a **public** address: create an alias with `POST /api/v1/proxy/
 ## Prerequisites
 
 - Scripts dir `/hoody/storage/hoody-exec/scripts/{subdomain}/{instanceId}/` (subdomain defaults to `default`, e.g. `…/scripts/default/1/`) is service-managed; write only via `POST /api/v1/exec/scripts/write`.
-- **`require('hoody-sdk')` works with no install step** — the SDK is embedded in hoody-exec: `require('hoody-sdk')` and its subpaths load that embedded copy before any disk lookup, so installing another version does not change it; a newer SDK arrives with a newer exec build. (Other `require()`d npm packages are auto-installed on first execution.) Import from `'hoody-sdk'`. The constructor takes an explicit config; `withContainer` is async and returns a container-scoped client. Calls go through the edge proxy — no localhost bypass — so all the usual capability gates / request hooks / proxy logs apply (see § No local bypass in `SKILL-HTTP.md`).
+- **`require('hoody-sdk')` works with no install step** — it loads the installed npm package from the scripts root's `node_modules`. Exec installs a missing SDK automatically (at startup, or on a script's first `require`), honors a version you declare in the scripts-root `package.json` (an exact version or a tag stops updates, a range keeps them inside it), and stages a newer registry release that the next kit startup swaps in; a running kit never replaces its live copy. (Other `require()`d npm packages are auto-installed on first execution.) Import from `'hoody-sdk'`. The constructor takes an explicit config; `withContainer` is async and returns a container-scoped client. Calls go through the edge proxy, so all the usual capability gates / request hooks / proxy logs apply (see § Source IP Guard in `SKILL-HTTP.md`).
 - The `hoody` CLI is also on `$PATH` if you'd rather shell out: `Bun.$\`hoody projects list\`` from the same script works end-to-end.
 
 ## Capability URL
@@ -65,7 +65,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `GET /api/v1/exec/logs/list` / `POST /api/v1/exec/logs/search` / `POST /api/v1/exec/logs/read` (one JSON response; `lines` and `tail` pick the slice). For a live tail use `GET /api/v1/exec/logs/stream` (SSE).
 2. `GET /api/v1/exec/monitor/active-requests` / `GET /api/v1/exec/monitor/stats`; per script, `GET /api/v1/exec/monitor/scripts` first, then `POST /api/v1/exec/monitor/script-performance` with one `scriptPath` from that listing (an empty body returns an empty `metrics` stub).
-3. `GET /api/v1/exec/user-openapi/list`, then `POST /api/v1/exec/user-openapi/generate` / `GET /api/v1/exec/user-openapi/spec` (a document built from the current scripts) or `POST /api/v1/exec/user-openapi/merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the whole scripts directory) and otherwise merges just the `specs` you pass; it answers `{success, data, meta}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `POST /api/v1/exec/user-openapi/validate` checks one script's `.openapi.json` sidecar.
+3. `GET /api/v1/exec/user-openapi/list`, then `POST /api/v1/exec/user-openapi/generate` / `GET /api/v1/exec/user-openapi/spec` (a document built from the current scripts) or `POST /api/v1/exec/user-openapi/merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data, meta}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `POST /api/v1/exec/user-openapi/validate` checks one script's `.openapi.json` sidecar.
 
 ## Quirks & gotchas
 
@@ -77,10 +77,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `POST /api/v1/exec/scripts/write` defaults `createDirs:true`, `validate:true`. `.md`/`.yaml`/`.env`/any other non-`.ts`/`.js`/`.json` extension skip; `.json` JSON.parse; only `.ts`/`.js` full pipeline.
 - Invocation = bare path (`POST /greeting`), NOT `/api/v1/exec/...`.
 - Proxy-alias uses `program: 'exec'`; `GET /api/v1/containers/{id}/proxy/services` returning `[]` is normal (it lists only services named in proxy permission rules or hooks).
-- `POST /api/v1/exec/schedules/trigger` resolves a relative `scriptPath` from the kit's scripts ROOT, not from the `default/<execId>/` folder that `POST /api/v1/exec/scripts/write` writes into. A script written as `tick.js` must be triggered as `default/1/tick.js` (the `scriptRel` of `GET /api/v1/exec/schedules/list`) or by its absolute `scriptPath`; plain `tick.js` answers 404 `script not found`. `GET /api/v1/exec/schedules/history` filters by the same root-relative form (an absolute path is converted to it).
+- `POST /api/v1/exec/schedules/trigger` and `GET /api/v1/exec/schedules/history` scope a relative `scriptPath` by the kit URL you call, like `POST /api/v1/exec/scripts/write`: through the `exec-1` kit URL, `tick.js` means `default/1/tick.js` (the `scriptRel` of `GET /api/v1/exec/schedules/list`), and a path that already starts with `default/1/` is kept as is. An absolute `scriptPath` is used as given (history converts it to the root-relative form); a script at the scripts root, outside any deployment folder, is reachable from a deployment URL only by its absolute path.
 - `POST /api/v1/exec/scripts/write`/`delete` accept optional `execId` (alias `exec_id`) + `subdomain`; query wins.
-- `PUT /api/v1/exec/magic-comments/update` and `GET /api/v1/exec/magic-comments/read` take `path` relative to the scripts ROOT: a script written as `tick.js` through the `exec-1` kit URL is `default/1/tick.js` here (the write's `resolvedPath`, or its `path` in `GET /api/v1/exec/scripts/list`), and plain `tick.js` answers 404 `Script not found`.
-- `POST /api/v1/exec/magic-comments/bulk-update` with neither `directory` nor `execId` edits the calling deployment's own tree (`default/1` through `exec-1`); a `directory` is scripts-root-relative too.
+- `PUT /api/v1/exec/magic-comments/update` and `GET /api/v1/exec/magic-comments/read` resolve `path` like `POST /api/v1/exec/scripts/write`: through the `exec-1` kit URL, `tick.js` is looked up as `default/1/tick.js` first (the `execId` / `subdomain` parameters pick another deployment), then as given relative to the scripts root, so the root-relative `default/1/tick.js` (the write's `resolvedPath`, or its `path` in `GET /api/v1/exec/scripts/list`) also works; the first that exists is used, and none answers 404 `Script not found`.
+- `POST /api/v1/exec/magic-comments/bulk-update` with neither `directory` nor `execId` edits the calling deployment's own tree (`default/1` through `exec-1`); a `directory` resolves like a script path (under the calling deployment's tree first, then relative to the scripts root).
 - `PUT /api/v1/exec/magic-comments/update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the max run time of one scheduled run; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `POST /api/v1/exec/schedules/reload`); `GET /api/v1/exec/schedules/list` shows its `nextFire`.
 - A `@schedule` fire bypasses the script's `@token`, and a script that also declares `@websocket` is not registered (`GET /api/v1/exec/schedules/history` records it as `incompatible`). The `curl` kit's schedules take 6 fields (seconds first); the `cron` namespace takes 5, in the container's own crontab.
 - **Built-in AI, zero setup — never wire up your own provider/key for AI in a script.** Every endpoint gets these script-scoped bindings, enabled by default (off with `// @ai false`; not on `globalThis`; `pre.js` / `post.js` get none): `ai` (`ai.generate(prompt)` / `ai.stream(prompt)` / `ai.object({ schema, prompt })`), plus `openai` (provider factory), `model` (the default model instance), and `generateText`/`streamText`/`generateObject`. They are already wired to **Hoody AI** (`https://ai.hoody.com/api/v1` unless the kit runs with another `--ai-url`; default model **`hoody-ai/hoody-free`** unless `--ai-default-model` changes it). **No `require()`, no base URL, and no API key**: the key defaults to `container-<hash>`, and `// @ai-key` replaces it. Exec does not price, meter or refuse models; what a model costs and what happens without wallet credit is decided by the AI service. Override per-script with magic comments (`// @ai-model <provider/model>`, `// @ai-temperature 0.7`, `// @ai-max-tokens 2048`, `// @ai-key <custom-tag>`); set a default system prompt via a sibling `<script>.system.md` (or directory-level `_system.md`).
@@ -241,7 +241,7 @@ curl -sX POST "$KIT/api/v1/exec/validate/magic-comments" \
   -d "$(jq -nc --arg c "$CODE" '{code:$c}')"
 ```
 
-If `valid:true`, ship it via `POST /api/v1/exec/scripts/write` (default `validate:true` re-runs the checks server-side). If `valid:false`, the `results.{syntax,typescript,dependencies}` slots tell you which checker rejected it. Magic comments never make a script invalid: a directive whose value cannot be used falls back to its default and is reported in `results.magicCommentWarnings` (or `warnings` from `POST /api/v1/exec/validate/magic-comments`) while `valid` stays `true`, so read those warnings separately. The two paths differ on one point: `POST /api/v1/exec/validate/script` counts a `require()`d module that is not installed yet as a failure, while `POST /api/v1/exec/scripts/write` only warns about it and the runtime installs it on first execution. A `valid:false` whose only failing slot is `dependencies` is therefore safe to write.
+If `valid:true`, ship it via `POST /api/v1/exec/scripts/write` (default `validate:true` re-runs the checks server-side). If `valid:false`, the `results.{syntax,typescript,dependencies}` slots tell you which checker rejected it. Magic comments never make a script invalid: a directive whose value cannot be used falls back to its default and is reported in `results.magicCommentWarnings` (or `warnings` from `POST /api/v1/exec/validate/magic-comments`) while `valid` stays `true`, so read those warnings separately. The two paths differ on one point: `POST /api/v1/exec/validate/script` counts a `require()`d module that is not installed yet as a failure, while `POST /api/v1/exec/scripts/write` only warns about it and the runtime installs it on first execution. A `valid:false` whose only failing slot is `dependencies` can be written for the runtime to install when `results.dependencies.invalidModules` is empty, so the failure is only missing packages. A versioned import specifier such as `require('lodash@4')` is listed in `invalidModules` and refused at runtime: pin the version in the scripts-root `package.json` (`POST /api/v1/exec/package/pin`) and import the bare package name.
 
 ### 6. Auto-publish OpenAPI for your scripts
 
@@ -259,7 +259,7 @@ curl -sf "$KIT/api/v1/exec/user-openapi/list" | jq '.data.scripts[] | {path, rou
 curl -sf "$KIT/api/v1/exec/user-openapi/spec?format=json" > /tmp/user-scripts.openapi.json
 ```
 
-**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `POST /api/v1/exec/user-openapi/merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the whole scripts directory); without them it merges just the `specs` you pass. It answers `{success, data, meta}` with the merged document in `data`.
+**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `POST /api/v1/exec/user-openapi/merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data, meta}` with the merged document in `data`.
 
 ```bash
 # /tmp/layer.json holds one hand-written OpenAPI document object
@@ -353,7 +353,7 @@ curl -sf "$KIT/api/v1/exec/schedules/list" \
   | jq '.schedules[] | {scriptPath, scriptRel, expression, registeredAt}'
 ```
 
-**Step 3 — fire it on demand.** `scriptPath` accepts the absolute `scriptPath` from step 2 or its root-relative `scriptRel` (`default/1/tick.js`). A relative path is resolved from the scripts ROOT, not from the `default/1/` folder `POST /api/v1/exec/scripts/write` wrote into, so plain `tick.js` answers 404 `script not found`. `force:true` bypasses the `// @token` refusal so you can manually exercise scripts that gate cron-only. The response is the fire outcome, `{triggered, scriptPath, runId, status, durationMs, error?}`.
+**Step 3 — fire it on demand.** `scriptPath` accepts the absolute `scriptPath` from step 2 or its root-relative `scriptRel` (`default/1/tick.js`). A relative path is scoped by the kit URL like `POST /api/v1/exec/scripts/write`, so through the `exec-1` kit URL plain `tick.js` also names `default/1/tick.js`. `force:true` bypasses the `// @token` refusal so you can manually exercise scripts that gate cron-only. The response is the fire outcome, `{triggered, scriptPath, runId, status, durationMs, error?}`.
 
 ```bash
 curl -sX POST "$KIT/api/v1/exec/schedules/trigger" \
@@ -561,25 +561,28 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 
 | Method | Summary | Params |
 |--------|---------|--------|
-| `GET /api/v1/exec/magic-comments/read` | Read Magic Comments | `?path*` |
+| `GET /api/v1/exec/magic-comments/read` | Read Magic Comments | `?path*` `?execId` `?exec_id` `?subdomain` |
 | `GET /api/v1/exec/magic-comments/schema` | Get Magic Comments Schema |  |
-| `PUT /api/v1/exec/magic-comments/update` | Update Magic Comments Handler | `body*` |
+| `PUT /api/v1/exec/magic-comments/update` | Update Magic Comments Handler | `?execId` `?exec_id` `?subdomain` `body*` |
 | `POST /api/v1/exec/magic-comments/bulk-update` | Bulk Update Magic Comments | `body*` |
 | `POST /api/v1/exec/validate/magic-comments` | Validate Magic Comments | `body*` |
 
 **Param notes:**
 
-- `path` — Path query parameter
+- `path` — A script path resolved like scripts/read: under the call's scope first (`execId` / `exec_id` / `subdomain`, else the Host's `[<subdomain>.]…-exec-<execId>`), as `<subdomain|default>/<execId>/<path>` unless it already starts with that prefix; when no file is there, relative to the scripts directory (so `default/1/x.ts` still works from any Host). An absolute path inside the scripts directory is read relative to it. `resolvedPath` in the answer names the file used.
+- `execId` — Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+- `exec_id` — Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+- `subdomain` — Optional subdomain namespace used with execId for path resolution.
 
 **Body shapes:**
 
-- `PUT /api/v1/exec/magic-comments/update` body — `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, dry_run: bool|null=false }`
-  - `path` — Script to edit, relative to the scripts directory.
+- `PUT /api/v1/exec/magic-comments/update` body — `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, dry_run: bool|null=false, execId: string, exec_id: string, subdomain: string }`
   - `comments` — Directives to set, keyed by directive name. … Keys that are not directives are ignored. A value that would not read back from the script as sent is refused with a 400, and so is a CORS sub-directive set in the same request as `cors: none`, which the script would ignore.
   - `dry_run` — When true, the file is not written: the response returns its `current` and `proposed` magic comments. When false (the default), the change is written and the response returns `previous` and `updated`.
+  - `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
 - `POST /api/v1/exec/magic-comments/bulk-update` body — `{ directory: string|null, execId: string|null, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, extension: string|null=".ts", recursive: bool|null=true, dry_run: bool|null=false }`
-  - `directory` — Directory to edit, relative to the scripts directory. Ignored when `execId` is given.
-  - `execId` — Edits `default/<execId>` (or `<subdomain>/<execId>` when taken from the Host). When neither `execId` nor `directory` is given, both are taken from the Host header; a supplied value is never replaced. An execId is 1 to 64 lowercase letters or digits.
+  - `directory` — Directory to edit, resolved like a script path: under the scope scripts/write would use for the same call first (the body `execId`, with the Host's subdomain and execId filling what the body leaves out: `<subdomain|default>/<execId>`), as `<scope>/<directory>` unless it already starts with that …
+  - `execId` — Without `directory`: edits the whole `default/<execId>` tree (or `<subdomain>/<execId>` when taken from the Host). With `directory`: the execId of the scope `directory` resolves under first (`<subdomain|default>/<execId>/<directory>`, the subdomain from the Host). …
   - `dry_run` — When true, no file is written: the response lists every matching file under `would_affect`, each with its `current` and `proposed` magic comments, or with an `error` in their place when that file could not be processed. …
 - `POST /api/v1/exec/validate/magic-comments` body — `{ code*: string }`
 
@@ -688,9 +691,10 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 
 **Body shapes:**
 
-- `POST /api/v1/exec/route/discover` body — `{ baseDir: string="", includeMetadata: bool=false }`
+- `POST /api/v1/exec/route/discover` body — `{ baseDir: string="", includeMetadata: bool=false, hostname: string, execId: string }`
   - `baseDir` — Base Dir
   - `includeMetadata` — Include Metadata
+  - `execId` — Exec Id
 - `POST /api/v1/exec/route/resolve` body — `{ path*: string, hostname: string|null, execId: string|null }` — The URL path to resolve and the namespace to resolve it in.
   - `path` — URL path to resolve, e.g. `/api/users/42`. A non-string is refused with a 400.
   - `hostname` — Hostname namespace: letters, digits, dots, hyphens and underscores, not `.` or `..` and not a reserved directory name (`node_modules`, `.git`, `.hoody-cache`, `_sdk`, `_hoody`). Surrounding whitespace is ignored. … Any other value is refused with a 400.
@@ -830,7 +834,7 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 |--------|---------|--------|
 | `POST /api/v1/exec/templates/create-custom` | Create Custom Template | `body*` |
 | `DELETE /api/v1/exec/templates/delete-custom/{name}` | Delete Custom Template |  |
-| `POST /api/v1/exec/templates/generate` | Generate From Template | `body*` |
+| `POST /api/v1/exec/templates/generate` | Generate From Template | `?execId` `?exec_id` `?subdomain` `body*` |
 | `GET /api/v1/exec/templates/list` | List Templates | `?category` `?includeBuiltin` `?includeCustom` |
 | `GET /api/v1/exec/templates/preview` | Preview Template | `?name*` `?variables` |
 | `PUT /api/v1/exec/templates/update-custom/{name}` | Update Custom Template | `body` |
@@ -838,6 +842,9 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 **Param notes:**
 
 - `name` — Name parameter _(on `DELETE /api/v1/exec/templates/delete-custom/{name}`, `PUT /api/v1/exec/templates/update-custom/{name}`)_
+- `execId` — Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+- `exec_id` — Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+- `subdomain` — Optional subdomain namespace used with execId for path resolution.
 - `category` — Filter templates to a single metadata category (e.g. `api`, `utility`). Omit to list all categories.
 - `includeBuiltin` — Include built-in templates in the result set. Default `true`. Accepts `true`/`false`/`1`/`0`.
 - `includeCustom` — Include user-supplied templates (from `_hoody/templates/`) in the result set. Default `true`.
@@ -850,8 +857,11 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
   - `name` — Template name: letters, digits, dots, hyphens and underscores, at most 64 characters, starting with a letter or digit and never containing `..`. A name already taken by a built-in template is refused with a 409.
   - `code` — Template source. It is stored after a generated metadata header. A non-string is refused with a 400.
   - `metadata` — Template metadata. An omitted member takes its default; a member of the wrong type, or a metadata value that is not an object, is refused with a 400.
-- `POST /api/v1/exec/templates/generate` body — `{ name*: string, variables: object, outputPath: string, saveFile: bool=false }`
-  - `outputPath` — Output Path
-  - `saveFile` — Save File
+- `POST /api/v1/exec/templates/generate` body — `{ name*: string, variables: object, outputPath: string, saveFile: bool=false, execId: string, exec_id: string, subdomain: string }`
+  - `name` — Template name: a built-in one or a custom template's (see templates/list).
+  - `variables` — Values for the template's `params`, substituted into its code.
+  - `outputPath` — Where to save the script when `saveFile` is true, as scripts/write takes a path: under the call's scope (`execId` / `exec_id` / `subdomain`, else the Host's `[<subdomain>.]…-exec-<execId>`), as `<subdomain|default>/<execId>/<outputPath>` unless it already starts with that prefix; relative to the scripts directory only when the call has no scope. …
+  - `saveFile` — When true, write the generated script to `outputPath` (required then). When false (the default), only return the code.
+  - `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
 - `PUT /api/v1/exec/templates/update-custom/{name}` body — `{ code: string, metadata: object }`
 

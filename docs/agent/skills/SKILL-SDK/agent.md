@@ -1,4 +1,4 @@
-> _**SDK skill · `agent` namespace** · ~128,857 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `agent` namespace** · ~130,290 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `agent` — In-container AI coding agent over HTTP
 
@@ -9,7 +9,7 @@ The `agent` kit exposes the in-container AI agent as a typed namespace: create a
 ## When to use
 
 - **Drive the agent programmatically** — create a session, prompt it, and consume the turn: `client.agent.sessions.create` → stream the turn for live tool/gate/output events (per surface — see the streaming note under Quirks), or `sessions.turns.run` for one blocking call → resolve gates with `gates.approve` / `gates.deny` / `gates.answer` → `sessions.turns.cancel` to interrupt.
-- **Inspect or configure the agent** — list `models` (`agent.models.list` / `agent.models.get`; the Jev decision-model catalogue is the separate `agent.jev.listModels`) and `providers.list` (configure providers via `providers.setDefaultAuth` / `providers.setApiKey` / `providers.startOauth`); switch a session's active model with `sessions.setModel`, browse/install `skills`, read/edit `memory`, manage `workflows`, `hooks`, `agents` (named agent profiles), and `tools` — both the sessionless catalogue/registry (`tools.list` / `tools.listReadOnly` / `tools.get`, and `agent.tools.run` (blocks, returns the result; with `stream: true` it returns the one-shot result over SSE frames instead, not a per-token stream) / `agent.tools.start` (returns `{ job_id }`, poll `jobs`) to invoke a tool with no session — read-only by default, a mutating tool needs `allow_mutations: true` or a confirmed re-issue) and the per-session surface (`sessions.listTools` for a session's *effective* tool set, `sessions.listMcpTools`, and `sessions.runTool`). Unlike the sessionless `agent.tools.run`, a per-session run executes against the session's *frozen* realm/container/cwd/tool-mode and claims the session's single serial turn slot — so it returns 409 `turn_in_flight` while a turn is running, 409 `gate_parked` while a gate is open, and 404 `tool_not_found` if the tool is not in that session's effective list; whether a mutating tool may run is decided by the live session's own tool mode and confirmation settings (the `allow_mutations` escape hatch is sessionless-only).
+- **Inspect or configure the agent** — list `models` (`agent.models.list` / `agent.models.get`; the Jev decision-model catalogue is the separate `agent.jev.listModels`) and `providers.list` (configure providers via `providers.setDefaultAuth` / `providers.setApiKey` / `providers.startOauth`); switch a session's active model with `sessions.setModel`, browse/install `skills`, read/edit `memory`, manage `workflows`, `hooks`, `definitions` (named agent profiles), and `tools` — both the sessionless catalogue/registry (`tools.list` / `tools.listReadOnly` / `tools.get`, and `agent.tools.run` (blocks, returns the result; with `stream: true` it returns the one-shot result over SSE frames instead, not a per-token stream) / `agent.tools.start` (returns `{ job_id }`, poll `jobs`) to invoke a tool with no session — read-only by default, a mutating tool needs `allow_mutations: true` or a confirmed re-issue) and the per-session surface (`sessions.listTools` for a session's *effective* tool set, `sessions.listMcpTools`, and `sessions.runTool`). Unlike the sessionless `agent.tools.run`, a per-session run executes against the session's *frozen* realm/container/cwd/tool-mode and claims the session's single serial turn slot — so it returns 409 `turn_in_flight` while a turn is running, 409 `gate_parked` while a gate is open, and 404 `tool_not_found` if the tool is not in that session's effective list; whether a mutating tool may run is decided by the live session's own tool mode and confirmation settings (the `allow_mutations` escape hatch is sessionless-only).
 - **One-shot non-interactive runs** — `client.agent.headless.start` (an async job) and `client.agent.headless.stream` (an SSE stream) each run the full agent loop once over a throwaway session (see workflow 7 for the per-surface form: an async job or an SSE stream).
 - **GitHub from inside the agent** — first establish an account with `github.login` (omit the body for a GitHub device flow → poll `github.pollLogin`; or pass a `token` PAT to persist it directly), then `github.getAuth` to confirm; once an account is active, `github.clone` / `github.createCommit` (and `github.getStatus` / `github.listBranches` / `github.listRepos` / `github.createPr` / `github.sync`) for repo operations the agent performs in-container.
 
@@ -44,7 +44,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. One-shot synchronous prompt
 
-`client.agent.sessions.create` → `client.agent.sessions.turns.run` with `{ text }` — blocks until the turn finishes, then returns `{status:"done", session_id, turn_id}` with no reply text (or a pending gate, if the turn parks on one); read the reply with `client.agent.sessions.getTranscript`. Best for short, non-interactive prompts where you don't need streamed events.
+`client.agent.sessions.create` → `client.agent.sessions.turns.run` with `{ text }` — waits for the turn to end, a gate that needs a person, or the server deadline (290 seconds by default). A clean turn returns `{status:"done", session_id, turn_id}` with no reply text; check `status`, because a failed, cancelled or quit turn answers `error` (with the error `event`), `canceled` or `quit`. A turn that parks on a gate returns `{pending_gate, turn_id}`. When the deadline passes first the answer is `503 service_unavailable` with `details.turn_id` and `details.turn_running: true`: the turn is NOT cancelled, so follow it with `client.agent.sessions.turns.get` (or the stream) instead of prompting again. Read the reply with `client.agent.sessions.getTranscript`. Best for short, non-interactive prompts where you don't need streamed events.
 
 ### 3. Resolve gates mid-turn
 
@@ -52,7 +52,7 @@ While a prompt streams, the agent may pause for human input: a confirmation gate
 
 ### 4. Pick a model / provider
 
-`client.agent.providers.list` to list the catalogued providers (and `client.agent.providers.getAuth` to check that one is `ready`: a stored credential or passwordless access), `client.agent.models.list` to list the catalogued models, then `client.agent.sessions.setModel` to bind a model to a session before prompting — SYNCHRONOUS: the response reports the actual outcome ({status:'ok', model, persisted} on success; structured 409/422 errors while busy or for an unconstructable spec). A successful switch is live for the session at once and then TRIES to persist into the chat agent's frontmatter (a global repin for future sessions of that agent); that save is best-effort, so only `persisted: true` confirms the repin — `persisted: false` means the session switched but future sessions keep the old pin. PRECEDENCE: the agent's frontmatter `model` is the DEFAULT for a session that does not request one; an explicit model on create (`sessions.create({ model })`), or this live `sessions.setModel`, OVERRIDES that pin for the session — create is session-scoped and does not rewrite the agent, this live switch repins globally. The shipped default agent ships pinned, so its pin is the out-of-the-box default until an explicit model is chosen (an explicit model together with `attach` or `backend: "acp"` is rejected 400 — a resumed/delegated session cannot take an explicit model). Each session has further per-session knobs (all session-scoped PATCHes that apply live): `sessions.setEffort` (`{ effort }` — `low|medium|high|xhigh`, or `""` for the model default), `sessions.setVerbosity` (`{ level }` — `normal|concise|terse|minimal`), `sessions.setHoodyEnv` (`{ enabled }` — toggle whether the `HOODY_*` shell-env contract is injected for the bash tool), and `sessions.setAgent` (`{ agent }` — bind a named profile from `agents`).
+`client.agent.providers.list` to list the catalogued providers (and `client.agent.providers.getAuth` to check that one is `ready`: a stored credential or passwordless access), `client.agent.models.list` to list the catalogued models, then `client.agent.sessions.setModel` to bind a model to a session before prompting — SYNCHRONOUS: the response reports the actual outcome ({status:'ok', model, persisted} on success; structured 409/422 errors while busy or for an unconstructable spec). A successful switch is live for the session at once and then TRIES to persist into the chat agent's frontmatter (a global repin for future sessions of that agent); that save is best-effort, so only `persisted: true` confirms the repin — `persisted: false` means the session switched but future sessions keep the old pin. PRECEDENCE: the agent's frontmatter `model` is the DEFAULT for a session that does not request one; an explicit model on create (`sessions.create({ model })`), or this live `sessions.setModel`, OVERRIDES that pin for the session — create is session-scoped and does not rewrite the agent, this live switch repins globally. The shipped default agent ships pinned, so its pin is the out-of-the-box default until an explicit model is chosen (an explicit model together with `attach` or `backend: "acp"` is rejected 400 — a resumed/delegated session cannot take an explicit model). Each session has further per-session knobs (all session-scoped PATCHes that apply live): `sessions.setEffort` (`{ effort }` — `low|medium|high|xhigh|max`, or `""` for the model default), `sessions.setVerbosity` (`{ level }` — `normal|concise|terse|minimal`), `sessions.setHoodyEnv` (`{ enabled }` — toggle whether the `HOODY_*` shell-env contract is injected for the bash tool), and `sessions.setAgent` (`{ agent }` — bind a named profile from `agents`).
 
 ### 5. Skills, memory, todos, workflows, agents
 
@@ -64,9 +64,9 @@ While a prompt streams, the agent may pause for human input: a confirmation gate
 
 ### 6. Fire-and-observe, recurring prompts, and re-attach
 
-- **Fire-and-observe** — `client.agent.sessions.startTurn` with `{ text }` dispatches a turn and returns `{ job_id, session_id, turn_id }` immediately (HTTP 202) without streaming or blocking; watch completion via the `agent_done` on `client.agent.sessions.connect` whose `turn_id` matches (another client's turn on the same session ends with its own `agent_done`). A cancel scoped with that `turn_id` stops only this turn. Refuses with 409 `turn_in_flight` if a turn is running, or 409 `gate_parked` if a gate is open.
-- **Observe / re-attach** — `client.agent.sessions.connect` attaches (WebSocket primary, SSE fallback) to a live session's full `event.*` stream; pass `since` (gateway int64 seq, or the `Last-Event-ID` header) to resume from the 1024-event replay ring after a disconnect (a gap past eviction yields `event: lagged {code:replay_gap}`). Each frame is `{seq, incarnation, event}`, and a session re-attached under the same id starts a new incarnation whose `seq` restarts at 1, so send `incarnation` (the one you last saw) together with `since`: a mismatch answers `replay_gap` plus the full retained ring instead of silently resuming into a different history. Over SSE the `event:` line drops the `event.` prefix (`event.agent_done` arrives as `event: agent_done`) while the JSON `data:` keeps the full name, so match on the payload's `type`; WebSocket frames are delivered unchanged. `client.agent.sessions.replay` returns the buffered event tail of a *live* session (with `min_seq`/`max_seq`) for a one-shot catch-up (only a *live* session has this ring). `sessions.connect` does not revive a session either: on a persisted but non-live session it answers `404 not_found`, so re-attach it first (`sessions.create({ attach: id })`), then open the stream.
-- **Recurring prompts (loops)** — `client.agent.loops.create` with `{ prompt, interval }` (plus optional `max_runs` / `stop_when` / `max_cost_usd` / `max_wall_ms` caps) schedules a prompt to re-fire on a live session; `listLoops` / `loops.update` (pause via `{ paused: true }`) / `loops.delete` to manage, `loops.startRun` to fire one immediately. Loops are entirely session-scoped. Three rules refuse a request rather than adjusting it: `interval` has a floor of 60 seconds; at most 8 loops can be active (not paused, not ended) per daemon, so the 9th create is rejected; and each `loops.update` carries at most ONE intent (`paused`, or `expires_in`, or the budget fields `max_cost_usd` / `max_wall_ms`), so a request mixing two is rejected 400 (a body with none of them is treated as a budget update).
+- **Fire-and-observe** — `client.agent.sessions.startTurn` with `{ text }` dispatches a turn and returns `{ job_id, session_id, turn_id }` immediately (HTTP 202) without streaming or blocking; watch completion via the `agent_done` on the session event stream (a connected `client.agent.sessions.connect` socket, or `client.agent.sessions.stream`) whose `turn_id` matches (another client's turn on the same session ends with its own `agent_done`). A cancel scoped with that `turn_id` stops only this turn. Refuses with 409 `turn_in_flight` if a turn is running, or 409 `gate_parked` if a gate is open.
+- **Observe / re-attach** — `client.agent.sessions.connect` attaches to a live session's full `event.*` stream over WebSocket, and `client.agent.sessions.stream` is the SSE form of the same route; neither falls back to the other on its own. `const socket = await client.agent.sessions.connect(id)` gives a socket client that is NOT connected yet: register handlers (`onEnvelope`, `onEnd`, `onError`), then `await socket.connect()`. Iterate the SSE form with `for await (const ev of await client.agent.sessions.stream(id))`. Either way, pass `since` (gateway int64 seq, or the `Last-Event-ID` header) to resume from the 1024-event replay ring after a disconnect (a gap past eviction yields `event: lagged {code:replay_gap}`). Each frame is `{seq, incarnation, event}`, and a session re-attached under the same id starts a new incarnation whose `seq` restarts at 1, so send `incarnation` (the one you last saw) together with `since`: a mismatch answers `replay_gap` plus the full retained ring instead of silently resuming into a different history. Over SSE the `event:` line drops the `event.` prefix (`event.agent_done` arrives as `event: agent_done`) while the JSON `data:` keeps the full name, so match ordinary event frames on the parsed payload's `event.type` (for example `event.agent_done`); control frames (`lagged`, `end`, `replay_boundary`) have no `event` key. WebSocket frames are delivered unchanged. `client.agent.sessions.replay` returns the buffered event tail of a *live* session (with `min_seq`/`max_seq`) for a one-shot catch-up (only a *live* session has this ring). `sessions.connect` does not revive a session either: on a persisted but non-live session it answers `404 not_found`, so re-attach it first (`sessions.create({ attach: id })`), then open the stream.
+- **Recurring prompts (loops)** — `client.agent.loops.create` with `{ prompt, interval }` (plus optional `max_runs` / `stop_when` / `max_cost_usd` / `max_wall_ms` caps) schedules a prompt to re-fire on a live session; `sessions.listLoops` / `loops.update` (pause via `{ paused: true }`) / `loops.delete` to manage, `loops.startRun` to fire one immediately. Loops are entirely session-scoped. Three rules refuse a request rather than adjusting it: `interval` has a floor of 60 seconds; at most 8 loops can be active (not paused, not ended) per daemon, so the 9th create is rejected; and each `loops.update` carries at most ONE intent (`paused`, or `expires_in`, or the budget fields `max_cost_usd` / `max_wall_ms`), so a request mixing two is rejected 400 (a body with none of them is treated as a budget update).
 
 ### 7. Headless one-shot run
 
@@ -79,9 +79,9 @@ Reads first: `client.agent.mcp.listServers` (`{ session_id }`) returns the EFFEC
 ## Quirks & gotchas
 
 - The bare `hoody agent` verb is a **TUI launcher**, separate from this HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface.
-- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. It trusts only traffic that arrives through the proxy: a request whose source address is private or loopback (curl to the kit's local port from inside the container, the host, or a sibling container) is refused 403, so call the public kit URL even from inside the container.
+- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the kit URL gets 403 `forbidden`, also from inside the container, so call the kit URL.
 - The proxy service slug is `agent` and the kit URL host carries the index segment (`-agent-{index}`). Resolve it with `client.getKitUrl('agent', container)` rather than hand-building it.
-- `sessions.turns.run` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `sessions.startTurnAndStream` accessor POSTs `prompt:stream` and returns a Promise of an async iterable of SSE events, so iterate `for await (const ev of await client.agent.sessions.startTurnAndStream(id, { text }))`. Nothing is sent until you start iterating or read `stream.response`. The stream does NOT close when the turn ends: it keeps delivering the session's later events, so break out at the `agent_done` for your own turn. `const stream = await client.agent.sessions.startTurnAndStream(id, { text }); const { documented } = await stream.response;` gives the turn id as `documented.XHoodyTurnId` (the `X-Hoody-Turn-Id` header; a browser sees it only if the kit exposes it over CORS); stop at the `agent_done` whose payload (`JSON.parse(ev.raw)`) carries that `turn_id`. Without the header, take the id from the stream itself: the `replay_boundary` frame's payload carries it as `turn_id`. Buffered frames arrive BEFORE `replay_boundary`, and a fast turn can finish inside them, so keep the `agent_done` frames seen before the boundary and check them against its `turn_id` as soon as it arrives; otherwise stop at the next `agent_done` carrying that `turn_id`. The higher-level `streamAgentPrompt` helper exported from the SDK wraps the same route and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy to answer confirm gates for the life of the turn (off by default): an ordinary confirm gate is approved, a gate raised by a tool-call rule is DENIED, and a session whose approval policy is `always` refuses the policy with `409 approval_policy_active` before the turn starts. SDK: `policy: 'auto_approve'` in the `sessions.startTurnAndStream` / `sessions.turns.run` options. This only answers **confirm** gates, never questions.
+- `sessions.turns.run` waits for the turn to end (or returns `{pending_gate}` the moment a turn parks on a confirm/question), but at most until the server deadline (290 seconds by default): a turn still running then answers `503 service_unavailable` with `details.turn_running: true` and keeps running; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `sessions.startTurnAndStream` accessor POSTs `prompt:stream` and returns a Promise of an async iterable of SSE events, so iterate `for await (const ev of await client.agent.sessions.startTurnAndStream(id, { text }))`. Nothing is sent until you start iterating or read `stream.response`. The stream does NOT close when the turn ends: it keeps delivering the session's later events, so break out at the `agent_done` for your own turn. `const stream = await client.agent.sessions.startTurnAndStream(id, { text }); const { documented } = await stream.response;` gives the turn id as `documented.XHoodyTurnId` (the `X-Hoody-Turn-Id` header; a browser sees it only if the kit exposes it over CORS); stop at the `agent_done` whose payload (`JSON.parse(ev.raw)`) carries that `turn_id`. Without the header, take the id from the stream itself: the `replay_boundary` frame's payload carries it as `turn_id`. Buffered frames arrive BEFORE `replay_boundary`, and a fast turn can finish inside them, so keep the `agent_done` frames seen before the boundary and check them against its `turn_id` as soon as it arrives; otherwise stop at the next `agent_done` carrying that `turn_id`. The higher-level `streamAgentPrompt` helper exported from the SDK wraps the same route and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy to answer confirm gates (off by default). On the blocking form (`sessions.turns.run`, route `prompt:sync`) it stays on for the dispatched turn even after the request ends. On the streamed form (route `prompt:stream`) it is tied to the connection, not the turn: disconnecting before the turn ends stops it, and while the stream stays open it also answers confirm gates of LATER turns on the same session, so close the stream at your turn's `agent_done`. With either form, an ordinary confirm gate is approved, a gate raised by a tool-call rule is DENIED, and a session whose approval policy is `always` refuses the policy with `409 approval_policy_active` before the turn starts. SDK: `policy: 'auto_approve'` in the `sessions.startTurnAndStream` / `sessions.turns.run` options. This only answers **confirm** gates, never questions.
 - Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `sessions.create` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `hooks.upsert` / `hooks.delete` / `hooks.enable` / `hooks.disable` / `hooks.enableAll` / `hooks.disableAll` — plus `hooks.createWriteIntent`, and the side-effecting `hooks.run` / `hooks.trust`, all require a live `session_id` — `hooks.trust` clears the per-session hook-trust prompt (the execution-trust probe `hooks.list` reports), the gate that must be acknowledged before a saved hook command is allowed to fire, mirroring `skills.trust` for skills; `hooks.reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `client.agent.hooks.createWriteIntent` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `hooks.upsert` / `hooks.delete` / `hooks.enable` / `hooks.disable` / `hooks.enableAll` / `hooks.disableAll` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `hooks.upsert` persists a command that fires on lifecycle events, and `hooks.run` on a command hook runs a command at once: running saved hooks goes through the session's hook-trust gate, while a run that supplies an unsaved inline `command` runs it without that saved-hook trust check. Every command-hook run is refused (`approval_policy_unsatisfiable`) while the session's approval policy is `always`, and `hooks.test` of a shipped hook only evaluates its trigger without running anything. These calls carry no confirmation step of their own — the same access that authorizes any agent-kit call authorizes these too, with nothing extra — so add your own confirmation before exposing this surface to an autonomous caller.
 - **`env` and `headers` VALUES are never returned by the MCP surface; every other field comes back verbatim.** `mcp.listServers` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. Other fields, including `url`, `command` and `args`, are echoed verbatim, so a credential embedded in one of them (a token in a URL, a key on a command line) is NOT redacted: keep secrets in `env` / `headers`, and treat the rest of a listing as sensitive. To change a secret you must supply its real value; to leave one alone, omit the field — `mcp.upsertServer` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `mcp.enableServer` / `mcp.disableServer` flip only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
 - `client.agent.platform.bootstrapToken` (token bootstrap) is enabled by default; a deployment can turn it off, and then every call answers 404. Browser clients may call it; the body must be exactly `application/json`. Where the deployment requires a capability, the body must carry the matching `capability` (a mismatch is also 404). The token must belong to this box's owner and carry the full login grant (otherwise 403). On a box with no credential it installs (201 `installed`) and adopts any local sessions or todos that have no owner; on a box logged in to the SAME account it replaces the stored token whether or not it expired (200 `renewed`). A token for a different account is refused `409 agent_login_conflict`, and a credential supplied through the environment is never replaced (`409 credential_present`).
@@ -90,7 +90,7 @@ Reads first: `client.agent.mcp.listServers` (`{ session_id }`) returns the EFFEC
 
 - A gate or question left unresolved stalls the turn — a streamed prompt that emitted an `event.confirm_request` (confirm gate) or `event.user_question` (question gate) will not complete until you answer it: `gates.approve` / `gates.deny` for a confirm, `gates.answer` for a question. For unattended runs, arm `sessions.setAutoReply` (a self-driving auto-user loop), or pass `policy: "auto_approve"` on the prompt — but `auto_approve` only answers **confirm** gates (approving ordinary ones, denying rule-raised ones; refused with `409 approval_policy_active` on an `always` session), never questions; a parked question still stalls until `gates.answer` (or the auto-reply loop) answers it.
 - `tasks.list` and `tasks.getTranscript` return their data INLINE and need no live session and no attached stream. `tasks.list` is the UNION of the live task registry and the session's PERSISTED task store (keyed by task id, live winning) — the live registry evicts completed tasks when a new one spawns, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `tasks.getTranscript` reads a task that reached a terminal state even for a closed session and after a daemon restart; a task still RUNNING when the daemon died is NOT recoverable and reads 404. Its `source` field is `"live"` or `"store"`, and `complete` reports whether the response reflects a terminal projection DURABLY COMMITTED to that store. `after_seq` is EXCLUSIVE (entries strictly after it, plus any still-open entry); OMITTING it returns the whole transcript, which is distinct from `after_seq=0`. `tasks.cancel` / `sessions.cancelTasks` still act on a LIVE session and stop background tasks mid-turn (server-layer; tasks survive `sessions.turns.cancel` but are not restartable).
-- `memory.consolidate` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — every HTTP/SDK/CLI call returns `403 human_only`; it can only be triggered from an interactive human session. Do not call it programmatically.
+- `memory.consolidate` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — it has no successful HTTP/SDK/CLI path: a call that passes the admin check returns `403 human_only`, and the admin check can refuse it first with `403 admin_unauthorized`. It can only be triggered from an interactive human session. Do not call it programmatically.
 - `mcp.testServer` (POST /mcp/probe) is **human-only and ALWAYS fails over this namespace** — probing STARTS A PROCESS (stdio) or makes an outbound request to a caller-chosen URL (http/sse), so a machine caller may not self-approve it and receives `403 human_only` on every HTTP/SDK/CLI call. The surface still exposes it for completeness, it simply always refuses. The deny list is still enforced on the candidate config before anything is started. Use `mcp.previewImport` for a write-free preview instead; there is no programmatic substitute for the live trial.
 - An MCP write needs BOTH a `nonce` and an `expect_hash` — neither is optional, and a stale hash is a CONFLICT rather than a silent overwrite. `mcp.upsertServer` / `mcp.deleteServer` / `mcp.enableServer` / `mcp.disableServer` / `mcp.importServers` each require a fresh single-use `nonce` from `mcp.createWriteIntent` minted for that exact op and scope (one minted for a different op or scope fails closed) AND the `mcp_servers` hash you last read, from either `mcp.createWriteIntent` or `mcp.listServers`. A mismatch means someone else edited the layer since you read it — re-read, re-mint, retry; each nonce is good for exactly one write, so a retry always needs a new one. There is no "omit it for the first write" shortcut: writing into a settings file that does not exist yet means passing the empty-array hash.
 - `workflows.delete` removes **user** workflows and saved customizations. A built-in/**system** workflow that you never customized is refused (`is_error:true`) and re-seeds on every boot; `workflows.setHidden` is the only way to remove it from view. Deleting your saved customization of a system workflow succeeds and brings the shipped version back: at once in a scoped realm, at the next daemon restart otherwise.
@@ -106,24 +106,24 @@ Reads first: `client.agent.mcp.listServers` (`{ session_id }`) returns the EFFEC
 
 **Accessor:** `client.agent`  |  **Import:** `import * as agent from 'hoody-sdk/agent'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.agent.acp` (5) — Process-wide settings (home settings.json)
 
 #### `disable` — Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.acp.disable(agent: Parameters<AcpServiceBase['__setACPEnabled']>[0], data?: FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">, options?: NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[3]>)
+client.agent.acp.disable(agent: string, data?: Omit<AgentSetACPEnabledRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `agent` | `string` | path | Yes | The agent. |
-| `data` | `FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">` | body | No |  |
+| `data` | `Omit<AgentSetACPEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled: bool }`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
 
-**Returns:** `ReturnType<AcpServiceBase['__setACPEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
+**Returns:** `Promise<AgentSetACPEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
 **CLI:** `hoody agent acp disable`
 
 ---
@@ -131,17 +131,17 @@ client.agent.acp.disable(agent: Parameters<AcpServiceBase['__setACPEnabled']>[0]
 #### `enable` — Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.acp.enable(agent: Parameters<AcpServiceBase['__setACPEnabled']>[0], data?: FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">, options?: NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[3]>)
+client.agent.acp.enable(agent: string, data?: Omit<AgentSetACPEnabledRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `agent` | `string` | path | Yes | The agent. |
-| `data` | `FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">` | body | No |  |
+| `data` | `Omit<AgentSetACPEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled: bool }`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
 
-**Returns:** `ReturnType<AcpServiceBase['__setACPEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
+**Returns:** `Promise<AgentSetACPEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
 **CLI:** `hoody agent acp enable`
 
 ---
@@ -202,7 +202,25 @@ client.agent.acp.setSecret(agent: string, key: string, data?: AgentAcpSetSecretR
 
 ---
 
-### `client.agent` (2) — Create, drive, and tear down agent sessions
+### `client.agent` (3) — Hoody operations
+
+#### `signIn` — Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in".
+
+```typescript
+client.agent.signIn(data: AgentBootstrapHoodyTokenRequest & Required<Pick<AgentBootstrapHoodyTokenRequest, "token">>)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `data` | `AgentBootstrapHoodyTokenRequest & Required<Pick<AgentBootstrapHoodyTokenRequest, "token">>` | body | Yes |  |
+
+**Body:** `{ token*: string, capability: string }`
+
+- `capability` — The operator bootstrap capability, required only on deployments configured with one; a mismatch is answered 404.
+
+**Returns:** `Promise<AgentBootstrapHoodyTokenResponse>`  |  **HTTP:** `POST /api/v1/agent/hoody/auth/bootstrap`
+
+---
 
 #### `stopAllWork` — Stop everything running in the realm.
 
@@ -303,21 +321,24 @@ client.agent.changes.stream(options?: { XHoodyCwd?: string; XHoodyConfigDir?: st
 #### `create` — Run one tool-free model completion.
 
 ```typescript
-client.agent.completions.create(data: NonNullable<Parameters<CompletionsServiceBase['__streamCompletion']>[0]>, options: NonNullable<Parameters<CompletionsServiceBase['__streamCompletion']>[2]> & { stream: true })
+client.agent.completions.create(data: AgentStreamCompletionRequest, options: { stream: true })  // → Promise<IEventStream>
+client.agent.completions.create(data: AgentCreateCompletionRequest, options?: { stream?: false })  // → Promise<AgentCreateCompletionResponse>
+client.agent.completions.create(data: AgentCreateCompletionRequest, options?: { stream?: boolean })  // → Promise<IEventStream> | Promise<AgentCreateCompletionResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `NonNullable<Parameters<CompletionsServiceBase['__streamCompletion']>[0]>` | body | Yes |  |
+| `data` | `AgentStreamCompletionRequest` | body | Yes |  |
 | `stream` | `boolean` | option | No | Stream the completion as server-sent events. |
 
-**Body:** `{ model*: string, system: string, messages*: { role*: "user" | "assistant", content*: string }[], settings: { thinking: object, temperature: number, max_tokens: int, response_format: object }, timeout_ms: int }`
+**Body:** `{ model*: string, system: string, messages*: { role*: "user" | "assistant", content*: string }[], settings: { thinking: object, temperature: number, max_tokens: int, response_format: object }, timeout_ms: int, max_tokens: int }`
 
 - `model` — … The same policy as a session's model: the provider prefix must be catalogued, the model name after it need not be (an uncatalogued name is sent to the provider, which may reject it as upstream_error). An unknown provider or an empty model name is 422 model_unavailable (reason unknown_model); a fusion/ composite is 422 model_unavailable (reason fusion).
 - `messages` — 1 to 1000 turns, oldest first; the last must be a user turn.
 - `settings` — Optional per-call model settings. A setting the model cannot honour is 400 unsupported_setting, never dropped.
+- `max_tokens` — Alias of settings.max_tokens (output-token cap, 1 to 1000000), accepted at the top level as most chat-completion APIs take it. Sending both with different values is 400 bad_request (details.field max_tokens).
 
-**Returns:** `ReturnType<CompletionsServiceBase['__streamCompletion']>`  |  **HTTP:** `POST /api/v1/agent/completions`
+**Returns:** see each form above  |  **HTTP:** `POST /api/v1/agent/completions`
 **CLI:** `hoody agent completions create`
 
 ---
@@ -881,30 +902,31 @@ client.agent.gates.answer(id: string, data: AgentGatesAnswerRequest, options?: {
 #### `approve` — Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease).
 
 ```typescript
-client.agent.gates.approve(id: Parameters<GatesServiceBase['__confirmGate']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<GatesServiceBase['__confirmGate']>[1]>, "approved">, [options?: NonNullable<Parameters<GatesServiceBase['__confirmGate']>[2]>, _templateVars?: Parameters<GatesServiceBase['__confirmGate']>[3]]>)
+client.agent.gates.approve(id: string, data?: Omit<AgentConfirmGateRequest, "approved">, options?: { realm?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | The session id. |
-| `X-Hoody-Approver-Lease` | `string` | header | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyApproverLease` | `string` | header `X-Hoody-Approver-Lease` | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<AgentConfirmGateRequest, "approved">` | body | No |  |
 
-**Body:** `{ gate_id: string, generation: int, approved*: bool, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
+**Body:** `{ gate_id: string, generation: int, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
 
 - `gate_id` — Echo of the parked gate id, as published on the frame that parked it (gate.id), by GET /sessions/{id} (pending_gate.id) and in 409 details. Valid only for the session in the path. Optional for compatibility, but an answer without it applies to whatever gate is parked when it arrives — a client binding an answer to a gate the user saw must send it. Ids are unique per session incarnation, so an id from before a re-attach never matches (stale/mismatch → 409). Required on a session that requires approval on every action: a confirm without it is rejected 400.
 - `generation` — Echo of the parked gate generation. It restarts when the session is re-attached, so it is not an identity on its own — send gate_id. Optional on a default-policy session; required, and non-zero, on a session that requires approval on every action.
-- `approved` — Required: true to approve, false to deny. There is no default; a missing, null or non-boolean value is rejected 400.
 - `session_scope` — Remember this decision for the rest of the session (the Allow/Deny for session answer): with approved true the tool stops asking, with approved false it is refused without asking. Offer allow-for-session only when the gate's event.confirm_request carried offer_session_allow. Under a locked approval policy the wider grant is refused, but the one-shot decision still applies and the reply says so (session_scope_applied false, note).
 - `request_id` — Optional: the caller's own id for this decision, at most 64 characters from A-Z, a-z, 0-9, '.', '_' and '-' (anything else is 400 bad_request). When this decision is the one the gate consumed, a later 409 gate_already_resolved for the gate echoes it as details.request_id, so a caller that lost the 200 knows the recorded decision is its own.
 - `lease_generation` — … A decision carrying the lease capability (X-Hoody-Approver-Lease) is checked against the current lease whatever it sends; without one, a stale generation is refused. …
 
-**Returns:** `ReturnType<GatesServiceBase['__confirmGate']>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
+**Fixed by the method:** the method sets `approved: true`; do not pass `approved`.
+
+**Returns:** `Promise<AgentConfirmGateResponse>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
 **CLI:** `hoody agent gates approve`
 
 ---
@@ -912,30 +934,31 @@ client.agent.gates.approve(id: Parameters<GatesServiceBase['__confirmGate']>[0],
 #### `deny` — Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease).
 
 ```typescript
-client.agent.gates.deny(id: Parameters<GatesServiceBase['__confirmGate']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<GatesServiceBase['__confirmGate']>[1]>, "approved">, [options?: NonNullable<Parameters<GatesServiceBase['__confirmGate']>[2]>, _templateVars?: Parameters<GatesServiceBase['__confirmGate']>[3]]>)
+client.agent.gates.deny(id: string, data?: Omit<AgentConfirmGateRequest, "approved">, options?: { realm?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | The session id. |
-| `X-Hoody-Approver-Lease` | `string` | header | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyApproverLease` | `string` | header `X-Hoody-Approver-Lease` | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<AgentConfirmGateRequest, "approved">` | body | No |  |
 
-**Body:** `{ gate_id: string, generation: int, approved*: bool, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
+**Body:** `{ gate_id: string, generation: int, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
 
 - `gate_id` — Echo of the parked gate id, as published on the frame that parked it (gate.id), by GET /sessions/{id} (pending_gate.id) and in 409 details. Valid only for the session in the path. Optional for compatibility, but an answer without it applies to whatever gate is parked when it arrives — a client binding an answer to a gate the user saw must send it. Ids are unique per session incarnation, so an id from before a re-attach never matches (stale/mismatch → 409). Required on a session that requires approval on every action: a confirm without it is rejected 400.
 - `generation` — Echo of the parked gate generation. It restarts when the session is re-attached, so it is not an identity on its own — send gate_id. Optional on a default-policy session; required, and non-zero, on a session that requires approval on every action.
-- `approved` — Required: true to approve, false to deny. There is no default; a missing, null or non-boolean value is rejected 400.
 - `session_scope` — Remember this decision for the rest of the session (the Allow/Deny for session answer): with approved true the tool stops asking, with approved false it is refused without asking. Offer allow-for-session only when the gate's event.confirm_request carried offer_session_allow. Under a locked approval policy the wider grant is refused, but the one-shot decision still applies and the reply says so (session_scope_applied false, note).
 - `request_id` — Optional: the caller's own id for this decision, at most 64 characters from A-Z, a-z, 0-9, '.', '_' and '-' (anything else is 400 bad_request). When this decision is the one the gate consumed, a later 409 gate_already_resolved for the gate echoes it as details.request_id, so a caller that lost the 200 knows the recorded decision is its own.
 - `lease_generation` — … A decision carrying the lease capability (X-Hoody-Approver-Lease) is checked against the current lease whatever it sends; without one, a stale generation is refused. …
 
-**Returns:** `ReturnType<GatesServiceBase['__confirmGate']>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
+**Fixed by the method:** the method sets `approved: false`; do not pass `approved`.
+
+**Returns:** `Promise<AgentConfirmGateResponse>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
 **CLI:** `hoody agent gates deny`
 
 ---
@@ -1100,22 +1123,24 @@ client.agent.github.createBranch(data: AgentGithubCreateBranchRequest, options?:
 #### `createCommit` — Stage all and commit.
 
 ```typescript
-client.agent.github.createCommit(data: NonNullable<Parameters<GithubServiceBase['__githubCommitPush']>[0]>, options: NonNullable<Parameters<GithubServiceBase['__githubCommitPush']>[1]> & { push: true })
+client.agent.github.createCommit(data: AgentGithubCommitPushRequest, options: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; push: true })  // → Promise<AgentGithubCommitPushResponse>
+client.agent.github.createCommit(data: AgentGithubCommitRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; push?: false })  // → Promise<AgentGithubCommitResponse>
+client.agent.github.createCommit(data: AgentGithubCommitRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; push?: boolean })  // → Promise<AgentGithubCommitPushResponse> | Promise<AgentGithubCommitResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `NonNullable<Parameters<GithubServiceBase['__githubCommitPush']>[0]>` | body | Yes |  |
+| `data` | `AgentGithubCommitPushRequest` | body | Yes |  |
 | `push` | `boolean` | option | No | Stage, commit and push in one call. |
 
 **Body:** `{ message*: string }`
 
-**Returns:** `ReturnType<GithubServiceBase['__githubCommitPush']>`  |  **HTTP:** `POST /api/v1/agent/github/commit`
+**Returns:** see each form above  |  **HTTP:** `POST /api/v1/agent/github/commit`
 **CLI:** `hoody agent github commits create`
 
 ---
@@ -1677,25 +1702,27 @@ client.agent.github.useBranch(data: AgentGithubUseBranchRequest, options?: { rea
 #### `start` — Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.start(data?: FacadeWithout<FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRunJson']>[0]>, "stream">, "format"> & { format?: "text" | "json" }, options?: NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRunJson']>[1]>)
+client.agent.headless.start(data?: Omit<AgentCreateHeadlessRunRequest, "stream" | "format"> & { format?: "text" | "json" }, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRunJson']>[0]>, "stream">, "format"> & { format?: "text" \| "json" }` | body | No |  |
+| `data` | `Omit<AgentCreateHeadlessRunRequest, "stream" \| "format"> & { format?: "text" \| "json" }` | body | No |  |
 
-**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: string, stream: bool, timeout_ms: int }`
+**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: "text" | "json", timeout_ms: int }`
 
 - `prompt` — The prompt to drive the ephemeral session. Required unless workflow is set; with a workflow it is the optional $(workflow.prompt) text.
 - `inputs` — Optional run-time values for the workflow's DECLARED input parameters (declared name → string value; resolves to $(input.<name>) in every step). Only accepted with workflow. A workflow with a REQUIRED declared parameter cannot run without these. Values must be strings; a non-string value is a 400.
 - `timeout_ms` — Optional run timeout in milliseconds (clamped to the hard ceiling).
 
-**Returns:** `ReturnType<HeadlessServiceBase['__createHeadlessRunJson']>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
+**Fixed by the method:** the method sets `stream: false`; do not pass `stream`.
+
+**Returns:** `FacadeJson<Promise<ApiResponse<unknown>>>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
 **CLI:** `hoody agent headless start`
 
 ---
@@ -1703,25 +1730,27 @@ client.agent.headless.start(data?: FacadeWithout<FacadeWithout<NonNullable<Param
 #### `stream` — Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.stream(data?: FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRun']>[0]>, "stream">, options?: NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRun']>[1]>)
+client.agent.headless.stream(data?: Omit<AgentCreateHeadlessRunRequest, "stream">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRun']>[0]>, "stream">` | body | No |  |
+| `data` | `Omit<AgentCreateHeadlessRunRequest, "stream">` | body | No |  |
 
-**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: string, stream: bool, timeout_ms: int }`
+**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: string, timeout_ms: int }`
 
 - `prompt` — The prompt to drive the ephemeral session. Required unless workflow is set; with a workflow it is the optional $(workflow.prompt) text.
 - `inputs` — Optional run-time values for the workflow's DECLARED input parameters (declared name → string value; resolves to $(input.<name>) in every step). Only accepted with workflow. A workflow with a REQUIRED declared parameter cannot run without these. Values must be strings; a non-string value is a 400.
 - `timeout_ms` — Optional run timeout in milliseconds (clamped to the hard ceiling).
 
-**Returns:** `ReturnType<HeadlessServiceBase['__createHeadlessRun']>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
+**Fixed by the method:** the method sets `stream: true`; do not pass `stream`.
+
+**Returns:** `Promise<IEventStream>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
 **CLI:** `hoody agent headless stream`
 
 ---
@@ -1780,25 +1809,31 @@ client.agent.hooks.delete(data: AgentHooksDeleteRequest, options?: { realm?: str
 #### `disable` — Toggle a hook.
 
 ```typescript
-client.agent.hooks.disable(data: FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" | "event" | "matcher" | "command" | "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">, options?: NonNullable<Parameters<HooksServiceBase['__toggleHook']>[1]>)
+client.agent.hooks.disable(data: Omit<AgentToggleHookRequest, "enabled" | "event" | "matcher" | "command" | "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
+client.agent.hooks.disable(data: Omit<AgentToggleHookRequest, "disabled" | "shipped_id" | "enabled"> & Required<Pick<AgentToggleHookRequest, "event" | "command">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">` | body | Yes |  |
+| `data` | `Omit<AgentToggleHookRequest, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, enabled: bool, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string, disabled: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
 - `event` — Lifecycle event of the ordinary hook to toggle; required on that branch (with matcher + command).
 - `command` — Command text of the ordinary hook to toggle (exact match); required on that branch — a toggle must resolve to an existing entry.
 
-**Returns:** `ReturnType<HooksServiceBase['__toggleHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
+**Fixed by the method**, by the form of the call:
+
+- With `shipped_id` in the body: the method sets `enabled: false`; do not pass `enabled`, `event`, `matcher`, `command`, `disabled`.
+- Otherwise: the method sets `disabled: true`; `event`, `command` are required; do not pass `disabled`, `shipped_id`, `enabled`.
+
+**Returns:** `Promise<AgentToggleHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
 **CLI:** `hoody agent hooks disable`
 
 ---
@@ -1806,24 +1841,25 @@ client.agent.hooks.disable(data: FacadeWithout<NonNullable<Parameters<HooksServi
 #### `disableAll` — Disable all hooks.
 
 ```typescript
-client.agent.hooks.disableAll(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[0]>, "value">, [options?: NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[1]>, _templateVars?: Parameters<HooksServiceBase['__disableAllHooks']>[2]]>)
+client.agent.hooks.disableAll(data: Omit<AgentDisableAllHooksRequest, "value">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentDisableAllHooksRequest, "value">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, value*: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
-- `value` — New kill-switch state: true disables all hooks in this scope, false clears the setting and re-enables them. REQUIRED — an absent value is read as false, i.e. as a re-enable.
 
-**Returns:** `ReturnType<HooksServiceBase['__disableAllHooks']>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
+**Fixed by the method:** the method sets `value: true`; do not pass `value`.
+
+**Returns:** `Promise<AgentDisableAllHooksResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
 **CLI:** `hoody agent hooks disable`
 
 ---
@@ -1831,25 +1867,31 @@ client.agent.hooks.disableAll(...args: FacadeBodyArgs<FacadeWithout<NonNullable<
 #### `enable` — Toggle a hook.
 
 ```typescript
-client.agent.hooks.enable(data: FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" | "event" | "matcher" | "command" | "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">, options?: NonNullable<Parameters<HooksServiceBase['__toggleHook']>[1]>)
+client.agent.hooks.enable(data: Omit<AgentToggleHookRequest, "enabled" | "event" | "matcher" | "command" | "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
+client.agent.hooks.enable(data: Omit<AgentToggleHookRequest, "disabled" | "shipped_id" | "enabled"> & Required<Pick<AgentToggleHookRequest, "event" | "command">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">` | body | Yes |  |
+| `data` | `Omit<AgentToggleHookRequest, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, enabled: bool, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string, disabled: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
 - `event` — Lifecycle event of the ordinary hook to toggle; required on that branch (with matcher + command).
 - `command` — Command text of the ordinary hook to toggle (exact match); required on that branch — a toggle must resolve to an existing entry.
 
-**Returns:** `ReturnType<HooksServiceBase['__toggleHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
+**Fixed by the method**, by the form of the call:
+
+- With `shipped_id` in the body: the method sets `enabled: true`; do not pass `enabled`, `event`, `matcher`, `command`, `disabled`.
+- Otherwise: the method sets `disabled: false`; `event`, `command` are required; do not pass `disabled`, `shipped_id`, `enabled`.
+
+**Returns:** `Promise<AgentToggleHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
 **CLI:** `hoody agent hooks enable`
 
 ---
@@ -1857,24 +1899,25 @@ client.agent.hooks.enable(data: FacadeWithout<NonNullable<Parameters<HooksServic
 #### `enableAll` — Disable all hooks.
 
 ```typescript
-client.agent.hooks.enableAll(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[0]>, "value">, [options?: NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[1]>, _templateVars?: Parameters<HooksServiceBase['__disableAllHooks']>[2]]>)
+client.agent.hooks.enableAll(data: Omit<AgentDisableAllHooksRequest, "value">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentDisableAllHooksRequest, "value">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, value*: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
-- `value` — New kill-switch state: true disables all hooks in this scope, false clears the setting and re-enables them. REQUIRED — an absent value is read as false, i.e. as a re-enable.
 
-**Returns:** `ReturnType<HooksServiceBase['__disableAllHooks']>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
+**Fixed by the method:** the method sets `value: false`; do not pass `value`.
+
+**Returns:** `Promise<AgentDisableAllHooksResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
 **CLI:** `hoody agent hooks enable`
 
 ---
@@ -1939,24 +1982,26 @@ client.agent.hooks.reload(data?: AgentHooksReloadRequest, options?: { realm?: st
 #### `run` — Test-fire a hook.
 
 ```typescript
-client.agent.hooks.run(data: FacadeWithout<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "event">, options?: NonNullable<Parameters<HooksServiceBase['__testHook']>[1]>)
+client.agent.hooks.run(data: Omit<AgentTestHookRequest, "shipped_id"> & Required<Pick<AgentTestHookRequest, "event">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "event">` | body | Yes |  |
+| `data` | `Omit<AgentTestHookRequest, "shipped_id"> & Required<Pick<AgentTestHookRequest, "event">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
+**Body:** `{ session_id*: string, event*: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
 
 - `event` — Lifecycle event to fire. Required on every branch except the shipped dry-run; the daemon rejects any value outside the enum.
 - `timeout` — Timeout in whole seconds for an inline `command` (positive integers only; a fractional or non-positive value is ignored rather than truncated). Hard-capped at 60s: a larger value, an ignored one, and a saved hook's own longer timeout are all clamped to the 60s test ceiling, so a dry-run can never run longer than that.
 
-**Returns:** `ReturnType<HooksServiceBase['__testHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
+**Fixed by the method:** do not pass `shipped_id`.
+
+**Returns:** `Promise<AgentTestHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
 **CLI:** `hoody agent hooks run`
 
 ---
@@ -1991,24 +2036,24 @@ client.agent.hooks.setRules(data: AgentHooksSetRulesRequest, options?: { realm?:
 #### `test` — Test-fire a hook.
 
 ```typescript
-client.agent.hooks.test(data: NonNullable<Parameters<HooksServiceBase['__testHook']>[0]> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id">, options?: NonNullable<Parameters<HooksServiceBase['__testHook']>[1]>)
+client.agent.hooks.test(data: AgentTestHookRequest & Required<Pick<AgentTestHookRequest, "shipped_id">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `NonNullable<Parameters<HooksServiceBase['__testHook']>[0]> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id">` | body | Yes |  |
+| `data` | `AgentTestHookRequest & Required<Pick<AgentTestHookRequest, "shipped_id">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
+**Body:** `{ session_id*: string, shipped_id*: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
 
 - `event` — Lifecycle event to fire. Required on every branch except the shipped dry-run; the daemon rejects any value outside the enum.
 - `timeout` — Timeout in whole seconds for an inline `command` (positive integers only; a fractional or non-positive value is ignored rather than truncated). Hard-capped at 60s: a larger value, an ignored one, and a saved hook's own longer timeout are all clamped to the 60s test ceiling, so a dry-run can never run longer than that.
 
-**Returns:** `ReturnType<HooksServiceBase['__testHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
+**Returns:** `Promise<AgentTestHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
 **CLI:** `hoody agent hooks test`
 
 ---
@@ -2353,7 +2398,7 @@ client.agent.logs.getStats(options?: { XHoodyCwd?: string; XHoodyConfigDir?: str
 #### `list` — Query logs.
 
 ```typescript
-client.agent.logs.list(options?: { source?: string; level?: string; host?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string })
+client.agent.logs.list(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2361,6 +2406,8 @@ client.agent.logs.list(options?: { source?: string; level?: string; host?: strin
 | `source` | `string` | query | No | Filter to a log source/facet (see `agent.logs.listSources`). One local source, or exactly ONE platform source (activity\|events\|proxy) — mixing them is rejected. |
 | `level` | `string` | query | No | Filter to a minimum log level. |
 | `host` | `string` | query | No | Filter to a host. |
+| `session_id` | `string` | query | No | Only entries correlated with this session id (exact match on the entry's session_id). |
+| `run_id` | `string` | query | No | Only entries correlated with this workflow/task run id (exact match on the entry's run_id). |
 | `since` | `string` | query | No | Lower TIME bound: RFC3339, or a relative duration like "1h"/"30m"/"7d". This is NOT a cursor — a bare sequence number is rejected 400 (use since_seq). Unparseable values are rejected the same way. |
 | `until` | `string` | query | No | Upper TIME bound, same forms as since. Paging BACKWARDS by repeatedly lowering until works, but it is coarse (rows sharing a timestamp repeat); before_seq is the exact backwards cursor. |
 | `since_seq` | `number` | query | No | Forward cursor: return only entries NEWER than this gateway seq. Take it from the previous reply's latest_seq to poll incrementally without re-reading rows. A non-numeric value is rejected 400. |
@@ -2393,7 +2440,7 @@ client.agent.logs.listSources(options?: { XHoodyCwd?: string; XHoodyConfigDir?: 
 #### `stream` — Stream the log tail (SSE).
 
 ```typescript
-client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string })
+client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -2401,6 +2448,8 @@ client.agent.logs.stream(options?: { source?: string; level?: string; host?: str
 | `source` | `string` | query | No | Filter the tail to a log source/facet. |
 | `level` | `string` | query | No | Filter to a minimum log level. |
 | `host` | `string` | query | No | Filter to a host. |
+| `session_id` | `string` | query | No | Only entries correlated with this session id. |
+| `run_id` | `string` | query | No | Only entries correlated with this workflow/task run id. |
 | `since_seq` | `number` | query | No | Initial resume cursor (the Last-Event-ID header overrides it). A non-numeric value is rejected 400. |
 | `limit` | `number` | query | No | Caps each poll batch. A non-numeric value is rejected 400. |
 | `LastEventID` | `string` | header `Last-Event-ID` | No | SSE resume cursor — the gateway int64 seq to resume from; OVERRIDES the ?since_seq query param. Sent automatically by an SSE client on reconnect. |
@@ -2602,23 +2651,25 @@ client.agent.mcp.deleteServer(data: AgentMcpDeleteServerRequest, options?: { rea
 #### `disableServer` — Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.disableServer(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[1]>, _templateVars?: Parameters<McpServiceBase['__setMCPServerEnabled']>[2]]>)
+client.agent.mcp.disableServer(data: Omit<AgentSetMCPServerEnabledRequest, "enabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentSetMCPServerEnabledRequest, "enabled">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, enabled*: bool, expect_hash*: string }`
+**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, expect_hash*: string }`
 
 - `scope` — Settings layer to write. Must match the scope the nonce was minted for.
 
-**Returns:** `ReturnType<McpServiceBase['__setMCPServerEnabled']>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
+
+**Returns:** `Promise<AgentSetMCPServerEnabledResponse>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
 **CLI:** `hoody agent mcp disable`
 
 ---
@@ -2626,23 +2677,25 @@ client.agent.mcp.disableServer(...args: FacadeBodyArgs<FacadeWithout<NonNullable
 #### `enableServer` — Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.enableServer(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[1]>, _templateVars?: Parameters<McpServiceBase['__setMCPServerEnabled']>[2]]>)
+client.agent.mcp.enableServer(data: Omit<AgentSetMCPServerEnabledRequest, "enabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentSetMCPServerEnabledRequest, "enabled">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, enabled*: bool, expect_hash*: string }`
+**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, expect_hash*: string }`
 
 - `scope` — Settings layer to write. Must match the scope the nonce was minted for.
 
-**Returns:** `ReturnType<McpServiceBase['__setMCPServerEnabled']>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
+
+**Returns:** `Promise<AgentSetMCPServerEnabledResponse>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
 **CLI:** `hoody agent mcp enable`
 
 ---
@@ -2920,18 +2973,18 @@ client.agent.memory.deleteProject(project: string, data: AgentMemoryDeleteProjec
 #### `disable` — Toggle memory capture.
 
 ```typescript
-client.agent.memory.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[1]>, _templateVars?: Parameters<MemoryServiceBase['__setMemoryEnabled']>[2]]>)
+client.agent.memory.disable(data?: Omit<AgentSetMemoryEnabledRequest, "enabled">, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `data` | `object` | body | No |  |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `data` | `Omit<AgentSetMemoryEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool }`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
 
-**Returns:** `ReturnType<MemoryServiceBase['__setMemoryEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
+**Returns:** `Promise<AgentSetMemoryEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
 **CLI:** `hoody agent memory disable`
 
 ---
@@ -2939,18 +2992,18 @@ client.agent.memory.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Pa
 #### `enable` — Toggle memory capture.
 
 ```typescript
-client.agent.memory.enable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[1]>, _templateVars?: Parameters<MemoryServiceBase['__setMemoryEnabled']>[2]]>)
+client.agent.memory.enable(data?: Omit<AgentSetMemoryEnabledRequest, "enabled">, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `data` | `object` | body | No |  |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `data` | `Omit<AgentSetMemoryEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool }`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
 
-**Returns:** `ReturnType<MemoryServiceBase['__setMemoryEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
+**Returns:** `Promise<AgentSetMemoryEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
 **CLI:** `hoody agent memory enable`
 
 ---
@@ -3288,18 +3341,18 @@ client.agent.models.listIterator(options?: { page?: number; limit?: number; XHoo
 #### `bootstrapToken` — Bootstrap the Hoody platform credential (install-if-absent).
 
 ```typescript
-client.agent.platform.bootstrapToken(data: AgentPlatformBootstrapTokenRequest)
+client.agent.platform.bootstrapToken(data: AgentBootstrapHoodyTokenRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `AgentPlatformBootstrapTokenRequest` | body | Yes |  |
+| `data` | `AgentBootstrapHoodyTokenRequest` | body | Yes |  |
 
 **Body:** `{ token*: string, capability: string }`
 
 - `capability` — The operator bootstrap capability, required only on deployments configured with one; a mismatch is answered 404.
 
-**Returns:** `Promise<AgentPlatformBootstrapTokenResponse>`  |  **HTTP:** `POST /api/v1/agent/hoody/auth/bootstrap`
+**Returns:** `Promise<AgentBootstrapHoodyTokenResponse>`  |  **HTTP:** `POST /api/v1/agent/hoody/auth/bootstrap`
 
 ---
 
@@ -3825,19 +3878,19 @@ client.agent.sessions.create(data?: AgentSessionsCreateRequest, options?: { real
 #### `delete` — Close (and optionally hard-delete) a session.
 
 ```typescript
-client.agent.sessions.delete(id: Parameters<SessionsServiceBase['__deleteSession']>[0], options?: FacadeWithout<NonNullable<Parameters<SessionsServiceBase['__deleteSession']>[1]>, "hard">)
+client.agent.sessions.delete(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | The session id. |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `ReturnType<SessionsServiceBase['__deleteSession']>`  |  **HTTP:** `DELETE /api/v1/agent/sessions/{id}`
+**Returns:** `Promise<AgentDeleteSessionResponse>`  |  **HTTP:** `DELETE /api/v1/agent/sessions/{id}`
 **CLI:** `hoody agent sessions delete`
 
 ---
@@ -4498,7 +4551,9 @@ client.agent.sessions.setEffort(id: string, data?: AgentSessionsSetEffortRequest
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `AgentSessionsSetEffortRequest` | body | No |  |
 
-**Body:** `{ effort: string }`
+**Body:** `{ effort: "" | "low" | "medium" | "high" | "xhigh" | "max" }`
+
+- `effort` — low|medium|high|xhigh|max, or "" for the model default. Any other value is 400 bad_request (details.field effort).
 
 **Returns:** `Promise<AgentSessionsSetEffortResponse>`  |  **HTTP:** `PATCH /api/v1/agent/sessions/{id}/effort`
 **CLI:** `hoody agent sessions effort set`
@@ -4569,7 +4624,9 @@ client.agent.sessions.setVerbosity(id: string, data?: AgentSessionsSetVerbosityR
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `AgentSessionsSetVerbosityRequest` | body | No |  |
 
-**Body:** `{ level: string }`
+**Body:** `{ level: "normal" | "concise" | "terse" | "minimal" }`
+
+- `level` — normal|concise|terse|minimal. Any other value is 400 bad_request (details.field level); the applied level is echoed on the stream as event.verbosity.
 
 **Returns:** `Promise<AgentSessionsSetVerbosityResponse>`  |  **HTTP:** `PATCH /api/v1/agent/sessions/{id}/verbosity`
 **CLI:** `hoody agent sessions verbosity set`
@@ -4946,21 +5003,23 @@ client.agent.skills.delete(data: AgentSkillsDeleteRequest, options?: { realm?: s
 #### `disable` — Enable/disable a skill.
 
 ```typescript
-client.agent.skills.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[0]>, "disabled">, [options?: NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[1]>, _templateVars?: Parameters<SkillsServiceBase['__toggleSkill']>[2]]>)
+client.agent.skills.disable(data: Omit<AgentToggleSkillRequest, "disabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentToggleSkillRequest, "disabled">` | body | Yes |  |
 
-**Body:** `{ name*: string, disabled: bool }`
+**Body:** `{ name*: string }`
 
-**Returns:** `ReturnType<SkillsServiceBase['__toggleSkill']>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
+**Fixed by the method:** the method sets `disabled: true`; do not pass `disabled`.
+
+**Returns:** `Promise<AgentToggleSkillResponse>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
 **CLI:** `hoody agent skills disable`
 
 ---
@@ -4968,21 +5027,23 @@ client.agent.skills.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Pa
 #### `enable` — Enable/disable a skill.
 
 ```typescript
-client.agent.skills.enable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[0]>, "disabled">, [options?: NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[1]>, _templateVars?: Parameters<SkillsServiceBase['__toggleSkill']>[2]]>)
+client.agent.skills.enable(data: Omit<AgentToggleSkillRequest, "disabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentToggleSkillRequest, "disabled">` | body | Yes |  |
 
-**Body:** `{ name*: string, disabled: bool }`
+**Body:** `{ name*: string }`
 
-**Returns:** `ReturnType<SkillsServiceBase['__toggleSkill']>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
+**Fixed by the method:** the method sets `disabled: false`; do not pass `disabled`.
+
+**Returns:** `Promise<AgentToggleSkillResponse>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
 **CLI:** `hoody agent skills enable`
 
 ---
@@ -5940,7 +6001,9 @@ client.agent.tools.listReadOnlyIterator(options?: { page?: number; limit?: numbe
 #### `run` — Run a tool (sessionless, gated).
 
 ```typescript
-client.agent.tools.run(name: Parameters<ToolsServiceBase['__streamTool']>[0], data: NonNullable<Parameters<ToolsServiceBase['__streamTool']>[1]> | undefined, options: NonNullable<Parameters<ToolsServiceBase['__streamTool']>[2]> & { stream: true })
+client.agent.tools.run(name: string, data: AgentStreamToolRequest | undefined, options: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; stream: true })  // → Promise<IEventStream>
+client.agent.tools.run(name: string, data?: AgentRunToolRequest, options?: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; stream?: false })  // → Promise<AgentRunToolResponse>
+client.agent.tools.run(name: string, data?: AgentRunToolRequest, options?: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; stream?: boolean })  // → Promise<IEventStream> | Promise<AgentRunToolResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -5948,14 +6011,14 @@ client.agent.tools.run(name: Parameters<ToolsServiceBase['__streamTool']>[0], da
 | `name` | `string` | path | Yes | The name. |
 | `confirm` | `boolean` | query | No | Query alias of the body `confirm` field — re-issue a previously-parked confirmation (pair with confirm_token). |
 | `confirm_token` | `string` | query | No | Query alias of the body `confirm_token` field — the single-use token returned in the 409 tool_needs_confirmation details. |
-| `X-Hoody-Tool-Mode` | `string` | header | No | Sessionless tool-mode for the ephemeral session: `standard` (the default) or `orchestrator`. Any other value is refused 400 invalid_tool_mode. Ignored on the in-session run (it inherits the session's frozen tool-mode). |
-| `X-Hoody-Dir-Scope` | `string` | header | No | Sessionless directory-access scope for the ephemeral session: home (the default) or full. Any other value is refused 400 invalid_dir_scope. Ignored on the in-session run (it inherits the session's frozen dir-scope). |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyToolMode` | `string` | header `X-Hoody-Tool-Mode` | No | Sessionless tool-mode for the ephemeral session: `standard` (the default) or `orchestrator`. Any other value is refused 400 invalid_tool_mode. Ignored on the in-session run (it inherits the session's frozen tool-mode). |
+| `XHoodyDirScope` | `string` | header `X-Hoody-Dir-Scope` | No | Sessionless directory-access scope for the ephemeral session: home (the default) or full. Any other value is refused 400 invalid_dir_scope. Ignored on the in-session run (it inherits the session's frozen dir-scope). |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `NonNullable<Parameters<ToolsServiceBase['__streamTool']>[1]> \| undefined` | body | Yes |  |
+| `data` | `AgentStreamToolRequest \| undefined` | body | Yes |  |
 | `stream` | `boolean` | option | No | Stream the tool output as server-sent events. |
 
 **Body:** `{ params: object, confirm: bool, confirm_token: string, allow_mutations: bool }`
@@ -5964,7 +6027,7 @@ client.agent.tools.run(name: Parameters<ToolsServiceBase['__streamTool']>[0], da
 - `confirm_token` — The single-use token returned in the 409 tool_needs_confirmation details. Bound to the tool/session/params it was minted for; present it with confirm:true and the echoed params to approve the parked run.
 - `allow_mutations` — Sessionless only: opt a non-read-only tool into running with every permission check applied (else a sessionless mutating run is refused 400 tool_mutation_refused).
 
-**Returns:** `ReturnType<ToolsServiceBase['__streamTool']>`  |  **HTTP:** `POST /api/v1/agent/tools/{name}/run`
+**Returns:** see each form above  |  **HTTP:** `POST /api/v1/agent/tools/{name}/run`
 **CLI:** `hoody agent tools run`
 
 ---

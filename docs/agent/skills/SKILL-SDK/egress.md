@@ -1,4 +1,4 @@
-> _**SDK skill · `egress` namespace** · ~6,968 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `egress` namespace** · ~7,729 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `egress` — the container's outbound HTTP proxy
 
@@ -38,6 +38,8 @@ The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server
 
 **Go back to the container's own IP.** `client.egress.upstream.disable`, or equivalently `upstream.set` with an empty string — the kit treats a body with no URL line as a disable. Check with `client.egress.upstream.get`.
 
+**Lease an upstream that should end with its client.** `client.egress.upstream.set(url, { lease: 60 })` installs the upstream for that many whole seconds, from 5 to 3600. The answer, and every later read while that upstream is configured, carries `lease: { id, ttl, expires_at, expires_in }` (`expires_at` in Unix seconds). Renew it before the deadline with `client.egress.upstream.renewLease({ lease_id })`: the deadline moves to `ttl` seconds from now, never earlier than it already was and never more than 3600 seconds ahead, and the answer is the same body a read returns. If no renewal arrives in time, the kit disables the upstream the way an explicit disable does and records the disable in its config file, so the container goes back to its own IP and stays there across a restart. A lease that ran out while the kit was down is disabled at startup. A set without `lease` installs a permanent upstream and ends any earlier lease. A replacement or a disable also ends it, and renewing the old id then answers 409.
+
 **Confirm where traffic exits.** Request `https://ip.hoody.com` through the proxy; it reports the address it saw, which is the container's or the upstream's once one is set.
 
 ## Quirks & gotchas
@@ -45,7 +47,7 @@ The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server
 - **Teardown deletes, it does not restore.** Clearing removes the upstream, and the kit never returns credentials — a read reports scheme, host, port and an `auth` flag only — so an authenticated upstream that some other tool configured cannot be put back unless whoever configured it still holds the full URL. An unauthenticated one can be rebuilt from a read taken before the clear.
 - **The setting is applied without a restart.** It lands in the file reported as `config_path` in the response and is picked up within about a second. A clear does not remove that file — it records an explicit `disabled` state, which is what makes the disable survive a restart of a process that was started with an upstream. A URL line the destination guard refuses, or one that does not parse, is NOT a fall back to direct, and which of two things it does depends on whether an upstream is already working: with one in force that upstream keeps carrying traffic, and with none in force the kit reports `state: "unavailable"` and answers proxied requests with 502 until the line is fixed or removed.
 - **Direct destinations are filtered, unconditionally, and IPv4 only.** With no upstream in force, the kit resolves the destination, refuses private, loopback, link-local, CGNAT, benchmarking, documentation, TEST-NET, multicast and reserved addresses with `403 destination not permitted`, and dials the address it checked, so a short-TTL record cannot pass the check and then point elsewhere. An IPv6 literal destination is refused on every path, upstream or not, mapped (`::ffff:a.b.c.d`), compatible and NAT64 spellings included; a name the kit resolves itself that has no IPv4 address is refused too. There is no flag, environment variable, file or API field that admits one. The same address rule applies to the upstream itself, with one exception for chaining: a `socks5`/`socks5h` upstream on IPv4 loopback is accepted on any port, credentials optional, because that is the shape a local exit installs. Past an upstream, the destination is that exit's business for all four schemes: `socks5` resolves the name here and sends the first IPv4 address without the private-address check, and `socks5h`, `http` and `https` hand the name to the exit, which also decides its address family.
-- **A configured upstream that cannot be used refuses traffic; it does not fall back to direct.** With no upstream in force, a configured one that is refused, unresolvable or unparsable reads as `enabled: true, state: "unavailable"`, and proxied requests get `502 configured upstream proxy is unavailable`. That is deliberate: a request must not leave from the container's own address after someone asked for an exit. The kit keeps retrying, so a transient DNS failure recovers on its own, and direct egress returns only on an explicit disable (`DELETE`, an empty or `disabled` body, or emptying a config file that has governed). A replacement refused by the management API (the `400` answers below) changes nothing at all. A replacement written into the config file behaves differently: an unparsable line is ignored while an upstream is working, but a line that parses and is refused only for now becomes the pending setting. The working upstream keeps carrying traffic meanwhile, the kit keeps re-checking the new line, and it takes over as soon as a later check approves it.
+- **A configured upstream that cannot be used refuses traffic; it does not fall back to direct.** With no upstream in force, a configured one that is refused, unresolvable or unparsable reads as `enabled: true, state: "unavailable"`, and proxied requests get `502 configured upstream proxy is unavailable`. That is deliberate: a request must not leave from the container's own address after someone asked for an exit. The kit keeps retrying, so a transient DNS failure recovers on its own. For an upstream set without a lease, direct egress returns only on an explicit disable (`DELETE`, an empty or `disabled` body, or emptying a config file that has governed); an upstream set with a `lease` (in seconds) is also disabled automatically when the lease runs out without a renewal. A replacement refused by the management API (the `400` answers below) changes nothing at all. A replacement written into the config file behaves differently: an unparsable line is ignored while an upstream is working, but a line that parses and is refused only for now becomes the pending setting. The working upstream keeps carrying traffic meanwhile, the kit keeps re-checking the new line, and it takes over as soon as a later check approves it.
 - **The body is small and strictly framed.** A missing `Content-Length` is 411, and a *declared* `Content-Length` over 4096 is 413 — the check is on the header, before the body is read. This is not a channel for anything but a URL.
 - **Health answers almost any method.** The health route matches on path alone, so every method except `OPTIONS` reaches it; `OPTIONS` is answered 204 with CORS headers before routing, which is what makes browser preflight work against the management API.
 - **A local exit makes your machine the exit** (`startLocalExit`, imported from the package root: `import { startLocalExit } from 'hoody-sdk'`, not from `hoody-sdk/egress`). It binds a loopback port inside the container over hoody-tunnel, points the upstream at it, and terminates SOCKS5 in your process, so requests leave from the machine the SDK process runs on and the exit lives only as long as that process. Nothing listens on that machine; every socket it opens is outbound. Destinations are gated to public IPv4 by default, every resolved A record is authorised, and the pinned address is what gets dialled, so DNS rebinding cannot redirect a connection after approval. **Only destination ports 80 and 443 are allowed by default**, so SSH, database or `:8080` traffic through the exit is refused; widen it with `policy: { allowPorts: [22, 443, 5432] }` (or `allowPorts: '*'`) in the `startLocalExit` options. The same `policy` object takes `blockPrivate` and `denyCidrs`.
@@ -55,16 +57,18 @@ The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server
 
 ## Common errors
 
-Errors come from two surfaces that answer differently. The management surface always sends a body: `text/plain` for every error except the 404, which is JSON, and every body ends with a trailing newline, so match on prefix or substring rather than equality. Framing and forwarding errors send no response body and no `Content-Type`; the status line still arrives with headers, always including `Vary: Origin` and `Connection: close`.
+Errors come from two surfaces that answer differently. The management surface always sends a body: `text/plain` for every error except the 404, which is JSON, and every body ends with a trailing newline, so match on prefix or substring rather than equality. Most framing and forwarding errors send no response body and no `Content-Type`; the exceptions are a destination-policy refusal (403) and an unavailable configured upstream (502), which both carry a `text/plain` body. The status line still arrives with headers, always including `Vary: Origin` and `Connection: close`.
 
-**Management surface** (path-form requests: `/api/v1/egress/upstream` and the route catch-all):
+**Management surface** (path-form requests: `/api/v1/egress/upstream`, `/api/v1/egress/upstream/renew` and the route catch-all):
 
-- 400 — five causes with five `text/plain` bodies: `Invalid upstream URL` when the value does not parse or its scheme is not one of the four, `Upstream destination not permitted` when it parses but every address it resolves to is refused by the destination guard, `Upstream unresolvable` when the host did not resolve inside the connect timeout (transient, worth a retry, and distinct from the previous one), `Failed to read body` when the read fails or times out, and `Body must be UTF-8`. The OpenAPI 400 description names the same five bodies; it is documentation, not additional wire text. A refused or unresolvable replacement leaves a working upstream in force, so a 400 here does not mean the container lost its exit.
+- 400 — the following causes, each with its own `text/plain` body: `Invalid upstream URL` when the value does not parse or its scheme is not one of the four, `Upstream destination not permitted` when it parses but every address it resolves to is refused by the destination guard, `Upstream unresolvable` when the host did not resolve inside the connect timeout (transient, worth a retry, and distinct from the previous one), `Failed to read body` when the read fails or times out, and `Body must be UTF-8`. A set request can also return `Invalid lease: give whole seconds from 5 to 3600`, or `A lease needs an upstream URL` when a lease accompanies an empty or `disabled` body. The OpenAPI 400 description names the same bodies; it is documentation, not additional wire text. A refused or unresolvable replacement leaves a working upstream in force, so a 400 here does not mean the container lost its exit.
 - 404 — a path-form target that is not a management route, and the one JSON error: `{"error":"not found"}` with `Content-Type: application/json`. It is never forwarded, so it means the request was addressed to the proxy rather than through it.
-- 405 — `Method Not Allowed` for any verb on the upstream route other than `GET`, `PUT`, `POST`, or `DELETE`. `OPTIONS` never reaches it; it is answered 204 before routing.
+- 400 — `Missing or invalid lease_id` on a renewal whose `lease_id` is absent or is not 1 to 64 ASCII letters and digits.
+- 405 — `Method Not Allowed` for any verb on the upstream route other than `GET`, `PUT`, `POST`, or `DELETE`, and for any verb but `POST` on the renew route. `OPTIONS` never reaches it; it is answered 204 before routing.
 - 411 — `Missing Content-Length` on a set request.
 - 413 — `Body too large` when the declared `Content-Length` exceeds 4096 bytes.
-- 500 — `Failed to write config` when persisting the upstream file fails, on set and clear alike. The in-memory upstream is swapped only after a successful write, so after a 500 the previous setting still applies.
+- 409 — `No upstream lease with this id is in force` on a renewal: the lease already expired, the upstream was replaced or disabled, or the config file no longer holds that lease. Nothing is rewritten, so the old upstream is not revived. Set the upstream again, with a new lease, if it is still wanted.
+- 500 — `Failed to write config` when persisting the upstream file fails, on set, clear and renewal alike, and `Failed to read config` when a renewal cannot read it. The in-memory upstream is swapped only after a successful write, so after a 500 the previous setting still applies.
 
 **Proxy data path and request framing.** Most of these send no response body; the two policy answers below (403, and the 502 whose body names an unavailable upstream) are the exceptions, and both carry `Content-Type: text/plain` plus CORS headers.
 
@@ -159,7 +163,7 @@ The check-then-set is not atomic — the guard protects against accidents, not r
 
 **Accessor:** `client.egress`  |  **Import:** `import * as egress from 'hoody-sdk/egress'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.egress.kit` (1) — egress
 
@@ -174,7 +178,7 @@ client.egress.kit.getHealth()
 
 ---
 
-### `client.egress.upstream` (3) — egress
+### `client.egress.upstream` (4) — egress
 
 #### `disable` — Disable upstream
 
@@ -198,14 +202,30 @@ client.egress.upstream.get()
 
 ---
 
-#### `set` — Set upstream
+#### `renewLease` — Renew the upstream lease
 
 ```typescript
-client.egress.upstream.set(data: string)
+client.egress.upstream.renewLease(options: { lease_id: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
+| `lease_id` | `string` | query | Yes | The `lease.id` returned when the upstream was set |
+
+**Returns:** `Promise<EgressUpstreamRenewLeaseResponse>`  |  **HTTP:** `POST /api/v1/egress/upstream/renew`
+**CLI:** `hoody egress upstream renew`
+
+---
+
+#### `set` — Set upstream
+
+```typescript
+client.egress.upstream.set(data: string, options?: { lease?: number })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `lease` | `number` | query | No | Lease the upstream for this many seconds. The service disables the upstream (as `DELETE` does) unless the lease is renewed before then with `POST /api/v1/egress/upstream/renew`. For an upstream that only works while its client is alive, such as the loopback exit `hoody egress local start` installs. |
 | `data` | `string` | body | Yes |  |
 
 **Returns:** `Promise<EgressUpstreamSetResponse>`  |  **HTTP:** `PUT /api/v1/egress/upstream`

@@ -1,4 +1,4 @@
-> _**SDK skill · `notes` namespace** · ~22,348 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `notes` namespace** · ~23,173 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 
@@ -39,7 +39,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 3. **Build a structured document with `document.set`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `document.set` OVERWRITES the whole document; `document.update` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `document.set`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
 4. **Database CRUD** — `nodes.create` `type:"database"`; then `records.create`/`records.list`/`records.search`/`records.update` (merges `fields`)/`records.delete`. Page with `page`/`count` on `records.list` (count max 100). `records.listIterator` and `records.listAll` walk those pages for you (they advance `page` and size pages with `count`).
 5. **Comments + versions** — `collaborators.add` (`admin`/`editor`/`collaborator`/`viewer`). `comments.create` (top-level, anchored, or reply); `comments.update` / `comments.delete` / `comments.resolve` accept optional `expectedVersion` for optimistic concurrency. `versions.create`/`list`/`get`/`restore`.
-6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `nodes.create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `files.download`. `files.upload(notebookId, data, { parentId, name })` does the whole sequence: it creates the file node with a valid `…18` id, sends the bytes over TUS and resolves once the file is ready. If it rejects after the node exists, `files.resumeUpload(notebookId, fileId, data)` continues from the offset the server holds (the id comes from the `onFileId` option or `err.fileId`), and `files.uploads.cancel(notebookId, fileId)` abandons the upload. A result with `alreadyUploaded: true` means the file was already recorded: the final response was lost, or another caller finished it. The helpers reject with `code` `NOTES_UPLOAD_LENGTH_MISMATCH`, `NOTES_UPLOAD_SIZE_MISMATCH`, `NOTES_UPLOAD_NOT_READY` or `NOTES_UPLOAD_NOT_A_FILE`; server refusals surface as `ApiError` with the notes code. `files.download` takes `(notebookId, fileId)`, notebook id first.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `nodes.create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `files.download`. `files.upload(notebookId, data, { parentId, name })` does the whole sequence: it creates the file node with a valid `…18` id, sends the bytes over TUS and resolves once the file is ready. If it rejects after the node exists, `files.resumeUpload(notebookId, fileId, data)` continues from the offset the server holds (the id comes from the `onFileId` option or `err.fileId`), and `files.uploads.cancel(notebookId, fileId, { TusResumable: '1.0.0' })` abandons the upload (the options argument is required). A result with `alreadyUploaded: true` means the file was already recorded: the final response was lost, or another caller finished it. The helpers reject with `code` `NOTES_UPLOAD_LENGTH_MISMATCH`, `NOTES_UPLOAD_SIZE_MISMATCH`, `NOTES_UPLOAD_NOT_READY` or `NOTES_UPLOAD_NOT_A_FILE`; server refusals surface as `ApiError` with the notes code. `files.download` takes `(notebookId, fileId)`, notebook id first.{22}18$/.test(fileId)"]
 
 ## Quirks & gotchas
 
@@ -48,14 +48,14 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Prefer `document.append` for adding content; it does NOT create the node.** Append server-assigns `id`/`parentId`/`index` and creates the document row if missing, but `404`s if the node is absent and `400`s for node types that do not support documents (only `page`/`record` do) — so create/find the page first. It rejects client-supplied `id`/`parentId`/`index` and reserved `attrs` keys (`id`,`parentId`,`index`,`type`,`__proto__`,`constructor`,`prototype`), accepts only `{type:'text'}` leaves (no inline `mention`/image), the `{text}` form does NOT split newlines (one literal block), and it caps at 100 blocks / 512 KiB per call. Appendable types: `paragraph`, `heading1-3`, `codeBlock`, `horizontalRule` (containers and `file` are rejected).
 - **`document.set` has no block/byte cap** (only the Fastify 10 MB body limit) and requires the node to exist, creating the document row if it has none; the 100-block / 512 KiB caps are append-only.
 - **A page needs a parent and a `name`: `nodes.create` with `type:"page"`, `parentId` and `attributes.name`.** The parent is the `Home` section (its id from `nodes.list` with `type:"section"`) or another page you can edit. With no `parentId` the kit answers `400 parent_required`: add the parent rather than creating a notebook. A `403 forbidden` is a real permission refusal (your role on the parent does not allow the create). The label is `name`; there is no `title` attribute, and a page without `name` fails with `500 unknown`.
-- **`nodes.create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A manually-created `section` must include `attributes.collaborators` with the creator as `admin` and is root-only — easiest is to reuse the auto-provisioned `Home` section.
+- **`nodes.create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A section is root-only (a `parentId` gives `400 section_must_be_root`). If `attributes.collaborators` is omitted, the server adds the creator as `admin`; a map you send yourself must name you as `admin`, or the create is a `403` !== 'admin') {"]. For a note, reuse the auto-provisioned `Home` section.
 - **`notebooks.create` always makes a new, separate notebook; it is not how you add a note.** It takes only `name` (plus optional `description`/`avatar`) and no parent: a notebook is top-level. It ignores `X-Idempotency-Key`, and names are not unique, so a retry or a second call with the same name makes a duplicate. Run `notebooks.list` first and reuse a notebook that has the name; to add a note, create a page in an existing notebook with `nodes.create`.
 - Authentication re-anchors identity to the `notebookId` in the URL, so one bearer token reaches any notebook the username has joined.
 - Cross-client convergence is **mutation-stream-driven** via the `mutations.sync` route + WS feed: each mutation type (`document.update`, `node.*`, etc.) is dispatched server-side to a SQL-backed lib function. `document.set` is a last-writer-wins overwrite of the same store. `document.update` re-applies its merge to the current document when a concurrent write lands first, so two PATCHes that send different blocks both survive; two that send the same block id are last-writer-wins for that block, and a `document.set` racing a PATCH still overwrites whatever it omits.
-- `notes.whoami` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `notebooks.create` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`; invalid Bearer = 401 even with fallback. **Without any of the three, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=` on every unauthenticated call, or attach Bearer / `ticket`. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
+- `notes.whoami` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `notebooks.create` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`. Only a notes Bearer token (base64url JSON with `userId`, `notebookId`, `username`, `role`) is read: one that decodes to a JSON object but is malformed returns `401` with no fallback, while a JWT, an opaque token or another scheme is ignored and resolution continues with `ticket` or the query identity. An export `ticket` is accepted only on the HTML document export (`GET …/document?output=html`); on any other route it is a `400`. **Without a notes Bearer token, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=<name>` on every unauthenticated call, or attach a valid notes Bearer identity. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
 - **`Readonly` notebook gates writes** — content reads still serve through; write routes (mutations, document.put/patch, record-create, etc.) are rejected with `403 notebook_readonly`. The TUS upload route refuses every method on a readonly notebook, the `HEAD` offset check included.
 - `X-Idempotency-Key` replay returns saved response; same key+different payload → 409. Only routes that implement it honour the header (see Prerequisites); notebook create does not.
-- `records.update` merges `fields`. Access resolves your role from your collaboration on the notebook **root** node, falling back to your notebook role when there is none, then walks the database's full ancestor chain and returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you (notebook owner/admin bypasses the privacy walk). A root collaboration alone is therefore NOT sufficient under such an ancestor. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.
+- `records.update` merges `fields`. Database access uses the shared node-access check: it starts from your collaboration on the notebook **root** node (or your notebook role when there is none), returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you, and then applies the deepest explicit collaboration on the database's ancestor chain, so a role granted lower in the tree overrides the root one. Notebook owners/admins skip the privacy checks and keep their root-level role. A root collaboration alone is therefore NOT sufficient under such an ancestor, and a write refusal can come from a deeper collaboration. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.{22}18$/.test(fileId)"]
 - `document.get` with `output=html` needs a short-lived export `ticket` (3 uses, 2 minutes) on `GET .../document`. `document.set` overwrites; `document.update` merges: top-level keys replace the stored ones, and `content.blocks` (a map by block id, or a list of blocks with distinct ids) merges by block id — a sent block replaces the stored block with that id, every other block is kept, and removing blocks takes a `document.set`. Any other `blocks` shape is a `400`. `comments.update` / `comments.delete` / `comments.resolve` accept optional `expectedVersion`.
 - `records.search` matches against record names AND field values (not just names).
 - Text filter operators in `records.list?filters=`: `is_equal_to` / `is_not_equal_to` / `contains` / `does_not_contain` / `starts_with` / `ends_with` / `is_empty` / `is_not_empty`. The bare `is` is NOT a valid operator — use `is_equal_to`; the bare `not_contains` is NOT either — use `does_not_contain`.
@@ -63,7 +63,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common errors
 
-- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.
+- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.{22}18$/.test(fileId)"]
 - `403 notebook_no_access`/`notebook_readonly`/`forbidden` (a database write needs a collaboration granting you create rights).
 - `404 not_found` — node/comment/version missing, or it does not belong to the `notebookId` given in the path. File routes use their own codes: `files.download` answers `400 file_not_found` for a missing file node or one outside the notebook, `400 file_not_ready` / `400 file_upload_not_found` for an upload that has not finished, and `404 file_not_found` when the stored bytes are missing; the TUS route answers `404 file_not_found` for a missing file node. `500 unknown` — read-back failed or uncategorized.
 
@@ -98,7 +98,9 @@ block is `{ id, type, parentId, index, content?, attrs? }`:
 - Inline `content` leaves are `{ "type":"text", "text":"…", "marks?":[…] }`. Marks:
   `bold`, `italic`, `strike`, `underline`, `code` (no attrs); `link`
   (`attrs:{href,target,rel}`); `color` (`attrs:{color}`); `highlight`
-  (`attrs:{highlight}`); `comment` (`attrs:{commentId}`). `mention` is an inline NODE
+  (`attrs:{highlight}`). Do not write `comment` marks: the editor treats them as legacy
+  and strips them from an editable document; anchor a comment with `comments.create`
+  instead. `mention` is an inline NODE
   (`{type:'mention',attrs:{id,target}}`), not a mark; `hardBreak`
   (`{type:'hardBreak'}`) forces a line break inside a paragraph.
 
@@ -248,7 +250,7 @@ const doc = await client.notes.document.get(nbId, pageId);
 const blocks = (doc.data!.content as any).blocks;
 ```
 
-**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An arbitrary string such as `_a0` sorts first but breaks the editor's next insert beside it.
+**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An invalid key such as `_a0` is not stored as sent: a full-document PUT re-keys every sibling group that holds one (fresh `a0`, `a1`, … in the current order, so every sibling's `index` changes), and a PATCH that sends a new invalid index is refused with `400`.
 
 ```typescript
 blocks[b2].index = 'Zz';   // sorts before the first sibling, a0
@@ -274,7 +276,7 @@ const order = (Object.values((after.data!.content as any).blocks) as any[])
 
 ### 5. Create a database (Tasks) with typed columns + add records
 
-**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `nodes.create` for `type:"database"` REQUIRES `attributes.fields` populated — without it the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
+**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `nodes.create` for `type:"database"` requires an `attributes.fields` map (`{}` is valid while the database has no columns yet) — without the map the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
 
 ```typescript
 const db = await client.notes.nodes.create(nbId, {
@@ -402,7 +404,7 @@ catch { await client.notes.notebooks.update(nbId, { name: 'team-wiki-DELETED' })
 
 **Accessor:** `client.notes`  |  **Import:** `import * as notes from 'hoody-sdk/notes'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.notes.avatars` (2) — avatars
 
@@ -416,7 +418,7 @@ client.notes.avatars.download(avatarId: string)
 |-----------|------|------|----------|-------------|
 | `avatarId` | `string` | path | Yes |  |
 
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/notes/avatars/{avatarId}`
+**Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /api/v1/notes/avatars/{avatarId}`
 **CLI:** `hoody notes avatars download`
 
 ---
@@ -424,7 +426,7 @@ client.notes.avatars.download(avatarId: string)
 #### `upload` — Upload an avatar image
 
 ```typescript
-client.notes.avatars.upload(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, requestOptions?: { contentType?: 'image/jpeg' | 'image/png' | 'image/webp' })
+client.notes.avatars.upload(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, _templateVars?: { projectId?: string; containerId?: string; serviceIndex?: string | number; serverName?: string; server?: string }, requestOptions?: { contentType?: 'image/jpeg' | 'image/png' | 'image/webp' })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -728,13 +730,14 @@ client.notes.comments.update(notebookId: string, nodeId: string, commentId: stri
 #### `append` — Append blocks to a document
 
 ```typescript
-client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { XIdempotencyKey?: string })
+client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { IfMatch?: string; XIdempotencyKey?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `XIdempotencyKey` | `string` | header `X-Idempotency-Key` | No | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
 | `data` | `NotesDocumentAppendRequest` | body | Yes |  |
 
@@ -786,7 +789,7 @@ client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: s
 #### `get` — Get document content
 
 ```typescript
-client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string })
+client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; IfNoneMatch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -798,6 +801,7 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 | `ticket` | `string` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | Optional (RFC 9110): ETags of copies the caller already holds, or `*`. When the document is still at one of them the JSON output answers 304 with no body. Ignored by the Markdown and HTML outputs. |
 
 **Returns:** `Promise<NotesDocumentGetResponse>`  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`
 **CLI:** `hoody notes document get`
@@ -807,13 +811,14 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 #### `set` — Create or replace document
 
 ```typescript
-client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest)
+client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest, options?: { IfMatch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `data` | `NotesDocumentSetRequest` | body | Yes |  |
 
 **Body:** `{ content*: { [key: string]: any } }`
@@ -826,13 +831,14 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 #### `update` — Merge document content
 
 ```typescript
-client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest)
+client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest, options?: { IfMatch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `data` | `NotesDocumentUpdateRequest` | body | Yes |  |
 
 **Body:** `{ content*: { [key: string]: any } }`
@@ -889,7 +895,7 @@ client.notes.files.listAll(notebookId: string, options?: { limit?: number; offse
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `Promise<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.files`, all pages collected (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string | null }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
+**Returns:** `Promise<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.files`, all pages collected (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string|null }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
 **CLI:** `hoody notes files list`
 
 ---
@@ -906,7 +912,7 @@ client.notes.files.listIterator(notebookId: string, options?: { limit?: number; 
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `AsyncGenerator<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.files` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string | null }`.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
+**Returns:** `AsyncGenerator<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.files` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string|null }`.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
 **CLI:** `hoody notes files list`
 
 ---
@@ -1169,7 +1175,7 @@ client.notes.nodes.listAll(notebookId: string, options?: { type?: string; parent
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `Promise<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.nodes`, all pages collected (`list()` fetches one page). Each item is `{ [key: string]: any }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
+**Returns:** `Promise<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.nodes`, all pages collected (`list()` fetches one page). `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
 **CLI:** `hoody notes nodes list`
 
 ---
@@ -1243,7 +1249,7 @@ client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; p
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `AsyncGenerator<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.nodes` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ [key: string]: any }`.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
+**Returns:** `AsyncGenerator<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.nodes` per step, next page fetched on demand (`list()` fetches one page).  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
 **CLI:** `hoody notes nodes list`
 
 ---
@@ -1333,7 +1339,7 @@ client.notes.notebooks.create(data: NotesNotebooksCreateRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `NotesNotebooksCreateRequest` | body | Yes |  |
 
-**Body:** `{ name*: string, description: string | null, avatar: string | null }`
+**Body:** `{ name*: string, description: string|null, avatar: string|null }`
 
 **Returns:** `Promise<NotesNotebooksCreateResponse>`  |  **HTTP:** `POST /api/v1/notes/notebooks`
 **CLI:** `hoody notes notebooks create`
@@ -1392,7 +1398,7 @@ client.notes.notebooks.update(notebookId: string, data: NotesNotebooksUpdateRequ
 | `notebookId` | `string` | path | Yes |  |
 | `data` | `NotesNotebooksUpdateRequest` | body | Yes |  |
 
-**Body:** `{ name*: string, description: string | null, avatar: string | null }`
+**Body:** `{ name*: string, description: string|null, avatar: string|null }`
 
 **Returns:** `Promise<NotesNotebooksUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/notes/notebooks/{notebookId}`
 **CLI:** `hoody notes notebooks update`
@@ -1480,7 +1486,7 @@ client.notes.records.create(notebookId: string, databaseId: string, data: NotesR
 | `databaseId` | `string` | path | Yes |  |
 | `data` | `NotesRecordsCreateRequest` | body | Yes |  |
 
-**Body:** `{ id: string, name: string="Untitled", avatar: string | null, fields: { [key: string]: any } }`
+**Body:** `{ id: string, name: string="Untitled", avatar: string|null, fields: { [key: string]: object } }`
 
 **Returns:** `Promise<NotesRecordsCreateResponse>`  |  **HTTP:** `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
 **CLI:** `hoody notes records create`
@@ -1612,7 +1618,7 @@ client.notes.records.update(notebookId: string, databaseId: string, recordId: st
 | `recordId` | `string` | path | Yes |  |
 | `data` | `NotesRecordsUpdateRequest` | body | Yes |  |
 
-**Body:** `{ name: string, avatar: string | null, fields: { [key: string]: object } }`
+**Body:** `{ name: string, avatar: string|null, fields: { [key: string]: object } }`
 
 **Returns:** `Promise<NotesRecordsUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
 **CLI:** `hoody notes records update`

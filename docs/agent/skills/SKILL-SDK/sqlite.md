@@ -1,4 +1,4 @@
-> _**SDK skill · `sqlite` namespace** · ~26,055 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `sqlite` namespace** · ~26,250 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `sqlite` — SQLite HTTP API
 
@@ -37,13 +37,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 `databases.create({ path, init_kv: true })` (`path`: bare name, `./name`, or absolute under `/hoody/databases`; `init_kv` creates the KV table) → `sql.runTransaction({ transaction: [{ statement, values?|valuesBatch? }] }, { db, create_db_if_missing: true })` (`create_db_if_missing` makes the create step optional) → `history.list({ db })`.
 
-One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, truncated }` (it sends a `query` item, so a write with `RETURNING` answers its rows too) and `sql.run({ db, sql, params? })` to `{ rowsUpdated }` (a `statement` item), both without the envelope. `params` is an array for `?` or an object for `:name`, each value a string, finite number, boolean or null (anything else throws before sending); `create_db_if_missing` and the request options pass through.
+One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, truncated }` (it sends a `query` item, so a write with `RETURNING` answers its rows too) and `sql.run({ db, sql, params? })` to `{ rowsUpdated }` (a `statement` item; for SQL that produces rows, such as a write with `RETURNING`, to `{ rowsUpdated, rows, truncated? }`, where `rowsUpdated` counts the returned rows and `truncated: true` means rows and count stop at the kit's row cap), both without the envelope. `params` is an array for `?` or an object for `:name`, each value a string, finite number, signed 64-bit `bigint`, boolean or null (anything else throws before sending); `create_db_if_missing` and the request options pass through.
 
 ### KV CRUD + CAS + counters
 
 - `kv.set` — `ttl`, `if_match` (CAS), `path`, `history`.
-- `kv.get` — `path`, `at_timestamp`. `exists` takes `db`, plus optional `table` and `timeout`; `kv.delete` takes `db`/`table`/`history` (`history` keeps the tombstone) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
-- `kv.increment` / `kv.decrement` / `kv.push` / `kv.pop` / `kv.remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. The generated push type is an object, so pushing a string or number needs `as any`.
+- `kv.get` — `path`, `at_timestamp`. `exists` takes `db`, plus optional `table` and `timeout`; `kv.delete` takes `db`/`table`/`history` (`history`, default true, records the deleted value; `false` records only that a delete happened) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
+- `kv.increment` / `kv.decrement` / `kv.push` / `kv.pop` / `kv.remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. The generated push type accepts any JSON value; pass a string or number directly.
 
 ### Time-travel (needs `history: true`)
 
@@ -58,18 +58,18 @@ One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, t
 
 ## Quirks & gotchas
 
-- **Bare-URL auth (no claim/token headers).** Like every kit (including `agent`), the `sqlite` kit accepts the bare per-container kit URL — no `X-Hoody-Container-Claim` or `X-Hoody-Token` headers required. The capability URL itself is the bearer.
+- **Bare-URL auth.** The `sqlite` kit checks no credential of its own; access through the kit URL is governed by the container proxy's permission policy. Under the default policy (no rules configured) the bare kit URL works with no extra headers and is itself the bearer; where the owner has configured auth groups, send the credential the group expects, or the proxy answers 401 or 403. → See `SKILL-SDK.md § Kit URLs as credentials`.
 - **Tx item keys: `"query"` and `statement`.** Each `transaction[i]` MUST carry exactly one of `"query"` or `statement`. A `statement` returns rows (`resultHeaders`/`resultSet`) when its SQL produces columns (a SELECT, or a write with `RETURNING`), and `rowsUpdated` otherwise. Use `"query"` for reads anyway; `valuesBatch` keeps its own restrictions. The `sql` alias maps to `statement`.
 - Path resolution: bare names auto-resolve under `/hoody/databases/` (with `.db` appended if no extension). The `./name` shorthand is the same bare name (`./app` → `/hoody/databases/app.db`). Any other relative path containing `/` or `\` (e.g. `data/app.db`, `./dir/app.db`) is **rejected**, NOT auto-absoluted; only literal absolute paths (e.g. `/hoody/databases/app.db`) are treated as absolute. Absolute paths outside `/hoody/databases` are refused unless the deployment allows any absolute database path. A database filename must be a regular file: a symlink at the filename itself is rejected. Symlinked parent directories are resolved to their real path. `:memory:` databases are rejected.
 - Directory mode takes an absolute directory path. Any other relative path (`sub/dir`) is refused with `directory-mode: invalid path input: path must be absolute`; a bare database name (`app`) is not treated as a directory and is opened as a database instead.
 - Tx items: `statement` or alias `sql`. `sql.runTransaction` caps: 10k items, 100k rows/`valuesBatch`, 1M total rows. `values` and `valuesBatch` are mutually exclusive on a single item; `"query"` items cannot use `valuesBatch`.
-- **GET `/query` rejects mutations**: INSERT/UPDATE/DELETE, `RETURNING` on writes, multi-statement (semicolons), PRAGMA writes, VACUUM, ATTACH/DETACH. Use `sql.runTransaction` with `statement:` items for writes.
+- **GET `/query` rejects mutations**: INSERT/UPDATE/DELETE, `RETURNING` on writes, multi-statement (semicolons), any PRAGMA, VACUUM, ATTACH/DETACH — only a single statement leading with SELECT, or a WITH that contains no write keyword, is accepted. Use `sql.runTransaction` with `statement:` items for writes.
 - **SELECT result-row cap is 10 000** (responses set `truncated: true` when hit) on both transaction `"query"` items and GET `/query`; further rows silently truncated. Paginate explicitly for larger result sets.
-- **`kv.set` body is any JSON value** (object, array, string, number, boolean, null), stored verbatim. The generated SDK type is `unknown`. Pass the JavaScript value itself: the SDK JSON-encodes every body sent as JSON, strings included, so `set(key, 'light')` stores the JSON string `"light"` and `set(key, JSON.stringify(obj))` stores a quoted string, not the object. **`kv.setMany` differs:** each item's `value` is a string, so JSON-encode objects yourself.
-- Time-travel **history is opt-out, not opt-in**: write handlers default `history: true`. Pass `history: false` to skip recording — but later `kv.listHistory` / snapshot / time-travel reads will see gaps (`has_gaps`, `gap_keys`, `candidate_truncated` fields). Per-key history reconstruction is capped at 50 000 ops.
+- **`kv.set` body is any JSON value** (object, array, string, number, boolean, null), stored verbatim. The generated SDK type is `unknown`. Pass objects, arrays, numbers, booleans and null as the JavaScript value itself; the SDK JSON-encodes them. `kv.set` sends a string as a JSON string (`application/json`), so `set(key, 'light', { db })` stores `"light"`, reads back as `light`, and works with `path`. `set(key, JSON.stringify(obj), { db })` therefore stores a JSON string holding escaped JSON text, not the object: pass the object itself. For raw text, pass `contentType: 'text/plain'` (or a `Content-Type` header): it is then stored verbatim, and the kit refuses it at a `path` with 400 `Invalid JSON value`. **`kv.setMany` differs:** each item's `value` is a string, so JSON-encode objects yourself.
+- Time-travel **history is opt-out, not opt-in**: write handlers default `history: true`. Pass `history: false` to record only that the write happened, not what it wrote — but later `kv.listHistory` / snapshot / time-travel reads will see gaps (`has_gaps`, `gap_keys`, `candidate_truncated` fields). Per-key history reconstruction is capped at 50 000 ops.
 - `create_db_if_missing`/`auto_create` aliases; mismatch → `conflicting flags`.
 - `kv.list` w/ `at_timestamp` → time-travel handler (different envelope; `offset` and `limit` still apply, ordered by key as in the regular listing). The history `limit`: 0→50, >1000→1000.
-- `sql.queryReadOnly` `sql` accepts URL-safe base64 (`+`→`-`, `/`→`_`); both padded and unpadded forms are accepted. Inputs that do not decode to a SELECT/WITH query are treated as raw SQL. No workspace scoping — the kit URL alone is the credential, share carefully.
+- `sql.queryReadOnly` `sql` accepts URL-safe base64 (`+`→`-`, `/`→`_`); both padded and unpadded forms are accepted. Inputs that do not decode to a SELECT/WITH query are treated as raw SQL. No workspace scoping — under the default proxy policy the kit URL alone is the credential, share carefully.
 - `databases.delete({ db })` removes a database file and its `-wal`, `-shm` and `-journal` companions, companions first. A missing file is `404 DATABASE_NOT_FOUND`; a directory or a non-SQLite file is `400` and stays untouched; a database other requests still hold past the deadline is `503 DATABASE_BUSY` with nothing removed. `500 DELETE_INCOMPLETE` lists `files_removed` and leaves the database file in place, so retrying the delete finishes it. A delete and a create of the same path wait for each other.
 - A directory-mode KV store keeps a `.hoody_sqlite/cache.db` in each directory it uses and holds it open, so that file and its `-wal`, `-shm` and `-journal` companions can be neither created nor deleted as a database (`400 INVALID_DB_PATH`). Any other database inside a `.hoody_sqlite` directory is an ordinary database.
 
@@ -83,7 +83,7 @@ One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, t
 - `400 GET /query only accepts read-only SELECT/WITH queries; use POST /db for mutating SQL` (returned for non-SELECT input; a non-base64 `sql` value is not an error — it is interpreted as raw SQL).
 - `400 Invalid JSON body` on `kv.setMany` — wire shape requires each `value` to be a JSON-encoded string, not an object.
 - `409` with `"error": "TIME_TRAVEL_CHAIN_GAP"` (message `time-travel: chain gap straddles target timestamp`) when the history needed for the answer has an unrecorded (`history: false`) or pruned gap. Timestamp reads, `kv.getSnapshot` at an `op_number`, and the rollbacks (`kv.rollback`, `kv.rollbackTable`) all return it. Per-key rollback puts the detail in `error` after the code (`"TIME_TRAVEL_CHAIN_GAP: ..."`); table rollback returns `error: "TIME_TRAVEL_CHAIN_GAP"` and puts the detail in `message`.
-- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`).
+- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
 
 ## Related namespaces
 
@@ -97,12 +97,12 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 
 ### 1. Schema setup with idempotent multi-statement transaction
 
-**Goal:** create a fresh database under `/tmp/`, install a 3-statement schema (table + index + seed row) atomically, then read it back. Every statement is `IF NOT EXISTS` / parameterised so the whole step is replay-safe.
+**Goal:** create a fresh database under `/hoody/databases/`, install a 3-statement schema (table + index + seed row) atomically, then read it back. Every statement is `IF NOT EXISTS` / parameterised so the whole step is replay-safe.
 
 **Step 1 — create the db file** with the kv table pre-seeded so KV ops on the same db don't have to bootstrap separately.
 
 ```typescript
-const db = `/tmp/sqlite-examples-${Math.random().toString(36).slice(2)}.db`;
+const db = `/hoody/databases/sqlite-examples-${Math.random().toString(36).slice(2)}.db`;
 await client.sqlite.databases.create({ path: db, init_kv: true });
 ```
 
@@ -144,9 +144,8 @@ await client.sqlite.kv.set('session:alex', { user_id: 'd6ec...', scopes: ['read'
 **Step 2 — `HEAD` for existence** (zero-body, cheap). Returns `200` while live, `404` once TTL elapses. A HEAD answer has no body, so the 404 names its reason in the `X-Hoody-Error-Code` header: `KEY_NOT_FOUND` or `KEY_EXPIRED`.
 
 ```typescript
-// exists() resolves to a boolean: true while live, false for a 404 whose
-// X-Hoody-Error-Code is KEY_NOT_FOUND or KEY_EXPIRED. It throws on anything else,
-// including a 404 without that header (an unknown route or a proxy, not this key).
+// exists() resolves to a boolean: true while the key is live, false on a 404 (the
+// kit names the reason, KEY_NOT_FOUND or KEY_EXPIRED). Any other status throws.
 const present = await client.sqlite.kv.exists('session:alex', { db });
 ```
 
@@ -229,7 +228,7 @@ const { data: theme } = await client.sqlite.kv.get('profile', { db, path: 'prefs
 **Step 3 — patch one leaf**. The PUT body is the **new leaf value** (here `"light"`), not the full document. `lang` and `name` are untouched.
 
 ```typescript
-await client.sqlite.kv.set('profile', 'light', { db, path: 'prefs.theme' }) // sent as the JSON string "light";
+await client.sqlite.kv.set('profile', 'light', { db, path: 'prefs.theme', headers: { 'Content-Type': 'application/json' } }); // sent as the JSON string "light"
 ```
 
 ### 6. Time-travel — record three states of a feature flag, roll back two
@@ -328,15 +327,16 @@ const sqlB64 = Buffer.from(sql).toString('base64url');
 const { data: r } = await client.sqlite.sql.queryReadOnly({ db, sql: sqlB64 });
 ```
 
-**Step 3 — paste-able URL** (e.g. dashboard link). The kit URL itself is the auth grant — guard who you share it with.
+**Step 3 — paste-able URL** (e.g. dashboard link). Under the default proxy policy the kit URL itself is the auth grant — guard who you share it with. Where the owner has configured auth groups, the link also needs the credential the proxy expects, and the query URL grants nothing beyond that policy.
 
 ```typescript
+const kitUrl = `https://${P}-${C}-sqlite-1.${N}.containers.hoody.com`; // P, C, N from containers.get
 const url = `${kitUrl}/api/v1/sqlite/query?db=${encodeURIComponent(db)}&sql=${sqlB64}`;
 ```
 
 ### 10. Bulk insert via `valuesBatch` — one statement, many rows
 
-**Goal:** load 3 rows (or 100k) with one transaction item that repeats a single SQL statement once per parameter row, instead of one tx item per row. The rows of an item commit or fail together. `valuesBatch` is an array of value-arrays positionally aligned with the `?` placeholders. Caps: 100k rows per `valuesBatch`, 1M rows per tx.
+**Goal:** load 3 rows (or 100k) with one transaction item that repeats a single SQL statement once per parameter row, instead of one tx item per row. Without `noFail: true` the rows of an item commit or fail together. With `noFail: true`, a row whose parameters do not parse or do not fit the placeholders is skipped and the valid rows still commit: the item answers `success: true` with a `rowErrors` list, so check it. `valuesBatch` is an array of value-arrays positionally aligned with the `?` placeholders. Caps: 100k rows per `valuesBatch`, 1M rows per tx.
 
 **Step 1 — bulk insert.** Response carries `rowsUpdatedBatch:[1,1,1]` — one entry per row.
 
@@ -359,7 +359,7 @@ const r = await client.sqlite.sql.runTransaction(
 const n = (r.data as any).results[0].resultSet[0].n;
 ```
 
-**Step 3 — clean up** (delete the throwaway database through the kit, which also removes its `-wal`, `-shm` and `-journal` files, or leave it under `/tmp/` for the next reboot to reclaim).
+**Step 3 — clean up** (delete the throwaway database through the kit, which also removes its `-wal`, `-shm` and `-journal` files, or leave it in place).
 
 ```typescript
 await client.sqlite.databases.delete({ db });
@@ -369,7 +369,7 @@ await client.sqlite.databases.delete({ db });
 
 **Accessor:** `client.sqlite`  |  **Import:** `import * as sqlite from 'hoody-sdk/sqlite'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.sqlite.databases` (4) — Database file lifecycle: create a database, list the databases in a directory, run maintenance
 
@@ -684,22 +684,13 @@ client.sqlite.kv.deleteMany(data: SqliteKvDeleteManyRequest, options: { db: stri
 
 ---
 
-#### `exists` — Check if key exists
+#### `exists` — Whether `key` exists: true, or false when the kit answers 404.
 
 ```typescript
-client.sqlite.kv.exists(key: string, options: { db: string; table?: string; timeout?: number; IfNoneMatch?: string })
+client.sqlite.kv.exists(key: string, options: KvExistsOptions, templateVars?: ExistsTarget)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `key` | `string` | path | Yes | Key name |
-| `db` | `string` | query | Yes | Database file path or directory |
-| `table` | `string` | query | No | Custom table name |
-| `IfNoneMatch` | `string` | header `If-None-Match` | No | Answers 304 while the key's current ETag matches. |
-| `timeout` | `number` | query | No | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-
-**Returns:** `Promise<boolean>`  |  **HTTP:** `HEAD /api/v1/sqlite/kv/{key}`
-**CLI:** `hoody kv exists`
+**Returns:** `Promise<boolean>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
 
 ---
 

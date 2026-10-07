@@ -1,4 +1,4 @@
-> _**HTTP skill · `display` namespace** · ~9,867 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `display` namespace** · ~8,218 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `display` — programmatic GUI desktops with screenshots, input, and windows
 
@@ -76,9 +76,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `POST /api/v1/display/input/click-at` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `GET /api/v1/display/windows` response) to a point picked on the screenshot, or use `GET /api/v1/display/window/{windowId}/geometry` to target a window directly.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
-- Window IDs are accepted as decimal or hex (`0x...`). `GET /api/v1/display/windows`, `POST /api/v1/display/window/search` and `GET /api/v1/display/window/active` return decimal numbers; the path-parameter routes (`GET /api/v1/display/window/{windowId}/properties`, `GET /api/v1/display/window/{windowId}/geometry`, `GET /api/v1/display/window/{windowId}/name`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.
+- Window IDs are accepted as decimal or hex (`0x...`). `GET /api/v1/display/windows`, `POST /api/v1/display/window/search` and `GET /api/v1/display/window/active` return decimal numbers; the path-parameter routes (`GET /api/v1/display/window/{windowId}/properties`, `GET /api/v1/display/window/{windowId}/geometry`, `GET /api/v1/display/window/{windowId}/name`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
 - `POST /api/v1/display/window/focus` activates the window and then tries to give it X input focus. The second step fails on a window that is not viewable, and the call still answers `success: true` with `details.inputFocus: false` and a `warning`; untargeted keyboard input then does not reach that window. `GET /api/v1/display/window/active` confirms the activation only.
-- `GET /api/v1/display/` returns HTML, browser-only.
 - `GET /api/v1/display/info` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `GET /api/v1/display/input/display-geometry`). 
 - `POST /api/v1/display/input/reset` clears stuck modifiers/buttons.
 - `POST /api/v1/display/input/wait-until` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
@@ -88,7 +87,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 - `400 NO_DISPLAY_CONTEXT` — supply `?displayId=N` or `*-display-N.*`.
 - `DISPLAY_NOT_AVAILABLE` — the X server for that `displayId` is unreachable. Returned by the input, clipboard and window routes alike.
-- `404 SCREENSHOT_NOT_FOUND` on `GET /api/v1/display/screenshot/{timestamp}` — no stored capture has that timestamp. Refresh by calling `GET /api/v1/display/screenshot`, which **takes a fresh screenshot** and returns its metadata, not just a timestamp lookup; then retry `GET /api/v1/display/screenshot/{timestamp}` with the new timestamp. (`GET /api/v1/display/screenshot/last` only returns metadata for the *latest* stored screenshot, which is not a replacement for a missed timestamp.)
+- `404 SCREENSHOT_NOT_FOUND` on `GET /api/v1/display/screenshot/{timestamp}` — no stored capture has that timestamp. Refresh by calling `GET /api/v1/display/screenshot`, which **takes a fresh screenshot** (with `base64` on, the response carries its `info.timestamp`), then retry `GET /api/v1/display/screenshot/{timestamp}` with the new timestamp. `GET /api/v1/display/screenshot/last` returns the latest stored image by default; its metadata-only form (`GET /api/v1/display/screenshot/last/info`) returns only that image's metadata. Neither takes a fresh screenshot, so neither replaces a missed timestamp.
 
 ## Related namespaces
 
@@ -118,7 +117,7 @@ curl -sX POST "$KIT/api/v1/display/input/click-at?displayId=1" \
   -H 'Content-Type: application/json' -d '{"x":75,"y":50,"button":1}'
 ```
 
-**Step 3 — capture again and give the new image to the vision model.** `GET /api/v1/display/screenshot` is not a cheaper probe: it takes a full capture too and only leaves the image bytes out of the response.
+**Step 3 — capture again and give the new image to the vision model.** With `base64` on, `GET /api/v1/display/screenshot` returns the fresh image and its metadata. There is no cheaper probe: the metadata-only form (`GET /api/v1/display/screenshot/info`) still takes a full screenshot and only leaves the image bytes out.
 
 ```bash
 curl -sf "$KIT/api/v1/display/screenshot?displayId=1&base64=true" | jq -r .image.data > /tmp/after.b64
@@ -396,76 +395,6 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 - `base64` — Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: `true`, `1`, `` (empty) - Return base64 JSON; `false`, `0` - Return binary (default)
 - `displayId` — Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999
 - `timestamp` — Unix timestamp of the screenshot. Use the `timestamp` field returned by screenshot metadata/list endpoints. Do not use `timestamp_human` for path queries. Must be numeric only for security.
-
-### `ui` (1) — Display information and management
-
-| Method | Summary | Params |
-|--------|---------|--------|
-| `GET /api/v1/display/` | Access the HTML5 Display client interface | `?displayId` `?decorations` `?toolbar` `?menu` `?maximize_new_windows` `?readonly` `?dark_mode` `?node` `?project_id` `?container_id` `?url_display_id` `?ssl` `?webtransport` `?path` `?action` `?display` `?encoding` `?offscreen` `?bandwidth_limit` `?override_width` `?override_height` `?vrefresh` `?suspend_inactive_tab` `?sound` `?audio_codec` `?keyboard` `?keyboard_layout` `?swap_keys` `?clipboard` `?clipboard_preferred_format` `?clipboard_poll` `?printing` `?file_transfer` `?video` `?mediasource_video` `?open_url` `?notification_server_url` `?web_notifications` `?display_notifications` `?notification_connection_type` `?sharing` `?steal` `?reconnect` `?floating_menu` `?clock` `?scroll_reverse_y` `?scroll_reverse_x` `?title_show_hoody` `?title_show_display_id` `?app` `?remote_logging` `?insecure` `?debug_main` `?debug_keyboard` `?debug_geometry` `?debug_mouse` `?debug_clipboard` `?debug_draw` `?debug_audio` `?debug_network` `?debug_file` |
-
-**Param notes:**
-
-- `displayId` — Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999
-- `decorations` — Show window decorations (title bar with close/minimize/maximize buttons). Set to false for headless/kiosk mode.
-- `toolbar` — Show entire toolbar/menu area (menu trigger + menu). Set to false to hide all menu UI elements. Takes precedence over the menu parameter.
-- `menu` — Show Hoody menu trigger icon. Set to false to hide menu completely. Note: toolbar parameter takes precedence over this.
-- `maximize_new_windows` — Open new top-level application windows maximized instead of centered at the default size (max 1024x1024). Only applies to windows that do not request their own position, and skips override-redirect windows, dialogs, other non-NORMAL window types, and windows the app itself marks undecorated via metadata (which would have no title bar to un-maximize from). Windows can still be un-maximized from their title bar. Combining with the global decorations=false parameter is honoured as explicit kiosk intent: windows open maximized without a title bar.
-- `readonly` — Enable read-only/view-only mode. Blocks all keyboard and mouse input from the client. Perfect for dashboards, monitoring, or demo scenarios. Works independently or combines with server readonly setting.
-- `dark_mode` — Enable dark mode theme
-- `node` — Hoody node identifier (e.g., node-example-1)
-- `project_id` — Hoody project ID
-- `container_id` — Hoody container ID
-- `url_display_id` — Display ID for URL construction
-- `ssl` — Use SSL/TLS for WebSocket connection
-- `webtransport` — Use WebTransport (HTTP3) instead of WebSocket
-- `path` — Connection path for the display server
-- `action` — Connection action type. `connect` - Connect to existing session; `start` - Start new session; `shadow` - Shadow existing display
-- `display` — Display number to connect to
-- `encoding` — Pre-selects the encoding in the settings dialog; does not change the stream encoding.
-- `offscreen` — Use offscreen canvas for rendering
-- `bandwidth_limit` — Bandwidth limit in bits per second (0 = unlimited)
-- `override_width` — Override virtual desktop width (auto or numeric value)
-- `override_height` — Override virtual desktop height (auto or numeric value 480-4320)
-- `vrefresh` — Vertical refresh rate in Hz. Use -1 for auto-detect. Minimum 30 when explicitly set.
-- `suspend_inactive_tab` — Suspend client updates when browser tab is inactive. Enables power saving by calling client.suspend() on tab hide and client.resume() on tab show. Recommended to keep enabled for better performance.
-- `sound` — Enable audio forwarding
-- `audio_codec` — Preferred audio codec
-- `keyboard` — Show on-screen virtual keyboard
-- `keyboard_layout` — Keyboard layout (us, gb, fr, de, etc.)
-- `swap_keys` — Swap Cmd/Ctrl keys (useful for macOS)
-- `clipboard` — Enable clipboard sharing
-- `clipboard_preferred_format` — Preferred clipboard format
-- `clipboard_poll` — Enable clipboard polling (browser-dependent default)
-- `printing` — Enable printing support
-- `file_transfer` — Enable file transfer support
-- `video` — Enable video encoding support
-- `mediasource_video` — Enable MediaSource API for video
-- `open_url` — Allow opening URLs from the remote session in the local browser
-- `notification_server_url` — External notification server URL for real-time notification integration. **URL Format:** `https://{project}-{container}-n-{display}.{node}.containers.hoody.com/notification-client.js` **Auto-detection:** If not provided, the client will attempt to auto-detect from the current hostname pattern. The client transforms the display URL pattern by replacing 'display' with 'n'. **Examples:** Manual: `?notification_server_url=https://my-project-container-n-6.node.containers.hoody.com/notification-client.js`; Auto-detected from: `https://my-project-container-display-6.node.containers.hoody.com` **Integration:** The notification server (port 3999) provides: Historical notification retrieval; Real-time WebSocket notification updates; Notification icons serving; Desktop notification triggering See external notification server OpenAPI spec for complete API documentation.
-- `web_notifications` — Enable browser web notifications (native OS notifications)
-- `display_notifications` — Show notifications within display UI
-- `notification_connection_type` — Notification server connection type. websocket: Real-time updates via WebSocket (recommended); polling: Periodic HTTP polling (fallback)
-- `sharing` — Allow session sharing
-- `steal` — Steal existing sessions
-- `reconnect` — Auto-reconnect on connection loss
-- `floating_menu` — Show floating menu
-- `clock` — Show server clock
-- `scroll_reverse_y` — Reverse vertical scrolling direction (auto, true, false)
-- `scroll_reverse_x` — Reverse horizontal scrolling direction
-- `title_show_hoody` — Show "Hoody" in browser title
-- `title_show_display_id` — Show display ID in browser title
-- `app` — Target application to launch or focus. Can be an application name, a REGEX pattern, or a window ID.
-- `remote_logging` — Enable remote logging to the display server
-- `insecure` — Allow insecure authentication (not recommended for production)
-- `debug_main` — Enable main debug logging
-- `debug_keyboard` — Enable keyboard debug logging
-- `debug_geometry` — Enable geometry debug logging
-- `debug_mouse` — Enable mouse debug logging
-- `debug_clipboard` — Enable clipboard debug logging
-- `debug_draw` — Enable draw debug logging
-- `debug_audio` — Enable audio debug logging
-- `debug_network` — Enable network debug logging
-- `debug_file` — Enable file transfer debug logging
 
 ### `windows` (14) — Mouse, keyboard, and window control operations
 

@@ -1,4 +1,4 @@
-> _**CLI skill · `run` namespace** · ~6,829 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `run` namespace** · ~6,997 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `run` — resolve apps to shell commands
 
@@ -36,7 +36,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Search then pick
 
-1. `hoody run search` → `{ set_id, total_count, items[], next_cursor? }`.
+1. `hoody run search [--page-size <page_size>] [--cursor <cursor>]` (this is the paged route: `page_size`, default 25, max 100, sets the page; `selector.limit` is ignored here) → `{ set_id, total_count, items[], next_cursor? }`.
 2. `hoody run resolve ...` → `shell_command`.
 
 ### 2. Preflight
@@ -50,7 +50,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 4. Batch
 
-`POST /api/v1/run/batch` (HTTP only; no CLI command). `mode:"run"` resolves each item to a command. Each result item is `result: "search"`, `"run"` or `"error"` (the item's own `{ error, code }`), so one bad item does not fail the batch. The CLI has no batch command; POST the route with curl against the kit URL, or resolve the apps one by one with `hoody run resolve`.
+`POST /api/v1/run/batch` (HTTP only; no CLI command). `mode:"run"` resolves each item to a command. Each result item is `result: "search"`, `"run"` or `"error"` (the item's own `{ error, code, status }`), so one bad item does not fail the batch. The CLI has no batch command; POST the route with curl against the kit URL, or resolve the apps one by one with `hoody run resolve`.
 
 ### 5. Recipes
 
@@ -66,9 +66,9 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - Query results are cached for about 30 s.
 - `set_id` expires 300s.
 - Selector requires `app`. Aliases `q`/`name` are accepted ONLY by the urlencoded query-string parser (GET / form-style); the JSON `Selector` model has only `app`, so JSON POST / SDK calls must use `app:`.
-- Resolve is command-only; the kit never launches the app or executes anything. The response `status` is `"dry-run"` (one picked candidate), `"printed-curl"` (one picked candidate, plus a `curl` line because `print_curl` was set) or `"resolved"` (pick mode `ask`: the candidate set, nothing selected). Only a picked response carries `handoff` (`{ state: "preview", terminal_id, display, preview_display_url?, preview_terminal_url? }`); a `resolved` response has none. The two preview URLs are built from the kit's configured URL templates for the target `terminal_id`, not from the candidate, so they are absent when no template is configured and do not prove anything is running.
+- Resolve is command-only; the kit never launches the app or executes anything. The response `status` is `"dry-run"` (one picked candidate), `"printed-curl"` (one picked candidate, plus a `curl` line because `print_curl` was set) or `"resolved"` (pick mode `ask`: the candidate set, nothing selected). Only a picked response carries `handoff` (`{ state: "preview", terminal_id, display, preview_display_url?, preview_terminal_url? }`); a `resolved` response has none. The two preview URLs are predicted for the target `terminal_id` (from an operator URL template when one is set, else from the container's own kit host form), not from the candidate; either is absent only when neither is available, and neither proves anything is running.
 - `POST /api/v1/run/batch` (HTTP only; no CLI command) only knows `mode: "search" | "run"` (no `"preflight"`); `"run"` resolves to a command.
-- `hoody run recipes resolve` / `hoody run recipes search` reject a recognized selector field outside `allowed_overrides` with `400 "recipe override not allowed: <field>"`; it is not silently dropped. An unknown key under `overrides` is ignored, so spell the selector field names exactly.
+- `hoody run recipes resolve` / `hoody run recipes search` reject a recognized selector field outside `allowed_overrides` with `400 OVERRIDE_NOT_ALLOWED` (`recipe override not allowed: <field>`); it is not silently dropped. An unknown key under `overrides` is ignored, so spell the selector field names exactly.
 - **Outbound requests the kit makes itself (webhook delivery, remote manifest index fetches, source fetches) go only to public IPv4 addresses.** Private, loopback, link-local, CGNAT, reserved and multicast destinations and every IPv6 form are refused, and a name that resolves to ANY prohibited IPv4 address is refused whole; no setting admits one, so a remote index URL on `localhost` or a sibling container's private address cannot work. Webhooks are configured in the kit's config file only (`GET /api/v1/run/config` is read-only), so this matters mainly when diagnosing a source sync or a webhook someone set up. A refusal carries the marker `refusing to connect to` and is not retried; `the name <host> resolved to no address` carries no marker and is a transient failure. Proxy environment variables are ignored; webhook and remote-index fetches follow no redirects, and source fetches follow at most ten. Helper binaries a provider shells out to (`nix search`) are outside this guarantee.
 - `selected.run_plan` carries `command`/`env`/`cwd` and is always present. `selected.execution_plan` (`argv`/`env`/`cwd`) is optional: trusted-list, manifest and AppImage candidates omit it. Read it as optional and use `shell_command` for the command to run.
 - `/go/...` are alias routes for bookmarkable resolve URLs — `GET /api/v1/run/go/{rest}` (selector parsed from path segments) and `GET /api/v1/run/t/{terminal_id}/go/{rest}` (terminal id baked into the path prefix, where it wins over any other `terminal_id`). Both are public HTTP routes, but neither has an SDK method: programmatic callers use the resolve endpoint from the first bullet. The CLI reaches only the first, as `hoody run resolve <path>`; `--terminal-id N` sends `terminal_id=N` as a query parameter on that same route.
@@ -79,16 +79,16 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common errors
 
-Every error body is `{ "error": "<text>", "code": <HTTP status> }`. There is no symbolic error-code field, so match on the status and the start of the text.
+Every error body is `{ "error": "<text>", "code": "<code>", "status": <HTTP status> }`. Match on the symbolic `code` and the HTTP `status`; a batch error item carries the same payload under `error`.
 
-- `400` `pick_index required`, `pick_index out of range: <N>`, `candidate_id required`, `candidate_id not found` or `no candidates`: the pick does not match the candidate set.
+- `400 INVALID_PICK` (`pick_index required`, `pick_index out of range: <N>`, `candidate_id required`, `candidate_id not found`) or `400 NO_CANDIDATES` (`no candidates`): the pick does not match the candidate set.
 - `400 INVALID_SELECTOR: invalid <field>: <value>`: a query-string selector value is not accepted, for example an unknown `source`.
-- `422` with a deserialization message: a JSON body carries a value that is not in the field's enum (for example `"kind":"create"`), in the same `{error, code}` body.
-- `409 SET_EXPIRED: …`: the `set_id` is unknown or older than 300 s; search again and pick against the new `set_id`.
+- `400 INVALID_BODY` with a deserialization message: a JSON body carries a value that is not in the field's enum (for example `"kind":"create"`), misses a required field or has a wrongly typed one.
+- `409 SET_EXPIRED`: an index pick (`pick_index`) names a `set_id` that is unknown or older than 300 s and is not the freshly resolved set; search again and pick against the new `set_id`. An id pick (`candidate_id`) does not get this error: it falls back to the fresh set, since `candidate_id` is content-addressed.
 - `403 POLICY_DENIED: …`: the effective policy does not permit the selected candidate.
-- `409 cursor set expired`: `search/paged` only; start again without a cursor.
-- A single source such as `nix` or `pkgx` that fails or is missing does not fail the request: the search continues with the other sources and can return an empty list (a pick against it then gives `400 no candidates`). An error the source reports is recorded in its diagnostics (`GET /api/v1/run/sources/{source_id}/diagnostics`), but some sources, `pkgx` among them, turn a missing tool or a failed query into an empty successful result, so the diagnostics can show no error at all. `502` is reserved for a resolution that fails as a whole.
-- `404 job not found`: the job id is unknown or its TTL ran out (see example 7).
+- `409 CURSOR_SET_EXPIRED` (`cursor set expired`): `search/paged` only; start again without a cursor.
+- A single source such as `nix` or `pkgx` that fails or is missing does not fail the request: the search continues with the other sources and can return an empty list (a pick against it then gives `400 NO_CANDIDATES`). An error the source reports is recorded in its diagnostics (`GET /api/v1/run/sources/{source_id}/diagnostics`), but some sources, `pkgx` among them, turn a missing tool or a failed query into an empty successful result, so the diagnostics can show no error at all. `502 SOURCE_RESOLUTION_FAILED` is reserved for a resolution that fails as a whole.
+- `404 JOB_NOT_FOUND` (`job not found`): the job id is unknown or its TTL ran out (see example 7).
 
 ## Related namespaces
 
@@ -102,7 +102,7 @@ Each example below has a copy-pasteable code block in the mode you're reading (c
 
 **Goal:** turn the user's typed `firefox` into a runnable shell command. When no profile sets a default, an omitted `pick` returns the candidates without selecting one; send `pick:"ask"` explicitly to be sure nothing is selected. The bare `hoody run <app>` CLI defaults to `--pick first` instead; pass `--pick ask` to keep the selection pending.
 
-**Step 1 — resolve to a command.** `hoody run firefox` resolves with `--pick first`, which picks from a freshly resolved list. To pin a list you displayed, run `hoody run search --selector-app firefox` and then `hoody run resolve --app firefox --set-id <set_id> --pick index --pick-index 0`.
+**Step 1 — resolve to a command.** `hoody run firefox` resolves with `--pick first`, which picks from a freshly resolved list. To pin a list you displayed, run `hoody run search --app firefox` and then `hoody run resolve --app firefox --set-id <set_id> --pick index --pick-index 0`.
 
 ```bash
 # Print the command (resolver only — nothing runs):
@@ -127,7 +127,7 @@ hoody run firefox -c "$C" --browser
 
 **Goal:** get the exact command plus its structured plan. Lightweight CLI app (`echo`) used so we don't leak GUI state.
 
-The response carries `shell_command` plus the full selected entry: `run_plan.{command,env,cwd}` (the shell-form, always present) and, when the source provides one, `execution_plan.{argv,env,cwd}` (the argv-form; trusted-list, manifest and AppImage candidates have none). `shell_command` is the command to run either way. A picked response also carries `handoff`; its `preview_display_url` / `preview_terminal_url` are present only when the kit's URL templates are configured, and they are built for the target terminal, not from the candidate. Resolve itself never launches anything.
+The response carries `shell_command` plus the full selected entry: `run_plan.{command,env,cwd}` (the shell-form, always present) and, when the source provides one, `execution_plan.{argv,env,cwd}` (the argv-form; trusted-list, manifest and AppImage candidates have none). `shell_command` is the command to run either way. A picked response also carries `handoff`; its `preview_display_url` / `preview_terminal_url` come from an operator URL template when one is set, else from the container's own kit host form, and are absent only when neither is available; they are built for the target terminal, not from the candidate. Resolve itself never launches anything.
 
 ```bash
 hoody --container "$C" run resolve --app echo --kind cli --pick first -o json \
@@ -141,7 +141,7 @@ hoody --container "$C" run resolve --app echo --kind cli --pick first -o json \
 **Step 1 — list candidates with `set_id`.**
 
 ```bash
-hoody --container "$C" run search --selector-app git --selector-kind cli --selector-limit 5 -o json \
+hoody --container "$C" run search --app git --selector-kind cli --page-size 5 -o json \
   | jq '{set_id, listing: (.items | to_entries | map({i: .key, id: .value.candidate_id, provider: .value.provider, score: .value.score}))}'
 ```
 
@@ -168,7 +168,7 @@ hoody --container "$C" run resolve --app git --kind cli --set-id "$SET" --pick i
 
 ```bash
 # --selector-source is repeatable (or comma-separated): --selector-source system --selector-source registry
-hoody --container "$C" run search --selector-app jq --selector-os linux --selector-arch amd64 --selector-kind cli --selector-source system --selector-limit 5 -o json \
+hoody --container "$C" run search --app jq --selector-os linux --selector-arch amd64 --selector-kind cli --selector-source system --page-size 5 -o json \
   | jq '{count: (.items|length), providers: [.items[].provider]}'
 ```
 
@@ -192,7 +192,7 @@ hoody --container "$C" run test --app xeyes --kind gui --pick first -o json \
 **Step 1 — first page.**
 
 ```bash
-RESP=$(hoody --container "$C" run search --selector-app git --selector-kind cli --page-size 3 -o json)
+RESP=$(hoody --container "$C" run search --app git --selector-kind cli --page-size 3 -o json)
 echo "$RESP" | jq '{total_count, count: (.items|length), next_cursor}'
 CURSOR=$(echo "$RESP" | jq -r .next_cursor)
 ```
@@ -201,7 +201,7 @@ CURSOR=$(echo "$RESP" | jq -r .next_cursor)
 
 ```bash
 while [ -n "$CURSOR" ] && [ "$CURSOR" != "null" ]; do
-  RESP=$(hoody --container "$C" run search --selector-app git --selector-kind cli --page-size 3 --cursor "$CURSOR" -o json)
+  RESP=$(hoody --container "$C" run search --app git --selector-kind cli --page-size 3 --cursor "$CURSOR" -o json)
   echo "$RESP" | jq '.items | length'
   CURSOR=$(echo "$RESP" | jq -r .next_cursor)
 done
@@ -221,7 +221,7 @@ done
 JID=$(hoody --container "$C" run jobs search create --app firefox --kind any -o json | jq -r .job_id)
 ```
 
-**Step 2 — wait for the result.** Status transitions `queued → running → done`, or ends in `error`, or in `cancelled` after a cancel request; all three are final, so stop polling on any of them. The job's TTL restarts only when its state changes, not when it is read, so polling does not keep a finished job alive; a caller that comes back too late gets `404 job not found`. Long-poll with `wait=done` and `timeout_ms` (max 120000) so the call returns as soon as the job finishes, and read the result from that response.
+**Step 2 — wait for the result.** Status transitions `queued → running → done`, or ends in `error`, or in `cancelled` after a cancel request; all three are final, so stop polling on any of them. The job's TTL restarts only when its state changes, not when it is read, so polling does not keep a finished job alive; a caller that comes back too late gets `404 JOB_NOT_FOUND`. Long-poll with `wait=done` and `timeout_ms` (max 120000) so the call returns as soon as the job finishes, and read the result from that response.
 
 ```bash
 # Keep --timeout-ms below the CLI's default 30 s request timeout.
@@ -233,7 +233,7 @@ hoody --container "$C" run jobs get "$JID" --wait done --timeout-ms 25000 -o jso
 
 **Goal:** the agent decided on three apps at once (`ls`, `echo`, `git`); resolve all to commands without three separate HTTP hits.
 
-`POST /api/v1/run/batch` (HTTP only; no CLI command) accepts items with `mode: 'search' | 'run'` (NOT `'preflight'`). Each item has its own `request_id` for correlation; results come back in the same order with one of `result: 'search'` (full search response), `result: 'run'` (with `selected` + `shell_command`) or `result: 'error'` (with `error: { error, code }` for that item only; the rest of the batch still runs).
+`POST /api/v1/run/batch` (HTTP only; no CLI command) accepts items with `mode: 'search' | 'run'` (NOT `'preflight'`). Each item has its own `request_id` for correlation; results come back in the same order with one of `result: 'search'` (full search response), `result: 'run'` (with `selected` + `shell_command`) or `result: 'error'` (with `error: { error, code, status }` for that item only; the rest of the batch still runs).
 The CLI has no batch command. POST `{ items: [...] }` to `/api/v1/run/batch` with curl against the kit URL, or run `hoody run resolve` once per app.
 
 ### 9. Save a recipe — reusable selector template with override allow-list
@@ -256,8 +256,8 @@ hoody --container "$C" run recipes create --name team-js-runtime \
 hoody --container "$C" run recipes list
 hoody --container "$C" run recipes get team-js-runtime -o json
 hoody --container "$C" run recipes update team-js-runtime --description 'Updated: now also resolves bun/deno via override'
-# When done:
-hoody --container "$C" run recipes delete team-js-runtime -y
+# After example 10 (it uses this recipe):
+# hoody --container "$C" run recipes delete team-js-runtime -y
 ```
 
 ### 10. Invoke a recipe with overrides — `hoody run recipes resolve <name>`
@@ -307,7 +307,7 @@ hoody --container "$C" run recipes search team-js-runtime --overrides-app node -
 | `hoody run recipes update` |  | write | Update a saved recipe | `run.recipes.update` | `hoody run recipes update my-resource --description 'My description' --selector-template-app firefox` |
 | `hoody run resolve` |  | action | Resolve an app to an exact shell command | `run.resolve` | `hoody run resolve --app firefox --os linux --kind gui` |
 | `hoody run resolve` |  | action | Resolve an app by path to an exact shell command |  | `hoody run resolve --app firefox --os linux --kind gui` |
-| `hoody run search` |  | read | Search candidates page by page with a cursor | `run.search` | `hoody run search --selector-app firefox --selector-os linux --selector-kind gui` |
+| `hoody run search` |  | read | Search candidates page by page with a cursor | `run.search` | `hoody run search --app firefox --selector-os linux --selector-kind gui` |
 | `hoody run sources create` |  | write | Add a package source | `run.sources.create` | `hoody run sources create --source-id nixpkgs --enabled --priority 100 --provider nix --source-type nix-pkgs --pin-url https://github.com/numtide/llm-agents.nix --source-config flake=nixpkgs` |
 | `hoody run sources delete` |  | destructive | Remove a package source | `run.sources.delete` | `hoody run sources delete abc-123 -y` |
 | `hoody run sources diagnostics get` |  | read | Show runtime health for a source: last error, last search latency, last sync job | `run.sources.getDiagnostics` | `hoody run sources diagnostics get abc-123` |

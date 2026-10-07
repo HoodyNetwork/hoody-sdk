@@ -1,4 +1,4 @@
-> _**CLI skill (basic)** · ~19,153 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill (basic)** · ~19,572 tokens · hoody-sdk v1.0.0-beta.16_
 
 # CLI mode — `hoody` command
 
@@ -68,7 +68,7 @@ After install: `hoody update` reports whether a newer release exists. With a con
 ## Login
 
 ```bash
-hoody login --username alex --password 'secret'
+hoody login --username alex --password "$HOODY_PASSWORD"
 ```
 
 - `--username` (`-u`) is the primary login flag; the CLI accepts `--email` as an alternative for email-based login. The server enforces the alphanumeric/underscore/hyphen pattern, so a malformed value fails at the request.
@@ -95,9 +95,9 @@ A container id is the 24-hex id from `hoody containers list` (the CLI rejects an
 
 ```bash
 CONTAINER_ID=$(hoody containers list -o json | jq -r '.containers[0].id')
-hoody --container "$CONTAINER_ID" files get /workspace       # inline
-HOODY_CONTAINER="$CONTAINER_ID" hoody files get /workspace   # env
-hoody local defaults set container "$CONTAINER_ID"           # sticky; then plain `hoody files get /workspace`
+hoody --container "$CONTAINER_ID" files get /home/user       # inline
+HOODY_CONTAINER="$CONTAINER_ID" hoody files get /home/user   # env
+hoody local defaults set container "$CONTAINER_ID"           # sticky; then plain `hoody files get /home/user`
 ```
 
 Account-level commands (`hoody login`, `hoody projects`, `hoody wallet`, `hoody auth`, `hoody vault`, `hoody containers list`, etc.) hit the control-plane API and ignore `--container`. Control-plane commands that act on ONE container read it from `--container` and require it, e.g. `hoody containers env …`, `hoody snapshots …`, `hoody firewall …`, `hoody network …`, `hoody storage …`. Check `--help` for a `Requires: --container` line.
@@ -193,7 +193,7 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 > - Use a **dedicated demo container with no secrets** — wallet credentials, vault data, source code only what they need to see.
 > - Set an **`expires_at`** on the alias for auto-expiry.
 > - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias instantly with `hoody proxy aliases disable <aliasId>`.
-> - For untrusted reviewers (customers, support tickets, public demos): prefer a **read-only `display`** embed of a screenshot stream over a live terminal, or build a constrained `exec` script that exposes only the operation they need.
+> - For untrusted reviewers (customers, support tickets, public demos): do not hand out a `display` kit URL as a "read-only" view — its readonly setting is client-side only, and anyone holding the URL can still call the display's input API (clicks, typing). Build a constrained `exec` script that exposes only the operation they need, such as serving a captured screenshot.
 
 ### Tips for embedders
 
@@ -202,20 +202,20 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 - Use `hoody proxy aliases create --container-id <container_id> --program '<kit>'` to ship a brandable hostname (`https://repo-acme.{N}.containers.hoody.com`) into the iframe instead of leaking the `{containerId}`.
 - For `display` / `desktop`: clipboard, file-transfer, audio, and notification features are toggleable via query params (`?clipboard=true&sound=true` …) — see the `display` namespace.
 - For `code`: append `?extension=<publisher>.<name>` to embed a single extension (e.g. Cline) without the IDE chrome — perfect for chat-channel "agent" widgets.
-- API kits (`sqlite`, `cron`, `watch`, `curl`, `pipe`, `http-<port>`, …) don't render a UI but you can still iframe them for status-page widgets, long-poll dashboards, etc.
+- Several API kits also serve a browser UI on their kit URL: `cron` (crontab manager) and `watch` at `/`, the `sqlite` studio at `/`, and the `pipe` send / receive / share pages — check a kit's own UI (and its embed views) before building a custom dashboard. `curl` renders no UI, and `http-<port>` shows whatever your app serves.
 - `allow="clipboard-read; clipboard-write"` on the `<iframe>` is recommended for `code`, `terminal`, `display` so paste / copy work inside the embed.
 
-## No local bypass — every call goes through the edge proxy
+## Source IP Guard — every call goes through the kit URL
 
-There is **no raw localhost-port bypass** to a kit. Even from inside the same container, every call to a kit service goes through the edge proxy on HTTPS — the kit binds to an internal interface that requires the proxy's authenticated, capability-checked, hook-instrumented path. An agent script trying to bypass via `http://127.0.0.1:<kit_port>` will not reach the kit. For in-container self-calls, use the full `{projectId}-{containerId}-…` kit URL (or an alias you configured): the proxy does not infer the calling container, so there is no `localhost` shorthand.
+Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403, from inside the same container too. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
 
 Why uniform proxy routing:
 
-- **Security uniformity** — the same `hoody containers proxy *` gates, `hoody containers proxy *` MITM rules, and `hoody proxy logs *` capture apply to every request, whether it came from across the internet or from a script in the next process. No "trusted internal" loophole that leaks to attackers via SSRF.
+- **Security uniformity** — requests from inside containers go through the same `hoody containers proxy *` checks and `hoody proxy logs *` capture as external requests, whether they came from across the internet or from a script in the next process. `hoody containers proxy *` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`. There is no "trusted internal" loophole that leaks to attackers via SSRF.
 - **One mental model** — same URL works from your laptop, from another container, from inside the container itself. You write the same code; the proxy is transparent.
 - **Cost is negligible** — the proxy hop adds microseconds, not a network round-trip.
 
-Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. Don't try to discover and target the kit's internal port — it is firewalled and won't accept the connection.
+Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. There is no other way in: the Source IP Guard refuses it.
 
 ### Container ↔ container — anyone reaches anyone (with permissions)
 
@@ -230,7 +230,7 @@ Cross-container access still goes through the gate stack — Y's `hoody containe
 - **By default** (no gates set), Y's URL is a capability — anyone with the URL has access. Within your account that's usually fine; for production / shared / multi-tenant fleets you SHOULD gate.
 - **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`setJwtGroup`) verifies a signed JWT instead.
 
-This is why "no local bypass" matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
+This is why edge routing matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
 
 ## Capability-token semantics — open by default, permission for production
 
@@ -298,7 +298,7 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/home/user/main.py` |
 | Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
 | SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
 | Display 1 (X11) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
@@ -400,12 +400,12 @@ The SSH endpoint is reachable from any IP; the registered key is the access cont
 
 ## User-hosted services — `http-<port>` / `https-<port>`
 
-**Anything you bind on a container port is automatically reachable from the public URL.** No alias, no firewall edit, no proxy registration. Use one of two slugs:
+**Anything you bind on a container port is automatically reachable from the public URL.** Bind your HTTP(S) service to `0.0.0.0:<port>` or the container's network IP to reach it at the public URL. A listener bound only to `127.0.0.1` is not reachable through this proxy. No alias, no firewall edit, no proxy registration. Use one of two slugs:
 
 | Slug form | Inner protocol | Edge URL |
 |---|---|---|
-| `http-<port>` | proxy speaks **HTTP** to `localhost:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
-| `https-<port>` | proxy speaks **HTTPS** to `localhost:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
+| `http-<port>` | proxy speaks **HTTP** to `<container-network-ip>:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
+| `https-<port>` | proxy speaks **HTTPS** to `<container-network-ip>:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
 
 Edge is always `https://` regardless — TLS terminates at the proxy. The `http-` / `https-` slug only describes what the proxy talks on the inside.
 
@@ -446,8 +446,8 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Two independent uniqueness rules, either of which answers `409 ALIAS_IN_USE`: the name must be free on the container's physical server (across every tenant there), AND your own account may hold a given name only once across all servers. |
 | `program` | Which kit/protocol to route to. Valid names, protocols first and then programs, with accepted aliases in parentheses: `http`, `https`, `ssh`, `terminal` (`tty`, `ttyd`, `t`), `display` (`d`), `desktop`, `cron`, `watch` (`w`), `notifications` (`notification`, `n`), `files` (`f`), `daemon`, `code`, `agent`, `exec` (`e`), `browser` (`b`), `cdp`, `curl`, `run`, `sqlite`, `logs` (`log`, `l`), `egress`, `pipe`, `notes` (`note`), `tunnel`, `bot`. Use only these names; `cli`, `proxy` and `proxyLogs`, for example, are refused with `400 Unknown program name`. The proxy-logs kit is `logs` (NOT `proxy` or `proxyLogs`), and `run` is NOT `app`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
-| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`. A request that carries its own path is forwarded as sent, resolved from the container root — `target_path` is never used as a prefix. |
-| `allow_path_override` | Defaults to `true`. Declared intent only: the proxy currently forwards non-root request paths as sent whatever this is set to, so `false` does NOT restrict which paths are reachable — use proxy permissions for access control. |
+| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`; a query written in it is sent too. It is never used as a prefix: with `allow_path_override: true` a request that carries its own path is forwarded as sent, resolved from the container root, and with `false` it is the only path the alias serves (at the root and at its own path). |
+| `allow_path_override` | Defaults to `true`: a root request lands on `target_path` (its query plus the visitor's parameters), and a request that carries its own path is forwarded as sent. With `false` the alias serves only `target_path`: the root `/` and the `target_path` path itself (e.g. `/run-report` when `target_path` is `/run-report`) are both served as `target_path`, and any other path — sub-paths and assets included — is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's value for the same key, and the instance selectors the alias's `index` sets (such as `id`, `terminal_id`, `display`) stay forced; the visitor's method, request body, other query keys, WebSocket upgrade and `Range` header pass through. Either way anyone with the link can open the alias, so restrict who may with proxy permissions. |
 | `expires_at` | Auto-disable timestamp — an ISO 8601 date-time string, or `null` for never. Convert an epoch value to ISO 8601 before sending. Must be in the future. |
 | `enabled` | Toggle without deleting (keeps alias slot reserved). |
 
@@ -464,7 +464,7 @@ Each row below shows the create-call fields and the resulting public URL. Issue 
 | GUI display 1 wrapped in a brandable host | `display` | `1` | — | `true` | `https://gui.{N}.containers.hoody.com` |
 | Read-only HTTPS upstream (target self-terminates TLS) | `https` | `8443` | — | `true` | `https://secureapi.{N}.containers.hoody.com` |
 
-`target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, gate the container (below) or point the alias at a program that serves only that operation.
+With the default `allow_path_override: true`, `target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, set `allow_path_override: false` (the alias then serves only `target_path`, at the root and at its own path; write into `target_path` every query key the visitor must not change), and gate the container (below) to decide who may call it.
 
 ### Gating an alias
 
@@ -490,7 +490,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ## Three credential types
 
-1. **JWT** — `authentication.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
+1. **JWT** — `POST /api/v1/users/auth/login` (HTTP only; no CLI command). Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
 2. **Auth token** — `hoody auth tokens create`. Prefix `hdy_`. Scopable (realms, `resources.*`), IP-restrictable, rotatable. Long-lived headless credential.
 3. **Kit URL** — `https://{projectId}-{containerId}-{kit_slug}-{serviceIndex}.{server}.containers.hoody.com` is the bearer for that kit while no proxy permissions are configured for the container. See § Proxy URLs.
 
@@ -523,7 +523,7 @@ Bearer by default. Add auth groups via `proxy.containerPermissions`/`proxy.proje
 
 Every built-in kit — **including `agent`** — accepts the bare per-container kit URL (the URL is the bearer). The `bot` kit's management routes ask for no account token either: they admit any request that reaches them, so on a container without proxy permissions anyone holding its bot URL can register, start, stop and delete bots. There is **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` handshake and no `401 CLAIM_REQUIRED` on the built-in kits; the `agent` kit behaves exactly like the others here.
 
-Separately, `hoody containers claims create <id>` mints a signed, portable **container claim** — `data: { container_claim: { kid, payload_b64, signature_hex }, expires_in, container_id, project_id }`. It is an *optional* credential for a program **you** run inside a container to verify a caller **offline** against the API's Ed25519 public key (`GET /api/v1/meta/public-key`); a `503 SIGNING_NOT_CONFIGURED` means no signing key is provisioned on that deployment. No built-in kit requires it.
+Separately, `hoody containers claims create -c <id>` mints a signed, portable **container claim** — `data: { container_claim: { kid, payload_b64, signature_hex }, expires_in, container_id, project_id }`. It is an *optional* credential for a program **you** run inside a container to verify a caller **offline** against the API's Ed25519 public key (`GET /api/v1/meta/public-key`); a `503 SIGNING_NOT_CONFIGURED` means no signing key is provisioned on that deployment. No built-in kit requires it.
 
 ## Realms — project isolation
 
@@ -597,8 +597,8 @@ Containers on **rented / dedicated (bare-metal) servers** can enable `/dev/kvm` 
 
 ```bash
 hoody containers create --project <project-id> --server-id <server-id> --name vm-host --kvm   # enable at creation
-hoody containers kvm enable <container-id>    # enable on a stopped container
-hoody containers kvm disable <container-id>   # disable
+hoody containers kvm enable -c <container-id>    # enable on a stopped container
+hoody containers kvm disable -c <container-id>   # disable
 ```
 
 ## `hoody` CLI is pre-installed inside every container
@@ -608,7 +608,7 @@ The `hoody` binary is on every container's `$PATH` (`/usr/bin/hoody`) for root, 
 ```bash
 hoody --version
 hoody projects list
-hoody --container "${HOODY_CONTAINER:-$HOODY_CONTAINER_ID}" files get /workspace
+hoody --container "${HOODY_CONTAINER:-$HOODY_CONTAINER_ID}" files get /home/user
 ```
 
 Inside the container, `$HOODY_CONTAINER_ID` is pre-populated by the kit (the CLI also accepts `$HOODY_CONTAINER` as a compatibility alias) so commands targeting "this container" can skip the `--container` flag. `$HOODY_TOKEN` is NOT auto-injected — set it via vault/secrets if container code needs to call the API. Login state is per-user under `~/.hoody/config.json`.
@@ -754,8 +754,8 @@ Global flags: `--base-url <URL>`, `--profile <P>`. Persist with `hoody config se
 `hoody c list [--realm-id <rid>] [-o wide]` (`c` is the registered alias for `containers`). There is no `--project` filter, and one call returns a single page (50 by default, `--limit 100` at most), so walk the pages (`hoody c list --limit 100 --page N -o json`, N = 1, 2, … until a page returns fewer than 100 rows) and filter each with `jq '.containers[] | select(.project_id=="<pid>")'` (the CLI's `-o json` unwraps the API envelope, so the top level is the `data` body — `.containers`, not `.data.items`).
 
 ### 7. Create container
-`hoody containers create --project <pid> --server-id <sid> --name ws --hoody-kit`. Flags `--project` and `--server-id` are required.
-Servers: `hoody servers {list|marketplace|rent <id>}`.
+`hoody containers create --project <pid> --server-id <sid> --name box-1 --hoody-kit`. Flags `--project` and `--server-id` are required.
+Servers: `hoody servers list`; `hoody servers marketplace list`; `hoody servers rent <id>`.
 
 ### 8. Lifecycle — get/wait, start/stop/restart
 ```bash
@@ -798,11 +798,13 @@ hoody files chunks write /home/user/x --input /tmp/more.bin   # appends raw byte
 ```
 
 ### 13. Browser screenshot
-`hoody browser screenshots capture --browser-id 1 --url https://example.com --format png --out-file /tmp/p.png`. Without `--out-file` the image bytes go to stdout as received (a terminal refuses them; redirect or pipe).
+`hoody browser screenshots capture --browser-id 1 --url https://example.com --format png --out-file /tmp/p.png`. The CLI uses `--browser-id` to pick the instance's `browser-N` host (the server itself does not read it); without it the CLI targets instance 1. Without `--out-file` the image bytes go to stdout as received (a terminal refuses them; redirect or pipe).
 
 ### 14. Display capture
 ```bash
-hoody display {screenshots|thumbnails} {latest|capture} --out-file /tmp/d.png   # or > /tmp/d.png: PNG bytes on stdout
+hoody display screenshots capture --out-file /tmp/d.png      # take one now; or > /tmp/d.png: PNG bytes on stdout
+hoody display screenshots latest get --out-file /tmp/d.png   # the most recent one already taken
+# `hoody display thumbnails capture` / `thumbnails latest get` are the small versions, same flags
 ```
 
 ### 15. SQLite KV
@@ -823,7 +825,7 @@ hoody kv batch get --db /hoody/databases/app.db --keys a,b
 `hoody tunnel {list|sessions list|bindings list|expose ...}`.
 
 ### 18. Snapshots
-`hoody snapshots create --container <cid> --alias pre-deploy [--expiry 30]`. Then `hoody snapshots {list --container <cid> | restore --container <cid> --name <alias> | delete --container <cid> --name <alias> | update-alias --container <cid> --name <alias> --alias <new>}` — every snapshot subcommand takes `--container <cid>` (not positional) and identifies snapshots by `--name <alias>`; on `update-alias`, the new value goes in `--alias`.
+`hoody snapshots create --container <cid> --alias pre-deploy [--expiry 30]`. Then `hoody snapshots {list | restore --name <name> | delete --name <name> | alias set --name <name> --alias <new>}` — each takes `--container <cid>` (or `-c`), not a positional id. `<name>` is the name `snapshots list` returns: the sanitized alias, or `snap-YYYYMMDD-HHMMSS` when none was given. On `alias set`, the new alias goes in `--alias`.
 
 ### 19. Vault
 ```bash
@@ -845,7 +847,7 @@ hoody cron crontabs set <user> ...  # bulk; <user> is positional and required
 ```bash
 hoody daemon programs create --name app --command 'node /app/s.js' \
   --user user --boot --autorestart unexpected     # --boot (not --autostart) toggles auto-start at container boot
-hoody daemon programs {list | stop <id> | logs <id> --lines 200}    # stop/logs take positional <id>, not --name
+hoody daemon programs {list | stop <id> | logs get <id> --lines 200}    # stop/logs get take positional <id>, not --name
 ```
 
 ### 23. Exec — serverless script
@@ -858,7 +860,7 @@ return { users: [{ id: 1, name: "Alice" }] };'
 
 ### 24. Open kit in browser
 ```bash
-hoody open <service>   # service ∈ terminal|files|code|display|desktop|sqlite|notifications|browser|daemon|exec|cron|curl|watch|logs|ssh|egress|http|https|http-<port>|https-<port> (db/kv are aliases for sqlite). NOT `agent` — that is rejected. Top-level `open` takes a service name, NOT a container id.
+hoody open <service>   # service ∈ agent|bot|browser|code|cron|db|desktop|display|exec|files|kv|notes|notifications|pipe|run|terminal|watch|sqlite|curl|logs|ssh|egress|http|https|http-<port>|https-<port>. Top-level `open` takes a service name, NOT a container id.
 hoody {display|code|files|exec|db|kv|notifications} open [...]
 ```
 

@@ -1,4 +1,4 @@
-> _**HTTP skill · `proxyLogs` namespace** · ~4,055 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `proxyLogs` namespace** · ~4,074 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `proxyLogs` — Per-container request/response/event log query, stats, and SSE tail
 
@@ -177,7 +177,7 @@ curl -sN -H 'Accept: text/event-stream' \
   ${LAST:+-H "Last-Event-ID: $LAST"} \
   "$KIT/_logs/stream?level=warn"
 # First frame may be `data: [...]\n\n` with no `id:` line; later live frames are `id: 12345\ndata: {...}\n\n`.
-# Heartbeat every 30s:  ": keepalive\n\n"   (ignore)
+# Heartbeat every 5s: ": keepalive\n\n". One ": open\n\n" follows any initial batch, replay or gap event (ignore both comments)
 # A resume whose cursor fell out of the buffer starts with `event: gap` (no id:):
 # backfill from "$KIT/_logs?sinceMs=<tsMs of the last entry you processed>" and skip entries you already have.
 ```

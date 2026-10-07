@@ -1,4 +1,4 @@
-> _**CLI skill · `curl` namespace** · ~6,692 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `curl` namespace** · ~7,214 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `curl` — full HTTP client gateway + REST-as-GET-URL bridge
 
@@ -40,7 +40,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 `GET /api/v1/curl/request?url=<TARGET>&method=<VERB>` on the curl kit URL. The kit executes the upstream request and returns a JSON envelope `{ success, job_id, status_code, headers, body, is_binary, timing, metadata }`. Useful when the caller can only emit a GET (browser, webhook, sandboxed agent, RSS-ish puller, link in an email).
 
-Note: the GET bridge accepts `url` + `method` + the 13 timing/follow/session/response/save flags (`response`, `mode`, `session_id`, `follow_redirects`, `timeout`, `user_agent`, `referer`, `bearer_token`, `save`, `save_path`, `insecure`, `compressed`, `job_name`) **AND a full request body + headers right in the query string**: `data` (raw body, curl `--data`), `json` (parsed JSON; sets `Content-Type: application/json`), `data_base64` (binary-safe; standard OR URL-safe base64, padding optional; takes precedence over `data`/`json`), and repeatable `header=Name: Value`. **Supplying a body auto-upgrades the default method GET→POST** — so a body-bearing POST/PUT/PATCH (with headers) is expressible as a single GET URL. Only the `form` field (URL-encoded fields) and a headers map are POST-only. Neither form sends a multipart upload or reads a file from disk (`--data-binary @file`); send a binary body as `data_base64`.
+Note: the GET bridge accepts `url` + `method` + the 13 timing/follow/session/response/save flags (`response`, `mode`, `session_id`, `follow_redirects`, `timeout`, `user_agent`, `referer`, `bearer_token`, `save`, `save_path`, `insecure`, `compressed`, `job_name`) **AND a full request body + headers right in the query string**: `data` (raw body, curl `--data`), `json` (parsed JSON; sets `Content-Type: application/json`), `data_base64` (binary-safe; standard OR URL-safe base64, padding optional; takes precedence over `data`/`json`), the aliases `body` and `body_base64` (for `data` and `data_base64`; the canonical name wins when both are given), and repeatable `header=Name: Value`. **Supplying a body auto-upgrades the default method GET→POST** — so a body-bearing POST/PUT/PATCH (with headers) is expressible as a single GET URL. Every other request field is POST-only: a headers map, `form` (URL-encoded fields), `cookie`, `auth_user` / `auth_password` / `auth_method`, `connect_timeout`, `max_redirects`, `max_filesize`, `tcp_nodelay`, `keepalive`, `keepalive_time`, `range`, `speed_limit`, `speed_time`, `retry_count` and `retry_delay`. The GET bridge ignores any of them in the query string without an error, so the request is sent without it. Neither form sends a multipart upload or reads a file from disk (`--data-binary @file`). To send arbitrary binary bytes, use `data_base64` on the GET bridge; the POST JSON form rejects a `data_base64` field with 400 (it refuses any unknown field).
 
 Live examples (verified — replace the kit URL with your container's):
 
@@ -49,9 +49,9 @@ Live examples (verified — replace the kit URL with your container's):
 
 Combine with `hoody proxy aliases create --program curl` to give the bridge a brandable hostname like `https://api-bridge.{server_name}.containers.hoody.com/api/v1/curl/request?...` and hide the `containerId`.
 
-`hoody curl run` **executes** the request and prints the response (a text body as-is, a JSON body pretty-printed; with `--response json` that is the `{status_code, headers, body}` envelope); it does NOT just compose a URL string. The CLI has no command for the GET route: `curl run` sends the POST form. When the deployment enables the kit's response cache (it is off by default), an eligible request can be answered from the cache instead. To compose a URL without firing it, build it client-side or use `hoody proxy aliases create --program curl --target-path /api/v1/curl/request` to get a stable prefix.
+`hoody curl run` **executes** the request and prints the response (a text body as-is, a JSON body pretty-printed; with `--response json` that is the `{status_code, headers, body}` envelope); it does NOT just compose a URL string. The CLI has no command for the GET route: `curl run` sends the POST form. When the deployment enables the kit's response cache (it is off by default), an eligible request can be answered from the cache instead. To compose a URL without firing it, build it client-side or create a proxy alias with `program: 'curl'`: a request to the alias host that carries its own path, such as `/api/v1/curl/request?...`, is forwarded as sent, and `target_path` only sets what the bare root URL serves.
 
-For the imperative full-cURL surface (a headers map, `form` fields sent URL-encoded, cookies, auth, follow-redirects, `insecure`, etc.) use the POST form below — though note the kit's request validator rejects `cacert`/`cert`/`key`/`proxy`/`proxy_user`/`proxy_password` (the rejected fields are limited to those six; all other body/auth/connection fields are accepted).
+For the imperative full-cURL surface (a headers map, `form` fields sent URL-encoded, cookies, auth, follow-redirects, `insecure`, etc.) use the POST form below — though note the kit refuses client-certificate files and an upstream proxy (an SSRF guard; the request schema no longer lists them), and accepts every other body, auth and connection field.
 
 ### 2. Sync request
 
@@ -86,11 +86,11 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - Default `mode:"sync"`; pass `"async"` for `job_id`.
 - `save_path` rejected if empty, absolute, rooted, or has `..`.
 - Saved files at `downloads/by-job/{job_id}/...`; pass relative path.
-- **Save downloads with `--out-file`.** `curl storage get`, `curl jobs result get` and `curl run` write the body as received, never decoded: `--out-file <path>` saves it byte for byte, and without it the bytes go to stdout. A terminal refuses binary output (`--out-file -` prints it anyway), and `-o json` prints `{ saved_to, bytes, content_type }` with `--out-file` and is refused without it.
-- **A saved download is stored under `by-job/{job_id}/<save_path>`, with best-effort index links** `by-date/<YYYY-MM-DD>/<job_id>` and `by-domain/<host>/<job_id>`. A URL whose host is an IP literal gets no `by-domain` link, and either link is skipped silently if it cannot be created, so expect one to three entries. `hoody curl storage list` returns one item per path; the bytes are the same file.
+- **Save downloads with `--out-file`.** With `--out-file <path>`, `curl storage get`, `curl jobs result get` and `curl run` save the body byte for byte. Without it, `curl storage get` always streams the raw bytes to stdout, while `curl run` and `curl jobs result get` parse a JSON body and print it like any other output, and stream only a binary body. A terminal refuses streamed binary output (`--out-file -` prints it anyway). For a streamed body, `-o json` prints `{ saved_to, bytes, content_type }` with `--out-file` and is refused without it.
+- **A saved download is stored under `by-job/{job_id}/<save_path>`, with best-effort index links** `by-date/<YYYY-MM-DD>/<job_id>` and `by-domain/<host>/<job_id>`. A URL whose host is an IP literal gets no `by-domain` link, and a symlink that cannot be created is skipped silently (failing to create an index directory fails the save), so expect one to three entries. `hoody curl storage list` returns one item per path; the bytes are the same file.
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
 - `hoody curl schedules *` 404s if disabled.
-- Pausing or resuming through `hoody curl schedules update` needs an explicit boolean `enabled`; else 400.
+- `hoody curl schedules update` changes any of `cron`, `request` and `enabled`; omitted fields keep their current value, so pause or resume by sending `enabled: false` or `enabled: true` alone.
 - **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
 - Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
@@ -122,15 +122,17 @@ https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<urle
 https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<target>&data_base64=eyJldmVudCI6IlgifQ&header=Content-Type:%20application/json
 ```
 
-(`form` fields, sent URL-encoded, are POST-only — use the POST form below for those. Neither form sends multipart uploads.)
+(`form` fields, sent URL-encoded, cookies, Basic auth, retries, ranges and the connection limits are POST-only, and the GET bridge drops them without an error — use the POST form below for those. Neither form sends multipart uploads.)
 
 ```bash
 # `hoody curl run` fires the request (it does not print a clickable URL). `--header NAME=VALUE`
 # sets a request header and repeats once per header (the value may itself contain `=`);
 # --json already sets Content-Type, and --bearer-token adds the Authorization header.
+# --json takes an object or array only from a file (@path), never inline.
+printf '%s' '{"event":"X"}' > event.json
 hoody --container "$C" curl run \
   --url 'https://my-api/events' --method POST \
-  --json '{"event":"X"}' \
+  --json @event.json \
   --header 'X-Request-Id=evt-1' \
   --bearer-token "$API_TOKEN"
 ```
@@ -321,11 +323,11 @@ hoody --container "$C" curl run --url https://api.github.com/user --method GET \
 https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<url-encoded-build-trigger>&json=%7B%22ref%22%3A%22main%22%7D&header=Authorization:%20Bearer%20XYZ
 ```
 
-**Step 2 — wrap with an alias** so the public URL hides `containerId`. The alias target must be the complete query from step 1, `json` and `header` included: the bridge reads the body and headers only from the query string, so an alias carrying just `url` and `method` sends an empty, unauthenticated POST. The token then lives in the alias configuration, so gate the alias (step 3).
+**Step 2 — wrap with an alias** so the public URL hides `containerId`. The alias target must carry the whole request, body and auth included: the bridge reads the body and headers only from the query string, so an alias carrying just `url` and `method` sends an empty, unauthenticated POST. `target_path` refuses percent escapes (and spaces, quotes and braces), so the step 1 query cannot be pasted as is: write the target URL unescaped, send the JSON body (here `{"ref":"main"}`) as URL-safe base64 in `data_base64` (`<base64-body>` below) with a `Content-Type:application/json` header, and pass the token as `bearer_token`. The token then lives in the alias configuration, so gate the alias (step 3). Keep `allow_path_override: false`: the alias then serves only this `target_path`, at its root and at `/api/v1/curl/request` (both with the target's query), and any other path is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's, so a visitor cannot override the target `url`, `method`, body, headers or `bearer_token`. Keys the target does not set (for example `timeout` or `save`) still pass from the visitor, so write into `target_path` every key you want fixed. Step 3's gate is what limits who can fire it.
 
 ```bash
 hoody proxy aliases create --container-id "$C" --alias rebuild-main --no-allow-path-override \
-  --program curl --target-path '/api/v1/curl/request?url=https%3A%2F%2Fci.example.com%2Fbuild&method=POST&json=%7B%22ref%22%3A%22main%22%7D&header=Authorization:%20Bearer%20XYZ'
+  --program curl --target-path '/api/v1/curl/request?url=https://ci.example.com/build&method=POST&data_base64=<base64-body>&header=Content-Type:application/json&bearer_token=XYZ'
 ```
 
 **Step 3 — gate it** — only your office IPs can fire it (uses `hoody containers proxy groups ip set`; see the `api` namespace).
@@ -388,7 +390,7 @@ done < /tmp/curl-purge.txt
 | `hoody curl jobs get` |  | read | Get detailed job information | `curl.jobs.get` | `hoody curl jobs get 550e8400-e29b-41d4-a716-446655440000` |
 | `hoody curl jobs list` |  | read | List all async jobs | `curl.jobs.list` | `hoody curl jobs list --page 1 --limit 50` |
 | `hoody curl jobs result get` |  | read | Get job response body | `curl.jobs.getResult` | `hoody curl jobs result get 550e8400-e29b-41d4-a716-446655440000` |
-| `hoody curl jobs stream` |  | read | Stream job lifecycle events live | `curl.jobs.stream` | `hoody curl jobs stream --job-id 550e8400-e29b-41d4-a716-446655440000` |
+| `hoody curl jobs stream` |  | read | Stream job lifecycle events live | `curl.jobs.stream` | `hoody curl jobs stream --job-id 550e8400-e29b-41d4-a716-446655440000 --since 0` |
 | `hoody curl metrics` |  | read | Prometheus metrics | `curl.kit.getMetrics` | `hoody curl metrics` |
 | `hoody curl run` |  | action | Execute HTTP request with full cURL capabilities | `curl.run` | `hoody curl run --compressed --connect-timeout 10 --url https://example.com` |
 | `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --request-compressed --request-connect-timeout 10 --request-url https://example.com` |
@@ -400,7 +402,7 @@ done < /tmp/curl-purge.txt
 | `hoody curl sessions delete` |  | destructive | Delete a session | `curl.sessions.delete` | `hoody curl sessions delete user-session-123 -y` |
 | `hoody curl sessions get` |  | read | Get session details | `curl.sessions.get` | `hoody curl sessions get user-session-123` |
 | `hoody curl sessions list` |  | read | List all cookie sessions | `curl.sessions.list` | `hoody curl sessions list --page 1 --limit 50` |
-| `hoody curl storage delete` |  | destructive | Delete a saved file | `curl.storage.delete` | `hoody curl storage delete by-job/550e8400-e29b-41d4-a716-446655440000/report.pdf -y` |
+| `hoody curl storage delete` |  | destructive | Delete a saved file | `curl.storage.delete` | `hoody curl storage delete by-job/550e8400-e29b-41d4-a716-446655440000/report.pdf --recursive -y` |
 | `hoody curl storage get` |  | read | Download a saved file | `curl.storage.get` | `hoody curl storage get by-job/550e8400-e29b-41d4-a716-446655440000/report.pdf` |
 | `hoody curl storage list` |  | read | List all saved downloads | `curl.storage.list` | `hoody curl storage list --page 1 --limit 50` |
 

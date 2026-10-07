@@ -1,4 +1,4 @@
-> _**SDK skill · `watch` namespace** · ~8,501 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `watch` namespace** · ~8,709 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `watch` — Linux inotify file-change streams with replay history
 
@@ -48,7 +48,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 3. Bulk replay via pagination
 
-Bulk replay: `client.watch.events.list` with `since_id`, one page per call; persist the highest `id`. `client.watch.events.listAll` and `client.watch.events.listIterator` walk every page.
+Bulk replay: `client.watch.events.list` with `since_id`, one page per call; persist the highest `id`. `client.watch.events.listAll` and `client.watch.events.listIterator` walk at most 1,000 pages (50 events each by default), then throw if more remain: pass `{ limit: 200 }` for large histories, and beyond 200,000 events page by hand with `after_id`.
 
 ### 4. WebSocket consumer
 
@@ -77,7 +77,7 @@ List with `client.watch.watchers.list`, inspect with `client.watch.watchers.get`
 
 ## Common errors
 
-- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` is rejected earlier, while the query string is parsed: still HTTP 400, but without the `INVALID_PAGINATION` code
+- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` also answers HTTP 400 `INVALID_PAGINATION`; the message names the parameter
 - `400 INVALID_REQUEST` — empty `paths`, an invalid or missing path, a glob that does not compile, or an invalid `ignore_dirs` entry. All of these answer the same code, so read the message, not the code, to tell them apart
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
@@ -143,24 +143,28 @@ for await (const frame of stream) {
 **Step 2 — reconnect with `since_id`.** Server replays from the buffer; if the buffer rolled past your cursor you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
 
 ```typescript
-// Resume from the last id processed, page by page. A 409 HISTORY_GAP means the
-// buffer no longer reaches back that far and the events in between are lost:
-// restart from since_id=0 (which never gaps) to re-read everything still retained.
-let cursor = lastId;
+// Resume from the last id processed, page by page, with after_id: it answers 409
+// HISTORY_GAP when any event after the cursor was lost (evicted, or too large to
+// keep), where since_id would skip it silently. On a 409, restart once from
+// since_id=0 (which never gaps) to re-read everything still retained.
+let cursor: { since_id?: number; after_id?: number } = { after_id: lastId };
+let recovered = false;
 for (;;) {
   let items: any[];
   try {
-    const page = await client.watch.events.list(wid, { since_id: cursor, limit: 200 });
+    const page = await client.watch.events.list(wid, { ...cursor, limit: 200 });
     items = (page.data as any)?.items ?? [];
   } catch (e: any) {
-    if (e.status !== 409) throw e;
-    cursor = 0; // data loss: rebuild from the oldest retained event
+    if (e.status !== 409 || e.code !== 'HISTORY_GAP' || recovered) throw e;
+    recovered = true;
+    cursor = { since_id: 0 }; // data loss: rebuild from the oldest retained event
     continue;
   }
-  for (const ev of items) { cursor = ev.id; console.log(ev.kind, ev.path); }
+  for (const ev of items) { lastId = ev.id; console.log(ev.kind, ev.path); }
   if (items.length < 200) break;
+  cursor = { after_id: lastId };
 }
-lastId = cursor; // continue the step 1 loop from here
+// lastId now continues the step 1 loop from here
 ```
 
 ### 3. WebSocket consumer — replay buffer + live events on one socket
@@ -253,11 +257,11 @@ catch (e: any) { /* e.status === 404, e.code === 'WATCHER_NOT_FOUND' */ }
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `since_id` set to the last id received. A 409 on one of those later `since_id` pages means the buffer rolled past the cursor while paging: the events between two pages are lost, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
 
 ```typescript
 const events: any[] = [];
-let cursor: { since_timestamp?: string; since_id?: number } = {
+let cursor: { since_timestamp?: string; since_id?: number; after_id?: number } = {
   since_timestamp: new Date(Date.now() - 5 * 60_000).toISOString(),
 };
 for (;;) {
@@ -268,11 +272,11 @@ for (;;) {
     // 409 HISTORY_GAP on the timestamp query: every retained event is newer than
     // the timestamp, so read them all (since_id=0 never gaps).
     if (e.status === 409 && cursor.since_timestamp) { cursor = { since_id: 0 }; continue; }
-    throw e; // includes a 409 on a later since_id page: history incomplete, run again
+    throw e; // includes a 409 on a later after_id page: history incomplete, run again
   }
   events.push(...items);
   if (items.length < 200) break;
-  cursor = { since_id: items[items.length - 1].id }; // next page: continue after the last id
+  cursor = { after_id: items[items.length - 1].id }; // next page: after_id detects unread evictions
 }
 ```
 
@@ -282,7 +286,7 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 **Accessor:** `client.watch`  |  **Import:** `import * as watch from 'hoody-sdk/watch'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.watch.events` (5) — Real-time event streams
 
@@ -505,6 +509,7 @@ client.watch.watchers.update(id: string, data: WatchWatchersUpdateRequest)
 ### Body schemas
 
 - `watch_CreateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths*: string[], recursive: bool|null, skip_hidden: bool|null }`
+  - Create a watcher. Only `paths` is required. A field the service does not know (a misspelt option such as `recursiv`) is refused with 400 `INVALID_REQUEST` naming it, as on update, rather than ignored.
   - `include` — Optional include glob patterns. If present, path must match one include.
 - `watch_UpdateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths: string[]|null, recursive: bool|null, skip_hidden: bool|null }`
   - Reconfigure a live watcher. Every field is optional; an omitted field keeps the watcher's current value, but at least one field must be given. The watcher keeps its id, its replay history (so `since_id` / `since_timestamp` cursors stay valid) and its connected SSE/WebSocket clients.

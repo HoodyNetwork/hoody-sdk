@@ -1,10 +1,10 @@
-> _**SDK skill · `files` namespace** · ~43,647 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `files` namespace** · ~44,467 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `files` — container filesystem over HTTP, with automatic Git-like change history
 
 ## Purpose
 
-**Default surface: the container's own filesystem, exposed over HTTP — with automatic mutation journaling when the deployment enabled it.** Read, write, copy, move, delete, stat, chmod, list, glob, grep, archive-preview/extract, fetch URLs into the FS, resumable upload — all on absolute container paths (`/workspace/main.py`, `/etc/hostname`, `/hoody/databases/foo.db`). No backend flag needed.
+**Default surface: the container's own filesystem, exposed over HTTP — with automatic mutation journaling when the deployment enabled it.** Read, write, copy, move, delete, stat, chmod, list, glob, grep, archive-preview/extract, fetch URLs into the FS, resumable upload — all on absolute container paths (`/home/user/main.py`, `/etc/hostname`, `/hoody/databases/foo.db`). No backend flag needed.
 
 **Headline feature when journaling is on — automatic change history (think Git, but for every file write).** With the journal enabled, every `PUT` / `PATCH` / `DELETE` / `MOVE` / `COPY` is appended to a per-container mutation log: monotonic sequence number, timestamp, path, op, size, hash. **History is kept for journaled paths, within limits:** retention prunes old entries (90 days or 2 GiB of journal storage by default), bodies over 2 MiB keep only their hash and size, and excluded paths (dev dirs such as `node_modules`, and `.git`) are never recorded. The journal lets you:
 
@@ -17,7 +17,7 @@
 When the deployment turned journaling on, no per-write setup is needed — every covered write is recorded. Exposing the journal query endpoints — history, revision, diff, stats, flush — over the API is a second deployment-side switch; where it is off those endpoints return `403`. Where API access is on but recording itself is off, they return `404 Journal is not enabled`. It is not a complete undo: retention pruning, the 2 MiB body cap, the exclude lists and write paths with no journal hook (URL downloads, archive extraction) all leave gaps, so check `?history` before relying on a restore. Journaling is ON in the standard `hoody_kit: true` container image; raw kit deployments that did not turn it on will accept writes but skip recording.
 
 **Optional add-ons (per-request, opt-in):**
-- **Remote backends** — append `?backend=<id>` (or `?type=<rclone-type>`) to operate against any of the 60+ rclone backend types you've connected (Mega, SFTP, S3, GDrive, Dropbox, Backblaze B2, WebDAV, Git, …) instead of the local FS. Only where the deployment enabled remote backends; otherwise `403`. Note: the journal records local-FS mutations; remote-backend ops go to the remote and aren't replayable from the journal.
+- **Remote backends** — append `?backend=<id>` to operate against a backend you've connected, of any of the 49 allowed rclone backend types (Mega, SFTP, S3, GDrive, Dropbox, Backblaze B2, WebDAV, …), instead of the local FS. A `?type=` parameter does not select a connected backend: on `/api/v1/files/{path}` it is ignored and the request runs on the local FS. = &["] Only where the deployment enabled remote backends; otherwise `403`. Note: the journal records local-FS mutations; remote-backend ops go to the remote and aren't replayable from the journal.
 - **FUSE mounts** — `mounts.create` to surface a remote backend AS a path in the local FS. Same deployment-side requirement.
 - **chmod / chown** — Unix-only, and only where the deployment enabled them; otherwise `403`.
 
@@ -26,7 +26,7 @@ When the deployment turned journaling on, no per-write setup is needed — every
 - **Local container FS (the 90% case)** — CRUD, archive entry / extract, cross-binary search (glob, grep), download a URL into a path, resumable upload. Local works out of the box.
 - **Recover / inspect a previous version of any file** — `?history=1`, `?revision=<seq>`, `?at=<unix-ms>`, `?diff=1&from_seq=<N>`. Available where journaling and journal API access are on (`403` when API access is off, `404` when recording is off), for writes the journal recorded and still retains (see Quirks for what is excluded).
 - **Audit / replay every change to the filesystem** — `journal.list` for the full event stream (sequence, timestamp, path, op, size, hash).
-- **Remote cloud / SSH / S3 / Git** — append `?backend=<id>` to read (`files.get`), upload (`files.upload`, not with `append`), delete (`files.delete`) or create a directory (`files.mkdir`). `backend` is refused with `400` on patch, append, extract, URL download, copy and move.
+- **Remote cloud / SSH / S3** — append `?backend=<id>` to read (`files.get`), upload (`files.upload`, not with `append`), delete (`files.delete`) or create a directory (`files.mkdir`). Only `files.get`, `files.upload`, `files.delete` and `files.mkdir` take a `backend` option, and `files.upload` refuses it with `400` together with `append`. `files.update`, `files.append`, `files.copy`, `files.move`, `files.archives.extract` and `files.downloads.create` have no `backend` option; do not bypass the types: with `owner`, `archives.extract` and `downloads.create` throw a client-side `ValidationError`, and without `owner` the option is dropped and the operation runs locally.
 - **FUSE-mount a remote into the local FS** — when downstream code needs to read the remote as a regular path (under the mount directory, `/hoody/mounts/permanent/…` by default).
 
 ## When NOT to use
@@ -35,7 +35,7 @@ Run binaries -> `terminal`/`exec`, live events -> `watch`, TS/JS gen -> `exec`, 
 
 ## Prerequisites
 
-- **For plain read/stat/list**: no deployment switch, but any authentication and per-path access rules configured on the kit still apply (`401` without credentials, `403` for a path outside your rules). **Writes are enabled by the deployment, not per request**: upload/write/append and copy need write enabled, delete needs delete enabled, move needs both (403 otherwise; all enabled in the standard hoody_kit container image, off on a raw kit deployment that did not turn them on). Paths are absolute container paths; the namespace is not workspace-scoped, so use `/workspace/...`, `/home/user/...`, etc.
+- **For plain read/stat/list**: no deployment switch, but any authentication and per-path access rules configured on the kit still apply (`401` without credentials, `403` for a path outside your rules). **Writes are enabled by the deployment, not per request**: upload/write/append and copy need write enabled, delete needs delete enabled, move needs both (403 otherwise; all enabled in the standard hoody_kit container image, off on a raw kit deployment that did not turn them on). Paths are absolute container paths; the namespace is not workspace-scoped, so use `/home/user/...`, `/etc/...`, etc.
 - **For glob / grep**: gated separately — glob needs search enabled, grep needs grep enabled (403 "not allowed" otherwise; both enabled in the standard hoody_kit container image).
 - **For remote backends** (`?backend=` / `?type=` / FUSE mounts): the deployment must have enabled remote backends; otherwise `403`.
 - **For chmod / chown**: the deployment must have enabled them, and the container is Unix.
@@ -63,13 +63,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `downloads.create(dir, { download: url })`; `downloads.listByDirectory` to poll.
 2. `archives.preview`; `archives.extract(archive, { extract: 'src/', dest: 'work-src' })` (`extract` is an exact entry name, or a directory prefix ending in `/`; no globs. `dest` MUST be relative).
-3. `backends.createS3` (60+ `connect*`) -> `files.get('/remote/path', { backend: id })` for one-shot reads OR `mounts.create` -> `files.list('/hoody/mounts/permanent/...')` for a regular FS view -> `mounts.delete`/`backends.delete`. (`files.list` itself has no `backend` option; `files.get`/`files.upload`/`files.delete` do.)
+3. `backends.createS3` (one `create*` method per backend type, e.g. `createSftp`) -> `files.get('/remote/path', { backend: id })` for one-shot reads OR `mounts.create` -> `files.list('/hoody/mounts/permanent/...')` for a regular FS view -> `mounts.delete`/`backends.delete`. (`files.list` itself has no `backend` option; `files.get`/`files.upload`/`files.delete` do.)
 
 ### 3. Journal time-travel + TUS-like upload
 
 1. `files.get` with `{ history: '' }`, `{ revision: N }` or `{ at: '<unix-ms>' }`, `{ diff: '', from_seq: N }` (valueless flags take `''`).
 2. `journal.list({ path, after_id })` (global entry id, not `seq`; see Purpose for the last-page cursor rule); `journal.flush` first.
-3. Resumable: `files.upload` for the first chunk, then `files.append(path, bytes)` per chunk (Example 3); it takes raw bytes, no cast. `files.writeChunk(path, bytes as any, { XUpdateRange: 'append' })` does the same over the WebDAV route but needs the cast, because its declared body type is a JSON object.
+3. Resumable: `files.upload` for the first chunk, then `files.append(path, bytes)` per chunk (Example 3); it takes raw bytes, no cast. `files.writeChunk(path, bytes)` also appends raw bytes, over the WebDAV route: it takes bytes directly and sets the append header itself, so do not pass `XUpdateRange` (the call throws if you do).
 
 ## Quirks & gotchas
 
@@ -88,7 +88,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Exclusions decide which paths are journalled.** Built-in dev-dir excludes (`node_modules`, `target`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `__pycache__`, `.venv`, `venv`, `env`, `__pypackages__`, `.tox`, `.nox`, `bower_components`, …) skip journaling unless the deployment turned the dev-dir exclusions off. `.git` is always excluded regardless of that setting (separate hardcoded check, not part of the toggleable list). The deployment can add further excludes of its own. This is why "I wrote to `node_modules/x` and saw no journal entry" is expected.
 - **Journal does NOT cover everything by default.** Live behaviour observed: a fresh `PUT` (create) and an overwriting `PUT` (write) on `/home/user/...` produce entries; URL downloads (`?download=`) and archive extraction are NOT journaled — those write through paths with no journal hook. `chmod`, `chown`, `touch`, `?append=true` and copy/move ARE recorded. Always call `journal.flush` then `journal.list` (or `?history=1`) to inspect what was actually recorded — don't assume coverage.
 - **Built-in dev-dir exclude list always skips journaling** for `node_modules`, `__pycache__`, `.venv`, `target`, `.next`, `.nuxt`, etc. — even on `/home/user/...` paths. Only the deployment can turn these off, at kit start. `.git` is hardcoded to ALWAYS be excluded and stays excluded even then.
-- **`HEAD /api/v1/files/{path}` returns `405`**; `HEAD` is served only on the WebDAV root route (`HEAD /{path}`, no `/api/v1/files/` prefix). For a JSON metadata envelope use `files.stat`.
+- **`HEAD` answers like `GET` with no body** on both routes: `HEAD /api/v1/files/{path}` returns the status and headers its `GET` would, and so does `HEAD /{path}`. It carries no metadata body; for a JSON metadata envelope use `files.stat`.
 - **`chown` to root is rejected** with `400 Cannot change ownership to root (UID 0)` (owner) or `400 Cannot change group to root (GID 0)` (group) — even where the deployment enabled chown. Use a non-root user (`nobody`, `user`, …).
 - **FUSE mount paths live under a configured mount directory** (`/hoody/mounts/permanent` by default, fixed by the deployment at kit start). An absolute `mount_path` must be under it (`400 Mount path must be under the configured mount directory` otherwise); a relative `mount_path` is resolved under it; an omitted one becomes `<mount dir>/mount_<id>`. If the path already exists and is not a symlink, the create fails with `409 Mount path already exists and is not a symlink`.
 - **Listing-style query params (`?downloads`, `?download_history`, `?extractions`, `?extraction_history`) are honoured on the WebDAV root route, NOT on `/api/v1/files/...`** — calling `GET /api/v1/files/<dir>?downloads` returns a regular directory listing (the query is ignored). Use `GET /<dir>?downloads` (or `GET /?download_history` for the global feed).
@@ -100,9 +100,9 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - 400 Cannot combine realpath with other ops.
 - 400 Cannot preview a directory as archive.
 - 400 Unknown operation -- POST needs one query op.
-- 400 Missing query or body -- PATCH needs op or body.
-- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` most refusals carry no `code` at all — an invalid path is 400 `{success: false, error: "Invalid path"}`, and a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
-- Cancelling a URL download removes the partial file only where the file's inode proves it is still the one the download created (local filesystems such as ext4, xfs, btrfs, tmpfs). On a FUSE mount, NFS, CIFS or overlayfs the partial file is kept, because the name could by then belong to a file of yours.
+- 400 Missing query parameter or request body -- PATCH needs op or body.
+- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
+- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file: where inode numbers identify a file (local filesystems such as ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created, and elsewhere (FUSE mounts, network filesystems) by its download-specific name while it is a regular file.
 
 ## Related namespaces
 
@@ -164,20 +164,20 @@ console.log(m.data!.total_matches, m.data!.matches.length);
 **Step 1 — first chunk via PUT.** Creates the file with the first slab.
 
 ```typescript
-import { readFileSync } from 'fs';
-await client.files.upload('/home/user/upload-test.bin', readFileSync('/tmp/chunk1.bin'));
+import { randomBytes } from 'node:crypto';
+await client.files.upload('/home/user/upload-test.bin', randomBytes(8 * 1024 * 1024));
 ```
 
 **Step 2 — append remaining chunks.** Send `PATCH /<path>` (the WebDAV root route, NOT `/api/v1/files/...` — that one expects JSON and 400s on raw bytes). Header `X-Update-Range: append` says "concatenate". Returns `204 No Content`.
 
 ```typescript
-import { readFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 // files.append sends raw bytes to PUT /api/v1/files/append/{path}; no cast needed.
-await client.files.append('/home/user/upload-test.bin', readFileSync('/tmp/chunk2.bin'));
+await client.files.append('/home/user/upload-test.bin', randomBytes(8 * 1024 * 1024));
 const s = await client.files.stat('/home/user/upload-test.bin');
 ```
 
-**Step 3 — resume after a network drop.** An append is written as it arrives, so a request that broke off may already have added part of its chunk. Do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The generated SDK sends only appends (`files.append`); explicit byte ranges need raw HTTP.
+**Step 3 — resume after a network drop.** A WebDAV append (`PATCH /{path}` with `X-Update-Range: append`) writes bytes as they arrive, so a request that broke off may already have added part of its chunk. A REST append (`PUT /api/v1/files/append/{path}`, or an upload with `append`) stages the whole body first, so a body that broke off leaves the file unchanged, although a failure during the write that follows can still leave part of the chunk appended. Either way, do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The generated SDK sends only appends (`files.append`); explicit byte ranges need raw HTTP.
 
 ### 4. Time-travel a single file — history → revision N → diff
 
@@ -374,24 +374,25 @@ const r = await client.files.journal.list({ path: '/home/user/files-examples-cle
 
 **Accessor:** `client.files`  |  **Import:** `import * as files from 'hoody-sdk/files'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.files.archives` (4) — Archive operations - extract, preview, download directories as ZIP
 
 #### `extract` — Extract archive
 
 ```typescript
-client.files.archives.extract(path: Parameters<ArchivesServiceBase['__postFileOperation']>[0], options: FacadeWithout<NonNullable<Parameters<ArchivesServiceBase['__postFileOperation']>[1]>, "backend" | "mkdir" | "download_from" | "filename" | "timeout" | "move_to" | "copy_to" | "overwrite"> & FacadeRequire<NonNullable<Parameters<ArchivesServiceBase['__postFileOperation']>[1]>, "owner">)
+client.files.archives.extract(path: string, options: { extract?: string; dest?: string; owner: string })  // → Promise<PostFileOperationResponse>
+client.files.archives.extract(archive: string, options?: { dest?: string; extract?: string })  // → Promise<ExtractArchiveResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `archive` | `string` | path | Yes |  |
-| `extract` | `string` | query | Yes | Empty for full extraction; path for selective (e.g. "src/" or "lib/") |
+| `path` | `string` | path | Yes |  |
+| `extract` | `string` | query | No | Empty for full extraction; path for selective (e.g. "src/" or "lib/") |
 | `dest` | `string` | query | No | Destination directory name (default: archive name) |
-| `owner` | `string` | query | No | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
+| `owner` | `string` | query | Yes | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
-**Returns:** `ReturnType<ArchivesServiceBase['__postFileOperation']>`  |  **HTTP:** `GET /{archive}?extract`
+**Returns:** see each form above  |  **HTTP:** `GET /{archive}?extract`
 **CLI:** `hoody files archives extract`
 
 ---
@@ -759,7 +760,7 @@ client.files.backends.createIclouddrive(data: FilesBackendsCreateIclouddriveRequ
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreateIclouddriveRequest` | body | Yes |  |
 
-**Body:** `{ apple_id*: string="", client_id: string="d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d", cookies: string="", description: string="", encoding: string="50438146", password*: string="", service*: "drive" | "photos"="drive", trust_token: string="" }`
+**Body:** `{ apple_id*: string="", client_id: string="d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d", cookies: string="", description: string="", encoding: string="50438146", password*: string="", service: "drive" | "photos"="drive", trust_token: string="" }`
 
 **Returns:** `Promise<FilesBackendsCreateIclouddriveResponse>`  |  **HTTP:** `POST /api/v1/backends/iclouddrive`
 **CLI:** `hoody files backends iclouddrive create`
@@ -989,7 +990,7 @@ client.files.backends.createPikpak(data: FilesBackendsCreatePikpakRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreatePikpakRequest` | body | Yes |  |
 
-**Body:** `{ chunk_size: string="5242880", description: string="", device_id: string="", encoding: string="56829838", hash_memory_limit: string="10485760", no_media_link: bool=false, pass*: string="", root_folder_id: string="", trashed_only: bool=false, upload_concurrency: int=4, upload_cutoff: string="209715200", use_trash: bool=true, user*: string="", user_agent: string="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" }`
+**Body:** `{ chunk_size: string="5242880", description: string="", device_id: string="", encoding: string="56829838", hash_memory_limit: string="10485760", no_media_link: bool=false, pass: string="", root_folder_id: string="", trashed_only: bool=false, upload_concurrency: int=4, upload_cutoff: string="209715200", use_trash: bool=true, user: string="", user_agent: string="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" }`
 
 - `hash_memory_limit` — Files bigger than this will be cached on disk to calculate hash if required.
 
@@ -1008,7 +1009,7 @@ client.files.backends.createPixeldrain(data: FilesBackendsCreatePixeldrainReques
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreatePixeldrainRequest` | body | Yes |  |
 
-**Body:** `{ api_key: string="", api_url*: string="https://pixeldrain.com/api", description: string="", root_folder_id: string="me" }`
+**Body:** `{ api_key: string="", api_url: string="https://pixeldrain.com/api", description: string="", root_folder_id: string="me" }`
 
 **Returns:** `Promise<FilesBackendsCreatePixeldrainResponse>`  |  **HTTP:** `POST /api/v1/backends/pixeldrain`
 **CLI:** `hoody files backends pixeldrain create`
@@ -1042,7 +1043,7 @@ client.files.backends.createProtondrive(data: FilesBackendsCreateProtondriveRequ
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreateProtondriveRequest` | body | Yes |  |
 
-**Body:** `{ 2fa: string="", app_version: string="", client_access_token: string="", client_refresh_token: string="", client_salted_key_pass: string="", client_uid: string="", description: string="", enable_caching: bool=true, encoding: string="52559874", mailbox_password: string="", original_file_size: bool=true, otp_secret_key: string="", password*: string="", replace_existing_draft: bool=false, username*: string="" }`
+**Body:** `{ 2fa: string="", app_version: string="", client_access_token: string="", client_refresh_token: string="", client_salted_key_pass: string="", client_uid: string="", description: string="", enable_caching: bool=true, encoding: string="52559874", mailbox_password: string="", original_file_size: bool=true, otp_secret_key: string="", password: string="", replace_existing_draft: bool=false, username: string="" }`
 
 **Returns:** `Promise<FilesBackendsCreateProtondriveResponse>`  |  **HTTP:** `POST /api/v1/backends/protondrive`
 **CLI:** `hoody files backends protondrive create`
@@ -1127,7 +1128,7 @@ client.files.backends.createSeafile(data: FilesBackendsCreateSeafileRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreateSeafileRequest` | body | Yes |  |
 
-**Body:** `{ 2fa: bool=false, auth_token: string="", create_library: bool=false, description: string="", encoding: string="50405386", library: string="", library_key: string="", pass: string="", url*: "https://cloud.seafile.com/"="", user*: string="" }`
+**Body:** `{ 2fa: bool=false, auth_token: string="", create_library: bool=false, description: string="", encoding: string="50405386", library: string="", library_key: string="", pass: string="", url*: "https://cloud.seafile.com/"="", user: string="" }`
 
 **Returns:** `Promise<FilesBackendsCreateSeafileResponse>`  |  **HTTP:** `POST /api/v1/backends/seafile`
 **CLI:** `hoody files backends seafile create`
@@ -1412,18 +1413,19 @@ client.files.downloads.cancel(id: string)
 #### `create` — Download file from remote URL
 
 ```typescript
-client.files.downloads.create(path: Parameters<DownloadsServiceBase['__postFileOperation']>[0], options: FacadeWithout<NonNullable<Parameters<DownloadsServiceBase['__postFileOperation']>[1]>, "backend" | "mkdir" | "extract" | "dest" | "move_to" | "copy_to" | "overwrite" | "download_from"> & { download?: NonNullable<Parameters<DownloadsServiceBase['__postFileOperation']>[1]>["download_from"] } & FacadeRequire<NonNullable<Parameters<DownloadsServiceBase['__postFileOperation']>[1]>, "owner">)
+client.files.downloads.create(path: string, options: { filename?: string; timeout?: number; owner: string; download?: string })  // → Promise<PostFileOperationResponse>
+client.files.downloads.create(directory: string, options: { download: string; filename?: string; timeout?: number })  // → Promise<DownloadFromUrlResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `directory` | `string` | path | Yes | Destination directory |
-| `download` | `string` | query | Yes | URL to download from |
+| `path` | `string` | path | Yes | Destination directory |
+| `download` | `string` | query | No | URL to download from |
 | `filename` | `string` | query | No | Custom filename for downloaded file |
-| `timeout` | `integer` | query | No | Download timeout in seconds |
-| `owner` | `string` | query | No | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
+| `timeout` | `number` | query | No | Download timeout in seconds. Default and maximum: 43200 (12 hours) |
+| `owner` | `string` | query | Yes | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
-**Returns:** `ReturnType<DownloadsServiceBase['__postFileOperation']>`  |  **HTTP:** `GET /{directory}?download`
+**Returns:** see each form above  |  **HTTP:** `GET /{directory}?download`
 **CLI:** `hoody files downloads create`
 
 ---
@@ -1458,14 +1460,14 @@ client.files.downloads.listByDirectory(directory: string, options: { downloads: 
 #### `listHistory` — Download history
 
 ```typescript
-client.files.downloads.listHistory(options: { download_history: "" })
+client.files.downloads.listHistory(options?: { download_history?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `download_history` | `""` | query | Yes |  |
+| `download_history` | `""` | query | No |  |
 
-**Returns:** `Promise<FilesDownloadsListHistoryResponse>`  |  **HTTP:** `GET /?download_history`
+**Returns:** `Promise<GetDownloadHistoryResponse>`  |  **HTTP:** `GET /?download_history`
 **CLI:** `hoody files downloads history list`
 
 ---
@@ -1515,14 +1517,14 @@ client.files.extractions.listByDirectory(options: { extractions: "" })
 #### `listHistory` — Extraction history
 
 ```typescript
-client.files.extractions.listHistory(options: { extraction_history: "" })
+client.files.extractions.listHistory(options?: { extraction_history?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `extraction_history` | `""` | query | Yes |  |
+| `extraction_history` | `""` | query | No |  |
 
-**Returns:** `Promise<FilesExtractionsListHistoryResponse>`  |  **HTTP:** `GET /?extraction_history`
+**Returns:** `Promise<GetExtractionHistoryResponse>`  |  **HTTP:** `GET /?extraction_history`
 **CLI:** `hoody files extractions history list`
 
 ---
@@ -1532,13 +1534,16 @@ client.files.extractions.listHistory(options: { extraction_history: "" })
 #### `append` — Append data to file
 
 ```typescript
-client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; contentType?: 'application/octet-stream' })
+client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | File path |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) when this append creates a new file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Absent → server default. |
+| `IfMatch` | `string` | header `If-Match` | No | Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | header `If-Unmodified-Since` | No | Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream<Uint8Array> \| string` | body | Yes |  |
 
 **Returns:** `Promise<FilesAppendResponse>`  |  **HTTP:** `PUT /api/v1/files/append/{path}`
@@ -1587,7 +1592,7 @@ client.files.copy(path: string, options: { copy_to: string; overwrite?: "true" |
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Source file or directory path |
-| `copy_to` | `string` | query | Yes | Destination path to copy the file/directory to |
+| `copy_to` | `string` | query | Yes | Destination path to copy the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `overwrite` | `"true" \| "false"` | query | No | Allow overwriting existing destination (default: false) |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for newly-created copies. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwritten existing files preserve their owner. Absent → server default. |
 
@@ -1612,28 +1617,13 @@ client.files.delete(path: string, options?: { backend?: string })
 
 ---
 
-#### `exists` — Get file metadata
+#### `exists` — Whether a file or directory exists at `path`: true, or false when the kit answers 404.
 
 ```typescript
-client.files.exists(path: string, options?: { history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number })
+client.files.exists(path: string, options?: FilesExistsOptions, templateVars?: FilesReadTarget)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `path` | `string` | path | Yes |  |
-| `history` | `""` | query | No | List all revisions of a file. Returns JSON with revisions array, pagination via after_id. Mutually exclusive with at/revision/diff. |
-| `at` | `string` | query | No | Read file content at a point in time. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. |
-| `revision` | `number` | query | No | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. |
-| `diff` | `""` | query | No | Compute unified diff between two versions. Requires from_seq or from_ts. Optional to_seq or to_ts (defaults to current file). Mutually exclusive with history/at/revision. |
-| `from_seq` | `number` | query | No | Source revision seq number for ?diff. Mutually exclusive with from_ts. |
-| `from_ts` | `string` | query | No | Source timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with from_seq. |
-| `to_seq` | `number` | query | No | Target revision seq number for ?diff. Mutually exclusive with to_ts. Default: current file on disk. |
-| `to_ts` | `string` | query | No | Target timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with to_seq. |
-| `after_id` | `number` | query | No | Cursor for ?history pagination. Returns entries with id > after_id. |
-| `limit` | `number` | query | No | Max entries to return for ?history. |
-
-**Returns:** `Promise<ApiResponse<Record<string, string>>>`  |  **HTTP:** `HEAD /{path}`
-**CLI:** `hoody files exists`
+**Returns:** `Promise<boolean>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
 
 ---
 
@@ -1667,7 +1657,7 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 | `grep` | `string` | query | No | Search file/directory contents for regex pattern (or literal if fixed_string=true). Only where the deployment enabled content search. |
 | `ignore_case` | `boolean` | query | No | Case-insensitive grep matching |
 | `fixed_string` | `boolean` | query | No | Treat grep pattern as literal string, not regex |
-| `glob` | `string` | query | No | Without grep, finds files and folders matching this glob (e.g. '**/*.rs', 'src/**/*.{ts,tsx}'); directory paths only, where the deployment enabled search. With grep, the content-search file filter. Only search files matching this glob (ripgrep -g syntax, one pattern per request, at most 1024 bytes). A pattern without '/' matches file names at any depth ('*.rs', '*.{ts,tsx}'). A pattern with a '/' other than a trailing one matches the path relative to the searched folder, and a leading '/' anchors it there ('src/**/*.go'). '*' stays within one folder and '**' crosses folders. A leading '!' excludes instead ('!*_test.go'; '!vendor/' skips every folder named vendor); write '\!' for a literal '!' and '\#' for a leading '#'. Matching is case-sensitive whatever ignore_case says. A positive pattern ending in '/' names folders only and so selects no files; use 'src/**' for everything under a folder. A pattern that is only whitespace or a comment (an unescaped leading '#') is refused. The filter only narrows the search: it never brings back a file that ignore files or the default exclusion of names starting with '.' leave out; no_ignore and hidden do that. Not applied when the path is a single file. Repeating glob in a content search is refused. |
+| `glob` | `string` | query | No | Without grep, finds files and folders matching this glob (e.g. '**/*.rs', 'src/**/*.{ts,tsx}'); directory paths only, where the deployment enabled search. The pattern is matched against each path relative to the searched folder: '*' stays within one folder and '**' crosses folders, so '*.md' finds only the folder's own files and '**/*.md' finds them at any depth. A pattern starting with '/' or holding a '..' segment is refused with 400. Symbolic links are listed but the search does not go into a linked folder. With grep, the content-search file filter. Only search files matching this glob (ripgrep -g syntax, one pattern per request, at most 1024 bytes). A pattern without '/' matches file names at any depth ('*.rs', '*.{ts,tsx}'). A pattern with a '/' other than a trailing one matches the path relative to the searched folder, and a leading '/' anchors it there ('src/**/*.go'). '*' stays within one folder and '**' crosses folders. A leading '!' excludes instead ('!*_test.go'; '!vendor/' skips every folder named vendor); write '\!' for a literal '!' and '\#' for a leading '#'. Matching is case-sensitive whatever ignore_case says. A positive pattern ending in '/' names folders only and so selects no files; use 'src/**' for everything under a folder. A pattern that is only whitespace or a comment (an unescaped leading '#') is refused. The filter only narrows the search: it never brings back a file that ignore files or the default exclusion of names starting with '.' leave out; no_ignore and hidden do that. Not applied when the path is a single file. Repeating glob in a content search is refused. |
 | `context` | `number` | query | No | Number of context lines before/after each grep match |
 | `max_count` | `number` | query | No | Max matches per file for grep |
 | `max_matches` | `number` | query | No | Total max matches across all files for grep |
@@ -1709,7 +1699,7 @@ client.files.glob(path: string, options: { pattern: string; max_results?: number
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Directory path to search within |
-| `pattern` | `string` | query | Yes | Glob pattern (e.g. '**/*.rs', 'src/**/*.{ts,tsx}', '*.md') |
+| `pattern` | `string` | query | Yes | Glob pattern, matched against paths relative to the searched folder (e.g. '**/*.rs', 'src/**/*.{ts,tsx}', '*.md'). '*' stays within one folder, '**' crosses folders. Cannot start with '/' or contain a '..' segment. |
 | `max_results` | `number` | query | No | Maximum entries to return |
 | `max_depth` | `number` | query | No | Maximum directory recursion depth |
 | `max_files_scanned` | `number` | query | No | Maximum filesystem entries to scan |
@@ -1768,7 +1758,7 @@ client.files.logout(path: string)
 #### `mkdir` — File operations (mkdir, extract, download, move, copy)
 
 ```typescript
-client.files.mkdir(path: Parameters<FilesServiceBase['__postFileOperation']>[0], options?: FacadeWithout<NonNullable<Parameters<FilesServiceBase['__postFileOperation']>[1]>, "mkdir" | "extract" | "dest" | "download_from" | "filename" | "timeout" | "move_to" | "copy_to" | "overwrite">)
+client.files.mkdir(path: string, options?: { backend?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1777,7 +1767,7 @@ client.files.mkdir(path: Parameters<FilesServiceBase['__postFileOperation']>[0],
 | `backend` | `string` | query | No | Backend ID, for mkdir only: create the directory on that remote backend. Any other operation with backend is refused with 400 INVALID_PARAMETER. |
 | `owner` | `string` | query | No | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
-**Returns:** `ReturnType<FilesServiceBase['__postFileOperation']>`  |  **HTTP:** `POST /api/v1/files/{path}`
+**Returns:** `Promise<PostFileOperationResponse>`  |  **HTTP:** `POST /api/v1/files/{path}`
 **CLI:** `hoody files mkdir`
 
 ---
@@ -1791,7 +1781,7 @@ client.files.move(path: string, options: { move_to: string; owner?: string })
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Source file or directory path |
-| `move_to` | `string` | query | Yes | Destination path to move the file/directory to |
+| `move_to` | `string` | query | Yes | Destination path to move the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for newly-created destination PARENT directories. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. The moved inode itself preserves its existing owner. Absent → server default. |
 
 **Returns:** `Promise<FilesMoveResponse>`  |  **HTTP:** `POST /api/v1/files/move/{path}`
@@ -1861,13 +1851,13 @@ client.files.stat(path: string)
 #### `touch` — Touch file (create or update mtime)
 
 ```typescript
-client.files.touch(path: string, options: { touch: "" })
+client.files.touch(path: string, options?: { touch?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | File path to touch |
-| `touch` | `""` | query | Yes | Flag to indicate touch operation |
+| `touch` | `""` | query | No | Flag to indicate touch operation |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PUT /{path}?touch`
 **CLI:** `hoody files touch`
@@ -1898,7 +1888,7 @@ client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?:
 #### `upload` — Upload or append file
 
 ```typescript
-client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; contentType?: 'application/octet-stream' })
+client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -1908,6 +1898,9 @@ client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `append` | `""` | query | No | Append body to end of existing file (create if missing) instead of overwriting |
 | `chmod` | `string` | query | No | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response echoes them in `mode`. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Every refusal comes before the body is read: nothing is created or changed. |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
+| `IfMatch` | `string` | header `If-Match` | No | Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | header `If-Unmodified-Since` | No | Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream<Uint8Array> \| string` | body | Yes |  |
 
 **Returns:** `Promise<FilesUploadResponse>`  |  **HTTP:** `PUT /api/v1/files/{path}`
@@ -1933,17 +1926,20 @@ client.files.whoami(path: string)
 #### `writeChunk` — File operations
 
 ```typescript
-client.files.writeChunk(path: Parameters<FilesServiceBase['__patchFile']>[0], data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: FacadeWithout<NonNullable<Parameters<FilesServiceBase['__patchFile']>[2]>, "XUpdateRange">)
+client.files.writeChunk(path: string, data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: { IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Writes of content (X-Update-Range) only. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | Writes of content (X-Update-Range) only. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | header `If-Unmodified-Since` | No | Writes of content (X-Update-Range) only. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream<Uint8Array>` | body | No |  |
 
 **Body:** `files_ChmodRequest | files_ChownRequest | files_RenameRequest`
 
-**Returns:** `ReturnType<FilesServiceBase['__patchFile']>`  |  **HTTP:** `PATCH /{path}`
+**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PATCH /{path}`
 **CLI:** `hoody files chunks write`
 
 ---
@@ -1951,13 +1947,13 @@ client.files.writeChunk(path: Parameters<FilesServiceBase['__patchFile']>[0], da
 #### `zip` — Download directory as ZIP
 
 ```typescript
-client.files.zip(directory: string, options: { zip: "" })
+client.files.zip(directory: string, options?: { zip?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `directory` | `string` | path | Yes |  |
-| `zip` | `""` | query | Yes |  |
+| `zip` | `""` | query | No |  |
 
 **Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /{directory}?zip`
 **CLI:** `hoody files zip`
@@ -1997,10 +1993,10 @@ client.files.getZipUrl(directory: string, templateVars?: TemplateVars)
 #### `list` — List a directory as JSON: `files.ui.getPage(path, { json: '' })`.
 
 ```typescript
-client.files.list(path: string, options?: Omit<NonNullable<Parameters<FilesUiService['getPage']>[1]>, 'json'>, templateVars?: Parameters<FilesUiService['getPage']>[2])
+client.files.list(path: string, options?: { simple?: ""; sort?: "name" | "mtime" | "size"; order?: "asc" | "desc"; hash?: ""; sha256?: ""; base64?: ""; edit?: ""; view?: ""; download?: "" | "1" | "true"; contentType?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper"; colorScheme?: "light" | "dark"; font?: "ibm-plex-mono" | "cascadia-code" | "fira-code" | "hack" | "inconsolata" | "intel-one-mono" | "iosevka" | "jetbrains-mono" | "meslo-lgs" | "roboto-mono" | "source-code-pro" | "ubuntu-mono"; fontSize?: number; embedderOrigin?: string; chromeless?: boolean; borderless?: boolean; hideHeader?: boolean; hideSidebar?: boolean; hidePreview?: boolean; hideFooter?: boolean; embedBg?: "transparent" }, templateVars?: { projectId?: string; containerId?: string; serviceIndex?: string | number; serverName?: string; server?: string })
 ```
 
-**Returns:** `ReturnType<FilesUiService['getPage']>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
+**Returns:** `Promise<ApiResponse<ArrayBuffer> | FilesUiGetPageResponse>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
 
 ---
 
@@ -2062,13 +2058,13 @@ client.files.ftp.get(path: string, options: { type: "ftp"; server: string; user?
 #### `convert` — Process and convert images
 
 ```typescript
-client.files.images.convert(image: string, options: { thumbnail: ""; format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; q?: number; blur?: number; grayscale?: ""; bg?: string })
+client.files.images.convert(image: string, options?: { format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; q?: number; blur?: number; grayscale?: ""; bg?: string; thumbnail?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `image` | `string` | path | Yes | Path to image file |
-| `thumbnail` | `""` | query | Yes | Enable image processing |
+| `thumbnail` | `""` | query | No | Enable image processing |
 | `format` | `"jpeg" \| "png" \| "webp" \| "gif" \| "bmp"` | query | No | Output format (default: jpeg) |
 | `size` | `string` | query | No | Target box in pixels: WIDTHxHEIGHT, or a single N for an N×N box (max: 2000×2000) |
 | `width` | `number` | query | No | Width in pixels (height auto-calculated) |
@@ -2546,14 +2542,14 @@ client.files.webdav.getOptions(path: string)
 #### `getProperties` — Get WebDAV properties
 
 ```typescript
-client.files.webdav.getProperties(path: string, data?: object, options?: { Depth?: "0" | "1" | "infinity" })
+client.files.webdav.getProperties(path: string, data?: string, options?: { Depth?: "0" | "1" | "infinity" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `"0" \| "1" \| "infinity"` | header | No | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
-| `data` | `object` | body | No |  |
+| `data` | `string` | body | No |  |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PROPFIND /{path}`
 
@@ -2562,14 +2558,14 @@ client.files.webdav.getProperties(path: string, data?: object, options?: { Depth
 #### `lock` — Lock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.lock(path: string, data?: object, options?: { Depth?: "0" | "infinity" })
+client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | "infinity" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `"0" \| "infinity"` | header | No |  |
-| `data` | `object` | body | No |  |
+| `data` | `string` | body | No |  |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `LOCK /{path}`
 
@@ -2608,13 +2604,13 @@ client.files.webdav.unlock(path: string)
 #### `updateProperties` — Update WebDAV properties
 
 ```typescript
-client.files.webdav.updateProperties(path: string, data?: object)
+client.files.webdav.updateProperties(path: string, data?: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
-| `data` | `object` | body | No |  |
+| `data` | `string` | body | No |  |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PROPPATCH /{path}`
 

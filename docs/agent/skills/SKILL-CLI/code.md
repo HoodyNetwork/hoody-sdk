@@ -1,4 +1,4 @@
-> _**CLI skill · `code` namespace** · ~5,005 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `code` namespace** · ~5,197 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `code` — VS Code in the browser, per container
 
@@ -36,7 +36,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 ## Prerequisites
 
 - A running container. Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get`.
-- Address the service through its `code-N` URL. That hostname selects the instance, so the CLI offers no instance flag and the generated SDK sends no `id` unless you pass one. An SDK client pointed at a bare kit server passes `id` itself.
+- Address the service through its `code-N` URL. That hostname selects the instance. The CLI's `code extensions list` and `code extensions install` take `--id <N>` (default 1), which sends the request to the `code-N` host, and the generated SDK sends no `id` unless you pass one. An SDK client pointed at a bare kit server passes `id` itself.
 - VSIX staging needs a downloadable `.vsix` URL that the service may fetch: `http` or `https`, no credentials in the URL, and not an address inside the container or on a private network.
 
 ## Capability URL
@@ -87,7 +87,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 
 ## Common errors
 
-- `403` with the plain-text body `Forbidden` (not JSON): the request came from a private, loopback or otherwise reserved address, such as a process inside the container calling the service directly. Use the `code-N` URL.
+- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON. Use the `code-N` URL, also from inside the container.
 - `400` HTML page from the entry path: exactly one of `folder` and `id` carried a value, `id` is not an unsigned decimal integer or was sent twice, `id` exceeds `65535 - basePort`, or the query is over 8192 bytes. Only a bare kit server hits the first case; behind the edge both are filled.
 - `409` from the entry path: the instance's port is held by a process the orchestrator did not start. Retrying does not help until it is released.
 - `503` from the entry path: the instance did not finish starting in time. Worth retrying.
@@ -110,7 +110,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 
 ```bash
 # The index is in the HOSTNAME (code-1); the edge supplies the instance selector.
-hoody --container "$C" code open 1 --folder /workspace/myrepo --url
+hoody --container "$C" code open 1 --folder /home/user/myrepo --url
 # `--url` prints the URL instead of launching $BROWSER.
 ```
 
@@ -126,17 +126,17 @@ https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=<publisher>.<name>
 
 ```bash
 # Prints the extension-only URL for instance 1. `--open` launches $BROWSER instead.
-hoody --container "$C" code embed saoudrizwan.claude-dev 1 --folder /workspace/myrepo
+hoody --container "$C" code embed saoudrizwan.claude-dev 1 --folder /home/user/myrepo
 ```
 
 Name the extension as `publisher.name`, no version. `hoody code embed` refuses any value that does not match `^[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+$`. A second surface (say Continue, `continue.continue`) goes on its own instance: build the same URL on `code-2`.
 
 ### 3. Open another folder on a running instance
 
-**Goal:** instance 1 is open on `/workspace/myrepo` and you want the editor on `/workspace/other`. Open the same instance URL with the new `folder`: the running instance is reused and the page loads the editor on that folder. `hoody code status` keeps reporting the folder the instance was started with.
+**Goal:** instance 1 is open on `/home/user/myrepo` and you want the editor on `/home/user/other`. Open the same instance URL with the new `folder`: the running instance is reused and the page loads the editor on that folder. `hoody code status` keeps reporting the folder the instance was started with.
 
 ```bash
-hoody --container "$C" code open 1 --folder /workspace/other --url
+hoody --container "$C" code open 1 --folder /home/user/other --url
 ```
 
 Add `restart=true` only when the process itself must restart, for example to apply a staged extension (Example 4). Restarting ends that instance's running editor session, including its terminals. Other instances are untouched.
@@ -187,7 +187,7 @@ hoody --container "$C" code extensions list -o json \
   | jq -e 'any(.observed.extensions[]?; .logicalKey == "saoudrizwan.claude-dev" and .status == "running")'
 ```
 
-An instance that has not started since the rebuild lists as `stopped`, and a stage it has not applied yet as `stale`; open the instance's URL once before the check.
+An instance that has not started since the rebuild reports every entry as `stopped`, including a staged version it has not installed yet; a running instance that has not installed the stage reports `stale` (`failed` if it started after the stage and its install grace has passed). Open the instance's URL once before the check.
 
 ### 7. Embed the editor in your own page, behind a branded URL
 
@@ -196,31 +196,31 @@ An instance that has not started since the rebuild lists as `stopped`, and a sta
 ```html
 <!-- Full editor, with a folder pre-loaded -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=/workspace/myrepo"
+  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=/home/user/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write; cross-origin-isolated"
 ></iframe>
 
 <!-- Single extension only (no IDE chrome) — Cline as a service -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo"
+  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/home/user/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write"
 ></iframe>
 ```
 
-To keep the `containerId` out of the iframe `src`, create a proxy alias on the `code` service with the landing query as its `target_path`, and use the URL the call returns:
+To keep the `containerId` out of the iframe `src`, create a proxy alias on the `code` service with the landing query as its `target_path`, and use the URL the call returns. Leave `id` out of the target: the alias's `index` picks the instance, and a target query naming `id` is refused with `404 ALIAS_TARGET_QUERY_FORCED_KEY`. The `folder` (and `extension`) in the target is a landing preference only: the editor opens there, but it does not confine the session, and anyone using the editor can open any other folder the container user can read.
 
 ```bash
 hoody proxy aliases create --container-id "$C" --program code --index 1 --alias agent \
-  --target-path '/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo&id=1'
+  --target-path '/?extension=saoudrizwan.claude-dev&folder=/home/user/myrepo'
 ```
 
 Gate the alias with `hoody containers proxy *` before sharing it (see the `api` namespace). The same iframe pattern works for **every** Hoody kit (`files`, `terminal`, `display`, `desktop`, `browser`, `notes`, `agent`, …).
 
 ## Reference
 
-### `hoody code` (7) — VS Code server
+### `hoody code` (8) — VS Code server
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
@@ -230,5 +230,6 @@ Gate the alias with `hoody containers proxy *` before sharing it (see the `api` 
 | `hoody code health` |  | read | Service health check | `code.kit.getHealth` | `hoody code health` |
 | `hoody code open` |  | action | Open the Code kit editor on a folder in your browser |  | `hoody code open --folder /home/user/project` |
 | `hoody code status` |  | read | Orchestrator configuration and running editor instances | `code.kit.getStatus` | `hoody code status` |
+| `hoody code stop` |  | action | Stop an editor instance; its settings, extensions and workspace state are kept | `code.stop` | `hoody code stop 1` |
 | `hoody code version` |  | read | Versions of the running orchestrator and its packaged editor | `code.kit.getVersion` | `hoody code version` |
 

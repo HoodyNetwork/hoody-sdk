@@ -1,4 +1,4 @@
-> _**SDK skill · `cron` namespace** · ~6,924 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `cron` namespace** · ~7,251 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `cron` — managed crontab entries per system user
 
@@ -59,11 +59,12 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `user`: matches `^[A-Za-z0-9_.-]{1,32}$` for the character class, but the validator additionally rejects a **leading** `-` (trailing `-` is allowed).
 - Vixie 5-field plus standard `@`-macros; Quartz rejected.
 - `command`/`name`/`comment` reject newline/null/VT/FF/NEL/LS/PS; caps 4096/120/500.
-- The kit collapses runs of whitespace inside the command of a managed entry with a 5-field schedule: when the spool is parsed back, the command is split on whitespace and re-joined with single spaces, and the next write for that user stores the collapsed text. `echo "a  b"` becomes `echo "a b"`. An `@macro` schedule keeps the command as written. Put commands that depend on exact spacing in a script and schedule the script.
+- Send a managed entry's command exactly as a shell would run it, and do not escape `%`: the kit writes it into the crontab as `\%` so cron runs the command unchanged and reads it back the same way. A `\%` you send is escaped again and runs as `\%`, backslash included. Raw lines in a `crontabs.set` body are written as given, so a `%` there follows crontab rules: a bare `%` ends the command, and `\%` is a literal `%`.
+- A managed entry's command is read back from the spool exactly as written, runs of whitespace included, so a later write for that user stores it unchanged: `echo "a  b"` stays `echo "a  b"`.
 - `expires_at` RFC 3339, strictly future.
 - Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
 - **`crontabs.set` replaces the whole crontab.** `crontabs.get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `crontabs.get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
-- A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line.
+- A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line. Every other non-comment line gets the syntax check of `crontab(1)`: a line it would refuse is `400 INVALID_CRONTAB` naming that line, and nothing is written.
 - `entries.list`/`entries.get` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
 - `entries.list` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
 - Sweep every 60s default; per-user lock.
@@ -78,10 +79,10 @@ Error bodies are `{ code, message, details }`, except where noted.
 - `400 INVALID_ID` `Entry id must be a UUID`: the `{id}` path segment is not a UUID.
 - `400 INVALID_PAGINATION`: `page` must be 1 or more and `limit` 1 to 200 (default 50).
 - `404 USER_NOT_FOUND`: the user is not in `/etc/passwd`. `404 ENTRY_NOT_FOUND`: no managed entry has that id (it may have expired and been swept).
-- `413`: a request body over the size cap (256 KiB by default) is rejected by the HTTP layer before the handler runs, with a plain-text body, not JSON. The JSON `PAYLOAD_TOO_LARGE` comes from the crontab parser: for a crontab over 10,000 lines, or over its separate byte ceiling of about 40 MB, which only a deployment that raised the size cap can reach.
-- `415` (the body is not `application/json`) and `422` (the JSON does not match the request schema) come from the JSON extractor, with a plain-text body.
+- `413 PAYLOAD_TOO_LARGE`: a request body over the size cap (256 KiB by default), or a crontab over 10,000 lines or over its separate byte ceiling of about 40 MB, which only a deployment that raised the size cap can reach.
+- `415 UNSUPPORTED_MEDIA_TYPE`: the Content-Type is neither `application/json` nor an `application/*+json` type. `400 INVALID_JSON`: the body is not valid JSON. `400 INVALID_BODY`: the JSON does not match the request fields (a missing or mistyped field).
 - `500 BACKEND_ERROR` — `crontab(1)` fail / 30s timeout.
-- `403 Forbidden` — private IP, no dev-server.
+- `403 Forbidden` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON.
 
 ## Related namespaces
 
@@ -100,7 +101,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 ```typescript
 const r = await client.cron.entries.create('root', {
   schedule: '0 2 * * *',
-  command: 'pg_dump -U postgres mydb | gzip > /backups/db-$(date +\\%F).sql.gz',  // `%` MUST be escaped — crontab truncates at a bare %
+  command: 'pg_dump -U postgres mydb | gzip > /backups/db-$(date +%F).sql.gz',  // write `%` as is: the kit escapes it for cron
   name: 'nightly-db-backup',
   expires_at: new Date(Date.now() + 365 * 86_400_000).toISOString(),  // must be in the future
 });
@@ -154,11 +155,13 @@ await Promise.all(ids.map(id => client.cron.entries.update('root', id, { enabled
 
 ```typescript
 const listed = await client.cron.entries.listAll('root');
-// Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO=, ...).
+// Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO = ..., "A B" = c).
 const toMigrate = listed
   .flatMap(e => (e.type === 'raw' ? [e.line] : []))
-  .filter(l => !/^\s*($|#|[A-Za-z_][A-Za-z0-9_]*=)/.test(l));
+  .filter(l => !/^\s*($|#|([A-Za-z_][A-Za-z0-9_]*|"[^"]*"|'[^']*')\s*=)/.test(l));
 ```
+
+**Before step 2 — check every line for `%` and `\`.** A raw line is in crontab syntax and a managed command is not: in a raw line a bare `%` ends the command and sends the rest to its stdin, and `\%` and `\\` stand for `%` and `\`, while the kit escapes a managed command itself (see Quirks). The scripts below copy the command text as it is, so they keep a line's meaning only when it contains neither `%` nor `\`. Take any other line out of the step 1 list and migrate it by hand: write the command cron actually runs (`\%` becomes `%`, `\\` becomes `\`, and a `%`-delimited stdin becomes a pipe or a here-string) and create its entry from that. Step 3 drops only the lines still in the list, so remove the raw lines you migrated by hand the same way, or each of those jobs runs twice.
 
 **Step 2 — create a managed entry per line.** An `@macro` line (`@daily`, `@reboot`, ...) has a one-field schedule; any other line has five fields. The rest of the line is the command.
 
@@ -293,7 +296,7 @@ For each non-empty user, drill in via `entries.list` for that user for the manag
 const snapshot = (await client.cron.crontabs.get('root')).data;
 ```
 
-**Step 2 — push the canonical config.** Body MUST be `application/json` (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
+**Step 2 — push the canonical config.** Body MUST use `application/json` or an `application/*+json` Content-Type (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
 
 ```typescript
 import { readFileSync } from 'fs';
@@ -303,7 +306,7 @@ await client.cron.crontabs.set('root', { crontab: newCrontab });
 
 ### 9. Update only the comment / metadata, leave the schedule untouched
 
-**Goal:** add a runbook URL or owner tag without changing the schedule or the enabled state. PATCH is partial — fields you don't pass are not assigned. The write still rewrites the user's whole crontab, so runs of whitespace inside a five-field managed entry's command are collapsed (see Quirks).
+**Goal:** add a runbook URL or owner tag without changing the schedule or the enabled state. PATCH is partial — fields you don't pass are not assigned.
 
 ```typescript
 await client.cron.entries.update('root', id, {
@@ -311,7 +314,7 @@ await client.cron.entries.update('root', id, {
 });
 ```
 
-`updated_at` advances; `schedule` and `enabled` are unchanged, and `command` is unchanged unless it contained runs of whitespace, which the rewrite collapses.
+`updated_at` advances; `schedule`, `enabled` and `command` are unchanged.
 
 ### 10. Rotate-and-replace pattern — read, edit text, write back
 
@@ -332,7 +335,7 @@ await client.cron.crontabs.set('root', { crontab: next });
 
 **Accessor:** `client.cron`  |  **Import:** `import * as cron from 'hoody-sdk/cron'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.cron.crontabs` (5) — Raw crontab management
 
@@ -359,8 +362,8 @@ client.cron.crontabs.list(options?: { page?: number; limit?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<CronCrontabsListResponse>`  |  **HTTP:** `GET /crontab`
 **CLI:** `hoody cron crontabs list`
@@ -375,8 +378,8 @@ client.cron.crontabs.listAll(options?: { page?: number; limit?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `cron_RawCrontabResponse`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /crontab`
 **CLI:** `hoody cron crontabs list`
@@ -391,8 +394,8 @@ client.cron.crontabs.listIterator(options?: { page?: number; limit?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `AsyncGenerator<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_RawCrontabResponse`.  |  **HTTP:** `GET /crontab`
 **CLI:** `hoody cron crontabs list`
@@ -474,8 +477,8 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `user` | `string` | path | Yes | System username |
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<CronEntriesListResponse>`  |  **HTTP:** `GET /users/{user}/entries`
 **CLI:** `hoody cron entries list`
@@ -491,8 +494,8 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `user` | `string` | path | Yes | System username |
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.entries`, all pages collected (`list()` fetches one page). Each item is `cron_CrontabEntryView`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /users/{user}/entries`
 **CLI:** `hoody cron entries list`
@@ -508,8 +511,8 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `user` | `string` | path | Yes | System username |
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `AsyncGenerator<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.entries` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_CrontabEntryView`.  |  **HTTP:** `GET /users/{user}/entries`
 **CLI:** `hoody cron entries list`

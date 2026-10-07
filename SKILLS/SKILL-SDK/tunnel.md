@@ -1,4 +1,4 @@
-> _**SDK skill · `tunnel` namespace** · ~5,947 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `tunnel` namespace** · ~6,239 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `tunnel` — reverse tunnels for HTTP/WS/TCP via container relay
 
@@ -67,7 +67,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 ## Quirks & gotchas
 
-- The data plane (expose / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 22.23+ (24.18+ on the 24 line; the listening-server form is Bun-only). The generated `tunnel` namespace covers only the read/observability + admin surface (`tunnel.list`, `sessions.list`, `bindings.list`, `kit.getMetrics`, `sessions.close`) — the driver itself ships alongside it. On a `withContainer()` client use `box.tunnel.expose` / `box.tunnel.pull` / `box.tunnel.serve`: they build the tunnel WebSocket URL from the container and send the client's `kitAuth`. The package-root `tunnelExpose` / `tunnelPull` / `tunnelServe` take an explicit `url` instead.
+- The data plane (expose / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 20.3+ (22+ recommended: Node 20 is end-of-life; the listening-server form is Bun-only). On Node releases whose built-in WebSocket is affected by CVE-2026-12151 (before 22.23.0, all of 23 and 25, 24 before 24.17.0, 26 before 26.3.1) the tunnel socket is opened with the `ws` package instead. The generated `tunnel` namespace covers only the read/observability + admin surface (`tunnel.list`, `sessions.list`, `bindings.list`, `kit.getMetrics`, `sessions.close`) — the driver itself ships alongside it. On a `withContainer()` client use `box.tunnel.expose` / `box.tunnel.pull` / `box.tunnel.serve`: they build the tunnel WebSocket URL from the container and send the client's `kitAuth`. The package-root `tunnelExpose` / `tunnelPull` / `tunnelServe` take an explicit `url` instead.
 - `BIND_OK.publicUrl` is `null` on deployments that do not mint public tunnel URLs — the bind still works, you just reach it another way.
 - `grace_ms` capped at 5000ms; over → `400`.
 - `containerPort: 0` requests an automatically allocated port; ports 1–79 are rejected; `80..=1023` are refused unless the deployment allows privileged ports (gated separately for expose and for pull).
@@ -77,16 +77,16 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 - Multi-WS (v2) drop semantics: dropping the **primary** socket closes the whole session; dropping a **secondary** shard makes the driver close streams pinned to that shard while the kit detaches the shard and the session continues.
 - Pre-auth connection cap defaults to 32; exceeding it closes the socket before HELLO (no explicit close code). HELLO timeout defaults to 5 s.
 - **No UDP support.** EXPOSE is HTTP/1.1+WS only; PULL is TCP only.
-- `GET /api/v1/tunnel/connect` (operation `tunnelConnect`) is the WS-upgrade endpoint of the data plane. It has no generated SDK method: a plain HTTP GET cannot perform the upgrade, so the SDK omits it. Use the driver helpers (`box.tunnel.expose` / `pull` / `serve` on a container-scoped client, or the package-root `tunnelConnect` / `TunnelSession`, `tunnelExpose`, `tunnelPull`, `tunnelServe`), which handle the WS subprotocol and HELLO frame; resuming a session takes the low-level `TunnelSession` (`resumeSessionId`).
+- `GET /api/v1/tunnel/connect` (operation `tunnelConnect`) is the WS-upgrade endpoint of the data plane. It has no generated SDK method: a plain HTTP GET cannot perform the upgrade, so the SDK omits it. Use the driver helpers (`box.tunnel.expose` / `pull` / `serve` on a container-scoped client, or the package-root `tunnelConnect` / `TunnelSession`, `tunnelExpose`, `tunnelPull`, `tunnelServe`), which handle the WS subprotocol and HELLO frame. `keepTunnelAlive` resumes a dropped session while the kit still holds its bindings; to resume by hand, use the package-root `tunnelResumeExpose` / `tunnelResumePull` with `sessionId`, or the low-level `TunnelSession` with `resumeSessionId`.
 
 ## Common errors
 
 - `404` on kill — session gone; no retry.
-- `403` — SSRF guard; not via the edge proxy.
+- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The response is a bare 403.
 - Upgrade `400` — missing/unsupported subprotocol; WS `1002` — HELLO rejected after upgrade; plain socket close — HELLO timeout or pre-auth cap reached.
-- `BIND_ERR` codes: `ALREADY_BOUND` (retry `takeover:true`), `PORT_IN_USE`, `RESERVED_PORT`, `INVALID_HOST`, `PRIVILEGED_PORT`, `BIND_CAP_EXCEEDED`, `INVALID_KIND` (unsupported `(kind, mode)` combo, or `takeover:true` on PULL), `INTERNAL` (server-side, e.g. random-port exhaustion).
+- `BIND_ERR` codes: `ALREADY_BOUND` (EXPOSE: retry with `takeover:true`; PULL: pick another port or close the owning session), `PORT_IN_USE`, `RESERVED_PORT`, `INVALID_HOST`, `PRIVILEGED_PORT`, `BIND_CAP_EXCEEDED`, `INVALID_KIND` (unsupported `(kind, mode)` combo, or `takeover:true` on PULL), `INTERNAL` (server-side, e.g. random-port exhaustion).
 - `GOAWAY` on an idle or unanswered-PING session: the body is a JSON object whose `code` is a **number**, `10`, and whose `message` reads `session idle timeout` or `pong timeout`; its two other fields are always `0`. Compare it against the SDK's exported `TunnelResetCode` (`IdleTimeout = 0x000a`, and `BindTakeover = 0x000d` for the RESET case below) rather than a bare literal, and treat `message` as human-readable only. Reconnect via `resume.sessionId`.
-- `503`+`Retry-After:5` at visitor URL — orphan takeover-grace window (set by `expose` driver kill, NOT by admin `sessions.close` which skips orphan parking).
+- `503`+`Retry-After:5` at visitor URL — orphan takeover-grace window. Only a primary socket that drops without a close frame (a killed driver, a lost network), or closes with a code other than 1000, parks its bindings; a client `GOAWAY`, a close frame with no code or code 1000 (what a clean driver close sends), or admin `sessions.close` ends the session without parking.
 
 ## Related namespaces
 
@@ -136,6 +136,8 @@ console.log({
 **Goal:** you got a `sessionId` from #2; now you want the session detail (who's connected, how loaded). Returns `peerAddr` (`<ip>:<port>` of the laptop holding the tunnel), `connectionsGranted` (the negotiated WebSocket pool size: 1 for v1, 1–16 for v2), `activeStreams` (right now), `maxStreams` (negotiated cap), `isV2` (control-plane protocol), and `bindings[]`.
 
 ```typescript
+const sid = process.env.SID;
+if (!sid) throw new Error('Set SID to a sessionId returned by example 2');
 const r = await client.tunnel.sessions.list();
 const s = r.data!.sessions.find(x => x.sessionId === sid);
 if (s) console.log({
@@ -193,7 +195,7 @@ For a dashboard, register the kit URL as a Prometheus scrape target through an a
 
 **Goal:** a teammate's tunnel expose session is wedged; you want it gone without restarting the kit. `sessions.close` returns `202` with `{sessionId, status}`. `grace_ms` ∈ [0, 5000] (default 50, anything above 5000 → `400`); it bounds how long the kit spends sending a best-effort GOAWAY before teardown. It is not a drain period: in-flight streams can be cut off. Orphan sessions skip the parking grace window and drop immediately.
 
-⚠ Don't run this in the doc as live verification — it kills whoever's actually connected. Recipe only.
+⚠ Closing a session cuts off whoever is connected to it, including its in-flight streams. Pick the intended session before running this recipe.
 
 ```typescript
 const list = await client.tunnel.sessions.list();
@@ -203,7 +205,7 @@ const r = await client.tunnel.sessions.close(stuck.sessionId, { grace_ms: 1000 }
 console.log(r.data); // { sessionId, status: 'closing' }
 ```
 
-After a non-admin driver disconnect, visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace (default 60 s). PULL listeners also stay bound during that grace, but drop each new connection while no live session holds them. `sessions.close` (admin) skips orphan parking and starts teardown, so do **not** expect that 503 window from an admin kill; its `202` means teardown was initiated, not that it has finished, so re-list to confirm.
+After an unclean driver disconnect (the socket drops without a close frame, or closes with a code other than 1000), visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace (default 60 s); a clean close (`GOAWAY`, or close code 1000) releases the bindings at once. PULL listeners also stay bound during that grace, but drop each new connection while no live session holds them. `sessions.close` (admin) skips orphan parking and starts teardown, so do **not** expect that 503 window from an admin kill; its `202` means teardown was initiated, not that it has finished, so re-list to confirm.
 
 ### 7. Auto-discover orphans + low-FD alert (monitoring recipe)
 
@@ -223,7 +225,7 @@ Only the process that owns a tunnel sees its `GOAWAY` and `RESET` frames: openin
 
 **Accessor:** `client.tunnel`  |  **Import:** `import * as tunnel from 'hoody-sdk/tunnel'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.tunnel.bindings` (1) — Tunnel control plane (WebSocket + health + management)
 

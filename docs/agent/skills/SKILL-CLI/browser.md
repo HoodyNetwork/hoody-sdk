@@ -1,4 +1,4 @@
-> _**CLI skill · `browser` namespace** · ~7,293 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `browser` namespace** · ~7,701 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `browser` — Per-container Chromium or Firefox instances, one per slot
 
@@ -43,7 +43,7 @@ After browse: `hoody browser html get`/`hoody browser text get`/`hoody browser s
 
 ### 3. Authenticated scraping
 1. `hoody browser start` matching `userAgent`/`viewport`/`locale`.
-2. `hoody browser cookies batch set` with a `cookies` list of `{name, value, url}` entries; each cookie requires `url`. Pass one `--cookies name=…,value=…,url=…` flag per cookie.
+2. `hoody browser cookies batch set` with a `cookies` list of `{name, value, url}` entries; each cookie needs `name`, `value` and either an absolute http(s) `url` or both `domain` and `path` (never `url` together with `domain` or `path`). Pass one `--cookies name=…,value=…,url=…` flag per cookie.
 3. `hoody browser navigate` to protected URL.
 4. `hoody browser html get`/`hoody browser text get`.
 5. `hoody browser cookies clear`.
@@ -75,22 +75,22 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 
 ## Quirks & gotchas
 
-- `browser_id` does NOT select an instance (the spec marks it deprecated). The `browser-X` hostname does: the proxy derives `browser_port` 30000+X and `display` 500+X from it and overrides caller-supplied values, so calls that differ only in `browser_id` or `browser_port` reach the same instance. Choose the slot with `--browser-id X` as a number (the CLI puts it in the hostname; a non-numeric value falls back to slot 1). The only endpoint that reads `browser_id` is history, as a filter equal to X.
+- The `browser-X` hostname selects the instance: the proxy derives `browser_port` 30000+X and `display` 500+X from it and overrides caller-supplied values. A `browser_id` (or another instance selector in the query or JSON body) that names a different instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`, `details.field` naming it, and nothing runs: leave it out or call that instance's own host. Choose the slot with `--browser-id X` as a number (the CLI puts it in the hostname; a value that is not a whole number such as 0, 1, 2 is refused with an error before any request is sent). On history, `browser_id` also filters, equal to X.
 - Endpoints auto-create unless `start=false`. Where a deployment disables auto-start, only an explicit `start=true` creates an instance. `hoody browser snapshot get`, `hoody browser act` and `hoody browser wait` never create one.
 - `stealth` defaults true; bare `?stealth`=true. Mid-flight change throws `Instance backend mismatch` — `hoody browser stop` first.
 - `stealth=true` is ignored on Firefox: the stealth engine is Chromium-only.
 - Extensions need `showBrowser=true` and run on a persistent profile.
 - `chromiumVersion`: full / major / channel (`stable|beta|dev|canary`); first new version blocks on download.
 - Console/network logs: 500-entry ring buffers — drain or filter `since`.
-- **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
+- **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), a top-level page navigation (including a person clicking around in the live view), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
 - Instances do NOT survive kit-process restarts: graceful shutdown (SIGTERM/SIGINT) terminates every child.
 - History records ALL navs (incl. headful clicks) at `/hoody/storage/hoody-browser/history`, retained 30 d by default. Where a deployment turns history off, the history endpoints answer `404 HISTORY_DISABLED`.
-- **`hoody browser history clear` with no filters wipes all history** — pair `before` + `browser_id` (or both).
+- **`hoody browser history clear` is scoped by the host:** through a `browser-N` host it clears only instance N's history (add `before` to keep newer entries); a `browser_id` naming another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`. To clear several instances, call it on each instance's host.
 - `browser_id` history filter sanitised as path component.
 - **On the default stealth engine (`stealth=true`, `engine: patchright`), `eval` runs the script in an isolated JavaScript world.** It sees the DOM, but not the globals the page's own scripts define (`window.__NEXT_DATA__`, SPA stores, config objects): those read as `undefined` and the call still returns 200. On `stealth=false` (`engine: playwright`) the script runs in the page's main world. To read page JS state, start the slot with `stealth=false`, or read what the page wrote into the DOM (for example the text of `<script id="__NEXT_DATA__">`).
 - `eval` POST accepts JSON `{"script":"..."}` (what the SDK and CLI send) or a `Content-Type: text/plain` body holding the raw script. The response is `{ "result": ... }`.
 - **A ref-addressed `hoody browser act` that navigates the page itself (a link click, a submit, a `pushState`) can answer `409 STALE_SNAPSHOT` with `details.outcome: "unknown"` after the action already ran.** `outcome` is `not-started` (never dispatched, safe to repeat), `unknown` (dispatched, result not observed) or `completed`. On `unknown`, check the page (`hoody browser wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
-- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `hoody browser devtools urls get` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `hoody browser devtools urls get` returns rather than building one. Where the deployment publishes CDP relay URLs, they are on the `cdp-X` host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); otherwise (the kit's default) they are on the `http-<port>` host, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")` on a `cdp-X` deployment). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
+- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `hoody browser devtools urls get` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `hoody browser devtools urls get` returns rather than building one. By default the returned URLs are on the `cdp-X` relay host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); a deployment that turns the relay URLs off returns the legacy `http-<port>` host instead, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")`). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
 - Launch options: the `viewport` and `geolocation` query parameters are **JSON strings**, not free-form `"WxH"` / `"lat,lng"`; the kit `JSON.parse`s a string value and rejects one that does not parse. In a JSON request body the same fields may also be plain objects. Examples: `viewport='{"width":1280,"height":800}'`, `geolocation='{"latitude":48.8,"longitude":2.3,"accuracy":50}'`. A launch `viewport` of `null` or `none` turns off fixed-viewport emulation. The runtime `hoody browser viewport set` is different: its body is an object, `{"viewport":{"width":1280,"height":800}}` or `{"viewport":null}` (integers 1–8192); a string there is a 400 `VALIDATION_ERROR`.
 - `hoody browser viewport set` takes `{viewport:{width, height}}` (1-8192 px) or `{viewport:null}` for responsive. `hoody browser viewport set` sends only a fixed size. Responsive works only on Chromium (`501 NOT_SUPPORTED`) and only on an instance started responsive (`409 REQUIRES_RESTART`: stop it and start it again with `viewport=null`). `502 VIEWPORT_APPLY_INCOMPLETE` means the policy was kept but some tabs did not apply it (`details.failedTabs`). `hoody browser viewport get` never starts an instance.
 - Screenshot `format` enum is `png | jpeg | base64` (NO `json`). Base64 mode returns `{ data: "<b64>" }` only — there is NO `mimeType` or `dataUrl` in the response (the kit's JSON body has `data` only).
@@ -98,11 +98,11 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 ## Common errors
 
 - `VALIDATION_ERROR` 400 — malformed `viewport`/`geolocation`, history `limit` not 1–500, `offset`<0.
-- `NOT_FOUND` 404 `Instance not found` — `hoody browser stop`, `hoody browser devtools urls get`, `start=false` no instance; also `hoody browser snapshot get`/`hoody browser act`/`hoody browser wait` on an empty slot, since they never auto-start.
+- `NOT_FOUND` 404 `Instance not found` — `hoody browser stop`, `hoody browser shutdown`, `hoody browser devtools urls get`, `start=false` no instance; also `hoody browser snapshot get`/`hoody browser act`/`hoody browser wait` on an empty slot, since they never auto-start.
 - `HISTORY_DISABLED` 404 `History is disabled` — history endpoints where the deployment turned history off.
 - `INSTANCE_BACKEND_MISMATCH` 409 (message starts `Instance backend mismatch`) — `stealth` differs from the running instance's backend; `hoody browser stop` then `hoody browser start`.
 - `VALIDATION_ERROR` 400 `display is required when showBrowser=true (no DISPLAY detected)` — `showBrowser=true` with no `display` field on `hoody browser start` and no `$DISPLAY` env.
-- `TIMEOUT` 408 — the request passed the kit's request deadline (600 s by default).
+- `TIMEOUT` 408 / 504 — the request passed the kit's request deadline (600 s by default). While the request is launching or restarting the instance this is a 504 with `details.phase: "launch"` and `details.outcome: "unknown"`: the instance may still come up, so check `hoody browser get` with `start=false` before retrying. After the request was forwarded to a running instance it is a 504 with `details.phase: "proxy"` and `details.outcome: "unknown"`: the call may already have taken effect (a `hoody browser viewport set` included), so inspect the state before repeating a mutation. A request that times out before either is a 408.
 - `TIMEOUT` 504 — an automation call (`hoody browser snapshot get`, `hoody browser act`, `hoody browser wait`) spent its `timeoutMs` budget (default 10000, max 30000). `details.phase` says where; `details.outcome` `not-started` means the action was never dispatched. For `hoody browser wait` this is how a condition that never held is reported.
 - `STALE_SNAPSHOT` 409 — the ref's snapshot is no longer the tab's latest, or the main frame navigated; take a new snapshot. Read `details.outcome` before repeating an action (see Quirks).
 - `INSTANCE_CHANGED` 409 — the `instanceGeneration` sent no longer matches the running instance (`details.expected` is null when no instance exists); re-read `hoody browser get`.
@@ -124,7 +124,7 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. ⚠ The `browser-X` hostname selects the instance; a caller-supplied `browser_id` or `browser_port` does not (see the Quirks gotcha). Examples 1–5 and 8–9 use slot 1 (`browser-1`, `--browser-id 1`); Examples 6 and 7 use slots 2 and 3 so their different launch options do not collide with slot 1's running instance.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. ⚠ The `browser-X` hostname selects the instance; a `browser_id` or `browser_port` that names another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT` (see the Quirks gotcha). Examples 1–5 and 8–9 use slot 1 (`browser-1`, `--browser-id 1`); Examples 6 and 7 use slots 2 and 3 so their different launch options do not collide with slot 1's running instance.
 
 ### 1. Spin up a headless instance and navigate to a URL
 
@@ -177,10 +177,10 @@ hoody --container "$C" browser evaluate --browser-id 1 \
 
 ### 5. Set cookies and read them back
 
-**Goal:** prime the cookie jar, then verify. POST body is a JSON object `{ cookies: [...] }` whose entries are `{ name, value, url }` plus optional `domain`, `path`, `httpOnly`, `secure`. `url` is required on every cookie.
+**Goal:** prime the cookie jar, then verify. POST body is a JSON object `{ cookies: [...] }` whose entries need `name`, `value`, and either an absolute http(s) `url` or both `domain` and `path`; do not combine `url` with `domain` or `path` (400 `VALIDATION_ERROR` naming the field). Optional: `httpOnly`, `secure`, `sameSite` (`Strict|Lax|None`), `expires` (Unix seconds, -1 = session).
 
 ```bash
-# One --cookies per cookie: comma-separated key=value pairs; url is required.
+# One --cookies per cookie: comma-separated key=value pairs; url, or domain + path.
 hoody --container "$C" browser cookies batch set --browser-id 1 \
   --cookies name=session,value=abc123,url=https://httpbin.org \
   --cookies name=theme,value=dark,url=https://httpbin.org
@@ -230,10 +230,10 @@ hoody --container "$C" browser history list \
   | jq '{total, has_more}'
 hoody --container "$C" browser history list --domain httpbin.org --limit 20 -o json \
   | jq '.entries | length'
-# `history delete` is interactive (requiresConfirmation: true); pass --yes or use SDK for non-interactive.
-hoody --container "$C" browser history clear -y \
+# `history clear` asks for confirmation; pass -y/--yes to run it non-interactively.
+hoody --container "$C" browser history clear --yes \
   --before "$(date -u -d '7 days ago' +%FT%TZ)" \
-  --browser-id 1 --yes
+  --browser-id 1
 ```
 
 ### 9. Capture instance metadata (engine, viewport, debug URL)
@@ -252,7 +252,7 @@ For an external CDP attachment, `hoody browser devtools urls get` returns the li
 
 **Goal:** browser instances stay alive across requests until they are stopped or the kit process restarts (graceful kit restart SIGTERMs every child — see Quirks & gotchas). The idle sweep reaps an instance nobody has used for the max age (1 h by default), so a forgotten instance is eventually reclaimed, and one you still need must see a request at least once per idle window. Each slot has a fixed port, so a slot whose previous process has not been confirmed exited answers `502 INSTANCE_QUARANTINED` until it has; retry later rather than restarting the container.
 
-`hoody browser stop` and `hoody browser shutdown` both terminate the child and delete any extension profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`); persistent profile dirs only exist when extensions were loaded. One `hoody browser stop` per instance is a complete teardown — calling both is redundant.
+`hoody browser stop` and `hoody browser shutdown` both terminate the child and delete its profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`). Every Chromium instance runs on a persistent profile of its own, with or without extensions (an extension profile under the kit's browser data dir, otherwise under the temp dir), and every exit removes it, so cookies and logins do not carry over to the next instance. One `hoody browser stop` per instance is a complete teardown — calling both is redundant.
 
 ```bash
 for X in 1 2 3; do
@@ -261,7 +261,7 @@ done
 hoody --container "$C" browser stats -o json | jq '.instances'
 ```
 
-A `404 Instance not found` from `hoody browser stop` means it was already gone — safe to ignore. Use `hoody browser stop` for teardown: it never creates an instance. `hoody browser shutdown` goes through auto-start like other endpoints, so on an empty slot it first starts a browser. The CLI command has no `--start` flag, so it cannot opt out.
+A `404 Instance not found` from `hoody browser stop` means it was already gone — safe to ignore. Neither `hoody browser stop` nor `hoody browser shutdown` creates an instance: on an empty slot both answer `404 Instance not found`. `hoody browser stop` terminates the child before it answers; `hoody browser shutdown` answers 200 as soon as shutdown starts and finishes in the background, so poll `hoody browser get` with `start=false` until it answers 404 to confirm the instance is gone.
 
 ## Reference
 

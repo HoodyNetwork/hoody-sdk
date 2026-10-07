@@ -1,4 +1,4 @@
-> _**HTTP skill · `browser` namespace** · ~14,655 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `browser` namespace** · ~15,066 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `browser` — Per-container Chromium or Firefox instances, one per slot
 
@@ -43,7 +43,7 @@ After browse: `GET /html`/`GET /text`/`GET /screenshot`/`GET /pdf` — params in
 
 ### 3. Authenticated scraping
 1. `GET /start` matching `userAgent`/`viewport`/`locale`.
-2. `POST /cookies` with a `cookies` list of `{name, value, url}` entries; each cookie requires `url`. 
+2. `POST /cookies` with a `cookies` list of `{name, value, url}` entries; each cookie needs `name`, `value` and either an absolute http(s) `url` or both `domain` and `path` (never `url` together with `domain` or `path`). 
 3. `POST /browse` to protected URL.
 4. `GET /html`/`GET /text`.
 5. `DELETE /cookies`.
@@ -75,22 +75,22 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 
 ## Quirks & gotchas
 
-- `browser_id` does NOT select an instance (the spec marks it deprecated). The `browser-X` hostname does: the proxy derives `browser_port` 30000+X and `display` 500+X from it and overrides caller-supplied values, so calls that differ only in `browser_id` or `browser_port` reach the same instance. Choose the slot with the `browser-X` host. The only endpoint that reads `browser_id` is history, as a filter equal to X.
+- The `browser-X` hostname selects the instance: the proxy derives `browser_port` 30000+X and `display` 500+X from it and overrides caller-supplied values. A `browser_id` (or another instance selector in the query or JSON body) that names a different instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`, `details.field` naming it, and nothing runs: leave it out or call that instance's own host. Choose the slot with the `browser-X` host. On history, `browser_id` also filters, equal to X.
 - Endpoints auto-create unless `start=false`. Where a deployment disables auto-start, only an explicit `start=true` creates an instance. `GET /snapshot`, `POST /action` and `POST /wait` never create one.
 - `stealth` defaults true; bare `?stealth`=true. Mid-flight change throws `Instance backend mismatch` — `GET /stop` first.
 - `stealth=true` is ignored on Firefox: the stealth engine is Chromium-only.
 - Extensions need `showBrowser=true` and run on a persistent profile.
 - `chromiumVersion`: full / major / channel (`stable|beta|dev|canary`); first new version blocks on download.
 - Console/network logs: 500-entry ring buffers — drain or filter `since`.
-- **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
+- **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), a top-level page navigation (including a person clicking around in the live view), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
 - Instances do NOT survive kit-process restarts: graceful shutdown (SIGTERM/SIGINT) terminates every child.
 - History records ALL navs (incl. headful clicks) at `/hoody/storage/hoody-browser/history`, retained 30 d by default. Where a deployment turns history off, the history endpoints answer `404 HISTORY_DISABLED`.
-- **`DELETE /history` with no filters wipes all history** — pair `before` + `browser_id` (or both).
+- **`DELETE /history` is scoped by the host:** through a `browser-N` host it clears only instance N's history (add `before` to keep newer entries); a `browser_id` naming another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`. To clear several instances, call it on each instance's host.
 - `browser_id` history filter sanitised as path component.
 - **On the default stealth engine (`stealth=true`, `engine: patchright`), `eval` runs the script in an isolated JavaScript world.** It sees the DOM, but not the globals the page's own scripts define (`window.__NEXT_DATA__`, SPA stores, config objects): those read as `undefined` and the call still returns 200. On `stealth=false` (`engine: playwright`) the script runs in the page's main world. To read page JS state, start the slot with `stealth=false`, or read what the page wrote into the DOM (for example the text of `<script id="__NEXT_DATA__">`).
 - `eval` POST accepts JSON `{"script":"..."}` (what the SDK and CLI send) or a `Content-Type: text/plain` body holding the raw script. The response is `{ "result": ... }`.
 - **A ref-addressed `POST /action` that navigates the page itself (a link click, a submit, a `pushState`) can answer `409 STALE_SNAPSHOT` with `details.outcome: "unknown"` after the action already ran.** `outcome` is `not-started` (never dispatched, safe to repeat), `unknown` (dispatched, result not observed) or `completed`. On `unknown`, check the page (`POST /wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
-- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `GET /devtools-url` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `GET /devtools-url` returns rather than building one. Where the deployment publishes CDP relay URLs, they are on the `cdp-X` host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); otherwise (the kit's default) they are on the `http-<port>` host, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")` on a `cdp-X` deployment). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
+- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `GET /devtools-url` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `GET /devtools-url` returns rather than building one. By default the returned URLs are on the `cdp-X` relay host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); a deployment that turns the relay URLs off returns the legacy `http-<port>` host instead, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")`). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
 - Launch options: the `viewport` and `geolocation` query parameters are **JSON strings**, not free-form `"WxH"` / `"lat,lng"`; the kit `JSON.parse`s a string value and rejects one that does not parse. In a JSON request body the same fields may also be plain objects. Examples: `viewport='{"width":1280,"height":800}'`, `geolocation='{"latitude":48.8,"longitude":2.3,"accuracy":50}'`. A launch `viewport` of `null` or `none` turns off fixed-viewport emulation. The runtime `POST /viewport` is different: its body is an object, `{"viewport":{"width":1280,"height":800}}` or `{"viewport":null}` (integers 1–8192); a string there is a 400 `VALIDATION_ERROR`.
 - `POST /viewport` takes `{viewport:{width, height}}` (1-8192 px) or `{viewport:null}` for responsive. Responsive works only on Chromium (`501 NOT_SUPPORTED`) and only on an instance started responsive (`409 REQUIRES_RESTART`: stop it and start it again with `viewport=null`). `502 VIEWPORT_APPLY_INCOMPLETE` means the policy was kept but some tabs did not apply it (`details.failedTabs`). `GET /viewport` never starts an instance.
 - Screenshot `format` enum is `png | jpeg | base64` (NO `json`). Base64 mode returns `{ data: "<b64>" }` only — there is NO `mimeType` or `dataUrl` in the response (the kit's JSON body has `data` only).
@@ -98,11 +98,11 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 ## Common errors
 
 - `VALIDATION_ERROR` 400 — malformed `viewport`/`geolocation`, history `limit` not 1–500, `offset`<0.
-- `NOT_FOUND` 404 `Instance not found` — `GET /stop`, `GET /devtools-url`, `start=false` no instance; also `GET /snapshot`/`POST /action`/`POST /wait` on an empty slot, since they never auto-start.
+- `NOT_FOUND` 404 `Instance not found` — `GET /stop`, `GET /shutdown`, `GET /devtools-url`, `start=false` no instance; also `GET /snapshot`/`POST /action`/`POST /wait` on an empty slot, since they never auto-start.
 - `HISTORY_DISABLED` 404 `History is disabled` — history endpoints where the deployment turned history off.
 - `INSTANCE_BACKEND_MISMATCH` 409 (message starts `Instance backend mismatch`) — `stealth` differs from the running instance's backend; `GET /stop` then `GET /start`.
 - `VALIDATION_ERROR` 400 `display is required when showBrowser=true (no DISPLAY detected)` — `showBrowser=true` with no `display` field on `GET /start` and no `$DISPLAY` env.
-- `TIMEOUT` 408 — the request passed the kit's request deadline (600 s by default).
+- `TIMEOUT` 408 / 504 — the request passed the kit's request deadline (600 s by default). While the request is launching or restarting the instance this is a 504 with `details.phase: "launch"` and `details.outcome: "unknown"`: the instance may still come up, so check `GET /metadata` with `start=false` before retrying. After the request was forwarded to a running instance it is a 504 with `details.phase: "proxy"` and `details.outcome: "unknown"`: the call may already have taken effect (a `POST /viewport` included), so inspect the state before repeating a mutation. A request that times out before either is a 408.
 - `TIMEOUT` 504 — an automation call (`GET /snapshot`, `POST /action`, `POST /wait`) spent its `timeoutMs` budget (default 10000, max 30000). `details.phase` says where; `details.outcome` `not-started` means the action was never dispatched. For `POST /wait` this is how a condition that never held is reported.
 - `STALE_SNAPSHOT` 409 — the ref's snapshot is no longer the tab's latest, or the main frame navigated; take a new snapshot. Read `details.outcome` before repeating an action (see Quirks).
 - `INSTANCE_CHANGED` 409 — the `instanceGeneration` sent no longer matches the running instance (`details.expected` is null when no instance exists); re-read `GET /metadata`.
@@ -124,7 +124,7 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. ⚠ The `browser-X` hostname selects the instance; a caller-supplied `browser_id` or `browser_port` does not (see the Quirks gotcha). Examples 1–5 and 8–9 use slot 1 (`browser-1`); Examples 6 and 7 use slots 2 and 3 so their different launch options do not collide with slot 1's running instance.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `GET /api/v1/containers/{id}` first. ⚠ The `browser-X` hostname selects the instance; a `browser_id` or `browser_port` that names another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT` (see the Quirks gotcha). Examples 1–5 and 8–9 use slot 1 (`browser-1`); Examples 6 and 7 use slots 2 and 3 so their different launch options do not collide with slot 1's running instance.
 
 ### 1. Spin up a headless instance and navigate to a URL
 
@@ -186,7 +186,7 @@ curl -sf -X POST "$KIT/eval" \
 
 ### 5. Set cookies and read them back
 
-**Goal:** prime the cookie jar, then verify. POST body is a JSON object `{ cookies: [...] }` whose entries are `{ name, value, url }` plus optional `domain`, `path`, `httpOnly`, `secure`. `url` is required on every cookie.
+**Goal:** prime the cookie jar, then verify. POST body is a JSON object `{ cookies: [...] }` whose entries need `name`, `value`, and either an absolute http(s) `url` or both `domain` and `path`; do not combine `url` with `domain` or `path` (400 `VALIDATION_ERROR` naming the field). Optional: `httpOnly`, `secure`, `sameSite` (`Strict|Lax|None`), `expires` (Unix seconds, -1 = session).
 
 ```bash
 KIT="https://${P}-${C}-browser-1.${N}.containers.hoody.com"
@@ -270,20 +270,18 @@ For an external CDP attachment, `GET /devtools-url` returns the live `webSocketD
 
 **Goal:** browser instances stay alive across requests until they are stopped or the kit process restarts (graceful kit restart SIGTERMs every child — see Quirks & gotchas). The idle sweep reaps an instance nobody has used for the max age (1 h by default), so a forgotten instance is eventually reclaimed, and one you still need must see a request at least once per idle window. Each slot has a fixed port, so a slot whose previous process has not been confirmed exited answers `502 INSTANCE_QUARANTINED` until it has; retry later rather than restarting the container.
 
-`GET /stop` and `GET /shutdown` both terminate the child and delete any extension profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`); persistent profile dirs only exist when extensions were loaded. One `GET /stop` per instance is a complete teardown — calling both is redundant.
+`GET /stop` and `GET /shutdown` both terminate the child and delete its profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`). Every Chromium instance runs on a persistent profile of its own, with or without extensions (an extension profile under the kit's browser data dir, otherwise under the temp dir), and every exit removes it, so cookies and logins do not carry over to the next instance. One `GET /stop` per instance is a complete teardown — calling both is redundant.
 
 ```bash
 for X in 1 2 3; do
   curl -sX GET "https://${P}-${C}-browser-${X}.${N}.containers.hoody.com/stop" | jq .
 done
-# If you use /shutdown in teardown, ALWAYS pass start=false — without it the endpoint
-# auto-creates a missing instance instead of tearing down:
-#   curl -sX GET "https://${P}-${C}-browser-${X}.${N}.containers.hoody.com/shutdown?start=false"
+# /shutdown never creates an instance either (404 on an empty slot); start=false is unnecessary.
 # Confirm nothing's left:
 curl -sf "https://${P}-${C}-browser-1.${N}.containers.hoody.com/metrics" | jq '.instances'
 ```
 
-A `404 Instance not found` from `GET /stop` means it was already gone — safe to ignore. Use `GET /stop` for teardown: it never creates an instance. `GET /shutdown` goes through auto-start like other endpoints, so on an empty slot it first starts a browser. Over HTTP, `?start=false` on `/shutdown` prevents that.
+A `404 Instance not found` from `GET /stop` means it was already gone — safe to ignore. Neither `GET /stop` nor `GET /shutdown` creates an instance: on an empty slot both answer `404 Instance not found`. `GET /stop` terminates the child before it answers; `GET /shutdown` answers 200 as soon as shutdown starts and finishes in the background, so poll `GET /metadata` with `start=false` until it answers 404 to confirm the instance is gone.
 
 ## Reference
 
@@ -297,7 +295,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 **Param notes:**
 
-- `browser_id` — Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`.
+- `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
 - `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 - `url` — Filter cookies by URL Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared.
 
@@ -315,10 +313,10 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 **Param notes:**
 
 - `before` — Delete entries before this ISO 8601 timestamp
-- `browser_id` — Delete entries for specific browser ID only _(on `DELETE /history`)_
+- `browser_id` — Delete entries for specific browser ID only. Through a `browser-{N}` service hostname it may only be `N` (the default there). _(on `DELETE /history`)_
 - `since` — Return entries after this ISO 8601 timestamp
 - `domain` — Filter by domain (exact match)
-- `browser_id` — Filter by browser ID _(on `GET /history`)_
+- `browser_id` — Filter by browser ID. Through a `browser-{N}` service hostname it may only be `N` (the default there). _(on `GET /history`)_
 - `limit` — Maximum entries to return (1-500)
 - `offset` — Number of entries to skip for pagination
 
@@ -335,9 +333,9 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 **Param notes:**
 
-- `browser_id` — Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`.
+- `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
 - `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
-- `chromiumVersion` — Chromium/Chrome version selection for the instance. This option applies only when `browser=chromium`. Supported formats: Full version: `136.0.7103.113`; Major version: `136` (mapped to a known stable patch for the current OS); Channel tag: `stable`, `beta`, `dev`, `canary` The request **blocks** until the requested browser build is available on the server.
+- `chromiumVersion` — Chromium/Chrome version selection for the instance. This option applies only when `browser=chromium`. Supported formats: Full version: `136.0.7103.113`; Major version: `136` (mapped to a known stable patch for the current OS); Channel tag: `stable`, `beta`, `dev`, `canary` Any other value is a `400 VALIDATION_ERROR` naming `chromiumVersion`. A full version that no download source has is a `400 VALIDATION_ERROR` too, answered once the download is refused. A major version with no known build falls back to `stable`. The request **blocks** until the requested browser build is available on the server.
 - `fingerprintId` — Base fingerprint profile id. The server uses the `context` and `launch` defaults of the configured fingerprint profile with this id, then applies any request overrides over them (top-level options and `userProfile` values both win over the profile). An unknown id starts with an empty profile.
 - `useRemoteDebuggingPort` — If `true`, the child process will launch Chromium with `--remote-debugging-port` and will populate `webSocketDebuggerUrl` in metadata responses.
 - `remoteDebuggingPort` — Ignored. The kit always assigns the DevTools port itself (a caller-supplied value is never honoured, for isolation); read the assigned URLs from `/devtools-url` or the instance metadata. Kept only so older clients do not fail validation.
@@ -393,7 +391,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 **Param notes:**
 
-- `browser_id` — Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`.
+- `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
 - `tabId` — The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema.
 - `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 - `type` — Filter by message type (log, error, warning, info, etc.). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`type must not be repeated`).
@@ -416,7 +414,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 **Param notes:**
 
-- `browser_id` — Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`.
+- `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
 - `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 - `url` — The URL to navigate to. Repeating this key IN THE QUERY STRING is a `400 VALIDATION_ERROR` (`url must not be repeated`), on GET and on POST alike — a request naming two destinations is answered rather than silently resolved to one of them. The rule is about the query string only — a JSON body property named `url` is governed by the body schema. Only an absolute `http`, `https` or `data` URL, `about:blank`, or (on Chromium engines only) a `chrome:` URL is accepted. Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. A value that is not a string is `url must be a string`. The `url` is checked before an instance is started, a tab is looked up, created or reused, or anything is navigated, and before `/pdf`'s `501 NOT_SUPPORTED`. On `/screenshot` and `/pdf` a supplied but empty `url=` is a `400 VALIDATION_ERROR` too (omit `url` to capture the current tab). This checks the request only; it does not stop the browser from opening local files (see "Local files" in the API overview). _(on `GET /screenshot`)_
 - `tabId` — The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema.
@@ -444,13 +442,14 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
   - `key` — press: Playwright key syntax (e.g. "Enter", "Control+a"). Unknown → 400.
   - `values` — select: option values or labels (first match wins). No match → 504 with details.availableOptions.
   - `checked` — check: desired state (idempotent).
-- `POST /eval` body — `{ script: string, tabId: int, scriptBase64: bool }` — Executes a JavaScript snippet provided in the request body. …
+- `POST /eval` body — `{ script: string, tabId: int, scriptBase64: bool, timeoutMs: int=30000 }` — Executes a JavaScript snippet provided in the request body. …
   - `script` — JavaScript code to execute
   - `tabId` — Tab to evaluate in (from `/tabs`). Omitted: the active tab. Unknown → `404 TAB_NOT_FOUND`, malformed → `400`.
   - `scriptBase64` — Set to `true` when `script` is base64-encoded.
+  - `timeoutMs` — Time limit for the script, in milliseconds (1 to 30000, default 30000). A script still running when it is spent is stopped and the answer is `504 TIMEOUT` (`details.phase` `evaluate`). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`timeoutMs must not be repeated`).
 - `POST /browse` body — `{ url*: string, tabId: int, waitUntil: "commit" | "domcontentloaded" | "load"="load", timeoutMs: int, instanceGeneration: string, active: bool=true, onlyIfNotExists: bool=false, ignoreGetParameters: bool=false }`
   - `url` — … Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. …
-  - `timeoutMs` — Omitted keeps legacy timing; present → budgeted navigation (504 on expiry).
+  - `timeoutMs` — Omitted: the navigation may take up to 30000 ms. Present: the whole budget. Either way a navigation that runs out of time is a 504 TIMEOUT (phase navigation).
   - `active` — Whether the tab becomes the active one. … ANY other value (`0`, `1`, `"yes"`, `"on"`, `""`, `null`, or an array) is rejected with `400 VALIDATION_ERROR` (`details.field` names the property) before a tab is created or reused; it is never coerced. …
   - `onlyIfNotExists` — Reuse an existing tab already on this URL instead of opening a new one. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
   - `ignoreGetParameters` — Compare URLs for `onlyIfNotExists` with the query string stripped. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
@@ -465,7 +464,7 @@ A `404 Instance not found` from `GET /stop` means it was already gone — safe t
 
 **Param notes:**
 
-- `browser_id` — Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`.
+- `browser_id` — Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`.
 - `start` — Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `GET /devtools-url` is the exception: it answers 404 when no instance is running and never consults this value.
 
 **Body shapes:**

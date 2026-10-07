@@ -2,7 +2,7 @@
 name: "hoody"
 description: "Hoody: run code, processes, GUIs, browsers, databases, cron jobs and HTTP services on real cloud computers the user owns, and operate their Hoody account — containers, files across 60+ storage providers, secrets, proxies, billing, notifications. Use when a task needs a real computer in the cloud, or any operation against the user's own tenant. Abstain for pre-sales, compliance, support/status, third-party SSO, and generic programming help."
 ---
-> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~12,490 tokens · hoody-sdk v1.0.0-beta.15_
+> _**mode-blend skill (chooser + SDK/HTTP/CLI side-by-side)** · ~12,631 tokens · hoody-sdk v1.0.0-beta.16_
 
 # Hoody Agent Skill — pick a surface (SDK / HTTP / CLI)
 
@@ -24,7 +24,7 @@ Reach for Hoody whenever the work needs a **real computer in the cloud** or an o
 
 | You're … | Pick |
 |---|---|
-| Writing code — a TypeScript / JavaScript service, script, or browser app | **SDK** — typed, opt-in retries, async iterators, auto re-auth |
+| Writing code — a TypeScript / JavaScript service, script, or browser app | **SDK** — typed, configurable automatic retries, async iterators, auto re-auth |
 | Writing code in another language (Python, Rust, Go, …) | **HTTP** — bearer token + `curl`/your stdlib client |
 | In a terminal — an agent with a shell tool or a human at a prompt; shell scripts, Makefiles, CI, `ssh` | **CLI** — `hoody …` one-liners, `-o json` for piping (preinstalled in every container; zero-install `npx hoody-sdk`) |
 | No `hoody` CLI and can't install one — or pseudo-scripting a few one-off calls | **HTTP** — anything that can send a request works; `curl` + the snippets below are the whole toolchain |
@@ -230,7 +230,7 @@ curl -X POST "$A/api/v1/projects/{P}/containers" \
 
 ```bash
 hoody containers create --project {P} --server-id {S} --name box-1 --hoody-kit --dev-kit
-# Discover servers: hoody servers {list|marketplace|rent <id>}
+# Discover servers: hoody servers list; hoody servers marketplace list; hoody servers rent <id>
 ```
 
 ### 5. Lifecycle — start / stop / wait
@@ -271,7 +271,7 @@ until [[ "$(hoody containers get {C} -o json | jq -r .status)" == running ]]; do
 
 ### 6. Read / write a file in a container
 
-Path is **absolute** in the container's filesystem. SDK exposes `box.files.get / put` after `await hoody.withContainer(c)`; HTTP and CLI hit the `files` kit URL directly.
+Path is **absolute** in the container's filesystem. SDK exposes `box.files.get` and `box.files.upload` after `await hoody.withContainer(c)`; HTTP and CLI hit the `files` kit URL directly.
 
 **Beyond the container's own disk — `files` extends the filesystem to your cloud storage.** Connect any of 60+ rclone-backed targets — **Mega, S3, Google Drive, Dropbox, Backblaze B2, SFTP, WebDAV, …** — then operate on them through the *same* `files` endpoints by appending `?backend=<id>` (or `?type=<rclone-type>`), or FUSE-mount a backend **as** a local path (`mounts.create`) so downstream code reads it like any other directory. One programmatic API spans the user's entire storage footprint, so an agent can read / write / copy / move files **across remote providers** without a separate SDK per service. Git repositories are not a backend (`type=git` is refused): run `git` in the container through `terminal` or `daemon`, then work on the checkout through `files`. Requires a deployment with remote backends enabled; `glob`/`grep`/`?lines=`/journal history stay local-FS-only. See the `files` deep-dive in <https://hoody.com/SKILLS/SKILL-SDK/files.md> (or the SKILL-HTTP / SKILL-CLI variant) for the `backend`/`mounts` mechanics.
 
@@ -282,7 +282,7 @@ const box = await hoody.withContainer(container);
 // The readers resolve to the content itself: readText → string, readJson → parsed value,
 // readBytes → Uint8Array. (files.get resolves to the { statusCode, message, data } envelope.)
 const text = await box.files.readText('/etc/hostname');
-await box.files.upload('/workspace/hello.txt', Buffer.from('hello'));   // the body is bytes
+await box.files.upload('/home/user/hello.txt', Buffer.from('hello'));   // the body is bytes
 ```
 
 **HTTP**
@@ -290,18 +290,18 @@ await box.files.upload('/workspace/hello.txt', Buffer.from('hello'));   // the b
 ```bash
 F=https://{P}-{C}-files-1.{N}.containers.hoody.com/api/v1/files
 curl "$F/etc/hostname"                                            # GET = download
-curl -X PUT --data-binary 'hello' "$F/workspace/hello.txt"        # PUT = upload
-curl -X PUT --data-binary 'more'  "$F/append/workspace/hello.txt" # append/-prefix = append
+curl -X PUT --data-binary 'hello' "$F/home/user/hello.txt"        # PUT = upload
+curl -X PUT --data-binary 'more'  "$F/append/home/user/hello.txt" # append/-prefix = append
 ```
 
 **CLI**
 
 ```bash
-hoody --container {C} files get /workspace                                   # list
+hoody --container {C} files get /home/user                                   # list
 hoody --container {C} files get /etc/hostname -o raw                          # read
-echo -n 'hello' | hoody --container {C} files upload /workspace/hello.txt        # write (body comes from stdin)
-hoody --container {C} files upload /workspace/big.bin   < ./local.bin            # write (from file)
-hoody --container {C} files upload /workspace/notes.txt < input.txt              # write (from stdin)
+echo -n 'hello' | hoody --container {C} files upload /home/user/hello.txt        # write (body comes from stdin)
+hoody --container {C} files upload /home/user/big.bin   < ./local.bin            # write (from file)
+hoody --container {C} files upload /home/user/notes.txt < input.txt              # write (from stdin)
 ```
 
 ### 7. Run a script as an HTTP endpoint (`exec`)
@@ -351,7 +351,7 @@ hoody --container {C} curl run --url 'https://{P}-{C}-exec-1.{N}.containers.hood
 
 ### 8. SQLite KV + Terminal — quick kit calls
 
-Two minute-scale workhorses: a key/value store (any bytes, JSON-encoded if you like — kit is opaque) and a one-off shell command. Both speak directly to the kit URL of the container.
+Two minute-scale workhorses: a key/value store (any bytes under `text/plain` / `application/octet-stream`; a value sent as `application/json` must be valid JSON, else `400 INVALID_JSON_VALUE`) and a one-off shell command. Both speak directly to the kit URL of the container.
 
 **SDK**
 
@@ -429,11 +429,11 @@ ssh root@$(hoody containers get {C} -o json | jq -r .ssh_hostname) 'uname -a'
 
 ### 10. Expose a port — `http-{port}` / `https-{port}` URL
 
-**Anything you bind on a container port is automatically reachable at a public URL.** No alias, no firewall edit, no proxy registration. Two URL slug forms:
+**Anything you bind on a container port is automatically reachable at a public URL.** Bind your HTTP(S) service to `0.0.0.0:<port>` or the container's network IP to reach it at the public URL. A listener bound only to `127.0.0.1` is not reachable through this proxy. No alias, no firewall edit, no proxy registration. Two URL slug forms:
 
 | Slug | Inner protocol the proxy uses | Edge URL (always `https://`, TLS terminates at proxy) |
 |---|---|---|
-| `http-<port>` | proxy speaks **HTTP** to `localhost:<port>` inside the container | `https://{P}-{C}-http-<port>.{N}.containers.hoody.com` |
+| `http-<port>` | proxy speaks **HTTP** to `<container-network-ip>:<port>` inside the container | `https://{P}-{C}-http-<port>.{N}.containers.hoody.com` |
 | `https-<port>` | proxy speaks **HTTPS** (target must terminate TLS itself) | `https://{P}-{C}-https-<port>.{N}.containers.hoody.com` |
 
 WebSockets just work via `wss://`. Port range `1..65535`; defaults: `http` → 80, `https` → 443. Same capability-token rules as any kit URL — the URL IS bearer; gate via `proxy.containerPermissions` if you don't want it open.
@@ -569,13 +569,13 @@ curl https://ai.hoody.com/api/v1/chat/completions \
 
 ## Pitfalls (mode-agnostic)
 
-- **A CLI flag belongs to the command it follows.** `hoody --container {C} files get /workspace` and `hoody files get /workspace --container {C}` are the same call: a global works in either position. But when the command declares a flag of its own with that spelling, the COMMAND gets it — `hoody agent github auth login --token ghp_x` sends the GitHub PAT, and the Hoody credential comes from `-t <hoody-token>` on the same line, from a position before the command, or from the config/env. The same rule covers `--format` (image or paper format on `browser screenshot` / `browser pdf`, output format everywhere else), `--profile` (an AWS profile on the S3 backends) and `--output` (the document format on `notes doc get`). When in doubt, put the Hoody global before the command.
+- **A CLI flag belongs to the command it follows.** `hoody --container {C} files get /home/user` and `hoody files get /home/user --container {C}` are the same call: a global works in either position. But when the command declares a flag of its own with that spelling, the COMMAND gets it — `hoody agent github auth login --token ghp_x` sends the GitHub PAT, and the Hoody credential comes from `-t <hoody-token>` on the same line, from a position before the command, or from the config/env. The same rule covers `--format` (image or paper format on `browser screenshot` / `browser pdf`, output format everywhere else), `--profile` (an AWS profile on the S3 backends) and `--output` (the document format on `notes doc get`). When in doubt, put the Hoody global before the command.
 - **Kit URL IS the credential — and a container restart does NOT rotate it.** The `{P}-{C}-{kit}-{n}` prefix is stable for the container's lifetime; only delete + recreate changes it. Don't paste it in public chats.
 - **Gating a kit URL without recreating = replace the proxy-permissions policy, with optimistic locking.** GET the current document to read `file_version`, then PUT with `If-Match: file:v<N>` (428 without the header, 412 if stale). SDK: `client.api.proxy.containerPermissions.set(containerId, body, { ifMatch: 'file:v' + currentVersion })`; HTTP: `PUT /api/v1/containers/{C}/proxy/permissions`; CLI: `hoody containers proxy permissions set -c {C} --project {P} --groups … --permissions … --if-match file:v<N>` (the CLI does not auto-fetch the version). A group alone restricts nothing: give it per-program access and set `default: 'deny'`, or anyone who matches no group still gets in. Full shape — auth groups + per-program permissions + hooks — is in <https://hoody.com/SKILLS/SKILL-SDK/api.md> § proxy.containerPermissions.
 - **Kit auth is uniform — the URL is the credential.** `sqlite` / `files` / `exec` / `terminal` / `display` / `agent` etc. all accept the bare per-container kit URL as bearer (no extra headers, `bot`'s management routes included), reached directly. The `agent` (slug `agent`, host `…-agent-{index}.…`) kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers and never returns `401 CLAIM_REQUIRED`: reaching the kit URL is sufficient.
 - **Refreshing a login token needs the refresh token twice** — in the body AND as `Authorization: Bearer <refreshToken>`, else `401 Invalid refresh token`. **SDK**: `api.auth.refresh({ refreshToken })` sends it in both places for you, and the client's automatic 401 recovery uses its stored refresh token before falling back to `credentials`. **HTTP**: send both yourself. **CLI**: `hoody auth refresh` sends both for you, using `--refresh-token` or the refresh token saved by the last `hoody login`, and saves the new tokens; with no saved refresh token, pass `--refresh-token` or run `hoody login` again.
 - **Login JWTs expire (~1 day; refresh token ~7 days).** A `401` on the control plane is NOT retryable — the token is missing, stale, or expired: refresh (or re-login), then retry the call. Headless / long-running agents should mint a long-lived auth token instead (`auth.tokens.create` / `POST /api/v1/auth/tokens`) — scopable, IP-restrictable, rotatable. Details: § Auth model in `SKILL-SDK.md` / `SKILL-HTTP.md` / `SKILL-CLI.md`.
-- **List endpoints paginate.** Control-plane lists take `?page=N&limit=M` and return a `pagination` object alongside the items; several kit lists use `offset`/`limit` or `cursor` instead (the per-namespace skill names which). A bare list call returns only the FIRST page — don't treat it as exhaustive. SDK: prefer the `listIterator()` variants (e.g. `containers.listIterator()`), which auto-paginate.
+- **Some list endpoints paginate.** Projects and containers accept `?page=N&limit=M` and return a `pagination` object; other routes use `offset`/`limit`, cursors, or a single collection response (auth tokens, vault keys, realms, proxy aliases, …). Follow each route's parameters and response schema (the per-namespace skill names which); on a paginated route a bare call returns only the FIRST page, so don't treat it as exhaustive. SDK: the `listIterator()` variants (e.g. `containers.listIterator()`) paginate only when the operation exposes pagination parameters; `auth.tokens.listIterator()` makes one request.
 - **`server_name` is the routable host**, never `subserver_name`. Build kit URLs from `server_name` (returned in container details).
 - **Container ≠ Docker.** It's a full Linux box: systemd, root, ssh, persistent disk, default user `user` with passwordless sudo.
 - **Realm-scoped tokens.** Mint with `hoody.api.auth.tokens.create({ alias:'agent-x', realm_ids:[realmId] })` (SDK — the field is `alias` not `name`) / `POST /api/v1/auth/tokens` (HTTP). Use either **per-call** via the generated `_realm` option (`containers.list({ _realm: realmId })`, etc. — every control-plane `api.*` method accepts it; kit methods do not, since a kit call is routed by its container URL, not by realm) OR **globally** via `https://{realmId}.api.hoody.com` as the `baseURL`. Resources created under a realm-scoped client / host are auto-tagged with that realm.

@@ -1,4 +1,4 @@
-> _**CLI skill · `notifications` namespace** · ~6,660 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `notifications` namespace** · ~7,097 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `notifications` — Trigger and consume desktop notifications inside a container
 
@@ -24,11 +24,11 @@ Two jobs in one namespace. First and most useful: **remotely inform the human op
 ## Prerequisites
 
 - A valid target display number. With display-ensure enabled (the default) the kit brings the display up itself before sending; dispatch still needs a usable D-Bus session on it.
-- Required: `display`+`summary` on `hoody notifications send`; `display` on `hoody notifications list`; `displays` on `hoody notifications stream`.
+- Required: `display`+`summary` on `hoody notifications send`; `display` on `hoody notifications list`; `displays` on the SSE stream (optional over WebSocket, where you can `subscribe` after connecting).
 
 ## Capability URL
 
-Kit slug is `n` (not `notifications`): `https://{P}-{C}-n-1.{N}.containers.hoody.com`. The HTTP API lives under `/api/v1/notifications/...`. **The root of that URL is a user-facing web page**: open `https://{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all` in any browser and it requests notification permission, then turns each entry it receives over its SSE stream into a real OS notification (works backgrounded; the stream reconnects on its own; there is no polling fallback, so an alert that arrives during a gap is not shown). The hostname itself is the credential, so no token or header goes in the URL — hand the human that exact URL with `{P}`/`{C}`/`{N}` filled in from `hoody containers get`. → See `SKILL-CLI.md § Proxy URLs` for the slug table and capability-token rules.
+Kit slug is `n` (the proxy also accepts `notifications` and `notification` as hostname aliases): `https://{P}-{C}-n-1.{N}.containers.hoody.com`. The HTTP API lives under `/api/v1/notifications/...`. **The root of that URL is a user-facing web page**: open `https://{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all` in any browser and it requests notification permission, then turns each entry it receives over its SSE stream into a real OS notification (works backgrounded; the stream reconnects on its own; there is no polling fallback, so an alert that arrives during a gap is not shown). The hostname itself is the credential, so no token or header goes in the URL — hand the human that exact URL with `{P}`/`{C}`/`{N}` filled in from `hoody containers get`. → See `SKILL-CLI.md § Proxy URLs` for the slug table and capability-token rules.
 
 **Reaching a service you host on a container port** (any port, any namespace):
 
@@ -41,15 +41,15 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Fire a notification
 
-`hoody notifications send` body: `display`+`summary` (req); optional `body`, `urgency`, `icon`, `category`, `expire_time`. CLI: `hoody notifications send --display 2 --summary "Build done"`. Pick a display that has (or can be given) a D-Bus session; `:0` often has none, see Example 1.
+`hoody notifications send` body: `display`+`summary` (req); optional `body`, `urgency`, `icon`, `category`, `expire_time`. CLI: `hoody notifications send --display 2 --summary "Build done"`. `display` is a number from 1 through 40000, optionally `:`-prefixed: display 0 returns `400 Validation Error` with `details: "Display 0 does not exist; display IDs start at 1."`, and a number above 40000 is a `400` too. With display-ensure enabled (the default) the kit tries to start a valid target display.
 
 ### 2. Read recent notifications
 
-`hoody notifications list` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries. With `since` the page holds the OLDEST `limit` entries at or after that timestamp; with `after_id` the OLDEST `limit` ids above it. Every page is sorted newest-first either way. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. The generated CLI has no `--cursor` flag yet: page forward per display with `--after-id` (the highest id you hold) while `has_more` is `true`; see Example 8 and the streaming caveat in Quirks.
+`hoody notifications list` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. The CLI takes it as `--cursor <next_cursor>` (omit `--since` and `--after-id` beside it); one cursor continues a listing of one display or of several; see Example 8.
 
 ### 3. Subscribe to events
 
-`hoody notifications stream` — `displays`: `"all"`, `"*"`, or a comma list of 1–5-digit IDs (each may carry a leading `:`). WS if `Upgrade`; else SSE (`connected`, 15 s `heartbeat`, `notification`). Over WS the kit sends, once per heartbeat interval (default 30 s), a protocol Ping plus the same JSON `heartbeat` message (`{"type":"heartbeat","timestamp":…}`). WS clients send `{"type":"subscribe"|"unsubscribe","displays":[...]}`.
+`hoody notifications stream` — `displays`: `"all"`, `"*"`, or a comma list of 1–5-digit IDs (each may carry a leading `:`). WS if `Upgrade`; else SSE (`connected`, 15 s `heartbeat`, `notification`, and `resync` when the subscriber fell behind; WS sends `resync` too). `displays` is required for SSE; a WS connection without it receives nothing until it subscribes. Over WS the kit sends, once per heartbeat interval (default 30 s), a protocol Ping plus the same JSON `heartbeat` message (`{"type":"heartbeat","timestamp":…}`). WS clients send `{"type":"subscribe"|"unsubscribe","displays":[...]}`.
 
 ### 4. Dismiss / restore
 
@@ -61,13 +61,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 6. Remotely notify the human operator
 
-Reach a human who isn't watching the session — on their phone, desktop, or smartwatch. One-time human setup: they open the kit web page with `?displays=all` (see § Capability URL), grant browser-notification permission, and leave the tab backgrounded. Agent side: `hoody notifications send` with a `display` (any real display number — the kit auto-ensures it, so you do NOT have to set up X first), a `summary`, and optional `body`/`urgency`. The kit records the entry and broadcasts it on its stream; the operator's page renders it as an OS notification. Full copy-paste recipe in Example 11.
+Reach a human who isn't watching the session — on their phone, desktop, or smartwatch. One-time human setup: they open the kit web page with `?displays=all` (see § Capability URL), grant browser-notification permission, and leave the tab backgrounded. Agent side: `hoody notifications send` with a `display` (1 through 40000, not 0 — the kit auto-ensures a valid display, so you do NOT have to set up X first), a `summary`, and optional `body`/`urgency`. The kit records the entry and broadcasts it on its stream; the operator's page renders it as an OS notification. Full copy-paste recipe in Example 11.
 
 ## Quirks & gotchas
 
-- Kit slug is `n`, not `notifications`.
+- Kit slug is `n`; the proxy also accepts `notifications` and `notification` as hostname aliases, but use `n`.
 - `dismiss.notificationIds` must be a non-empty array; non-integer elements are silently dropped, and only when no integer remains does it return `400 "notificationIds must contain valid integer IDs"` (so `[12,"13"]` dismisses only `12`). `displayId` strips leading `:`.
-- `hoody notifications send` limits: `summary` ≤200 and `body` ≤1000 by default (a deployment can change them with `NOTIFY_SEND_MAX_SUMMARY_LENGTH` / `NOTIFY_SEND_MAX_BODY_LENGTH`), `category` ≤50, `expire_time` 0–300000; `urgency` ∈ `low|normal|critical`.
+- `hoody notifications send` limits: `summary` ≤200 and `body` ≤1000 by default (a deployment can change them with `NOTIFY_SEND_MAX_SUMMARY_LENGTH` / `NOTIFY_SEND_MAX_BODY_LENGTH`), `category` ≤50, `expire_time` 0–300000; `urgency` ∈ `low|normal|critical`; `display` 1–40000 (display 0 and higher numbers are a `400`).
 - `list.display` numeric or `"all"`; `connect.displays` accepts `all`, `*`, or a comma list of 1–5-digit IDs, each optionally `:`-prefixed (`1000` and `20001` are valid; 6+ digits rejected).
 - `list.limit` `[1,1000]` def 100; forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
 - `username`/`session` are owner filters, with specific displays and with `all`: only history files named for that owner are read (`<username>-<session>-notifications.json`, `<username>-display-<N>-notifications.json`), so the generic `display-<N>`/`user-<N>` history is excluded. A `session` filter also excludes the `<username>-display-<N>` files, which carry no session. The display selection still filters the rows read.
@@ -75,16 +75,16 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
 - WS only with `Upgrade`; else SSE+15 s JSON heartbeat. WS: per-IP caps, origin allow-list, every 30 s by default a protocol Ping plus the same JSON `heartbeat` message, drops after 2 missed pongs.
 - `hoody notifications restore`=DELETE, `hoody notifications dismiss`=POST, same path.
-- The live stream is best-effort, not a delivery log: on each history-file change the kit compares the file with its previous snapshot and broadcasts every new or changed row (oldest first), but a subscriber that lags behind the broadcast skips the missed entries without replay. To catch up, page `hoody notifications list` forward from your last position and keep going while `has_more` is `true` (Example 8): with `cursor`, `since` or `after_id` each page holds the OLDEST matching rows past that point, so nothing is skipped between pages.
+- The live stream is best-effort, not a delivery log: on each history-file change the kit compares the file with its previous snapshot and broadcasts every new or changed row (oldest first), but a subscriber that lags behind the broadcast skips the missed entries without replay. The kit says when that happens: both SSE and WebSocket send `{"type":"resync","skipped":<n>,"timestamp":<ms>}` in place of the skipped entries. To catch up, page `hoody notifications list` forward from your last position and keep going while `has_more` is `true` (Example 8): with `cursor`, `since` or `after_id` each page holds the OLDEST matching rows past that point, so nothing is skipped between pages.
 - **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `hoody inbox *` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated — and its credential rules are NOT the kit's: reading requires the auth token to hold `resources.read_account` (403 without it), and BOTH acknowledge routes refuse every auth token outright, needing a first-party account login.
-- The CLI maps the `notifications` namespace to the kit slug `n`, so `hoody --container <C> notifications {list|dismiss|clear-dismissed|icon|trigger}` reaches `https://{P}-{C}-n-1.{N}.containers.hoody.com/api/v1/notifications/...`.
-- `hoody notifications stream` is not wired for streaming output — the generated command buffers SSE events instead of printing them as they arrive. For a live feed, read the endpoint directly: `curl -sN "$KIT/api/v1/notifications/stream?displays=all"`.
+- The CLI maps the `notifications` namespace to the kit slug `n`, so `hoody --container <C> notifications {list|dismiss|restore|send|icons get|stream}` reaches `https://{P}-{C}-n-1.{N}.containers.hoody.com/api/v1/notifications/...`.
+- `hoody --container "$C" notifications stream --displays all` prints SSE events as they arrive. It reads one connection and does not reconnect when it ends, so rerun it (and page `list` forward from your last position) after a drop.
 - The kit serves a **browser client at `/`** (and at the `/api/v1/notifications` alias): it subscribes to every display over SSE (EventSource, which reconnects on its own) and raises a browser `Notification` per entry it receives. It has no polling fallback: recent history is reloaded on every stream open (reconnects included) and on a `resync` event, but history rows only update the activity list and never raise a native alert, so an alert that arrives while the stream is down is not shown. The `?displays=all` suffix in the handed-out URL is harmless; the page always subscribes to all displays. This is the supported path for delivering an agent's notifications to a human's device; no token goes in the URL (the hostname is the capability).
-- `hoody notifications send` does NOT require you to pre-create an X display: when display-ensure is enabled (the kit default), the kit brings the target display up itself before calling `notify-send` (waiting up to the display-ensure timeout, default 30 s; results are cached 60 s), so firing to e.g. `:1` works on demand. If no D-Bus session can be found for the display it still returns `500` `error: "Notification dispatch failed"` with `details: "The display's notification session is not available yet. Start the display and retry."`
+- `hoody notifications send` does NOT require you to pre-create an X display: when display-ensure is enabled (the kit default), the kit brings the target display up itself before calling `notify-send` (waiting up to the display-ensure timeout, default 30 s; results are cached 60 s), so firing to e.g. `:1` works on demand. If no D-Bus session can be found for the display yet, it returns `503` `error: "Display not ready"`, `code: "DISPLAY_NOT_READY"`, a `Retry-After` header and `details: "The display's notification session is not available yet. Retry in a few seconds."`; when no display is running and none can be started it returns `503` `error: "Display not available"`, `code: "DISPLAY_NOT_AVAILABLE"`.
 
 ## Common errors
 
-- Invalid input on `hoody notifications send` (including text the dispatcher's sanitizer rejects) → `400` `error: "Validation Error"` with the reason in `details`. A failed dispatch → `500` `error: "Notification dispatch failed"` with one fixed `details` sentence: session unavailable ("The display's notification session is not available yet. Start the display and retry."), timeout ("Sending the notification timed out. Retry later."), or any other failure ("The notification service failed to send the notification.").
+- Invalid input on `hoody notifications send` (including text the dispatcher's sanitizer rejects) → `400` `error: "Validation Error"` with the reason in `details`. A failed dispatch carries a fixed `code` and one fixed `details` sentence: no display running and none can be started → `503` `error: "Display not available"`, `code: "DISPLAY_NOT_AVAILABLE"`; the display's notification session not up yet → `503` `error: "Display not ready"`, `code: "DISPLAY_NOT_READY"`, with `Retry-After` and `details: "The display's notification session is not available yet. Retry in a few seconds."`; a timeout ("Sending the notification timed out. Retry later.") or any other failure ("The notification service failed to send the notification.") → `500` `error: "Notification dispatch failed"`, `code: "DISPATCH_FAILED"`.
 - WS origin-deny → `403` `Origin not allowed` before the upgrade; close `1008` on message rate limit; `1001` heartbeat timeout. `429` on `send` / `hoody notifications icons get`; both are enforced by the shared per-IP rate-limit middleware.
 - `/health` 200 ≠ authorised endpoints reachable.
 
@@ -94,11 +94,11 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 
 ## Examples
 
-The kit slug is `n`, NOT `notifications` (the long form does not resolve). Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first, and tag your test traffic with a distinctive `category` like `sdk-doc-*` so cleanup can find it.
+Use the canonical kit slug `n` in URLs; the proxy also accepts `notifications` and `notification` as hostname aliases. Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first, and tag your test traffic with a distinctive `category` like `sdk-doc-*` so cleanup can find it.
 
 ### 1. Fire a notification on a display + read it back
 
-**Goal:** post a toast on display `:2`, then confirm the kit recorded it. ⚠ Display `:0` typically has no D-Bus session in headless containers (`500` with `details: "The display's notification session is not available yet. Start the display and retry."`); use a display that an X session is actually attached to.
+**Goal:** post a toast on display `:2`, then confirm the kit recorded it. ⚠ Use a display from 1 through 40000: display `:0` does not exist and returns `400 Validation Error` (`details: "Display 0 does not exist; display IDs start at 1."`). A valid display whose notification session is not up yet returns `503` `DISPLAY_NOT_READY` with `Retry-After`; resend after that wait.
 
 **Step 1 — trigger.** Body is `application/json`; `display` + `summary` are required, the rest are optional. The kit responds `{"success":true,"message":"Notification sent successfully"}` — note: NO `id` is returned here, so step 2 has to recover the per-display id by listing.
 
@@ -131,13 +131,14 @@ hoody --container "$C" notifications list 2,3 --limit 20 -o json \
 
 ### 3. Subscribe to the live SSE stream and react to new notifications
 
-**Goal:** keep a long-lived consumer that reacts to new notifications as they arrive. Default is SSE (no `Upgrade` header); WebSocket activates only with an `Upgrade: websocket` request. SSE frames: `connected` (once), `heartbeat` (every 15 s), `notification` (on new entry). The stream is best-effort: a slow consumer skips what it lagged behind, with no replay. When every entry matters, also page `hoody notifications list` forward (Example 8). 
+**Goal:** keep a long-lived consumer that reacts to new notifications as they arrive. Default is SSE (no `Upgrade` header); WebSocket activates only with an `Upgrade: websocket` request. SSE frames: `connected` (once), `heartbeat` (every 15 s), `notification` (on new entry), `resync` (when the subscriber fell behind). The stream is best-effort: a slow consumer skips what it lagged behind, with no replay, but both transports then send `{"type":"resync","skipped":<n>,"timestamp":<ms>}`. On a `resync`, page `hoody notifications list` forward from the last position you processed (Example 8) to recover the skipped entries. 
 
 ```bash
-# Generated CLI buffers SSE events in memory (no cli_stream flag in the namespace
-# mapping), so `notifications stream` is not a true live tail. For a streaming
-# feed, drop to EventSource/fetch on $KIT/api/v1/notifications/stream or use the
-# SDK connect() wrapper.
+# Follow the stream in one shell: events print as they arrive. One connection,
+# no automatic reconnect: rerun it after a drop.
+hoody --container "$C" notifications stream --displays all
+
+# In another shell, fire something:
 hoody --container "$C" notifications send --display 2 \
   --summary 'hello-stream' --category 'sdk-doc-stream'
 ```
@@ -164,7 +165,7 @@ hoody --container "$C" notifications restore                  # every scope
 
 ### 6. Fetch a notification icon by id with revalidation
 
-**Goal:** download the icon a notification carried, then revalidate cheaply via `If-None-Match`. `iconId` looks like `6_10_1749024932903.png`; the kit rejects unknown extensions and any path traversal. Unknown/unresolvable `iconId` returns `400` (`{"error":"Icon not found"}` / `Icon not found or path invalid`); an unsupported extension or path traversal returns `400 "Icon ID is invalid or has an unsupported extension."`, and an existing-but-unreadable icon returns `500`. The route has no 404 path at all — a missing icon is a `400`.
+**Goal:** download the icon a notification carried, then revalidate cheaply via `If-None-Match`. `iconId` looks like `6_10_1749024932903.png`; the kit rejects unknown extensions and any path traversal. Unknown/unresolvable `iconId` returns `400` (`{"error":"Icon not found"}` / `Icon not found or path invalid`); an unsupported extension or path traversal returns `400` with `error: "Validation Error"` and `details: "Icon ID is invalid or has an unsupported extension."`, an icon that cannot be opened returns `400 "Icon not found"`, and a read failure after opening it returns `500 "Internal server error while serving icon"`. The route has no 404 path at all — a missing icon is a `400`.
 
 ```bash
 ICON=$(hoody --container "$C" notifications list 2 --limit 10 -o json \
@@ -174,7 +175,7 @@ hoody --container "$C" notifications icons get "$ICON" --out-file "/tmp/$ICON"
 
 ### 7. Filter a listing by display, time window, and cursor
 
-**Goal:** "give me what is new on display `:2` since a known point, with a position to continue from." `since` is **Unix milliseconds** (inclusive), `after_id` the exclusive integer id. With either, the page holds the OLDEST `limit` matches (still listed newest-first), and `data.has_more` says whether more follow `data.next_cursor`. `display_id` comes back as either a number or a string depending on the entry source, so compare it loosely; the path/CLI accepts `"2"`, `":2"`, or even `"all"`.
+**Goal:** "give me what is new on display `:2` since a known point, with a position to continue from." `since` is **Unix milliseconds** (inclusive), `after_id` the exclusive integer id. With either, the page holds the OLDEST `limit` matches, listed oldest-first, and `data.has_more` says whether more follow `data.next_cursor`. `display_id` comes back as either a number or a string depending on the entry source, so compare it loosely; the path/CLI accepts `"2"`, `":2"`, or even `"all"`.
 
 ```bash
 SINCE_MS=$(( $(date +%s) * 1000 - 24*60*60*1000 ))  # last 24h, ms
@@ -187,21 +188,22 @@ hoody --container "$C" notifications list 2 \
 
 **Goal:** poll for what arrived since your last read, without re-reading or skipping anything. A plain listing returns the newest `limit` entries (its `has_more` is always `false`), and its `data.next_cursor` marks the newest row. Pass that value back as `cursor` and the kit returns the OLDEST `limit` rows after it, with a fresh `next_cursor` and `has_more: true` while more rows wait. Loop until `has_more` is `false`, keep the last `next_cursor`, and start the next poll from it (an empty page echoes your cursor back). Rows are ordered by (timestamp, display, id), so one cursor covers `all` or `2,3`. `cursor` cannot be combined with `since` or `after_id` (`400`). To walk the whole retained history, start with `since=0` instead of a plain listing. There is no reverse cursor.
 
-The generated CLI has no `--cursor` flag yet, so page with `--after-id` instead: it returns the OLDEST `limit` entries whose id is above it, so passing the highest id you hold, again while `has_more` is `true`, misses nothing. Ids are numbered per display and are not unique across displays, so keep one `--after-id` per display and list each display on its own.
+The CLI takes the cursor as `--cursor <next_cursor>`.
 
 ```bash
-declare -A HIGH
-for D in 2 3; do   # first read: the HIGHEST id per display (0 when empty)
-  HIGH[$D]=$(hoody --container "$C" notifications list "$D" --limit 50 -o json \
-    | jq '[.data.notifications[].id] | max // 0')   # -o json keeps the kit envelope
-done
-# Each poll: per display, the OLDEST entries above that display's cursor, until has_more is false.
-for D in 2 3; do
-  while :; do
-    NEW=$(hoody --container "$C" notifications list "$D" --limit 1000 --after-id "${HIGH[$D]}" -o json)
-    HIGH[$D]=$(echo "$NEW" | jq --argjson h "${HIGH[$D]}" '[.data.notifications[].id] | max // $h')
-    [ "$(echo "$NEW" | jq -r '.data.has_more')" = true ] || break
-  done
+# First read: the newest page. Keep its next_cursor (null only when nothing is listed).
+CUR=$(hoody --container "$C" notifications list all --limit 50 -o json \
+  | jq -r '.data.next_cursor // empty')   # -o json keeps the kit envelope
+# Each poll: follow next_cursor while has_more; every page is the OLDEST rows past the cursor.
+while :; do
+  if [ -n "$CUR" ]; then
+    PAGE=$(hoody --container "$C" notifications list all --limit 1000 --cursor "$CUR" -o json)
+  else
+    PAGE=$(hoody --container "$C" notifications list all --limit 1000 --since 0 -o json)
+  fi
+  echo "$PAGE" | jq -c '.data.notifications[]'   # handle the rows (oldest first)
+  CUR=$(echo "$PAGE" | jq -r '.data.next_cursor // empty')
+  [ "$(echo "$PAGE" | jq -r '.data.has_more')" = true ] || break
 done
 ```
 
@@ -218,10 +220,11 @@ hoody --container "$C" notifications list 2 \
 
 ### 10. Survive a 429 rate-limit burst on `hoody notifications send`
 
-**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `hoody notifications send` and `hoody notifications icons get`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `500` (`error: "Notification dispatch failed"`) says why in `details`; when it reads "The display's notification session is not available yet. Start the display and retry.", bring the display up (→ `display`) before retrying instead of looping on the same call.
+**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `hoody notifications send` and `hoody notifications icons get`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means no display can be started, so bring one up (→ `display`) instead of looping on the same call. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
 
 ```bash
-# The CLI does not retry by default. Resend the SAME alert with bounded backoff,
+# By default the CLI retries a send only when it was never dispatched, never on a 429.
+# Resend the SAME alert with bounded backoff,
 # but only on 429; any other error, or a 429 on the last try, stops with a nonzero exit.
 for i in $(seq 1 50); do
   delay=1; sent=0
@@ -246,7 +249,7 @@ https://{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all
 
 The page asks for notification permission on first load (with an Enable button when the browser needs a click first) and its stream reconnects on its own. Delivery is best-effort: there is no polling fallback, so an alert fired while the connection is down is not shown. When an alert must not be missed, the agent should also check the `hoody notifications list` history. No token goes in the URL — the hostname is the credential.
 
-**Agent side** — fire the alert. Any real display number works; the kit auto-ensures it, so you don't need to set up X first.
+**Agent side** — fire the alert. Any display from 1 through 40000 works (display 0 is a `400`); the kit auto-ensures it, so you don't need to set up X first.
 
 ```bash
 hoody --container "$C" notifications send \
@@ -268,5 +271,5 @@ hoody --container "$C" notifications send \
 | `hoody notifications open` |  | action | Open the Notifications kit service in your browser |  | `hoody notifications open` |
 | `hoody notifications restore` |  | destructive | Clear dismissed notifications | `notifications.restore` | `hoody notifications restore --display-id 1` |
 | `hoody notifications send` |  | write | Trigger a new desktop notification | `notifications.send` | `hoody notifications send --body 'This is a test message from the API.' --category test-api --display 1 --summary 'Test Notification'` |
-| `hoody notifications stream` |  | read | Real-time notification stream via WebSocket | `notifications.connect` | `hoody notifications stream --displays all` |
+| `hoody notifications stream` |  | read | Follow new notifications as they arrive (Server-Sent Events) | `notifications.connect` | `hoody notifications stream --displays all` |
 

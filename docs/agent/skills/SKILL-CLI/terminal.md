@@ -1,4 +1,4 @@
-> _**CLI skill · `terminal` namespace** · ~9,349 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `terminal` namespace** · ~9,491 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `terminal` — Persistent multiplayer PTY sessions over HTTP and WebSocket
 
@@ -42,7 +42,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Persistent interactive session
 
-`hoody terminal sessions create` (pin `terminal_id` or `ephemeral=true`) → `hoody terminal commands run` (body `wait` defaults to `true` and asks for a synchronous result, but SSH sessions, `defer_pid` commands and a server at its concurrent-wait cap answer asynchronously — check `status` and poll `hoody terminal commands get` by `command_id`; send body `wait: false` for an async `command_id`; shares shell state) → `hoody terminal commands get` → `hoody terminal sessions read`/`hoody terminal sessions screenshots capture` → `hoody terminal sessions delete`. The CLI exec command cannot send `wait: false`; type a fire-and-forget command with `hoody terminal sessions write` instead.
+`hoody terminal sessions create` (pin `terminal_id` or `ephemeral=true`) → `hoody terminal commands run` (body `wait` defaults to `true` and asks for a synchronous result, but SSH sessions, `defer_pid` commands and a server at its concurrent-wait cap answer asynchronously — check `status` and poll `hoody terminal commands get` by `command_id`; send body `wait: false` for an async `command_id`; shares shell state) → `hoody terminal commands get` → `hoody terminal sessions read`/`hoody terminal sessions screenshots capture` → `hoody terminal sessions delete`. Use `hoody --container "$C" terminal commands run --terminal-id <id> --command '<command>' --no-wait -o json` to start asynchronously and keep the returned `command_id`.
 
 ### 2. Ephemeral one-off execute
 
@@ -65,8 +65,8 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 For interactive coding agents and other long-lived TUIs the user may detach from and come back to:
 
 1. Pick an unused `terminal_id` (1–39999, **never** the ephemeral range 40000–65535, **never** re-use one another program is on).
-2. `hoody terminal sessions create` with that pinned id, `ephemeral: false`, `shell: '/bin/bash'`, `cwd: '/workspace'` (or wherever).
-3. `hoody terminal commands run` with body `command: 'claude'` (or `codex`, `aider`, `gemini …`) and body `wait: false` so the agent stays alive in the PTY rather than being treated as a sync request. The CLI exec command cannot send `wait: false`; type the command into the PTY with `hoody terminal sessions write --terminal-id <id> --input claude` instead.
+2. `hoody terminal sessions create` with that pinned id, `ephemeral: false`, `shell: '/bin/bash'`, `cwd: '/home/user'` (or wherever).
+3. `hoody terminal commands run` with body `command: 'claude'` (or `codex`, `aider`, `gemini …`) and body `wait: false` so the agent stays alive in the PTY rather than being treated as a sync request. In the CLI: `hoody --container "$C" terminal commands run --terminal-id <id> --command claude --no-wait -o json`.
 4. Reattach any time: `hoody --container "$C" shell --terminal-id <id>` for an interactive attach (multiplayer — multiple viewers / scripts can attach to the same PTY simultaneously), or drive it with `hoody terminal sessions press` / `paste`.
 5. Tear down only when really done: `hoody terminal sessions delete <terminal-id>`. The session persists until explicitly deleted or hit by `terminal-idle-timeout` (300 s default with zero attached clients and no running process). Sessions are in-memory only — a container reboot kills the PTY and drops the session; re-create after a reboot.
 
@@ -103,15 +103,15 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 ## Quirks & gotchas
 
-- **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script or a read-only `display` stream over a live PTY.
+- **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script over a live PTY (a `display` URL is no read-only alternative: its readonly setting is client-side only, and its holder can still send input).
 - `terminal_id` numeric **1–65535**. **40000–65535 reserved for ephemeral**; pin manual IDs in 1–39999.
 - `terminal_id=0` = sentinel "treat as absent".
 - **Display pairing.** `hoody terminal sessions create` builds the session's `DISPLAY` from its `display` field and ignores any `display` in the request URL, so there is no automatic `terminal_id=N ⇒ DISPLAY=:N` mapping — pass `display` explicitly (either `"N"` or `":N"` — the kit normalises a bare number to `:N`). `hoody terminal commands run` differs: a session it has to create is configured from the request URL, where `display=N` (or the `display_id=N` alias) sets `DISPLAY=:N` — and on a `terminal-N` host that parameter is supplied for you, so a session first created that way already renders on `:N`. `ephemeral=true` still strips it, and an already-running session keeps the `DISPLAY` it spawned with. The `display-N` kit URL surface is independent of session id.
 - `ephemeral=true` strips `DISPLAY`, skips display/dbus init — X11 won't render.
 - `defer_pid` returns `/execute` immediately even with `wait=true`; queues until named PID exits (TUI-safe), for at most `defer_timeout_ms` (60000 ms default) — on expiry the command never runs.
 - **`/execute` body field is `command` (NOT `cmd`); request fails `400 Missing 'command' field` if you send `cmd`. The value is plain UTF-8, not base64; only the URL-form `?cmd=<base64>` is base64-decoded.** The kit wraps the command with shell bookkeeping (optional `cd`, environment prefix, exit-code capture, completion-marker echo) before it reaches the PTY; for direct interactive input use `hoody terminal sessions write`, `hoody terminal sessions paste` or `hoody terminal sessions press`.
-- **`/execute` REQUIRES `?terminal_id=<n>` as a query parameter** unless `?ephemeral=true`; missing/non-numeric returns `400`. A `terminal_id` in the body is ignored; with no `?terminal_id` the request is `400 terminal_id parameter required`.
-- Completion normally comes from the `COMMAND_COMPLETED_MARKER_{id}` tail, stripped before `/result/{id}`. A command is also marked completed when the session's process has died (exit code 1), or — on a non-ephemeral session with no explicit `timeout` — after 10 s of output silence once some output was captured (exit code 0, marker never seen). A `completed` result therefore does not prove a long-running program exited; a program that swallows the marker and never falls silent keeps `wait=true` waiting.
+- **`/execute` REQUIRES `?terminal_id=<n>` as a query parameter** unless `?ephemeral=true`; missing/non-numeric returns `400`. A `terminal_id` in the body is ignored; with no `?terminal_id` the request is `400 terminal_id parameter required`. With body `mode: "raw"` the command runs as a one-shot process with no terminal session, and `terminal_id` is ignored.
+- Completion normally comes from the `COMMAND_COMPLETED_MARKER_{id}` tail, stripped before `/result/{id}`. A command is also marked completed when the session's process has died (exit code 1, `completion: "ended"`), or — on a non-ephemeral session with no explicit `timeout` — after 10 s without output once stdout was captured or the command's start marker was seen (`completion: "output_quiet"`, `exit_code: null`: the exit status is unknown and the program may still be running). A `completed` result therefore does not prove a long-running program exited; check `completion`; a program that swallows the marker and never falls silent keeps `wait=true` waiting.
 - **`wait=false` returns `status:"queued"` or `"running"` immediately** (NOT `"completed"`) — the kit tracks the command through its marker and output, not the underlying PID. Re-check actual output via `hoody terminal sessions read` / `hoody terminal sessions snapshot get`.
 - **Screenshot `?format=` accepts `png | jpeg | jpg | gif`** at the kit level — `json` is invalid. (Note: the generated SDK type only allows `png | jpeg | gif`, so `jpg` works only via raw HTTP.)
 - **`hoody terminal processes signal` with `{name}` targets EVERY process matching that name** (returns `affected_pids`); use `{pid}` for surgical kills.
@@ -122,7 +122,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 ## Common errors
 
-- `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id; the lower-level validator logs a near-identical `0-65535` warning.
+- `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id.
 - `400` config-error on `hoody terminal sessions create` — SSH/SOCKS5 partial validation (e.g. `ssh_user` without `ssh_host`, `socks5_port` out of range). The kit does NOT enforce mutual exclusion of `ssh_password` + `ssh_key`; both can coexist on a single session.
 - `404` on `hoody terminal commands get` once the result is gone: its session was removed (an ephemeral session holding results goes after `ephemeral-result-timeout` of inactivity with no attached client), or the session's result buffer filled and evicted it.
 - `Unknown program name "<name>"` (400) on `hoody proxy aliases create` → the `program` is not in the platform's program catalog. For a terminal alias use `program=terminal` (not `hoody-terminal` or `terminal-N`); pick the instance with `index`.
@@ -135,7 +135,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first.
 
-⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). In the SDK that is `_templateVars: { serviceIndex: N }` (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body parser only consumes the `command`, `id`, `timeout`, the boolean wait sync flag, `cwd` and `env` keys); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output, provided some stdout has already been captured, and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `hoody terminal sessions read` if in doubt. Add `-o json` to `hoody terminal commands run` to get the full result body (`stdout`, `exit_code`, `command_id`) for scripting.
+⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). A DNS label holds at most 63 characters, so from id 10000 up the `<projectId>-<containerId>-terminal-<N>` label is too long: use the short alias `t-<N>` (`<projectId>-<containerId>-t-<N>.<server>.containers.hoody.com`), which selects the same terminal. The SDK and CLI switch to it automatically."] In the SDK, pass `{ serviceIndex: N }` as the last, template-vars argument (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body carries `command`, `wait`, `mode` (`pty` by default, or `raw` for a one-shot process with no terminal session), `stdin_b64` and `user` (raw mode only), `id`, `timeout`, `cwd` and `env`); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output once stdout was captured or its start marker was seen (`completion: "output_quiet"`, `exit_code: null`; the program may still be running), and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `hoody terminal sessions read` if in doubt. Add `-o json` to `hoody terminal commands run` to get the full result body (`stdout`, `exit_code`, `command_id`) for scripting.
 
 ### 1. Persistent interactive session — create, run, capture, tear down
 
@@ -278,11 +278,13 @@ To route the SSH connection through a SOCKS5 proxy, keep `ssh_host` and `ssh_use
 
 **Goal:** start a long-running TUI (Claude Code, Codex, vim, …) at a pinned `terminal_id`, walk away, come back later from a different host.
 
-**Step 1 — pin id, create, launch with body `wait: false`** so the request returns instantly while the agent stays alive in the PTY. `commands run` in the CLI has no `--no-wait`; the CLI form types the command into the PTY with `sessions write` instead. The `cwd` must already exist: `hoody terminal sessions create` has no auto-create option and fails on a missing directory. To have the kit create it, skip `hoody terminal sessions create` and let `hoody terminal commands run` create the session, passing `cwd` and `cwd_auto_create=true` with the pinned `terminal_id`. The CLI form below creates the session first, so its `--cwd` must exist:
+**Step 1 — pin id, create, launch with body `wait: false`** so the request returns instantly while the agent stays alive in the PTY. In the CLI, `commands run --no-wait` sends `wait: false`. The `cwd` must already exist: `hoody terminal sessions create` has no auto-create option and fails on a missing directory. To have the kit create it, skip `hoody terminal sessions create` and let `hoody terminal commands run` create the session, passing `cwd` and `cwd_auto_create=true` with the pinned `terminal_id`:
 
 ```bash
-hoody --container "$C" terminal sessions create --terminal-id 50 --shell bash --cwd /workspace
-hoody --container "$C" terminal sessions write --terminal-id 50 --input 'sleep 600; echo agent-stopped'
+# No sessions create: this call creates session 50 and its missing working directory.
+hoody --container "$C" terminal commands run --terminal-id 50 --shell bash \
+  --cwd /home/user/agent --cwd-auto-create true \
+  --command 'sleep 600; echo agent-stopped' --no-wait -o json   # placeholder for `claude`/`codex`
 ```
 
 **Step 2 — reattach later** — same `terminal_id`, WS or REST, multiplayer:
@@ -310,20 +312,18 @@ hoody --container "$C" terminal commands run --terminal-id 60 --defer-pid 12345 
 
 **Goal:** abort a hung `/execute` by `command_id`, then escalate to a process-level signal if the underlying program ignored SIGINT.
 
-**Step 1 — submit async (body `wait: false`), capture `command_id`.** `commands run` in the CLI has no `--no-wait`, so the CLI form types the command with `sessions write` and has no `command_id` to abort.
+**Step 1 — submit async (body `wait: false`), capture `command_id`.** In the CLI, `commands run --no-wait` sends `wait: false`.
 
 ```bash
 hoody --container "$C" terminal sessions create --terminal-id 70
-hoody --container "$C" terminal sessions write --terminal-id 70 --input 'sleep 120'
+CID=$(hoody --container "$C" terminal commands run --terminal-id 70 \
+  --command 'sleep 120' --no-wait -o json | jq -r .command_id)
 ```
 
 **Step 2 — abort** the command tracker. Add `force:true` to send SIGKILL; default sends SIGINT.
 
 ```bash
-# With a command_id from HTTP/SDK:
 hoody --container "$C" terminal commands cancel "$CID" --force
-# For the CLI-typed command above, interrupt it in the PTY instead:
-hoody --container "$C" terminal sessions press --terminal-id 70 --key ctrl+c
 ```
 
 **Step 3 — if the program survives** (ignored SIGINT, double-fork'd, etc.), escalate via `hoody terminal processes signal` by name. Targets every process matching the name.
@@ -371,7 +371,7 @@ Cleanup: `hoody terminal sessions delete <terminal-id>`. ⚠ Never call `hoody t
 | `hoody terminal system displays list` |  | read | Get display information | `terminal.system.listDisplays` | `hoody terminal system displays list` |
 | `hoody terminal system displays stop` |  | destructive | Stop an X display and everything drawing on it, including a display a deleted terminal session left running | `terminal.system.stopDisplay` | `hoody terminal system displays stop 1 -y` |
 | `hoody terminal system ports list` |  | read | List all listening network ports | `terminal.system.listPorts` | `hoody terminal system ports list --protocol tcp --user root` |
-| `hoody terminal system reboot` |  | write | Reboot the system | `terminal.system.reboot` | `hoody terminal system reboot --delay 60` |
-| `hoody terminal system shutdown` |  | write | Shutdown the system | `terminal.system.shutdown` | `hoody terminal system shutdown --delay 60` |
+| `hoody terminal system reboot` |  | write | Reboot the system | `terminal.system.reboot` | `hoody terminal system reboot --delay 60 -y` |
+| `hoody terminal system shutdown` |  | write | Shutdown the system | `terminal.system.shutdown` | `hoody terminal system shutdown --delay 60 -y` |
 | `hoody terminal system stats` |  | read | Get system resources and statistics | `terminal.system.getStats` | `hoody terminal system stats` |
 

@@ -1,4 +1,4 @@
-> _**CLI skill · `notes` namespace** · ~11,258 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `notes` namespace** · ~12,235 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `notes` — Collaborative notebooks, hierarchical nodes, documents, databases
 
@@ -39,7 +39,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 3. **Build a structured document with `hoody notes document set`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `hoody notes document set` OVERWRITES the whole document; `hoody notes document update` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `hoody notes document set`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
 4. **Database CRUD** — `hoody notes nodes create` `type:"database"`; then `hoody notes records create`/`hoody notes records list`/`hoody notes records search`/`hoody notes records update` (merges `fields`)/`hoody notes records delete`. Page with `page`/`count` on `hoody notes records list` (count max 100).
 5. **Comments + versions** — `hoody notes collaborators add` (`admin`/`editor`/`collaborator`/`viewer`). `hoody notes comments create` (top-level, anchored, or reply); `hoody notes comments update` / `hoody notes comments delete` / `hoody notes comments resolve` accept optional `expectedVersion` for optimistic concurrency. `hoody notes versions create`/`list`/`get`/`hoody notes versions restore`.
-6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `hoody notes nodes create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `hoody notes files download`. The CLI has no TUS commands (`hoody notes files` only lists and downloads), so upload over HTTP.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `hoody notes nodes create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `hoody notes files download`. The CLI has no TUS commands (`hoody notes files` only lists and downloads), so upload over HTTP.{22}18$/.test(fileId)"]
 
 ## Quirks & gotchas
 
@@ -48,17 +48,17 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Prefer `hoody notes document append` for adding content; it does NOT create the node.** Append server-assigns `id`/`parentId`/`index` and creates the document row if missing, but `404`s if the node is absent and `400`s for node types that do not support documents (only `page`/`record` do) — so create/find the page first. It rejects client-supplied `id`/`parentId`/`index` and reserved `attrs` keys (`id`,`parentId`,`index`,`type`,`__proto__`,`constructor`,`prototype`), accepts only `{type:'text'}` leaves (no inline `mention`/image), the `{text}` form does NOT split newlines (one literal block), and it caps at 100 blocks / 512 KiB per call. Appendable types: `paragraph`, `heading1-3`, `codeBlock`, `horizontalRule` (containers and `file` are rejected).
 - **`hoody notes document set` has no block/byte cap** (only the Fastify 10 MB body limit) and requires the node to exist, creating the document row if it has none; the 100-block / 512 KiB caps are append-only.
 - **A page needs a parent and a `name`: `hoody notes nodes create` with `type:"page"`, `parentId` and `attributes.name`.** The parent is the `Home` section (its id from `hoody notes nodes list` with `type:"section"`) or another page you can edit; in flags: `--type page --parent-id <sectionId> --attributes name=<name>`. With no `parentId` the kit answers `400 parent_required`: add the parent rather than creating a notebook. A `403 forbidden` is a real permission refusal (your role on the parent does not allow the create). The label is `name`; there is no `title` attribute, and a page without `name` fails with `500 unknown`.
-- **`hoody notes nodes create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A manually-created `section` must include `attributes.collaborators` with the creator as `admin` and is root-only — easiest is to reuse the auto-provisioned `Home` section.
+- **`hoody notes nodes create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A section is root-only (a `parentId` gives `400 section_must_be_root`). If `attributes.collaborators` is omitted, the server adds the creator as `admin`; a map you send yourself must name you as `admin`, or the create is a `403` !== 'admin') {"]. For a note, reuse the auto-provisioned `Home` section.
 - **`hoody notes notebooks create` always makes a new, separate notebook; it is not how you add a note.** It takes only `name` (plus optional `description`/`avatar`) and no parent: a notebook is top-level. It ignores `X-Idempotency-Key`, and names are not unique, so a retry or a second call with the same name makes a duplicate. Run `hoody notes notebooks list` first and reuse a notebook that has the name; to add a note, create a page in an existing notebook with `hoody notes nodes create`.
-- **Known defect (CLI): `hoody notes document set` and `hoody notes document update` cannot write text.** `--content KEY=VALUE` sends a flat object of strings, not a rich-text document (`{type:"rich_text",blocks:{…}}`): `doc put` is refused with `400`, and `doc patch` stores an extra key the page never shows. Write text with `hoody notes document append --body '{"text":"…","type":"paragraph"}'`; build lists and tables over HTTP or the SDK.
-- **Known defect (CLI): `hoody notes records create` and `hoody notes records update` cannot set field values.** `--fields KEY=VALUE` sends each value as a plain string, but a record field is a typed `{type, value}` object keyed by the field id, so any `--fields` is refused (`db create` `500`, `db update` `400`). Use `--name` alone from the CLI and write field values over HTTP or the SDK.
-- **Known defect (CLI): `hoody notes avatars upload` has no input for the image**, so it sends an empty request and the kit answers `400`. Upload over HTTP: `POST /api/v1/notes/avatars` with the raw JPEG, PNG or WebP bytes as the body and a matching `Content-Type`; the response carries the avatar id for `--avatar`.
+- **`hoody notes document set` and `hoody notes document update` take a rich-text document only from a file: `--content @/tmp/content.json`.** The file holds the content object itself, such as `{"type":"rich_text","blocks":{…}}`, without an outer `content` key; its values are sent as written, nested blocks included. `--content KEY=VALUE` sends each value as a plain string, which no document accepts (`set` is refused with `400`, `update` stores an extra key the page never shows). For plain text, `hoody notes document append --body '{"text":"…","type":"paragraph"}'` is simpler.
+- **`hoody notes records create` and `hoody notes records update` take typed field values.** Each `--fields` VALUE is JSON, the `{type, value}` object keyed by the field id: `--fields 'f_done={"type":"boolean","value":true}'` (repeat the flag per field), or `--fields @/tmp/fields.json` for the whole fields map. A bare value such as `f_done=true` is not a field value and is refused.
+- **Upload an avatar with `hoody --container "$C" notes avatars upload --input /tmp/avatar.jpg`** (or pipe the bytes on stdin). The body is the raw JPEG, PNG or WebP image, and the CLI sets `Content-Type` from the file's bytes; the response carries the avatar id for `--avatar`.
 - Authentication re-anchors identity to the `notebookId` in the URL, so one bearer token reaches any notebook the username has joined.
 - Cross-client convergence is **mutation-stream-driven** via the `POST /api/v1/notes/notebooks/{notebookId}/mutations` (HTTP only; no CLI command) route + WS feed: each mutation type (`hoody notes document update`, `node.*`, etc.) is dispatched server-side to a SQL-backed lib function. `hoody notes document set` is a last-writer-wins overwrite of the same store. `hoody notes document update` re-applies its merge to the current document when a concurrent write lands first, so two PATCHes that send different blocks both survive; two that send the same block id are last-writer-wins for that block, and a `hoody notes document set` racing a PATCH still overwrites whatever it omits.
-- `hoody notes whoami` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `hoody notes notebooks create` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`; invalid Bearer = 401 even with fallback. **Without any of the three, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=` on every unauthenticated call, or attach Bearer / `ticket`. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
+- `hoody notes whoami` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `hoody notes notebooks create` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`. Only a notes Bearer token (base64url JSON with `userId`, `notebookId`, `username`, `role`) is read: one that decodes to a JSON object but is malformed returns `401` with no fallback, while a JWT, an opaque token or another scheme is ignored and resolution continues with `ticket` or the query identity. An export `ticket` is accepted only on the HTML document export (`GET …/document?output=html`); on any other route it is a `400`. **Without a notes Bearer token, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=<name>` on every unauthenticated call, or attach a valid notes Bearer identity. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
 - **`Readonly` notebook gates writes** — content reads still serve through; write routes (mutations, document.put/patch, record-create, etc.) are rejected with `403 notebook_readonly`. The TUS upload route refuses every method on a readonly notebook, the `HEAD` offset check included.
 - `X-Idempotency-Key` replay returns saved response; same key+different payload → 409. Only routes that implement it honour the header (see Prerequisites); notebook create does not.
-- `hoody notes records update` merges `fields`. Access resolves your role from your collaboration on the notebook **root** node, falling back to your notebook role when there is none, then walks the database's full ancestor chain and returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you (notebook owner/admin bypasses the privacy walk). A root collaboration alone is therefore NOT sufficient under such an ancestor. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.
+- `hoody notes records update` merges `fields`. Database access uses the shared node-access check: it starts from your collaboration on the notebook **root** node (or your notebook role when there is none), returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you, and then applies the deepest explicit collaboration on the database's ancestor chain, so a role granted lower in the tree overrides the root one. Notebook owners/admins skip the privacy checks and keep their root-level role. A root collaboration alone is therefore NOT sufficient under such an ancestor, and a write refusal can come from a deeper collaboration. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.{22}18$/.test(fileId)"]
 - `hoody notes document get` with `output=html` needs a short-lived export `ticket` (3 uses, 2 minutes) on `GET .../document`. `hoody notes document set` overwrites; `hoody notes document update` merges: top-level keys replace the stored ones, and `content.blocks` (a map by block id, or a list of blocks with distinct ids) merges by block id — a sent block replaces the stored block with that id, every other block is kept, and removing blocks takes a `hoody notes document set`. Any other `blocks` shape is a `400`. `hoody notes comments update` / `hoody notes comments delete` / `hoody notes comments resolve` accept optional `expectedVersion`.
 - `hoody notes records search` matches against record names AND field values (not just names).
 - Text filter operators in `hoody notes records list --filters <filters>`: `is_equal_to` / `is_not_equal_to` / `contains` / `does_not_contain` / `starts_with` / `ends_with` / `is_empty` / `is_not_empty`. The bare `is` is NOT a valid operator — use `is_equal_to`; the bare `not_contains` is NOT either — use `does_not_contain`.
@@ -66,7 +66,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common errors
 
-- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.
+- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.{22}18$/.test(fileId)"]
 - `403 notebook_no_access`/`notebook_readonly`/`forbidden` (a database write needs a collaboration granting you create rights).
 - `404 not_found` — node/comment/version missing, or it does not belong to the `notebookId` given in the path. File routes use their own codes: `hoody notes files download` answers `400 file_not_found` for a missing file node or one outside the notebook, `400 file_not_ready` / `400 file_upload_not_found` for an upload that has not finished, and `404 file_not_found` when the stored bytes are missing; the TUS route answers `404 file_not_found` for a missing file node. `500 unknown` — read-back failed or uncategorized.
 
@@ -76,7 +76,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK), except the structured-document and typed-record steps the CLI flags cannot express, which point to the HTTP or SDK skill instead. Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. The examples send no `?username=`, Bearer token or ticket, so every call runs as the default username `user`; to act as another user, add the same `?username=<name>` to every request (a username that appears on only some calls splits ownership between two users).
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK); nested documents and whole attribute maps go through a JSON file passed as `@file.json`. Set `P`, `C`, `N` (project id, container id, server name) from `hoody containers get` first. The examples send no `?username=`, Bearer token or ticket, so every call runs as the default username `user`; to act as another user, add the same `?username=<name>` to every request (a username that appears on only some calls splits ownership between two users).
 
 ### 0. Block model cheat-sheet — types, the `attrs` key, and container nesting
 
@@ -101,7 +101,9 @@ block is `{ id, type, parentId, index, content?, attrs? }`:
 - Inline `content` leaves are `{ "type":"text", "text":"…", "marks?":[…] }`. Marks:
   `bold`, `italic`, `strike`, `underline`, `code` (no attrs); `link`
   (`attrs:{href,target,rel}`); `color` (`attrs:{color}`); `highlight`
-  (`attrs:{highlight}`); `comment` (`attrs:{commentId}`). `mention` is an inline NODE
+  (`attrs:{highlight}`). Do not write `comment` marks: the editor treats them as legacy
+  and strips them from an editable document; anchor a comment with `hoody notes comments create`
+  instead. `mention` is an inline NODE
   (`{type:'mention',attrs:{id,target}}`), not a mark; `hardBreak`
   (`{type:'hardBreak'}`) forces a line break inside a paragraph.
 
@@ -197,7 +199,27 @@ omitted blocks are kept, so it can add or rewrite blocks but never remove one. T
 remove blocks, `GET` the current blocks, mutate locally, `PUT` the result back (to
 add plain blocks, `hoody notes document append` is simpler).
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; run this step over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
+```bash
+PAGE=...
+B1=$(openssl rand -hex 12); B2=$(openssl rand -hex 12); B3=$(openssl rand -hex 12)
+BL=$(openssl rand -hex 12); LI1=$(openssl rand -hex 12); LI1P=$(openssl rand -hex 12)
+LI2=$(openssl rand -hex 12); LI2P=$(openssl rand -hex 12)
+# The file holds the content object itself (no outer "content" key).
+cat > /tmp/content.json <<EOF
+{"type":"rich_text","blocks":{
+  "$B1":{"id":"$B1","parentId":"$PAGE","index":"a0","type":"heading1","content":[{"type":"text","text":"Deploy Steps"}]},
+  "$B2":{"id":"$B2","parentId":"$PAGE","index":"a1","type":"paragraph","content":[{"type":"text","text":"Run the script below, then verify."}]},
+  "$B3":{"id":"$B3","parentId":"$PAGE","index":"a2","type":"codeBlock","attrs":{"language":"bash"},"content":[{"type":"text","text":"./deploy.sh prod"}]},
+  "$BL":{"id":"$BL","parentId":"$PAGE","index":"a3","type":"bulletList"},
+  "$LI1":{"id":"$LI1","parentId":"$BL","index":"a0","type":"listItem"},
+  "$LI1P":{"id":"$LI1P","parentId":"$LI1","index":"a0","type":"paragraph","content":[{"type":"text","text":"Smoke-test /healthz"}]},
+  "$LI2":{"id":"$LI2","parentId":"$BL","index":"a1","type":"listItem"},
+  "$LI2P":{"id":"$LI2P","parentId":"$LI2","index":"a0","type":"paragraph","content":[{"type":"text","text":"Tag the release"}]}
+}}
+EOF
+hoody --container "$C" notes document set --notebook-id "$NBID" --node-id "$PAGE" \
+  --content @/tmp/content.json
+```
 
 ### 3. Update one block's content + reorder by changing `index`
 
@@ -210,24 +232,56 @@ DOC=$(hoody --container "$C" notes document get --notebook-id "$NBID" --node-id 
 echo "$DOC" | jq '.content.blocks | to_entries | map({k:.key,t:.value.type,i:.value.index})'
 ```
 
-**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An arbitrary string such as `_a0` sorts first but breaks the editor's next insert beside it.
+**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An invalid key such as `_a0` is not stored as sent: a full-document PUT re-keys every sibling group that holds one (fresh `a0`, `a1`, … in the current order, so every sibling's `index` changes), and a PATCH that sends a new invalid index is refused with `400`.
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; run this step over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
+```bash
+# --content @file takes the content object itself (no outer "content" key)
+echo "$DOC" | jq --arg id "$B2" --arg t "Updated intro paragraph (now first)." '
+  .content.blocks
+  | .[$id].index = "Zz"
+  | .[$id].content = [{type:"text",text:$t}]
+  | {type:"rich_text",blocks:.}' > /tmp/content.json
+hoody --container "$C" notes document set --notebook-id "$NBID" --node-id "$PAGE" \
+  --content @/tmp/content.json
+```
 
 ### 4. Delete a block + verify ordering survives
 
 **Goal:** drop a single block from the doc. Same overwrite trick — `delete blocks[b3]` locally, PUT remaining map back, then GET to verify the survivors keep their `index` order.
 
-_(this step has no native `hoody notes` shape — the CLI flag set can't carry nested rich-text blocks; run this step over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
+```bash
+hoody --container "$C" notes document get --notebook-id "$NBID" --node-id "$PAGE" -o json \
+  | jq '{type:"rich_text",blocks:(.content.blocks | del(.["'"$B3"'"]))}' > /tmp/content.json
+hoody --container "$C" notes document set --notebook-id "$NBID" --node-id "$PAGE" \
+  --content @/tmp/content.json
+hoody --container "$C" notes document get --notebook-id "$NBID" --node-id "$PAGE" -o json \
+  | jq --arg p "$PAGE" '[.content.blocks[] | select(.parentId==$p)] | sort_by(.index) | map(.type)'
+```
 
 ### 5. Create a database (Tasks) with typed columns + add records
 
-**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `hoody notes nodes create` for `type:"database"` REQUIRES `attributes.fields` populated — without it the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
+**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `hoody notes nodes create` for `type:"database"` requires an `attributes.fields` map (`{}` is valid while the database has no columns yet) — without the map the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
 
 ```bash
-# _(no native `hoody notes` shape)_ — `--fields` is a KEY=VALUE collector, so the
-# JSON would be sent as a literal STRING and the server rejects the untyped value
-# (`db create` 500s, `db update` 400s). Typed database fields are HTTP/SDK-only.
+# The database's attributes (name + field definitions) come from a file.
+cat > /tmp/db-attrs.json <<'EOF'
+{"name":"Tasks","fields":{
+  "f_status":{"id":"f_status","type":"text","name":"Status","index":"a0"},
+  "f_priority":{"id":"f_priority","type":"number","name":"Priority","index":"a1"},
+  "f_done":{"id":"f_done","type":"boolean","name":"Done","index":"a2"}
+}}
+EOF
+DBID=$(hoody --container "$C" notes nodes create --notebook-id "$NBID" \
+  --type database --parent-id "$SEC" --attributes @/tmp/db-attrs.json -o json | jq -r .id)
+
+# Each --fields VALUE is the typed {type, value} JSON for that field id.
+for i in 1 2 3; do
+  hoody --container "$C" notes records create --notebook-id "$NBID" --database-id "$DBID" \
+    --name "Task $i" \
+    --fields 'f_status={"type":"text","value":"todo"}' \
+    --fields "f_priority={\"type\":\"number\",\"value\":$i}" \
+    --fields 'f_done={"type":"boolean","value":false}' >/dev/null
+done
 ```
 
 ### 6. Query records — filter + sort
@@ -250,17 +304,32 @@ A simpler full-text alternative is `hoody notes records search --q ...` — no a
 ```bash
 RID=$(hoody --container "$C" notes records list --notebook-id "$NBID" --database-id "$DBID" --count 50 -o json \
   | jq -r '.records[] | select(.name=="Task 1") | .id' | head -1)
-# _(no native `hoody notes` shape for the update itself)_ — `--fields` is a KEY=VALUE
-# collector and would send the typed union as a literal string (`400` at the route).
-# Write typed field values over HTTP or from the SDK: see this example in
-# SKILL-HTTP/notes.md or SKILL-SDK/notes.md.
+hoody --container "$C" notes records update --notebook-id "$NBID" --database-id "$DBID" --record-id "$RID" \
+  --fields 'f_status={"type":"text","value":"done"}' \
+  --fields 'f_done={"type":"boolean","value":true}' -o json | jq '.fields'
 ```
 
 ### 8. Bulk import records from a CSV
 
 **Goal:** load a list of imports into the Tasks database in a loop. There is no single-call bulk-create endpoint; loop `hoody notes records create` per row. ⚠ Records DO NOT auto-deduplicate by `name` — re-running the same import doubles your data. If you need idempotency over HTTP/raw fetch, set the request header `X-Idempotency-Key` to a deterministic per-row key (replay returns the saved response; same key + different payload returns `409`). 
 
-_(this step has no native `hoody notes` shape — `--fields` is a KEY=VALUE collector, so typed field values would be sent as literal strings, and `hoody notes records create` has no idempotency flag; run the import over HTTP or from the SDK, as shown in the same example in `SKILL-HTTP/notes.md` or `SKILL-SDK/notes.md`)_
+```bash
+cat > /tmp/tasks.csv <<EOF
+name,priority,status
+Migrate DB,2,todo
+Update docs,3,todo
+Wire CI,1,in-progress
+EOF
+# `records create` has no idempotency flag, so a rerun adds every row again;
+# for a retry-safe import, send X-Idempotency-Key over HTTP instead.
+tail -n +2 /tmp/tasks.csv | while IFS=, read -r name pri stat; do
+  hoody --container "$C" notes records create --notebook-id "$NBID" --database-id "$DBID" \
+    --name "$name" \
+    --fields "f_priority=$(jq -nc --argjson p "$pri" '{type:"number",value:$p}')" \
+    --fields "f_status=$(jq -nc --arg s "$stat" '{type:"text",value:$s}')" \
+    --fields 'f_done={"type":"boolean","value":false}' >/dev/null
+done
+```
 
 ### 9. Export a page to HTML — short-lived ticket flow
 
@@ -306,7 +375,7 @@ hoody --container "$C" notes notebooks delete --notebook-id "$NBID" \
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
 | `hoody notes avatars download` |  | read | Download an avatar image by id | `notes.avatars.download` | `hoody notes avatars download --avatar-id abc-123` |
-| `hoody notes avatars upload` |  | write | Upload an avatar image and get its id (JPEG, PNG or WebP; resized to 500x500) | `notes.avatars.upload` | `hoody notes avatars upload` |
+| `hoody notes avatars upload` |  | write | Upload an avatar image and get its id (JPEG, PNG or WebP; resized to 500x500) | `notes.avatars.upload` | `hoody notes avatars upload --input ./local-file` |
 | `hoody notes collaborators add` |  | write | Add a collaborator to a node | `notes.collaborators.add` | `hoody notes collaborators add --notebook-id abc-123 --node-id 1 --collaborator-id abc-123 --role admin` |
 | `hoody notes collaborators list` |  | read | List collaborators on a node | `notes.collaborators.list` | `hoody notes collaborators list --notebook-id abc-123 --node-id 1` |
 | `hoody notes collaborators remove` |  | destructive | Remove a collaborator from a node | `notes.collaborators.remove` | `hoody notes collaborators remove --notebook-id abc-123 --node-id 1 --collaborator-id abc-123` |

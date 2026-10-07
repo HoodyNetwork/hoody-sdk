@@ -1,4 +1,4 @@
-> _**CLI skill · `watch` namespace** · ~4,876 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `watch` namespace** · ~4,892 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `watch` — Linux inotify file-change streams with replay history
 
@@ -79,7 +79,7 @@ List with `hoody watch list`, inspect with `hoody watch get`, reconfigure in pla
 
 ## Common errors
 
-- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` is rejected earlier, while the query string is parsed: still HTTP 400, but without the `INVALID_PAGINATION` code
+- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` also answers HTTP 400 `INVALID_PAGINATION`; the message names the parameter
 - `400 INVALID_REQUEST` — empty `paths`, an invalid or missing path, a glob that does not compile, or an invalid `ignore_dirs` entry. All of these answer the same code, so read the message, not the code, to tell them apart
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
@@ -216,7 +216,7 @@ hoody --container "$C" watch get    --id "$WID"   # exits non-zero
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `since_id` set to the last id received. A 409 on one of those later `since_id` pages means the buffer rolled past the cursor while paging: the events between two pages are lost, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
 
 ```bash
 # One page only (at most 200 events). For more, repeat with --after-id set to the

@@ -1,4 +1,4 @@
-> _**CLI skill · `sqlite` namespace** · ~7,389 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `sqlite` namespace** · ~7,638 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `sqlite` — SQLite HTTP API
 
@@ -40,7 +40,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 ### KV CRUD + CAS + counters
 
 - `hoody kv set` — `ttl`, `if_match` (CAS), `path`, `history`.
-- `hoody kv get` — `path`, `at_timestamp`. `hoody kv exists` takes `db`, plus optional `table` and `timeout`; `hoody kv delete` takes `db`/`table`/`history` (`history` keeps the tombstone) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
+- `hoody kv get` — `path`, `at_timestamp`. `hoody kv exists` takes `db`, plus optional `table` and `timeout`; `hoody kv delete` takes `db`/`table`/`history` (`history`, default true, records the deleted value; `false` records only that a delete happened) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
 - `hoody kv increment` / `hoody kv decrement` / `hoody kv arrays push` / `hoody kv arrays pop` / `hoody kv arrays remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. 
 
 ### Time-travel (needs `history: true`)
@@ -56,18 +56,18 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Quirks & gotchas
 
-- **Bare-URL auth (no claim/token headers).** Like every kit (including `agent`), the `sqlite` kit accepts the bare per-container kit URL — no `X-Hoody-Container-Claim` or `X-Hoody-Token` headers required. The capability URL itself is the bearer.
+- **Bare-URL auth.** The `sqlite` kit checks no credential of its own; access through the kit URL is governed by the container proxy's permission policy. Under the default policy (no rules configured) the bare kit URL works with no extra headers and is itself the bearer; where the owner has configured auth groups, send the credential the group expects, or the proxy answers 401 or 403. → See `SKILL-CLI.md § Kit URLs as credentials`.
 - **Tx item keys: `"query"` and `statement`.** Each `transaction[i]` MUST carry exactly one of `"query"` or `statement`. A `statement` returns rows (`resultHeaders`/`resultSet`) when its SQL produces columns (a SELECT, or a write with `RETURNING`), and `rowsUpdated` otherwise. Use `"query"` for reads anyway; `valuesBatch` keeps its own restrictions. The `sql` alias maps to `statement`.
 - Path resolution: bare names auto-resolve under `/hoody/databases/` (with `.db` appended if no extension). The `./name` shorthand is the same bare name (`./app` → `/hoody/databases/app.db`). Any other relative path containing `/` or `\` (e.g. `data/app.db`, `./dir/app.db`) is **rejected**, NOT auto-absoluted; only literal absolute paths (e.g. `/hoody/databases/app.db`) are treated as absolute. Absolute paths outside `/hoody/databases` are refused unless the deployment allows any absolute database path. A database filename must be a regular file: a symlink at the filename itself is rejected. Symlinked parent directories are resolved to their real path. `:memory:` databases are rejected.
 - Directory mode takes an absolute directory path. Any other relative path (`sub/dir`) is refused with `directory-mode: invalid path input: path must be absolute`; a bare database name (`app`) is not treated as a directory and is opened as a database instead.
 - Tx items: `statement` or alias `sql`. `hoody db transactions run` caps: 10k items, 100k rows/`valuesBatch`, 1M total rows. `values` and `valuesBatch` are mutually exclusive on a single item; `"query"` items cannot use `valuesBatch`.
-- **GET `/query` rejects mutations**: INSERT/UPDATE/DELETE, `RETURNING` on writes, multi-statement (semicolons), PRAGMA writes, VACUUM, ATTACH/DETACH. Use `hoody db transactions run` with `statement:` items for writes.
+- **GET `/query` rejects mutations**: INSERT/UPDATE/DELETE, `RETURNING` on writes, multi-statement (semicolons), any PRAGMA, VACUUM, ATTACH/DETACH — only a single statement leading with SELECT, or a WITH that contains no write keyword, is accepted. Use `hoody db transactions run` with `statement:` items for writes.
 - **SELECT result-row cap is 10 000** (responses set `truncated: true` when hit) on both transaction `"query"` items and GET `/query`; further rows silently truncated. Paginate explicitly for larger result sets.
 - **`hoody kv set` body is any JSON value** (object, array, string, number, boolean, null), stored verbatim. **`hoody kv batch set` differs:** each item's `value` is a string, so JSON-encode objects yourself.
-- Time-travel **history is opt-out, not opt-in**: write handlers default `history: true`. Pass `history: false` to skip recording — but later `hoody kv history list` / snapshot / time-travel reads will see gaps (`has_gaps`, `gap_keys`, `candidate_truncated` fields). Per-key history reconstruction is capped at 50 000 ops.
+- Time-travel **history is opt-out, not opt-in**: write handlers default `history: true`. Pass `history: false` to record only that the write happened, not what it wrote — but later `hoody kv history list` / snapshot / time-travel reads will see gaps (`has_gaps`, `gap_keys`, `candidate_truncated` fields). Per-key history reconstruction is capped at 50 000 ops.
 - `create_db_if_missing`/`auto_create` aliases; mismatch → `conflicting flags`.
 - `hoody kv list` w/ `at_timestamp` → time-travel handler (different envelope; `offset` and `limit` still apply, ordered by key as in the regular listing). The history `limit`: 0→50, >1000→1000.
-- `hoody db readonly query` `sql` accepts URL-safe base64 (`+`→`-`, `/`→`_`); both padded and unpadded forms are accepted. Inputs that do not decode to a SELECT/WITH query are treated as raw SQL. No workspace scoping — the kit URL alone is the credential, share carefully.
+- `hoody db readonly query` `sql` accepts URL-safe base64 (`+`→`-`, `/`→`_`); both padded and unpadded forms are accepted. Inputs that do not decode to a SELECT/WITH query are treated as raw SQL. No workspace scoping — under the default proxy policy the kit URL alone is the credential, share carefully.
 - A directory-mode KV store keeps a `.hoody_sqlite/cache.db` in each directory it uses and holds it open, so that file and its `-wal`, `-shm` and `-journal` companions can be neither created nor deleted as a database (`400 INVALID_DB_PATH`). Any other database inside a `.hoody_sqlite` directory is an ordinary database.
 - CLI: `hoody db` (short form `sql`); KV under `hoody kv`.
 
@@ -81,7 +81,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `400 GET /query only accepts read-only SELECT/WITH queries; use POST /db for mutating SQL` (returned for non-SELECT input; a non-base64 `sql` value is not an error — it is interpreted as raw SQL).
 - `400 Invalid JSON body` on `hoody kv batch set` — wire shape requires each `value` to be a JSON-encoded string, not an object.
 - `409` with `"error": "TIME_TRAVEL_CHAIN_GAP"` (message `time-travel: chain gap straddles target timestamp`) when the history needed for the answer has an unrecorded (`history: false`) or pruned gap. Timestamp reads, `hoody kv snapshots get` at an `op_number`, and the rollbacks (`hoody kv rollback`, `hoody kv table rollback`) all return it. Per-key rollback puts the detail in `error` after the code (`"TIME_TRAVEL_CHAIN_GAP: ..."`); table rollback returns `error: "TIME_TRAVEL_CHAIN_GAP"` and puts the detail in `message`.
-- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`).
+- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
 
 ## Related namespaces
 
@@ -95,12 +95,12 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 
 ### 1. Schema setup with idempotent multi-statement transaction
 
-**Goal:** create a fresh database under `/tmp/`, install a 3-statement schema (table + index + seed row) atomically, then read it back. Every statement is `IF NOT EXISTS` / parameterised so the whole step is replay-safe.
+**Goal:** create a fresh database under `/hoody/databases/`, install a 3-statement schema (table + index + seed row) atomically, then read it back. Every statement is `IF NOT EXISTS` / parameterised so the whole step is replay-safe.
 
 **Step 1 — create the db file** with the kv table pre-seeded so KV ops on the same db don't have to bootstrap separately.
 
 ```bash
-DB="/tmp/sqlite-examples-$RANDOM.db"
+DB="/hoody/databases/sqlite-examples-$RANDOM.db"
 hoody --container "$C" db create --path "$DB" --init-kv
 ```
 
@@ -300,7 +300,7 @@ hoody --container "$C" kv batch delete --db "$DB" --keys u:1,u:2,u:3
 
 ```bash
 SQL='SELECT id, name, email FROM users LIMIT 10'
-# `db exec-shareable` does NOT auto-encode the SQL; pre-encode to URL-safe
+# `db readonly query` does NOT auto-encode the SQL; pre-encode to URL-safe
 # base64 (padding optional) the same way the HTTP example does:
 SQL_B64=$(printf '%s' "$SQL" | base64 -w0 | tr '+/' '-_')
 hoody --container "$C" db readonly query --db "$DB" --sql "$SQL_B64"
@@ -313,17 +313,17 @@ hoody --container "$C" db readonly query --db "$DB" --sql "$SQL_B64"
 :
 ```
 
-**Step 3 — paste-able URL** (e.g. dashboard link). The kit URL itself is the auth grant — guard who you share it with.
+**Step 3 — paste-able URL** (e.g. dashboard link). Under the default proxy policy the kit URL itself is the auth grant — guard who you share it with. Where the owner has configured auth groups, the link also needs the credential the proxy expects, and the query URL grants nothing beyond that policy.
 
 ```bash
-# `--url` is NOT a flag on `db exec-shareable` (it belongs to `db open`);
+# `--url` is NOT a flag on `db readonly query` (it belongs to `db open`);
 # compose a pasteable URL by hand if you want one:
 echo "https://${P}-${C}-sqlite-1.${N}.containers.hoody.com/api/v1/sqlite/query?db=${DB}&sql=${SQL_B64}"
 ```
 
 ### 10. Bulk insert via `valuesBatch` — one statement, many rows
 
-**Goal:** load 3 rows (or 100k) with one transaction item that repeats a single SQL statement once per parameter row, instead of one tx item per row. The rows of an item commit or fail together. `valuesBatch` is an array of value-arrays positionally aligned with the `?` placeholders. Caps: 100k rows per `valuesBatch`, 1M rows per tx.
+**Goal:** load 3 rows (or 100k) with one transaction item that repeats a single SQL statement once per parameter row, instead of one tx item per row. Without `noFail: true` the rows of an item commit or fail together. With `noFail: true`, a row whose parameters do not parse or do not fit the placeholders is skipped and the valid rows still commit: the item answers `success: true` with a `rowErrors` list, so check it. `valuesBatch` is an array of value-arrays positionally aligned with the `?` placeholders. Caps: 100k rows per `valuesBatch`, 1M rows per tx.
 
 **Step 1 — bulk insert.** Response carries `rowsUpdatedBatch:[1,1,1]` — one entry per row.
 
@@ -340,7 +340,7 @@ hoody --container "$C" db transactions run --db "$DB" --transaction '[{
 hoody --container "$C" db transactions run --db "$DB" --transaction '[{"query":"SELECT COUNT(*) AS n FROM users"}]'
 ```
 
-**Step 3 — clean up** (delete the throwaway database through the kit, which also removes its `-wal`, `-shm` and `-journal` files, or leave it under `/tmp/` for the next reboot to reclaim).
+**Step 3 — clean up** (delete the throwaway database through the kit, which also removes its `-wal`, `-shm` and `-journal` files, or leave it in place).
 
 ```bash
 hoody --container "$C" db delete --db "$DB" -y
@@ -376,8 +376,8 @@ hoody --container "$C" db delete --db "$DB" -y
 | `hoody kv batch delete` |  | write | Batch delete multiple keys | `sqlite.kv.deleteMany` | `hoody kv batch delete --db <db> --table kv_store --history --keys <keys>` |
 | `hoody kv batch get` |  | read | Batch get multiple keys | `sqlite.kv.getMany` | `hoody kv batch get --db /hoody/databases/app.db --table kv_store --timeout 30 --keys <keys>` |
 | `hoody kv batch set` |  | write | Batch set multiple keys | `sqlite.kv.setMany` | `hoody kv batch set --db <db> --table kv_store --history --items '[{"key":"<key>"}]'` |
-| `hoody kv changes list` |  | read | List the changes made to a KV table | `sqlite.kv.listChanges` | `hoody kv changes list --db <db> --table kv_store --since 2026-01-01T00:00:00Z` |
-| `hoody kv changes stream` |  | read | Stream the changes made to a KV table live | `sqlite.kv.streamChanges` | `hoody kv changes stream --db <db> --table kv_store --since 2026-01-01T00:00:00Z` |
+| `hoody kv changes list` |  | read | List the changes made to a KV table | `sqlite.kv.listChanges` | `hoody kv changes list --db <db> --table kv_store --since <cursor>` |
+| `hoody kv changes stream` |  | read | Stream the changes made to a KV table live | `sqlite.kv.streamChanges` | `hoody kv changes stream --db <db> --table kv_store --since <cursor>` |
 | `hoody kv decrement` |  | write | Atomic decrement | `sqlite.kv.decrement` | `hoody kv decrement <key> --db <db> --table kv_store --delta 1` |
 | `hoody kv delete` |  | destructive | Delete key | `sqlite.kv.delete` | `hoody kv delete <key> --db <db> --table kv_store --history -y` |
 | `hoody kv entry get` |  | read | Show a key's value with its metadata (content type, ETag, timestamps, expiry) | `sqlite.kv.getEntry` | `hoody kv entry get user:123 --db /hoody/databases/app.db --table kv_store --timeout 30` |
@@ -391,7 +391,7 @@ hoody --container "$C" db delete --db "$DB" -y
 | `hoody kv set` |  | write | Set value for key | `sqlite.kv.set` | `hoody kv set user:123 --db /hoody/databases/app.db --table kv_store --path .profile.theme --body '{}'` |
 | `hoody kv snapshots get` |  | read | Get key snapshot at operation | `sqlite.kv.getSnapshot` | `hoody kv snapshots get <key> --db <db> --table kv_store --op-number 10 --timeout 30` |
 | `hoody kv table rollback` |  | write | Rollback entire table | `sqlite.kv.rollbackTable` | `hoody kv table rollback --db <db> --table kv_store --to-timestamp 1750000000 --dry-run` |
-| `hoody kv table snapshots compare` |  | read | Compare table snapshots | `sqlite.kv.compareTableSnapshots` | `hoody kv table snapshots compare --db <db> --table kv_store --from 1750000000 --to 1750000000 --timeout 30` |
+| `hoody kv table snapshots compare` |  | read | Compare table snapshots | `sqlite.kv.compareTableSnapshots` | `hoody kv table snapshots compare --db <db> --table kv_store --from 1749996400 --to 1750000000 --timeout 30` |
 | `hoody kv table snapshots get` |  | read | Get table snapshot at timestamp | `sqlite.kv.getTableSnapshot` | `hoody kv table snapshots get --db <db> --table kv_store --timestamp 1750000000 --limit 100` |
 | `hoody kv ttl clear` |  | write | Remove a key's time to live so it never expires | `sqlite.kv.clearTtl` | `hoody kv ttl clear session:abc --db /hoody/databases/app.db --table kv_store --history` |
 | `hoody kv ttl set` |  | write | Set a key's time to live | `sqlite.kv.setTtl` | `hoody kv ttl set session:abc --db /hoody/databases/app.db --table kv_store --ttl 3600 --history` |

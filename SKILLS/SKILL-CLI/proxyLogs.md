@@ -1,4 +1,4 @@
-> _**CLI skill · `proxyLogs` namespace** · ~3,723 tokens · hoody-sdk v1.0.0-beta.15_
+> _**CLI skill · `proxyLogs` namespace** · ~3,702 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `proxyLogs` — Per-container request/response/event log query, stats, and SSE tail
 
@@ -65,7 +65,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `traceId` is per log source: edge entries carry the edge's hex request ID, backend request/response pairs share their own UUID. Entries from the edge and the backend, or from different kits, never share one.
 - `level` accepts ONE value at a time on the kit URL: `level=warn,error` returns `total: 0`, so query each level separately and union client-side.
 - `serviceName` is not honoured on the kit URL for `GET /_logs` (the list handler ignores it); filter client-side. It IS honoured on `GET /_logs/stream`, so tail with `serviceName=` and list without it.
-- `hoody proxy logs stream` accepts `--service-name`, `--source` and `--after-id` but does not send them, so its output covers every service and source. For a server-side service filter on the stream, use the HTTP endpoint or the SDK; with the CLI, post-filter its output by service.
+- `hoody proxy logs stream` forwards `--service-name`, `--source` and `--after-id` to the stream endpoint, so `--service-name` filters the stream on the server; no client-side post-filter is needed.
 - Every `hoody proxy logs list` read returns `{entries,total,limit,offset}`. `last=N` returns the newest N entries, oldest first, in one response (`total` is the number returned, `offset` does not apply, and `last` wins over `afterId`); on the kit URL without bodies or time filters those entries come from the in-memory recent buffer and carry `id: 0`, so never cursor from them. `afterId` always reads the log database: real row ids, oldest first, `total` counts every entry after the cursor and `offset` pages through them.
 - `includeRequestBody`/`includeResponseBody` default `false`.
 - The resume buffer holds at most 2,000 frames and 8 MiB, shared by every stream on the server, so a busy neighbour shortens your window; past it you get `event: gap`.

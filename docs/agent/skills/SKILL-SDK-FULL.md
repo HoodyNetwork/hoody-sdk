@@ -1,8 +1,8 @@
-> _**SDK skill (FULL: basic + all 21 namespaces)** · ~514,282 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill (FULL: basic + all 21 namespaces)** · ~518,470 tokens · hoody-sdk v1.0.0-beta.16_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 
-Typed client, 1000+ methods, 21 namespaces. Node, Bun, browser. Opt-in retries (off until you set `retries`), error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
+Typed client, 1000+ methods, 21 namespaces. Node, Bun, browser. Configurable automatic retries, error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
 
 ## What is Hoody
 
@@ -50,7 +50,7 @@ import { HoodyClient } from 'hoody-sdk';
 const hoody = new HoodyClient({ baseURL, credentials: { username, password } });
 ```
 
-Retries are off by default (`retries: 0`). To retry `408/425/429/500/502/503/504` automatically, pass `retries` (and optionally `retryDelayMs` / `retryOnStatuses`) to the constructor or per call. That applies to GET, HEAD, OPTIONS, PUT and DELETE; a POST or PATCH is retried only on `429`, and a request whose body is a stream is never retried.
+Retries are on by default. When neither the client nor the call sets `retries`, eligible requests get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting: a GET, HEAD, OPTIONS, PUT or DELETE on `408/425/429/500/502/503/504` or a lost connection; any other method only when the connection could not be opened (the request never reached a server). Set `retries: 0` to disable retries, or pass `retries` (and optionally `retryDelayMs` / `retryOnStatuses`) to the constructor or per call to set your own budget (250 ms backoff base, no total cap). Connection failures proven never dispatched can be retried for any method. With an explicit retry budget, POST/PATCH can also retry `429` and hoody-files' `409 FILE_PATH_BUSY` refusal (nothing was changed). A streamed body is never replayed; a request marked `responseIsFinal` is replayed only when it never reached a server, and only under an explicit budget.
 
 Recommended `baseURL`: `https://api.hoody.com` (when `baseURL` is omitted outside a browser page, `HoodyClient` uses `HOODY_BASE_URL`, then `HOODY_API_URL`, then `https://api.hoody.com`; a client with `target: 'kit'` gets no default host; in a browser page an omitted base stays relative to the page). Realm-scoped: `https://{realmId}.api.hoody.com`. Token scoping → § Auth model. Kit URLs → § Proxy URLs.
 
@@ -73,7 +73,7 @@ Other paginated methods follow the same `*` / `*All` / `*Iterator` triple (e.g. 
 
 ## Errors
 
-SDK throws **`ApiError`** on every 4xx/5xx. Type guards: `isApiError`, `isRetryableApiError`. Also `ValidationError` (client-side input) and `VaultCryptoError`. Retryable codes: `408/425/429/500/502/503/504` (the client retries them only when you set `retries`). Secrets (`Authorization`, `Cookie`, `?token=…`, body `{password,token,apikey}`, URL userinfo) auto-redacted to `[REDACTED]` before `catch`. See § Reference appendix.
+SDK throws **`ApiError`** on every 4xx/5xx, except where the status is the answer: `files.exists` and `sqlite.kv.exists` resolve `false` on a 404 (a missing or expired key). Type guards: `isApiError`, `isRetryableApiError`. Also `ValidationError` (client-side input) and `VaultCryptoError`. Retryable codes: `408/425/429/500/502/503/504`, plus hoody-files' `409 FILE_PATH_BUSY` (see the retry policy under § Init). Secrets (`Authorization`, `Cookie`, `?token=…`, body `{password,token,apikey}`, URL userinfo) auto-redacted to `[REDACTED]` before `catch`. See § Reference appendix.
 
 ## Streaming
 
@@ -154,7 +154,7 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 > - Use a **dedicated demo container with no secrets** — wallet credentials, vault data, source code only what they need to see.
 > - Set an **`expires_at`** on the alias for auto-expiry.
 > - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias instantly with `proxy.aliases.disable(aliasId)`.
-> - For untrusted reviewers (customers, support tickets, public demos): prefer a **read-only `display`** embed of a screenshot stream over a live terminal, or build a constrained `exec` script that exposes only the operation they need.
+> - For untrusted reviewers (customers, support tickets, public demos): do not hand out a `display` kit URL as a "read-only" view — its readonly setting is client-side only, and anyone holding the URL can still call the display's input API (clicks, typing). Build a constrained `exec` script that exposes only the operation they need, such as serving a captured screenshot.
 
 ### Tips for embedders
 
@@ -163,20 +163,20 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 - Use `proxy.aliases.create({ container_id, program: '<kit>' })` to ship a brandable hostname (`https://repo-acme.{N}.containers.hoody.com`) into the iframe instead of leaking the `{containerId}`.
 - For `display` / `desktop`: clipboard, file-transfer, audio, and notification features are toggleable via query params (`?clipboard=true&sound=true` …) — see the `display` namespace.
 - For `code`: append `?extension=<publisher>.<name>` to embed a single extension (e.g. Cline) without the IDE chrome — perfect for chat-channel "agent" widgets.
-- API kits (`sqlite`, `cron`, `watch`, `curl`, `pipe`, `http-<port>`, …) don't render a UI but you can still iframe them for status-page widgets, long-poll dashboards, etc.
+- Several API kits also serve a browser UI on their kit URL: `cron` (crontab manager) and `watch` at `/`, the `sqlite` studio at `/`, and the `pipe` send / receive / share pages — check a kit's own UI (and its embed views) before building a custom dashboard. `curl` renders no UI, and `http-<port>` shows whatever your app serves.
 - `allow="clipboard-read; clipboard-write"` on the `<iframe>` is recommended for `code`, `terminal`, `display` so paste / copy work inside the embed.
 
-## No local bypass — every call goes through the edge proxy
+## Source IP Guard — every call goes through the kit URL
 
-There is **no raw localhost-port bypass** to a kit. Even from inside the same container, every call to a kit service goes through the edge proxy on HTTPS — the kit binds to an internal interface that requires the proxy's authenticated, capability-checked, hook-instrumented path. An agent script trying to bypass via `http://127.0.0.1:<kit_port>` will not reach the kit. For in-container self-calls, use the full `{projectId}-{containerId}-…` kit URL (or an alias you configured): the proxy does not infer the calling container, so there is no `localhost` shorthand.
+Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403, from inside the same container too. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
 
 Why uniform proxy routing:
 
-- **Security uniformity** — the same `proxy.containerPermissions.*` gates, `proxy.hooks.*` MITM rules, and `proxyLogs.*` capture apply to every request, whether it came from across the internet or from a script in the next process. No "trusted internal" loophole that leaks to attackers via SSRF.
+- **Security uniformity** — requests from inside containers go through the same `proxy.containerPermissions.*` checks and `proxyLogs.*` capture as external requests, whether they came from across the internet or from a script in the next process. `proxy.hooks.*` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`. There is no "trusted internal" loophole that leaks to attackers via SSRF.
 - **One mental model** — same URL works from your laptop, from another container, from inside the container itself. You write the same code; the proxy is transparent.
 - **Cost is negligible** — the proxy hop adds microseconds, not a network round-trip.
 
-Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. Don't try to discover and target the kit's internal port — it is firewalled and won't accept the connection.
+Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. There is no other way in: the Source IP Guard refuses it.
 
 ### Container ↔ container — anyone reaches anyone (with permissions)
 
@@ -191,7 +191,7 @@ Cross-container access still goes through the gate stack — Y's `proxy.containe
 - **By default** (no gates set), Y's URL is a capability — anyone with the URL has access. Within your account that's usually fine; for production / shared / multi-tenant fleets you SHOULD gate.
 - **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`setJwtGroup`) verifies a signed JWT instead.
 
-This is why "no local bypass" matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
+This is why edge routing matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
 
 ## Capability-token semantics — open by default, permission for production
 
@@ -259,7 +259,7 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/home/user/main.py` |
 | Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
 | SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
 | Display 1 (X11) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
@@ -363,12 +363,12 @@ The SSH endpoint is reachable from any IP; the registered key is the access cont
 
 ## User-hosted services — `http-<port>` / `https-<port>`
 
-**Anything you bind on a container port is automatically reachable from the public URL.** No alias, no firewall edit, no proxy registration. Use one of two slugs:
+**Anything you bind on a container port is automatically reachable from the public URL.** Bind your HTTP(S) service to `0.0.0.0:<port>` or the container's network IP to reach it at the public URL. A listener bound only to `127.0.0.1` is not reachable through this proxy. No alias, no firewall edit, no proxy registration. Use one of two slugs:
 
 | Slug form | Inner protocol | Edge URL |
 |---|---|---|
-| `http-<port>` | proxy speaks **HTTP** to `localhost:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
-| `https-<port>` | proxy speaks **HTTPS** to `localhost:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
+| `http-<port>` | proxy speaks **HTTP** to `<container-network-ip>:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
+| `https-<port>` | proxy speaks **HTTPS** to `<container-network-ip>:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
 
 Edge is always `https://` regardless — TLS terminates at the proxy. The `http-` / `https-` slug only describes what the proxy talks on the inside.
 
@@ -409,8 +409,8 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Two independent uniqueness rules, either of which answers `409 ALIAS_IN_USE`: the name must be free on the container's physical server (across every tenant there), AND your own account may hold a given name only once across all servers. |
 | `program` | Which kit/protocol to route to. Valid names, protocols first and then programs, with accepted aliases in parentheses: `http`, `https`, `ssh`, `terminal` (`tty`, `ttyd`, `t`), `display` (`d`), `desktop`, `cron`, `watch` (`w`), `notifications` (`notification`, `n`), `files` (`f`), `daemon`, `code`, `agent`, `exec` (`e`), `browser` (`b`), `cdp`, `curl`, `run`, `sqlite`, `logs` (`log`, `l`), `egress`, `pipe`, `notes` (`note`), `tunnel`, `bot`. Use only these names; `cli`, `proxy` and `proxyLogs`, for example, are refused with `400 Unknown program name`. The proxy-logs kit is `logs` (NOT `proxy` or `proxyLogs`), and `run` is NOT `app`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
-| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`. A request that carries its own path is forwarded as sent, resolved from the container root — `target_path` is never used as a prefix. |
-| `allow_path_override` | Defaults to `true`. Declared intent only: the proxy currently forwards non-root request paths as sent whatever this is set to, so `false` does NOT restrict which paths are reachable — use proxy permissions for access control. |
+| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`; a query written in it is sent too. It is never used as a prefix: with `allow_path_override: true` a request that carries its own path is forwarded as sent, resolved from the container root, and with `false` it is the only path the alias serves (at the root and at its own path). |
+| `allow_path_override` | Defaults to `true`: a root request lands on `target_path` (its query plus the visitor's parameters), and a request that carries its own path is forwarded as sent. With `false` the alias serves only `target_path`: the root `/` and the `target_path` path itself (e.g. `/run-report` when `target_path` is `/run-report`) are both served as `target_path`, and any other path — sub-paths and assets included — is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's value for the same key, and the instance selectors the alias's `index` sets (such as `id`, `terminal_id`, `display`) stay forced; the visitor's method, request body, other query keys, WebSocket upgrade and `Range` header pass through. Either way anyone with the link can open the alias, so restrict who may with proxy permissions. |
 | `expires_at` | Auto-disable timestamp — an ISO 8601 date-time string, or `null` for never. Convert an epoch value to ISO 8601 before sending. Must be in the future. |
 | `enabled` | Toggle without deleting (keeps alias slot reserved). |
 
@@ -427,7 +427,7 @@ Each row below shows the create-call fields and the resulting public URL. Issue 
 | GUI display 1 wrapped in a brandable host | `display` | `1` | — | `true` | `https://gui.{N}.containers.hoody.com` |
 | Read-only HTTPS upstream (target self-terminates TLS) | `https` | `8443` | — | `true` | `https://secureapi.{N}.containers.hoody.com` |
 
-`target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, gate the container (below) or point the alias at a program that serves only that operation.
+With the default `allow_path_override: true`, `target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, set `allow_path_override: false` (the alias then serves only `target_path`, at the root and at its own path; write into `target_path` every query key the visitor must not change), and gate the container (below) to decide who may call it.
 
 ### Gating an alias
 
@@ -453,7 +453,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ## Three credential types
 
-1. **JWT** — `authentication.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
+1. **JWT** — `client.api.auth.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
 2. **Auth token** — `auth.tokens.create`. Prefix `hdy_`. Scopable (realms, `resources.*`), IP-restrictable, rotatable. Long-lived headless credential.
 3. **Kit URL** — `https://{projectId}-{containerId}-{kit_slug}-{serviceIndex}.{server}.containers.hoody.com` is the bearer for that kit while no proxy permissions are configured for the container. See § Proxy URLs.
 
@@ -697,8 +697,8 @@ const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com', token: process
 const box = await hoody.withContainer(containerId);
 ```
 
-A hoody-exec script loads the SDK with `require` (a top-level `import` fails there) and reaches
-the container it runs in through `metadata.containerId`:
+A hoody-exec script can load the SDK with `require` or a top-level `import`, and reaches the
+container it runs in through `metadata.containerId`:
 
 ```typescript
 const { HoodyClient } = require('hoody-sdk');
@@ -799,7 +799,7 @@ if (r.data && 'temp_token' in r.data) {
 
 ```typescript
 const created = await hoody.api.auth.tokens.create({
-  alias: 'Customer: Acme Corp',
+  alias: 'Customer Acme Corp',
   permission_template: 'external_customer',
   realm_ids: ['507f1f77bcf86cd799439011'],
 });
@@ -918,7 +918,7 @@ const out = r.data.stdout;      // envelope: also r.data.stderr, r.data.exit_cod
 // body and answers 400 "Missing 'terminal_id' field" without it.
 const N = 100;  // pick 1-39999 (40000+ is the ephemeral range)
 await box.terminal.sessions.create(
-  { terminal_id: String(N), shell: '/bin/bash', user: 'user', cwd: '/workspace' },
+  { terminal_id: String(N), shell: '/bin/bash', user: 'user', cwd: '/home/user' },
   { serviceIndex: N },
 );
 
@@ -946,16 +946,16 @@ directory path answers its listing). A missing file throws `ApiError` with `err.
 in a browser), a `Uint8Array` or an `ArrayBuffer`.
 
 ```typescript
-const text = await box.files.readText('/workspace/notes.md');               // string
-const settings = await box.files.readJson('/workspace/settings.json');      // parsed value
-const png = await box.files.readBytes('/workspace/logo.png');               // Uint8Array
+const text = await box.files.readText('/home/user/notes.md');               // string
+const settings = await box.files.readJson('/home/user/settings.json');      // parsed value
+const png = await box.files.readBytes('/home/user/logo.png');               // Uint8Array
 
 // Write (creates or replaces)
-await box.files.upload('/workspace/hello.txt', Buffer.from('hello'));
-await box.files.upload('/workspace/settings.json', Buffer.from(JSON.stringify(settings, null, 2)));
+await box.files.upload('/home/user/hello.txt', Buffer.from('hello'));
+await box.files.upload('/home/user/settings.json', Buffer.from(JSON.stringify(settings, null, 2)));
 
 // A directory path lists it (envelope: .data.entries)
-const { data: dir } = await box.files.get('/workspace');
+const { data: dir } = await box.files.get('/home/user');
 const fileNames = (dir as { entries: Array<{ name: string; is_dir: boolean }> }).entries.filter((e) => !e.is_dir).map((e) => e.name);
 ```
 
@@ -971,7 +971,7 @@ const { data: hostname } = await box.files.get('/etc/hostname', { responseType: 
 
 ```typescript
 // The browser-N host picks the instance (default browser-1); add { serviceIndex: N }
-// as the second argument for another one. `browser_id` does not select an instance.
+// as the second argument for another one (a `browser_id` option picks the host too).
 const png = await box.browser.page.captureScreenshot({
   url: 'https://example.com',
   fullPage: true,
@@ -1010,7 +1010,7 @@ const { data: user } = await box.sqlite.kv.get('user:42', { db: '/hoody/database
 // CreateWatcherRequest takes `paths: string[]` (NOT `path`) and `kinds`
 // (NOT `events`). Recursive defaults to server config.
 const w = await box.watch.watchers.create({
-  paths: ['/workspace'],
+  paths: ['/home/user'],
   recursive: true,
   kinds: ['created', 'modified', 'removed'],
 });
@@ -1159,14 +1159,14 @@ const rows = results[0].resultSet;
 
 ### 26. Cron entries
 
-Managed crontab entries of one system user. The user is a positional string (`'user'` is the
+The crontab of one system user: managed entries plus the user's other lines. The user is a positional string (`'user'` is the
 container's login user), never an object.
 
 ```typescript
 const list = await box.cron.entries.list('user');
-const commands = list.data.entries.map((e) => (e.type === 'managed' ? e.command : e.line));  // e: { id, schedule, command, enabled, … }
+const commands = list.data.entries.map((e) => (e.type === 'managed' ? e.command : e.line));  // managed: { type, id, schedule, command, enabled, … }; raw: { type, line }
 
-const created = await box.cron.entries.create('user', { schedule: '*/5 * * * *', command: '/workspace/bin/sync.sh' });
+const created = await box.cron.entries.create('user', { schedule: '*/5 * * * *', command: '/home/user/bin/sync.sh' });
 const id = created.data.id;
 await box.cron.entries.update('user', id, { enabled: false });
 await box.cron.entries.delete('user', id);
@@ -1177,7 +1177,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 
 | Route | Does |
 |---|---|
-| `GET /users/{user}/entries?page=&limit=` | list managed entries: `{ user, entries, total, page, limit }` (limit max 200) |
+| `GET /users/{user}/entries?page=&limit=` | list every crontab line in order: `{ user, entries, total, page, limit }` (limit max 200); managed entries have `type:"managed"` with `id`, `schedule`, `command`; other lines come back as `type:"raw"` with `line` |
 | `POST /users/{user}/entries` | create: JSON `{ schedule, command, name?, comment?, enabled?, expires_at? }` → 201, the entry with its `id` |
 | `GET /users/{user}/entries/{id}` | one entry |
 | `PATCH /users/{user}/entries/{id}` | update the fields you send (`schedule`, `command`, `enabled`, …) |
@@ -1194,7 +1194,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 
 - `baseURL` (recommended `https://api.hoody.com`; when omitted outside a browser page: `HOODY_BASE_URL`, then `HOODY_API_URL`, then `https://api.hoody.com`; none for `target: 'kit'`); `realmId` -> `{realmId}.api.hoody.com`.
 - Auth: `token` and/or `credentials` (`{username,password}` or `{email,password}`; both fields are independent on `HoodyClientConfig`); `autoRefresh`, `autoRetryAuth`; hooks `onTokenExpired`, `refreshToken`, `kitAuth`+`onKitAuthExpired`, `onError`.
-- Retry: `timeout`, `retries` (default `0`: nothing is retried until you set it), `retryDelayMs`, `retryOnStatuses` (default 408/425/429/500/502/503/504); honours `Retry-After`, cap 30s.
+- Retry: `timeout`, `retries` (when omitted, eligible requests get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting; set `retries: 0` to disable retries; a value you set gets a 250 ms base and no total cap), `retryDelayMs`, `retryOnStatuses` (default 408/425/429/500/502/503/504); honours `Retry-After`, cap 30s per wait.
 - Misc: `headers`, `cache{enabled,ttl}`, `transport.keepAlive`, `forceIPv4`, `forceIPv4Cache{enabled,ttlMs}`, `middlewares`, `clientId`/`clientName`, `urlTemplates`.
 - Per-call: `responseType` (`json|text|arrayBuffer|blob|auto`), `timeoutMs`, `signal`, `rawResponse` (skip envelope; cast `as unknown as RawShape`).
 
@@ -1209,7 +1209,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
   - **Nested `{error:{code,message}}`** — the notes kit's routes and the bot kit's management routes (`not_found`, `invalid_token`, …). The nested value reaches `err.code`.
   - **Header only** — the sqlite kit's KV `HEAD` 404 names `KEY_NOT_FOUND` / `KEY_EXPIRED` in `X-Hoody-Error-Code`.
 - A lower-case `error` value is not a code: the logs kit's `429 {error: "rate_limited"}` leaves `err.code` `undefined`; read the body.
-- Three values of `code` come from the CLIENT, not from any body, always with `status` `0`: **`ABORTED`** when the request timed out or was aborted (message `Request timed out after Nms`; never retried), **`PARSE_ERROR`** when the response body would not parse, and **`ETIMEDOUT`** when the body stalled after the headers arrived. A timeout is the error a caller meets most often, so handle `ABORTED` explicitly.
+- Some values of `code` come from the CLIENT, not from any body. With `status` `0`: **`ABORTED`** when the request timed out, was aborted, or got no response headers in time (never retried), **`PARSE_ERROR`** when the response body would not parse, and **`ETIMEDOUT`** when the connection could not be opened in time or the body stalled after the headers arrived. Stream validation errors (`NOT_AN_EVENT_STREAM`, `STREAM_FRAME_TOO_LARGE`) keep the response status, and `REDIRECT_REFUSED` keeps the refused redirect's status. A timeout is the error a caller meets most often, so handle `ABORTED` explicitly.
 - **So: branch on `status` first, always. Treat `code` as an optional, service-specific refinement, and never assume a documented value will appear there.**
 - `retryAfterMs` is attached to the thrown error when an HTTP **error** response carried a **parseable** `Retry-After` header — any error status, not just 429. It is not attached on the client-side failures above: a `200` whose body will not parse throws `PARSE_ERROR` with `status` `0` and no `retryAfterMs`, even when the response carried the header. Delta-seconds and an HTTP-date both parse; anything else is ignored and the property stays absent, and a date already in the past gives `0` rather than a negative wait. It is set at runtime but is NOT declared on `ApiError`, so TypeScript callers must read it through a cast: `(err as ApiError & { retryAfterMs?: number }).retryAfterMs`.
 
@@ -1219,7 +1219,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 
 ## Streaming
 
-`proxyLogs.stream` and `exec.logs.stream` return `Promise<AsyncIterable<IStreamEvent>>` — iterate them with `for await (const ev of await box.proxyLogs.stream({...}))` or `for await (const ev of await box.exec.logs.stream({ file, follow: true }))`. `watch.events.stream(id, { since_id })` does the same: `for await (const ev of await box.watch.events.stream(id))`. Check each SSE method's return type; one that returns `Promise<ApiResponse<…>>` buffers the whole response and never resolves on a live stream — use the URL with `EventSource`/`fetch`+ReadableStream, or poll a cursor endpoint, for those. WebSocket-wrapper methods (`notifications.connect`, `terminal.sessions.connect`, `curl.jobs.connect`, `watch.events.connect`) expose `await wrapper.connect()` plus per-wrapper typed callbacks: terminal has `onOutput` (Uint8Array); notifications has `onNotification`/`onHeartbeat`; curl has `onJobstarted`/`onJobprogress`/`onJobcompleted`; watch has `onFileEvent`/`onLag`; lifecycle close on every wrapper is `onDisconnect`. Tunnel `tunnelExpose({ url | container, kitAuth?, containerPort, to: { host, port }, takeover? })` (a `token` option is ignored) from `hoody-sdk` (re-exported); `ExposeOptions` accepts either a fully-qualified `url` or a container WebSocket hostname; when `url` is omitted the helper builds `ws://${container}/api/v1/tunnel/connect` — that default works only for plain-HTTP local dev. For production HTTPS kit URLs you MUST pass `url: 'wss://{P}-{C}-tunnel-1.{N}.containers.hoody.com/api/v1/tunnel/connect'` explicitly.
+`proxyLogs.stream` and `exec.logs.stream` return `Promise<AsyncIterable<IStreamEvent>>` — iterate them with `for await (const ev of await box.proxyLogs.stream({...}))` or `for await (const ev of await box.exec.logs.stream({ file, follow: true }))`. `watch.events.stream(id, { since_id })` does the same: `for await (const ev of await box.watch.events.stream(id))`. Check each SSE method's return type; one that returns `Promise<ApiResponse<…>>` buffers the whole response and never resolves on a live stream — use the URL with `EventSource`/`fetch`+ReadableStream, or poll a cursor endpoint, for those. WebSocket-wrapper methods (`notifications.connect`, `terminal.sessions.connect`, `curl.jobs.connect`, `watch.events.connect`) expose `await wrapper.connect()` plus per-wrapper typed callbacks: terminal has `onOutput` (Uint8Array); notifications has `onNotification`/`onHeartbeat`; curl has `onJobstarted`/`onJobprogress`/`onJobcompleted`; watch has `onFileEvent`/`onLag`; lifecycle close on every wrapper is `onDisconnect`. Tunnel `tunnelExpose({ url | container, kitAuth?, containerPort, to: { host, port }, takeover? })` (a `token` option is ignored) from `hoody-sdk` (re-exported); `ExposeOptions` accepts either a fully-qualified `url` or a `container`. When `url` is omitted, `container` may be a hostname or an HTTP(S)/WS(S) kit URL. Public DNS names use `wss://`; HTTPS becomes WSS and HTTP becomes WS. Loopback, IP literals and single-label hosts use `ws://`. The helper appends `/api/v1/tunnel/connect` when the path lacks it.
 
 ## Type imports
 
@@ -1272,7 +1272,7 @@ The `agent` kit exposes the in-container AI agent as a typed namespace: create a
 ## When to use
 
 - **Drive the agent programmatically** — create a session, prompt it, and consume the turn: `client.agent.sessions.create` → stream the turn for live tool/gate/output events (per surface — see the streaming note under Quirks), or `sessions.turns.run` for one blocking call → resolve gates with `gates.approve` / `gates.deny` / `gates.answer` → `sessions.turns.cancel` to interrupt.
-- **Inspect or configure the agent** — list `models` (`agent.models.list` / `agent.models.get`; the Jev decision-model catalogue is the separate `agent.jev.listModels`) and `providers.list` (configure providers via `providers.setDefaultAuth` / `providers.setApiKey` / `providers.startOauth`); switch a session's active model with `sessions.setModel`, browse/install `skills`, read/edit `memory`, manage `workflows`, `hooks`, `agents` (named agent profiles), and `tools` — both the sessionless catalogue/registry (`tools.list` / `tools.listReadOnly` / `tools.get`, and `agent.tools.run` (blocks, returns the result; with `stream: true` it returns the one-shot result over SSE frames instead, not a per-token stream) / `agent.tools.start` (returns `{ job_id }`, poll `jobs`) to invoke a tool with no session — read-only by default, a mutating tool needs `allow_mutations: true` or a confirmed re-issue) and the per-session surface (`sessions.listTools` for a session's *effective* tool set, `sessions.listMcpTools`, and `sessions.runTool`). Unlike the sessionless `agent.tools.run`, a per-session run executes against the session's *frozen* realm/container/cwd/tool-mode and claims the session's single serial turn slot — so it returns 409 `turn_in_flight` while a turn is running, 409 `gate_parked` while a gate is open, and 404 `tool_not_found` if the tool is not in that session's effective list; whether a mutating tool may run is decided by the live session's own tool mode and confirmation settings (the `allow_mutations` escape hatch is sessionless-only).
+- **Inspect or configure the agent** — list `models` (`agent.models.list` / `agent.models.get`; the Jev decision-model catalogue is the separate `agent.jev.listModels`) and `providers.list` (configure providers via `providers.setDefaultAuth` / `providers.setApiKey` / `providers.startOauth`); switch a session's active model with `sessions.setModel`, browse/install `skills`, read/edit `memory`, manage `workflows`, `hooks`, `definitions` (named agent profiles), and `tools` — both the sessionless catalogue/registry (`tools.list` / `tools.listReadOnly` / `tools.get`, and `agent.tools.run` (blocks, returns the result; with `stream: true` it returns the one-shot result over SSE frames instead, not a per-token stream) / `agent.tools.start` (returns `{ job_id }`, poll `jobs`) to invoke a tool with no session — read-only by default, a mutating tool needs `allow_mutations: true` or a confirmed re-issue) and the per-session surface (`sessions.listTools` for a session's *effective* tool set, `sessions.listMcpTools`, and `sessions.runTool`). Unlike the sessionless `agent.tools.run`, a per-session run executes against the session's *frozen* realm/container/cwd/tool-mode and claims the session's single serial turn slot — so it returns 409 `turn_in_flight` while a turn is running, 409 `gate_parked` while a gate is open, and 404 `tool_not_found` if the tool is not in that session's effective list; whether a mutating tool may run is decided by the live session's own tool mode and confirmation settings (the `allow_mutations` escape hatch is sessionless-only).
 - **One-shot non-interactive runs** — `client.agent.headless.start` (an async job) and `client.agent.headless.stream` (an SSE stream) each run the full agent loop once over a throwaway session (see workflow 7 for the per-surface form: an async job or an SSE stream).
 - **GitHub from inside the agent** — first establish an account with `github.login` (omit the body for a GitHub device flow → poll `github.pollLogin`; or pass a `token` PAT to persist it directly), then `github.getAuth` to confirm; once an account is active, `github.clone` / `github.createCommit` (and `github.getStatus` / `github.listBranches` / `github.listRepos` / `github.createPr` / `github.sync`) for repo operations the agent performs in-container.
 
@@ -1307,7 +1307,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 2. One-shot synchronous prompt
 
-`client.agent.sessions.create` → `client.agent.sessions.turns.run` with `{ text }` — blocks until the turn finishes, then returns `{status:"done", session_id, turn_id}` with no reply text (or a pending gate, if the turn parks on one); read the reply with `client.agent.sessions.getTranscript`. Best for short, non-interactive prompts where you don't need streamed events.
+`client.agent.sessions.create` → `client.agent.sessions.turns.run` with `{ text }` — waits for the turn to end, a gate that needs a person, or the server deadline (290 seconds by default). A clean turn returns `{status:"done", session_id, turn_id}` with no reply text; check `status`, because a failed, cancelled or quit turn answers `error` (with the error `event`), `canceled` or `quit`. A turn that parks on a gate returns `{pending_gate, turn_id}`. When the deadline passes first the answer is `503 service_unavailable` with `details.turn_id` and `details.turn_running: true`: the turn is NOT cancelled, so follow it with `client.agent.sessions.turns.get` (or the stream) instead of prompting again. Read the reply with `client.agent.sessions.getTranscript`. Best for short, non-interactive prompts where you don't need streamed events.
 
 ### 3. Resolve gates mid-turn
 
@@ -1315,7 +1315,7 @@ While a prompt streams, the agent may pause for human input: a confirmation gate
 
 ### 4. Pick a model / provider
 
-`client.agent.providers.list` to list the catalogued providers (and `client.agent.providers.getAuth` to check that one is `ready`: a stored credential or passwordless access), `client.agent.models.list` to list the catalogued models, then `client.agent.sessions.setModel` to bind a model to a session before prompting — SYNCHRONOUS: the response reports the actual outcome ({status:'ok', model, persisted} on success; structured 409/422 errors while busy or for an unconstructable spec). A successful switch is live for the session at once and then TRIES to persist into the chat agent's frontmatter (a global repin for future sessions of that agent); that save is best-effort, so only `persisted: true` confirms the repin — `persisted: false` means the session switched but future sessions keep the old pin. PRECEDENCE: the agent's frontmatter `model` is the DEFAULT for a session that does not request one; an explicit model on create (`sessions.create({ model })`), or this live `sessions.setModel`, OVERRIDES that pin for the session — create is session-scoped and does not rewrite the agent, this live switch repins globally. The shipped default agent ships pinned, so its pin is the out-of-the-box default until an explicit model is chosen (an explicit model together with `attach` or `backend: "acp"` is rejected 400 — a resumed/delegated session cannot take an explicit model). Each session has further per-session knobs (all session-scoped PATCHes that apply live): `sessions.setEffort` (`{ effort }` — `low|medium|high|xhigh`, or `""` for the model default), `sessions.setVerbosity` (`{ level }` — `normal|concise|terse|minimal`), `sessions.setHoodyEnv` (`{ enabled }` — toggle whether the `HOODY_*` shell-env contract is injected for the bash tool), and `sessions.setAgent` (`{ agent }` — bind a named profile from `agents`).
+`client.agent.providers.list` to list the catalogued providers (and `client.agent.providers.getAuth` to check that one is `ready`: a stored credential or passwordless access), `client.agent.models.list` to list the catalogued models, then `client.agent.sessions.setModel` to bind a model to a session before prompting — SYNCHRONOUS: the response reports the actual outcome ({status:'ok', model, persisted} on success; structured 409/422 errors while busy or for an unconstructable spec). A successful switch is live for the session at once and then TRIES to persist into the chat agent's frontmatter (a global repin for future sessions of that agent); that save is best-effort, so only `persisted: true` confirms the repin — `persisted: false` means the session switched but future sessions keep the old pin. PRECEDENCE: the agent's frontmatter `model` is the DEFAULT for a session that does not request one; an explicit model on create (`sessions.create({ model })`), or this live `sessions.setModel`, OVERRIDES that pin for the session — create is session-scoped and does not rewrite the agent, this live switch repins globally. The shipped default agent ships pinned, so its pin is the out-of-the-box default until an explicit model is chosen (an explicit model together with `attach` or `backend: "acp"` is rejected 400 — a resumed/delegated session cannot take an explicit model). Each session has further per-session knobs (all session-scoped PATCHes that apply live): `sessions.setEffort` (`{ effort }` — `low|medium|high|xhigh|max`, or `""` for the model default), `sessions.setVerbosity` (`{ level }` — `normal|concise|terse|minimal`), `sessions.setHoodyEnv` (`{ enabled }` — toggle whether the `HOODY_*` shell-env contract is injected for the bash tool), and `sessions.setAgent` (`{ agent }` — bind a named profile from `agents`).
 
 ### 5. Skills, memory, todos, workflows, agents
 
@@ -1327,9 +1327,9 @@ While a prompt streams, the agent may pause for human input: a confirmation gate
 
 ### 6. Fire-and-observe, recurring prompts, and re-attach
 
-- **Fire-and-observe** — `client.agent.sessions.startTurn` with `{ text }` dispatches a turn and returns `{ job_id, session_id, turn_id }` immediately (HTTP 202) without streaming or blocking; watch completion via the `agent_done` on `client.agent.sessions.connect` whose `turn_id` matches (another client's turn on the same session ends with its own `agent_done`). A cancel scoped with that `turn_id` stops only this turn. Refuses with 409 `turn_in_flight` if a turn is running, or 409 `gate_parked` if a gate is open.
-- **Observe / re-attach** — `client.agent.sessions.connect` attaches (WebSocket primary, SSE fallback) to a live session's full `event.*` stream; pass `since` (gateway int64 seq, or the `Last-Event-ID` header) to resume from the 1024-event replay ring after a disconnect (a gap past eviction yields `event: lagged {code:replay_gap}`). Each frame is `{seq, incarnation, event}`, and a session re-attached under the same id starts a new incarnation whose `seq` restarts at 1, so send `incarnation` (the one you last saw) together with `since`: a mismatch answers `replay_gap` plus the full retained ring instead of silently resuming into a different history. Over SSE the `event:` line drops the `event.` prefix (`event.agent_done` arrives as `event: agent_done`) while the JSON `data:` keeps the full name, so match on the payload's `type`; WebSocket frames are delivered unchanged. `client.agent.sessions.replay` returns the buffered event tail of a *live* session (with `min_seq`/`max_seq`) for a one-shot catch-up (only a *live* session has this ring). `sessions.connect` does not revive a session either: on a persisted but non-live session it answers `404 not_found`, so re-attach it first (`sessions.create({ attach: id })`), then open the stream.
-- **Recurring prompts (loops)** — `client.agent.loops.create` with `{ prompt, interval }` (plus optional `max_runs` / `stop_when` / `max_cost_usd` / `max_wall_ms` caps) schedules a prompt to re-fire on a live session; `listLoops` / `loops.update` (pause via `{ paused: true }`) / `loops.delete` to manage, `loops.startRun` to fire one immediately. Loops are entirely session-scoped. Three rules refuse a request rather than adjusting it: `interval` has a floor of 60 seconds; at most 8 loops can be active (not paused, not ended) per daemon, so the 9th create is rejected; and each `loops.update` carries at most ONE intent (`paused`, or `expires_in`, or the budget fields `max_cost_usd` / `max_wall_ms`), so a request mixing two is rejected 400 (a body with none of them is treated as a budget update).
+- **Fire-and-observe** — `client.agent.sessions.startTurn` with `{ text }` dispatches a turn and returns `{ job_id, session_id, turn_id }` immediately (HTTP 202) without streaming or blocking; watch completion via the `agent_done` on the session event stream (a connected `client.agent.sessions.connect` socket, or `client.agent.sessions.stream`) whose `turn_id` matches (another client's turn on the same session ends with its own `agent_done`). A cancel scoped with that `turn_id` stops only this turn. Refuses with 409 `turn_in_flight` if a turn is running, or 409 `gate_parked` if a gate is open.
+- **Observe / re-attach** — `client.agent.sessions.connect` attaches to a live session's full `event.*` stream over WebSocket, and `client.agent.sessions.stream` is the SSE form of the same route; neither falls back to the other on its own. `const socket = await client.agent.sessions.connect(id)` gives a socket client that is NOT connected yet: register handlers (`onEnvelope`, `onEnd`, `onError`), then `await socket.connect()`. Iterate the SSE form with `for await (const ev of await client.agent.sessions.stream(id))`. Either way, pass `since` (gateway int64 seq, or the `Last-Event-ID` header) to resume from the 1024-event replay ring after a disconnect (a gap past eviction yields `event: lagged {code:replay_gap}`). Each frame is `{seq, incarnation, event}`, and a session re-attached under the same id starts a new incarnation whose `seq` restarts at 1, so send `incarnation` (the one you last saw) together with `since`: a mismatch answers `replay_gap` plus the full retained ring instead of silently resuming into a different history. Over SSE the `event:` line drops the `event.` prefix (`event.agent_done` arrives as `event: agent_done`) while the JSON `data:` keeps the full name, so match ordinary event frames on the parsed payload's `event.type` (for example `event.agent_done`); control frames (`lagged`, `end`, `replay_boundary`) have no `event` key. WebSocket frames are delivered unchanged. `client.agent.sessions.replay` returns the buffered event tail of a *live* session (with `min_seq`/`max_seq`) for a one-shot catch-up (only a *live* session has this ring). `sessions.connect` does not revive a session either: on a persisted but non-live session it answers `404 not_found`, so re-attach it first (`sessions.create({ attach: id })`), then open the stream.
+- **Recurring prompts (loops)** — `client.agent.loops.create` with `{ prompt, interval }` (plus optional `max_runs` / `stop_when` / `max_cost_usd` / `max_wall_ms` caps) schedules a prompt to re-fire on a live session; `sessions.listLoops` / `loops.update` (pause via `{ paused: true }`) / `loops.delete` to manage, `loops.startRun` to fire one immediately. Loops are entirely session-scoped. Three rules refuse a request rather than adjusting it: `interval` has a floor of 60 seconds; at most 8 loops can be active (not paused, not ended) per daemon, so the 9th create is rejected; and each `loops.update` carries at most ONE intent (`paused`, or `expires_in`, or the budget fields `max_cost_usd` / `max_wall_ms`), so a request mixing two is rejected 400 (a body with none of them is treated as a budget update).
 
 ### 7. Headless one-shot run
 
@@ -1342,9 +1342,9 @@ Reads first: `client.agent.mcp.listServers` (`{ session_id }`) returns the EFFEC
 ## Quirks & gotchas
 
 - The bare `hoody agent` verb is a **TUI launcher**, separate from this HTTP namespace; they coexist — the launcher opens the in-container Agent TUI, the namespace is the typed control surface.
-- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. It trusts only traffic that arrives through the proxy: a request whose source address is private or loopback (curl to the kit's local port from inside the container, the host, or a sibling container) is refused 403, so call the public kit URL even from inside the container.
+- Source of truth is the agent kit's own OpenAPI document, served at `GET /api/v1/agent/openapi.{json,yaml}`; every route lives under the single `/api/v1/agent` prefix. The kit checks no credential of its own and asks for no bearer header; access is decided by the container's proxy permission policy. Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the kit URL gets 403 `forbidden`, also from inside the container, so call the kit URL.
 - The proxy service slug is `agent` and the kit URL host carries the index segment (`-agent-{index}`). Resolve it with `client.getKitUrl('agent', container)` rather than hand-building it.
-- `sessions.turns.run` blocks until the turn finishes (or returns `{pending_gate}` the moment a turn parks on a confirm/question) — long un-parked agent turns can still exceed default HTTP client timeouts; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `sessions.startTurnAndStream` accessor POSTs `prompt:stream` and returns a Promise of an async iterable of SSE events, so iterate `for await (const ev of await client.agent.sessions.startTurnAndStream(id, { text }))`. Nothing is sent until you start iterating or read `stream.response`. The stream does NOT close when the turn ends: it keeps delivering the session's later events, so break out at the `agent_done` for your own turn. `const stream = await client.agent.sessions.startTurnAndStream(id, { text }); const { documented } = await stream.response;` gives the turn id as `documented.XHoodyTurnId` (the `X-Hoody-Turn-Id` header; a browser sees it only if the kit exposes it over CORS); stop at the `agent_done` whose payload (`JSON.parse(ev.raw)`) carries that `turn_id`. Without the header, take the id from the stream itself: the `replay_boundary` frame's payload carries it as `turn_id`. Buffered frames arrive BEFORE `replay_boundary`, and a fast turn can finish inside them, so keep the `agent_done` frames seen before the boundary and check them against its `turn_id` as soon as it arrives; otherwise stop at the next `agent_done` carrying that `turn_id`. The higher-level `streamAgentPrompt` helper exported from the SDK wraps the same route and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy to answer confirm gates for the life of the turn (off by default): an ordinary confirm gate is approved, a gate raised by a tool-call rule is DENIED, and a session whose approval policy is `always` refuses the policy with `409 approval_policy_active` before the turn starts. SDK: `policy: 'auto_approve'` in the `sessions.startTurnAndStream` / `sessions.turns.run` options. This only answers **confirm** gates, never questions.
+- `sessions.turns.run` waits for the turn to end (or returns `{pending_gate}` the moment a turn parks on a confirm/question), but at most until the server deadline (290 seconds by default): a turn still running then answers `503 service_unavailable` with `details.turn_running: true` and keeps running; prefer streamed prompting for anything non-trivial so you can observe progress and resolve gates as they arrive. (SDK note: the generated `sessions.startTurnAndStream` accessor POSTs `prompt:stream` and returns a Promise of an async iterable of SSE events, so iterate `for await (const ev of await client.agent.sessions.startTurnAndStream(id, { text }))`. Nothing is sent until you start iterating or read `stream.response`. The stream does NOT close when the turn ends: it keeps delivering the session's later events, so break out at the `agent_done` for your own turn. `const stream = await client.agent.sessions.startTurnAndStream(id, { text }); const { documented } = await stream.response;` gives the turn id as `documented.XHoodyTurnId` (the `X-Hoody-Turn-Id` header; a browser sees it only if the kit exposes it over CORS); stop at the `agent_done` whose payload (`JSON.parse(ev.raw)`) carries that `turn_id`. Without the header, take the id from the stream itself: the `replay_boundary` frame's payload carries it as `turn_id`. Buffered frames arrive BEFORE `replay_boundary`, and a fast turn can finish inside them, so keep the `agent_done` frames seen before the boundary and check them against its `turn_id` as soon as it arrives; otherwise stop at the next `agent_done` carrying that `turn_id`. The higher-level `streamAgentPrompt` helper exported from the SDK wraps the same route and exposes `events` / `text` / `done` plus a cancel() method that aborts the turn.) For non-interactive turns where you cannot resolve gates by hand, enable the `auto_approve` gate policy to answer confirm gates (off by default). On the blocking form (`sessions.turns.run`, route `prompt:sync`) it stays on for the dispatched turn even after the request ends. On the streamed form (route `prompt:stream`) it is tied to the connection, not the turn: disconnecting before the turn ends stops it, and while the stream stays open it also answers confirm gates of LATER turns on the same session, so close the stream at your turn's `agent_done`. With either form, an ordinary confirm gate is approved, a gate raised by a tool-call rule is DENIED, and a session whose approval policy is `always` refuses the policy with `409 approval_policy_active` before the turn starts. SDK: `policy: 'auto_approve'` in the `sessions.startTurnAndStream` / `sessions.turns.run` options. This only answers **confirm** gates, never questions.
 - Every prompt/gate/cancel call is **session-scoped** — you must hold a session id from `sessions.create` first; there is no implicit default session. Hook writes are session-scoped too (the guarded writes — `hooks.upsert` / `hooks.delete` / `hooks.enable` / `hooks.disable` / `hooks.enableAll` / `hooks.disableAll` — plus `hooks.createWriteIntent`, and the side-effecting `hooks.run` / `hooks.trust`, all require a live `session_id` — `hooks.trust` clears the per-session hook-trust prompt (the execution-trust probe `hooks.list` reports), the gate that must be acknowledged before a saved hook command is allowed to fire, mirroring `skills.trust` for skills; `hooks.reload` accepts one only to also return the reloaded summary) AND nonce-guarded: call `client.agent.hooks.createWriteIntent` (`{ session_id, op, scope }`, op ∈ upsert|delete|toggle|set_disabled) to mint a single-use nonce, then pass that `nonce` on the matching `hooks.upsert` / `hooks.delete` / `hooks.enable` / `hooks.disable` / `hooks.enableAll` / `hooks.disableAll` — the nonce binds to that session+op+scope tuple and the write fails closed without it. Note hooks are an arbitrary-command surface: `hooks.upsert` persists a command that fires on lifecycle events, and `hooks.run` on a command hook runs a command at once: running saved hooks goes through the session's hook-trust gate, while a run that supplies an unsaved inline `command` runs it without that saved-hook trust check. Every command-hook run is refused (`approval_policy_unsatisfiable`) while the session's approval policy is `always`, and `hooks.test` of a shipped hook only evaluates its trigger without running anything. These calls carry no confirmation step of their own — the same access that authorizes any agent-kit call authorizes these too, with nothing extra — so add your own confirmation before exposing this surface to an autonomous caller.
 - **`env` and `headers` VALUES are never returned by the MCP surface; every other field comes back verbatim.** `mcp.listServers` reports `env_keys` / `header_keys` — key NAMES only — because a redacted value invites a client to write the placeholder back as the real secret; a write whose body carries the redaction placeholder for a credential is REFUSED rather than stored. Other fields, including `url`, `command` and `args`, are echoed verbatim, so a credential embedded in one of them (a token in a URL, a key on a command line) is NOT redacted: keep secrets in `env` / `headers`, and treat the rest of a listing as sensitive. To change a secret you must supply its real value; to leave one alone, omit the field — `mcp.upsertServer` merges FIELD BY FIELD over the existing entry of the same name, so omitted fields keep their stored value (including fields this build does not model), and `mcp.enableServer` / `mcp.disableServer` flip only the `enabled` flag so credentials and options survive a disable. Writes apply to live sessions before the response returns: a deleted, disabled, or re-pointed server is REVOKED in every live session first (a stdio child is reaped when its last holder releases), so a caller mid-turn cannot still reach it. Import is WHOLE-BATCH — one bad entry aborts everything — it understands the hoody (`mcp_servers` list), Claude/Cursor (`mcpServers` map) and VS Code (`servers` map) dialects, and REFUSES a document carrying more than one of them rather than guessing.
 - `client.agent.platform.bootstrapToken` (token bootstrap) is enabled by default; a deployment can turn it off, and then every call answers 404. Browser clients may call it; the body must be exactly `application/json`. Where the deployment requires a capability, the body must carry the matching `capability` (a mismatch is also 404). The token must belong to this box's owner and carry the full login grant (otherwise 403). On a box with no credential it installs (201 `installed`) and adopts any local sessions or todos that have no owner; on a box logged in to the SAME account it replaces the stored token whether or not it expired (200 `renewed`). A token for a different account is refused `409 agent_login_conflict`, and a credential supplied through the environment is never replaced (`409 credential_present`).
@@ -1353,7 +1353,7 @@ Reads first: `client.agent.mcp.listServers` (`{ session_id }`) returns the EFFEC
 
 - A gate or question left unresolved stalls the turn — a streamed prompt that emitted an `event.confirm_request` (confirm gate) or `event.user_question` (question gate) will not complete until you answer it: `gates.approve` / `gates.deny` for a confirm, `gates.answer` for a question. For unattended runs, arm `sessions.setAutoReply` (a self-driving auto-user loop), or pass `policy: "auto_approve"` on the prompt — but `auto_approve` only answers **confirm** gates (approving ordinary ones, denying rule-raised ones; refused with `409 approval_policy_active` on an `always` session), never questions; a parked question still stalls until `gates.answer` (or the auto-reply loop) answers it.
 - `tasks.list` and `tasks.getTranscript` return their data INLINE and need no live session and no attached stream. `tasks.list` is the UNION of the live task registry and the session's PERSISTED task store (keyed by task id, live winning) — the live registry evicts completed tasks when a new one spawns, so a finished task can leave memory while its transcript is still durable, and a live-only list would hide it. `tasks.getTranscript` reads a task that reached a terminal state even for a closed session and after a daemon restart; a task still RUNNING when the daemon died is NOT recoverable and reads 404. Its `source` field is `"live"` or `"store"`, and `complete` reports whether the response reflects a terminal projection DURABLY COMMITTED to that store. `after_seq` is EXCLUSIVE (entries strictly after it, plus any still-open entry); OMITTING it returns the whole transcript, which is distinct from `after_seq=0`. `tasks.cancel` / `sessions.cancelTasks` still act on a LIVE session and stop background tasks mid-turn (server-layer; tasks survive `sessions.turns.cancel` but are not restartable).
-- `memory.consolidate` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — every HTTP/SDK/CLI call returns `403 human_only`; it can only be triggered from an interactive human session. Do not call it programmatically.
+- `memory.consolidate` (POST /memory/consolidate) is **human-only and ALWAYS fails over this namespace** — it has no successful HTTP/SDK/CLI path: a call that passes the admin check returns `403 human_only`, and the admin check can refuse it first with `403 admin_unauthorized`. It can only be triggered from an interactive human session. Do not call it programmatically.
 - `mcp.testServer` (POST /mcp/probe) is **human-only and ALWAYS fails over this namespace** — probing STARTS A PROCESS (stdio) or makes an outbound request to a caller-chosen URL (http/sse), so a machine caller may not self-approve it and receives `403 human_only` on every HTTP/SDK/CLI call. The surface still exposes it for completeness, it simply always refuses. The deny list is still enforced on the candidate config before anything is started. Use `mcp.previewImport` for a write-free preview instead; there is no programmatic substitute for the live trial.
 - An MCP write needs BOTH a `nonce` and an `expect_hash` — neither is optional, and a stale hash is a CONFLICT rather than a silent overwrite. `mcp.upsertServer` / `mcp.deleteServer` / `mcp.enableServer` / `mcp.disableServer` / `mcp.importServers` each require a fresh single-use `nonce` from `mcp.createWriteIntent` minted for that exact op and scope (one minted for a different op or scope fails closed) AND the `mcp_servers` hash you last read, from either `mcp.createWriteIntent` or `mcp.listServers`. A mismatch means someone else edited the layer since you read it — re-read, re-mint, retry; each nonce is good for exactly one write, so a retry always needs a new one. There is no "omit it for the first write" shortcut: writing into a settings file that does not exist yet means passing the empty-array hash.
 - `workflows.delete` removes **user** workflows and saved customizations. A built-in/**system** workflow that you never customized is refused (`is_error:true`) and re-seeds on every boot; `workflows.setHidden` is the only way to remove it from view. Deleting your saved customization of a system workflow succeeds and brings the shipped version back: at once in a scoped realm, at the next daemon restart otherwise.
@@ -1369,24 +1369,24 @@ Reads first: `client.agent.mcp.listServers` (`{ session_id }`) returns the EFFEC
 
 **Accessor:** `client.agent`  |  **Import:** `import * as agent from 'hoody-sdk/agent'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.agent.acp` (5) — Process-wide settings (home settings.json)
 
 #### `disable` — Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.acp.disable(agent: Parameters<AcpServiceBase['__setACPEnabled']>[0], data?: FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">, options?: NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[3]>)
+client.agent.acp.disable(agent: string, data?: Omit<AgentSetACPEnabledRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `agent` | `string` | path | Yes | The agent. |
-| `data` | `FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">` | body | No |  |
+| `data` | `Omit<AgentSetACPEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled: bool }`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
 
-**Returns:** `ReturnType<AcpServiceBase['__setACPEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
+**Returns:** `Promise<AgentSetACPEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
 **CLI:** `hoody agent acp disable`
 
 ---
@@ -1394,17 +1394,17 @@ client.agent.acp.disable(agent: Parameters<AcpServiceBase['__setACPEnabled']>[0]
 #### `enable` — Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.acp.enable(agent: Parameters<AcpServiceBase['__setACPEnabled']>[0], data?: FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">, options?: NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[3]>)
+client.agent.acp.enable(agent: string, data?: Omit<AgentSetACPEnabledRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `agent` | `string` | path | Yes | The agent. |
-| `data` | `FacadeWithout<NonNullable<Parameters<AcpServiceBase['__setACPEnabled']>[1]>, "enabled">` | body | No |  |
+| `data` | `Omit<AgentSetACPEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled: bool }`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
 
-**Returns:** `ReturnType<AcpServiceBase['__setACPEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
+**Returns:** `Promise<AgentSetACPEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/acp/agents/{agent}/enabled`
 **CLI:** `hoody agent acp enable`
 
 ---
@@ -1465,7 +1465,25 @@ client.agent.acp.setSecret(agent: string, key: string, data?: AgentAcpSetSecretR
 
 ---
 
-### `client.agent` (2) — Create, drive, and tear down agent sessions
+### `client.agent` (3) — Hoody operations
+
+#### `signIn` — Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in".
+
+```typescript
+client.agent.signIn(data: AgentBootstrapHoodyTokenRequest & Required<Pick<AgentBootstrapHoodyTokenRequest, "token">>)
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `data` | `AgentBootstrapHoodyTokenRequest & Required<Pick<AgentBootstrapHoodyTokenRequest, "token">>` | body | Yes |  |
+
+**Body:** `{ token*: string, capability: string }`
+
+- `capability` — The operator bootstrap capability, required only on deployments configured with one; a mismatch is answered 404.
+
+**Returns:** `Promise<AgentBootstrapHoodyTokenResponse>`  |  **HTTP:** `POST /api/v1/agent/hoody/auth/bootstrap`
+
+---
 
 #### `stopAllWork` — Stop everything running in the realm.
 
@@ -1566,21 +1584,24 @@ client.agent.changes.stream(options?: { XHoodyCwd?: string; XHoodyConfigDir?: st
 #### `create` — Run one tool-free model completion.
 
 ```typescript
-client.agent.completions.create(data: NonNullable<Parameters<CompletionsServiceBase['__streamCompletion']>[0]>, options: NonNullable<Parameters<CompletionsServiceBase['__streamCompletion']>[2]> & { stream: true })
+client.agent.completions.create(data: AgentStreamCompletionRequest, options: { stream: true })  // → Promise<IEventStream>
+client.agent.completions.create(data: AgentCreateCompletionRequest, options?: { stream?: false })  // → Promise<AgentCreateCompletionResponse>
+client.agent.completions.create(data: AgentCreateCompletionRequest, options?: { stream?: boolean })  // → Promise<IEventStream> | Promise<AgentCreateCompletionResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `NonNullable<Parameters<CompletionsServiceBase['__streamCompletion']>[0]>` | body | Yes |  |
+| `data` | `AgentStreamCompletionRequest` | body | Yes |  |
 | `stream` | `boolean` | option | No | Stream the completion as server-sent events. |
 
-**Body:** `{ model*: string, system: string, messages*: { role*: "user" | "assistant", content*: string }[], settings: { thinking: object, temperature: number, max_tokens: int, response_format: object }, timeout_ms: int }`
+**Body:** `{ model*: string, system: string, messages*: { role*: "user" | "assistant", content*: string }[], settings: { thinking: object, temperature: number, max_tokens: int, response_format: object }, timeout_ms: int, max_tokens: int }`
 
 - `model` — … The same policy as a session's model: the provider prefix must be catalogued, the model name after it need not be (an uncatalogued name is sent to the provider, which may reject it as upstream_error). An unknown provider or an empty model name is 422 model_unavailable (reason unknown_model); a fusion/ composite is 422 model_unavailable (reason fusion).
 - `messages` — 1 to 1000 turns, oldest first; the last must be a user turn.
 - `settings` — Optional per-call model settings. A setting the model cannot honour is 400 unsupported_setting, never dropped.
+- `max_tokens` — Alias of settings.max_tokens (output-token cap, 1 to 1000000), accepted at the top level as most chat-completion APIs take it. Sending both with different values is 400 bad_request (details.field max_tokens).
 
-**Returns:** `ReturnType<CompletionsServiceBase['__streamCompletion']>`  |  **HTTP:** `POST /api/v1/agent/completions`
+**Returns:** see each form above  |  **HTTP:** `POST /api/v1/agent/completions`
 **CLI:** `hoody agent completions create`
 
 ---
@@ -2144,30 +2165,31 @@ client.agent.gates.answer(id: string, data: AgentGatesAnswerRequest, options?: {
 #### `approve` — Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease).
 
 ```typescript
-client.agent.gates.approve(id: Parameters<GatesServiceBase['__confirmGate']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<GatesServiceBase['__confirmGate']>[1]>, "approved">, [options?: NonNullable<Parameters<GatesServiceBase['__confirmGate']>[2]>, _templateVars?: Parameters<GatesServiceBase['__confirmGate']>[3]]>)
+client.agent.gates.approve(id: string, data?: Omit<AgentConfirmGateRequest, "approved">, options?: { realm?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | The session id. |
-| `X-Hoody-Approver-Lease` | `string` | header | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyApproverLease` | `string` | header `X-Hoody-Approver-Lease` | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<AgentConfirmGateRequest, "approved">` | body | No |  |
 
-**Body:** `{ gate_id: string, generation: int, approved*: bool, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
+**Body:** `{ gate_id: string, generation: int, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
 
 - `gate_id` — Echo of the parked gate id, as published on the frame that parked it (gate.id), by GET /sessions/{id} (pending_gate.id) and in 409 details. Valid only for the session in the path. Optional for compatibility, but an answer without it applies to whatever gate is parked when it arrives — a client binding an answer to a gate the user saw must send it. Ids are unique per session incarnation, so an id from before a re-attach never matches (stale/mismatch → 409). Required on a session that requires approval on every action: a confirm without it is rejected 400.
 - `generation` — Echo of the parked gate generation. It restarts when the session is re-attached, so it is not an identity on its own — send gate_id. Optional on a default-policy session; required, and non-zero, on a session that requires approval on every action.
-- `approved` — Required: true to approve, false to deny. There is no default; a missing, null or non-boolean value is rejected 400.
 - `session_scope` — Remember this decision for the rest of the session (the Allow/Deny for session answer): with approved true the tool stops asking, with approved false it is refused without asking. Offer allow-for-session only when the gate's event.confirm_request carried offer_session_allow. Under a locked approval policy the wider grant is refused, but the one-shot decision still applies and the reply says so (session_scope_applied false, note).
 - `request_id` — Optional: the caller's own id for this decision, at most 64 characters from A-Z, a-z, 0-9, '.', '_' and '-' (anything else is 400 bad_request). When this decision is the one the gate consumed, a later 409 gate_already_resolved for the gate echoes it as details.request_id, so a caller that lost the 200 knows the recorded decision is its own.
 - `lease_generation` — … A decision carrying the lease capability (X-Hoody-Approver-Lease) is checked against the current lease whatever it sends; without one, a stale generation is refused. …
 
-**Returns:** `ReturnType<GatesServiceBase['__confirmGate']>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
+**Fixed by the method:** the method sets `approved: true`; do not pass `approved`.
+
+**Returns:** `Promise<AgentConfirmGateResponse>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
 **CLI:** `hoody agent gates approve`
 
 ---
@@ -2175,30 +2197,31 @@ client.agent.gates.approve(id: Parameters<GatesServiceBase['__confirmGate']>[0],
 #### `deny` — Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease).
 
 ```typescript
-client.agent.gates.deny(id: Parameters<GatesServiceBase['__confirmGate']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<GatesServiceBase['__confirmGate']>[1]>, "approved">, [options?: NonNullable<Parameters<GatesServiceBase['__confirmGate']>[2]>, _templateVars?: Parameters<GatesServiceBase['__confirmGate']>[3]]>)
+client.agent.gates.deny(id: string, data?: Omit<AgentConfirmGateRequest, "approved">, options?: { realm?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | The session id. |
-| `X-Hoody-Approver-Lease` | `string` | header | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyApproverLease` | `string` | header `X-Hoody-Approver-Lease` | No | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<AgentConfirmGateRequest, "approved">` | body | No |  |
 
-**Body:** `{ gate_id: string, generation: int, approved*: bool, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
+**Body:** `{ gate_id: string, generation: int, persist_dirs: bool, session_scope: bool, trust_container: bool, request_id: string, lease_generation: int }`
 
 - `gate_id` — Echo of the parked gate id, as published on the frame that parked it (gate.id), by GET /sessions/{id} (pending_gate.id) and in 409 details. Valid only for the session in the path. Optional for compatibility, but an answer without it applies to whatever gate is parked when it arrives — a client binding an answer to a gate the user saw must send it. Ids are unique per session incarnation, so an id from before a re-attach never matches (stale/mismatch → 409). Required on a session that requires approval on every action: a confirm without it is rejected 400.
 - `generation` — Echo of the parked gate generation. It restarts when the session is re-attached, so it is not an identity on its own — send gate_id. Optional on a default-policy session; required, and non-zero, on a session that requires approval on every action.
-- `approved` — Required: true to approve, false to deny. There is no default; a missing, null or non-boolean value is rejected 400.
 - `session_scope` — Remember this decision for the rest of the session (the Allow/Deny for session answer): with approved true the tool stops asking, with approved false it is refused without asking. Offer allow-for-session only when the gate's event.confirm_request carried offer_session_allow. Under a locked approval policy the wider grant is refused, but the one-shot decision still applies and the reply says so (session_scope_applied false, note).
 - `request_id` — Optional: the caller's own id for this decision, at most 64 characters from A-Z, a-z, 0-9, '.', '_' and '-' (anything else is 400 bad_request). When this decision is the one the gate consumed, a later 409 gate_already_resolved for the gate echoes it as details.request_id, so a caller that lost the 200 knows the recorded decision is its own.
 - `lease_generation` — … A decision carrying the lease capability (X-Hoody-Approver-Lease) is checked against the current lease whatever it sends; without one, a stale generation is refused. …
 
-**Returns:** `ReturnType<GatesServiceBase['__confirmGate']>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
+**Fixed by the method:** the method sets `approved: false`; do not pass `approved`.
+
+**Returns:** `Promise<AgentConfirmGateResponse>`  |  **HTTP:** `POST /api/v1/agent/sessions/{id}/confirm`
 **CLI:** `hoody agent gates deny`
 
 ---
@@ -2363,22 +2386,24 @@ client.agent.github.createBranch(data: AgentGithubCreateBranchRequest, options?:
 #### `createCommit` — Stage all and commit.
 
 ```typescript
-client.agent.github.createCommit(data: NonNullable<Parameters<GithubServiceBase['__githubCommitPush']>[0]>, options: NonNullable<Parameters<GithubServiceBase['__githubCommitPush']>[1]> & { push: true })
+client.agent.github.createCommit(data: AgentGithubCommitPushRequest, options: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; push: true })  // → Promise<AgentGithubCommitPushResponse>
+client.agent.github.createCommit(data: AgentGithubCommitRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; push?: false })  // → Promise<AgentGithubCommitResponse>
+client.agent.github.createCommit(data: AgentGithubCommitRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; push?: boolean })  // → Promise<AgentGithubCommitPushResponse> | Promise<AgentGithubCommitResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `NonNullable<Parameters<GithubServiceBase['__githubCommitPush']>[0]>` | body | Yes |  |
+| `data` | `AgentGithubCommitPushRequest` | body | Yes |  |
 | `push` | `boolean` | option | No | Stage, commit and push in one call. |
 
 **Body:** `{ message*: string }`
 
-**Returns:** `ReturnType<GithubServiceBase['__githubCommitPush']>`  |  **HTTP:** `POST /api/v1/agent/github/commit`
+**Returns:** see each form above  |  **HTTP:** `POST /api/v1/agent/github/commit`
 **CLI:** `hoody agent github commits create`
 
 ---
@@ -2940,25 +2965,27 @@ client.agent.github.useBranch(data: AgentGithubUseBranchRequest, options?: { rea
 #### `start` — Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.start(data?: FacadeWithout<FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRunJson']>[0]>, "stream">, "format"> & { format?: "text" | "json" }, options?: NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRunJson']>[1]>)
+client.agent.headless.start(data?: Omit<AgentCreateHeadlessRunRequest, "stream" | "format"> & { format?: "text" | "json" }, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRunJson']>[0]>, "stream">, "format"> & { format?: "text" \| "json" }` | body | No |  |
+| `data` | `Omit<AgentCreateHeadlessRunRequest, "stream" \| "format"> & { format?: "text" \| "json" }` | body | No |  |
 
-**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: string, stream: bool, timeout_ms: int }`
+**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: "text" | "json", timeout_ms: int }`
 
 - `prompt` — The prompt to drive the ephemeral session. Required unless workflow is set; with a workflow it is the optional $(workflow.prompt) text.
 - `inputs` — Optional run-time values for the workflow's DECLARED input parameters (declared name → string value; resolves to $(input.<name>) in every step). Only accepted with workflow. A workflow with a REQUIRED declared parameter cannot run without these. Values must be strings; a non-string value is a 400.
 - `timeout_ms` — Optional run timeout in milliseconds (clamped to the hard ceiling).
 
-**Returns:** `ReturnType<HeadlessServiceBase['__createHeadlessRunJson']>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
+**Fixed by the method:** the method sets `stream: false`; do not pass `stream`.
+
+**Returns:** `FacadeJson<Promise<ApiResponse<unknown>>>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
 **CLI:** `hoody agent headless start`
 
 ---
@@ -2966,25 +2993,27 @@ client.agent.headless.start(data?: FacadeWithout<FacadeWithout<NonNullable<Param
 #### `stream` — Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.stream(data?: FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRun']>[0]>, "stream">, options?: NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRun']>[1]>)
+client.agent.headless.stream(data?: Omit<AgentCreateHeadlessRunRequest, "stream">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HeadlessServiceBase['__createHeadlessRun']>[0]>, "stream">` | body | No |  |
+| `data` | `Omit<AgentCreateHeadlessRunRequest, "stream">` | body | No |  |
 
-**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: string, stream: bool, timeout_ms: int }`
+**Body:** `{ prompt: string, workflow: string, inputs: { [key: string]: string }, model: string, format: string, timeout_ms: int }`
 
 - `prompt` — The prompt to drive the ephemeral session. Required unless workflow is set; with a workflow it is the optional $(workflow.prompt) text.
 - `inputs` — Optional run-time values for the workflow's DECLARED input parameters (declared name → string value; resolves to $(input.<name>) in every step). Only accepted with workflow. A workflow with a REQUIRED declared parameter cannot run without these. Values must be strings; a non-string value is a 400.
 - `timeout_ms` — Optional run timeout in milliseconds (clamped to the hard ceiling).
 
-**Returns:** `ReturnType<HeadlessServiceBase['__createHeadlessRun']>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
+**Fixed by the method:** the method sets `stream: true`; do not pass `stream`.
+
+**Returns:** `Promise<IEventStream>`  |  **HTTP:** `POST /api/v1/agent/headless/runs`
 **CLI:** `hoody agent headless stream`
 
 ---
@@ -3043,25 +3072,31 @@ client.agent.hooks.delete(data: AgentHooksDeleteRequest, options?: { realm?: str
 #### `disable` — Toggle a hook.
 
 ```typescript
-client.agent.hooks.disable(data: FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" | "event" | "matcher" | "command" | "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">, options?: NonNullable<Parameters<HooksServiceBase['__toggleHook']>[1]>)
+client.agent.hooks.disable(data: Omit<AgentToggleHookRequest, "enabled" | "event" | "matcher" | "command" | "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
+client.agent.hooks.disable(data: Omit<AgentToggleHookRequest, "disabled" | "shipped_id" | "enabled"> & Required<Pick<AgentToggleHookRequest, "event" | "command">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">` | body | Yes |  |
+| `data` | `Omit<AgentToggleHookRequest, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, enabled: bool, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string, disabled: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
 - `event` — Lifecycle event of the ordinary hook to toggle; required on that branch (with matcher + command).
 - `command` — Command text of the ordinary hook to toggle (exact match); required on that branch — a toggle must resolve to an existing entry.
 
-**Returns:** `ReturnType<HooksServiceBase['__toggleHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
+**Fixed by the method**, by the form of the call:
+
+- With `shipped_id` in the body: the method sets `enabled: false`; do not pass `enabled`, `event`, `matcher`, `command`, `disabled`.
+- Otherwise: the method sets `disabled: true`; `event`, `command` are required; do not pass `disabled`, `shipped_id`, `enabled`.
+
+**Returns:** `Promise<AgentToggleHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
 **CLI:** `hoody agent hooks disable`
 
 ---
@@ -3069,24 +3104,25 @@ client.agent.hooks.disable(data: FacadeWithout<NonNullable<Parameters<HooksServi
 #### `disableAll` — Disable all hooks.
 
 ```typescript
-client.agent.hooks.disableAll(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[0]>, "value">, [options?: NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[1]>, _templateVars?: Parameters<HooksServiceBase['__disableAllHooks']>[2]]>)
+client.agent.hooks.disableAll(data: Omit<AgentDisableAllHooksRequest, "value">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentDisableAllHooksRequest, "value">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, value*: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
-- `value` — New kill-switch state: true disables all hooks in this scope, false clears the setting and re-enables them. REQUIRED — an absent value is read as false, i.e. as a re-enable.
 
-**Returns:** `ReturnType<HooksServiceBase['__disableAllHooks']>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
+**Fixed by the method:** the method sets `value: true`; do not pass `value`.
+
+**Returns:** `Promise<AgentDisableAllHooksResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
 **CLI:** `hoody agent hooks disable`
 
 ---
@@ -3094,25 +3130,31 @@ client.agent.hooks.disableAll(...args: FacadeBodyArgs<FacadeWithout<NonNullable<
 #### `enable` — Toggle a hook.
 
 ```typescript
-client.agent.hooks.enable(data: FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" | "event" | "matcher" | "command" | "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">, options?: NonNullable<Parameters<HooksServiceBase['__toggleHook']>[1]>)
+client.agent.hooks.enable(data: Omit<AgentToggleHookRequest, "enabled" | "event" | "matcher" | "command" | "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
+client.agent.hooks.enable(data: Omit<AgentToggleHookRequest, "disabled" | "shipped_id" | "enabled"> & Required<Pick<AgentToggleHookRequest, "event" | "command">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__toggleHook']>[0]>, "shipped_id">` | body | Yes |  |
+| `data` | `Omit<AgentToggleHookRequest, "enabled" \| "event" \| "matcher" \| "command" \| "disabled"> & Required<Pick<AgentToggleHookRequest, "shipped_id">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, enabled: bool, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string, disabled: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", matcher: string, command: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
 - `event` — Lifecycle event of the ordinary hook to toggle; required on that branch (with matcher + command).
 - `command` — Command text of the ordinary hook to toggle (exact match); required on that branch — a toggle must resolve to an existing entry.
 
-**Returns:** `ReturnType<HooksServiceBase['__toggleHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
+**Fixed by the method**, by the form of the call:
+
+- With `shipped_id` in the body: the method sets `enabled: true`; do not pass `enabled`, `event`, `matcher`, `command`, `disabled`.
+- Otherwise: the method sets `disabled: false`; `event`, `command` are required; do not pass `disabled`, `shipped_id`, `enabled`.
+
+**Returns:** `Promise<AgentToggleHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/toggle`
 **CLI:** `hoody agent hooks enable`
 
 ---
@@ -3120,24 +3162,25 @@ client.agent.hooks.enable(data: FacadeWithout<NonNullable<Parameters<HooksServic
 #### `enableAll` — Disable all hooks.
 
 ```typescript
-client.agent.hooks.enableAll(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[0]>, "value">, [options?: NonNullable<Parameters<HooksServiceBase['__disableAllHooks']>[1]>, _templateVars?: Parameters<HooksServiceBase['__disableAllHooks']>[2]]>)
+client.agent.hooks.enableAll(data: Omit<AgentDisableAllHooksRequest, "value">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentDisableAllHooksRequest, "value">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: string, value*: bool }`
+**Body:** `{ session_id*: string, nonce*: string, scope: string }`
 
 - `scope` — Scope of the settings file to write (must match the nonce's scope).
-- `value` — New kill-switch state: true disables all hooks in this scope, false clears the setting and re-enables them. REQUIRED — an absent value is read as false, i.e. as a re-enable.
 
-**Returns:** `ReturnType<HooksServiceBase['__disableAllHooks']>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
+**Fixed by the method:** the method sets `value: false`; do not pass `value`.
+
+**Returns:** `Promise<AgentDisableAllHooksResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/disable-all`
 **CLI:** `hoody agent hooks enable`
 
 ---
@@ -3202,24 +3245,26 @@ client.agent.hooks.reload(data?: AgentHooksReloadRequest, options?: { realm?: st
 #### `run` — Test-fire a hook.
 
 ```typescript
-client.agent.hooks.run(data: FacadeWithout<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "event">, options?: NonNullable<Parameters<HooksServiceBase['__testHook']>[1]>)
+client.agent.hooks.run(data: Omit<AgentTestHookRequest, "shipped_id"> & Required<Pick<AgentTestHookRequest, "event">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `FacadeWithout<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id"> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "event">` | body | Yes |  |
+| `data` | `Omit<AgentTestHookRequest, "shipped_id"> & Required<Pick<AgentTestHookRequest, "event">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
+**Body:** `{ session_id*: string, event*: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
 
 - `event` — Lifecycle event to fire. Required on every branch except the shipped dry-run; the daemon rejects any value outside the enum.
 - `timeout` — Timeout in whole seconds for an inline `command` (positive integers only; a fractional or non-positive value is ignored rather than truncated). Hard-capped at 60s: a larger value, an ignored one, and a saved hook's own longer timeout are all clamped to the 60s test ceiling, so a dry-run can never run longer than that.
 
-**Returns:** `ReturnType<HooksServiceBase['__testHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
+**Fixed by the method:** do not pass `shipped_id`.
+
+**Returns:** `Promise<AgentTestHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
 **CLI:** `hoody agent hooks run`
 
 ---
@@ -3254,24 +3299,24 @@ client.agent.hooks.setRules(data: AgentHooksSetRulesRequest, options?: { realm?:
 #### `test` — Test-fire a hook.
 
 ```typescript
-client.agent.hooks.test(data: NonNullable<Parameters<HooksServiceBase['__testHook']>[0]> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id">, options?: NonNullable<Parameters<HooksServiceBase['__testHook']>[1]>)
+client.agent.hooks.test(data: AgentTestHookRequest & Required<Pick<AgentTestHookRequest, "shipped_id">>, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `NonNullable<Parameters<HooksServiceBase['__testHook']>[0]> & FacadeRequire<NonNullable<Parameters<HooksServiceBase['__testHook']>[0]>, "shipped_id">` | body | Yes |  |
+| `data` | `AgentTestHookRequest & Required<Pick<AgentTestHookRequest, "shipped_id">>` | body | Yes |  |
 
-**Body:** `{ session_id*: string, shipped_id: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
+**Body:** `{ session_id*: string, shipped_id*: string, event: "Notification" | "PostToolUse" | "PreCompact" | "PreToolUse" | "SessionEnd" | "SessionStart" | "Stop" | "SubagentStart" | "SubagentStop" | "UserPromptSubmit", match_value: string, command: string, timeout: int, exit_code: int, payload: object }`
 
 - `event` — Lifecycle event to fire. Required on every branch except the shipped dry-run; the daemon rejects any value outside the enum.
 - `timeout` — Timeout in whole seconds for an inline `command` (positive integers only; a fractional or non-positive value is ignored rather than truncated). Hard-capped at 60s: a larger value, an ignored one, and a saved hook's own longer timeout are all clamped to the 60s test ceiling, so a dry-run can never run longer than that.
 
-**Returns:** `ReturnType<HooksServiceBase['__testHook']>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
+**Returns:** `Promise<AgentTestHookResponse>`  |  **HTTP:** `POST /api/v1/agent/hooks/test`
 **CLI:** `hoody agent hooks test`
 
 ---
@@ -3616,7 +3661,7 @@ client.agent.logs.getStats(options?: { XHoodyCwd?: string; XHoodyConfigDir?: str
 #### `list` — Query logs.
 
 ```typescript
-client.agent.logs.list(options?: { source?: string; level?: string; host?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string })
+client.agent.logs.list(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3624,6 +3669,8 @@ client.agent.logs.list(options?: { source?: string; level?: string; host?: strin
 | `source` | `string` | query | No | Filter to a log source/facet (see `agent.logs.listSources`). One local source, or exactly ONE platform source (activity\|events\|proxy) — mixing them is rejected. |
 | `level` | `string` | query | No | Filter to a minimum log level. |
 | `host` | `string` | query | No | Filter to a host. |
+| `session_id` | `string` | query | No | Only entries correlated with this session id (exact match on the entry's session_id). |
+| `run_id` | `string` | query | No | Only entries correlated with this workflow/task run id (exact match on the entry's run_id). |
 | `since` | `string` | query | No | Lower TIME bound: RFC3339, or a relative duration like "1h"/"30m"/"7d". This is NOT a cursor — a bare sequence number is rejected 400 (use since_seq). Unparseable values are rejected the same way. |
 | `until` | `string` | query | No | Upper TIME bound, same forms as since. Paging BACKWARDS by repeatedly lowering until works, but it is coarse (rows sharing a timestamp repeat); before_seq is the exact backwards cursor. |
 | `since_seq` | `number` | query | No | Forward cursor: return only entries NEWER than this gateway seq. Take it from the previous reply's latest_seq to poll incrementally without re-reading rows. A non-numeric value is rejected 400. |
@@ -3656,7 +3703,7 @@ client.agent.logs.listSources(options?: { XHoodyCwd?: string; XHoodyConfigDir?: 
 #### `stream` — Stream the log tail (SSE).
 
 ```typescript
-client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string })
+client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -3664,6 +3711,8 @@ client.agent.logs.stream(options?: { source?: string; level?: string; host?: str
 | `source` | `string` | query | No | Filter the tail to a log source/facet. |
 | `level` | `string` | query | No | Filter to a minimum log level. |
 | `host` | `string` | query | No | Filter to a host. |
+| `session_id` | `string` | query | No | Only entries correlated with this session id. |
+| `run_id` | `string` | query | No | Only entries correlated with this workflow/task run id. |
 | `since_seq` | `number` | query | No | Initial resume cursor (the Last-Event-ID header overrides it). A non-numeric value is rejected 400. |
 | `limit` | `number` | query | No | Caps each poll batch. A non-numeric value is rejected 400. |
 | `LastEventID` | `string` | header `Last-Event-ID` | No | SSE resume cursor — the gateway int64 seq to resume from; OVERRIDES the ?since_seq query param. Sent automatically by an SSE client on reconnect. |
@@ -3865,23 +3914,25 @@ client.agent.mcp.deleteServer(data: AgentMcpDeleteServerRequest, options?: { rea
 #### `disableServer` — Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.disableServer(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[1]>, _templateVars?: Parameters<McpServiceBase['__setMCPServerEnabled']>[2]]>)
+client.agent.mcp.disableServer(data: Omit<AgentSetMCPServerEnabledRequest, "enabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentSetMCPServerEnabledRequest, "enabled">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, enabled*: bool, expect_hash*: string }`
+**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, expect_hash*: string }`
 
 - `scope` — Settings layer to write. Must match the scope the nonce was minted for.
 
-**Returns:** `ReturnType<McpServiceBase['__setMCPServerEnabled']>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
+
+**Returns:** `Promise<AgentSetMCPServerEnabledResponse>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
 **CLI:** `hoody agent mcp disable`
 
 ---
@@ -3889,23 +3940,25 @@ client.agent.mcp.disableServer(...args: FacadeBodyArgs<FacadeWithout<NonNullable
 #### `enableServer` — Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.enableServer(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<McpServiceBase['__setMCPServerEnabled']>[1]>, _templateVars?: Parameters<McpServiceBase['__setMCPServerEnabled']>[2]]>)
+client.agent.mcp.enableServer(data: Omit<AgentSetMCPServerEnabledRequest, "enabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentSetMCPServerEnabledRequest, "enabled">` | body | Yes |  |
 
-**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, enabled*: bool, expect_hash*: string }`
+**Body:** `{ session_id*: string, nonce*: string, scope: "user" | "project" | "local", name*: string, expect_hash*: string }`
 
 - `scope` — Settings layer to write. Must match the scope the nonce was minted for.
 
-**Returns:** `ReturnType<McpServiceBase['__setMCPServerEnabled']>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
+
+**Returns:** `Promise<AgentSetMCPServerEnabledResponse>`  |  **HTTP:** `POST /api/v1/agent/mcp/servers/enable`
 **CLI:** `hoody agent mcp enable`
 
 ---
@@ -4183,18 +4236,18 @@ client.agent.memory.deleteProject(project: string, data: AgentMemoryDeleteProjec
 #### `disable` — Toggle memory capture.
 
 ```typescript
-client.agent.memory.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[1]>, _templateVars?: Parameters<MemoryServiceBase['__setMemoryEnabled']>[2]]>)
+client.agent.memory.disable(data?: Omit<AgentSetMemoryEnabledRequest, "enabled">, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `data` | `object` | body | No |  |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `data` | `Omit<AgentSetMemoryEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool }`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
 
-**Returns:** `ReturnType<MemoryServiceBase['__setMemoryEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
+**Returns:** `Promise<AgentSetMemoryEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
 **CLI:** `hoody agent memory disable`
 
 ---
@@ -4202,18 +4255,18 @@ client.agent.memory.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Pa
 #### `enable` — Toggle memory capture.
 
 ```typescript
-client.agent.memory.enable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[0]>, "enabled">, [options?: NonNullable<Parameters<MemoryServiceBase['__setMemoryEnabled']>[1]>, _templateVars?: Parameters<MemoryServiceBase['__setMemoryEnabled']>[2]]>)
+client.agent.memory.enable(data?: Omit<AgentSetMemoryEnabledRequest, "enabled">, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `data` | `object` | body | No |  |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `data` | `Omit<AgentSetMemoryEnabledRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool }`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
 
-**Returns:** `ReturnType<MemoryServiceBase['__setMemoryEnabled']>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
+**Returns:** `Promise<AgentSetMemoryEnabledResponse>`  |  **HTTP:** `PUT /api/v1/agent/memory/enabled`
 **CLI:** `hoody agent memory enable`
 
 ---
@@ -4551,18 +4604,18 @@ client.agent.models.listIterator(options?: { page?: number; limit?: number; XHoo
 #### `bootstrapToken` — Bootstrap the Hoody platform credential (install-if-absent).
 
 ```typescript
-client.agent.platform.bootstrapToken(data: AgentPlatformBootstrapTokenRequest)
+client.agent.platform.bootstrapToken(data: AgentBootstrapHoodyTokenRequest)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `AgentPlatformBootstrapTokenRequest` | body | Yes |  |
+| `data` | `AgentBootstrapHoodyTokenRequest` | body | Yes |  |
 
 **Body:** `{ token*: string, capability: string }`
 
 - `capability` — The operator bootstrap capability, required only on deployments configured with one; a mismatch is answered 404.
 
-**Returns:** `Promise<AgentPlatformBootstrapTokenResponse>`  |  **HTTP:** `POST /api/v1/agent/hoody/auth/bootstrap`
+**Returns:** `Promise<AgentBootstrapHoodyTokenResponse>`  |  **HTTP:** `POST /api/v1/agent/hoody/auth/bootstrap`
 
 ---
 
@@ -5088,19 +5141,19 @@ client.agent.sessions.create(data?: AgentSessionsCreateRequest, options?: { real
 #### `delete` — Close (and optionally hard-delete) a session.
 
 ```typescript
-client.agent.sessions.delete(id: Parameters<SessionsServiceBase['__deleteSession']>[0], options?: FacadeWithout<NonNullable<Parameters<SessionsServiceBase['__deleteSession']>[1]>, "hard">)
+client.agent.sessions.delete(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | The session id. |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 
-**Returns:** `ReturnType<SessionsServiceBase['__deleteSession']>`  |  **HTTP:** `DELETE /api/v1/agent/sessions/{id}`
+**Returns:** `Promise<AgentDeleteSessionResponse>`  |  **HTTP:** `DELETE /api/v1/agent/sessions/{id}`
 **CLI:** `hoody agent sessions delete`
 
 ---
@@ -5761,7 +5814,9 @@ client.agent.sessions.setEffort(id: string, data?: AgentSessionsSetEffortRequest
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `AgentSessionsSetEffortRequest` | body | No |  |
 
-**Body:** `{ effort: string }`
+**Body:** `{ effort: "" | "low" | "medium" | "high" | "xhigh" | "max" }`
+
+- `effort` — low|medium|high|xhigh|max, or "" for the model default. Any other value is 400 bad_request (details.field effort).
 
 **Returns:** `Promise<AgentSessionsSetEffortResponse>`  |  **HTTP:** `PATCH /api/v1/agent/sessions/{id}/effort`
 **CLI:** `hoody agent sessions effort set`
@@ -5832,7 +5887,9 @@ client.agent.sessions.setVerbosity(id: string, data?: AgentSessionsSetVerbosityR
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `data` | `AgentSessionsSetVerbosityRequest` | body | No |  |
 
-**Body:** `{ level: string }`
+**Body:** `{ level: "normal" | "concise" | "terse" | "minimal" }`
+
+- `level` — normal|concise|terse|minimal. Any other value is 400 bad_request (details.field level); the applied level is echoed on the stream as event.verbosity.
 
 **Returns:** `Promise<AgentSessionsSetVerbosityResponse>`  |  **HTTP:** `PATCH /api/v1/agent/sessions/{id}/verbosity`
 **CLI:** `hoody agent sessions verbosity set`
@@ -6209,21 +6266,23 @@ client.agent.skills.delete(data: AgentSkillsDeleteRequest, options?: { realm?: s
 #### `disable` — Enable/disable a skill.
 
 ```typescript
-client.agent.skills.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[0]>, "disabled">, [options?: NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[1]>, _templateVars?: Parameters<SkillsServiceBase['__toggleSkill']>[2]]>)
+client.agent.skills.disable(data: Omit<AgentToggleSkillRequest, "disabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentToggleSkillRequest, "disabled">` | body | Yes |  |
 
-**Body:** `{ name*: string, disabled: bool }`
+**Body:** `{ name*: string }`
 
-**Returns:** `ReturnType<SkillsServiceBase['__toggleSkill']>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
+**Fixed by the method:** the method sets `disabled: true`; do not pass `disabled`.
+
+**Returns:** `Promise<AgentToggleSkillResponse>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
 **CLI:** `hoody agent skills disable`
 
 ---
@@ -6231,21 +6290,23 @@ client.agent.skills.disable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Pa
 #### `enable` — Enable/disable a skill.
 
 ```typescript
-client.agent.skills.enable(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[0]>, "disabled">, [options?: NonNullable<Parameters<SkillsServiceBase['__toggleSkill']>[1]>, _templateVars?: Parameters<SkillsServiceBase['__toggleSkill']>[2]]>)
+client.agent.skills.enable(data: Omit<AgentToggleSkillRequest, "disabled">, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | body | Yes |  |
+| `data` | `Omit<AgentToggleSkillRequest, "disabled">` | body | Yes |  |
 
-**Body:** `{ name*: string, disabled: bool }`
+**Body:** `{ name*: string }`
 
-**Returns:** `ReturnType<SkillsServiceBase['__toggleSkill']>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
+**Fixed by the method:** the method sets `disabled: false`; do not pass `disabled`.
+
+**Returns:** `Promise<AgentToggleSkillResponse>`  |  **HTTP:** `POST /api/v1/agent/skills/toggle`
 **CLI:** `hoody agent skills enable`
 
 ---
@@ -7203,7 +7264,9 @@ client.agent.tools.listReadOnlyIterator(options?: { page?: number; limit?: numbe
 #### `run` — Run a tool (sessionless, gated).
 
 ```typescript
-client.agent.tools.run(name: Parameters<ToolsServiceBase['__streamTool']>[0], data: NonNullable<Parameters<ToolsServiceBase['__streamTool']>[1]> | undefined, options: NonNullable<Parameters<ToolsServiceBase['__streamTool']>[2]> & { stream: true })
+client.agent.tools.run(name: string, data: AgentStreamToolRequest | undefined, options: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; stream: true })  // → Promise<IEventStream>
+client.agent.tools.run(name: string, data?: AgentRunToolRequest, options?: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; stream?: false })  // → Promise<AgentRunToolResponse>
+client.agent.tools.run(name: string, data?: AgentRunToolRequest, options?: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; stream?: boolean })  // → Promise<IEventStream> | Promise<AgentRunToolResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -7211,14 +7274,14 @@ client.agent.tools.run(name: Parameters<ToolsServiceBase['__streamTool']>[0], da
 | `name` | `string` | path | Yes | The name. |
 | `confirm` | `boolean` | query | No | Query alias of the body `confirm` field — re-issue a previously-parked confirmation (pair with confirm_token). |
 | `confirm_token` | `string` | query | No | Query alias of the body `confirm_token` field — the single-use token returned in the 409 tool_needs_confirmation details. |
-| `X-Hoody-Tool-Mode` | `string` | header | No | Sessionless tool-mode for the ephemeral session: `standard` (the default) or `orchestrator`. Any other value is refused 400 invalid_tool_mode. Ignored on the in-session run (it inherits the session's frozen tool-mode). |
-| `X-Hoody-Dir-Scope` | `string` | header | No | Sessionless directory-access scope for the ephemeral session: home (the default) or full. Any other value is refused 400 invalid_dir_scope. Ignored on the in-session run (it inherits the session's frozen dir-scope). |
-| `X-Hoody-Cwd` | `string` | header | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
-| `X-Hoody-Config-Dir` | `string` | header | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `X-Hoody-Container` | `string` | header | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `X-Hoody-Realm` | `string` | header | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyToolMode` | `string` | header `X-Hoody-Tool-Mode` | No | Sessionless tool-mode for the ephemeral session: `standard` (the default) or `orchestrator`. Any other value is refused 400 invalid_tool_mode. Ignored on the in-session run (it inherits the session's frozen tool-mode). |
+| `XHoodyDirScope` | `string` | header `X-Hoody-Dir-Scope` | No | Sessionless directory-access scope for the ephemeral session: home (the default) or full. Any other value is refused 400 invalid_dir_scope. Ignored on the in-session run (it inherits the session's frozen dir-scope). |
+| `XHoodyCwd` | `string` | header `X-Hoody-Cwd` | No | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; `agent.todos.create` also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | header `X-Hoody-Config-Dir` | No | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | header `X-Hoody-Container` | No | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `XHoodyRealm` | `string` | header `X-Hoody-Realm` | No | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `realm` | `string` | query | No | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `NonNullable<Parameters<ToolsServiceBase['__streamTool']>[1]> \| undefined` | body | Yes |  |
+| `data` | `AgentStreamToolRequest \| undefined` | body | Yes |  |
 | `stream` | `boolean` | option | No | Stream the tool output as server-sent events. |
 
 **Body:** `{ params: object, confirm: bool, confirm_token: string, allow_mutations: bool }`
@@ -7227,7 +7290,7 @@ client.agent.tools.run(name: Parameters<ToolsServiceBase['__streamTool']>[0], da
 - `confirm_token` — The single-use token returned in the 409 tool_needs_confirmation details. Bound to the tool/session/params it was minted for; present it with confirm:true and the echoed params to approve the parked run.
 - `allow_mutations` — Sessionless only: opt a non-read-only tool into running with every permission check applied (else a sessionless mutating run is refused 400 tool_mutation_refused).
 
-**Returns:** `ReturnType<ToolsServiceBase['__streamTool']>`  |  **HTTP:** `POST /api/v1/agent/tools/{name}/run`
+**Returns:** see each form above  |  **HTTP:** `POST /api/v1/agent/tools/{name}/run`
 **CLI:** `hoody agent tools run`
 
 ---
@@ -7777,18 +7840,18 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 ## Quirks & gotchas
 
 - Login accepts `username` OR `email` + `password` (`anyOf`); only the email lookup is lowercased, usernames are matched case-sensitive.
-- JWT lifecycle: `auth.logoutAll` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `auth.tokens.delete`). `auth.refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. The generated method sends the body with the client's current token and takes no per-call headers, so call it on a client whose token IS the refresh token: `new HoodyClient({ baseURL, token: refreshToken }).api.auth.refresh({ refreshToken })`. For headless flows, mint a long-lived `auth.tokens.create` token instead.
-- `servers.listRegions` returns `r.data.regions` (single-wrapped, like every other endpoint — older docs incorrectly called it doubly-wrapped).
+- JWT lifecycle: `auth.logoutAll` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `auth.tokens.delete`). `auth.refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. `client.api.auth.refresh({ refreshToken })` handles both: the client presents the body's `refreshToken` as the bearer for that one request, whatever token the client holds, so no separate client is needed (the call never enters automatic 401 recovery). For headless flows, mint a long-lived `auth.tokens.create` token instead.
+- `servers.listRegions` returns `r.data.regions` (single-wrapped, like every other endpoint).
 - Duplicate signup returns `200` (anti-enumeration). For an unverified user the stored password is left unchanged (first writer wins) and a fresh verification email is sent; for a verified user it is a no-op. A second signup therefore cannot fix a mistyped password: logging in with the new one fails with 401. Change it through `auth.recoverPassword` → `auth.resetPassword`. Do NOT probe with signup.
 - The `agent` kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers: it accepts the bare per-container kit URL, and access is decided by the container's proxy permission policy. No built-in kit asks for more, `bot` included: its management routes ignore an `Authorization` header and check no container ownership, so the proxy permission policy is their only access control. The `containers.createClaim(id)` call mints an *optional* portable container claim for offline verification by your own container programs; no built-in kit requires it. See § Auth model.
 - Vault via auth tokens requires `vault_access === true` AND `resources.vault` on the token; else 403. JWT sessions are not gated.
 - Rate limits: login 1000/30min failures-only; signup 5/hour fail-closed.
-- `containers.start`, `containers.stop`, `containers.restart`, `containers.pause` and `containers.resume` all call `POST /api/v1/containers/{id}/{operation}`: the operation is the last PATH segment, never a body field, and each method fixes it for you. `containers.stop({ force: true })` sends `force-stop`. The optional body field `timeout` (seconds) caps how long the operation may run on the host; for `stop` and `restart` it is also the time the container gets to shut down cleanly.
+- `containers.start`, `containers.stop`, `containers.restart`, `containers.pause` and `containers.resume` all call `POST /api/v1/containers/{id}/{operation}`: the operation is the last PATH segment, never a body field, and each method fixes it for you. `containers.stop(id, undefined, { force: true })` sends `force-stop`. The optional body field `timeout` (seconds) caps how long the operation may run on the host; for `stop` and `restart` it is also the time the container gets to shut down cleanly.
 - `containers.create` needs a `server_id` in its body, and nothing else in workflow 4 produces one: take it from `servers.list` (a server you rent). A `name` that another container in the project already uses is refused with 409. `container_image` is optional (omitted, the default image is used); name a public image from `images.listPublic`, since `images.list` lists only images your account owns and is empty on a new account. A bare `debian` resolves to the canonical base image.
-- Snapshots are addressed by `name`, never by alias: `snapshots.restore`, `snapshots.delete` and `snapshots.setAlias` take the `name` that `snapshots.list` returns. `snapshots.create` derives it from `alias`, keeping only letters, digits, `_` and `-` (no leading `-`), or uses `snap-YYYYMMDD-HHMMSS` (UTC) when no alias is given.
+- Snapshots are addressed by `name`, never by alias: `snapshots.restore`, `snapshots.delete` and `snapshots.setAlias` take the `name` that `snapshots.list` returns. `snapshots.create` derives it from `alias`: it keeps only letters, digits, `_` and `-`, drops any leading or trailing `-` and `_`, and cuts the result to 64 characters. A derived name shorter than 2 characters is refused with 400. With no alias, or one with no usable characters, the name is `snap-YYYYMMDD-HHMMSS` (UTC).
 - `snapshots.create` needs the container `running` or `stopped` (another status is refused with 400). A container holds at most 1000 snapshots, 10 on a free-tier slice; one more is refused with 400 `CONTAINER_SNAPSHOT_LIMIT` until you delete one.
 - `projects.create` names the project with `alias` (required, at most 100 characters); there is no `name` field. An alias that one of your projects already uses is refused with 409.
-- Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com`: with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `proxy.containerPermissions.*` groups, or publish a `proxy.aliases.create` alias instead.
+- Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com` (a terminal id of 10000 or more makes that label longer than DNS allows, so it is `t-<n>` instead of `terminal-<n>`; the SDK and CLI do this for you): with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `proxy.containerPermissions.*` groups, or publish a `proxy.aliases.create` alias instead.
 - `proxy.services.list` lists only the services named in the container's proxy permission rules or hooks, so a container with no custom rules returns `services: []`; it is not a list of running kits. `proxy.aliases.create` takes the kit or protocol as `program` (e.g. `'exec'`, `'terminal'`, or `'http'` with `port`).
 - `wallet.listInvoices` returns `200 {invoices:[],pagination:{...}}` for never-billed accounts (current). `ip.get` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
 - `servers.offers.reserve` charges at once, and every reservation whose total is above zero needs `max_charge_cents`, although the body schema marks it optional. Without it the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED` (409 `SETUP_FEE_CONFIRMATION_REQUIRED` when the offer has a one-time setup fee), and a total above it is refused with 409 `CHARGE_EXCEEDS_MAX`; the error data carries `total_cents`, and nothing is charged. It also needs a caller-generated `idempotency_key`: a retry with the same key returns the first reservation instead of charging again.
@@ -7806,7 +7869,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - 404 — missing resource OR 403 masked.
 - 409 — uniqueness (duplicate username, proxy-alias).
 - 428 / 412 — on the public routes these come from the If-Match guard on proxy-permission, proxy-settings and proxy-hook writes: 428 means the `If-Match` header is missing, 412 means it is malformed or stale (the document changed since you read it). Re-read the document (`proxy.containerPermissions.get` / `proxy.projectPermissions.get`), send its current `file:v<N>`, and retry. They do not signal a missing payment method, email verification or 2FA.
-- 422 — request-schema validation (`REQUEST_SCHEMA_INVALID`, e.g. a backup code sent where `auth.twoFactor.rotateBackupCodes` wants a 6-digit TOTP) and semantic validation (password complexity, `rental_days` with no pricing).
+- 422 — request-schema validation (e.g. a backup code sent where `auth.twoFactor.rotateBackupCodes` wants a 6-digit TOTP: the body is `{statusCode: 422, error: "Validation Error", message: "Validation failed: …"}`, with no `REQUEST_SCHEMA_INVALID` code on the wire) and semantic validation (password complexity, `rental_days` with no pricing).
 - 429 — login 1000/30min (failures only), signup 5/hour, refresh 30/30min.
 - 400 — the `events` socket accepts the WebSocket transport only (unless the deployment turns polling on); while polling is off, every long-polling request (with or without a `sid`) is refused with 400 `Polling transport is not supported; use the websocket transport`. Only on a deployment that turns polling on does a polling write with a missing or unknown `sid` get 400 `Unknown session`. Connect with `transports: ['websocket']`.
 - Always-200 — `auth.recoverPassword`, `auth.sendVerificationEmail`, duplicate-`signup`; do NOT probe with these.
@@ -7878,7 +7941,7 @@ client.api.activity.listAll(options?: { page?: number; limit?: number; start_dat
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | query | No | Filter by HTTP method |
 | `realm_id` | `string` | query | No | Filter by realm ID |
 
-**Returns:** `Promise<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown)[]>` — every item of `data`, all pages collected (`list()` fetches one page). Each item is `{ id*: string, user_id: string, realm_id: string, method: string, path: string, status_code: int, ip_address: string, user_agent: string, created_at: string }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/users/auth/activity`
+**Returns:** `Promise<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown)[]>` — every item of `data`, all pages collected (`list()` fetches one page). `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/users/auth/activity`
 **CLI:** `hoody activity list`
 
 ---
@@ -7901,7 +7964,7 @@ client.api.activity.listIterator(options?: { page?: number; limit?: number; star
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | query | No | Filter by HTTP method |
 | `realm_id` | `string` | query | No | Filter by realm ID |
 
-**Returns:** `AsyncGenerator<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown), void, unknown>` — one item of `data` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ id*: string, user_id: string, realm_id: string, method: string, path: string, status_code: int, ip_address: string, user_agent: string, created_at: string }`.  |  **HTTP:** `GET /api/v1/users/auth/activity`
+**Returns:** `AsyncGenerator<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown), void, unknown>` — one item of `data` per step, next page fetched on demand (`list()` fetches one page).  |  **HTTP:** `GET /api/v1/users/auth/activity`
 **CLI:** `hoody activity list`
 
 ---
@@ -8512,19 +8575,21 @@ client.api.auth.twoFactor.disable(data: ApiAuthTwoFactorDisableRequest)
 #### `disableTokenGate` — Set 2FA token gate preference
 
 ```typescript
-client.api.auth.twoFactor.disableTokenGate(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[0]>, "enabled">, [options?: NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[1]>]>)
+client.api.auth.twoFactor.disableTokenGate(data?: Omit<SetTokenGatePatchRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `object` | body | No |  |
+| `data` | `Omit<SetTokenGatePatchRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool, password: string, otp_code: string }`
+**Body:** `{ password: string, otp_code: string }`
 
 - `password` — Required when setting enabled=false (security downgrade requires primary-factor reauth)
 - `otp_code` — TOTP code or backup code. Required when setting enabled=false.
 
-**Returns:** `ReturnType<AuthTwoFactorServiceBase['__setTokenGate']>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
+
+**Returns:** `Promise<SetTokenGatePatchResponse>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
 **CLI:** `hoody auth 2fa gate disable`
 
 ---
@@ -8532,19 +8597,21 @@ client.api.auth.twoFactor.disableTokenGate(...args: FacadeBodyArgs<FacadeWithout
 #### `enableTokenGate` — Set 2FA token gate preference
 
 ```typescript
-client.api.auth.twoFactor.enableTokenGate(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[0]>, "enabled">, [options?: NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[1]>]>)
+client.api.auth.twoFactor.enableTokenGate(data?: Omit<SetTokenGatePatchRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `object` | body | No |  |
+| `data` | `Omit<SetTokenGatePatchRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool, password: string, otp_code: string }`
+**Body:** `{ password: string, otp_code: string }`
 
 - `password` — Required when setting enabled=false (security downgrade requires primary-factor reauth)
 - `otp_code` — TOTP code or backup code. Required when setting enabled=false.
 
-**Returns:** `ReturnType<AuthTwoFactorServiceBase['__setTokenGate']>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
+
+**Returns:** `Promise<SetTokenGatePatchResponse>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
 **CLI:** `hoody auth 2fa gate enable`
 
 ---
@@ -8695,14 +8762,17 @@ client.api.containers.delete(id: string)
 #### `disableKvm` — Enable or disable /dev/kvm (run VMs in the container)
 
 ```typescript
-client.api.containers.disableKvm(id: Parameters<ContainersServiceBase['__setContainerKvm']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[1]>, "kvm" | "dev_kvm">, [options?: NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[2]>]>)
+client.api.containers.disableKvm(id: string, data?: Omit<SetContainerKvmPatchRequest, "kvm" | "dev_kvm">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
+| `data` | `Omit<SetContainerKvmPatchRequest, "kvm" \| "dev_kvm">` | body | No |  |
 
-**Returns:** `ReturnType<ContainersServiceBase['__setContainerKvm']>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
+**Fixed by the method:** the method sets `kvm: false`; do not pass `kvm`, `dev_kvm`.
+
+**Returns:** `Promise<SetContainerKvmPatchResponse>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
 **CLI:** `hoody containers kvm disable`
 
 ---
@@ -8710,14 +8780,17 @@ client.api.containers.disableKvm(id: Parameters<ContainersServiceBase['__setCont
 #### `enableKvm` — Enable or disable /dev/kvm (run VMs in the container)
 
 ```typescript
-client.api.containers.enableKvm(id: Parameters<ContainersServiceBase['__setContainerKvm']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[1]>, "kvm" | "dev_kvm">, [options?: NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[2]>]>)
+client.api.containers.enableKvm(id: string, data?: Omit<SetContainerKvmPatchRequest, "kvm" | "dev_kvm">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
+| `data` | `Omit<SetContainerKvmPatchRequest, "kvm" \| "dev_kvm">` | body | No |  |
 
-**Returns:** `ReturnType<ContainersServiceBase['__setContainerKvm']>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
+**Fixed by the method:** the method sets `kvm: true`; do not pass `kvm`, `dev_kvm`.
+
+**Returns:** `Promise<SetContainerKvmPatchResponse>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
 **CLI:** `hoody containers kvm enable`
 
 ---
@@ -8935,19 +9008,19 @@ client.api.containers.listStatusHistory(id: string, options?: { page?: number; l
 #### `pause` — Manage container
 
 ```typescript
-client.api.containers.pause(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.pause(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers pause`
 
 ---
@@ -8955,19 +9028,19 @@ client.api.containers.pause(id: Parameters<ContainersServiceBase['__manageContai
 #### `restart` — Manage container
 
 ```typescript
-client.api.containers.restart(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.restart(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers restart`
 
 ---
@@ -8975,19 +9048,19 @@ client.api.containers.restart(id: Parameters<ContainersServiceBase['__manageCont
 #### `resume` — Manage container
 
 ```typescript
-client.api.containers.resume(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.resume(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers resume`
 
 ---
@@ -8995,19 +9068,19 @@ client.api.containers.resume(id: Parameters<ContainersServiceBase['__manageConta
 #### `start` — Manage container
 
 ```typescript
-client.api.containers.start(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.start(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers start`
 
 ---
@@ -9015,20 +9088,22 @@ client.api.containers.start(id: Parameters<ContainersServiceBase['__manageContai
 #### `stop` — Manage container
 
 ```typescript
-client.api.containers.stop(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]> | undefined, options: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]> & { force: true })
+client.api.containers.stop(id: string, data: NonNullable<ManageContainerRequest> | undefined, options: { force: true })
+client.api.containers.stop(id: string, data?: NonNullable<ManageContainerRequest>, options?: { force?: false })
+client.api.containers.stop(id: string, data?: NonNullable<ManageContainerRequest>, options?: { force?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]> \| undefined` | body | Yes |  |
+| `data` | `NonNullable<ManageContainerRequest> \| undefined` | body | Yes |  |
 | `force` | `boolean` | option | No | Kill the container without a graceful shutdown (the force-stop operation). |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers stop`
 
 ---
@@ -9328,7 +9403,7 @@ client.api.firewall.createEgressRule(id: string, data: ApiFirewallCreateEgressRu
 
 **Body:** `{ action*: "allow" | "reject" | "drop", protocol*: "tcp" | "udp" | "icmp4", description*: string, destination_port: string, destination: string, source_port: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
-- `destination_port` — Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+- `destination_port` — Port number (1-65535), range with the lower port first (80-90), or comma-separated list (80,443). Required for TCP/UDP; not allowed with icmp4.
 
 **Returns:** `Promise<ApiFirewallCreateEgressRuleResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress create`
@@ -9348,7 +9423,7 @@ client.api.firewall.createIngressRule(id: string, data: ApiFirewallCreateIngress
 
 **Body:** `{ action*: "allow" | "reject" | "drop", protocol*: "tcp" | "udp" | "icmp4", description*: string, destination_port: string, source: string, source_port: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
-- `destination_port` — Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+- `destination_port` — Port number (1-65535), range with the lower port first (80-90), or comma-separated list (80,443). Required for TCP/UDP; not allowed with icmp4.
 
 **Returns:** `Promise<ApiFirewallCreateIngressRuleResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress create`
@@ -9366,7 +9441,7 @@ client.api.firewall.deleteEgressRule(id: string, data: ApiFirewallDeleteEgressRu
 | `id` | `string` | path | Yes | Container ID |
 | `data` | `ApiFirewallDeleteEgressRuleRequest` | body | Yes |  |
 
-**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, destination: string, source_port: string, description: string, state: "enabled" | "disabled"="enabled", icmp_type: string, icmp_code: string }`
+**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, destination: string, source_port: string, description: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
 **Returns:** `Promise<ApiFirewallDeleteEgressRuleResponse>`  |  **HTTP:** `DELETE /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress delete`
@@ -9384,7 +9459,7 @@ client.api.firewall.deleteIngressRule(id: string, data: ApiFirewallDeleteIngress
 | `id` | `string` | path | Yes | Container ID |
 | `data` | `ApiFirewallDeleteIngressRuleRequest` | body | Yes |  |
 
-**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source: string, source_port: string, description: string, state: "enabled" | "disabled"="enabled", icmp_type: string, icmp_code: string }`
+**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source: string, source_port: string, description: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
 **Returns:** `Promise<ApiFirewallDeleteIngressRuleResponse>`  |  **HTTP:** `DELETE /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress delete`
@@ -9394,17 +9469,19 @@ client.api.firewall.deleteIngressRule(id: string, data: ApiFirewallDeleteIngress
 #### `disableEgressRule` — Toggle Egress Rule State
 
 ```typescript
-client.api.firewall.disableEgressRule(id: Parameters<FirewallServiceBase['__toggleEgressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[2]>]>)
+client.api.firewall.disableEgressRule(id: string, data?: Omit<ToggleEgressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleEgressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleEgressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
+**Fixed by the method:** the method sets `state: "disabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleEgressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress disable`
 
 ---
@@ -9412,17 +9489,19 @@ client.api.firewall.disableEgressRule(id: Parameters<FirewallServiceBase['__togg
 #### `disableIngressRule` — Toggle Ingress Rule State
 
 ```typescript
-client.api.firewall.disableIngressRule(id: Parameters<FirewallServiceBase['__toggleIngressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[2]>]>)
+client.api.firewall.disableIngressRule(id: string, data?: Omit<ToggleIngressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleIngressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleIngressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
+**Fixed by the method:** the method sets `state: "disabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleIngressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress disable`
 
 ---
@@ -9430,17 +9509,19 @@ client.api.firewall.disableIngressRule(id: Parameters<FirewallServiceBase['__tog
 #### `enableEgressRule` — Toggle Egress Rule State
 
 ```typescript
-client.api.firewall.enableEgressRule(id: Parameters<FirewallServiceBase['__toggleEgressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[2]>]>)
+client.api.firewall.enableEgressRule(id: string, data?: Omit<ToggleEgressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleEgressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleEgressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
+**Fixed by the method:** the method sets `state: "enabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleEgressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress enable`
 
 ---
@@ -9448,17 +9529,19 @@ client.api.firewall.enableEgressRule(id: Parameters<FirewallServiceBase['__toggl
 #### `enableIngressRule` — Toggle Ingress Rule State
 
 ```typescript
-client.api.firewall.enableIngressRule(id: Parameters<FirewallServiceBase['__toggleIngressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[2]>]>)
+client.api.firewall.enableIngressRule(id: string, data?: Omit<ToggleIngressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleIngressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleIngressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
+**Fixed by the method:** the method sets `state: "enabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleIngressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress enable`
 
 ---
@@ -10430,6 +10513,7 @@ client.api.proxy.aliases.create(data: ApiProxyAliasesCreateRequest)
 - `container_id` — Container ID that this alias points to. You must own this container.
 - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. … Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
 - `program` — Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+- `allow_path_override` — When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). …
 
 **Returns:** `Promise<ApiProxyAliasesCreateResponse>`  |  **HTTP:** `POST /api/v1/proxy/aliases`
 **CLI:** `hoody proxy aliases create`
@@ -10454,14 +10538,17 @@ client.api.proxy.aliases.delete(id: string)
 #### `disable` — Enable or disable proxy alias
 
 ```typescript
-client.api.proxy.aliases.disable(id: Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[1]>, "enabled">, [options?: NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[2]>]>)
+client.api.proxy.aliases.disable(id: string, data?: Omit<SetProxyAliasStateRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Proxy alias ID |
+| `data` | `Omit<SetProxyAliasStateRequest, "enabled">` | body | No |  |
 
-**Returns:** `ReturnType<ProxyAliasesServiceBase['__setProxyAliasState']>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
+
+**Returns:** `Promise<SetProxyAliasStateResponse>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
 **CLI:** `hoody proxy aliases disable`
 
 ---
@@ -10469,14 +10556,17 @@ client.api.proxy.aliases.disable(id: Parameters<ProxyAliasesServiceBase['__setPr
 #### `enable` — Enable or disable proxy alias
 
 ```typescript
-client.api.proxy.aliases.enable(id: Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[1]>, "enabled">, [options?: NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[2]>]>)
+client.api.proxy.aliases.enable(id: string, data?: Omit<SetProxyAliasStateRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Proxy alias ID |
+| `data` | `Omit<SetProxyAliasStateRequest, "enabled">` | body | No |  |
 
-**Returns:** `ReturnType<ProxyAliasesServiceBase['__setProxyAliasState']>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
+
+**Returns:** `Promise<SetProxyAliasStateResponse>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
 **CLI:** `hoody proxy aliases enable`
 
 ---
@@ -10568,6 +10658,7 @@ client.api.proxy.aliases.update(id: string, data: ApiProxyAliasesUpdateRequest)
 
 - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
 - `program` — Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+- `allow_path_override` — When false, only the root, or target_path itself, is served, as target_path; other paths 404, and target_path's own parameters cannot be overridden. When true, a request that carries its own path is forwarded as sent.
 
 **Returns:** `Promise<ApiProxyAliasesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}`
 **CLI:** `hoody proxy aliases update`
@@ -10647,18 +10738,18 @@ client.api.proxy.containerPermissions.deleteGroupPermission(id: string, groupNam
 #### `disable` — Update container proxy enable state
 
 ```typescript
-client.api.proxy.containerPermissions.disable(id: Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[2]>)
+client.api.proxy.containerPermissions.disable(id: string, data: Omit<UpdateContainerProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateContainerProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: false`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateContainerProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
 **CLI:** `hoody containers proxy disable`
 
 ---
@@ -10666,18 +10757,18 @@ client.api.proxy.containerPermissions.disable(id: Parameters<ProxyContainerPermi
 #### `enable` — Update container proxy enable state
 
 ```typescript
-client.api.proxy.containerPermissions.enable(id: Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[2]>)
+client.api.proxy.containerPermissions.enable(id: string, data: Omit<UpdateContainerProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateContainerProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: true`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateContainerProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
 **CLI:** `hoody containers proxy enable`
 
 ---
@@ -11081,18 +11172,18 @@ client.api.proxy.projectPermissions.deleteGroupPermission(id: string, groupName:
 #### `disable` — Update project proxy enable state
 
 ```typescript
-client.api.proxy.projectPermissions.disable(id: Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[2]>)
+client.api.proxy.projectPermissions.disable(id: string, data: Omit<UpdateProjectProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Project ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateProjectProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: false`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateProjectProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
 **CLI:** `hoody projects proxy disable`
 
 ---
@@ -11100,18 +11191,18 @@ client.api.proxy.projectPermissions.disable(id: Parameters<ProxyProjectPermissio
 #### `enable` — Update project proxy enable state
 
 ```typescript
-client.api.proxy.projectPermissions.enable(id: Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[2]>)
+client.api.proxy.projectPermissions.enable(id: string, data: Omit<UpdateProjectProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Project ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateProjectProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: true`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateProjectProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
 **CLI:** `hoody projects proxy enable`
 
 ---
@@ -11805,14 +11896,17 @@ client.api.servers.subscriptions.cancel(id: string)
 #### `disableAutoRenew` — Turn auto-renew on or off
 
 ```typescript
-client.api.servers.subscriptions.disableAutoRenew(id: Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[1]>, "auto_renew">, [options?: NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[2]>]>)
+client.api.servers.subscriptions.disableAutoRenew(id: string, data?: Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes |  |
+| `data` | `Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">` | body | No |  |
 
-**Returns:** `ReturnType<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
+**Fixed by the method:** the method sets `auto_renew: false`; do not pass `auto_renew`.
+
+**Returns:** `Promise<SetSubserverSubscriptionAutoRenewPatchResponse>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
 **CLI:** `hoody servers subscriptions autorenew disable`
 
 ---
@@ -11820,14 +11914,17 @@ client.api.servers.subscriptions.disableAutoRenew(id: Parameters<ServersSubscrip
 #### `enableAutoRenew` — Turn auto-renew on or off
 
 ```typescript
-client.api.servers.subscriptions.enableAutoRenew(id: Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[1]>, "auto_renew">, [options?: NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[2]>]>)
+client.api.servers.subscriptions.enableAutoRenew(id: string, data?: Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes |  |
+| `data` | `Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">` | body | No |  |
 
-**Returns:** `ReturnType<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
+**Fixed by the method:** the method sets `auto_renew: true`; do not pass `auto_renew`.
+
+**Returns:** `Promise<SetSubserverSubscriptionAutoRenewPatchResponse>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
 **CLI:** `hoody servers subscriptions autorenew enable`
 
 ---
@@ -11939,6 +12036,7 @@ client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest)
 
 **Body:** `{ alias: string, expiry: int }`
 
+- `alias` — … It is kept as the alias and also becomes the snapshot name after sanitizing (letters, digits, underscore and hyphen kept; leading and trailing hyphens and underscores stripped; at most 64 characters). A sanitized name shorter than 2 characters is refused with 400.
 - `expiry` — Expiry in days (1–3650). Values outside this range are rejected before the snapshot is created.
 
 **Returns:** `Promise<ApiSnapshotsCreateResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/snapshots`
@@ -11955,7 +12053,7 @@ client.api.snapshots.delete(id: string, name: string)
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
-| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 
 **Returns:** `Promise<ApiSnapshotsDeleteResponse>`  |  **HTTP:** `DELETE /api/v1/containers/{id}/snapshots/{name}`
 **CLI:** `hoody snapshots delete`
@@ -12016,7 +12114,7 @@ client.api.snapshots.restore(id: string, name: string)
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to restore |
-| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 
 **Returns:** `Promise<ApiSnapshotsRestoreResponse>`  |  **HTTP:** `PUT /api/v1/containers/{id}/snapshots/{name}`
 **CLI:** `hoody snapshots restore`
@@ -12032,7 +12130,7 @@ client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAli
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
-| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 | `data` | `ApiSnapshotsSetAliasRequest` | body | Yes |  |
 
 **Body:** `{ alias*: string|null }`
@@ -12268,15 +12366,18 @@ client.api.storage.shares.listIterator(options?: { realm_id?: string })
 #### `mountIncoming` — Toggle incoming share mount
 
 ```typescript
-client.api.storage.shares.mountIncoming(id: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[0], shareId: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[1], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[2]>, "mount">, [options?: NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[3]>]>)
+client.api.storage.shares.mountIncoming(id: string, shareId: string, data?: Omit<ToggleIncomingShareMountRequest, "mount">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Target container ID (receiver container) |
 | `shareId` | `string` | path | Yes | Share ID to toggle |
+| `data` | `Omit<ToggleIncomingShareMountRequest, "mount">` | body | No |  |
 
-**Returns:** `ReturnType<StorageSharesServiceBase['__toggleIncomingShareMount']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
+**Fixed by the method:** the method sets `mount: true`; do not pass `mount`.
+
+**Returns:** `Promise<ToggleIncomingShareMountResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
 **CLI:** `hoody storage incoming mount`
 
 ---
@@ -12284,15 +12385,18 @@ client.api.storage.shares.mountIncoming(id: Parameters<StorageSharesServiceBase[
 #### `unmountIncoming` — Toggle incoming share mount
 
 ```typescript
-client.api.storage.shares.unmountIncoming(id: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[0], shareId: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[1], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[2]>, "mount">, [options?: NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[3]>]>)
+client.api.storage.shares.unmountIncoming(id: string, shareId: string, data?: Omit<ToggleIncomingShareMountRequest, "mount">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Target container ID (receiver container) |
 | `shareId` | `string` | path | Yes | Share ID to toggle |
+| `data` | `Omit<ToggleIncomingShareMountRequest, "mount">` | body | No |  |
 
-**Returns:** `ReturnType<StorageSharesServiceBase['__toggleIncomingShareMount']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
+**Fixed by the method:** the method sets `mount: false`; do not pass `mount`.
+
+**Returns:** `Promise<ToggleIncomingShareMountResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
 **CLI:** `hoody storage incoming unmount`
 
 ---
@@ -12593,7 +12697,7 @@ client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id
 
 **Body:** `{ value*: string, metadata: object|null }`
 
-- `metadata` — Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. This counts toward your total vault storage limit.
+- `metadata` — Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. …
 
 **Returns:** `Promise<ApiVaultSetResponse>`  |  **HTTP:** `PUT /api/v1/vault/keys/{key}`
 **CLI:** `hoody vault set`
@@ -13231,7 +13335,7 @@ Create the bot in the chat app first and keep its token. `client.bot.registratio
 - The kit holds no token of its own; every working token belongs to a chat user. A login typed into the chat form lives for at most two minutes, while a token a user pastes is kept, encrypted, and used for that user's later commands. The bot tries to delete each chat message that carried a credential, and when the channel refuses the delete it tells the user to delete it themselves. Deleting a registration therefore does not revoke what its users still hold; that is what the revoke operations are for.
 - The channel token is write-only. Registration posts it once, the kit validates it with the channel before storing it, encrypts it, and no read ever returns it. A registration whose token was rotated in the chat app has to be deleted and registered again with the new token: registering the same bot while the old registration exists is refused `409 registration_duplicate` (and deleting a registration does not revoke the credentials its users hold).
 - Health is unauthenticated by design and reports exactly nine fields. `open_by_default` stays null until the self-probe resolves and is never reported as safe by default, so treat null as unknown rather than as protected.
-- The port refuses private, loopback, link-local and CGNAT peers, so a curl from inside the same container or a sibling on the same bridge fails where a request arriving through the proxy succeeds.
+- Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the bot's kit URL, also from inside the same container, gets 403 with the JSON body `{ "error": { "code": "forbidden", ... } }`.
 - Bare `/health` is 404. The management API and health live under the versioned prefix; the only route outside it is the management UI page at the root.
 - Errors do not use the account-plane envelope. Management refusals answer `{ error: { code, message } }` with an enumerated code, and the message never carries a credential or an upstream error string, though a validation message may name a query parameter or body field you sent. An unknown path (404) or method (405) answers a bare string instead, `{ error: "not_found" }` or `{ error: "method_not_allowed" }`.
 - A repeated query parameter is refused rather than resolved on every management route. Sending the same control twice makes the request say two things at once, and no handler answers it. The manifest route (which parses no query string) and the unauthenticated health route are outside that rule.
@@ -13257,7 +13361,7 @@ Create the bot in the chat app first and keep its token. `client.bot.registratio
 
 **Accessor:** `client.bot`  |  **Import:** `import * as bot from 'hoody-sdk/bot'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.bot.kit` (3) — system
 
@@ -13569,7 +13673,7 @@ After browse: `getHtml`/`getText`/`page.captureScreenshot`/`exportPdf` — param
 
 ### 3. Authenticated scraping
 1. `instances.start` matching `userAgent`/`viewport`/`locale`.
-2. `cookies.setMany` with a `cookies` list of `{name, value, url}` entries; each cookie requires `url`. 
+2. `cookies.setMany` with a `cookies` list of `{name, value, url}` entries; each cookie needs `name`, `value` and either an absolute http(s) `url` or both `domain` and `path` (never `url` together with `domain` or `path`). 
 3. `page.navigate` to protected URL.
 4. `page.getHtml`/`getText`.
 5. `cookies.clear`.
@@ -13585,7 +13689,7 @@ After browse: `getHtml`/`getText`/`page.captureScreenshot`/`exportPdf` — param
 
 ### 6. Dedicated project browser — suggest it to the user
 When the work is a website project or business research, **offer** the user a dedicated recorded browser. This is a suggestion to the user only — set it up when they ask, don't spin it up unprompted.
-1. Pick a slot number X (e.g. 2) and start headful on that slot: `instances.start` addressed to the `browser-X` hostname (`_templateVars: { serviceIndex: X }`) with `showBrowser=true`. The proxy derives `browser_port` 30000+X and `display` 500+X from the hostname and overrides any values you send. Add any per-project identity: own egress proxy (`proxyServer`/`proxyUsername`/`proxyPassword`/`proxyBypass`), `stealth`, `userAgent`, `viewport`, `locale`, `geolocation`, extensions.
+1. Pick a slot number X (e.g. 2) and start headful on that slot: `instances.start` addressed to the `browser-X` hostname (`{ serviceIndex: X }` as the last, template-vars argument) with `showBrowser=true`. The proxy derives `browser_port` 30000+X and `display` 500+X from the hostname and overrides any values you send. Add any per-project identity: own egress proxy (`proxyServer`/`proxyUsername`/`proxyPassword`/`proxyBypass`), `stealth`, `userAgent`, `viewport`, `locale`, `geolocation`, extensions.
 2. Give the user the direct live-view URL — the standard kit URL with the `browser-` slug and `?view=display`: `https://{P}-{C}-browser-X.{N}.containers.hoody.com/?view=display`. That page embeds display 500+X live (the bare root URL shows an instance status page with a View Display link instead), so an instance started on display 500+X gets its own stable viewing URL — changing the X in the URL is how you address each browser's live window. `instances.getDevtoolsUrls` adds a live DevTools inspector as a second link; that link gives full control of the browser, so hand it only to someone you would give the browser to.
 3. Everything browsed there — by the user clicking around in the live view or by the agent via the API — lands in persistent per-slot history (`history.list` with `browser_id=X`): live debugging and business research accumulate into one durable project trail. The instance itself is reaped once it has been idle past the deployment's max age (see Quirks) — history survives; re-run `instances.start` with the same options to revive the window.
 4. Then offer log capture as a follow-up: console/network buffers hold only the last 500 entries and die with the instance, so a recurring `cron` job (or agent loop) draining `logs.listConsole`/`logs.listNetwork` with `clear=true` into `sqlite`/`files`/agent memory preserves full context for later sessions.
@@ -13601,22 +13705,22 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 
 ## Quirks & gotchas
 
-- `browser_id` does NOT select an instance (the spec marks it deprecated). The `browser-X` hostname does: the proxy derives `browser_port` 30000+X and `display` 500+X from it and overrides caller-supplied values, so calls that differ only in `browser_id` or `browser_port` reach the same instance. Choose the slot with `_templateVars: { serviceIndex: X }` as the last argument (default 1). The only endpoint that reads `browser_id` is history, as a filter equal to X.
+- The `browser-X` hostname selects the instance: the proxy derives `browser_port` 30000+X and `display` 500+X from it and overrides caller-supplied values. A `browser_id` (or another instance selector in the query or JSON body) that names a different instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`, `details.field` naming it, and nothing runs: leave it out or call that instance's own host. In the SDK, a `browser_id` option picks the `browser-X` host itself, unless a `serviceIndex` in the template-vars argument is given, which wins (a `browser_id` that then names another instance is refused as above). Choose the slot by passing `{ serviceIndex: X }` as the last, template-vars argument, e.g. `page.navigate({ url }, {}, { serviceIndex: 2 })` (default 1). On history, `browser_id` also filters, equal to X.
 - Endpoints auto-create unless `start=false`. Where a deployment disables auto-start, only an explicit `start=true` creates an instance. `getSnapshot`, `page.act` and `page.wait` never create one.
 - `stealth` defaults true; bare `?stealth`=true. Mid-flight change throws `Instance backend mismatch` — `stop` first.
 - `stealth=true` is ignored on Firefox: the stealth engine is Chromium-only.
 - Extensions need `showBrowser=true` and run on a persistent profile.
 - `chromiumVersion`: full / major / channel (`stable|beta|dev|canary`); first new version blocks on download.
 - Console/network logs: 500-entry ring buffers — drain or filter `since`.
-- **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
+- **A sweep runs every 5 min and SIGTERMs any instance idle for 1 h (deployment defaults), healthy or not.** The idle clock is restarted by real use: every API request routed to the instance (counted from the END of the request), a top-level page navigation (including a person clicking around in the live view), attaching over CDP, and starting an instance that already exists. An instance with a request in flight or an open CDP connection is never reaped. The instance's own heartbeat is liveness only and does NOT keep it alive, so an instance you want to keep (logged-in cookies, session state) needs a request at least once per idle window. A reaped instance's next call starts a fresh one, with none of the cookies or session state the old one held; recorded history survives.
 - Instances do NOT survive kit-process restarts: graceful shutdown (SIGTERM/SIGINT) terminates every child.
 - History records ALL navs (incl. headful clicks) at `/hoody/storage/hoody-browser/history`, retained 30 d by default. Where a deployment turns history off, the history endpoints answer `404 HISTORY_DISABLED`.
-- **`history.clear` with no filters wipes all history** — pair `before` + `browser_id` (or both).
+- **`history.clear` is scoped by the host:** through a `browser-N` host it clears only instance N's history (add `before` to keep newer entries); a `browser_id` naming another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT`. To clear several instances, call it on each instance's host.
 - `browser_id` history filter sanitised as path component.
 - **On the default stealth engine (`stealth=true`, `engine: patchright`), `eval` runs the script in an isolated JavaScript world.** It sees the DOM, but not the globals the page's own scripts define (`window.__NEXT_DATA__`, SPA stores, config objects): those read as `undefined` and the call still returns 200. On `stealth=false` (`engine: playwright`) the script runs in the page's main world. To read page JS state, start the slot with `stealth=false`, or read what the page wrote into the DOM (for example the text of `<script id="__NEXT_DATA__">`).
 - `eval` POST accepts JSON `{"script":"..."}` (what the SDK and CLI send) or a `Content-Type: text/plain` body holding the raw script. The response is `{ "result": ... }`.
 - **A ref-addressed `page.act` that navigates the page itself (a link click, a submit, a `pushState`) can answer `409 STALE_SNAPSHOT` with `details.outcome: "unknown"` after the action already ran.** `outcome` is `not-started` (never dispatched, safe to repeat), `unknown` (dispatched, result not observed) or `completed`. On `unknown`, check the page (`page.wait`, a new snapshot, the URL) before repeating a click or submit. Selector, role, label, text, placeholder and testId targets are not affected.
-- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `instances.getDevtoolsUrls` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `instances.getDevtoolsUrls` returns rather than building one. Where the deployment publishes CDP relay URLs, they are on the `cdp-X` host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); otherwise (the kit's default) they are on the `http-<port>` host, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")` on a `cdp-X` deployment). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
+- Chromium CDP defaults to `useRemoteDebuggingPort=true`; pass `useRemoteDebuggingPort=false` at start to turn it off. `instances.getDevtoolsUrls` answers 404 only when the instance is missing; with CDP off it returns 200 with null URLs. Use the URLs `instances.getDevtoolsUrls` returns rather than building one. By default the returned URLs are on the `cdp-X` relay host paired 1:1 with `browser-X` (`https://{P}-{C}-cdp-X.{N}.containers.hoody.com/`); a deployment that turns the relay URLs off returns the legacy `http-<port>` host instead, where `<port>` is the debugging port. Point a CDP client at the returned URL (for example `connectOverCDP("https://{P}-{C}-cdp-X.{N}.containers.hoody.com/")`). The rest of this bullet describes the `cdp-X` relay. A discovery request (`/`, `/json`, `/json/list`, `/json/version`) may cold-start Chromium instance X when it is not running: only when cold start is enabled (the default; a deployment can turn it off) and the request does not come from a web page, which gets `403 CDP_CSRF_COLD_START` instead. A DevTools WebSocket only attaches to a running instance. Only read-only endpoints (the discovery paths, `/json/protocol`, the `/devtools/` front end) and DevTools WebSocket sessions are relayed; `/json/new`, `/json/activate` and `/json/close` return 404. Treat the `cdp-X` URL like a credential: anyone who can reach it controls the browser (navigate, run script, read cookies and page content), so start with `useRemoteDebuggingPort=false` when the container is shared.
 - Launch options: the `viewport` and `geolocation` query parameters are **JSON strings**, not free-form `"WxH"` / `"lat,lng"`; the kit `JSON.parse`s a string value and rejects one that does not parse. In a JSON request body the same fields may also be plain objects. Examples: `viewport='{"width":1280,"height":800}'`, `geolocation='{"latitude":48.8,"longitude":2.3,"accuracy":50}'`. A launch `viewport` of `null` or `none` turns off fixed-viewport emulation. The runtime `viewport.set` is different: its body is an object, `{"viewport":{"width":1280,"height":800}}` or `{"viewport":null}` (integers 1–8192); a string there is a 400 `VALIDATION_ERROR`.
 - `viewport.set` takes `{viewport:{width, height}}` (1-8192 px) or `{viewport:null}` for responsive. Responsive works only on Chromium (`501 NOT_SUPPORTED`) and only on an instance started responsive (`409 REQUIRES_RESTART`: stop it and start it again with `viewport=null`). `502 VIEWPORT_APPLY_INCOMPLETE` means the policy was kept but some tabs did not apply it (`details.failedTabs`). `viewport.get` never starts an instance.
 - Screenshot `format` enum is `png | jpeg | base64` (NO `json`). Base64 mode returns `{ data: "<b64>" }` only — there is NO `mimeType` or `dataUrl` in the response (the kit's JSON body has `data` only).
@@ -13624,11 +13728,11 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 ## Common errors
 
 - `VALIDATION_ERROR` 400 — malformed `viewport`/`geolocation`, history `limit` not 1–500, `offset`<0.
-- `NOT_FOUND` 404 `Instance not found` — `stop`, `instances.getDevtoolsUrls`, `start=false` no instance; also `getSnapshot`/`page.act`/`page.wait` on an empty slot, since they never auto-start.
+- `NOT_FOUND` 404 `Instance not found` — `stop`, `shutdown`, `instances.getDevtoolsUrls`, `start=false` no instance; also `getSnapshot`/`page.act`/`page.wait` on an empty slot, since they never auto-start.
 - `HISTORY_DISABLED` 404 `History is disabled` — history endpoints where the deployment turned history off.
 - `INSTANCE_BACKEND_MISMATCH` 409 (message starts `Instance backend mismatch`) — `stealth` differs from the running instance's backend; `stop` then `start`.
 - `VALIDATION_ERROR` 400 `display is required when showBrowser=true (no DISPLAY detected)` — `showBrowser=true` with no `display` field on `instances.start` and no `$DISPLAY` env.
-- `TIMEOUT` 408 — the request passed the kit's request deadline (600 s by default).
+- `TIMEOUT` 408 / 504 — the request passed the kit's request deadline (600 s by default). While the request is launching or restarting the instance this is a 504 with `details.phase: "launch"` and `details.outcome: "unknown"`: the instance may still come up, so check `instances.get` with `start=false` before retrying. After the request was forwarded to a running instance it is a 504 with `details.phase: "proxy"` and `details.outcome: "unknown"`: the call may already have taken effect (a `viewport.set` included), so inspect the state before repeating a mutation. A request that times out before either is a 408.
 - `TIMEOUT` 504 — an automation call (`getSnapshot`, `page.act`, `page.wait`) spent its `timeoutMs` budget (default 10000, max 30000). `details.phase` says where; `details.outcome` `not-started` means the action was never dispatched. For `page.wait` this is how a condition that never held is reported.
 - `STALE_SNAPSHOT` 409 — the ref's snapshot is no longer the tab's latest, or the main frame navigated; take a new snapshot. Read `details.outcome` before repeating an action (see Quirks).
 - `INSTANCE_CHANGED` 409 — the `instanceGeneration` sent no longer matches the running instance (`details.expected` is null when no instance exists); re-read `instances.get`.
@@ -13650,7 +13754,7 @@ These three operations never start an instance (404 `NOT_FOUND` on an empty slot
 
 ## Examples
 
-Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first. ⚠ The `browser-X` hostname selects the instance; a caller-supplied `browser_id` or `browser_port` does not (see the Quirks gotcha). Examples 1–5 and 8–9 use slot 1 (`browser-1`, the SDK default); Examples 6 and 7 use slots 2 and 3 so their different launch options do not collide with slot 1's running instance.
+Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first. ⚠ The `browser-X` hostname selects the instance; a `browser_id` or `browser_port` that names another instance is refused with 400 `INSTANCE_SELECTOR_CONFLICT` (the SDK's `browser_id` option picks the host instead) (see the Quirks gotcha). Examples 1–5 and 8–9 use slot 1 (`browser-1`, the SDK default); Examples 6 and 7 use slots 2 and 3 so their different launch options do not collide with slot 1's running instance.
 
 ### 1. Spin up a headless instance and navigate to a URL
 
@@ -13713,7 +13817,7 @@ console.log(t.data, r.data);
 
 ### 5. Set cookies and read them back
 
-**Goal:** prime the cookie jar, then verify. POST body is a JSON object `{ cookies: [...] }` whose entries are `{ name, value, url }` plus optional `domain`, `path`, `httpOnly`, `secure`. `url` is required on every cookie.
+**Goal:** prime the cookie jar, then verify. POST body is a JSON object `{ cookies: [...] }` whose entries need `name`, `value`, and either an absolute http(s) `url` or both `domain` and `path`; do not combine `url` with `domain` or `path` (400 `VALIDATION_ERROR` naming the field). Optional: `httpOnly`, `secure`, `sameSite` (`Strict|Lax|None`), `expires` (Unix seconds, -1 = session).
 
 ```typescript
 await client.browser.cookies.setMany({
@@ -13791,7 +13895,7 @@ For an external CDP attachment, `instances.getDevtoolsUrls` returns the live `we
 
 **Goal:** browser instances stay alive across requests until they are stopped or the kit process restarts (graceful kit restart SIGTERMs every child — see Quirks & gotchas). The idle sweep reaps an instance nobody has used for the max age (1 h by default), so a forgotten instance is eventually reclaimed, and one you still need must see a request at least once per idle window. Each slot has a fixed port, so a slot whose previous process has not been confirmed exited answers `502 INSTANCE_QUARANTINED` until it has; retry later rather than restarting the container.
 
-`instances.stop` and `instances.shutdown` both terminate the child and delete any extension profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`); persistent profile dirs only exist when extensions were loaded. One `instances.stop` per instance is a complete teardown — calling both is redundant.
+`instances.stop` and `instances.shutdown` both terminate the child and delete its profile dir (the child's SIGTERM handler runs the same cleanup as `/shutdown`). Every Chromium instance runs on a persistent profile of its own, with or without extensions (an extension profile under the kit's browser data dir, otherwise under the temp dir), and every exit removes it, so cookies and logins do not carry over to the next instance. One `instances.stop` per instance is a complete teardown — calling both is redundant.
 
 ```typescript
 for (const serviceIndex of [1, 2, 3]) {
@@ -13801,13 +13905,13 @@ const m = await client.browser.kit.getStats();
 console.log(m.data!.instances);
 ```
 
-A `404 Instance not found` from `stop` means it was already gone — safe to ignore. Use `instances.stop` for teardown: it never creates an instance. `instances.shutdown` goes through auto-start like other endpoints, so on an empty slot it first starts a browser. The SDK method does not accept `start`, so it cannot opt out.
+A `404 Instance not found` from `stop` means it was already gone — safe to ignore. Neither `instances.stop` nor `instances.shutdown` creates an instance: on an empty slot both answer `404 Instance not found`. `instances.stop` terminates the child before it answers; `instances.shutdown` answers 200 as soon as shutdown starts and finishes in the background, so poll `instances.get` with `start=false` until it answers 404 to confirm the instance is gone.
 
 ## Reference
 
 **Accessor:** `client.browser`  |  **Import:** `import * as browser from 'hoody-sdk/browser'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.browser.cookies` (3) — Browser State
 
@@ -13819,7 +13923,7 @@ client.browser.cookies.clear(options?: { browser_id?: string; start?: boolean })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
 **Returns:** `Promise<BrowserCookiesClearResponse>`  |  **HTTP:** `DELETE /cookies`
@@ -13835,7 +13939,7 @@ client.browser.cookies.list(options?: { browser_id?: string; start?: boolean; ur
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `url` | `string` | query | No | Filter cookies by URL Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared. |
 
@@ -13852,7 +13956,7 @@ client.browser.cookies.setMany(data: BrowserCookiesSetManyRequest, options?: { b
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `data` | `BrowserCookiesSetManyRequest` | body | Yes |  |
 
@@ -13874,7 +13978,7 @@ client.browser.history.clear(options?: { before?: string; browser_id?: string })
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `before` | `string` | query | No | Delete entries before this ISO 8601 timestamp |
-| `browser_id` | `string` | query | No | Delete entries for specific browser ID only |
+| `browser_id` | `string` | query | No | Delete entries for specific browser ID only. Through a `browser-{N}` service hostname it may only be `N` (the default there). |
 
 **Returns:** `Promise<BrowserHistoryClearResponse>`  |  **HTTP:** `DELETE /history`
 **CLI:** `hoody browser history clear`
@@ -13891,7 +13995,7 @@ client.browser.history.list(options?: { since?: string; domain?: string; browser
 |-----------|------|------|----------|-------------|
 | `since` | `string` | query | No | Return entries after this ISO 8601 timestamp |
 | `domain` | `string` | query | No | Filter by domain (exact match) |
-| `browser_id` | `string` | query | No | Filter by browser ID |
+| `browser_id` | `string` | query | No | Filter by browser ID. Through a `browser-{N}` service hostname it may only be `N` (the default there). |
 | `limit` | `number` | query | No | Maximum entries to return (1-500) |
 | `offset` | `number` | query | No | Number of entries to skip for pagination |
 
@@ -13910,7 +14014,7 @@ client.browser.instances.get(options?: { browser_id?: string; start?: boolean })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
 **Returns:** `Promise<BrowserInstancesGetResponse>`  |  **HTTP:** `GET /metadata`
@@ -13926,7 +14030,7 @@ client.browser.instances.getDevtoolsUrls(options?: { browser_id?: string; start?
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
 **Returns:** `Promise<BrowserInstancesGetDevtoolsUrlsResponse>`  |  **HTTP:** `GET /devtools-url`
@@ -13942,9 +14046,9 @@ client.browser.instances.restart(options?: { browser_id?: string; start?: boolea
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `chromiumVersion` | `string` | query | No | Chromium/Chrome version selection for the instance. This option applies only when `browser=chromium`. Supported formats: Full version: `136.0.7103.113`; Major version: `136` (mapped to a known stable patch for the current OS); Channel tag: `stable`, `beta`, `dev`, `canary` The request **blocks** until the requested browser build is available on the server. |
+| `chromiumVersion` | `string` | query | No | Chromium/Chrome version selection for the instance. This option applies only when `browser=chromium`. Supported formats: Full version: `136.0.7103.113`; Major version: `136` (mapped to a known stable patch for the current OS); Channel tag: `stable`, `beta`, `dev`, `canary` Any other value is a `400 VALIDATION_ERROR` naming `chromiumVersion`. A full version that no download source has is a `400 VALIDATION_ERROR` too, answered once the download is refused. A major version with no known build falls back to `stable`. The request **blocks** until the requested browser build is available on the server. |
 | `fingerprintId` | `string` | query | No | Base fingerprint profile id. The server uses the `context` and `launch` defaults of the configured fingerprint profile with this id, then applies any request overrides over them (top-level options and `userProfile` values both win over the profile). An unknown id starts with an empty profile. |
 | `useRemoteDebuggingPort` | `boolean` | query | No | If `true`, the child process will launch Chromium with `--remote-debugging-port` and will populate `webSocketDebuggerUrl` in metadata responses. |
 | `remoteDebuggingPort` | `number` | query | No | Ignored. The kit always assigns the DevTools port itself (a caller-supplied value is never honoured, for isolation); read the assigned URLs from `/devtools-url` or the instance metadata. Kept only so older clients do not fail validation. |
@@ -13992,7 +14096,7 @@ client.browser.instances.shutdown(options?: { browser_id?: string })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 
 **Returns:** `Promise<BrowserInstancesShutdownResponse>`  |  **HTTP:** `GET /shutdown`
 **CLI:** `hoody browser shutdown`
@@ -14007,8 +14111,8 @@ client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
-| `chromiumVersion` | `string` | query | No | Chromium/Chrome version selection for the instance. This option applies only when `browser=chromium`. Supported formats: Full version: `136.0.7103.113`; Major version: `136` (mapped to a known stable patch for the current OS); Channel tag: `stable`, `beta`, `dev`, `canary` The request **blocks** until the requested browser build is available on the server. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
+| `chromiumVersion` | `string` | query | No | Chromium/Chrome version selection for the instance. This option applies only when `browser=chromium`. Supported formats: Full version: `136.0.7103.113`; Major version: `136` (mapped to a known stable patch for the current OS); Channel tag: `stable`, `beta`, `dev`, `canary` Any other value is a `400 VALIDATION_ERROR` naming `chromiumVersion`. A full version that no download source has is a `400 VALIDATION_ERROR` too, answered once the download is refused. A major version with no known build falls back to `stable`. The request **blocks** until the requested browser build is available on the server. |
 | `fingerprintId` | `string` | query | No | Base fingerprint profile id. The server uses the `context` and `launch` defaults of the configured fingerprint profile with this id, then applies any request overrides over them (top-level options and `userProfile` values both win over the profile). An unknown id starts with an empty profile. |
 | `useRemoteDebuggingPort` | `boolean` | query | No | If `true`, the child process will launch Chromium with `--remote-debugging-port` and will populate `webSocketDebuggerUrl` in metadata responses. |
 | `remoteDebuggingPort` | `number` | query | No | Ignored. The kit always assigns the DevTools port itself (a caller-supplied value is never honoured, for isolation); read the assigned URLs from `/devtools-url` or the instance metadata. Kept only so older clients do not fail validation. |
@@ -14056,7 +14160,7 @@ client.browser.instances.stop(options?: { browser_id?: string })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 
 **Returns:** `Promise<BrowserInstancesStopResponse>`  |  **HTTP:** `GET /stop`
 **CLI:** `hoody browser stop`
@@ -14097,7 +14201,7 @@ client.browser.logs.listConsole(options?: { browser_id?: string; tabId?: number;
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `type` | `string` | query | No | Filter by message type (log, error, warning, info, etc.). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`type must not be repeated`). |
@@ -14117,7 +14221,7 @@ client.browser.logs.listNetwork(options?: { browser_id?: string; tabId?: number;
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `since` | `string` | query | No | Only return entries at or after this time: an ISO 8601 date or date-time, like `2026-10-05T12:00:00Z`. Any other value (an epoch number, a word like `yesterday`) is a `400 VALIDATION_ERROR` naming `since`, never an unfiltered list. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`since must not be repeated`). |
@@ -14138,7 +14242,7 @@ client.browser.page.act(data: BrowserPageActRequest, options?: { browser_id?: st
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `data` | `BrowserPageActRequest` | body | Yes |  |
 
 **Body:** `{ instanceGeneration: string, tabId: int, timeoutMs: int=10000, action*: "click" | "fill" | "type" | "press" | "select" | "check" | "hover", target*: browser_Target, dialog: browser_DialogPolicy, value: string, delayMs: int=0, key: string, values: string[], checked: bool, button: "left" | "middle" | "right"="left", clickCount: int=1, modifiers: ("Alt" | "Control" | "Meta" | "Shift")[] }`
@@ -14160,7 +14264,7 @@ client.browser.page.captureScreenshot(options?: { browser_id?: string; start?: b
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `url` | `string` | query | No | The URL to navigate to. Repeating this key IN THE QUERY STRING is a `400 VALIDATION_ERROR` (`url must not be repeated`), on GET and on POST alike — a request naming two destinations is answered rather than silently resolved to one of them. The rule is about the query string only — a JSON body property named `url` is governed by the body schema. Only an absolute `http`, `https` or `data` URL, `about:blank`, or (on Chromium engines only) a `chrome:` URL is accepted. Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. A value that is not a string is `url must be a string`. The `url` is checked before an instance is started, a tab is looked up, created or reused, or anything is navigated, and before `/pdf`'s `501 NOT_SUPPORTED`. On `/screenshot` and `/pdf` a supplied but empty `url=` is a `400 VALIDATION_ERROR` too (omit `url` to capture the current tab). This checks the request only; it does not stop the browser from opening local files (see "Local files" in the API overview). |
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
@@ -14181,13 +14285,14 @@ client.browser.page.evaluate(data: BrowserPageEvaluateRequest, options?: { brows
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `data` | `BrowserPageEvaluateRequest` | body | Yes |  |
 
-**Body:** `{ script: string, tabId: int, scriptBase64: bool }`
+**Body:** `{ script: string, tabId: int, scriptBase64: bool, timeoutMs: int=30000 }`
 
 - `tabId` — Tab to evaluate in (from `/tabs`). Omitted: the active tab. Unknown → `404 TAB_NOT_FOUND`, malformed → `400`.
+- `timeoutMs` — Time limit for the script, in milliseconds (1 to 30000, default 30000). A script still running when it is spent is stopped and the answer is `504 TIMEOUT` (`details.phase` `evaluate`). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`timeoutMs must not be repeated`).
 
 **Returns:** `Promise<BrowserPageEvaluateResponse>`  |  **HTTP:** `POST /eval`
 **CLI:** `hoody browser evaluate`
@@ -14202,7 +14307,7 @@ client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: number; s
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `url` | `string` | query | No | Optional URL to navigate to before generating the PDF. Only an absolute `http`, `https` or `data` URL, `about:blank`, or (on Chromium engines only) a `chrome:` URL is accepted. Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. A value that is not a string is `url must be a string`. The `url` is checked before an instance is started, a tab is looked up, created or reused, or anything is navigated, and before `/pdf`'s `501 NOT_SUPPORTED`. On `/screenshot` and `/pdf` a supplied but empty `url=` is a `400 VALIDATION_ERROR` too (omit `url` to capture the current tab). This checks the request only; it does not stop the browser from opening local files (see "Local files" in the API overview). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared. |
@@ -14224,7 +14329,7 @@ client.browser.page.getHtml(options?: { browser_id?: string; tabId?: number; sta
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
@@ -14241,7 +14346,7 @@ client.browser.page.getSnapshot(options?: { browser_id?: string; instanceGenerat
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `instanceGeneration` | `string` | query | No | The instance generation from /metadata. If it no longer matches the running instance → 409 INSTANCE_CHANGED (also when no instance exists: details.expected is null). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`instanceGeneration must not be repeated`); a body property of the same name is governed by the body schema. |
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `paramTimeoutMs` | `number` | query `timeoutMs` | No | Budget for the whole browser operation, starting at handler entry (instance provisioning is never inside it). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`timeoutMs must not be repeated`); a body property of the same name does not suppress that — it is governed by the body schema instead. A body that is not a JSON object at all, or that fails the operation's own validation, is rejected first, with its own message and the same status and code. |
@@ -14261,7 +14366,7 @@ client.browser.page.getText(options?: { browser_id?: string; tabId?: number; sta
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `tabId` | `number` | query | No | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
@@ -14278,13 +14383,14 @@ client.browser.page.navigate(data: BrowserPageNavigateRequest, options?: { brows
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `data` | `BrowserPageNavigateRequest` | body | Yes |  |
 
 **Body:** `{ url*: string, tabId: int, waitUntil: "commit" | "domcontentloaded" | "load"="load", timeoutMs: int, instanceGeneration: string, active: bool=true, onlyIfNotExists: bool=false, ignoreGetParameters: bool=false }`
 
 - `url` — … Any other scheme (`file:` in any spelling, `view-source:`, `javascript:`, `blob:` and the rest) is a `400 VALIDATION_ERROR` (`url must be an http, https or data URL, about:blank, or a chrome URL on Chromium; file and other local schemes are refused`), and a value that is not an absolute URL (such as `/etc/hostname`) is a `400 VALIDATION_ERROR` (`url must be an absolute URL, like https://example.com/`). Every other `about:` page is refused (Firefox's `about:reader?url=file:…` loads a local file), and `chrome:` is refused on Firefox, where it is the browser's own privileged UI. …
+- `timeoutMs` — Omitted: the navigation may take up to 30000 ms. Present: the whole budget. Either way a navigation that runs out of time is a 504 TIMEOUT (phase navigation).
 - `active` — Whether the tab becomes the active one. … ANY other value (`0`, `1`, `"yes"`, `"on"`, `""`, `null`, or an array) is rejected with `400 VALIDATION_ERROR` (`details.field` names the property) before a tab is created or reused; it is never coerced. …
 - `onlyIfNotExists` — Reuse an existing tab already on this URL instead of opening a new one. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
 - `ignoreGetParameters` — Compare URLs for `onlyIfNotExists` with the query string stripped. Same value rule as `active`: send a JSON boolean (the strings `"true"`/`"false"` are tolerated because one parser reads both the query and the body spelling); anything else is `400 VALIDATION_ERROR`, never coerced.
@@ -14302,7 +14408,7 @@ client.browser.page.wait(data: BrowserPageWaitRequest, options?: { browser_id?: 
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `data` | `BrowserPageWaitRequest` | body | Yes |  |
 
 **Body:** `{ instanceGeneration: string, tabId: int, timeoutMs: int=10000, condition*: browser_WaitCondition }`
@@ -14334,7 +14440,7 @@ client.browser.tabs.close(data?: BrowserTabsCloseRequest, options?: { browser_id
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `data` | `BrowserTabsCloseRequest` | body | No |  |
 
@@ -14353,7 +14459,7 @@ client.browser.tabs.list(options?: { browser_id?: string; start?: boolean })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `browser_id` | `string` | query | No | Accepted for backwards compatibility; the server does NOT use it to select an instance. Inside a Hoody container an instance is selected by the `browser-{N}` service hostname: the platform derives the instance's port and display from it and overrides any caller-supplied values. Against a bare server, address instances with `browser_host` + `browser_port`. The only endpoint that reads `browser_id` is `/history`, as a filter equal to `N`. |
+| `browser_id` | `string` | query | No | Selects the instance: SDK and CLI clients send the request to the `browser-<N>` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | query | No | Controls instance creation behavior. Default mode: instances are created automatically. Set to `false` to prevent creation. When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `browser.instances.getDevtoolsUrls` is the exception: it answers 404 when no instance is running and never consults this value. |
 
 **Returns:** `Promise<BrowserTabsListResponse>`  |  **HTTP:** `GET /tabs`
@@ -14453,7 +14559,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 ## Prerequisites
 
 - A running container. Set `P`, `C`, `N` (project id, container id, server name) from `containers.get`.
-- Address the service through its `code-N` URL. That hostname selects the instance, so the CLI offers no instance flag and the generated SDK sends no `id` unless you pass one. An SDK client pointed at a bare kit server passes `id` itself.
+- Address the service through its `code-N` URL. That hostname selects the instance. The CLI's `code extensions list` and `code extensions install` take `--id <N>` (default 1), which sends the request to the `code-N` host, and the generated SDK sends no `id` unless you pass one. An SDK client pointed at a bare kit server passes `id` itself.
 - VSIX staging needs a downloadable `.vsix` URL that the service may fetch: `http` or `https`, no credentials in the URL, and not an address inside the container or on a private network.
 
 ## Capability URL
@@ -14504,7 +14610,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 
 ## Common errors
 
-- `403` with the plain-text body `Forbidden` (not JSON): the request came from a private, loopback or otherwise reserved address, such as a process inside the container calling the service directly. Use the `code-N` URL.
+- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON. Use the `code-N` URL, also from inside the container.
 - `400` HTML page from the entry path: exactly one of `folder` and `id` carried a value, `id` is not an unsigned decimal integer or was sent twice, `id` exceeds `65535 - basePort`, or the query is over 8192 bytes. Only a bare kit server hits the first case; behind the edge both are filled.
 - `409` from the entry path: the instance's port is held by a process the orchestrator did not start. Retrying does not help until it is released.
 - `503` from the entry path: the instance did not finish starting in time. Worth retrying.
@@ -14526,7 +14632,7 @@ Not for: non-interactive shell → `terminal`/`exec`, file I/O without a UI → 
 **Goal:** ship a teammate a single URL that opens VS Code already pointing at the right repo.
 
 ```typescript
-const url = `https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=${encodeURIComponent('/workspace/myrepo')}`;
+const url = `https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=${encodeURIComponent('/home/user/myrepo')}`;
 console.log(url);
 ```
 
@@ -14545,7 +14651,7 @@ https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=<publisher>.<name>
 // (omitted on a withContainer() client); the edge picks the instance from the
 // code-N hostname.
 const url = client.embeds.code.extension(undefined, {
-  params: { extension: 'saoudrizwan.claude-dev', folder: '/workspace/myrepo' },
+  params: { extension: 'saoudrizwan.claude-dev', folder: '/home/user/myrepo' },
 });
 ```
 
@@ -14553,10 +14659,10 @@ Name the extension as `publisher.name`, no version. `client.embeds.code.extensio
 
 ### 3. Open another folder on a running instance
 
-**Goal:** instance 1 is open on `/workspace/myrepo` and you want the editor on `/workspace/other`. Open the same instance URL with the new `folder`: the running instance is reused and the page loads the editor on that folder. `kit.getStatus` keeps reporting the folder the instance was started with.
+**Goal:** instance 1 is open on `/home/user/myrepo` and you want the editor on `/home/user/other`. Open the same instance URL with the new `folder`: the running instance is reused and the page loads the editor on that folder. `kit.getStatus` keeps reporting the folder the instance was started with.
 
 ```typescript
-const url = `https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=${encodeURIComponent('/workspace/other')}`;
+const url = `https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=${encodeURIComponent('/home/user/other')}`;
 ```
 
 Add `restart=true` only when the process itself must restart, for example to apply a staged extension (Example 4). Restarting ends that instance's running editor session, including its terminals. Other instances are untouched.
@@ -14615,7 +14721,7 @@ const live = ext.observed.extensions?.some(
 if (!live) throw new Error('extension not installed on instance 1');
 ```
 
-An instance that has not started since the rebuild lists as `stopped`, and a stage it has not applied yet as `stale`; open the instance's URL once before the check.
+An instance that has not started since the rebuild reports every entry as `stopped`, including a staged version it has not installed yet; a running instance that has not installed the stage reports `stale` (`failed` if it started after the stage and its install grace has passed). Open the instance's URL once before the check.
 
 ### 7. Embed the editor in your own page, behind a branded URL
 
@@ -14624,20 +14730,20 @@ An instance that has not started since the rebuild lists as `stopped`, and a sta
 ```html
 <!-- Full editor, with a folder pre-loaded -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=/workspace/myrepo"
+  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?folder=/home/user/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write; cross-origin-isolated"
 ></iframe>
 
 <!-- Single extension only (no IDE chrome) — Cline as a service -->
 <iframe
-  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo"
+  src="https://${P}-${C}-code-1.${N}.containers.hoody.com/?extension=saoudrizwan.claude-dev&folder=/home/user/myrepo"
   style="width:100%;height:100vh;border:0"
   allow="clipboard-read; clipboard-write"
 ></iframe>
 ```
 
-To keep the `containerId` out of the iframe `src`, create a proxy alias on the `code` service with the landing query as its `target_path`, and use the URL the call returns:
+To keep the `containerId` out of the iframe `src`, create a proxy alias on the `code` service with the landing query as its `target_path`, and use the URL the call returns. Leave `id` out of the target: the alias's `index` picks the instance, and a target query naming `id` is refused with `404 ALIAS_TARGET_QUERY_FORCED_KEY`. The `folder` (and `extension`) in the target is a landing preference only: the editor opens there, but it does not confine the session, and anyone using the editor can open any other folder the container user can read.
 
 ```typescript
 const alias = await client.api.proxy.aliases.create({
@@ -14645,7 +14751,7 @@ const alias = await client.api.proxy.aliases.create({
   program: 'code',
   index: 1,
   alias: 'agent',
-  target_path: '/?extension=saoudrizwan.claude-dev&folder=/workspace/myrepo&id=1',
+  target_path: '/?extension=saoudrizwan.claude-dev&folder=/home/user/myrepo',
 });
 ```
 
@@ -14655,7 +14761,24 @@ Gate the alias with `proxy.containerPermissions.*` before sharing it (see the `a
 
 **Accessor:** `client.code`  |  **Import:** `import * as code from 'hoody-sdk/code'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
+
+### `client.code` (1) — VS Code web interface
+
+#### `stop` — Stop an editor instance
+
+```typescript
+client.code.stop(options?: { id?: number })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `id` | `number` | query | No | Which instance to stop. On a `code-{N}` service URL the edge proxy sets it from the hostname and overrides any value sent, so a caller there neither needs to send it nor can change it. It is required: there is no default instance to stop, so a request without it is answered `400`. Read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. |
+
+**Returns:** `Promise<CodeStopResponse>`  |  **HTTP:** `DELETE /api/v1/code`
+**CLI:** `hoody code stop`
+
+---
 
 ### `client.code.extensions` (2) — Extension staging and inspection
 
@@ -14667,7 +14790,7 @@ client.code.extensions.install(data: CodeExtensionsInstallRequest, options?: { i
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `id` | `number` | query | No | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. Supply it yourself only when addressing the orchestrator directly, which is the case this being required describes: there is no discovery branch here to fall back to, so a request that reaches the orchestrator without an `id` has named no instance and is answered `400`. |
+| `id` | `number` | query | No | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
 | `data` | `CodeExtensionsInstallRequest` | body | Yes |  |
 
 **Body:** `{ url*: string, allowDowngrade: bool=false }`
@@ -14687,7 +14810,7 @@ client.code.extensions.list(options?: { id?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `id` | `number` | query | No | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. Supply it yourself only when addressing the orchestrator directly, which is the case this being required describes: there is no discovery branch here to fall back to, so a request that reaches the orchestrator without an `id` has named no instance and is answered `400`. |
+| `id` | `number` | query | No | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. Where it comes from: On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
 
 **Returns:** `Promise<CodeExtensionsListResponse>`  |  **HTTP:** `GET /api/v1/code/extensions/list`
 **CLI:** `hoody code extensions list`
@@ -14729,7 +14852,7 @@ client.code.kit.getVersion()
 
 ---
 
-### `client.code.ui` (5) — Static assets and descriptors served by this host
+### `client.code.ui` (4) — Static assets and descriptors served by this host
 
 #### `getFavicon` — Site icon
 
@@ -14748,31 +14871,6 @@ client.code.ui.getManifest()
 ```
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/code/manifest.json`
-
----
-
-#### `getPage` — Open the editor (canonical kit path)
-
-```typescript
-client.code.ui.getPage(options?: { folder?: string; id?: number; extension?: string; restart?: boolean; pageLoader?: boolean; disableWalkthroughs?: boolean; hoodyCode?: boolean; welcomeIframeUrl?: string; pageLoaderPath?: string; proxyDomain?: string; locale?: string; appName?: string })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `folder` | `string` | query | No | Absolute path to the folder to open in the instance. Supply it together with `id` to open an editor. Omit both, or send both with empty values, to retrieve this specification. The path is normalised before use. A `..` segment is resolved away rather than rejected, and a relative path is resolved against the orchestrator's own working directory, so the folder that opens may differ from the string sent. Send an absolute, already normalised path. An empty value counts as not sent. On its own it produces the discovery response rather than an error; alongside a non-empty `id` it is rejected with `400`. Switching folders reuses the running instance: A later request naming the same `id` and a different `folder` is answered from the running instance, and the page it returns loads the editor on the folder this request names. No restart is needed. The instance keeps the folder it was started with as its own: that is the folder the status endpoint reports. `restart` is optional here. It kills and respawns the instance, ending its running sessions, and applies the parameters of the request that carries it. |
-| `id` | `number` | query | No | Instance selector. Supply it together with `folder` to open an editor. Omit both, or send both with empty values, to retrieve this specification. It determines: TCP port: `basePort + id`; Data directory: `dataDir/instances/{id}/`; Unique isolation per ID Upper bound: The instance binds `basePort + id`, so the largest accepted value is `65535 - basePort`, not a fixed number. `basePort` is part of this deployment's configuration and is reported as `orchestrator.basePort` by `/status`. With a base port of 7000, for example, ids above 58535 are rejected. A rejection names the limit and the base port in use. How the value is read: The selector decides which instance a request reaches, so it is read strictly rather than leniently. The value must be an unsigned decimal integer. A sign, a decimal point, surrounding whitespace, hexadecimal notation or any trailing character is rejected, so `+2`, `2.0`, ` 2`, `0x2` and `2abc` are not accepted as `2`. Only the exact name `id` is read. Bracket spellings such as `id[]` and `id[0]` are different names: they are ignored rather than merged into this parameter, and a request carrying only those has supplied no selector. Sending `id` more than once is rejected outright rather than resolved to one of the values. A percent-encoded spelling of the same name counts as a repeat. Repeats whose values are all empty are the exception: with no non-empty `folder` alongside them they count as no selector at all and the request takes the discovery branch. Alongside a non-empty `folder` they are still a repeat and are rejected. The query string carrying the selector is limited in size. See "Query size limit" in this operation's description. |
-| `extension` | `string` | query | No | Extension identifier to open in extension-only mode (embedded extension) Format: `PUBLISHER.NAME` (e.g., `ms-python.python`) This parameter is: **Preserved** in the iframe URL for VS Code to consume; **NOT forwarded** to the child CLI arguments When present, VS Code will: Hide the file explorer; Focus on the extension's UI; Display only that extension's views and commands |
-| `restart` | `boolean` | query | No | Force restart the instance before rendering. Accepted truthy values: `true`, `1`, `yes`, `on` If the instance is running and restart is explicitly true: The instance is killed; A new instance is spawned; The iframe is rendered with the new instance Note: Missing or empty parameter does NOT trigger restart. |
-| `pageLoader` | `boolean` | query `page-loader` | No | Enable/disable the page loader overlay in the child instance. Boolean flag (passed to child without value): Truthy: `true`, `1`, `yes`, `on`, or empty string; Falsy: `false`, `0`, `no`, `off`, or omitted When enabled, child shows loading overlay during initialization. |
-| `disableWalkthroughs` | `boolean` | query `disable-walkthroughs` | No | Disable VS Code walkthrough functionality in the child instance. Boolean flag (passed to child without value). Default in orchestrator: true (walkthroughs disabled by default) |
-| `hoodyCode` | `boolean` | query `hoody-code` | No | Enable/disable loading of Hoody Code injected scripts (extra/injected/*.js). Boolean flag (passed to child without value). When enabled, all .js files in extra/injected/ are loaded after page load. |
-| `welcomeIframeUrl` | `string` | query `welcome-iframe-url` | No | URL for custom welcome page iframe. Passed to child as `--welcome-iframe-url <url>`. Replaces the default Welcome (Getting Started) page with a fullscreen iframe. |
-| `pageLoaderPath` | `string` | query `page-loader-path` | No | Path to the loading page the instance serves while it starts. Passed to child as `--page-loader-path <path>`. It is read by the instance, so the path is resolved on the container's filesystem and not on the caller's. It has no effect unless `page-loader` is also enabled. |
-| `proxyDomain` | `string` | query `proxy-domain` | No | Domain pattern for port proxying. Automatically computed from request Host header: `<proj>-<cont>-ui.<domain>` → `<proj>-<cont>-http-{{port}}.<domain>`; Passed to child as `--proxy-domain <pattern>` Manual override: `--proxy-domain custom-{{port}}.example.com` |
-| `locale` | `string` | query | No | Display language for VS Code UI. Format: IETF language tag (e.g., en, fr, de, ja, zh-CN). Passed to child as `--locale <tag>`. |
-| `appName` | `string` | query `app-name` | No | Custom application name displayed in the VS Code title bar and branding. Passed to child as `--app-name <name>`. Replaces `{{app}}` placeholders in templates. |
-
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/code`
 
 ---
 
@@ -14858,11 +14956,12 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `user`: matches `^[A-Za-z0-9_.-]{1,32}$` for the character class, but the validator additionally rejects a **leading** `-` (trailing `-` is allowed).
 - Vixie 5-field plus standard `@`-macros; Quartz rejected.
 - `command`/`name`/`comment` reject newline/null/VT/FF/NEL/LS/PS; caps 4096/120/500.
-- The kit collapses runs of whitespace inside the command of a managed entry with a 5-field schedule: when the spool is parsed back, the command is split on whitespace and re-joined with single spaces, and the next write for that user stores the collapsed text. `echo "a  b"` becomes `echo "a b"`. An `@macro` schedule keeps the command as written. Put commands that depend on exact spacing in a script and schedule the script.
+- Send a managed entry's command exactly as a shell would run it, and do not escape `%`: the kit writes it into the crontab as `\%` so cron runs the command unchanged and reads it back the same way. A `\%` you send is escaped again and runs as `\%`, backslash included. Raw lines in a `crontabs.set` body are written as given, so a `%` there follows crontab rules: a bare `%` ends the command, and `\%` is a literal `%`.
+- A managed entry's command is read back from the spool exactly as written, runs of whitespace included, so a later write for that user stores it unchanged: `echo "a  b"` stays `echo "a  b"`.
 - `expires_at` RFC 3339, strictly future.
 - Body cap 256 KiB by default, which the deployment can change, AND 10,000 lines; duplicate entry id rejected, and a duplicate `id=` within one metadata line is rejected.
 - **`crontabs.set` replaces the whole crontab.** `crontabs.get` returns each managed entry as its `# hoody-cron:` metadata line followed by its rule line, and PUT parses those pairs back into the same managed entries with the same ids. So a read, edit, write cycle keeps every managed entry whose two lines are still in the body; a managed entry left out of the body is deleted. Edit the text from `crontabs.get` instead of writing a fresh body, and do not re-create managed entries after a PUT: they are still there, and re-creating them makes every job run twice. Comment or blank lines placed between a metadata line and its rule line are dropped.
-- A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line.
+- A PUT body may contain `# hoody-cron:` metadata lines written by the caller. The kit revalidates every managed entry it parses from them (schedule, command, name, comment) and rejects duplicate ids, but it does not check where the metadata came from: a well-formed pair written by hand is accepted as a managed entry, and a metadata line it cannot parse or pair is kept as a raw line. Every other non-comment line gets the syntax check of `crontab(1)`: a line it would refuse is `400 INVALID_CRONTAB` naming that line, and nothing is written.
 - `entries.list`/`entries.get` clean expired entries before serializing under a per-user mutex — a GET can mutate the spool.
 - `entries.list` items have `type: "managed"` or `"raw"`; only `managed` items carry `id`.
 - Sweep every 60s default; per-user lock.
@@ -14877,10 +14976,10 @@ Error bodies are `{ code, message, details }`, except where noted.
 - `400 INVALID_ID` `Entry id must be a UUID`: the `{id}` path segment is not a UUID.
 - `400 INVALID_PAGINATION`: `page` must be 1 or more and `limit` 1 to 200 (default 50).
 - `404 USER_NOT_FOUND`: the user is not in `/etc/passwd`. `404 ENTRY_NOT_FOUND`: no managed entry has that id (it may have expired and been swept).
-- `413`: a request body over the size cap (256 KiB by default) is rejected by the HTTP layer before the handler runs, with a plain-text body, not JSON. The JSON `PAYLOAD_TOO_LARGE` comes from the crontab parser: for a crontab over 10,000 lines, or over its separate byte ceiling of about 40 MB, which only a deployment that raised the size cap can reach.
-- `415` (the body is not `application/json`) and `422` (the JSON does not match the request schema) come from the JSON extractor, with a plain-text body.
+- `413 PAYLOAD_TOO_LARGE`: a request body over the size cap (256 KiB by default), or a crontab over 10,000 lines or over its separate byte ceiling of about 40 MB, which only a deployment that raised the size cap can reach.
+- `415 UNSUPPORTED_MEDIA_TYPE`: the Content-Type is neither `application/json` nor an `application/*+json` type. `400 INVALID_JSON`: the body is not valid JSON. `400 INVALID_BODY`: the JSON does not match the request fields (a missing or mistyped field).
 - `500 BACKEND_ERROR` — `crontab(1)` fail / 30s timeout.
-- `403 Forbidden` — private IP, no dev-server.
+- `403 Forbidden` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden`, not JSON.
 
 ## Related namespaces
 
@@ -14899,7 +14998,7 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 ```typescript
 const r = await client.cron.entries.create('root', {
   schedule: '0 2 * * *',
-  command: 'pg_dump -U postgres mydb | gzip > /backups/db-$(date +\\%F).sql.gz',  // `%` MUST be escaped — crontab truncates at a bare %
+  command: 'pg_dump -U postgres mydb | gzip > /backups/db-$(date +%F).sql.gz',  // write `%` as is: the kit escapes it for cron
   name: 'nightly-db-backup',
   expires_at: new Date(Date.now() + 365 * 86_400_000).toISOString(),  // must be in the future
 });
@@ -14953,11 +15052,13 @@ await Promise.all(ids.map(id => client.cron.entries.update('root', id, { enabled
 
 ```typescript
 const listed = await client.cron.entries.listAll('root');
-// Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO=, ...).
+// Raw items only; skip blanks, comments and environment lines (SHELL=, MAILTO = ..., "A B" = c).
 const toMigrate = listed
   .flatMap(e => (e.type === 'raw' ? [e.line] : []))
-  .filter(l => !/^\s*($|#|[A-Za-z_][A-Za-z0-9_]*=)/.test(l));
+  .filter(l => !/^\s*($|#|([A-Za-z_][A-Za-z0-9_]*|"[^"]*"|'[^']*')\s*=)/.test(l));
 ```
+
+**Before step 2 — check every line for `%` and `\`.** A raw line is in crontab syntax and a managed command is not: in a raw line a bare `%` ends the command and sends the rest to its stdin, and `\%` and `\\` stand for `%` and `\`, while the kit escapes a managed command itself (see Quirks). The scripts below copy the command text as it is, so they keep a line's meaning only when it contains neither `%` nor `\`. Take any other line out of the step 1 list and migrate it by hand: write the command cron actually runs (`\%` becomes `%`, `\\` becomes `\`, and a `%`-delimited stdin becomes a pipe or a here-string) and create its entry from that. Step 3 drops only the lines still in the list, so remove the raw lines you migrated by hand the same way, or each of those jobs runs twice.
 
 **Step 2 — create a managed entry per line.** An `@macro` line (`@daily`, `@reboot`, ...) has a one-field schedule; any other line has five fields. The rest of the line is the command.
 
@@ -15092,7 +15193,7 @@ For each non-empty user, drill in via `entries.list` for that user for the manag
 const snapshot = (await client.cron.crontabs.get('root')).data;
 ```
 
-**Step 2 — push the canonical config.** Body MUST be `application/json` (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
+**Step 2 — push the canonical config.** Body MUST use `application/json` or an `application/*+json` Content-Type (raw `text/plain` returns `415`). Response carries `removed_expired` (count of managed entries that were dropped because their `expires_at` had passed).
 
 ```typescript
 import { readFileSync } from 'fs';
@@ -15102,7 +15203,7 @@ await client.cron.crontabs.set('root', { crontab: newCrontab });
 
 ### 9. Update only the comment / metadata, leave the schedule untouched
 
-**Goal:** add a runbook URL or owner tag without changing the schedule or the enabled state. PATCH is partial — fields you don't pass are not assigned. The write still rewrites the user's whole crontab, so runs of whitespace inside a five-field managed entry's command are collapsed (see Quirks).
+**Goal:** add a runbook URL or owner tag without changing the schedule or the enabled state. PATCH is partial — fields you don't pass are not assigned.
 
 ```typescript
 await client.cron.entries.update('root', id, {
@@ -15110,7 +15211,7 @@ await client.cron.entries.update('root', id, {
 });
 ```
 
-`updated_at` advances; `schedule` and `enabled` are unchanged, and `command` is unchanged unless it contained runs of whitespace, which the rewrite collapses.
+`updated_at` advances; `schedule`, `enabled` and `command` are unchanged.
 
 ### 10. Rotate-and-replace pattern — read, edit text, write back
 
@@ -15131,7 +15232,7 @@ await client.cron.crontabs.set('root', { crontab: next });
 
 **Accessor:** `client.cron`  |  **Import:** `import * as cron from 'hoody-sdk/cron'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.cron.crontabs` (5) — Raw crontab management
 
@@ -15158,8 +15259,8 @@ client.cron.crontabs.list(options?: { page?: number; limit?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<CronCrontabsListResponse>`  |  **HTTP:** `GET /crontab`
 **CLI:** `hoody cron crontabs list`
@@ -15174,8 +15275,8 @@ client.cron.crontabs.listAll(options?: { page?: number; limit?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.items`, all pages collected (`list()` fetches one page). Each item is `cron_RawCrontabResponse`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /crontab`
 **CLI:** `hoody cron crontabs list`
@@ -15190,8 +15291,8 @@ client.cron.crontabs.listIterator(options?: { page?: number; limit?: number })
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `AsyncGenerator<(NonNullable<CronCrontabsListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { items?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.items` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_RawCrontabResponse`.  |  **HTTP:** `GET /crontab`
 **CLI:** `hoody cron crontabs list`
@@ -15273,8 +15374,8 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `user` | `string` | path | Yes | System username |
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<CronEntriesListResponse>`  |  **HTTP:** `GET /users/{user}/entries`
 **CLI:** `hoody cron entries list`
@@ -15290,8 +15391,8 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `user` | `string` | path | Yes | System username |
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `Promise<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.entries`, all pages collected (`list()` fetches one page). Each item is `cron_CrontabEntryView`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /users/{user}/entries`
 **CLI:** `hoody cron entries list`
@@ -15307,8 +15408,8 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `user` | `string` | path | Yes | System username |
-| `page` | `number` | query | No | Page number (1-based) |
-| `limit` | `number` | query | No | Items per page (max 200) |
+| `page` | `number` | query | No | Page number (1-based, default 1) |
+| `limit` | `number` | query | No | Items per page (default 50, max 200) |
 
 **Returns:** `AsyncGenerator<(NonNullable<CronEntriesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { entries?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.entries` per step, next page fetched on demand (`list()` fetches one page). Each item is `cron_CrontabEntryView`.  |  **HTTP:** `GET /users/{user}/entries`
 **CLI:** `hoody cron entries list`
@@ -15395,7 +15496,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 `GET /api/v1/curl/request?url=<TARGET>&method=<VERB>` on the curl kit URL. The kit executes the upstream request and returns a JSON envelope `{ success, job_id, status_code, headers, body, is_binary, timing, metadata }`. Useful when the caller can only emit a GET (browser, webhook, sandboxed agent, RSS-ish puller, link in an email).
 
-Note: the GET bridge accepts `url` + `method` + the 13 timing/follow/session/response/save flags (`response`, `mode`, `session_id`, `follow_redirects`, `timeout`, `user_agent`, `referer`, `bearer_token`, `save`, `save_path`, `insecure`, `compressed`, `job_name`) **AND a full request body + headers right in the query string**: `data` (raw body, curl `--data`), `json` (parsed JSON; sets `Content-Type: application/json`), `data_base64` (binary-safe; standard OR URL-safe base64, padding optional; takes precedence over `data`/`json`), and repeatable `header=Name: Value`. **Supplying a body auto-upgrades the default method GET→POST** — so a body-bearing POST/PUT/PATCH (with headers) is expressible as a single GET URL. Only the `form` field (URL-encoded fields) and a headers map are POST-only. Neither form sends a multipart upload or reads a file from disk (`--data-binary @file`); send a binary body as `data_base64`.
+Note: the GET bridge accepts `url` + `method` + the 13 timing/follow/session/response/save flags (`response`, `mode`, `session_id`, `follow_redirects`, `timeout`, `user_agent`, `referer`, `bearer_token`, `save`, `save_path`, `insecure`, `compressed`, `job_name`) **AND a full request body + headers right in the query string**: `data` (raw body, curl `--data`), `json` (parsed JSON; sets `Content-Type: application/json`), `data_base64` (binary-safe; standard OR URL-safe base64, padding optional; takes precedence over `data`/`json`), the aliases `body` and `body_base64` (for `data` and `data_base64`; the canonical name wins when both are given), and repeatable `header=Name: Value`. **Supplying a body auto-upgrades the default method GET→POST** — so a body-bearing POST/PUT/PATCH (with headers) is expressible as a single GET URL. Every other request field is POST-only: a headers map, `form` (URL-encoded fields), `cookie`, `auth_user` / `auth_password` / `auth_method`, `connect_timeout`, `max_redirects`, `max_filesize`, `tcp_nodelay`, `keepalive`, `keepalive_time`, `range`, `speed_limit`, `speed_time`, `retry_count` and `retry_delay`. The GET bridge ignores any of them in the query string without an error, so the request is sent without it. Neither form sends a multipart upload or reads a file from disk (`--data-binary @file`). To send arbitrary binary bytes, use `data_base64` on the GET bridge; the POST JSON form rejects a `data_base64` field with 400 (it refuses any unknown field).
 
 Live examples (verified — replace the kit URL with your container's):
 
@@ -15404,9 +15505,9 @@ Live examples (verified — replace the kit URL with your container's):
 
 Combine with `proxy.aliases.create({ program: 'curl' })` to give the bridge a brandable hostname like `https://api-bridge.{server_name}.containers.hoody.com/api/v1/curl/request?...` and hide the `containerId`.
 
-`client.curl.run` **executes** the request and returns the envelope; it does NOT just compose a URL string. The SDK has no GET method for this route: `run` always sends the POST form. When the deployment enables the kit's response cache (it is off by default), an eligible request can be answered from the cache instead. To compose a URL without firing it, build it client-side or use `proxy.aliases.create({ program: 'curl', target_path: '/api/v1/curl/request' })` to get a stable prefix.
+`client.curl.run` **executes** the request and returns the envelope; it does NOT just compose a URL string. The SDK has no GET method for this route: `run` always sends the POST form. When the deployment enables the kit's response cache (it is off by default), an eligible request can be answered from the cache instead. To compose a URL without firing it, build it client-side or create a proxy alias with `program: 'curl'`: a request to the alias host that carries its own path, such as `/api/v1/curl/request?...`, is forwarded as sent, and `target_path` only sets what the bare root URL serves.
 
-For the imperative full-cURL surface (a headers map, `form` fields sent URL-encoded, cookies, auth, follow-redirects, `insecure`, etc.) use the POST form below — though note the kit's request validator rejects `cacert`/`cert`/`key`/`proxy`/`proxy_user`/`proxy_password` (the rejected fields are limited to those six; all other body/auth/connection fields are accepted).
+For the imperative full-cURL surface (a headers map, `form` fields sent URL-encoded, cookies, auth, follow-redirects, `insecure`, etc.) use the POST form below — though note the kit refuses client-certificate files and an upstream proxy (an SSRF guard; the request schema no longer lists them), and accepts every other body, auth and connection field.
 
 ### 2. Sync request
 
@@ -15442,10 +15543,10 @@ For the imperative full-cURL surface (a headers map, `form` fields sent URL-enco
 - `save_path` rejected if empty, absolute, rooted, or has `..`.
 - Saved files at `downloads/by-job/{job_id}/...`; pass relative path.
 - `storage.get` resolves with `ApiResponse<ArrayBuffer>` — binary-safe, no text decoding. Write `response.data` straight to disk.
-- **A saved download is stored under `by-job/{job_id}/<save_path>`, with best-effort index links** `by-date/<YYYY-MM-DD>/<job_id>` and `by-domain/<host>/<job_id>`. A URL whose host is an IP literal gets no `by-domain` link, and either link is skipped silently if it cannot be created, so expect one to three entries. `storage.list` returns one item per path; the bytes are the same file.
+- **A saved download is stored under `by-job/{job_id}/<save_path>`, with best-effort index links** `by-date/<YYYY-MM-DD>/<job_id>` and `by-domain/<host>/<job_id>`. A URL whose host is an IP literal gets no `by-domain` link, and a symlink that cannot be created is skipped silently (failing to create an index directory fails the save), so expect one to three entries. `storage.list` returns one item per path; the bytes are the same file.
 - `*.list` returns ALL when `limit` omitted; always pass `limit`.
 - `schedules.*` 404s if disabled.
-- Pausing or resuming through `schedules.update` needs an explicit boolean `enabled`; else 400.
+- `schedules.update` changes any of `cron`, `request` and `enabled`; omitted fields keep their current value, so pause or resume by sending `enabled: false` or `enabled: true` alone.
 - **`schedules.create.cron` is 6-field (with seconds), NOT the standard 5-field crontab.** `*/15 * * * *` is rejected as `Invalid cron expression`; use `0 */15 * * * *` (at second 0 every 15 min). The standard @-nicknames (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`) ARE accepted (expanded internally to 6-field), but Go-style `@every 15m` is NOT — for anything else use explicit 6-field expressions. Different syntax from the `cron` namespace, which uses Vixie 5-field.
 - `session_id` is caller-provided.
 - Job events stream over a WebSocket at `/api/v1/curl/ws`; filter by `job_id`.
@@ -15477,7 +15578,7 @@ https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<urle
 https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<target>&data_base64=eyJldmVudCI6IlgifQ&header=Content-Type:%20application/json
 ```
 
-(`form` fields, sent URL-encoded, are POST-only — use the POST form below for those. Neither form sends multipart uploads.)
+(`form` fields, sent URL-encoded, cookies, Basic auth, retries, ranges and the connection limits are POST-only, and the GET bridge drops them without an error — use the POST form below for those. Neither form sends multipart uploads.)
 
 ```typescript
 const r = await client.curl.run({
@@ -15691,14 +15792,14 @@ const remaining = r.data!.headers['x-ratelimit-remaining'];
 https://${P}-${C}-curl-1.${N}.containers.hoody.com/api/v1/curl/request?url=<url-encoded-build-trigger>&json=%7B%22ref%22%3A%22main%22%7D&header=Authorization:%20Bearer%20XYZ
 ```
 
-**Step 2 — wrap with an alias** so the public URL hides `containerId`. The alias target must be the complete query from step 1, `json` and `header` included: the bridge reads the body and headers only from the query string, so an alias carrying just `url` and `method` sends an empty, unauthenticated POST. The token then lives in the alias configuration, so gate the alias (step 3).
+**Step 2 — wrap with an alias** so the public URL hides `containerId`. The alias target must carry the whole request, body and auth included: the bridge reads the body and headers only from the query string, so an alias carrying just `url` and `method` sends an empty, unauthenticated POST. `target_path` refuses percent escapes (and spaces, quotes and braces), so the step 1 query cannot be pasted as is: write the target URL unescaped, send the JSON body (here `{"ref":"main"}`) as URL-safe base64 in `data_base64` (`<base64-body>` below) with a `Content-Type:application/json` header, and pass the token as `bearer_token`. The token then lives in the alias configuration, so gate the alias (step 3). Keep `allow_path_override: false`: the alias then serves only this `target_path`, at its root and at `/api/v1/curl/request` (both with the target's query), and any other path is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's, so a visitor cannot override the target `url`, `method`, body, headers or `bearer_token`. Keys the target does not set (for example `timeout` or `save`) still pass from the visitor, so write into `target_path` every key you want fixed. Step 3's gate is what limits who can fire it.
 
 ```typescript
 await client.api.proxy.aliases.create({
   container_id: C,
   alias: 'rebuild-main',
   program: 'curl',
-  target_path: '/api/v1/curl/request?url=https%3A%2F%2Fci.example.com%2Fbuild&method=POST&json=%7B%22ref%22%3A%22main%22%7D&header=Authorization:%20Bearer%20XYZ',
+  target_path: '/api/v1/curl/request?url=https://ci.example.com/build&method=POST&data_base64=<base64-body>&header=Content-Type:application/json&bearer_token=XYZ',
   allow_path_override: false,
 });
 ```
@@ -15748,7 +15849,7 @@ await Promise.all(old.map(i => client.curl.storage.delete(i.path)));
 
 **Accessor:** `client.curl`  |  **Import:** `import * as curl from 'hoody-sdk/curl'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.curl.channel` (1) — WebSocket event endpoints
 
@@ -15784,14 +15885,14 @@ client.curl.run(data: CurlRunRequest)
 #### `cancel` — Cancel a pending or running job, or delete a finished one
 
 ```typescript
-client.curl.jobs.cancel(id: Parameters<JobsServiceBase['__cancelJob']>[0], options?: FacadeWithout<NonNullable<Parameters<JobsServiceBase['__cancelJob']>[1]>, "purge">)
+client.curl.jobs.cancel(id: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique job identifier (UUID format) |
 
-**Returns:** `ReturnType<JobsServiceBase['__cancelJob']>`  |  **HTTP:** `DELETE /api/v1/curl/jobs/{id}`
+**Returns:** `Promise<CancelJobResponse>`  |  **HTTP:** `DELETE /api/v1/curl/jobs/{id}`
 **CLI:** `hoody curl jobs cancel`
 
 ---
@@ -15799,12 +15900,14 @@ client.curl.jobs.cancel(id: Parameters<JobsServiceBase['__cancelJob']>[0], optio
 #### `connect` — Subscribe to job events over WebSocket
 
 ```typescript
-client.curl.jobs.connect(options?: { job_id?: string })
+client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `job_id` | `string` | query | No | Optional job ID filter |
+| `since` | `number` | query | No | Resume cursor: the last `seq` (or `replay_boundary.max_seq`) received; `0` for everything still kept. The lifecycle events after it are replayed first, then a `replay_boundary` frame |
+| `incarnation` | `string` | query | No | The `incarnation` of the last control frame received; a different one means the server restarted since |
 
 **Returns:** `Promise<CurlWsJobEventsWebSocket>` — an unconnected wrapper: register handlers, then `await ws.connect()`  |  **HTTP:** `GET /api/v1/curl/ws`
 
@@ -15813,14 +15916,14 @@ client.curl.jobs.connect(options?: { job_id?: string })
 #### `delete` — Cancel a pending or running job, or delete a finished one
 
 ```typescript
-client.curl.jobs.delete(id: Parameters<JobsServiceBase['__cancelJob']>[0], options?: FacadeWithout<NonNullable<Parameters<JobsServiceBase['__cancelJob']>[1]>, "purge">)
+client.curl.jobs.delete(id: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique job identifier (UUID format) |
 
-**Returns:** `ReturnType<JobsServiceBase['__cancelJob']>`  |  **HTTP:** `DELETE /api/v1/curl/jobs/{id}`
+**Returns:** `Promise<CancelJobResponse>`  |  **HTTP:** `DELETE /api/v1/curl/jobs/{id}`
 **CLI:** `hoody curl jobs delete`
 
 ---
@@ -15906,12 +16009,15 @@ client.curl.jobs.listIterator(options?: { page?: number; limit?: number })
 #### `stream` — Subscribe to job events over Server-Sent Events
 
 ```typescript
-client.curl.jobs.stream(options?: { job_id?: string })
+client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string; LastEventID?: string | null })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `job_id` | `string` | query | No | Optional job ID filter |
+| `since` | `number` | query | No | Resume cursor: the last `seq` (SSE `id:`) received; `0` for everything still kept. Wins over `Last-Event-ID` |
+| `incarnation` | `string` | query | No | The `incarnation` of the last `lagged` event received; a different one means the server restarted since |
+| `LastEventID` | `string \| null` | header `Last-Event-ID` | No | Resume cursor as sent by an EventSource reconnect: the last `id:` received. Ignored when it is not a number or when `since` is given |
 
 **Returns:** `Promise<IEventStream>`  |  **HTTP:** `GET /api/v1/curl/sse`
 **CLI:** `hoody curl jobs stream`
@@ -16150,15 +16256,16 @@ client.curl.sessions.listIterator(options?: { page?: number; limit?: number })
 
 ### `client.curl.storage` (5) — Storage management endpoints
 
-#### `delete` — Delete a saved file
+#### `delete` — Delete a saved file or directory
 
 ```typescript
-client.curl.storage.delete(path: string)
+client.curl.storage.delete(path: string, options?: { recursive?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `path` | `string` | path | Yes | Relative path to file in storage |
+| `path` | `string` | path | Yes | Relative path to a file or directory in storage |
+| `recursive` | `boolean` | query | No | `true` deletes a directory and everything in it (default false) |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `DELETE /api/v1/curl/storage/{path}`
 **CLI:** `hoody curl storage delete`
@@ -16229,7 +16336,7 @@ client.curl.storage.listIterator(options?: { page?: number; limit?: number })
 
 ### Body schemas
 
-- `curl_CurlRequest` — `{ auth_method: string|null, auth_password: string|null, auth_user: string|null, bearer_token: string|null, cacert: string|null, cert: string|null, cert_type: string|null, compressed: bool|null, connect_timeout: int|null, cookie: string|null, data: string|null, follow_redirects: bool|null, form: { [key: string]: string }|null, headers: { [key: string]: string }|null, insecure: bool|null, job_name: string|null, json: any, keepalive: bool|null, keepalive_time: int|null, key: string|null, max_filesize: int|null, max_redirects: int|null, method: string|null, mode: null | curl_ExecutionMode, proxy: string|null, proxy_password: string|null, proxy_user: string|null, range: string|null, referer: string|null, response: null | curl_ResponseMode, retry_count: int|null, retry_delay: int|null, save: bool|null, save_path: string|null, schedule: string|null, session_id: string|null, speed_limit: int|null, speed_time: int|null, tcp_nodelay: bool|null, timeout: int|null, url*: string, user_agent: string|null }`
+- `curl_CurlRequest` — `{ auth_method: string|null, auth_password: string|null, auth_user: string|null, bearer_token: string|null, compressed: bool|null, connect_timeout: int|null, cookie: string|null, data: string|null, follow_redirects: bool|null, form: { [key: string]: string }|null, headers: { [key: string]: string }|null, insecure: bool|null, job_name: string|null, json: any, keepalive: bool|null, keepalive_time: int|null, max_filesize: int|null, max_redirects: int|null, method: string|null, mode: null | curl_ExecutionMode, range: string|null, referer: string|null, response: null | curl_ResponseMode, retry_count: int|null, retry_delay: int|null, save: bool|null, save_path: string|null, session_id: string|null, speed_limit: int|null, speed_time: int|null, tcp_nodelay: bool|null, timeout: int|null, url*: string, user_agent: string|null }`
   - cURL request parameters A JSON body carrying any field not listed here is rejected with `400`. This protects against silently sending a removed or not-yet-released field that would otherwise slip past validation unnoticed.
   - `save_path` — Relative path under this job's download directory (downloads/by-job/{job_id}). Must not be absolute or contain `..`.
 - `curl_CreateScheduleRequest` — `{ cron*: string, request*: curl_CurlRequest }`
@@ -16247,11 +16354,11 @@ client.curl.storage.listIterator(options?: { page?: number; limit?: number })
 
 ## Purpose
 
-**Default for "start a program" / "spawn a process"** when you don't need an interactive shell or a TUI. REST over `supervisord` — every process is supervised, auto-restart-eligible, log-captured by default (stdout + stderr written under `/hoody/storage/hoody-daemon/logs/<name>/stdout.log` and `/hoody/storage/hoody-daemon/logs/<name>/stderr.log` — one directory per program, with rotated timestamped log files behind those symlinks), and inspectable after the fact. Those are the default paths: a program can set its own log files or turn logging off. Log files rotate by size. When an apply changes a program's configuration, its old timestamped default log sessions older than the retention period (30 days by default) are deleted; the active session is kept, and custom log files are not covered by that cleanup. Log FILES outlive the process on disk, but the ephemeral tracking entry is reaped once the program is stopped, fatal, or exited with autorestart off — after that `ephemeralPrograms.getLogs` 404s (see Quirks); capture logs before stopping, or read the on-disk files directly (e.g. via the `files` namespace). `programs.getLogs` covers configured (non-ephemeral) programs.
+**Default for "start a program" / "spawn a process"** when you don't need an interactive shell or a TUI. REST over `supervisord` — every process is supervised, auto-restart-eligible, log-captured by default (stdout + stderr written under `/hoody/storage/hoody-daemon/logs/<name>/stdout.log` and `/hoody/storage/hoody-daemon/logs/<name>/stderr.log` — one directory per program, with rotated timestamped log files behind those symlinks), and inspectable after the fact. Those are the default paths: a program can set its own log files or turn logging off. Log files rotate by size. When an apply changes a program's configuration, its old timestamped default log sessions older than the retention period (30 days by default) are deleted; the active session is kept, and custom log files are not covered by that cleanup. Log FILES outlive the process on disk, but the ephemeral tracking entry is dropped 10 minutes after the program finishes or is stopped — after that `ephemeralPrograms.getLogs` 404s (see Quirks); read the logs within those 10 minutes, or read the on-disk files directly (e.g. via the `files` namespace). `programs.getLogs` covers configured (non-ephemeral) programs.
 
 Two flavours:
 
-- **Quick-start (ephemeral, not added to the program list)** — `ephemeralPrograms.start { command, user, ttl?, wait?, timeout? }`. Returns `temporary_id = quick_<ts>_<seq>`. Best for one-offs and short-lived jobs (build steps, batch transforms, "run this once and tell me the output"). It adds no durable program entry, but it does write a temporary supervisord configuration and records the program in the kit's ephemeral tracking file so the cleanup pass can find it. The log files stay on disk, but `ephemeralPrograms.getLogs` works only while the tracking entry exists. The cleanup pass (every 30 s) reaps the entry, and the logs route then 404s, once the program is `stopped` or `fatal`, or `exited` with autorestart turned off; under the default `unexpected` policy an `exited` program is not reaped. Read the logs before stopping it. Optional `ttl` auto-stops after N seconds.
+- **Quick-start (ephemeral, not added to the program list)** — `ephemeralPrograms.start { command, user, ttl?, wait?, timeout? }`. Returns `temporary_id = quick_<ts>_<seq>`. Best for one-offs and short-lived jobs (build steps, batch transforms, "run this once and tell me the output"). It adds no durable program entry, but it does write a temporary supervisord configuration and records the program in the kit's ephemeral tracking file so the cleanup pass can find it. The log files stay on disk, but `ephemeralPrograms.getLogs` works only while the tracking entry exists. The cleanup pass (every 30 s) finalizes a program that is `stopped` or `fatal`, or `exited` with autorestart turned off; under the default `unexpected` policy an `exited` program is finalized when its exit code is known to be 0, and is kept while its exit code is unknown. A finalized program's result and logs stay readable for 10 minutes; then the pass drops the entry and the logs route 404s. Stopping a program that already finished does not extend that window. Optional `ttl` auto-stops after N seconds.
 - **Registered program (durable, persists across kit restarts)** — `programs.create { name, command, user, enabled: true, boot: true?, autorestart: 'unexpected', … }` → `programs.start { wait: false }`, then poll `programs.getStatus`. Use this when the process should come back after a container restart, when you want auto-restart on crash, or when you need port-range fan-out / lazy-load on first proxy hit.
 
 ## When to use
@@ -16264,7 +16371,7 @@ Two flavours:
 
 - **Traditional system services that ship native systemd units** (apache2, nginx, postgresql, mysql, redis, mosquitto, sshd, postfix, …) — leave them on `systemd`. Hoody containers are full Linux boxes with systemd + root (they behave like VMs, not Docker), so the standard `apt install nginx && systemctl enable --now nginx` flow Just Works and benefits from the upstream unit's hardening (drop-in directories, sd_notify, journal integration, etc.). Mixing systemd-managed and `daemon`-managed processes in the same container is fine — pick whichever fits the program.
 - Need an interactive TTY (Claude Code, Codex, htop, vim, anything that paints the screen) → a one-off or hand-driven session is `terminal` with a **pinned non-ephemeral `terminal_id`**; a program that must be supervised (auto-restart, start at boot) is a `daemon` program with `terminal_id`, which runs on that terminal's PTY. Without `terminal_id` a daemon program has no TTY. A program with `terminal_id` cannot also have an effective sandbox.
-- Watch or type into a daemon program's terminal → `client.daemon.programs.attachTerminal(container, program)` (resolves `{ terminalId, ws }`; `ws.disconnect()` leaves the program running). Snapshot, press, paste, write and wait drive it over REST without a WebSocket. Execute and session create on that id answer `409 DAEMON_TERMINAL`; a stopped program answers `409 DAEMON_PROGRAM_NOT_RUNNING` and closes a WebSocket with `4404`.
+- Watch or type into a daemon program's terminal → `client.daemon.programs.attachTerminal(program)` on a container-scoped client (resolves `{ terminalId, ws }`; `ws.disconnect()` leaves the program running). Snapshot, press, paste, write and wait drive it over REST without a WebSocket. Execute and session create on that id answer `409 DAEMON_TERMINAL`; a stopped program answers `409 DAEMON_PROGRAM_NOT_RUNNING` and closes a WebSocket with `4404`.
 - Need to pipe input mid-run / send keystrokes → `terminal` (`terminal.sessions.pressKeys`, `terminal.sessions.paste`).
 - One-shot synchronous request/response → `exec` (HTTP handler, returns body).
 - Schedule (cron syntax) → `cron`. Access logs → `proxyLogs`. File-system events → `watch`.
@@ -16337,9 +16444,9 @@ Edge is always `https://`; the slug only describes the inner protocol. Gate acce
 - `ephemeralPrograms.start` returns `temporary_id` = `quick_<unix-ms>_<seq>` (e.g. `quick_1700000000000_1`); pass it unchanged to `ephemeralPrograms.getStatus`, `ephemeralPrograms.getLogs` and `ephemeralPrograms.stop` on every surface. TTL polled ~10 s.
 - A program is addressed by its integer `id` from `programs.list`, never by its name: a name in the `{id}` slot is refused with 404 before the daemon looks anything up. To find the id of a named program, filter the list by name.
 - Default ephemeral log paths are `/hoody/storage/hoody-daemon/logs/<name>/stdout.log` and `/hoody/storage/hoody-daemon/logs/<name>/stderr.log` (one directory per program), NOT `<name>.out.log`/`<name>.err.log`.
-- After `ephemeralPrograms.stop`, the tracking entry is removed once its temporary configuration is deleted (the on-disk log files persist but are unreachable through `ephemeralPrograms.getLogs`, which returns `404`). If that deletion fails, the entry is kept and retried on the next cleanup pass, even though the stop response still reports success. Capture logs (read `ephemeralPrograms.getLogs` or fetch the on-disk file directly) BEFORE calling `stop`.
-- `programs.start` accepts `if_not_running: true` for an idempotent boot — early-returns with `already_running: true` if the program is already running and, for a standard program with a `ready_port`, that port accepts connections; otherwise, including a running program whose `ready_port` is not serving, it takes the start path, and polls for readiness only with `wait: true` (port-range responses include an `instance` block with per-instance status/pid; standard programs omit the `instance` field entirely, so there is no pid). Use it for "ensure started" workflows.
-- **`environment` REPLACES the whole map** on `programs.update` (not per-key merge). If the existing env is `{A:1,B:2}` and you PATCH `{environment:{A:9}}`, the result is `{A:9}`. To preserve secrets, GET the program first and re-send the merged map.
+- After `ephemeralPrograms.stop`, the program's result and logs stay readable for 10 minutes; then its tracking entry is dropped and `ephemeralPrograms.getLogs` returns `404`, while the on-disk log files persist. If withdrawing the program's supervisord group fails, the stop still reports success, with `cleaned_up: false`, and the next cleanup pass retries the withdrawal. Read `ephemeralPrograms.getLogs` within those 10 minutes, or fetch the on-disk file directly.
+- `programs.start` accepts `if_not_running: true` for an idempotent boot — early-returns with `already_running: true` if the program is already running and, for a standard program with a `ready_port`, that port accepts connections; otherwise, including a running program whose `ready_port` is not serving, it takes the start path, and polls for readiness only with `wait: true` (port-range responses include an `instance` block with the instance's status, but a newly dispatched start leaves out its pid — only the already-running shortcut returns an observed pid; standard programs omit the `instance` field entirely. Read the pid from `programs.getStatus(id, { port })`). Use it for "ensure started" workflows.
+- **`environment` REPLACES the whole map** on `programs.update` (not per-key merge). If the existing env is `{A:"1",B:"2"}` and you update with `{environment:{A:"9"}}`, the stored map becomes `{A:"9"}` (values are strings). To preserve secrets, GET the program first and re-send the merged map.
 - **`sandbox` is three-state on `programs.update`**: absent keeps the stored block, `null` clears it, and an object REPLACES the whole block (no field merge). Sending `{sandbox:{process:{max_pids:64}}}` to a program that also had `filesystem.read_only_root` and `network.mode: restricted` leaves only `max_pids`, and the program runs without the others. Read `programs.getSandbox(id)` first (`configured` is the stored block) and resend every restriction you want kept: merge locally and send the whole block.
 - Quick-start programs cannot be sandboxed: a non-null `sandbox` on `ephemeralPrograms.start` is a 400 (`sandbox is not supported for quick-start programs`); `null` is accepted as absent.
 - An effective sandbox is refused for a `user` that resolves to uid 0 (under any name) and together with `terminal_id`. A block that restricts nothing is stored as absent and does not appear on the program.
@@ -16347,16 +16454,15 @@ Edge is always `https://`; the slug only describes the inner protocol. Gate acce
 - A NON-EMPTY `network.ingress_allow_from`, or an `ingress_rate_limit`, needs a listening set: without `bind_ports`, `port_range` or `ready_port` the edit is a 400 (`sandbox.network.ingress_* requires a listening set`). An empty list owes no rules and so needs nothing. They filter IPv4 TCP arriving on `eth0` at those ports only, leave established connections alone, and an empty `ingress_allow_from` restricts nothing rather than denying everyone.
 - **Do not test an ingress allowlist from inside the same container.** The chain only matches what arrives on `eth0`, so same-container traffic never reaches it at all; and `ingress_allow_platform` defaults to `true`, which returns traffic whose source is loopback or the container's gateway ahead of both the meter and the allowlist. Either way a local probe proves nothing. Test with a new connection from an outside source. Public traffic the proxy forwards keeps the client's own address and IS filtered. The rate meter runs before the allowlist and stops tracking new sources once its 65535-entry set is full, while the allowlist keeps applying.
 - `programs.getSandbox(id)` answers with more than the stored block, and none of it certifies a running program: `configured` is what was persisted; `rev` is the 12-hex revision recomputed from the currently valid stored policy, the one the daemon WOULD place on the wrapper command line rather than an observation of the running process, and null when no effective policy validates; `effective` is DIAGNOSTIC argv recomputed from the stored policy, carrying placeholders like `<program argv>` and `<pid>`, never the observed command, and it omits what the wrapper applies from inside itself (Landlock ports and the open-file limit); `live` reports the nft table, chain and rules read from the kernel at request time; `firewall` is `none`, `ok`, `draining` or `degraded`, with `problems` listing validation, state, integrity and unresolved-install failures. Read `problems` before concluding a restriction is in force.
-- **`restricted` is a PORT policy, not a destination policy.** `full` restricts neither bind nor connect. `restricted` limits which TCP ports the program may bind and connect to, at every destination including loopback: it cannot allow one host and deny another, and it does not touch UDP, ICMP or raw sockets, because Landlock has no hook for them. It also governs the `bind` and `connect` CALLS, not a socket that starts listening without an explicit bind, and a listener obtained that way is outside the ingress rules too. `none` is different in kind: it unshares the network namespace, so it removes IP networking of every protocol. Unix sockets reachable by filesystem path stay reachable under every mode, `none` included, governed by file permissions rather than by this field.
+- **`restricted` is a PORT policy, not a destination policy.** `full` restricts neither bind nor connect. `restricted` limits which TCP ports the program may bind and connect to, at every destination including loopback: it cannot allow one host and deny another, and it does not touch UDP, ICMP or raw sockets, because Landlock has no hook for them. It also governs the `bind` and `connect` CALLS, not a socket that starts listening without an explicit bind, and a listener obtained that way is outside the ingress rules too. `none` is different in kind: it unshares the network namespace, so it removes IP networking of every protocol. Network mode alone does not block filesystem Unix sockets: under every mode, `none` included, they are governed by filesystem restrictions and file permissions rather than by this field. Every effective sandbox also masks `/run/user` with an empty directory, so sockets beneath it (the user manager, the session bus, agent sockets) are unreachable.
 - Ports are numbers or inclusive `"a-b"` strings. An omitted `bind_ports` defaults to the union of `port_range` and `ready_port`, and an explicit list has to cover both. `restricted` needs a non-empty resolved bind set, and an omitted or empty `connect_ports` denies outbound TCP entirely; a non-empty `connect_ports` requires `restricted`. `none` refuses declared listeners, a non-null explicit `bind_ports` (`[]` included), a non-empty connect or allow list, and a configured rate limit. Empty lists and either value of `ingress_allow_platform` are accepted and inert.
 - **The filesystem side is confinement, not a private container.** An effective sandbox drops all capabilities and unshares the user, PID and IPC namespaces, but the program keeps its account's supplementary groups and still sees the container's filesystem subject to ordinary permissions. `read_only_root` stops writes, not reads, and `/dev` and `/proc` are mounted over it. Private `/tmp` and `/var/tmp` are added only with `process.private_tmp: true`, which defaults to false: otherwise the program shares the container's temporary directories. `hidden` is not a secrecy boundary against an actor who can rename a validated directory or one of its ancestors: writable sources are pinned by descriptor at launch, but mount destinations are still resolved by pathname.
-- Process limits have fixed domains and are rejected outside them: `max_memory` from `16M` to `64G` (decimal bytes, or uppercase binary `K`/`M`/`G`, with scope swap disabled), `max_pids` from 4 to 65536 counting threads and two wrapper helpers, `max_open_files` from 8 to 1048576 applied as both the soft and the hard limit. There is no CPU or disk quota here.
+- Process limits have fixed domains and are rejected outside them: `max_memory` from `16M` to `64G` (decimal bytes, or uppercase binary `K`/`M`/`G`, with scope swap disabled), `max_pids` from 4 to 65536 counting threads and two wrapper helpers, `max_open_files` from 8 to 1048576 applied as both the soft and the hard limit. `max_cpu` (`"<n>%"`, whole numbers from `1%` to `102400%`, `100%` = one CPU), `max_file_size` (a per-file size limit, `1K` to `1024G`) and `tmp_size` (the size of each private tmpfs, `1M` to `64G`, only with `private_tmp: true`) are accepted too; a daemon built before they were added refuses them as unknown fields. There is no aggregate disk quota.
 - **A stored sandbox is not proof that one is installed.** An add or edit can persist the new block and still fail to apply it to supervisord; the response says so, and the earlier process may keep running unconfined when its stop cannot be confirmed. Treat a failed write as unresolved, read `problems`, fix the cause and reapply, rather than assuming either the old or the new policy is in force.
 - The ingress table `ip hoody_daemon` is rebuilt from desired state, not continuously enforced. Flushing or weakening it out of band can leave running programs unprotected: status turns `degraded` and new ingress launches refuse, but there is no integrity-repair loop and nothing stops what is already running. The next firewall transaction or reconcile rebuilds the table; re-applying an identical policy does not. Restore it and check `live` plus `firewall` after any out-of-band change.
 - Ingress rules are attached to a destination PORT on `eth0`, not to a process. Another listener on that same port at a different local address gets the same filtering, and the ownership check only knows about ports other programs have DECLARED, so an undeclared listener is neither protected from this nor protected against it.
 - **A policy change restarts the program.** The revision is part of the supervisord command line, so changing the resolved policy replaces the definition and stops the running instance; whether another starts is decided by `boot` and `lazy_load`, not by the edit. The old revision's ingress rules and port reservations can linger as `draining` after the call returns, so for a short window traffic meets both policies and the port is not yet free to reuse.
 - Webhook delivery needs per-program `webhooks.enabled: true` AND a deployment that enables event delivery for the kit. No request turns event delivery on, so a program whose `webhooks.enabled` is `true` can still receive no callbacks; a saved `webhooks` block is not proof that any will arrive.
-- Proxy `X-Bypass-Local-Restrictions` strips `command`/`environment`/`directory`/`user`/`webhooks`/`stdout_logfile`/`stderr_logfile`/`sandbox`.
 - `port_range` is an object `{ start, end }`.
 
 ## Common errors
@@ -16364,7 +16470,7 @@ Edge is always `https://`; the slug only describes the inner protocol. Gate acce
 - 400 webhook (enabled blocks only): `must use HTTPS protocol`, `must not contain userinfo`, `cannot point to private, loopback, link-local, or cloud-metadata IP addresses`.
 - 400 `name already in use` / `Port range overlaps` / `port_param requires port_range`.
 - success=false `Port parameter required for port-range programs` -> resend with a `port` from the program's range. success=false `Program with ID {id} is disabled` -> `programs.enable` first.
-- Direct private-IP connections get a plain `403 Forbidden` with no reason in the body -> use the capability URL.
+- `403 Forbidden` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The body is the plain text `Forbidden` with no reason; use the capability URL.
 - 1 MB JSON body limit.
 
 ## Related namespaces
@@ -16426,7 +16532,7 @@ const st = await client.daemon.ephemeralPrograms.getStatus(qid);
 const lg = await client.daemon.ephemeralPrograms.getLogs(qid, { type: 'stdout', lines: 10 } as any);
 ```
 
-**Step 4 — stop.** Read the logs first: after a successful `stop` the tracking entry is normally gone and `ephemeralPrograms.getLogs` returns 404.
+**Step 4 — stop.** Read the logs within 10 minutes of the stop: after that the tracking entry is dropped and `ephemeralPrograms.getLogs` returns 404 (the on-disk log files stay).
 
 ```typescript
 await client.daemon.ephemeralPrograms.stop(qid);
@@ -16460,7 +16566,7 @@ The instance is reachable at `https://${P}-${C}-http-18800.${N}.containers.hoody
 
 ### 4. Tail program logs (`programs.getLogs` with type / lines)
 
-**Goal:** investigate why a worker keeps restarting. `status.getLogs` returns `{ logs, type, lines, log_file }` where `log_file` is the on-disk path under `/hoody/storage/hoody-daemon/logs/<name>/{stdout,stderr}.log`.
+**Goal:** investigate why a worker keeps restarting. `programs.getLogs` returns `{ logs, type, lines, log_file }` where `log_file` is the on-disk path under `/hoody/storage/hoody-daemon/logs/<name>/{stdout,stderr}.log`.
 
 ```typescript
 const lg = await client.daemon.programs.getLogs(id, { type: 'stderr', lines: 200 } as any);
@@ -16474,7 +16580,7 @@ For a port-range program, pass `?port=18800` to read the per-instance log file.
 **Goal:** when the program enters the `FATAL` state, POST to your HTTPS endpoint. ⚠ Webhook URLs must be **HTTPS** unless `NODE_ENV=development` (and reject userinfo, `localhost`, and private/CGNAT/link-local ranges). ⚠ **Event names are kit-specific, not the supervisord canonical `PROCESS_STATE_*` ones**: the kit accepts only `STARTING, RUNNING, BACKOFF, STOPPING, STOPPED, EXITED, FATAL, UNKNOWN, "all", "*"`. Sending `PROCESS_STATE_FATAL` returns `400 Invalid event type`.
 
 ```typescript
-// programs.edit takes ProgramUpdate: every field is optional.
+// programs.update takes ProgramUpdate: every field is optional.
 await client.daemon.programs.update(id, {
   webhooks: {
     enabled: true,
@@ -16503,7 +16609,7 @@ await client.daemon.programs.reset();
 **Goal:** flip `LOG_LEVEL=debug` without restating `command`/`user`/etc. `programs.update` is partial on every surface: fields absent from the request body keep their stored values. `environment` itself is replaced whole (see the note below).
 
 ```typescript
-// programs.edit takes ProgramUpdate: send only what changes. environment is replaced whole.
+// programs.update takes ProgramUpdate: send only what changes. environment is replaced whole.
 await client.daemon.programs.update(id, {
   environment: { LOG_LEVEL: 'debug', BUILD: 'examples' },
 });
@@ -16511,11 +16617,11 @@ await client.daemon.programs.stop(id, {} as any);
 await client.daemon.programs.start(id, { wait: false });
 ```
 
-⚠ `environment` REPLACES the whole map (not per-key merge). If you have `{A:1,B:2}` and PATCH `{A:9}`, you end up with just `{A:9}` — re-send everything you want to keep.
+⚠ `environment` REPLACES the whole map (not per-key merge). If you have `{A:"1",B:"2"}` and update with `{environment:{A:"9"}}`, you end up with just `{A:"9"}` — re-send everything you want to keep.
 
 ### 8. Inspect a running program with stats
 
-**Goal:** read CPU/RSS/uptime to feed a dashboard. `programs.getStatus?include_stats=true` returns the basic `{ id, status }` plus stats fields when the process is actually `running` (when in `backoff`/`stopped`, only `status` and a string `uptime` like `"too quickly (process log may have details)"` come back).
+**Goal:** read CPU/RSS/uptime to feed a dashboard. For a standard program, `programs.getStatus?include_stats=true` returns `{ success, status: { id, status, pid?, uptime? }, stats? }`: the resource figures are in the separate `stats` object, present only when they could be collected for a running process. A program that is not running (`backoff`, `stopped`, `fatal`, …) has no `pid`, `uptime` or `stats`; supervisord's diagnostic text is never returned as `uptime`. A port-range program answers with `instances` instead, each instance carrying its own `stats`.
 
 ```typescript
 const r = await client.daemon.programs.getStatus(id, { include_stats: 'true' } as any);
@@ -16558,7 +16664,7 @@ await client.daemon.programs.start(id, { wait: false, if_not_running: true });
 
 **Accessor:** `client.daemon`  |  **Import:** `import * as daemon from 'hoody-sdk/daemon'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.daemon.ephemeralPrograms` (5) — Ephemeral program launcher - Create temporary programs that auto-cleanup when stopped or on reboot
 
@@ -16916,21 +17022,23 @@ client.daemon.programs.attachTerminal(program: DaemonProgramRef, options?: Progr
 
 ### Body schemas
 
-- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected" | bool="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, port_range: { start*: int, end*: int }, port_param: string, lazy_load: bool=false, ready_port: int|null, display: string|null | int, terminal_id: int, terminal_shell: string|null, terminal_interactive: bool|null, webhooks: { enabled*: bool, urls*: string[], events: string | string[], headers: object, timeout: int, retry: int }|null, sandbox: daemon_SandboxConfig|null }`
-- `daemon_ProgramUpdate` — `{ id: int|null, name: string|null, description: string|null, command: string|null, user: string|null, enabled: bool|null, boot: bool|null, delay_seconds: int|null, autorestart: "true" | "false" | "unexpected" | bool|null, directory: string|null, priority: int|null, stdout_logfile: string|null, stderr_logfile: string|null, logs_enabled: bool|null, log_max_bytes: int|null, log_backups: int|null, environment: { [key: string]: string }|null, hoody_kit: bool, port_range: { start*: int, end*: int }|null, port_param: string|null, lazy_load: bool|null, ready_port: int|null, display: string|null | int, terminal_id: int|null, terminal_shell: string|null, terminal_interactive: bool|null, webhooks: { enabled*: bool, urls*: string[], events: string|null | string[], headers: object|null, timeout: int|null, retry: int|null }|null, sandbox: daemon_SandboxConfig|null }`
-- `daemon_EphemeralProgramInput` — `{ command*: string, user*: string, name: string, autorestart: "true" | "false" | "unexpected" | bool="unexpected", directory: string, environment: { [key: string]: string }, priority: int=999, delay_seconds: int=0, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, ttl: int, wait: bool=false, timeout: int=30, display: string|null | int, terminal_id: int, terminal_shell: string|null, terminal_interactive: bool|null }`
+- `daemon_ProgramInput` — `{ id: int, name*: string, description: string, command*: string, user*: string, enabled: bool=true, boot: bool=false, delay_seconds: int=0, autorestart: "true" | "false" | "unexpected" | bool="unexpected", directory: string, priority: int=999, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, environment: { [key: string]: string }, hoody_kit: bool=false, inject_container_env: bool, port_range: { start*: int, end*: int }, port_param: string, lazy_load: bool=false, ready_port: int|null, display: string|null | int, terminal_id: int, terminal_shell: string|null, terminal_interactive: bool|null, webhooks: { enabled*: bool, urls*: string[], events: string | string[], headers: object, timeout: int, retry: int }|null, sandbox: daemon_SandboxConfig|null }`
+- `daemon_ProgramUpdate` — `{ id: int|null, name: string|null, description: string|null, command: string|null, user: string|null, enabled: bool|null, boot: bool|null, delay_seconds: int|null, autorestart: "true" | "false" | "unexpected" | bool|null, directory: string|null, priority: int|null, stdout_logfile: string|null, stderr_logfile: string|null, logs_enabled: bool|null, log_max_bytes: int|null, log_backups: int|null, environment: { [key: string]: string }|null, hoody_kit: bool, inject_container_env: bool, port_range: { start*: int, end*: int }|null, port_param: string|null, lazy_load: bool|null, ready_port: int|null, display: string|null | int, terminal_id: int|null, terminal_shell: string|null, terminal_interactive: bool|null, webhooks: { enabled*: bool, urls*: string[], events: string|null | string[], headers: object|null, timeout: int|null, retry: int|null }|null, sandbox: daemon_SandboxConfig|null }`
+- `daemon_EphemeralProgramInput` — `{ command*: string, user*: string, name: string, autorestart: "true" | "false" | "unexpected" | bool="false", directory: string, environment: { [key: string]: string }, inject_container_env: bool, priority: int=999, delay_seconds: int=0, stdout_logfile: string, stderr_logfile: string, logs_enabled: bool=true, log_max_bytes: int=5242880, log_backups: int=2, ttl: int, wait: bool=false, timeout: int=30, display: string|null | int, terminal_id: int, terminal_shell: string|null, terminal_interactive: bool|null }`
 - `daemon_SandboxConfig` — `{ filesystem: daemon_SandboxFilesystem|null, network: daemon_SandboxNetwork|null, process: daemon_SandboxProcess|null }`
   - … Consequences that callers must expect — the pid supervisord tracks is the wrapper, not the program; a signal death reaches supervisord as exit code `128+n` rather than as a signal; and any edit that changes the RESOLVED policy replaces the loaded definition, stopping the instance that ran under …
 - `daemon_SandboxFilesystem` — `{ read_only_root: bool|null=false, writable: string[]|null, hidden: string[]|null }`
   - … Independently of these fields, every sandboxed program sees an empty `/run/user` in place of the real one, so it cannot reach its account's systemd user manager or session bus; a sandboxed program whose `directory` is under `/run/user` is rejected with 400. Unknown keys are rejected with 400. …
   - `read_only_root` — Bind `/` read-only (`--ro-bind / /`). … `/sys` is bound read-only for every sandboxed program regardless of this flag, so the program cannot edit its own cgroup limits.
   - `writable` — … Each must already exist and is canonicalized. `read_only_root` must be true — `writable` on its own is a 400, not a restriction. … `/hoody` and `/hoody/storage` are therefore refused because they contain the daemon's own tree; `/hoody/storage/apps/<name>` is accepted. At launch the wrapper's outer stage canonicalizes each path, records its `(st_dev, st_ino)`, and compares those against a fresh stat immediately before the sandbox is spawned; a path that changed identity, or is no longer a directory, is refused. …
-- `daemon_SandboxNetwork` — `{ mode: "full" | "restricted" | "none"|null="full", bind_ports: (int | string)[]|null, connect_ports: (int | string)[]|null, ingress_allow_from: string[]|null, ingress_allow_platform: bool|null=true, ingress_rate_limit: string|null }`
+- `daemon_SandboxNetwork` — `{ mode: "full" | "restricted" | "none"|null="full", bind_ports: (int | string)[]|null, connect_ports: (int | string)[]|null, ingress_allow_from: string[]|null, ingress_allow_platform: bool|null=true, ingress_rate_limit: string|null, udp: "allow" | "deny"|null="allow" }`
   - Network confinement. … Unknown keys are rejected with 400. …
-- `daemon_SandboxProcess` — `{ max_memory: string|null, max_pids: int|null, max_open_files: int|null, private_tmp: bool|null=false }`
-  - … The program sees `/sys` read-only and cannot raise the cgroup limits. Unknown keys are rejected with 400. …
+- `daemon_SandboxProcess` — `{ max_memory: string|null, max_pids: int|null, max_open_files: int|null, max_cpu: string|null, max_file_size: string|null, tmp_size: string|null, private_tmp: bool|null=false }`
+  - Process limits, applied by three different mechanisms: `max_memory`, `max_pids` and `max_cpu` by systemd on the transient scope that owns the program's cgroup (each read back from the cgroup before the program runs; a limit that did not land refuses the launch), `max_open_files` and `max_file_size` as in-process resource limits set just before the program is executed, and `private_tmp` and `tmp_size` as bubblewrap mounts. The program sees `/sys` read-only and cannot raise the cgroup limits. Unknown keys are rejected with 400. …
   - `max_pids` — `TasksMax=` on the scope, from 4 to 65536. The count includes the two wrapper helpers (the scope payload and bubblewrap), so budget at least 2 above the program's own process and thread count.
-  - `private_tmp` — … Rejected with 400 when a `filesystem.writable` entry equals, contains or is contained by `/tmp` or `/var/tmp`: the private mounts are applied first, so a writable bind over them would expose the container's shared directory. Also rejected when the program's `directory` lies strictly below `/tmp` or `/var/tmp`, or when the daemon itself is installed below either: the private mounts would hide them and the launch could not reach the program.
+  - `max_cpu` — … Written to the scope as `CPUQuota=<n>%`; before the program runs, the scope's `cpu.max` is read back and the launch is refused if it holds no limit or a share more than 1 % away from the request. …
+  - `tmp_size` — Size of EACH of the program's private `/tmp` and `/var/tmp`, from 1M to 64G, in the size grammar of `max_memory`. Requires `private_tmp: true`; on its own it is a 400. … Needs bubblewrap 0.10.0 or newer (`/health` reports `bwrap_tmpfs_size`); on an older one the launch is refused.
+  - `private_tmp` — … Rejected with 400 when a `filesystem.writable` entry equals, contains or is contained by `/tmp` or `/var/tmp`: the private mounts are applied first, so a writable bind over them would expose the container's shared directory. Also rejected when the program's `directory` lies strictly below `/tmp` or `/var/tmp`, or when the daemon itself is installed below either: the private mounts would hide them and the launch could not reach the program. …
 
 
 ---
@@ -17013,10 +17121,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **A screenshot pixel is not always a click coordinate.** A seamless session captures only the windows it shows, so the capture's origin is the top-left of their bounding box, while `input.click` and the other pointer calls take root-window coordinates. When the shown windows do not start at (0,0), add the capture origin (the smallest `x` and `y` among the shown windows' "geometry" objects in the `windows.list` response) to a point picked on the screenshot, or use `windows.getGeometry` to target a window directly.
 - Clipboard `selection`: `clipboard` (default), `primary`, `secondary`. PRIMARY ≠ Ctrl+V.
 - Clipboard reads and writes can fail with `CLIPBOARD_FAILED`, carrying a shortened tool error; read the clipboard back after a write to confirm it landed.
-- Window IDs are accepted as decimal or hex (`0x...`). `windows.list`, `windows.search` and `windows.getActive` return decimal numbers; the path-parameter routes (`windows.get`, `windows.getGeometry`, `windows.getTitle`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.
+- Window IDs are accepted as decimal or hex (`0x...`). `windows.list`, `windows.search` and `windows.getActive` return decimal numbers; the path-parameter routes (`windows.get`, `windows.getGeometry`, `windows.getTitle`) echo `windowId` exactly as sent, as a string. Compare ids as numbers, not strings.{1,8}$/"]
 - `windows.focus` activates the window and then tries to give it X input focus. The second step fails on a window that is not viewable, and the call still answers `success: true` with `details.inputFocus: false` and a `warning`; untargeted keyboard input then does not reach that window. `windows.getActive` confirms the activation only.
-- `ui.getPage` returns HTML, browser-only.
-- The screenshot-list accessor hangs off the namespace root (`client.display.screenshots.list`), not the `screenshots` service — there is no `screenshots.list`.
+- The HTML5 client page has no SDK method. Build its URL with `client.embeds.display.client()` and open it or put it in an iframe.
+- List stored screenshots with `client.display.screenshots.list({ displayId: 1 })`; the list method belongs to the `screenshots` service.
 - `display.get` returns display info, a window list (each with per-window `position`/`size`), and the screenshot list — but NOT the virtual screen dimensions (those live on `display.getGeometry`). Its declared response type has only `display` and `screenshots`; read the other fields through a cast.
 - `input.reset` clears stuck modifiers/buttons.
 - `windows.wait` answers 200 even when it times out: the body is `success: false, timedOut: true`, so check `timedOut`, not the status. `timeoutMs` is 100-25000 (default 10000). Too many waits at once on one display give `429 QUEUE_FULL`.
@@ -17026,7 +17134,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 - `400 NO_DISPLAY_CONTEXT` — supply `?displayId=N` or `*-display-N.*`.
 - `DISPLAY_NOT_AVAILABLE` — the X server for that `displayId` is unreachable. Returned by the input, clipboard and window routes alike.
-- `404 SCREENSHOT_NOT_FOUND` on `screenshots.get` — no stored capture has that timestamp. Refresh by calling `screenshots.capture`, which **takes a fresh screenshot** and returns its metadata, not just a timestamp lookup; then retry `screenshots.get` with the new timestamp. (`screenshots.getLatest` only returns metadata for the *latest* stored screenshot, which is not a replacement for a missed timestamp.)
+- `404 SCREENSHOT_NOT_FOUND` on `screenshots.get` — no stored capture has that timestamp. Refresh by calling `screenshots.capture`, which **takes a fresh screenshot** (with `base64` on, the response carries its `info.timestamp`), then retry `screenshots.get` with the new timestamp. `screenshots.getLatest` returns the latest stored image by default; its metadata-only form (`getLatest({ metadata: true })`) returns only that image's metadata. Neither takes a fresh screenshot, so neither replaces a missed timestamp.
 
 ## Related namespaces
 
@@ -17054,7 +17162,7 @@ const b64 = before.image.data;
 await client.display.input.click({ x: 75, y: 50, button: 1 }, { displayId: 1 });
 ```
 
-**Step 3 — capture again and give the new image to the vision model.** `screenshots.capture` is not a cheaper probe: it takes a full capture too and only leaves the image bytes out of the response.
+**Step 3 — capture again and give the new image to the vision model.** With `base64` on, `screenshots.capture` returns the fresh image and its metadata. There is no cheaper probe: the metadata-only form (`metadata: true`) still takes a full screenshot and only leaves the image bytes out.
 
 ```typescript
 const fresh = await client.display.screenshots.capture({ displayId: 1, base64: true });
@@ -17197,7 +17305,7 @@ Safe to call any time, even when nothing is stuck. Pair it with the start of eve
 
 **Accessor:** `client.display`  |  **Import:** `import * as display from 'hoody-sdk/display'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.display.clipboard` (2) — Display information and management
 
@@ -17617,18 +17725,20 @@ client.display.mouse.up(data?: DisplayMouseUpRequest, options?: { displayId?: nu
 #### `capture` — Capture a new screenshot
 
 ```typescript
-client.display.screenshots.capture(options: NonNullable<Parameters<ScreenshotsServiceBase['__captureDisplayScreenshotMetadata']>[0]> & { metadata: true })
+client.display.screenshots.capture(options: { displayId?: number; metadata: true })  // → Promise<CaptureDisplayScreenshotMetadataResponse>
+client.display.screenshots.capture(options?: { base64?: boolean; displayId?: number; region?: string; cursor?: boolean; metadata?: false })  // → Promise<ApiResponse<ArrayBuffer> | CaptureDisplayScreenshotResponse>
+client.display.screenshots.capture(options?: { base64?: boolean; displayId?: number; region?: string; cursor?: boolean; metadata?: boolean })  // → Promise<CaptureDisplayScreenshotMetadataResponse> | Promise<ApiResponse<ArrayBuffer> | CaptureDisplayScreenshotResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `base64` | `boolean` | query | No | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: `true`, `1`, `` (empty) - Return base64 JSON; `false`, `0` - Return binary (default) |
-| `displayId` | `integer` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
+| `displayId` | `number` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 | `region` | `string` | query | No | Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 > x1` and `y2 > y1`; anything else is a 400. The coordinates are **capture coordinates**, not root-window coordinates. A seamless session composites only the windows it is showing, so the capture's origin is the bounding box of those windows. Crop against the width and height reported for the capture itself, not against the geometry from `GET /input/display-geometry`. |
 | `cursor` | `boolean` | query | No | Include the pointer position in the response. Only has an effect on the base64 JSON form, which gains a `cursor` object; a binary PNG response has nowhere to put it. Accepted values: `true`, `1`, `` (empty). Anything else is off. |
 | `metadata` | `boolean` | option | No | Answer the screenshot metadata instead of the image. |
 
-**Returns:** `ReturnType<ScreenshotsServiceBase['__captureDisplayScreenshotMetadata']>`  |  **HTTP:** `GET /api/v1/display/screenshot`
+**Returns:** see each form above  |  **HTTP:** `GET /api/v1/display/screenshot`
 **CLI:** `hoody display screenshots capture`
 
 ---
@@ -17653,16 +17763,18 @@ client.display.screenshots.get(timestamp: string, options?: { base64?: boolean; 
 #### `getLatest` — Retrieve the most recent screenshot
 
 ```typescript
-client.display.screenshots.getLatest(options: NonNullable<Parameters<ScreenshotsServiceBase['__getDisplayLatestScreenshotMetadata']>[0]> & { metadata: true })
+client.display.screenshots.getLatest(options: { displayId?: number; metadata: true })  // → Promise<GetDisplayLatestScreenshotMetadataResponse>
+client.display.screenshots.getLatest(options?: { base64?: boolean; displayId?: number; metadata?: false })  // → Promise<ApiResponse<ArrayBuffer> | GetDisplayLatestScreenshotResponse>
+client.display.screenshots.getLatest(options?: { base64?: boolean; displayId?: number; metadata?: boolean })  // → Promise<GetDisplayLatestScreenshotMetadataResponse> | Promise<ApiResponse<ArrayBuffer> | GetDisplayLatestScreenshotResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `base64` | `boolean` | query | No | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: `true`, `1`, `` (empty) - Return base64 JSON; `false`, `0` - Return binary (default) |
-| `displayId` | `integer` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
+| `displayId` | `number` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 | `metadata` | `boolean` | option | No | Answer the latest screenshot metadata instead of the image. |
 
-**Returns:** `ReturnType<ScreenshotsServiceBase['__getDisplayLatestScreenshotMetadata']>`  |  **HTTP:** `GET /api/v1/display/screenshot/last`
+**Returns:** see each form above  |  **HTTP:** `GET /api/v1/display/screenshot/last`
 **CLI:** `hoody display screenshots latest get`
 
 ---
@@ -17740,82 +17852,6 @@ client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: nu
 
 **Returns:** `Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsGetLatestResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /api/v1/display/thumbnail/last`
 **CLI:** `hoody display thumbnails latest get`
-
----
-
-### `client.display.ui` (1) — Display information and management
-
-#### `getPage` — Access the HTML5 Display client interface
-
-```typescript
-client.display.ui.getPage(options?: { displayId?: number; decorations?: boolean; toolbar?: boolean; menu?: boolean; maximize_new_windows?: boolean; readonly?: boolean; dark_mode?: boolean; node?: string; project_id?: string; container_id?: string; url_display_id?: string; ssl?: boolean; webtransport?: boolean; path?: string; action?: "connect" | "start" | "shadow"; display?: string; encoding?: string; offscreen?: boolean; bandwidth_limit?: number; override_width?: string; override_height?: string; vrefresh?: number; suspend_inactive_tab?: boolean; sound?: boolean; audio_codec?: string; keyboard?: boolean; keyboard_layout?: string; swap_keys?: boolean; clipboard?: boolean; clipboard_preferred_format?: "text/plain" | "text/html" | "UTF8_STRING"; clipboard_poll?: boolean; printing?: boolean; file_transfer?: boolean; video?: boolean; mediasource_video?: boolean; open_url?: boolean; notification_server_url?: string; web_notifications?: boolean; display_notifications?: boolean; notification_connection_type?: "websocket" | "polling"; sharing?: boolean; steal?: boolean; reconnect?: boolean; floating_menu?: boolean; clock?: boolean; scroll_reverse_y?: "auto" | "true" | "false"; scroll_reverse_x?: boolean; title_show_hoody?: boolean; title_show_display_id?: boolean; app?: string; remote_logging?: boolean; insecure?: boolean; debug_main?: boolean; debug_keyboard?: boolean; debug_geometry?: boolean; debug_mouse?: boolean; debug_clipboard?: boolean; debug_draw?: boolean; debug_audio?: boolean; debug_network?: boolean; debug_file?: boolean })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `displayId` | `number` | query | No | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `decorations` | `boolean` | query | No | Show window decorations (title bar with close/minimize/maximize buttons). Set to false for headless/kiosk mode. |
-| `toolbar` | `boolean` | query | No | Show entire toolbar/menu area (menu trigger + menu). Set to false to hide all menu UI elements. Takes precedence over the menu parameter. |
-| `menu` | `boolean` | query | No | Show Hoody menu trigger icon. Set to false to hide menu completely. Note: toolbar parameter takes precedence over this. |
-| `maximize_new_windows` | `boolean` | query | No | Open new top-level application windows maximized instead of centered at the default size (max 1024x1024). Only applies to windows that do not request their own position, and skips override-redirect windows, dialogs, other non-NORMAL window types, and windows the app itself marks undecorated via metadata (which would have no title bar to un-maximize from). Windows can still be un-maximized from their title bar. Combining with the global decorations=false parameter is honoured as explicit kiosk intent: windows open maximized without a title bar. |
-| `readonly` | `boolean` | query | No | Enable read-only/view-only mode. Blocks all keyboard and mouse input from the client. Perfect for dashboards, monitoring, or demo scenarios. Works independently or combines with server readonly setting. |
-| `dark_mode` | `boolean` | query | No | Enable dark mode theme |
-| `node` | `string` | query | No | Hoody node identifier (e.g., node-example-1) |
-| `project_id` | `string` | query | No | Hoody project ID |
-| `container_id` | `string` | query | No | Hoody container ID |
-| `url_display_id` | `string` | query | No | Display ID for URL construction |
-| `ssl` | `boolean` | query | No | Use SSL/TLS for WebSocket connection |
-| `webtransport` | `boolean` | query | No | Use WebTransport (HTTP3) instead of WebSocket |
-| `path` | `string` | query | No | Connection path for the display server |
-| `action` | `"connect" \| "start" \| "shadow"` | query | No | Connection action type. `connect` - Connect to existing session; `start` - Start new session; `shadow` - Shadow existing display |
-| `display` | `string` | query | No | Display number to connect to |
-| `encoding` | `string` | query | No | Pre-selects the encoding in the settings dialog; does not change the stream encoding. |
-| `offscreen` | `boolean` | query | No | Use offscreen canvas for rendering |
-| `bandwidth_limit` | `number` | query | No | Bandwidth limit in bits per second (0 = unlimited) |
-| `override_width` | `string` | query | No | Override virtual desktop width (auto or numeric value) |
-| `override_height` | `string` | query | No | Override virtual desktop height (auto or numeric value 480-4320) |
-| `vrefresh` | `number` | query | No | Vertical refresh rate in Hz. Use -1 for auto-detect. Minimum 30 when explicitly set. |
-| `suspend_inactive_tab` | `boolean` | query | No | Suspend client updates when browser tab is inactive. Enables power saving by calling client.suspend() on tab hide and client.resume() on tab show. Recommended to keep enabled for better performance. |
-| `sound` | `boolean` | query | No | Enable audio forwarding |
-| `audio_codec` | `string` | query | No | Preferred audio codec |
-| `keyboard` | `boolean` | query | No | Show on-screen virtual keyboard |
-| `keyboard_layout` | `string` | query | No | Keyboard layout (us, gb, fr, de, etc.) |
-| `swap_keys` | `boolean` | query | No | Swap Cmd/Ctrl keys (useful for macOS) |
-| `clipboard` | `boolean` | query | No | Enable clipboard sharing |
-| `clipboard_preferred_format` | `"text/plain" \| "text/html" \| "UTF8_STRING"` | query | No | Preferred clipboard format |
-| `clipboard_poll` | `boolean` | query | No | Enable clipboard polling (browser-dependent default) |
-| `printing` | `boolean` | query | No | Enable printing support |
-| `file_transfer` | `boolean` | query | No | Enable file transfer support |
-| `video` | `boolean` | query | No | Enable video encoding support |
-| `mediasource_video` | `boolean` | query | No | Enable MediaSource API for video |
-| `open_url` | `boolean` | query | No | Allow opening URLs from the remote session in the local browser |
-| `notification_server_url` | `string` | query | No | External notification server URL for real-time notification integration. **URL Format:** `https://{project}-{container}-n-{display}.{node}.containers.hoody.com/notification-client.js` **Auto-detection:** If not provided, the client will attempt to auto-detect from the current hostname pattern. The client transforms the display URL pattern by replacing 'display' with 'n'. **Examples:** Manual: `?notification_server_url=https://my-project-container-n-6.node.containers.hoody.com/notification-client.js`; Auto-detected from: `https://my-project-container-display-6.node.containers.hoody.com` **Integration:** The notification server (port 3999) provides: Historical notification retrieval; Real-time WebSocket notification updates; Notification icons serving; Desktop notification triggering See external notification server OpenAPI spec for complete API documentation. |
-| `web_notifications` | `boolean` | query | No | Enable browser web notifications (native OS notifications) |
-| `display_notifications` | `boolean` | query | No | Show notifications within display UI |
-| `notification_connection_type` | `"websocket" \| "polling"` | query | No | Notification server connection type. websocket: Real-time updates via WebSocket (recommended); polling: Periodic HTTP polling (fallback) |
-| `sharing` | `boolean` | query | No | Allow session sharing |
-| `steal` | `boolean` | query | No | Steal existing sessions |
-| `reconnect` | `boolean` | query | No | Auto-reconnect on connection loss |
-| `floating_menu` | `boolean` | query | No | Show floating menu |
-| `clock` | `boolean` | query | No | Show server clock |
-| `scroll_reverse_y` | `"auto" \| "true" \| "false"` | query | No | Reverse vertical scrolling direction (auto, true, false) |
-| `scroll_reverse_x` | `boolean` | query | No | Reverse horizontal scrolling direction |
-| `title_show_hoody` | `boolean` | query | No | Show "Hoody" in browser title |
-| `title_show_display_id` | `boolean` | query | No | Show display ID in browser title |
-| `app` | `string` | query | No | Target application to launch or focus. Can be an application name, a REGEX pattern, or a window ID. |
-| `remote_logging` | `boolean` | query | No | Enable remote logging to the display server |
-| `insecure` | `boolean` | query | No | Allow insecure authentication (not recommended for production) |
-| `debug_main` | `boolean` | query | No | Enable main debug logging |
-| `debug_keyboard` | `boolean` | query | No | Enable keyboard debug logging |
-| `debug_geometry` | `boolean` | query | No | Enable geometry debug logging |
-| `debug_mouse` | `boolean` | query | No | Enable mouse debug logging |
-| `debug_clipboard` | `boolean` | query | No | Enable clipboard debug logging |
-| `debug_draw` | `boolean` | query | No | Enable draw debug logging |
-| `debug_audio` | `boolean` | query | No | Enable audio debug logging |
-| `debug_network` | `boolean` | query | No | Enable network debug logging |
-| `debug_file` | `boolean` | query | No | Enable file transfer debug logging |
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/display/`
 
 ---
 
@@ -18120,6 +18156,8 @@ The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server
 
 **Go back to the container's own IP.** `client.egress.upstream.disable`, or equivalently `upstream.set` with an empty string — the kit treats a body with no URL line as a disable. Check with `client.egress.upstream.get`.
 
+**Lease an upstream that should end with its client.** `client.egress.upstream.set(url, { lease: 60 })` installs the upstream for that many whole seconds, from 5 to 3600. The answer, and every later read while that upstream is configured, carries `lease: { id, ttl, expires_at, expires_in }` (`expires_at` in Unix seconds). Renew it before the deadline with `client.egress.upstream.renewLease({ lease_id })`: the deadline moves to `ttl` seconds from now, never earlier than it already was and never more than 3600 seconds ahead, and the answer is the same body a read returns. If no renewal arrives in time, the kit disables the upstream the way an explicit disable does and records the disable in its config file, so the container goes back to its own IP and stays there across a restart. A lease that ran out while the kit was down is disabled at startup. A set without `lease` installs a permanent upstream and ends any earlier lease. A replacement or a disable also ends it, and renewing the old id then answers 409.
+
 **Confirm where traffic exits.** Request `https://ip.hoody.com` through the proxy; it reports the address it saw, which is the container's or the upstream's once one is set.
 
 ## Quirks & gotchas
@@ -18127,7 +18165,7 @@ The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server
 - **Teardown deletes, it does not restore.** Clearing removes the upstream, and the kit never returns credentials — a read reports scheme, host, port and an `auth` flag only — so an authenticated upstream that some other tool configured cannot be put back unless whoever configured it still holds the full URL. An unauthenticated one can be rebuilt from a read taken before the clear.
 - **The setting is applied without a restart.** It lands in the file reported as `config_path` in the response and is picked up within about a second. A clear does not remove that file — it records an explicit `disabled` state, which is what makes the disable survive a restart of a process that was started with an upstream. A URL line the destination guard refuses, or one that does not parse, is NOT a fall back to direct, and which of two things it does depends on whether an upstream is already working: with one in force that upstream keeps carrying traffic, and with none in force the kit reports `state: "unavailable"` and answers proxied requests with 502 until the line is fixed or removed.
 - **Direct destinations are filtered, unconditionally, and IPv4 only.** With no upstream in force, the kit resolves the destination, refuses private, loopback, link-local, CGNAT, benchmarking, documentation, TEST-NET, multicast and reserved addresses with `403 destination not permitted`, and dials the address it checked, so a short-TTL record cannot pass the check and then point elsewhere. An IPv6 literal destination is refused on every path, upstream or not, mapped (`::ffff:a.b.c.d`), compatible and NAT64 spellings included; a name the kit resolves itself that has no IPv4 address is refused too. There is no flag, environment variable, file or API field that admits one. The same address rule applies to the upstream itself, with one exception for chaining: a `socks5`/`socks5h` upstream on IPv4 loopback is accepted on any port, credentials optional, because that is the shape a local exit installs. Past an upstream, the destination is that exit's business for all four schemes: `socks5` resolves the name here and sends the first IPv4 address without the private-address check, and `socks5h`, `http` and `https` hand the name to the exit, which also decides its address family.
-- **A configured upstream that cannot be used refuses traffic; it does not fall back to direct.** With no upstream in force, a configured one that is refused, unresolvable or unparsable reads as `enabled: true, state: "unavailable"`, and proxied requests get `502 configured upstream proxy is unavailable`. That is deliberate: a request must not leave from the container's own address after someone asked for an exit. The kit keeps retrying, so a transient DNS failure recovers on its own, and direct egress returns only on an explicit disable (`DELETE`, an empty or `disabled` body, or emptying a config file that has governed). A replacement refused by the management API (the `400` answers below) changes nothing at all. A replacement written into the config file behaves differently: an unparsable line is ignored while an upstream is working, but a line that parses and is refused only for now becomes the pending setting. The working upstream keeps carrying traffic meanwhile, the kit keeps re-checking the new line, and it takes over as soon as a later check approves it.
+- **A configured upstream that cannot be used refuses traffic; it does not fall back to direct.** With no upstream in force, a configured one that is refused, unresolvable or unparsable reads as `enabled: true, state: "unavailable"`, and proxied requests get `502 configured upstream proxy is unavailable`. That is deliberate: a request must not leave from the container's own address after someone asked for an exit. The kit keeps retrying, so a transient DNS failure recovers on its own. For an upstream set without a lease, direct egress returns only on an explicit disable (`DELETE`, an empty or `disabled` body, or emptying a config file that has governed); an upstream set with a `lease` (in seconds) is also disabled automatically when the lease runs out without a renewal. A replacement refused by the management API (the `400` answers below) changes nothing at all. A replacement written into the config file behaves differently: an unparsable line is ignored while an upstream is working, but a line that parses and is refused only for now becomes the pending setting. The working upstream keeps carrying traffic meanwhile, the kit keeps re-checking the new line, and it takes over as soon as a later check approves it.
 - **The body is small and strictly framed.** A missing `Content-Length` is 411, and a *declared* `Content-Length` over 4096 is 413 — the check is on the header, before the body is read. This is not a channel for anything but a URL.
 - **Health answers almost any method.** The health route matches on path alone, so every method except `OPTIONS` reaches it; `OPTIONS` is answered 204 with CORS headers before routing, which is what makes browser preflight work against the management API.
 - **A local exit makes your machine the exit** (`startLocalExit`, imported from the package root: `import { startLocalExit } from 'hoody-sdk'`, not from `hoody-sdk/egress`). It binds a loopback port inside the container over hoody-tunnel, points the upstream at it, and terminates SOCKS5 in your process, so requests leave from the machine the SDK process runs on and the exit lives only as long as that process. Nothing listens on that machine; every socket it opens is outbound. Destinations are gated to public IPv4 by default, every resolved A record is authorised, and the pinned address is what gets dialled, so DNS rebinding cannot redirect a connection after approval. **Only destination ports 80 and 443 are allowed by default**, so SSH, database or `:8080` traffic through the exit is refused; widen it with `policy: { allowPorts: [22, 443, 5432] }` (or `allowPorts: '*'`) in the `startLocalExit` options. The same `policy` object takes `blockPrivate` and `denyCidrs`.
@@ -18137,16 +18175,18 @@ The endpoint is `https://{projectId}-{containerId}-egress-{serviceIndex}.{server
 
 ## Common errors
 
-Errors come from two surfaces that answer differently. The management surface always sends a body: `text/plain` for every error except the 404, which is JSON, and every body ends with a trailing newline, so match on prefix or substring rather than equality. Framing and forwarding errors send no response body and no `Content-Type`; the status line still arrives with headers, always including `Vary: Origin` and `Connection: close`.
+Errors come from two surfaces that answer differently. The management surface always sends a body: `text/plain` for every error except the 404, which is JSON, and every body ends with a trailing newline, so match on prefix or substring rather than equality. Most framing and forwarding errors send no response body and no `Content-Type`; the exceptions are a destination-policy refusal (403) and an unavailable configured upstream (502), which both carry a `text/plain` body. The status line still arrives with headers, always including `Vary: Origin` and `Connection: close`.
 
-**Management surface** (path-form requests: `/api/v1/egress/upstream` and the route catch-all):
+**Management surface** (path-form requests: `/api/v1/egress/upstream`, `/api/v1/egress/upstream/renew` and the route catch-all):
 
-- 400 — five causes with five `text/plain` bodies: `Invalid upstream URL` when the value does not parse or its scheme is not one of the four, `Upstream destination not permitted` when it parses but every address it resolves to is refused by the destination guard, `Upstream unresolvable` when the host did not resolve inside the connect timeout (transient, worth a retry, and distinct from the previous one), `Failed to read body` when the read fails or times out, and `Body must be UTF-8`. The OpenAPI 400 description names the same five bodies; it is documentation, not additional wire text. A refused or unresolvable replacement leaves a working upstream in force, so a 400 here does not mean the container lost its exit.
+- 400 — the following causes, each with its own `text/plain` body: `Invalid upstream URL` when the value does not parse or its scheme is not one of the four, `Upstream destination not permitted` when it parses but every address it resolves to is refused by the destination guard, `Upstream unresolvable` when the host did not resolve inside the connect timeout (transient, worth a retry, and distinct from the previous one), `Failed to read body` when the read fails or times out, and `Body must be UTF-8`. A set request can also return `Invalid lease: give whole seconds from 5 to 3600`, or `A lease needs an upstream URL` when a lease accompanies an empty or `disabled` body. The OpenAPI 400 description names the same bodies; it is documentation, not additional wire text. A refused or unresolvable replacement leaves a working upstream in force, so a 400 here does not mean the container lost its exit.
 - 404 — a path-form target that is not a management route, and the one JSON error: `{"error":"not found"}` with `Content-Type: application/json`. It is never forwarded, so it means the request was addressed to the proxy rather than through it.
-- 405 — `Method Not Allowed` for any verb on the upstream route other than `GET`, `PUT`, `POST`, or `DELETE`. `OPTIONS` never reaches it; it is answered 204 before routing.
+- 400 — `Missing or invalid lease_id` on a renewal whose `lease_id` is absent or is not 1 to 64 ASCII letters and digits.
+- 405 — `Method Not Allowed` for any verb on the upstream route other than `GET`, `PUT`, `POST`, or `DELETE`, and for any verb but `POST` on the renew route. `OPTIONS` never reaches it; it is answered 204 before routing.
 - 411 — `Missing Content-Length` on a set request.
 - 413 — `Body too large` when the declared `Content-Length` exceeds 4096 bytes.
-- 500 — `Failed to write config` when persisting the upstream file fails, on set and clear alike. The in-memory upstream is swapped only after a successful write, so after a 500 the previous setting still applies.
+- 409 — `No upstream lease with this id is in force` on a renewal: the lease already expired, the upstream was replaced or disabled, or the config file no longer holds that lease. Nothing is rewritten, so the old upstream is not revived. Set the upstream again, with a new lease, if it is still wanted.
+- 500 — `Failed to write config` when persisting the upstream file fails, on set, clear and renewal alike, and `Failed to read config` when a renewal cannot read it. The in-memory upstream is swapped only after a successful write, so after a 500 the previous setting still applies.
 
 **Proxy data path and request framing.** Most of these send no response body; the two policy answers below (403, and the 502 whose body names an unavailable upstream) are the exceptions, and both carry `Content-Type: text/plain` plus CORS headers.
 
@@ -18241,7 +18281,7 @@ The check-then-set is not atomic — the guard protects against accidents, not r
 
 **Accessor:** `client.egress`  |  **Import:** `import * as egress from 'hoody-sdk/egress'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.egress.kit` (1) — egress
 
@@ -18256,7 +18296,7 @@ client.egress.kit.getHealth()
 
 ---
 
-### `client.egress.upstream` (3) — egress
+### `client.egress.upstream` (4) — egress
 
 #### `disable` — Disable upstream
 
@@ -18280,14 +18320,30 @@ client.egress.upstream.get()
 
 ---
 
-#### `set` — Set upstream
+#### `renewLease` — Renew the upstream lease
 
 ```typescript
-client.egress.upstream.set(data: string)
+client.egress.upstream.renewLease(options: { lease_id: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
+| `lease_id` | `string` | query | Yes | The `lease.id` returned when the upstream was set |
+
+**Returns:** `Promise<EgressUpstreamRenewLeaseResponse>`  |  **HTTP:** `POST /api/v1/egress/upstream/renew`
+**CLI:** `hoody egress upstream renew`
+
+---
+
+#### `set` — Set upstream
+
+```typescript
+client.egress.upstream.set(data: string, options?: { lease?: number })
+```
+
+| Parameter | Type | In | Required | Description |
+|-----------|------|------|----------|-------------|
+| `lease` | `number` | query | No | Lease the upstream for this many seconds. The service disables the upstream (as `DELETE` does) unless the lease is renewed before then with `POST /api/v1/egress/upstream/renew`. For an upstream that only works while its client is alive, such as the loopback exit `hoody egress local start` installs. |
 | `data` | `string` | body | Yes |  |
 
 **Returns:** `Promise<EgressUpstreamSetResponse>`  |  **HTTP:** `PUT /api/v1/egress/upstream`
@@ -18306,7 +18362,7 @@ client.egress.upstream.set(data: string)
 
 **Routes only auto-mount for `.ts` / `.js` files.** Bare `.sh` / `.py` files dropped in the scripts dir are NOT exposed as HTTP — wrap them by writing a thin `.ts` handler that shells out via `Bun.$`. From a `.ts` handler you can run anything on `$PATH` (curl, ffmpeg, Python, native binaries) in one line.
 
-To give a script a **public** address: create an alias with `proxy.aliases.create` (`program: 'exec'`, and `target_path: '/<your-script>'` as the landing page) and you get back `https://<alias>.{server_name}.containers.hoody.com` with no `containerId` in the URL. The alias points at the WHOLE exec kit, not at one script: `target_path` only answers a request with no path, and every other path is forwarded as sent whatever `allow_path_override` says. That can include the kit's own management API under `/api/v1/exec/` (`scripts.write`, `scripts.delete`, …), so anyone holding the link may be able to write and run code in the container. Before sharing the alias, gate it with `proxy.containerPermissions.*` (a password, token, JWT or IP group, plus a `default` policy that denies what the group does not allow), exactly as for any kit URL.
+To give a script a **public** address: create an alias with `proxy.aliases.create` (`program: 'exec'`, and `target_path: '/<your-script>'` as the landing page) and you get back `https://<alias>.{server_name}.containers.hoody.com` with no `containerId` in the URL. With the default `allow_path_override: true` the alias points at the WHOLE exec kit, not at one script: `target_path` only answers a request with no path, and every other path is forwarded as sent. That includes the kit's own management API under `/api/v1/exec/` (`scripts.write`, `scripts.delete`, …), so anyone holding the link may be able to write and run code in the container. Set `allow_path_override: false` to serve only the script: it is served at the alias root AND at `/<your-script>`, while any other path (sub-paths, assets and the management API under `/api/v1/exec/` included) is refused with `404 ALIAS_PATH_PINNED`, and the visitor's method, body and query keys the target does not set still reach the script. Either way, before sharing the alias, gate it with `proxy.containerPermissions.*` (a password, token, JWT or IP group, plus a `default` policy that denies what the group does not allow), exactly as for any kit URL.
 
 **Trust model — read carefully.** Scripts run inside the container with full container privileges. They are NOT a sandbox for untrusted user code. Anyone who can invoke a script can do everything the script can do (read files, hit other kits, spawn processes). Use them for *your* APIs / cron logic / webhooks / ETL — don't expose them as an arbitrary code-execution surface to anonymous internet users without thinking through the gate stack first.
 
@@ -18329,7 +18385,7 @@ To give a script a **public** address: create an alias with `proxy.aliases.creat
 ## Prerequisites
 
 - Scripts dir `/hoody/storage/hoody-exec/scripts/{subdomain}/{instanceId}/` (subdomain defaults to `default`, e.g. `…/scripts/default/1/`) is service-managed; write only via `scripts.write`.
-- **`require('hoody-sdk')` works with no install step** — the SDK is embedded in hoody-exec: `require('hoody-sdk')` and its subpaths load that embedded copy before any disk lookup, so installing another version does not change it; a newer SDK arrives with a newer exec build. (Other `require()`d npm packages are auto-installed on first execution.) Import from `'hoody-sdk'`. The constructor takes an explicit config; `withContainer` is async and returns a container-scoped client. Calls go through the edge proxy — no localhost bypass — so all the usual capability gates / request hooks / proxy logs apply (see § No local bypass in `SKILL-SDK.md`).
+- **`require('hoody-sdk')` works with no install step** — it loads the installed npm package from the scripts root's `node_modules`. Exec installs a missing SDK automatically (at startup, or on a script's first `require`), honors a version you declare in the scripts-root `package.json` (an exact version or a tag stops updates, a range keeps them inside it), and stages a newer registry release that the next kit startup swaps in; a running kit never replaces its live copy. (Other `require()`d npm packages are auto-installed on first execution.) Import from `'hoody-sdk'`. The constructor takes an explicit config; `withContainer` is async and returns a container-scoped client. Calls go through the edge proxy, so all the usual capability gates / request hooks / proxy logs apply (see § Source IP Guard in `SKILL-SDK.md`).
 - The `hoody` CLI is also on `$PATH` if you'd rather shell out: `Bun.$\`hoody projects list\`` from the same script works end-to-end.
 
 ## Capability URL
@@ -18363,7 +18419,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `logs.list` / `logs.search` / `logs.get` (one JSON response; `lines` and `tail` pick the slice). For a live tail use `logs.stream` (SSE).
 2. `kit.listRequests` / `kit.getStats`; per script, `scripts.listStats` first, then `scripts.getStats` with one `scriptPath` from that listing (an empty body returns an empty `metrics` stub).
-3. `openapi.listScripts`, then `openapi.generate` / `openapi.get` (a document built from the current scripts) or `openapi.merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the whole scripts directory) and otherwise merges just the `specs` you pass; it answers `{success, data, meta}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `openapi.validateSchema` checks one script's `.openapi.json` sidecar.
+3. `openapi.listScripts`, then `openapi.generate` / `openapi.get` (a document built from the current scripts) or `openapi.merge`. Merge scans scripts only for the `directories` you name (`['scripts']` for the calling deployment's scripts directory — the `<subdomain|default>/<execId>` the kit URL names, unless you pass `subdomain` / `execId`) and otherwise merges just the `specs` you pass; it answers `{success, data, meta}` with the document in `data`. None of the three writes anything to disk, so store a merge result yourself if you need to keep it. `openapi.validateSchema` checks one script's `.openapi.json` sidecar.
 
 ## Quirks & gotchas
 
@@ -18375,10 +18431,10 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - `scripts.write` defaults `createDirs:true`, `validate:true`. `.md`/`.yaml`/`.env`/any other non-`.ts`/`.js`/`.json` extension skip; `.json` JSON.parse; only `.ts`/`.js` full pipeline.
 - Invocation = bare path (`POST /greeting`), NOT `/api/v1/exec/...`.
 - Proxy-alias uses `program: 'exec'`; `proxy.services.list` returning `[]` is normal (it lists only services named in proxy permission rules or hooks).
-- `schedules.run` resolves a relative `scriptPath` from the kit's scripts ROOT, not from the `default/<execId>/` folder that `scripts.write` writes into. A script written as `tick.js` must be triggered as `default/1/tick.js` (the `scriptRel` of `schedules.list`) or by its absolute `scriptPath`; plain `tick.js` answers 404 `script not found`. `schedules.listHistory` filters by the same root-relative form (an absolute path is converted to it).
+- `schedules.run` and `schedules.listHistory` scope a relative `scriptPath` by the kit URL you call, like `scripts.write`: through the `exec-1` kit URL, `tick.js` means `default/1/tick.js` (the `scriptRel` of `schedules.list`), and a path that already starts with `default/1/` is kept as is. An absolute `scriptPath` is used as given (history converts it to the root-relative form); a script at the scripts root, outside any deployment folder, is reachable from a deployment URL only by its absolute path.
 - `scripts.write`/`delete` accept optional `execId` (alias `exec_id`) + `subdomain`; query wins.
-- `magicComments.update` and `magicComments.get` take `path` relative to the scripts ROOT: a script written as `tick.js` through the `exec-1` kit URL is `default/1/tick.js` here (the write's `resolvedPath`, or its `path` in `scripts.list`), and plain `tick.js` answers 404 `Script not found`.
-- `magicComments.updateMany` with neither `directory` nor `execId` edits the calling deployment's own tree (`default/1` through `exec-1`); a `directory` is scripts-root-relative too.
+- `magicComments.update` and `magicComments.get` resolve `path` like `scripts.write`: through the `exec-1` kit URL, `tick.js` is looked up as `default/1/tick.js` first (the `execId` / `subdomain` parameters pick another deployment), then as given relative to the scripts root, so the root-relative `default/1/tick.js` (the write's `resolvedPath`, or its `path` in `scripts.list`) also works; the first that exists is used, and none answers 404 `Script not found`.
+- `magicComments.updateMany` with neither `directory` nor `execId` edits the calling deployment's own tree (`default/1` through `exec-1`); a `directory` resolves like a script path (under the calling deployment's tree first, then relative to the scripts root).
 - `magicComments.update` sets `// @schedule` (`comments.schedule`; an empty string removes it). The value is a 5-field cron expression (`minute hour day month weekday`) or a nickname (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), always in UTC, one per file. `// @schedule-timeout <ms>` is the max run time of one scheduled run; HTTP requests keep `@timeout` (a scheduled run without it uses `@timeout`, else 30 s). It is registered at once, as by a write whose header has the line (no `schedules.reload`); `schedules.list` shows its `nextFire`.
 - A `@schedule` fire bypasses the script's `@token`, and a script that also declares `@websocket` is not registered (`schedules.listHistory` records it as `incompatible`). The `curl` kit's schedules take 6 fields (seconds first); the `cron` namespace takes 5, in the container's own crontab.
 - **Built-in AI, zero setup — never wire up your own provider/key for AI in a script.** Every endpoint gets these script-scoped bindings, enabled by default (off with `// @ai false`; not on `globalThis`; `pre.js` / `post.js` get none): `ai` (`ai.generate(prompt)` / `ai.stream(prompt)` / `ai.object({ schema, prompt })`), plus `openai` (provider factory), `model` (the default model instance), and `generateText`/`streamText`/`generateObject`. They are already wired to **Hoody AI** (`https://ai.hoody.com/api/v1` unless the kit runs with another `--ai-url`; default model **`hoody-ai/hoody-free`** unless `--ai-default-model` changes it). **No `require()`, no base URL, and no API key**: the key defaults to `container-<hash>`, and `// @ai-key` replaces it. Exec does not price, meter or refuse models; what a model costs and what happens without wallet credit is decided by the AI service. Override per-script with magic comments (`// @ai-model <provider/model>`, `// @ai-temperature 0.7`, `// @ai-max-tokens 2048`, `// @ai-key <custom-tag>`); set a default system prompt via a sibling `<script>.system.md` (or directory-level `_system.md`).
@@ -18457,7 +18513,7 @@ await client.exec.scripts.write({
   //   companion file next to the script, so you must supply these yourself:
   //   const hoody = new HoodyClient({ baseURL: process.env.HOODY_API_URL!, token: process.env.HOODY_TOKEN });
   //   const c = await hoody.withContainer(process.env.HOODY_CONTAINER!);
-  //   const a = await c.curl.run({ url: 'https://agent-a/score', method: 'POST', data: req.body });
+  //   const a = await c.curl.run({ url: 'https://agent-a/score', method: 'POST', json: req.body });
   const callA = async () => ({ score: 0.91, label: 'spam' });
   const checkB = async (a) => ({ verdict: a.score > 0.8 ? 'block' : 'allow' });
   const actC  = async (v) => ({ executed: v === 'block' ? 'quarantined' : 'delivered' });
@@ -18528,7 +18584,7 @@ const m = await client.exec.magicComments.validate({ code });
 console.log(v.data!.valid, m.data!.magicComments);
 ```
 
-If `valid:true`, ship it via `scripts.write` (default `validate:true` re-runs the checks server-side). If `valid:false`, the `results.{syntax,typescript,dependencies}` slots tell you which checker rejected it. Magic comments never make a script invalid: a directive whose value cannot be used falls back to its default and is reported in `results.magicCommentWarnings` (or `warnings` from `magicComments.validate`) while `valid` stays `true`, so read those warnings separately. The two paths differ on one point: `scripts.validate` counts a `require()`d module that is not installed yet as a failure, while `scripts.write` only warns about it and the runtime installs it on first execution. A `valid:false` whose only failing slot is `dependencies` is therefore safe to write.
+If `valid:true`, ship it via `scripts.write` (default `validate:true` re-runs the checks server-side). If `valid:false`, the `results.{syntax,typescript,dependencies}` slots tell you which checker rejected it. Magic comments never make a script invalid: a directive whose value cannot be used falls back to its default and is reported in `results.magicCommentWarnings` (or `warnings` from `magicComments.validate`) while `valid` stays `true`, so read those warnings separately. The two paths differ on one point: `scripts.validate` counts a `require()`d module that is not installed yet as a failure, while `scripts.write` only warns about it and the runtime installs it on first execution. A `valid:false` whose only failing slot is `dependencies` can be written for the runtime to install when `results.dependencies.invalidModules` is empty, so the failure is only missing packages. A versioned import specifier such as `require('lodash@4')` is listed in `invalidModules` and refused at runtime: pin the version in the scripts-root `package.json` (`packages.pin`) and import the bare package name.
 
 ### 6. Auto-publish OpenAPI for your scripts
 
@@ -18548,7 +18604,7 @@ const r = await client.exec.openapi.get({ format: 'json' });
 require('fs').writeFileSync('/tmp/user-scripts.openapi.json', JSON.stringify(r.data, null, 2));
 ```
 
-**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `openapi.merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the whole scripts directory); without them it merges just the `specs` you pass. It answers `{success, data, meta}` with the merged document in `data`.
+**Step 3 — merge a hand-written spec layer** (auth / examples / hosts) on top of the auto-generated one with `openapi.merge`. Merge generates from the scripts only for the `directories` you name (`scripts` means the calling deployment's scripts directory, not every deployment's); without them it merges just the `specs` you pass. It answers `{success, data, meta}` with the merged document in `data`.
 
 ```typescript
 const layer = JSON.parse(require('fs').readFileSync('/tmp/layer.json', 'utf8'));
@@ -18566,9 +18622,12 @@ const doc = merged.data!.data;   // the merged OpenAPI document
 const list = await client.exec.logs.list();
 const tail = await client.exec.logs.get({ file: logName, lines: '200', tail: true });  // logName from logs.list().logs[].name
 
-// Live tail: stream() resolves to an async iterable of SSE events; each event's data is {"line": "..."}.
+// Live tail: stream() resolves to an async iterable of SSE events. A `message` event's data is {"line": "..."};
+// a `gap` event ({reason, file} or {reason, skippedFiles}) reports log lines the follower could not deliver.
 for await (const ev of await client.exec.logs.stream({ file: logName, follow: true })) {
-  console.log(JSON.parse(ev.raw).line);
+  const data = JSON.parse(ev.raw);
+  if (ev.event === 'gap') console.error('Log gap:', data);
+  else console.log(data.line);
 }
 ```
 
@@ -18631,7 +18690,7 @@ const r = await client.exec.schedules.list();
 console.log(r.data!.schedules);
 ```
 
-**Step 3 — fire it on demand.** `scriptPath` accepts the absolute `scriptPath` from step 2 or its root-relative `scriptRel` (`default/1/tick.js`). A relative path is resolved from the scripts ROOT, not from the `default/1/` folder `scripts.write` wrote into, so plain `tick.js` answers 404 `script not found`. `force:true` bypasses the `// @token` refusal so you can manually exercise scripts that gate cron-only. The response is the fire outcome, `{triggered, scriptPath, runId, status, durationMs, error?}`.
+**Step 3 — fire it on demand.** `scriptPath` accepts the absolute `scriptPath` from step 2 or its root-relative `scriptRel` (`default/1/tick.js`). A relative path is scoped by the kit URL like `scripts.write`, so through the `exec-1` kit URL plain `tick.js` also names `default/1/tick.js`. `force:true` bypasses the `// @token` refusal so you can manually exercise scripts that gate cron-only. The response is the fire outcome, `{triggered, scriptPath, runId, status, durationMs, error?}`.
 
 ```typescript
 await client.exec.schedules.run({
@@ -18767,7 +18826,7 @@ curl -s "https://{P}-{C}-exec-1.{N}.containers.hoody.com/upload" -F title=notes 
 
 **Accessor:** `client.exec`  |  **Import:** `import * as exec from 'hoody-sdk/exec'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.exec.cache` (1) — Cache
 
@@ -18999,12 +19058,15 @@ client.exec.logs.stream(options: { file: string; follow?: boolean })
 #### `get` — Read Magic Comments
 
 ```typescript
-client.exec.magicComments.get(options: { path: string })
+client.exec.magicComments.get(options: { path: string; execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `path` | `string` | query | Yes | Path query parameter |
+| `path` | `string` | query | Yes | A script path resolved like scripts/read: under the call's scope first (`execId` / `exec_id` / `subdomain`, else the Host's `[<subdomain>.]…-exec-<execId>`), as `<subdomain\|default>/<execId>/<path>` unless it already starts with that prefix; when no file is there, relative to the scripts directory (so `default/1/x.ts` still works from any Host). An absolute path inside the scripts directory is read relative to it. `resolvedPath` in the answer names the file used. |
+| `execId` | `string` | query | No | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | query | No | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `subdomain` | `string` | query | No | Optional subdomain namespace used with execId for path resolution. |
 
 **Returns:** `Promise<ExecMagicCommentsGetResponse>`  |  **HTTP:** `GET /api/v1/exec/magic-comments/read`
 **CLI:** `hoody exec magic comments get`
@@ -19025,16 +19087,21 @@ client.exec.magicComments.getSchema()
 #### `update` — Update Magic Comments Handler
 
 ```typescript
-client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest)
+client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
+| `execId` | `string` | query | No | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | query | No | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `subdomain` | `string` | query | No | Optional subdomain namespace used with execId for path resolution. |
 | `data` | `ExecMagicCommentsUpdateRequest` | body | Yes |  |
 
-**Body:** `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, dry_run: bool|null=false }`
+**Body:** `{ path*: string, comments*: { enabled: bool|null, token: string|null | string[], mode: "worker" | "serverless" | null, timeout: int|null | string, log-level: "none" | "minimal" | "standard" | "full" | "debug" | null, debug: bool|null, log-request-body: bool|null | "full" | "redacted" | "off", log-response-body: bool|null | "full" | "redacted" | "off", log-max-body-size: int|null | string, log-exclude-headers: string[]|null, log-retention-days: int|null, debug-instrument: bool|null, await-promises: bool|null, concurrent: bool|null | int, cors: string|null, cors-credentials: bool|null, cors-methods: string|null, cors-headers: string|null, cors-max-age: int|null, websocket: bool|null, websocket-pre: bool|null, ai: bool|null, ai-model: string|null, ai-temperature: number|null, ai-max-tokens: int|null, ai-key: string|null, description: string|null, tags: string[]|null, label: string|null, schedule: string|null, schedule-timeout: int|null | string, remote-messages: bool|null, remote-call: bool|null, remote-eval: bool|null, remote-token: "[REDACTED]" | null | object | object[], tokens: string[]|null }, dry_run: bool|null=false, execId: string, exec_id: string, subdomain: string }`
 
 - `comments` — Directives to set, keyed by directive name. … Keys that are not directives are ignored. A value that would not read back from the script as sent is refused with a 400, and so is a CORS sub-directive set in the same request as `cors: none`, which the script would ignore.
+- `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+- `exec_id` — Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
 
 **Returns:** `Promise<ExecMagicCommentsUpdateResponse>`  |  **HTTP:** `PUT /api/v1/exec/magic-comments/update`
 **CLI:** `hoody exec magic comments update`
@@ -19371,7 +19438,7 @@ client.exec.routes.list(data?: ExecRoutesListRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `ExecRoutesListRequest` | body | No |  |
 
-**Body:** `{ baseDir: string="", includeMetadata: bool=false }`
+**Body:** `{ baseDir: string="", includeMetadata: bool=false, hostname: string, execId: string }`
 
 **Returns:** `Promise<ExecRoutesListResponse>`  |  **HTTP:** `POST /api/v1/exec/route/discover`
 **CLI:** `hoody exec routes list`
@@ -19965,14 +20032,22 @@ client.exec.templates.delete(name: string)
 #### `generate` — Generate From Template
 
 ```typescript
-client.exec.templates.generate(data: ExecTemplatesGenerateRequest)
+client.exec.templates.generate(data: ExecTemplatesGenerateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
+| `execId` | `string` | query | No | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | query | No | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `subdomain` | `string` | query | No | Optional subdomain namespace used with execId for path resolution. |
 | `data` | `ExecTemplatesGenerateRequest` | body | Yes |  |
 
-**Body:** `{ name*: string, variables: object, outputPath: string, saveFile: bool=false }`
+**Body:** `{ name*: string, variables: object, outputPath: string, saveFile: bool=false, execId: string, exec_id: string, subdomain: string }`
+
+- `outputPath` — Where to save the script when `saveFile` is true, as scripts/write takes a path: under the call's scope (`execId` / `exec_id` / `subdomain`, else the Host's `[<subdomain>.]…-exec-<execId>`), as `<subdomain|default>/<execId>/<outputPath>` unless it already starts with that prefix; relative to the scripts directory only when the call has no scope. …
+- `saveFile` — When true, write the generated script to `outputPath` (required then). When false (the default), only return the code.
+- `execId` — Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
+- `exec_id` — Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
 
 **Returns:** `Promise<ExecTemplatesGenerateResponse>`  |  **HTTP:** `POST /api/v1/exec/templates/generate`
 **CLI:** `hoody exec templates generate`
@@ -20037,7 +20112,7 @@ client.exec.templates.update(name: string, data?: ExecTemplatesUpdateRequest)
 
 ## Purpose
 
-**Default surface: the container's own filesystem, exposed over HTTP — with automatic mutation journaling when the deployment enabled it.** Read, write, copy, move, delete, stat, chmod, list, glob, grep, archive-preview/extract, fetch URLs into the FS, resumable upload — all on absolute container paths (`/workspace/main.py`, `/etc/hostname`, `/hoody/databases/foo.db`). No backend flag needed.
+**Default surface: the container's own filesystem, exposed over HTTP — with automatic mutation journaling when the deployment enabled it.** Read, write, copy, move, delete, stat, chmod, list, glob, grep, archive-preview/extract, fetch URLs into the FS, resumable upload — all on absolute container paths (`/home/user/main.py`, `/etc/hostname`, `/hoody/databases/foo.db`). No backend flag needed.
 
 **Headline feature when journaling is on — automatic change history (think Git, but for every file write).** With the journal enabled, every `PUT` / `PATCH` / `DELETE` / `MOVE` / `COPY` is appended to a per-container mutation log: monotonic sequence number, timestamp, path, op, size, hash. **History is kept for journaled paths, within limits:** retention prunes old entries (90 days or 2 GiB of journal storage by default), bodies over 2 MiB keep only their hash and size, and excluded paths (dev dirs such as `node_modules`, and `.git`) are never recorded. The journal lets you:
 
@@ -20050,7 +20125,7 @@ client.exec.templates.update(name: string, data?: ExecTemplatesUpdateRequest)
 When the deployment turned journaling on, no per-write setup is needed — every covered write is recorded. Exposing the journal query endpoints — history, revision, diff, stats, flush — over the API is a second deployment-side switch; where it is off those endpoints return `403`. Where API access is on but recording itself is off, they return `404 Journal is not enabled`. It is not a complete undo: retention pruning, the 2 MiB body cap, the exclude lists and write paths with no journal hook (URL downloads, archive extraction) all leave gaps, so check `?history` before relying on a restore. Journaling is ON in the standard `hoody_kit: true` container image; raw kit deployments that did not turn it on will accept writes but skip recording.
 
 **Optional add-ons (per-request, opt-in):**
-- **Remote backends** — append `?backend=<id>` (or `?type=<rclone-type>`) to operate against any of the 60+ rclone backend types you've connected (Mega, SFTP, S3, GDrive, Dropbox, Backblaze B2, WebDAV, Git, …) instead of the local FS. Only where the deployment enabled remote backends; otherwise `403`. Note: the journal records local-FS mutations; remote-backend ops go to the remote and aren't replayable from the journal.
+- **Remote backends** — append `?backend=<id>` to operate against a backend you've connected, of any of the 49 allowed rclone backend types (Mega, SFTP, S3, GDrive, Dropbox, Backblaze B2, WebDAV, …), instead of the local FS. A `?type=` parameter does not select a connected backend: on `/api/v1/files/{path}` it is ignored and the request runs on the local FS. = &["] Only where the deployment enabled remote backends; otherwise `403`. Note: the journal records local-FS mutations; remote-backend ops go to the remote and aren't replayable from the journal.
 - **FUSE mounts** — `mounts.create` to surface a remote backend AS a path in the local FS. Same deployment-side requirement.
 - **chmod / chown** — Unix-only, and only where the deployment enabled them; otherwise `403`.
 
@@ -20059,7 +20134,7 @@ When the deployment turned journaling on, no per-write setup is needed — every
 - **Local container FS (the 90% case)** — CRUD, archive entry / extract, cross-binary search (glob, grep), download a URL into a path, resumable upload. Local works out of the box.
 - **Recover / inspect a previous version of any file** — `?history=1`, `?revision=<seq>`, `?at=<unix-ms>`, `?diff=1&from_seq=<N>`. Available where journaling and journal API access are on (`403` when API access is off, `404` when recording is off), for writes the journal recorded and still retains (see Quirks for what is excluded).
 - **Audit / replay every change to the filesystem** — `journal.list` for the full event stream (sequence, timestamp, path, op, size, hash).
-- **Remote cloud / SSH / S3 / Git** — append `?backend=<id>` to read (`files.get`), upload (`files.upload`, not with `append`), delete (`files.delete`) or create a directory (`files.mkdir`). `backend` is refused with `400` on patch, append, extract, URL download, copy and move.
+- **Remote cloud / SSH / S3** — append `?backend=<id>` to read (`files.get`), upload (`files.upload`, not with `append`), delete (`files.delete`) or create a directory (`files.mkdir`). Only `files.get`, `files.upload`, `files.delete` and `files.mkdir` take a `backend` option, and `files.upload` refuses it with `400` together with `append`. `files.update`, `files.append`, `files.copy`, `files.move`, `files.archives.extract` and `files.downloads.create` have no `backend` option; do not bypass the types: with `owner`, `archives.extract` and `downloads.create` throw a client-side `ValidationError`, and without `owner` the option is dropped and the operation runs locally.
 - **FUSE-mount a remote into the local FS** — when downstream code needs to read the remote as a regular path (under the mount directory, `/hoody/mounts/permanent/…` by default).
 
 ## When NOT to use
@@ -20068,7 +20143,7 @@ Run binaries -> `terminal`/`exec`, live events -> `watch`, TS/JS gen -> `exec`, 
 
 ## Prerequisites
 
-- **For plain read/stat/list**: no deployment switch, but any authentication and per-path access rules configured on the kit still apply (`401` without credentials, `403` for a path outside your rules). **Writes are enabled by the deployment, not per request**: upload/write/append and copy need write enabled, delete needs delete enabled, move needs both (403 otherwise; all enabled in the standard hoody_kit container image, off on a raw kit deployment that did not turn them on). Paths are absolute container paths; the namespace is not workspace-scoped, so use `/workspace/...`, `/home/user/...`, etc.
+- **For plain read/stat/list**: no deployment switch, but any authentication and per-path access rules configured on the kit still apply (`401` without credentials, `403` for a path outside your rules). **Writes are enabled by the deployment, not per request**: upload/write/append and copy need write enabled, delete needs delete enabled, move needs both (403 otherwise; all enabled in the standard hoody_kit container image, off on a raw kit deployment that did not turn them on). Paths are absolute container paths; the namespace is not workspace-scoped, so use `/home/user/...`, `/etc/...`, etc.
 - **For glob / grep**: gated separately — glob needs search enabled, grep needs grep enabled (403 "not allowed" otherwise; both enabled in the standard hoody_kit container image).
 - **For remote backends** (`?backend=` / `?type=` / FUSE mounts): the deployment must have enabled remote backends; otherwise `403`.
 - **For chmod / chown**: the deployment must have enabled them, and the container is Unix.
@@ -20096,13 +20171,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 1. `downloads.create(dir, { download: url })`; `downloads.listByDirectory` to poll.
 2. `archives.preview`; `archives.extract(archive, { extract: 'src/', dest: 'work-src' })` (`extract` is an exact entry name, or a directory prefix ending in `/`; no globs. `dest` MUST be relative).
-3. `backends.createS3` (60+ `connect*`) -> `files.get('/remote/path', { backend: id })` for one-shot reads OR `mounts.create` -> `files.list('/hoody/mounts/permanent/...')` for a regular FS view -> `mounts.delete`/`backends.delete`. (`files.list` itself has no `backend` option; `files.get`/`files.upload`/`files.delete` do.)
+3. `backends.createS3` (one `create*` method per backend type, e.g. `createSftp`) -> `files.get('/remote/path', { backend: id })` for one-shot reads OR `mounts.create` -> `files.list('/hoody/mounts/permanent/...')` for a regular FS view -> `mounts.delete`/`backends.delete`. (`files.list` itself has no `backend` option; `files.get`/`files.upload`/`files.delete` do.)
 
 ### 3. Journal time-travel + TUS-like upload
 
 1. `files.get` with `{ history: '' }`, `{ revision: N }` or `{ at: '<unix-ms>' }`, `{ diff: '', from_seq: N }` (valueless flags take `''`).
 2. `journal.list({ path, after_id })` (global entry id, not `seq`; see Purpose for the last-page cursor rule); `journal.flush` first.
-3. Resumable: `files.upload` for the first chunk, then `files.append(path, bytes)` per chunk (Example 3); it takes raw bytes, no cast. `files.writeChunk(path, bytes as any, { XUpdateRange: 'append' })` does the same over the WebDAV route but needs the cast, because its declared body type is a JSON object.
+3. Resumable: `files.upload` for the first chunk, then `files.append(path, bytes)` per chunk (Example 3); it takes raw bytes, no cast. `files.writeChunk(path, bytes)` also appends raw bytes, over the WebDAV route: it takes bytes directly and sets the append header itself, so do not pass `XUpdateRange` (the call throws if you do).
 
 ## Quirks & gotchas
 
@@ -20121,7 +20196,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Exclusions decide which paths are journalled.** Built-in dev-dir excludes (`node_modules`, `target`, `.next`, `.nuxt`, `.svelte-kit`, `.turbo`, `__pycache__`, `.venv`, `venv`, `env`, `__pypackages__`, `.tox`, `.nox`, `bower_components`, …) skip journaling unless the deployment turned the dev-dir exclusions off. `.git` is always excluded regardless of that setting (separate hardcoded check, not part of the toggleable list). The deployment can add further excludes of its own. This is why "I wrote to `node_modules/x` and saw no journal entry" is expected.
 - **Journal does NOT cover everything by default.** Live behaviour observed: a fresh `PUT` (create) and an overwriting `PUT` (write) on `/home/user/...` produce entries; URL downloads (`?download=`) and archive extraction are NOT journaled — those write through paths with no journal hook. `chmod`, `chown`, `touch`, `?append=true` and copy/move ARE recorded. Always call `journal.flush` then `journal.list` (or `?history=1`) to inspect what was actually recorded — don't assume coverage.
 - **Built-in dev-dir exclude list always skips journaling** for `node_modules`, `__pycache__`, `.venv`, `target`, `.next`, `.nuxt`, etc. — even on `/home/user/...` paths. Only the deployment can turn these off, at kit start. `.git` is hardcoded to ALWAYS be excluded and stays excluded even then.
-- **`HEAD /api/v1/files/{path}` returns `405`**; `HEAD` is served only on the WebDAV root route (`HEAD /{path}`, no `/api/v1/files/` prefix). For a JSON metadata envelope use `files.stat`.
+- **`HEAD` answers like `GET` with no body** on both routes: `HEAD /api/v1/files/{path}` returns the status and headers its `GET` would, and so does `HEAD /{path}`. It carries no metadata body; for a JSON metadata envelope use `files.stat`.
 - **`chown` to root is rejected** with `400 Cannot change ownership to root (UID 0)` (owner) or `400 Cannot change group to root (GID 0)` (group) — even where the deployment enabled chown. Use a non-root user (`nobody`, `user`, …).
 - **FUSE mount paths live under a configured mount directory** (`/hoody/mounts/permanent` by default, fixed by the deployment at kit start). An absolute `mount_path` must be under it (`400 Mount path must be under the configured mount directory` otherwise); a relative `mount_path` is resolved under it; an omitted one becomes `<mount dir>/mount_<id>`. If the path already exists and is not a symlink, the create fails with `409 Mount path already exists and is not a symlink`.
 - **Listing-style query params (`?downloads`, `?download_history`, `?extractions`, `?extraction_history`) are honoured on the WebDAV root route, NOT on `/api/v1/files/...`** — calling `GET /api/v1/files/<dir>?downloads` returns a regular directory listing (the query is ignored). Use `GET /<dir>?downloads` (or `GET /?download_history` for the global feed).
@@ -20133,9 +20208,9 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - 400 Cannot combine realpath with other ops.
 - 400 Cannot preview a directory as archive.
 - 400 Unknown operation -- POST needs one query op.
-- 400 Missing query or body -- PATCH needs op or body.
-- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` most refusals carry no `code` at all — an invalid path is 400 `{success: false, error: "Invalid path"}`, and a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
-- Cancelling a URL download removes the partial file only where the file's inode proves it is still the one the download created (local filesystems such as ext4, xfs, btrfs, tmpfs). On a FUSE mount, NFS, CIFS or overlayfs the partial file is kept, because the name could by then belong to a file of yours.
+- 400 Missing query parameter or request body -- PATCH needs op or body.
+- Refusals on the WebDAV path route (`/{path}`) answer JSON `{success: false, error, code}`: `ACCESS_FORBIDDEN` 403, `RESOURCE_NOT_FOUND` 404, `INVALID_PATH` 400, `PATH_CONFLICT` 409, `OVERWRITE_REFUSED` 412 (a WebDAV `COPY`/`MOVE` with `Overwrite: F` onto an existing target), `DIRECTORY_EXISTS` 405 (creating a directory that exists), `PAYLOAD_TOO_LARGE` 413, `UPLOAD_INCOMPLETE` 400 and `REMOTE_UPLOAD_FAILED` 502 (an upload to a remote backend), and `MOUNT_PATH_RESERVED` 409 for a change to a path a mount holds. `INVALID_PARAMETER` means the request itself is wrong; a failure that a changed request would not fix (an OS error, a backend failure, the concurrent-download limit's 429) carries no `code`, so branch on the status. On `/api/v1/files/{path}` many refusals carry no `code` — a REST copy or move onto an existing target without overwrite is 409 `{success: false, error}`. The REST codes are `INVALID_PATH` 400 (`{success: false, error: "Invalid path", code: "INVALID_PATH"}`), `ACCESS_FORBIDDEN` 403 (a path rule), `CONTAINS_SERVICE_STORAGE` 409, `FILE_MOVE_CROSSES_DEVICES` 409, `INVALID_PARAMETER` 400 on some parameter checks, and `FILE_PATH_BUSY`, `FILE_PATH_CHANGED` and `MOUNT_PATH_RESERVED` 409 for a change to a path that is in use or held for a mount. When `code` is absent, branch on the HTTP status.
+- A URL download streams into a hidden part file, `.hoody-download-<id>.part`, in the destination folder, and the file gets its final name only once it is complete. Cancelling the download (or a failure or timeout) removes that part file: where inode numbers identify a file (local filesystems such as ext4, xfs, btrfs, tmpfs) only if its inode is still the one the download created, and elsewhere (FUSE mounts, network filesystems) by its download-specific name while it is a regular file.
 
 ## Related namespaces
 
@@ -20197,20 +20272,20 @@ console.log(m.data!.total_matches, m.data!.matches.length);
 **Step 1 — first chunk via PUT.** Creates the file with the first slab.
 
 ```typescript
-import { readFileSync } from 'fs';
-await client.files.upload('/home/user/upload-test.bin', readFileSync('/tmp/chunk1.bin'));
+import { randomBytes } from 'node:crypto';
+await client.files.upload('/home/user/upload-test.bin', randomBytes(8 * 1024 * 1024));
 ```
 
 **Step 2 — append remaining chunks.** Send `PATCH /<path>` (the WebDAV root route, NOT `/api/v1/files/...` — that one expects JSON and 400s on raw bytes). Header `X-Update-Range: append` says "concatenate". Returns `204 No Content`.
 
 ```typescript
-import { readFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 // files.append sends raw bytes to PUT /api/v1/files/append/{path}; no cast needed.
-await client.files.append('/home/user/upload-test.bin', readFileSync('/tmp/chunk2.bin'));
+await client.files.append('/home/user/upload-test.bin', randomBytes(8 * 1024 * 1024));
 const s = await client.files.stat('/home/user/upload-test.bin');
 ```
 
-**Step 3 — resume after a network drop.** An append is written as it arrives, so a request that broke off may already have added part of its chunk. Do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The generated SDK sends only appends (`files.append`); explicit byte ranges need raw HTTP.
+**Step 3 — resume after a network drop.** A WebDAV append (`PATCH /{path}` with `X-Update-Range: append`) writes bytes as they arrive, so a request that broke off may already have added part of its chunk. A REST append (`PUT /api/v1/files/append/{path}`, or an upload with `append`) stages the whole body first, so a body that broke off leaves the file unchanged, although a failure during the write that follows can still leave part of the chunk appended. Either way, do not resend the whole chunk blindly: stat the remote file, compare its size with how many bytes of the payload you have sent, and append only the bytes after that size. An explicit `bytes=<start>-<end>` range (no `/<total>` suffix — that is rejected) must start inside the existing file and writes the whole body from that start, so it can rewrite a tail you know is wrong, but a start at EOF is refused; appending is the way to continue. The generated SDK sends only appends (`files.append`); explicit byte ranges need raw HTTP.
 
 ### 4. Time-travel a single file — history → revision N → diff
 
@@ -20407,24 +20482,25 @@ const r = await client.files.journal.list({ path: '/home/user/files-examples-cle
 
 **Accessor:** `client.files`  |  **Import:** `import * as files from 'hoody-sdk/files'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.files.archives` (4) — Archive operations - extract, preview, download directories as ZIP
 
 #### `extract` — Extract archive
 
 ```typescript
-client.files.archives.extract(path: Parameters<ArchivesServiceBase['__postFileOperation']>[0], options: FacadeWithout<NonNullable<Parameters<ArchivesServiceBase['__postFileOperation']>[1]>, "backend" | "mkdir" | "download_from" | "filename" | "timeout" | "move_to" | "copy_to" | "overwrite"> & FacadeRequire<NonNullable<Parameters<ArchivesServiceBase['__postFileOperation']>[1]>, "owner">)
+client.files.archives.extract(path: string, options: { extract?: string; dest?: string; owner: string })  // → Promise<PostFileOperationResponse>
+client.files.archives.extract(archive: string, options?: { dest?: string; extract?: string })  // → Promise<ExtractArchiveResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `archive` | `string` | path | Yes |  |
-| `extract` | `string` | query | Yes | Empty for full extraction; path for selective (e.g. "src/" or "lib/") |
+| `path` | `string` | path | Yes |  |
+| `extract` | `string` | query | No | Empty for full extraction; path for selective (e.g. "src/" or "lib/") |
 | `dest` | `string` | query | No | Destination directory name (default: archive name) |
-| `owner` | `string` | query | No | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
+| `owner` | `string` | query | Yes | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
-**Returns:** `ReturnType<ArchivesServiceBase['__postFileOperation']>`  |  **HTTP:** `GET /{archive}?extract`
+**Returns:** see each form above  |  **HTTP:** `GET /{archive}?extract`
 **CLI:** `hoody files archives extract`
 
 ---
@@ -20792,7 +20868,7 @@ client.files.backends.createIclouddrive(data: FilesBackendsCreateIclouddriveRequ
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreateIclouddriveRequest` | body | Yes |  |
 
-**Body:** `{ apple_id*: string="", client_id: string="d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d", cookies: string="", description: string="", encoding: string="50438146", password*: string="", service*: "drive" | "photos"="drive", trust_token: string="" }`
+**Body:** `{ apple_id*: string="", client_id: string="d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d", cookies: string="", description: string="", encoding: string="50438146", password*: string="", service: "drive" | "photos"="drive", trust_token: string="" }`
 
 **Returns:** `Promise<FilesBackendsCreateIclouddriveResponse>`  |  **HTTP:** `POST /api/v1/backends/iclouddrive`
 **CLI:** `hoody files backends iclouddrive create`
@@ -21022,7 +21098,7 @@ client.files.backends.createPikpak(data: FilesBackendsCreatePikpakRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreatePikpakRequest` | body | Yes |  |
 
-**Body:** `{ chunk_size: string="5242880", description: string="", device_id: string="", encoding: string="56829838", hash_memory_limit: string="10485760", no_media_link: bool=false, pass*: string="", root_folder_id: string="", trashed_only: bool=false, upload_concurrency: int=4, upload_cutoff: string="209715200", use_trash: bool=true, user*: string="", user_agent: string="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" }`
+**Body:** `{ chunk_size: string="5242880", description: string="", device_id: string="", encoding: string="56829838", hash_memory_limit: string="10485760", no_media_link: bool=false, pass: string="", root_folder_id: string="", trashed_only: bool=false, upload_concurrency: int=4, upload_cutoff: string="209715200", use_trash: bool=true, user: string="", user_agent: string="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" }`
 
 - `hash_memory_limit` — Files bigger than this will be cached on disk to calculate hash if required.
 
@@ -21041,7 +21117,7 @@ client.files.backends.createPixeldrain(data: FilesBackendsCreatePixeldrainReques
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreatePixeldrainRequest` | body | Yes |  |
 
-**Body:** `{ api_key: string="", api_url*: string="https://pixeldrain.com/api", description: string="", root_folder_id: string="me" }`
+**Body:** `{ api_key: string="", api_url: string="https://pixeldrain.com/api", description: string="", root_folder_id: string="me" }`
 
 **Returns:** `Promise<FilesBackendsCreatePixeldrainResponse>`  |  **HTTP:** `POST /api/v1/backends/pixeldrain`
 **CLI:** `hoody files backends pixeldrain create`
@@ -21075,7 +21151,7 @@ client.files.backends.createProtondrive(data: FilesBackendsCreateProtondriveRequ
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreateProtondriveRequest` | body | Yes |  |
 
-**Body:** `{ 2fa: string="", app_version: string="", client_access_token: string="", client_refresh_token: string="", client_salted_key_pass: string="", client_uid: string="", description: string="", enable_caching: bool=true, encoding: string="52559874", mailbox_password: string="", original_file_size: bool=true, otp_secret_key: string="", password*: string="", replace_existing_draft: bool=false, username*: string="" }`
+**Body:** `{ 2fa: string="", app_version: string="", client_access_token: string="", client_refresh_token: string="", client_salted_key_pass: string="", client_uid: string="", description: string="", enable_caching: bool=true, encoding: string="52559874", mailbox_password: string="", original_file_size: bool=true, otp_secret_key: string="", password: string="", replace_existing_draft: bool=false, username: string="" }`
 
 **Returns:** `Promise<FilesBackendsCreateProtondriveResponse>`  |  **HTTP:** `POST /api/v1/backends/protondrive`
 **CLI:** `hoody files backends protondrive create`
@@ -21160,7 +21236,7 @@ client.files.backends.createSeafile(data: FilesBackendsCreateSeafileRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `FilesBackendsCreateSeafileRequest` | body | Yes |  |
 
-**Body:** `{ 2fa: bool=false, auth_token: string="", create_library: bool=false, description: string="", encoding: string="50405386", library: string="", library_key: string="", pass: string="", url*: "https://cloud.seafile.com/"="", user*: string="" }`
+**Body:** `{ 2fa: bool=false, auth_token: string="", create_library: bool=false, description: string="", encoding: string="50405386", library: string="", library_key: string="", pass: string="", url*: "https://cloud.seafile.com/"="", user: string="" }`
 
 **Returns:** `Promise<FilesBackendsCreateSeafileResponse>`  |  **HTTP:** `POST /api/v1/backends/seafile`
 **CLI:** `hoody files backends seafile create`
@@ -21445,18 +21521,19 @@ client.files.downloads.cancel(id: string)
 #### `create` — Download file from remote URL
 
 ```typescript
-client.files.downloads.create(path: Parameters<DownloadsServiceBase['__postFileOperation']>[0], options: FacadeWithout<NonNullable<Parameters<DownloadsServiceBase['__postFileOperation']>[1]>, "backend" | "mkdir" | "extract" | "dest" | "move_to" | "copy_to" | "overwrite" | "download_from"> & { download?: NonNullable<Parameters<DownloadsServiceBase['__postFileOperation']>[1]>["download_from"] } & FacadeRequire<NonNullable<Parameters<DownloadsServiceBase['__postFileOperation']>[1]>, "owner">)
+client.files.downloads.create(path: string, options: { filename?: string; timeout?: number; owner: string; download?: string })  // → Promise<PostFileOperationResponse>
+client.files.downloads.create(directory: string, options: { download: string; filename?: string; timeout?: number })  // → Promise<DownloadFromUrlResponse>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `directory` | `string` | path | Yes | Destination directory |
-| `download` | `string` | query | Yes | URL to download from |
+| `path` | `string` | path | Yes | Destination directory |
+| `download` | `string` | query | No | URL to download from |
 | `filename` | `string` | query | No | Custom filename for downloaded file |
-| `timeout` | `integer` | query | No | Download timeout in seconds |
-| `owner` | `string` | query | No | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
+| `timeout` | `number` | query | No | Download timeout in seconds. Default and maximum: 43200 (12 hours) |
+| `owner` | `string` | query | Yes | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
-**Returns:** `ReturnType<DownloadsServiceBase['__postFileOperation']>`  |  **HTTP:** `GET /{directory}?download`
+**Returns:** see each form above  |  **HTTP:** `GET /{directory}?download`
 **CLI:** `hoody files downloads create`
 
 ---
@@ -21491,14 +21568,14 @@ client.files.downloads.listByDirectory(directory: string, options: { downloads: 
 #### `listHistory` — Download history
 
 ```typescript
-client.files.downloads.listHistory(options: { download_history: "" })
+client.files.downloads.listHistory(options?: { download_history?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `download_history` | `""` | query | Yes |  |
+| `download_history` | `""` | query | No |  |
 
-**Returns:** `Promise<FilesDownloadsListHistoryResponse>`  |  **HTTP:** `GET /?download_history`
+**Returns:** `Promise<GetDownloadHistoryResponse>`  |  **HTTP:** `GET /?download_history`
 **CLI:** `hoody files downloads history list`
 
 ---
@@ -21548,14 +21625,14 @@ client.files.extractions.listByDirectory(options: { extractions: "" })
 #### `listHistory` — Extraction history
 
 ```typescript
-client.files.extractions.listHistory(options: { extraction_history: "" })
+client.files.extractions.listHistory(options?: { extraction_history?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `extraction_history` | `""` | query | Yes |  |
+| `extraction_history` | `""` | query | No |  |
 
-**Returns:** `Promise<FilesExtractionsListHistoryResponse>`  |  **HTTP:** `GET /?extraction_history`
+**Returns:** `Promise<GetExtractionHistoryResponse>`  |  **HTTP:** `GET /?extraction_history`
 **CLI:** `hoody files extractions history list`
 
 ---
@@ -21565,13 +21642,16 @@ client.files.extractions.listHistory(options: { extraction_history: "" })
 #### `append` — Append data to file
 
 ```typescript
-client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; contentType?: 'application/octet-stream' })
+client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | File path |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) when this append creates a new file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Absent → server default. |
+| `IfMatch` | `string` | header `If-Match` | No | Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | header `If-Unmodified-Since` | No | Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream<Uint8Array> \| string` | body | Yes |  |
 
 **Returns:** `Promise<FilesAppendResponse>`  |  **HTTP:** `PUT /api/v1/files/append/{path}`
@@ -21620,7 +21700,7 @@ client.files.copy(path: string, options: { copy_to: string; overwrite?: "true" |
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Source file or directory path |
-| `copy_to` | `string` | query | Yes | Destination path to copy the file/directory to |
+| `copy_to` | `string` | query | Yes | Destination path to copy the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `overwrite` | `"true" \| "false"` | query | No | Allow overwriting existing destination (default: false) |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for newly-created copies. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwritten existing files preserve their owner. Absent → server default. |
 
@@ -21645,28 +21725,13 @@ client.files.delete(path: string, options?: { backend?: string })
 
 ---
 
-#### `exists` — Get file metadata
+#### `exists` — Whether a file or directory exists at `path`: true, or false when the kit answers 404.
 
 ```typescript
-client.files.exists(path: string, options?: { history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number })
+client.files.exists(path: string, options?: FilesExistsOptions, templateVars?: FilesReadTarget)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `path` | `string` | path | Yes |  |
-| `history` | `""` | query | No | List all revisions of a file. Returns JSON with revisions array, pagination via after_id. Mutually exclusive with at/revision/diff. |
-| `at` | `string` | query | No | Read file content at a point in time. Accepts RFC3339 timestamp or Unix milliseconds. Mutually exclusive with history/revision/diff. Composable with ?lines, ?hash, ?base64. |
-| `revision` | `number` | query | No | Read file content by stable per-path sequence number. Mutually exclusive with history/at/diff. Composable with ?lines, ?hash, ?base64. |
-| `diff` | `""` | query | No | Compute unified diff between two versions. Requires from_seq or from_ts. Optional to_seq or to_ts (defaults to current file). Mutually exclusive with history/at/revision. |
-| `from_seq` | `number` | query | No | Source revision seq number for ?diff. Mutually exclusive with from_ts. |
-| `from_ts` | `string` | query | No | Source timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with from_seq. |
-| `to_seq` | `number` | query | No | Target revision seq number for ?diff. Mutually exclusive with to_ts. Default: current file on disk. |
-| `to_ts` | `string` | query | No | Target timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with to_seq. |
-| `after_id` | `number` | query | No | Cursor for ?history pagination. Returns entries with id > after_id. |
-| `limit` | `number` | query | No | Max entries to return for ?history. |
-
-**Returns:** `Promise<ApiResponse<Record<string, string>>>`  |  **HTTP:** `HEAD /{path}`
-**CLI:** `hoody files exists`
+**Returns:** `Promise<boolean>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
 
 ---
 
@@ -21700,7 +21765,7 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 | `grep` | `string` | query | No | Search file/directory contents for regex pattern (or literal if fixed_string=true). Only where the deployment enabled content search. |
 | `ignore_case` | `boolean` | query | No | Case-insensitive grep matching |
 | `fixed_string` | `boolean` | query | No | Treat grep pattern as literal string, not regex |
-| `glob` | `string` | query | No | Without grep, finds files and folders matching this glob (e.g. '**/*.rs', 'src/**/*.{ts,tsx}'); directory paths only, where the deployment enabled search. With grep, the content-search file filter. Only search files matching this glob (ripgrep -g syntax, one pattern per request, at most 1024 bytes). A pattern without '/' matches file names at any depth ('*.rs', '*.{ts,tsx}'). A pattern with a '/' other than a trailing one matches the path relative to the searched folder, and a leading '/' anchors it there ('src/**/*.go'). '*' stays within one folder and '**' crosses folders. A leading '!' excludes instead ('!*_test.go'; '!vendor/' skips every folder named vendor); write '\!' for a literal '!' and '\#' for a leading '#'. Matching is case-sensitive whatever ignore_case says. A positive pattern ending in '/' names folders only and so selects no files; use 'src/**' for everything under a folder. A pattern that is only whitespace or a comment (an unescaped leading '#') is refused. The filter only narrows the search: it never brings back a file that ignore files or the default exclusion of names starting with '.' leave out; no_ignore and hidden do that. Not applied when the path is a single file. Repeating glob in a content search is refused. |
+| `glob` | `string` | query | No | Without grep, finds files and folders matching this glob (e.g. '**/*.rs', 'src/**/*.{ts,tsx}'); directory paths only, where the deployment enabled search. The pattern is matched against each path relative to the searched folder: '*' stays within one folder and '**' crosses folders, so '*.md' finds only the folder's own files and '**/*.md' finds them at any depth. A pattern starting with '/' or holding a '..' segment is refused with 400. Symbolic links are listed but the search does not go into a linked folder. With grep, the content-search file filter. Only search files matching this glob (ripgrep -g syntax, one pattern per request, at most 1024 bytes). A pattern without '/' matches file names at any depth ('*.rs', '*.{ts,tsx}'). A pattern with a '/' other than a trailing one matches the path relative to the searched folder, and a leading '/' anchors it there ('src/**/*.go'). '*' stays within one folder and '**' crosses folders. A leading '!' excludes instead ('!*_test.go'; '!vendor/' skips every folder named vendor); write '\!' for a literal '!' and '\#' for a leading '#'. Matching is case-sensitive whatever ignore_case says. A positive pattern ending in '/' names folders only and so selects no files; use 'src/**' for everything under a folder. A pattern that is only whitespace or a comment (an unescaped leading '#') is refused. The filter only narrows the search: it never brings back a file that ignore files or the default exclusion of names starting with '.' leave out; no_ignore and hidden do that. Not applied when the path is a single file. Repeating glob in a content search is refused. |
 | `context` | `number` | query | No | Number of context lines before/after each grep match |
 | `max_count` | `number` | query | No | Max matches per file for grep |
 | `max_matches` | `number` | query | No | Total max matches across all files for grep |
@@ -21742,7 +21807,7 @@ client.files.glob(path: string, options: { pattern: string; max_results?: number
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Directory path to search within |
-| `pattern` | `string` | query | Yes | Glob pattern (e.g. '**/*.rs', 'src/**/*.{ts,tsx}', '*.md') |
+| `pattern` | `string` | query | Yes | Glob pattern, matched against paths relative to the searched folder (e.g. '**/*.rs', 'src/**/*.{ts,tsx}', '*.md'). '*' stays within one folder, '**' crosses folders. Cannot start with '/' or contain a '..' segment. |
 | `max_results` | `number` | query | No | Maximum entries to return |
 | `max_depth` | `number` | query | No | Maximum directory recursion depth |
 | `max_files_scanned` | `number` | query | No | Maximum filesystem entries to scan |
@@ -21801,7 +21866,7 @@ client.files.logout(path: string)
 #### `mkdir` — File operations (mkdir, extract, download, move, copy)
 
 ```typescript
-client.files.mkdir(path: Parameters<FilesServiceBase['__postFileOperation']>[0], options?: FacadeWithout<NonNullable<Parameters<FilesServiceBase['__postFileOperation']>[1]>, "mkdir" | "extract" | "dest" | "download_from" | "filename" | "timeout" | "move_to" | "copy_to" | "overwrite">)
+client.files.mkdir(path: string, options?: { backend?: string; owner?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21810,7 +21875,7 @@ client.files.mkdir(path: Parameters<FilesServiceBase['__postFileOperation']>[0],
 | `backend` | `string` | query | No | Backend ID, for mkdir only: create the directory on that remote backend. Any other operation with backend is refused with 400 INVALID_PARAMETER. |
 | `owner` | `string` | query | No | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
-**Returns:** `ReturnType<FilesServiceBase['__postFileOperation']>`  |  **HTTP:** `POST /api/v1/files/{path}`
+**Returns:** `Promise<PostFileOperationResponse>`  |  **HTTP:** `POST /api/v1/files/{path}`
 **CLI:** `hoody files mkdir`
 
 ---
@@ -21824,7 +21889,7 @@ client.files.move(path: string, options: { move_to: string; owner?: string })
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | Source file or directory path |
-| `move_to` | `string` | query | Yes | Destination path to move the file/directory to |
+| `move_to` | `string` | query | Yes | Destination path to move the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for newly-created destination PARENT directories. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. The moved inode itself preserves its existing owner. Absent → server default. |
 
 **Returns:** `Promise<FilesMoveResponse>`  |  **HTTP:** `POST /api/v1/files/move/{path}`
@@ -21894,13 +21959,13 @@ client.files.stat(path: string)
 #### `touch` — Touch file (create or update mtime)
 
 ```typescript
-client.files.touch(path: string, options: { touch: "" })
+client.files.touch(path: string, options?: { touch?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes | File path to touch |
-| `touch` | `""` | query | Yes | Flag to indicate touch operation |
+| `touch` | `""` | query | No | Flag to indicate touch operation |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PUT /{path}?touch`
 **CLI:** `hoody files touch`
@@ -21931,7 +21996,7 @@ client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?:
 #### `upload` — Upload or append file
 
 ```typescript
-client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; contentType?: 'application/octet-stream' })
+client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -21941,6 +22006,9 @@ client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `append` | `""` | query | No | Append body to end of existing file (create if missing) instead of overwriting |
 | `chmod` | `string` | query | No | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response echoes them in `mode`. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Every refusal comes before the body is read: nothing is created or changed. |
 | `owner` | `string` | query | No | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
+| `IfMatch` | `string` | header `If-Match` | No | Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | header `If-Unmodified-Since` | No | Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream<Uint8Array> \| string` | body | Yes |  |
 
 **Returns:** `Promise<FilesUploadResponse>`  |  **HTTP:** `PUT /api/v1/files/{path}`
@@ -21966,17 +22034,20 @@ client.files.whoami(path: string)
 #### `writeChunk` — File operations
 
 ```typescript
-client.files.writeChunk(path: Parameters<FilesServiceBase['__patchFile']>[0], data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: FacadeWithout<NonNullable<Parameters<FilesServiceBase['__patchFile']>[2]>, "XUpdateRange">)
+client.files.writeChunk(path: string, data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: { IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Writes of content (X-Update-Range) only. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | Writes of content (X-Update-Range) only. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | header `If-Unmodified-Since` | No | Writes of content (X-Update-Range) only. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream<Uint8Array>` | body | No |  |
 
 **Body:** `files_ChmodRequest | files_ChownRequest | files_RenameRequest`
 
-**Returns:** `ReturnType<FilesServiceBase['__patchFile']>`  |  **HTTP:** `PATCH /{path}`
+**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PATCH /{path}`
 **CLI:** `hoody files chunks write`
 
 ---
@@ -21984,13 +22055,13 @@ client.files.writeChunk(path: Parameters<FilesServiceBase['__patchFile']>[0], da
 #### `zip` — Download directory as ZIP
 
 ```typescript
-client.files.zip(directory: string, options: { zip: "" })
+client.files.zip(directory: string, options?: { zip?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `directory` | `string` | path | Yes |  |
-| `zip` | `""` | query | Yes |  |
+| `zip` | `""` | query | No |  |
 
 **Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /{directory}?zip`
 **CLI:** `hoody files zip`
@@ -22030,10 +22101,10 @@ client.files.getZipUrl(directory: string, templateVars?: TemplateVars)
 #### `list` — List a directory as JSON: `files.ui.getPage(path, { json: '' })`.
 
 ```typescript
-client.files.list(path: string, options?: Omit<NonNullable<Parameters<FilesUiService['getPage']>[1]>, 'json'>, templateVars?: Parameters<FilesUiService['getPage']>[2])
+client.files.list(path: string, options?: { simple?: ""; sort?: "name" | "mtime" | "size"; order?: "asc" | "desc"; hash?: ""; sha256?: ""; base64?: ""; edit?: ""; view?: ""; download?: "" | "1" | "true"; contentType?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper"; colorScheme?: "light" | "dark"; font?: "ibm-plex-mono" | "cascadia-code" | "fira-code" | "hack" | "inconsolata" | "intel-one-mono" | "iosevka" | "jetbrains-mono" | "meslo-lgs" | "roboto-mono" | "source-code-pro" | "ubuntu-mono"; fontSize?: number; embedderOrigin?: string; chromeless?: boolean; borderless?: boolean; hideHeader?: boolean; hideSidebar?: boolean; hidePreview?: boolean; hideFooter?: boolean; embedBg?: "transparent" }, templateVars?: { projectId?: string; containerId?: string; serviceIndex?: string | number; serverName?: string; server?: string })
 ```
 
-**Returns:** `ReturnType<FilesUiService['getPage']>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
+**Returns:** `Promise<ApiResponse<ArrayBuffer> | FilesUiGetPageResponse>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
 
 ---
 
@@ -22095,13 +22166,13 @@ client.files.ftp.get(path: string, options: { type: "ftp"; server: string; user?
 #### `convert` — Process and convert images
 
 ```typescript
-client.files.images.convert(image: string, options: { thumbnail: ""; format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; q?: number; blur?: number; grayscale?: ""; bg?: string })
+client.files.images.convert(image: string, options?: { format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; q?: number; blur?: number; grayscale?: ""; bg?: string; thumbnail?: "" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `image` | `string` | path | Yes | Path to image file |
-| `thumbnail` | `""` | query | Yes | Enable image processing |
+| `thumbnail` | `""` | query | No | Enable image processing |
 | `format` | `"jpeg" \| "png" \| "webp" \| "gif" \| "bmp"` | query | No | Output format (default: jpeg) |
 | `size` | `string` | query | No | Target box in pixels: WIDTHxHEIGHT, or a single N for an N×N box (max: 2000×2000) |
 | `width` | `number` | query | No | Width in pixels (height auto-calculated) |
@@ -22579,14 +22650,14 @@ client.files.webdav.getOptions(path: string)
 #### `getProperties` — Get WebDAV properties
 
 ```typescript
-client.files.webdav.getProperties(path: string, data?: object, options?: { Depth?: "0" | "1" | "infinity" })
+client.files.webdav.getProperties(path: string, data?: string, options?: { Depth?: "0" | "1" | "infinity" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `"0" \| "1" \| "infinity"` | header | No | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
-| `data` | `object` | body | No |  |
+| `data` | `string` | body | No |  |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PROPFIND /{path}`
 
@@ -22595,14 +22666,14 @@ client.files.webdav.getProperties(path: string, data?: object, options?: { Depth
 #### `lock` — Lock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.lock(path: string, data?: object, options?: { Depth?: "0" | "infinity" })
+client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | "infinity" })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
 | `Depth` | `"0" \| "infinity"` | header | No |  |
-| `data` | `object` | body | No |  |
+| `data` | `string` | body | No |  |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `LOCK /{path}`
 
@@ -22641,13 +22712,13 @@ client.files.webdav.unlock(path: string)
 #### `updateProperties` — Update WebDAV properties
 
 ```typescript
-client.files.webdav.updateProperties(path: string, data?: object)
+client.files.webdav.updateProperties(path: string, data?: string)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `path` | `string` | path | Yes |  |
-| `data` | `object` | body | No |  |
+| `data` | `string` | body | No |  |
 
 **Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `PROPPATCH /{path}`
 
@@ -22716,7 +22787,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 3. **Build a structured document with `document.set`** — use this only when you need full control over layout/ordering (append cannot create lists, tables, or nested blocks). `document.set` OVERWRITES the whole document; `document.update` merges: top-level keys replace the stored ones, and `content.blocks` merges by block id (each sent block replaces the stored block with that id wholesale, omitted blocks are kept; removing a block takes `document.set`). The body is `{content:{type:"rich_text",blocks:{<id>:<block>}}}`. **Use the real block `type` strings and the `attrs` key, and remember container blocks (lists/tasks/blockquote/table cells) hold their text in a CHILD `paragraph` block** — see §Examples 0 (block-model cheat-sheet) and 2.
 4. **Database CRUD** — `nodes.create` `type:"database"`; then `records.create`/`records.list`/`records.search`/`records.update` (merges `fields`)/`records.delete`. Page with `page`/`count` on `records.list` (count max 100). `records.listIterator` and `records.listAll` walk those pages for you (they advance `page` and size pages with `count`).
 5. **Comments + versions** — `collaborators.add` (`admin`/`editor`/`collaborator`/`viewer`). `comments.create` (top-level, anchored, or reply); `comments.update` / `comments.delete` / `comments.resolve` accept optional `expectedVersion` for optimistic concurrency. `versions.create`/`list`/`get`/`restore`.
-6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `nodes.create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `files.download`. `files.upload(notebookId, data, { parentId, name })` does the whole sequence: it creates the file node with a valid `…18` id, sends the bytes over TUS and resolves once the file is ready. If it rejects after the node exists, `files.resumeUpload(notebookId, fileId, data)` continues from the offset the server holds (the id comes from the `onFileId` option or `err.fileId`), and `files.uploads.cancel(notebookId, fileId)` abandons the upload. A result with `alreadyUploaded: true` means the file was already recorded: the final response was lost, or another caller finished it. The helpers reject with `code` `NOTES_UPLOAD_LENGTH_MISMATCH`, `NOTES_UPLOAD_SIZE_MISMATCH`, `NOTES_UPLOAD_NOT_READY` or `NOTES_UPLOAD_NOT_A_FILE`; server refusals surface as `ApiError` with the notes code. `files.download` takes `(notebookId, fileId)`, notebook id first.
+6. **TUS upload + download** — the `fileId` is an input, not something the upload returns. First create the file node yourself: `nodes.create` with `id: <22 lowercase hex chars> + '18'` (the file-id suffix; a node created without an explicit `id` gets the generic `…08` suffix, which the upload routes reject), `type: 'file'`, `parentId` (a node where you have editor rights), and `attributes: { subtype: 'image'|'video'|'audio'|'pdf'|'other', name, originalName, mimeType, extension: '' or '.ext', size, version: <22 lowercase hex chars> + '03', status: 0 }`. Only that node's creator can upload to it. Then run the TUS calls on that id: create (`POST …/files/{fileId}/tus` with `Tus-Resumable: 1.0.0` and `Upload-Length`), send chunks (`PATCH` with `Upload-Offset` and `Content-Type: application/offset+octet-stream`), check the resume offset (`HEAD`), or cancel (`DELETE`). Download with `files.download`. `files.upload(notebookId, data, { parentId, name })` does the whole sequence: it creates the file node with a valid `…18` id, sends the bytes over TUS and resolves once the file is ready. If it rejects after the node exists, `files.resumeUpload(notebookId, fileId, data)` continues from the offset the server holds (the id comes from the `onFileId` option or `err.fileId`), and `files.uploads.cancel(notebookId, fileId, { TusResumable: '1.0.0' })` abandons the upload (the options argument is required). A result with `alreadyUploaded: true` means the file was already recorded: the final response was lost, or another caller finished it. The helpers reject with `code` `NOTES_UPLOAD_LENGTH_MISMATCH`, `NOTES_UPLOAD_SIZE_MISMATCH`, `NOTES_UPLOAD_NOT_READY` or `NOTES_UPLOAD_NOT_A_FILE`; server refusals surface as `ApiError` with the notes code. `files.download` takes `(notebookId, fileId)`, notebook id first.{22}18$/.test(fileId)"]
 
 ## Quirks & gotchas
 
@@ -22725,14 +22796,14 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - **Prefer `document.append` for adding content; it does NOT create the node.** Append server-assigns `id`/`parentId`/`index` and creates the document row if missing, but `404`s if the node is absent and `400`s for node types that do not support documents (only `page`/`record` do) — so create/find the page first. It rejects client-supplied `id`/`parentId`/`index` and reserved `attrs` keys (`id`,`parentId`,`index`,`type`,`__proto__`,`constructor`,`prototype`), accepts only `{type:'text'}` leaves (no inline `mention`/image), the `{text}` form does NOT split newlines (one literal block), and it caps at 100 blocks / 512 KiB per call. Appendable types: `paragraph`, `heading1-3`, `codeBlock`, `horizontalRule` (containers and `file` are rejected).
 - **`document.set` has no block/byte cap** (only the Fastify 10 MB body limit) and requires the node to exist, creating the document row if it has none; the 100-block / 512 KiB caps are append-only.
 - **A page needs a parent and a `name`: `nodes.create` with `type:"page"`, `parentId` and `attributes.name`.** The parent is the `Home` section (its id from `nodes.list` with `type:"section"`) or another page you can edit. With no `parentId` the kit answers `400 parent_required`: add the parent rather than creating a notebook. A `403 forbidden` is a real permission refusal (your role on the parent does not allow the create). The label is `name`; there is no `title` attribute, and a page without `name` fails with `500 unknown`.
-- **`nodes.create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A manually-created `section` must include `attributes.collaborators` with the creator as `admin` and is root-only — easiest is to reuse the auto-provisioned `Home` section.
+- **`nodes.create` with schema-invalid `attributes` for a KNOWN type returns `500 unknown`, not `400`** — attribute validation throws before the create transaction's error handling can map it to a status (an unknown type or a `parentId` that does not exist gives `400`; no `parentId` for a node that needs one gives `400 parent_required`; a parent you cannot edit gives `403`). A section is root-only (a `parentId` gives `400 section_must_be_root`). If `attributes.collaborators` is omitted, the server adds the creator as `admin`; a map you send yourself must name you as `admin`, or the create is a `403` !== 'admin') {"]. For a note, reuse the auto-provisioned `Home` section.
 - **`notebooks.create` always makes a new, separate notebook; it is not how you add a note.** It takes only `name` (plus optional `description`/`avatar`) and no parent: a notebook is top-level. It ignores `X-Idempotency-Key`, and names are not unique, so a retry or a second call with the same name makes a duplicate. Run `notebooks.list` first and reuse a notebook that has the name; to add a note, create a page in an existing notebook with `nodes.create`.
 - Authentication re-anchors identity to the `notebookId` in the URL, so one bearer token reaches any notebook the username has joined.
 - Cross-client convergence is **mutation-stream-driven** via the `mutations.sync` route + WS feed: each mutation type (`document.update`, `node.*`, etc.) is dispatched server-side to a SQL-backed lib function. `document.set` is a last-writer-wins overwrite of the same store. `document.update` re-applies its merge to the current document when a concurrent write lands first, so two PATCHes that send different blocks both survive; two that send the same block id are last-writer-wins for that block, and a `document.set` racing a PATCH still overwrites whatever it omits.
-- `notes.whoami` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `notebooks.create` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`; invalid Bearer = 401 even with fallback. **Without any of the three, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=` on every unauthenticated call, or attach Bearer / `ticket`. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
+- `notes.whoami` with `?username=&role=` does NOT create a per-user notebook: the first request for a username adds that user to the container's single shared default notebook (`Hoody Notes`, seeded with starting content) with the role from that request (default `owner`), and notebook routes then use that stored role. Every query-identity username shares that notebook, so use `notebooks.create` for private content. The `username`/`role`/`ticket` query parameters are read on every route, although the generated Reference does not list them. Priority Bearer → `ticket` → `?username=&role=`. Only a notes Bearer token (base64url JSON with `userId`, `notebookId`, `username`, `role`) is read: one that decodes to a JSON object but is malformed returns `401` with no fallback, while a JWT, an opaque token or another scheme is ignored and resolution continues with `ticket` or the query identity. An export `ticket` is accepted only on the HTML document export (`GET …/document?output=html`); on any other route it is a `400`. **Without a notes Bearer token, requests default to username `user` (NOT to a previously seen `?username=alex` query)** — re-pass `?username=<name>` on every unauthenticated call, or attach a valid notes Bearer identity. Username lowercased `/^[a-zA-Z0-9_-]+$/` 1–32. `role` ∈ `owner|admin|collaborator|guest|none`; `none` → `notebook_no_access`.
 - **`Readonly` notebook gates writes** — content reads still serve through; write routes (mutations, document.put/patch, record-create, etc.) are rejected with `403 notebook_readonly`. The TUS upload route refuses every method on a readonly notebook, the `HEAD` offset check included.
 - `X-Idempotency-Key` replay returns saved response; same key+different payload → 409. Only routes that implement it honour the header (see Prerequisites); notebook create does not.
-- `records.update` merges `fields`. Access resolves your role from your collaboration on the notebook **root** node, falling back to your notebook role when there is none, then walks the database's full ancestor chain and returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you (notebook owner/admin bypasses the privacy walk). A root collaboration alone is therefore NOT sufficient under such an ancestor. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.
+- `records.update` merges `fields`. Database access uses the shared node-access check: it starts from your collaboration on the notebook **root** node (or your notebook role when there is none), returns `403` if an ancestor is a private `section` or a `channel` whose `collaborators` map omits you, and then applies the deepest explicit collaboration on the database's ancestor chain, so a role granted lower in the tree overrides the root one. Notebook owners/admins skip the privacy checks and keep their root-level role. A root collaboration alone is therefore NOT sufficient under such an ancestor, and a write refusal can come from a deeper collaboration. TUS validates `notebookId`/`fileId` against generated-id regex; free-form id → 400 `file_not_found`.{22}18$/.test(fileId)"]
 - `document.get` with `output=html` needs a short-lived export `ticket` (3 uses, 2 minutes) on `GET .../document`. `document.set` overwrites; `document.update` merges: top-level keys replace the stored ones, and `content.blocks` (a map by block id, or a list of blocks with distinct ids) merges by block id — a sent block replaces the stored block with that id, every other block is kept, and removing blocks takes a `document.set`. Any other `blocks` shape is a `400`. `comments.update` / `comments.delete` / `comments.resolve` accept optional `expectedVersion`.
 - `records.search` matches against record names AND field values (not just names).
 - Text filter operators in `records.list?filters=`: `is_equal_to` / `is_not_equal_to` / `contains` / `does_not_contain` / `starts_with` / `ends_with` / `is_empty` / `is_not_empty`. The bare `is` is NOT a valid operator — use `is_equal_to`; the bare `not_contains` is NOT either — use `does_not_contain`.
@@ -22740,7 +22811,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common errors
 
-- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.
+- `400 validation_error` for request-schema failures (the only 400 that carries `details[]`); `400 bad_request` for checks inside a handler (no `details`); `400 file_not_found` TUS id regex; `409` PK dupe or idempotency-key reused w/ different payload.{22}18$/.test(fileId)"]
 - `403 notebook_no_access`/`notebook_readonly`/`forbidden` (a database write needs a collaboration granting you create rights).
 - `404 not_found` — node/comment/version missing, or it does not belong to the `notebookId` given in the path. File routes use their own codes: `files.download` answers `400 file_not_found` for a missing file node or one outside the notebook, `400 file_not_ready` / `400 file_upload_not_found` for an upload that has not finished, and `404 file_not_found` when the stored bytes are missing; the TUS route answers `404 file_not_found` for a missing file node. `500 unknown` — read-back failed or uncategorized.
 
@@ -22775,7 +22846,9 @@ block is `{ id, type, parentId, index, content?, attrs? }`:
 - Inline `content` leaves are `{ "type":"text", "text":"…", "marks?":[…] }`. Marks:
   `bold`, `italic`, `strike`, `underline`, `code` (no attrs); `link`
   (`attrs:{href,target,rel}`); `color` (`attrs:{color}`); `highlight`
-  (`attrs:{highlight}`); `comment` (`attrs:{commentId}`). `mention` is an inline NODE
+  (`attrs:{highlight}`). Do not write `comment` marks: the editor treats them as legacy
+  and strips them from an editable document; anchor a comment with `comments.create`
+  instead. `mention` is an inline NODE
   (`{type:'mention',attrs:{id,target}}`), not a mark; `hardBreak`
   (`{type:'hardBreak'}`) forces a line break inside a paragraph.
 
@@ -22925,7 +22998,7 @@ const doc = await client.notes.document.get(nbId, pageId);
 const blocks = (doc.data!.content as any).blocks;
 ```
 
-**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An arbitrary string such as `_a0` sorts first but breaks the editor's next insert beside it.
+**Step 2 — mutate locally + PUT back.** Select the target block by its id (`B2` / `b2` from example 2) and leave every other block as it is; matching on `type` would also rewrite the paragraphs inside the list items. `index` orders a block among the children of the same parent only, by plain code-unit string comparison. The editor treats it as a fractional index, so give the block a key that sorts before its first sibling and is still a valid key: before `a0` that is `Zz`. An invalid key such as `_a0` is not stored as sent: a full-document PUT re-keys every sibling group that holds one (fresh `a0`, `a1`, … in the current order, so every sibling's `index` changes), and a PATCH that sends a new invalid index is refused with `400`.
 
 ```typescript
 blocks[b2].index = 'Zz';   // sorts before the first sibling, a0
@@ -22951,7 +23024,7 @@ const order = (Object.values((after.data!.content as any).blocks) as any[])
 
 ### 5. Create a database (Tasks) with typed columns + add records
 
-**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `nodes.create` for `type:"database"` REQUIRES `attributes.fields` populated — without it the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
+**Goal:** make a database node with `text`, `number`, `boolean` fields, then create a few records. ⚠ `nodes.create` for `type:"database"` requires an `attributes.fields` map (`{}` is valid while the database has no columns yet) — without the map the kit returns `500`, because attribute validation throws before the create transaction's error handling can map it to a status — a permission failure would be a `403`. Each field needs `id` (matching `^[a-zA-Z0-9_-]+$`), `type`, `name`, `index`.
 
 ```typescript
 const db = await client.notes.nodes.create(nbId, {
@@ -23079,7 +23152,7 @@ catch { await client.notes.notebooks.update(nbId, { name: 'team-wiki-DELETED' })
 
 **Accessor:** `client.notes`  |  **Import:** `import * as notes from 'hoody-sdk/notes'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.notes.avatars` (2) — avatars
 
@@ -23093,7 +23166,7 @@ client.notes.avatars.download(avatarId: string)
 |-----------|------|------|----------|-------------|
 | `avatarId` | `string` | path | Yes |  |
 
-**Returns:** `Promise<ApiResponse<unknown>>`  |  **HTTP:** `GET /api/v1/notes/avatars/{avatarId}`
+**Returns:** `Promise<ApiResponse<ArrayBuffer>>`  |  **HTTP:** `GET /api/v1/notes/avatars/{avatarId}`
 **CLI:** `hoody notes avatars download`
 
 ---
@@ -23101,7 +23174,7 @@ client.notes.avatars.download(avatarId: string)
 #### `upload` — Upload an avatar image
 
 ```typescript
-client.notes.avatars.upload(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, requestOptions?: { contentType?: 'image/jpeg' | 'image/png' | 'image/webp' })
+client.notes.avatars.upload(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, _templateVars?: { projectId?: string; containerId?: string; serviceIndex?: string | number; serverName?: string; server?: string }, requestOptions?: { contentType?: 'image/jpeg' | 'image/png' | 'image/webp' })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23405,13 +23478,14 @@ client.notes.comments.update(notebookId: string, nodeId: string, commentId: stri
 #### `append` — Append blocks to a document
 
 ```typescript
-client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { XIdempotencyKey?: string })
+client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { IfMatch?: string; XIdempotencyKey?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `XIdempotencyKey` | `string` | header `X-Idempotency-Key` | No | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
 | `data` | `NotesDocumentAppendRequest` | body | Yes |  |
 
@@ -23463,7 +23537,7 @@ client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: s
 #### `get` — Get document content
 
 ```typescript
-client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string })
+client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; IfNoneMatch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
@@ -23475,6 +23549,7 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 | `ticket` | `string` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfNoneMatch` | `string` | header `If-None-Match` | No | Optional (RFC 9110): ETags of copies the caller already holds, or `*`. When the document is still at one of them the JSON output answers 304 with no body. Ignored by the Markdown and HTML outputs. |
 
 **Returns:** `Promise<NotesDocumentGetResponse>`  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes/{nodeId}/document`
 **CLI:** `hoody notes document get`
@@ -23484,13 +23559,14 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 #### `set` — Create or replace document
 
 ```typescript
-client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest)
+client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest, options?: { IfMatch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `data` | `NotesDocumentSetRequest` | body | Yes |  |
 
 **Body:** `{ content*: { [key: string]: any } }`
@@ -23503,13 +23579,14 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 #### `update` — Merge document content
 
 ```typescript
-client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest)
+client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest, options?: { IfMatch?: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `notebookId` | `string` | path | Yes |  |
 | `nodeId` | `string` | path | Yes |  |
+| `IfMatch` | `string` | header `If-Match` | No | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `data` | `NotesDocumentUpdateRequest` | body | Yes |  |
 
 **Body:** `{ content*: { [key: string]: any } }`
@@ -23566,7 +23643,7 @@ client.notes.files.listAll(notebookId: string, options?: { limit?: number; offse
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `Promise<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.files`, all pages collected (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string | null }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
+**Returns:** `Promise<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.files`, all pages collected (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string|null }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
 **CLI:** `hoody notes files list`
 
 ---
@@ -23583,7 +23660,7 @@ client.notes.files.listIterator(notebookId: string, options?: { limit?: number; 
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `AsyncGenerator<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.files` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string | null }`.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
+**Returns:** `AsyncGenerator<(NonNullable<NotesFilesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { files?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.files` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ id*: string, name*: string, mimeType*: string, size*: number, createdAt*: string, createdBy*: string, documentId*: string, documentName*: string|null }`.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/files`
 **CLI:** `hoody notes files list`
 
 ---
@@ -23846,7 +23923,7 @@ client.notes.nodes.listAll(notebookId: string, options?: { type?: string; parent
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `Promise<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.nodes`, all pages collected (`list()` fetches one page). Each item is `{ [key: string]: any }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
+**Returns:** `Promise<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown)[]>` — every item of `data.nodes`, all pages collected (`list()` fetches one page). `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
 **CLI:** `hoody notes nodes list`
 
 ---
@@ -23920,7 +23997,7 @@ client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; p
 | `offset` | `number` | query | No |  |
 | `notebookId` | `string` | path | Yes |  |
 
-**Returns:** `AsyncGenerator<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.nodes` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ [key: string]: any }`.  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
+**Returns:** `AsyncGenerator<(NonNullable<NotesNodesListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends { nodes?: infer T1 } ? (NonNullable<T1> extends readonly (infer TItem)[] ? TItem : unknown) : unknown) : unknown), void, unknown>` — one item of `data.nodes` per step, next page fetched on demand (`list()` fetches one page).  |  **HTTP:** `GET /api/v1/notes/notebooks/{notebookId}/nodes`
 **CLI:** `hoody notes nodes list`
 
 ---
@@ -24010,7 +24087,7 @@ client.notes.notebooks.create(data: NotesNotebooksCreateRequest)
 |-----------|------|------|----------|-------------|
 | `data` | `NotesNotebooksCreateRequest` | body | Yes |  |
 
-**Body:** `{ name*: string, description: string | null, avatar: string | null }`
+**Body:** `{ name*: string, description: string|null, avatar: string|null }`
 
 **Returns:** `Promise<NotesNotebooksCreateResponse>`  |  **HTTP:** `POST /api/v1/notes/notebooks`
 **CLI:** `hoody notes notebooks create`
@@ -24069,7 +24146,7 @@ client.notes.notebooks.update(notebookId: string, data: NotesNotebooksUpdateRequ
 | `notebookId` | `string` | path | Yes |  |
 | `data` | `NotesNotebooksUpdateRequest` | body | Yes |  |
 
-**Body:** `{ name*: string, description: string | null, avatar: string | null }`
+**Body:** `{ name*: string, description: string|null, avatar: string|null }`
 
 **Returns:** `Promise<NotesNotebooksUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/notes/notebooks/{notebookId}`
 **CLI:** `hoody notes notebooks update`
@@ -24157,7 +24234,7 @@ client.notes.records.create(notebookId: string, databaseId: string, data: NotesR
 | `databaseId` | `string` | path | Yes |  |
 | `data` | `NotesRecordsCreateRequest` | body | Yes |  |
 
-**Body:** `{ id: string, name: string="Untitled", avatar: string | null, fields: { [key: string]: any } }`
+**Body:** `{ id: string, name: string="Untitled", avatar: string|null, fields: { [key: string]: object } }`
 
 **Returns:** `Promise<NotesRecordsCreateResponse>`  |  **HTTP:** `POST /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records`
 **CLI:** `hoody notes records create`
@@ -24289,7 +24366,7 @@ client.notes.records.update(notebookId: string, databaseId: string, recordId: st
 | `recordId` | `string` | path | Yes |  |
 | `data` | `NotesRecordsUpdateRequest` | body | Yes |  |
 
-**Body:** `{ name: string, avatar: string | null, fields: { [key: string]: object } }`
+**Body:** `{ name: string, avatar: string|null, fields: { [key: string]: object } }`
 
 **Returns:** `Promise<NotesRecordsUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/notes/notebooks/{notebookId}/databases/{databaseId}/records/{recordId}`
 **CLI:** `hoody notes records update`
@@ -24472,11 +24549,11 @@ Two jobs in one namespace. First and most useful: **remotely inform the human op
 ## Prerequisites
 
 - A valid target display number. With display-ensure enabled (the default) the kit brings the display up itself before sending; dispatch still needs a usable D-Bus session on it.
-- Required: `display`+`summary` on `notifications.send`; `display` on `list`; `displays` on `connect`.
+- Required: `display`+`summary` on `notifications.send`; `display` on `list`; `displays` on the SSE stream (optional over WebSocket, where you can `subscribe` after connecting).
 
 ## Capability URL
 
-Kit slug is `n` (not `notifications`): `https://{P}-{C}-n-1.{N}.containers.hoody.com`. The HTTP API lives under `/api/v1/notifications/...`. **The root of that URL is a user-facing web page**: open `https://{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all` in any browser and it requests notification permission, then turns each entry it receives over its SSE stream into a real OS notification (works backgrounded; the stream reconnects on its own; there is no polling fallback, so an alert that arrives during a gap is not shown). The hostname itself is the credential, so no token or header goes in the URL — hand the human that exact URL with `{P}`/`{C}`/`{N}` filled in from `containers.get`. → See `SKILL-SDK.md § Proxy URLs` for the slug table and capability-token rules.
+Kit slug is `n` (the proxy also accepts `notifications` and `notification` as hostname aliases): `https://{P}-{C}-n-1.{N}.containers.hoody.com`. The HTTP API lives under `/api/v1/notifications/...`. **The root of that URL is a user-facing web page**: open `https://{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all` in any browser and it requests notification permission, then turns each entry it receives over its SSE stream into a real OS notification (works backgrounded; the stream reconnects on its own; there is no polling fallback, so an alert that arrives during a gap is not shown). The hostname itself is the credential, so no token or header goes in the URL — hand the human that exact URL with `{P}`/`{C}`/`{N}` filled in from `containers.get`. → See `SKILL-SDK.md § Proxy URLs` for the slug table and capability-token rules.
 
 **Reaching a service you host on a container port** (any port, any namespace):
 
@@ -24489,15 +24566,15 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Fire a notification
 
-`notifications.send` body: `display`+`summary` (req); optional `body`, `urgency`, `icon`, `category`, `expire_time`. Pick a display that has (or can be given) a D-Bus session; `:0` often has none, see Example 1.
+`notifications.send` body: `display`+`summary` (req); optional `body`, `urgency`, `icon`, `category`, `expire_time`. `display` is a number from 1 through 40000, optionally `:`-prefixed: display 0 returns `400 Validation Error` with `details: "Display 0 does not exist; display IDs start at 1."`, and a number above 40000 is a `400` too. With display-ensure enabled (the default) the kit tries to start a valid target display.
 
 ### 2. Read recent notifications
 
-`list` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries. With `since` the page holds the OLDEST `limit` entries at or after that timestamp; with `after_id` the OLDEST `limit` ids above it. Every page is sorted newest-first either way. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. The SDK `list` options have no `cursor` yet (an unknown key is not sent): page forward per display with `after_id` while `has_more` is `true`; see Example 8.
+`list` — `display`: `":0"`, `"0"`, `"0,:1,2"`, or `"all"`. Optional `limit` (1–1000, default 100), `since` (ms, inclusive), `after_id` (exclusive id), `cursor`, `username`, `session`. Without `since`/`after_id`/`cursor` one call returns the newest `limit` entries, listed newest-first. With `since` the page holds the OLDEST `limit` entries at or after that timestamp, with `after_id` the OLDEST `limit` ids above it, and with `cursor` the OLDEST `limit` entries after it; these forward pages are listed oldest-first, in the order they were selected, so consecutive pages join into one ascending list. Each response carries an opaque `next_cursor` and `has_more`: pass `next_cursor` back as `cursor` while `has_more` is `true` to page forward (`has_more` is always `false` on a plain newest page). `cursor` cannot be combined with `since` or `after_id` (`400`). `count` is the size of that page, not a total. There is no reverse cursor; to walk the whole retained history, start at `since=0` and page forward. The SDK takes it as `{ cursor: next_cursor }` (omit `since` and `after_id` beside it); one cursor continues a listing of one display or of several. `listIterator` and `listAll` follow `next_cursor` for you: pass `since` (`0` for the whole retained history) or a `cursor` to say where to start, since without one they return only the newest page; see Example 8.
 
 ### 3. Subscribe to events
 
-`connect` — `displays`: `"all"`, `"*"`, or a comma list of 1–5-digit IDs (each may carry a leading `:`). WS if `Upgrade`; else SSE (`connected`, 15 s `heartbeat`, `notification`). Over WS the kit sends, once per heartbeat interval (default 30 s), a protocol Ping plus the same JSON `heartbeat` message (`{"type":"heartbeat","timestamp":…}`). WS clients send `{"type":"subscribe"|"unsubscribe","displays":[...]}`.
+`connect` — `displays`: `"all"`, `"*"`, or a comma list of 1–5-digit IDs (each may carry a leading `:`). WS if `Upgrade`; else SSE (`connected`, 15 s `heartbeat`, `notification`, and `resync` when the subscriber fell behind; WS sends `resync` too). `displays` is required for SSE; a WS connection without it receives nothing until it subscribes. Over WS the kit sends, once per heartbeat interval (default 30 s), a protocol Ping plus the same JSON `heartbeat` message (`{"type":"heartbeat","timestamp":…}`). WS clients send `{"type":"subscribe"|"unsubscribe","displays":[...]}`.
 
 ### 4. Dismiss / restore
 
@@ -24509,13 +24586,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 6. Remotely notify the human operator
 
-Reach a human who isn't watching the session — on their phone, desktop, or smartwatch. One-time human setup: they open the kit web page with `?displays=all` (see § Capability URL), grant browser-notification permission, and leave the tab backgrounded. Agent side: `notifications.send` with a `display` (any real display number — the kit auto-ensures it, so you do NOT have to set up X first), a `summary`, and optional `body`/`urgency`. The kit records the entry and broadcasts it on its stream; the operator's page renders it as an OS notification. Full copy-paste recipe in Example 11.
+Reach a human who isn't watching the session — on their phone, desktop, or smartwatch. One-time human setup: they open the kit web page with `?displays=all` (see § Capability URL), grant browser-notification permission, and leave the tab backgrounded. Agent side: `notifications.send` with a `display` (1 through 40000, not 0 — the kit auto-ensures a valid display, so you do NOT have to set up X first), a `summary`, and optional `body`/`urgency`. The kit records the entry and broadcasts it on its stream; the operator's page renders it as an OS notification. Full copy-paste recipe in Example 11.
 
 ## Quirks & gotchas
 
-- Kit slug is `n`, not `notifications`.
+- Kit slug is `n`; the proxy also accepts `notifications` and `notification` as hostname aliases, but use `n`.
 - `dismiss.notificationIds` must be a non-empty array; non-integer elements are silently dropped, and only when no integer remains does it return `400 "notificationIds must contain valid integer IDs"` (so `[12,"13"]` dismisses only `12`). `displayId` strips leading `:`.
-- `notifications.send` limits: `summary` ≤200 and `body` ≤1000 by default (a deployment can change them with `NOTIFY_SEND_MAX_SUMMARY_LENGTH` / `NOTIFY_SEND_MAX_BODY_LENGTH`), `category` ≤50, `expire_time` 0–300000; `urgency` ∈ `low|normal|critical`.
+- `notifications.send` limits: `summary` ≤200 and `body` ≤1000 by default (a deployment can change them with `NOTIFY_SEND_MAX_SUMMARY_LENGTH` / `NOTIFY_SEND_MAX_BODY_LENGTH`), `category` ≤50, `expire_time` 0–300000; `urgency` ∈ `low|normal|critical`; `display` 1–40000 (display 0 and higher numbers are a `400`).
 - `list.display` numeric or `"all"`; `connect.displays` accepts `all`, `*`, or a comma list of 1–5-digit IDs, each optionally `:`-prefixed (`1000` and `20001` are valid; 6+ digits rejected).
 - `list.limit` `[1,1000]` def 100; forward start points `since`/`after_id`, continuation `cursor` (a `next_cursor` value; not combinable with `since`/`after_id`); `username`/`session` 1–100 ASCII alnum.
 - `username`/`session` are owner filters, with specific displays and with `all`: only history files named for that owner are read (`<username>-<session>-notifications.json`, `<username>-display-<N>-notifications.json`), so the generic `display-<N>`/`user-<N>` history is excluded. A `session` filter also excludes the `<username>-display-<N>` files, which carry no session. The display selection still filters the rows read.
@@ -24523,16 +24600,16 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 - `iconId` ext whitelist `jpg|jpeg|png|webp|avif|gif|bmp`; traversal rejected.
 - WS only with `Upgrade`; else SSE+15 s JSON heartbeat. WS: per-IP caps, origin allow-list, every 30 s by default a protocol Ping plus the same JSON `heartbeat` message, drops after 2 missed pongs.
 - `restore`=DELETE, `dismiss`=POST, same path.
-- The live stream is best-effort, not a delivery log: on each history-file change the kit compares the file with its previous snapshot and broadcasts every new or changed row (oldest first), but a subscriber that lags behind the broadcast skips the missed entries without replay. To catch up, page `list` forward from your last position and keep going while `has_more` is `true` (Example 8): with `cursor`, `since` or `after_id` each page holds the OLDEST matching rows past that point, so nothing is skipped between pages.
+- The live stream is best-effort, not a delivery log: on each history-file change the kit compares the file with its previous snapshot and broadcasts every new or changed row (oldest first), but a subscriber that lags behind the broadcast skips the missed entries without replay. The kit says when that happens: both SSE and WebSocket send `{"type":"resync","skipped":<n>,"timestamp":<ms>}` in place of the skipped entries (the SDK wrapper's `onResync(cb)`). To catch up, page `list` forward from your last position and keep going while `has_more` is `true` (Example 8): with `cursor`, `since` or `after_id` each page holds the OLDEST matching rows past that point, so nothing is skipped between pages.
 - **There are two distinct `notifications` surfaces; this namespace is the kit one.** This file documents the per-container kit (`hoody-notifications`, kit slug `n`) — `/api/v1/notifications/{display}`, `notify-send`, icons, WS/SSE stream. The control-plane *account inbox* lives at `client.api.inbox.*` (`GET /api/v1/notifications/`, `PUT /:id/read`, `read-all`) and is unrelated — and its credential rules are NOT the kit's: reading requires the auth token to hold `resources.read_account` (403 without it), and BOTH acknowledge routes refuse every auth token outright, needing a first-party account login.
-- For live feeds use `connect` (see the next bullet). The generated CLI command for the same route buffers SSE events instead of streaming them, so don't shell out to it.
-- `connect` returns a `Promise<NotificationsConnectNotificationStreamWebSocket>` wrapper, NOT `void`, and nothing is connected when it resolves. Wire callbacks first (`wrapper.onNotification(cb)` / `onDisconnect(cb)` / `onError(cb)`), then `await wrapper.connect()`. The wrapper also has `onHeartbeat(cb)`: it fires on the kit's JSON `heartbeat` message, which the kit sends over WebSocket too, next to a protocol Ping, once per heartbeat interval (30 s by default, not SSE's 15 s). Close with `wrapper.close()`. There is NO `onMessage`/`onClose` — those names are wrong. `displays` is required twice over: the options object is required and types it `displays: string`, and the method throws `ValidationError('displays is required')` when it is missing.
+- For live feeds use `connect` (see the next bullet).
+- `connect` returns a `Promise<NotificationsConnectNotificationStreamWebSocket>` wrapper, NOT `void`, and nothing is connected when it resolves. Wire callbacks first (`wrapper.onNotification(cb)` / `onDisconnect(cb)` / `onError(cb)`), then `await wrapper.connect()`. The wrapper also has `onHeartbeat(cb)`: it fires on the kit's JSON `heartbeat` message, which the kit sends over WebSocket too, next to a protocol Ping, once per heartbeat interval (30 s by default, not SSE's 15 s). Close with `wrapper.close()`. There is NO `onMessage`/`onClose` — those names are wrong. `displays` is optional here (only the SSE route requires it): `connect({ displays: 'all' })` subscribes on connect, while `connect()` without it opens a socket that receives nothing until you call `wrapper.subscribe(['2'])` after `await wrapper.connect()` (`unsubscribe([...])` removes displays). Register `onResync(cb)` too: it fires with `{type:"resync",skipped,timestamp}` when the socket fell behind and skipped entries, which you then read back with `list` from your last position.
 - The kit serves a **browser client at `/`** (and at the `/api/v1/notifications` alias): it subscribes to every display over SSE (EventSource, which reconnects on its own) and raises a browser `Notification` per entry it receives. It has no polling fallback: recent history is reloaded on every stream open (reconnects included) and on a `resync` event, but history rows only update the activity list and never raise a native alert, so an alert that arrives while the stream is down is not shown. The `?displays=all` suffix in the handed-out URL is harmless; the page always subscribes to all displays. This is the supported path for delivering an agent's notifications to a human's device; no token goes in the URL (the hostname is the capability).
-- `notifications.send` does NOT require you to pre-create an X display: when display-ensure is enabled (the kit default), the kit brings the target display up itself before calling `notify-send` (waiting up to the display-ensure timeout, default 30 s; results are cached 60 s), so firing to e.g. `:1` works on demand. If no D-Bus session can be found for the display it still returns `500` `error: "Notification dispatch failed"` with `details: "The display's notification session is not available yet. Start the display and retry."`
+- `notifications.send` does NOT require you to pre-create an X display: when display-ensure is enabled (the kit default), the kit brings the target display up itself before calling `notify-send` (waiting up to the display-ensure timeout, default 30 s; results are cached 60 s), so firing to e.g. `:1` works on demand. If no D-Bus session can be found for the display yet, it returns `503` `error: "Display not ready"`, `code: "DISPLAY_NOT_READY"`, a `Retry-After` header and `details: "The display's notification session is not available yet. Retry in a few seconds."`; when no display is running and none can be started it returns `503` `error: "Display not available"`, `code: "DISPLAY_NOT_AVAILABLE"`.
 
 ## Common errors
 
-- Invalid input on `notifications.send` (including text the dispatcher's sanitizer rejects) → `400` `error: "Validation Error"` with the reason in `details`. A failed dispatch → `500` `error: "Notification dispatch failed"` with one fixed `details` sentence: session unavailable ("The display's notification session is not available yet. Start the display and retry."), timeout ("Sending the notification timed out. Retry later."), or any other failure ("The notification service failed to send the notification.").
+- Invalid input on `notifications.send` (including text the dispatcher's sanitizer rejects) → `400` `error: "Validation Error"` with the reason in `details`. A failed dispatch carries a fixed `code` and one fixed `details` sentence: no display running and none can be started → `503` `error: "Display not available"`, `code: "DISPLAY_NOT_AVAILABLE"`; the display's notification session not up yet → `503` `error: "Display not ready"`, `code: "DISPLAY_NOT_READY"`, with `Retry-After` and `details: "The display's notification session is not available yet. Retry in a few seconds."`; a timeout ("Sending the notification timed out. Retry later.") or any other failure ("The notification service failed to send the notification.") → `500` `error: "Notification dispatch failed"`, `code: "DISPATCH_FAILED"`.
 - WS origin-deny → `403` `Origin not allowed` before the upgrade; close `1008` on message rate limit; `1001` heartbeat timeout. `429` on `send` / `icons.get`; both are enforced by the shared per-IP rate-limit middleware.
 - `/health` 200 ≠ authorised endpoints reachable.
 
@@ -24542,11 +24619,11 @@ Reach a human who isn't watching the session — on their phone, desktop, or sma
 
 ## Examples
 
-The kit slug is `n`, NOT `notifications` (the long form does not resolve). Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first, and tag your test traffic with a distinctive `category` like `sdk-doc-*` so cleanup can find it.
+Use the canonical kit slug `n` in URLs; the proxy also accepts `notifications` and `notification` as hostname aliases. Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first, and tag your test traffic with a distinctive `category` like `sdk-doc-*` so cleanup can find it.
 
 ### 1. Fire a notification on a display + read it back
 
-**Goal:** post a toast on display `:2`, then confirm the kit recorded it. ⚠ Display `:0` typically has no D-Bus session in headless containers (`500` with `details: "The display's notification session is not available yet. Start the display and retry."`); use a display that an X session is actually attached to.
+**Goal:** post a toast on display `:2`, then confirm the kit recorded it. ⚠ Use a display from 1 through 40000: display `:0` does not exist and returns `400 Validation Error` (`details: "Display 0 does not exist; display IDs start at 1."`). A valid display whose notification session is not up yet returns `503` `DISPLAY_NOT_READY` with `Retry-After`; resend after that wait.
 
 **Step 1 — trigger.** Body is `application/json`; `display` + `summary` are required, the rest are optional. The kit responds `{"success":true,"message":"Notification sent successfully"}` — note: NO `id` is returned here, so step 2 has to recover the per-display id by listing.
 
@@ -24583,13 +24660,15 @@ const mine = (r.data as any).data.notifications.filter((n: any) => n.category ==
 
 ### 3. Subscribe to the live SSE stream and react to new notifications
 
-**Goal:** keep a long-lived consumer that reacts to new notifications as they arrive. Default is SSE (no `Upgrade` header); WebSocket activates only with an `Upgrade: websocket` request. SSE frames: `connected` (once), `heartbeat` (every 15 s), `notification` (on new entry). The stream is best-effort: a slow consumer skips what it lagged behind, with no replay. When every entry matters, also page `list` forward (Example 8). The SDK wrapper connects over WebSocket, not SSE: register the handlers before `connect()`. Over WebSocket the JSON `heartbeat` (and so `onHeartbeat`) arrives every 30 s by default, not every 15 s.
+**Goal:** keep a long-lived consumer that reacts to new notifications as they arrive. Default is SSE (no `Upgrade` header); WebSocket activates only with an `Upgrade: websocket` request. SSE frames: `connected` (once), `heartbeat` (every 15 s), `notification` (on new entry), `resync` (when the subscriber fell behind). The stream is best-effort: a slow consumer skips what it lagged behind, with no replay, but both transports then send `{"type":"resync","skipped":<n>,"timestamp":<ms>}`. On a `resync`, page `list` forward from the last position you processed (Example 8) to recover the skipped entries. The SDK wrapper connects over WebSocket, not SSE: register the handlers, `onResync` included, before `connect()`. Over WebSocket the JSON `heartbeat` (and so `onHeartbeat`) arrives every 30 s by default, not every 15 s.
 
 ```typescript
 const stream = await client.notifications.connect({ displays: 'all' });
 stream.onNotification((msg) => console.log('new:', msg.data));
 stream.onDisconnect((code, reason) => { /* socket closed: code=${code} reason=${reason} */ });
 stream.onError((err) => console.error(err));
+// Fell behind: `msg.skipped` entries were not delivered; page list forward from your last position (Example 8).
+stream.onResync((msg) => console.warn('missed', msg.skipped, 'notifications; catching up'));
 await stream.connect();
 // later:
 stream.close();
@@ -24617,7 +24696,7 @@ await client.notifications.restore();                     // every scope, global
 
 ### 6. Fetch a notification icon by id with revalidation
 
-**Goal:** download the icon a notification carried, then revalidate cheaply via `If-None-Match`. `iconId` looks like `6_10_1749024932903.png`; the kit rejects unknown extensions and any path traversal. Unknown/unresolvable `iconId` returns `400` (`{"error":"Icon not found"}` / `Icon not found or path invalid`); an unsupported extension or path traversal returns `400 "Icon ID is invalid or has an unsupported extension."`, and an existing-but-unreadable icon returns `500`. The route has no 404 path at all — a missing icon is a `400`.
+**Goal:** download the icon a notification carried, then revalidate cheaply via `If-None-Match`. `iconId` looks like `6_10_1749024932903.png`; the kit rejects unknown extensions and any path traversal. Unknown/unresolvable `iconId` returns `400` (`{"error":"Icon not found"}` / `Icon not found or path invalid`); an unsupported extension or path traversal returns `400` with `error: "Validation Error"` and `details: "Icon ID is invalid or has an unsupported extension."`, an icon that cannot be opened returns `400 "Icon not found"`, and a read failure after opening it returns `500 "Internal server error while serving icon"`. The route has no 404 path at all — a missing icon is a `400`.
 
 ```typescript
 const r = await client.notifications.list('2', { limit: 10 });
@@ -24629,12 +24708,12 @@ const bytes = r2.data; // icons.get returns ApiResponse<ArrayBuffer>; the bytes 
 
 ### 7. Filter a listing by display, time window, and cursor
 
-**Goal:** "give me what is new on display `:2` since a known point, with a position to continue from." `since` is **Unix milliseconds** (inclusive), `after_id` the exclusive integer id. With either, the page holds the OLDEST `limit` matches (still listed newest-first), and `data.has_more` says whether more follow `data.next_cursor`. `display_id` comes back as either a number or a string depending on the entry source, so compare it loosely; the path/CLI accepts `"2"`, `":2"`, or even `"all"`.
+**Goal:** "give me what is new on display `:2` since a known point, with a position to continue from." `since` is **Unix milliseconds** (inclusive), `after_id` the exclusive integer id. With either, the page holds the OLDEST `limit` matches, listed oldest-first, and `data.has_more` says whether more follow `data.next_cursor`. `display_id` comes back as either a number or a string depending on the entry source, so compare it loosely; the path/CLI accepts `"2"`, `":2"`, or even `"all"`.
 
 ```typescript
 const since = Date.now() - 60_000;
-// With `since` the page is the OLDEST `limit` matches, listed newest first.
-// There are no collect-all / iterator helpers for this endpoint; check has_more yourself.
+// With `since` the page is the OLDEST `limit` matches, listed oldest first.
+// To walk every page from `since`, use listIterator('2', { since }) or listAll('2', { since }).
 const r = await client.notifications.list('2', { limit: 100, since });
 const { notifications: items, has_more } = (r.data as any).data;
 const lastId = items.length ? Math.max(...items.map((n: any) => n.id)) : null;
@@ -24644,24 +24723,19 @@ const lastId = items.length ? Math.max(...items.map((n: any) => n.id)) : null;
 
 **Goal:** poll for what arrived since your last read, without re-reading or skipping anything. A plain listing returns the newest `limit` entries (its `has_more` is always `false`), and its `data.next_cursor` marks the newest row. Pass that value back as `cursor` and the kit returns the OLDEST `limit` rows after it, with a fresh `next_cursor` and `has_more: true` while more rows wait. Loop until `has_more` is `false`, keep the last `next_cursor`, and start the next poll from it (an empty page echoes your cursor back). Rows are ordered by (timestamp, display, id), so one cursor covers `all` or `2,3`. `cursor` cannot be combined with `since` or `after_id` (`400`). To walk the whole retained history, start with `since=0` instead of a plain listing. There is no reverse cursor.
 
-The SDK `list` options have no `cursor` yet (an unknown key is not sent), so page with `after_id` instead: it returns the OLDEST `limit` entries whose id is above it, so passing the highest id you hold, again while `has_more` is `true`, misses nothing. Ids are numbered per display and are not unique across displays, so keep one `after_id` per display and list each display on its own.
+The SDK takes the cursor as `{ cursor: next_cursor }`. `listIterator('all', { since: 0 })` and `listAll('all', { since: 0 })` follow `next_cursor` for one walk, but they do not hand back the last `next_cursor`, so keep the manual loop below when each poll must resume where the previous one stopped.
 
 ```typescript
-const displays = ['2', '3'];
-const high: Record<string, number> = {};
 const pageOf = (r: any) => (r.data as any).data ?? { notifications: [], has_more: false };
-for (const d of displays) {   // first read: the HIGHEST id per display (0 when empty)
-  const ids: number[] = pageOf(await client.notifications.list(d, { limit: 50 })).notifications.map((n: any) => n.id);
-  high[d] = ids.length ? Math.max(...ids) : 0;
-}
-// Each poll: per display, the OLDEST entries above that display's cursor, until has_more is false.
-for (const d of displays) {
-  for (;;) {
-    const page = pageOf(await client.notifications.list(d, { limit: 1000, after_id: high[d] }));
-    const ids: number[] = page.notifications.map((n: any) => n.id);
-    if (ids.length) high[d] = Math.max(high[d], ...ids);
-    if (!page.has_more) break;
-  }
+// First read: the newest page. Keep its next_cursor (null only when nothing is listed).
+let cursor: string | undefined = pageOf(await client.notifications.list('all', { limit: 50 })).next_cursor ?? undefined;
+// Each poll: follow next_cursor while has_more; every page is the OLDEST rows past the cursor.
+for (;;) {
+  const page = pageOf(await client.notifications.list('all',
+    cursor ? { limit: 1000, cursor } : { limit: 1000, since: 0 }));
+  for (const n of page.notifications) { /* handle n (oldest first) */ }
+  cursor = page.next_cursor ?? cursor;
+  if (!page.has_more) break;
 }
 ```
 
@@ -24680,7 +24754,7 @@ const r = await client.notifications.list('2', {
 
 ### 10. Survive a 429 rate-limit burst on `notifications.send`
 
-**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `notifications.send` and `icons.get`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `500` (`error: "Notification dispatch failed"`) says why in `details`; when it reads "The display's notification session is not available yet. Start the display and retry.", bring the display up (→ `display`) before retrying instead of looping on the same call.
+**Goal:** you're shipping a flood of toasts (CI, monitoring, …) and the kit pushes back with `429 Too Many Requests`. The kit per-IP rate-limits both `notifications.send` and `icons.get`. Strategy: cap concurrency client-side, exponential-backoff on `429`, and never retry on `400` (validation — fix the body instead). A `503` with `code: "DISPLAY_NOT_READY"` means the display's notification session is not up yet: wait for its `Retry-After` and resend. A `503` with `code: "DISPLAY_NOT_AVAILABLE"` means no display can be started, so bring one up (→ `display`) instead of looping on the same call. A `500` (`code: "DISPATCH_FAILED"`) is a failed or timed-out send; its `details` says which.
 
 ```typescript
 async function triggerWithBackoff(req: any, max = 5) {
@@ -24689,7 +24763,7 @@ async function triggerWithBackoff(req: any, max = 5) {
     try { return await client.notifications.send(req); }
     catch (e: any) {
       if (e?.status === 429) { await new Promise(r => setTimeout(r, delay)); delay *= 2; continue; }
-      throw e; // 400 / 500 — don't retry blindly
+      throw e; // 400 / 500 / 503 — don't retry blindly (see the Goal for 503 DISPLAY_NOT_READY)
     }
   }
   throw new Error('rate-limited after retries');
@@ -24708,7 +24782,7 @@ https://{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all
 
 The page asks for notification permission on first load (with an Enable button when the browser needs a click first) and its stream reconnects on its own. Delivery is best-effort: there is no polling fallback, so an alert fired while the connection is down is not shown. When an alert must not be missed, the agent should also check the `list` history. No token goes in the URL — the hostname is the credential.
 
-**Agent side** — fire the alert. Any real display number works; the kit auto-ensures it, so you don't need to set up X first.
+**Agent side** — fire the alert. Any display from 1 through 40000 works (display 0 is a `400`); the kit auto-ensures it, so you don't need to set up X first.
 
 ```typescript
 await client.notifications.send({
@@ -24723,7 +24797,7 @@ await client.notifications.send({
 
 **Accessor:** `client.notifications`  |  **Import:** `import * as notifications from 'hoody-sdk/notifications'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.notifications.icons` (1) — Serve notification icons
 
@@ -24815,9 +24889,9 @@ client.notifications.list(display: string, options?: { limit?: number; since?: n
 |-----------|------|------|----------|-------------|
 | `display` | `string` | path | Yes | A display ID (`1` or `:1`, up to 5 digits), a comma-separated list (`1,:2,3`), or `all`. Any invalid element rejects the whole request with 400. |
 | `limit` | `number` | query | No | Maximum number of notifications to return |
-| `since` | `number` | query | No | Forward start point, Unix milliseconds, inclusive: returns the oldest `limit` notifications with `timestamp >= since`. Use it to start from a known time; continue with `cursor` = `data.next_cursor`. |
-| `after_id` | `number` | query | No | Forward cursor on notification id, exclusive: returns the oldest `limit` notifications with `id > after_id`, chosen by id. Ids are numbered per display, so the filter is only meaningful for a single display; use `since` for lists and `all`. `data.next_cursor` of an `after_id` page continues in id order and keeps the request's `since` bound: with both `since` and `after_id`, every page reached by following it returns only rows with `timestamp >= since` and `id > after_id`. |
-| `cursor` | `string` | query | No | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
+| `since` | `number` | query | No | Forward start point, Unix milliseconds, inclusive: returns the oldest `limit` notifications with `timestamp >= since`, oldest first. Use it to start from a known time (`0` for the whole history); continue with `cursor` = `data.next_cursor`. |
+| `after_id` | `number` | query | No | Forward cursor on notification id, exclusive: returns the oldest `limit` notifications with `id > after_id`, chosen and listed by id. Ids are numbered per display, so the filter is only meaningful for a single display; use `since` for lists and `all`. `data.next_cursor` of an `after_id` page continues in id order and keeps the request's `since` bound: with both `since` and `after_id`, every page reached by following it returns only rows with `timestamp >= since` and `id > after_id`. |
+| `cursor` | `string` | query | No | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it, oldest first. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
 | `username` | `string` | query | No | Read only this user's history files (letters and digits only). See the operation description. |
 | `session` | `string` | query | No | Read only this session's history files (letters and digits only). See the operation description. |
 
@@ -24836,9 +24910,9 @@ client.notifications.listAll(display: string, options?: { limit?: number; since?
 |-----------|------|------|----------|-------------|
 | `display` | `string` | path | Yes | A display ID (`1` or `:1`, up to 5 digits), a comma-separated list (`1,:2,3`), or `all`. Any invalid element rejects the whole request with 400. |
 | `limit` | `number` | query | No | Maximum number of notifications to return |
-| `since` | `number` | query | No | Forward start point, Unix milliseconds, inclusive: returns the oldest `limit` notifications with `timestamp >= since`. Use it to start from a known time; continue with `cursor` = `data.next_cursor`. |
-| `after_id` | `number` | query | No | Forward cursor on notification id, exclusive: returns the oldest `limit` notifications with `id > after_id`, chosen by id. Ids are numbered per display, so the filter is only meaningful for a single display; use `since` for lists and `all`. `data.next_cursor` of an `after_id` page continues in id order and keeps the request's `since` bound: with both `since` and `after_id`, every page reached by following it returns only rows with `timestamp >= since` and `id > after_id`. |
-| `cursor` | `string` | query | No | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
+| `since` | `number` | query | No | Forward start point, Unix milliseconds, inclusive: returns the oldest `limit` notifications with `timestamp >= since`, oldest first. Use it to start from a known time (`0` for the whole history); continue with `cursor` = `data.next_cursor`. |
+| `after_id` | `number` | query | No | Forward cursor on notification id, exclusive: returns the oldest `limit` notifications with `id > after_id`, chosen and listed by id. Ids are numbered per display, so the filter is only meaningful for a single display; use `since` for lists and `all`. `data.next_cursor` of an `after_id` page continues in id order and keeps the request's `since` bound: with both `since` and `after_id`, every page reached by following it returns only rows with `timestamp >= since` and `id > after_id`. |
+| `cursor` | `string` | query | No | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it, oldest first. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
 | `username` | `string` | query | No | Read only this user's history files (letters and digits only). See the operation description. |
 | `session` | `string` | query | No | Read only this session's history files (letters and digits only). See the operation description. |
 
@@ -24857,9 +24931,9 @@ client.notifications.listIterator(display: string, options?: { limit?: number; s
 |-----------|------|------|----------|-------------|
 | `display` | `string` | path | Yes | A display ID (`1` or `:1`, up to 5 digits), a comma-separated list (`1,:2,3`), or `all`. Any invalid element rejects the whole request with 400. |
 | `limit` | `number` | query | No | Maximum number of notifications to return |
-| `since` | `number` | query | No | Forward start point, Unix milliseconds, inclusive: returns the oldest `limit` notifications with `timestamp >= since`. Use it to start from a known time; continue with `cursor` = `data.next_cursor`. |
-| `after_id` | `number` | query | No | Forward cursor on notification id, exclusive: returns the oldest `limit` notifications with `id > after_id`, chosen by id. Ids are numbered per display, so the filter is only meaningful for a single display; use `since` for lists and `all`. `data.next_cursor` of an `after_id` page continues in id order and keeps the request's `since` bound: with both `since` and `after_id`, every page reached by following it returns only rows with `timestamp >= since` and `id > after_id`. |
-| `cursor` | `string` | query | No | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
+| `since` | `number` | query | No | Forward start point, Unix milliseconds, inclusive: returns the oldest `limit` notifications with `timestamp >= since`, oldest first. Use it to start from a known time (`0` for the whole history); continue with `cursor` = `data.next_cursor`. |
+| `after_id` | `number` | query | No | Forward cursor on notification id, exclusive: returns the oldest `limit` notifications with `id > after_id`, chosen and listed by id. Ids are numbered per display, so the filter is only meaningful for a single display; use `since` for lists and `all`. `data.next_cursor` of an `after_id` page continues in id order and keeps the request's `since` bound: with both `since` and `after_id`, every page reached by following it returns only rows with `timestamp >= since` and `id > after_id`. |
+| `cursor` | `string` | query | No | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it, oldest first. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
 | `username` | `string` | query | No | Read only this user's history files (letters and digits only). See the operation description. |
 | `session` | `string` | query | No | Read only this session's history files (letters and digits only). See the operation description. |
 
@@ -24947,7 +25021,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-Send with `client.pipe.send` (per-call request headers go in `{ headers }`). The generated pipe service has no receive method: receive with `PipeStream` (Node entry of `hoody-sdk`; `const ps = PipeStream.fromClient(client, container)`), whose `ps.receive(path, { n, download, filename, wait, sha256, live, signal })` resolves once the sender starts, with `{ body, headers, status, transferId }`: `body` is a `ReadableStream<Uint8Array>` and `headers` the forwarded response headers. A non-2xx answer throws. In a browser, `PipeBrowser.receive` gives the same shape.
+Send with `client.pipe.send` (per-call request headers go in `{ headers }`). The generated `client.pipe.receive(path, options)` returns the whole body buffered in `data`; for a streaming body and the forwarded response headers, receive with `PipeStream` (Node entry of `hoody-sdk`; `const ps = PipeStream.fromClient(client, container)`), whose `ps.receive(path, { n, download, filename, wait, sha256, live, signal })` resolves once the sender starts, with `{ body, headers, status, transferId }`: `body` is a `ReadableStream<Uint8Array>` and `headers` the forwarded response headers. A non-2xx answer throws. In a browser, `PipeBrowser.receive(path, { n, live, signal })` returns `{ body, headers, status }` with no `transferId`: read it from `headers.get('X-Hoody-Pipe-Transfer-Id')`. A `live` receiver gets no transfer id (`transferId: null`, and the header lookup returns null); inspect a live stream by name with `status(path)`.
 
 ### 1. One-to-one
 
@@ -24982,7 +25056,7 @@ Send page `<kit>/api/v1/pipe/?name=<name>&…`:
 | `text` | ≤100000 chars | text to send; selects text mode |
 | `mode` | `file` \| `text` | form mode |
 | `filename` | ≤255 chars | name the receiver gets for a text or pasted image |
-| `autostart` | `1` | text mode with a text and a name: send on open, no click |
+| `autostart` | `1` | text mode with non-empty text: send on open, no click (no `name` needed: an absent one is generated, and the page still sends) |
 
 Receive page `<kit>/api/v1/pipe/<name>?receive&…`:
 
@@ -25006,13 +25080,13 @@ Share page `<kit>/api/v1/pipe/<name>?share&…` (viewers open the video page):
 
 Video page `<kit>/api/v1/pipe/<name>?video&n=<n>&live=1&wait=<s>` (`n` only when >1, not with `live`; `live=1` plays a live broadcast; `wait` 1-3600 s is how long the player waits for the stream; opening it receives). Progress page `<kit>/api/v1/pipe/<name>?progress` (no params, no slot). No-JS form `<kit>/api/v1/pipe/noscript?path=<name>&mode=file|text&wait=<s>&sha256=1` (`wait` and `sha256` go on to its upload).
 
-In a browser, `PipeBrowser` and `PipeMedia` (from `hoody-sdk`, `fromClient(client, container)` or `{ pipeBaseUrl }`) have `getPageUrl(page, name, options)` and `openPage(page, name, options)` for `send`, `receive`, `share`, `video`, `progress`, `noscript`; options use the param names above (`autostart: true`, `audio: true|false`, `sha256: true`, `live: true`, `wait: <s>`; `wait`/`sha256` on receive and noscript, `live`/`wait` on video). A wrong option, out-of-range value, reserved name (see Quirks), `.`/`..` segment or over-long name throws. The `noscript` link carries the name encoded as in the pipe URL in its `path` (so its form posts to the same pipe) and refuses a name with `/`. `PipeBrowser` also has `sendFile(path, File|Blob|string|ArrayBuffer, { n, filename, contentType, transfer, onProgress, onStatus, signal })` (resolves when the transfer completes, rejects with `PipeTransferError`), `receive(path, { n, signal })` → `{ body, headers, status }`, `download(path, { n, filename })` (browser download manager) and `subscribeProgress(path)` (same events as `PipeStream`). `PipeMedia.shareAudio({ microphone, systemAudio, n })` streams audio only; listeners open `session.url` (`?video`). A share session (`shareScreen`, `shareWebcam`, `shareAudio`) uploads with its own transfer id (`?transfer=`, `session.transferId`) and follows only that transfer (`?status&transfer=<id>` and its `done` event), so another transfer on the name never ends it. It stops the capture when its transfer ends; `session.done` rejects with `PipeTransferError` when it failed (nobody joined in 5 minutes, every viewer left, idle timeout, network, an id in use (409), or its transfer unknown to the kit for about 30 s after it was seen), and a bad `path` throws before capture starts. The recording follows the upload: once 8 MiB of it wait to be sent (no receiver reading yet, a slow network) the recorder pauses (`session.paused` is true), and it resumes when the upload is back to 4 MiB behind; a pause by `session.pause()` stays until `session.resume()`. More than 16 MiB waiting ends the share and `session.done` rejects. Embed views `pipe.send`, `pipe.share`, `pipe.receive` take the same params except `autostart`; framing the share page needs `allow="display-capture; camera; microphone; autoplay"`.
+In a browser, `PipeBrowser` and `PipeMedia` (from `hoody-sdk`, `fromClient(client, container)` or `{ pipeBaseUrl }`) have `getPageUrl(page, name, options)` and `openPage(page, name, options)` for `send`, `receive`, `share`, `video`, `progress`, `noscript`; options use the param names above (`autostart: true`, `audio: true|false`, `sha256: true`, `live: true`, `wait: <s>`; `wait`/`sha256` on receive and noscript, `live`/`wait` on video). A wrong option, out-of-range value, reserved name (see Quirks), `.`/`..` segment or over-long name throws. The `noscript` link carries the name encoded as in the pipe URL in its `path` (so its form posts to the same pipe) and refuses a name with `/`. `PipeBrowser` also has `sendFile(path, File|Blob|string|ArrayBuffer, { n, filename, contentType, transfer, onProgress, onStatus, signal })` (resolves when the transfer completes, rejects with `PipeTransferError` when the transfer fails; built with `fromClient`, a refused request (non-2xx) throws the client's `ApiError` instead), `receive(path, { n, signal })` → `{ body, headers, status }`, `download(path, { n, filename })` (browser download manager) and `subscribeProgress(path)` (same events as `PipeStream`). `PipeMedia.shareAudio({ microphone, systemAudio, n })` streams audio only; listeners open `session.url` (`?video`). A share session (`shareScreen`, `shareWebcam`, `shareAudio`) uploads with its own transfer id (`?transfer=`, `session.transferId`) and follows only that transfer (`?status&transfer=<id>` and its `done` event), so another transfer on the name never ends it. It stops the capture when its transfer ends; `session.done` rejects with `PipeTransferError` when it failed (nobody joined in 5 minutes, every viewer left, idle timeout, network, an id in use (409), or its transfer unknown to the kit for about 30 s after it was seen), and a bad `path` throws before capture starts. The recording follows the upload: once 8 MiB of it wait to be sent (no receiver reading yet, a slow network) the recorder pauses (`session.paused` is true), and it resumes when the upload is back to 4 MiB behind; a pause by `session.pause()` stays until `session.resume()`. More than 16 MiB waiting ends the share and `session.done` rejects. Embed views `pipe.send`, `pipe.share`, `pipe.receive` take the same params except `autostart`; framing the share page needs `allow="display-capture; camera; microphone; autoplay"`.
 
 ### 7. Status, waiting time and checksums
 
-`?status` is one JSON snapshot of a name, with no receiver slot: `state` (`idle`, `waiting`, `streaming`, `complete`, `failed`), `kind` (`pipe`, `ws`, `live` or null), `peers`, `transferId`, `hasSender`, `activeReceivers`, `totalReceivers`, `bytesTransferred`, `totalBytes`, `speed`, `eta`, `elapsed`, `reason`, `sha256`. `?wait=<s>` (1-3600, default 300) sets how long one sender or receiver waits for the other side. `?sha256` (sender or any receiver) has the kit hash the stream; receivers get the transfer id in `X-Hoody-Pipe-Transfer-Id`, and `?status&transfer=<id>` returns that transfer, for a hashed one also for 10 min after it ends. Prometheus metrics: `GET /api/v1/pipe/metrics`.
+`?status` is one JSON snapshot of a name, with no receiver slot: `state` (`idle`, `waiting`, `streaming`, `complete`, `failed`), `kind` (`pipe`, `ws`, `live` or null), `peers`, `transferId`, `hasSender`, `activeReceivers`, `totalReceivers`, `bytesTransferred`, `totalBytes`, `speed`, `eta`, `elapsed`, `reason`, `sha256`. `?wait=<s>` (1-3600, default 300) sets how long one sender or receiver waits for the other side. `?sha256` (sender or any receiver) has the kit hash the stream; receivers of an ordinary (not `?live`) transfer get the transfer id in `X-Hoody-Pipe-Transfer-Id`, and `?status&transfer=<id>` returns that transfer, for a hashed one also for up to 10 min after it ends (the kit keeps at most 1,000 receipts in all and evicts the oldest first, so a busy kit can drop one sooner). Prometheus metrics: `GET /api/v1/pipe/metrics`.
 
-Through `PipeStream` (`const ps = PipeStream.fromClient(client, container)`; `PipeBrowser` has `status` too): `ps.status(path, { transfer? })` returns the snapshot. `ps.send` also takes `transfer` (its own transfer id, 16-64 of A-Z a-z 0-9 `_` `-`; the kit uses it as the transfer id, so `ps.status(path, { transfer })` reads this transfer from admission on; an id in use → 409; `PipeBrowser.sendFile` too). `ps.send` and `ps.receive` take `wait` and `sha256`: on send the result's `sha256` promise gives the kit's digest (null when not hashed or failed); on receive `sha256: true` hashes the body while it is read and `verified` rejects with `PipeIntegrityError` (`kind` `mismatch`, `unavailable` or `incomplete`) unless it matches the kit's digest. `ps.send` returns once the kit takes the upload. Its `done` resolves only when the kit's last status line confirms the transfer (`Transfer complete.`, or `Live stream ended (peak N viewers).` for `live`); otherwise it rejects with `PipeTransferError`, whose `message` is the kit's text (`Timed out waiting for receivers.`, `All receivers disconnected before transfer completed.`, an idle timeout) or `pipe send failed: the response ended before the transfer completed`, with `status` and the status lines in `messages`. A refused send (non-2xx) throws `PipeTransferError` with that `status`. `ps.send` `filename` goes in `Content-Disposition` as `PipeBrowser.sendFile` sends it: a non-ASCII name as RFC 5987 `filename*` plus an ASCII fallback. `ps.metrics()` returns the metrics text.
+Through `PipeStream` (`const ps = PipeStream.fromClient(client, container)`; `PipeBrowser` has `status` too): `ps.status(path, { transfer? })` returns the snapshot. `ps.send` also takes `transfer` (its own transfer id, 16-64 of A-Z a-z 0-9 `_` `-`; the kit uses it as the transfer id, so `ps.status(path, { transfer })` reads this transfer from admission on; an id in use → 409; `PipeBrowser.sendFile` too). `ps.send` and `ps.receive` take `wait` and `sha256`: on send the result's `sha256` promise gives the kit's digest (null when not hashed or failed); on receive `sha256: true` hashes the body while it is read and `verified` rejects with `PipeIntegrityError` (`kind` `mismatch`, `unavailable` or `incomplete`) unless it matches the kit's digest. `ps.send` returns once the kit takes the upload. Its `done` resolves only when the kit's last status line confirms the transfer (`Transfer complete.`, or `Live stream ended (peak N viewers).` for `live`); otherwise it rejects with `PipeTransferError`, whose `message` is the kit's text (`Timed out waiting for receivers.`, `All receivers disconnected before transfer completed.`, an idle timeout) or `pipe send failed: the response ended before the transfer completed`, with `status` and the status lines in `messages`. A refused send (non-2xx) throws the client's `ApiError` when `ps` was built with `fromClient`, and `PipeTransferError` with that `status` on the global-fetch transport (`{ pipeBaseUrl }`). `ps.send` `filename` goes in `Content-Disposition` as `PipeBrowser.sendFile` sends it: a non-ASCII name as RFC 5987 `filename*` plus an ASCII fallback. `ps.metrics()` returns the metrics text.
 
 ### 8. Live broadcast (`?live`)
 
@@ -25030,17 +25104,17 @@ A live sender streams at once, with nobody watching; any number of viewers (256 
 - Dangerous sender MIME (HTML/SVG/JS) → `text/plain`; `nosniff` forced.
 - Forwarded sender→receiver headers: `Content-Type` (sanitized — dangerous MIME → `text/plain`), `Content-Length` (only for a non-multipart body, and only when the value is 1–19 plain digits; multipart transfers are sent without it), `X-Piping`, `X-Hoody-Pipe` (each ≤8 KiB, CRLF-stripped). `Content-Disposition` is rebuilt per-receiver from sender metadata + receiver `?download`/`?filename` params.
 - `?download` enum (SDK-validated): `"true"`/`"false"`/`"yes"`/`"no"`/`"1"`/`"0"` (attach / inline). The kit is more permissive — bare `?download` (no value) and any non-`false`/`no`/`0` string are treated as truthy. `?filename=<v>` implies attach, sanitised (255 chars, RFC 5987), unless the same receiver also sent an explicit `download=false`/`no`/`0`, which suppresses Content-Disposition entirely. 
-- `?video` HTML player only on `Accept: text/html`; no receiver slot. A valid `?wait` on the player URL is used by each of its receives; an invalid one is ignored. It plays each stream to its end, even a short file that arrives all at once, then waits on the same path: the next stream sent there replaces it. Audio-only WebM (Opus/Vorbis) plays as audio; with `?n=N` the players may be tabs of one browser. It never skips content (a stream that fell behind stays behind; it reads at most 45 s ahead). Playback stopped 1.5 s with media buffered ahead moves on to it.
+- `?video` HTML player only on `Accept: text/html`; no receiver slot. A valid `?wait` on the player URL is used by each of its receives; an invalid one is ignored. It plays each stream to its end, even a short file that arrives all at once, then waits on the same path: the next stream sent there replaces it. Audio-only WebM (Opus/Vorbis) plays as audio; with `?n=N` the players may be tabs of one browser. Without `live` it never skips content (a stream that fell behind stays behind; it reads at most 45 s ahead); with `live` (`?video&live=1`), a player that falls behind may jump to the newest buffered media. Playback stopped 1.5 s with media buffered ahead moves on to it.
 - `?progress` no receiver slot. Caps: 50/path, 500 groups, 30 min TTL.
 - `?receive` and `?share` serve pages only on `Accept: text/html` (a browser); any other client gets the data as a plain receiver, like `?video`. With several page params on one URL a browser gets `?progress`, then `?video`, then `?share`, then `?receive`; `=0`/`false`/`no` turns one off.
 - `?receive` page: shows the name and whether a sender waits (from `?progress`, no slot). On the person's click — or by itself with `autostart=1` — the browser's download manager receives `?download` (plus `n`, `filename`, and the page's own `wait` and `sha256`), so any size goes to disk without passing through the page. Progress and the result are only in the browser's downloads list: the page cannot see the download, so after Receive it stays `Receiving in your browser` and never reports success. Its only outcome is `Failed` with the kit's error text when the download frame gets one (`Timed out waiting for sender.` after 5 min or the page's `wait`, an `n` mismatch, a taken slot); `?progress` state snapshots fill an info line labelled "Status for this name" (all its senders and receivers, not this download: no sender yet / sender waiting for receivers / transfer running; "Status unavailable, retrying…" while the stream is down) and never set an outcome. Cancel frees the slot while waiting (a started download goes on in the browser's downloads); Receive again after a failure retries. Pre-fill: `n` (invalid → 1, max 256), `filename` (sanitized like `?filename`), `autostart=1` (only `1`/`true`/`yes`/bare), `wait` (1-3600 s; invalid → dropped), `sha256` (forwarded only; the page shows no checksum).
 - `?share` page: shares the screen (with its audio if ticked), the camera with the microphone, or the microphone only, live to the `?video` player.
   - Start sharing asks the browser for the capture (the person's click), then sends one WebM stream to the name and shows a viewer link (Copy + QR) to `<name>?video` (plus `&n=`).
-  - The stream starts when all `n` viewers have opened the link; until then the page shows `Waiting for viewers… x of n connected`. Live shows viewers, elapsed time and bytes sent (from `?progress`, no slot).
+  - Without Live, the stream starts when all `n` viewers have opened the link; until then the page shows `Waiting for viewers… x of n connected`. With Live (the Live box or `live=1`), it is a `?live` broadcast that starts at once and viewers join and leave at any time. The page shows viewers, elapsed time and bytes sent (from `?progress`, no slot).
   - Stop, or the browser's own stop-sharing control, ends the stream; Start sharing again shares on the same name and players still open on the link play it.
-  - It ends with a message when nobody (or not all `n`) opened the link within 5 min, all viewers left, the name is busy, the kit refused the share (its error text), or the connection cannot keep up.
+  - Without Live, it ends with a message when nobody (or not all `n`) opened the link within 5 min, or all viewers left. In either mode it ends with a message when the name is busy, the kit refused the share (its error text), or the connection cannot keep up.
   - It needs a browser that can stream an upload (Chromium-based) over HTTPS with HTTP/2 or HTTP/3; any other browser gets a message instead of a start. It stores nothing in the browser.
-  - Pre-fill: `source=screen|camera|audio`, `audio=1` (screen audio), `surface=monitor|window|browser` (offered first in the picker), `quality=low|medium|high` (up to 480p/720p/1080p), `fps` (1–60, default 30), `n` (1–256). Invalid values fall back to the defaults; capture still needs the click on Start sharing.
+  - Pre-fill: `source=screen|camera|audio`, `audio=1` (screen audio), `surface=monitor|window|browser` (offered first in the picker), `quality=low|medium|high` (up to 480p/720p/1080p), `fps` (1–60, default 30), `n` (1–256), `live=1` (Live). Invalid values fall back to the defaults; capture still needs the click on Start sharing.
 - `/` (also `/api/v1/pipe/`) is the send page.
   - It sends one file, a typed or pasted text, or a pasted image (sent as a file).
   - It fills in a random name that the person can edit, plus `n`. Send/Cancel uses one POST to `/api/v1/pipe/<name>`: each `/`-separated part of the name is encoded, so `?`, `#` and `%` stay in the name, and leading `/` are kept. A name with a `.` or `..` part (also `%2e`) is refused before sending, as in the SDK.
@@ -25190,6 +25264,8 @@ Only `done` says how a transfer ended. A failed one sends `{"state":"failed",…
 
 ```typescript
 // Browser/Node: use EventSource with the kit URL directly
+const kitUrl = `https://${P}-${C}-pipe-1.${N}.containers.hoody.com`; // P, C, N from containers.get
+const pathName = `watched-${crypto.randomUUID().slice(0, 8)}`; // the sender uses this same name
 const url = `${kitUrl}/api/v1/pipe/${pathName}?progress=1`;
 const es = new EventSource(url, { withCredentials: false });
 es.addEventListener('state',    e => console.log('state', JSON.parse((e as MessageEvent).data)));
@@ -25205,6 +25281,8 @@ es.addEventListener('done',     e => { console.log('done', (e as MessageEvent).d
 
 ```typescript
 // Just point the browser at the URL — no SDK call needed:
+const kitUrl = `https://${P}-${C}-pipe-1.${N}.containers.hoody.com`; // P, C, N from containers.get
+const pathName = `watched-${crypto.randomUUID().slice(0, 8)}`; // the sender uses this same name
 const dashUrl = `${kitUrl}/api/v1/pipe/${pathName}?progress=1`;
 window.open(dashUrl, '_blank');
 // Or embed:
@@ -25219,6 +25297,8 @@ window.open(dashUrl, '_blank');
 
 ```typescript
 // Player URL is just a browser navigation — open it directly:
+const kitUrl = `https://${P}-${C}-pipe-1.${N}.containers.hoody.com`; // P, C, N from containers.get
+const pathName = `screencast-${crypto.randomUUID().slice(0, 8)}`; // the sender uses this same name
 const playerUrl = `${kitUrl}/api/v1/pipe/${pathName}?video=1`;
 window.open(playerUrl, '_blank');
 // To push the encode from Node, stream a ReadableStream into pipe.send (raw fetch
@@ -25270,7 +25350,7 @@ try {
 
 **Response headers** with `X-Hoody-Pipe: build-id=42; commit=abc1234` + `X-Piping: legacy-meta=true`:
 ```
-access-control-expose-headers: X-Piping, X-Hoody-Pipe
+access-control-expose-headers: X-Hoody-Pipe-Transfer-Id, X-Piping, X-Hoody-Pipe
 x-hoody-pipe: build-id=42; commit=abc1234
 x-piping: legacy-meta=true
 ```
@@ -25297,7 +25377,7 @@ console.log(res.headers.get('x-piping'));     // → "legacy-meta=true"
 
 **Accessor:** `client.pipe`  |  **Import:** `import * as pipe from 'hoody-sdk/pipe'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.pipe.kit` (3) — info
 
@@ -25336,19 +25416,22 @@ client.pipe.kit.getMetrics()
 
 ### `client.pipe` (3) — pipe
 
-#### `getStatus` — Pipe status headers (HEAD ?status)
+#### `getStatus` — One snapshot of a pipe name (GET ?status): state, sender, receivers, bytes. Takes no receiver slot.
 
 ```typescript
-client.pipe.getStatus(path: string, options: { status: "" | "true" | "yes" | "1" })
+client.pipe.getStatus(path: string, options: { headersOnly: true })  // → Promise<ApiResponse<Record<string, string>>>
+client.pipe.getStatus(path: string, options?: { transfer?: string; headersOnly?: false })  // → FacadeJson<Promise<ApiResponse<ArrayBuffer> | PipeReceiveDataResponse>>
+client.pipe.getStatus(path: string, options?: { transfer?: string; headersOnly?: boolean })  // → Promise<ApiResponse<Record<string, string>>> | FacadeJson<Promise<ApiResponse<ArrayBuffer> | PipeReceiveDataResponse>>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `path` | `string` | path | Yes | Pipe path name |
-| `status` | `"" \| "true" \| "yes" \| "1"` | query | Yes | Must be on (`?status`, `true`, `yes`, `1`) |
+| `path` | `string` | path | Yes | Pipe path name to receive from — must match the path used by the sender. Reserved paths (`/help`, `/noscript`, etc.) return their own content on GET instead of acting as pipe receivers. |
+| `transfer` | `string` | query | No | With `status`: answer for one transfer, by the id a receiver got in `X-Hoody-Pipe-Transfer-Id` or the id a sender chose with its own `transfer`, even after the name was reused or its 30 s linger ended. A `?sha256` transfer, and every transfer with a sender-chosen id, leaves a receipt (state, reason, digest, bytes) kept 10 minutes (at most 1000; the oldest go first), so a receiver verifies its bytes after it has read them all: `complete` with the same `sha256` means the bytes match. A sender-chosen id answers from the sender's arrival on (`waiting`). An id that is neither the name's current transfer nor a kept receipt for this name is 404. Not with `ws` (400). |
+| `headersOnly` | `boolean` | option | No | Answer only the response headers (HEAD ?status): a liveness probe with no snapshot. |
 
-**Returns:** `Promise<ApiResponse<Record<string, string>>>`  |  **HTTP:** `HEAD /api/v1/pipe/{path}`
-**CLI:** `hoody pipe status`
+**Returns:** see each form above  |  **HTTP:** `GET /api/v1/pipe/{path}`
+**CLI:** `hoody pipe receive`
 
 ---
 
@@ -25381,7 +25464,7 @@ client.pipe.receive(path: string, options?: { n?: number; download?: "true" | "f
 | `live` | `"" \| "true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | query | No | Watch a live stream (a sender with `?live`): join at any time, leave and rejoin at will. With no live sender yet, the viewer waits like a receiver (`wait`, default 300 s, then 408 `Timed out waiting for sender.`). The body is a **suffix** of the stream: no `Content-Length`, `X-Hoody-Pipe-Live: 1`, `Cache-Control: no-store`, no `X-Hoody-Pipe-Transfer-Id`. A WebM stream starts with its header, then a Cluster that begins with a video keyframe (any Cluster for audio-only); other bodies start at the next chunk. **Slow viewers:** a viewer that falls 2 MiB behind skips whole Clusters (WebM) until it has caught up to 512 KiB, resuming at a keyframe Cluster. One more than 8 MiB or 4096 pieces behind, one that takes nothing for 60 s, or the most-behind one when the server's live memory budget is full, is cut: its body ends without the chunked terminator. The others are never slowed. **Ending:** after the sender's clean end a viewer takes what it was already sent (up to 60 s), then its body ends normally; if the sender fails, every viewer is cut. A viewer's response counts against the limits until it disconnects, or until 35 s after its body ended. **Plain GET:** a GET without `live` on a name whose live stream is running joins it the same way (a suffix, marked `X-Hoody-Pipe-Live: 1`). While `?live` viewers wait for a sender, a plain GET or `live=0` is 409. `?video&live` serves the player for a live stream; on `?share` (a browser), `live=1` pre-ticks the page's Live box. Not with `n` above 1, `sha256` or `ws` (400). At most 256 viewers per stream and 4096 live viewer responses in all (429). **Values:** `?live` (bare), `true`, `yes`, `1` → watch live; `false`, `no`, `0` → an ordinary receiver (409 on a live name). |
 | `sha256` | `"" \| "true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | query | No | Ask the server to hash the transfer (a receiver can switch it on alone). Read `X-Hoody-Pipe-Transfer-Id`, hash the bytes as you receive them, then compare with `?status&transfer=<id>` (see `transfer`). The digest cannot come in-band: response headers go out before the body, and HTTP trailers are not sent. **Values:** `?sha256` (bare), `true`, `yes`, `1` → on; `false`, `no`, `0` → off. |
 
-**Returns:** `Promise<ApiResponse<ArrayBuffer> | PipeReceiveResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /api/v1/pipe/{path}`
+**Returns:** `Promise<ApiResponse<ArrayBuffer> | PipeReceiveDataResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /api/v1/pipe/{path}`
 **CLI:** `hoody pipe receive`
 
 ---
@@ -25404,44 +25487,6 @@ client.pipe.send(path: string, data?: string | FormData | Blob | ArrayBuffer | U
 
 **Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `POST /api/v1/pipe/{path}`
 **CLI:** `hoody pipe send`
-
----
-
-### `client.pipe.ui` (2) — ui
-
-#### `getNoScriptPage` — No-JavaScript upload page
-
-```typescript
-client.pipe.ui.getNoScriptPage(options?: { path?: string; mode?: "file" | "text"; wait?: number; sha256?: "" | "1" | "true" | "yes" | "0" | "false" | "no" })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `path` | `string` | query | No | Pre-fill the pipe path. Only URL-safe characters allowed. |
-| `mode` | `"file" \| "text"` | query | No | Input mode: `file` for file picker, `text` for textarea |
-| `wait` | `number` | query | No | Seconds the upload waits for its receivers (1-3600), forwarded to the form's POST. An invalid value is dropped. |
-| `sha256` | `"" \| "1" \| "true" \| "yes" \| "0" \| "false" \| "no"` | query | No | `1`, `true`, `yes` or bare: the upload is hashed with SHA-256, forwarded to the form's POST. `0`, `false`, `no` or absent: not hashed. |
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/pipe/noscript`
-
----
-
-#### `getPage` — Send page
-
-```typescript
-client.pipe.ui.getPage(options?: { name?: string; n?: number; text?: string; mode?: "file" | "text"; filename?: string; autostart?: "1" | "true" | "yes" | "0" | "false" | "no" })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `name` | `string` | query | No | Pre-fills the pipe name (up to 1024 characters). Absent → a random name. |
-| `n` | `number` | query | No | Pre-fills the receiver count (1-256). Invalid → 1. |
-| `text` | `string` | query | No | Pre-fills the text to send (up to 100000 characters) and selects text mode. |
-| `mode` | `"file" \| "text"` | query | No | Selects file or text mode. Default `file`, or `text` when `text` is given. |
-| `filename` | `string` | query | No | Pre-fills the file name used for a text or pasted send (up to 255 characters). |
-| `autostart` | `"1" \| "true" \| "yes" \| "0" \| "false" \| "no"` | query | No | Text mode only — `1`, `true`, `yes` or bare sends the pre-filled text without a click once the page has loaded (needs a text; a name the page refuses shows the reason instead). A file send always needs the user to pick the file. |
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/pipe/`
 
 
 ---
@@ -25717,7 +25762,7 @@ for (const e of (r.data as any).entries) {
 
 **Accessor:** `client.proxyLogs`  |  **Import:** `import * as proxyLogs from 'hoody-sdk/proxyLogs'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.proxyLogs` (5) — logs
 
@@ -25880,7 +25925,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 1. Search then pick
 
-1. `client.run.search({ selector: { app, os?, kind?, arch?, tags?, source?, limit? } })` → `{ set_id, total_count, items[], next_cursor? }`.
+1. `client.run.search({ selector: { app, os?, kind?, arch?, tags?, source? }, page_size?, cursor? })` (this is the paged route: `page_size`, default 25, max 100, sets the page; `selector.limit` is ignored here) → `{ set_id, total_count, items[], next_cursor? }`.
 2. `client.run.resolve({ ...selector, set_id, pick:"index", pick_index:N })` → `shell_command`.
 
 ### 2. Preflight
@@ -25895,7 +25940,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 4. Batch
 
-`client.run.resolveMany({ items: [{ request_id, mode, selector }] })`. `mode:"run"` resolves each item to a command. Each result item is `result: "search"`, `"run"` or `"error"` (the item's own `{ error, code }`), so one bad item does not fail the batch.
+`client.run.resolveMany({ items: [{ request_id, mode, selector }] })`. `mode:"run"` resolves each item to a command. Each result item is `result: "search"`, `"run"` or `"error"` (the item's own `{ error, code, status }`), so one bad item does not fail the batch.
 
 ### 5. Recipes
 
@@ -25911,25 +25956,25 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 - Query results are cached for about 30 s.
 - `set_id` expires 300s.
 - Selector requires `app`. Aliases `q`/`name` are accepted ONLY by the urlencoded query-string parser (GET / form-style); the JSON `Selector` model has only `app`, so JSON POST / SDK calls must use `app:`.
-- Resolve is command-only; the kit never launches the app or executes anything. The response `status` is `"dry-run"` (one picked candidate), `"printed-curl"` (one picked candidate, plus a `curl` line because `print_curl` was set) or `"resolved"` (pick mode `ask`: the candidate set, nothing selected). Only a picked response carries `handoff` (`{ state: "preview", terminal_id, display, preview_display_url?, preview_terminal_url? }`); a `resolved` response has none. The two preview URLs are built from the kit's configured URL templates for the target `terminal_id`, not from the candidate, so they are absent when no template is configured and do not prove anything is running.
+- Resolve is command-only; the kit never launches the app or executes anything. The response `status` is `"dry-run"` (one picked candidate), `"printed-curl"` (one picked candidate, plus a `curl` line because `print_curl` was set) or `"resolved"` (pick mode `ask`: the candidate set, nothing selected). Only a picked response carries `handoff` (`{ state: "preview", terminal_id, display, preview_display_url?, preview_terminal_url? }`); a `resolved` response has none. The two preview URLs are predicted for the target `terminal_id` (from an operator URL template when one is set, else from the container's own kit host form), not from the candidate; either is absent only when neither is available, and neither proves anything is running.
 - `resolveMany` only knows `mode: "search" | "run"` (no `"preflight"`); `"run"` resolves to a command.
-- `recipes.resolve` / `recipes.search` reject a recognized selector field outside `allowed_overrides` with `400 "recipe override not allowed: <field>"`; it is not silently dropped. An unknown key under `overrides` is ignored, so spell the selector field names exactly.
+- `recipes.resolve` / `recipes.search` reject a recognized selector field outside `allowed_overrides` with `400 OVERRIDE_NOT_ALLOWED` (`recipe override not allowed: <field>`); it is not silently dropped. An unknown key under `overrides` is ignored, so spell the selector field names exactly.
 - **Outbound requests the kit makes itself (webhook delivery, remote manifest index fetches, source fetches) go only to public IPv4 addresses.** Private, loopback, link-local, CGNAT, reserved and multicast destinations and every IPv6 form are refused, and a name that resolves to ANY prohibited IPv4 address is refused whole; no setting admits one, so a remote index URL on `localhost` or a sibling container's private address cannot work. Webhooks are configured in the kit's config file only (`GET /api/v1/run/config` is read-only), so this matters mainly when diagnosing a source sync or a webhook someone set up. A refusal carries the marker `refusing to connect to` and is not retried; `the name <host> resolved to no address` carries no marker and is a transient failure. Proxy environment variables are ignored; webhook and remote-index fetches follow no redirects, and source fetches follow at most ten. Helper binaries a provider shells out to (`nix search`) are outside this guarantee.
 - `selected.run_plan` carries `command`/`env`/`cwd` and is always present. `selected.execution_plan` (`argv`/`env`/`cwd`) is optional: trusted-list, manifest and AppImage candidates omit it. Read it as optional and use `shell_command` for the command to run.
 - `/go/...` are alias routes for bookmarkable resolve URLs — `GET /api/v1/run/go/{rest}` (selector parsed from path segments) and `GET /api/v1/run/t/{terminal_id}/go/{rest}` (terminal id baked into the path prefix, where it wins over any other `terminal_id`). Both are public HTTP routes, but neither has an SDK method: programmatic callers use the resolve endpoint from the first bullet. 
 
 ## Common errors
 
-Every error body is `{ "error": "<text>", "code": <HTTP status> }`. There is no symbolic error-code field, so match on the status and the start of the text.
+Every error body is `{ "error": "<text>", "code": "<code>", "status": <HTTP status> }`. Match on the symbolic `code` and the HTTP `status`; a batch error item carries the same payload under `error`.
 
-- `400` `pick_index required`, `pick_index out of range: <N>`, `candidate_id required`, `candidate_id not found` or `no candidates`: the pick does not match the candidate set.
+- `400 INVALID_PICK` (`pick_index required`, `pick_index out of range: <N>`, `candidate_id required`, `candidate_id not found`) or `400 NO_CANDIDATES` (`no candidates`): the pick does not match the candidate set.
 - `400 INVALID_SELECTOR: invalid <field>: <value>`: a query-string selector value is not accepted, for example an unknown `source`.
-- `422` with a deserialization message: a JSON body carries a value that is not in the field's enum (for example `"kind":"create"`), in the same `{error, code}` body.
-- `409 SET_EXPIRED: …`: the `set_id` is unknown or older than 300 s; search again and pick against the new `set_id`.
+- `400 INVALID_BODY` with a deserialization message: a JSON body carries a value that is not in the field's enum (for example `"kind":"create"`), misses a required field or has a wrongly typed one.
+- `409 SET_EXPIRED`: an index pick (`pick_index`) names a `set_id` that is unknown or older than 300 s and is not the freshly resolved set; search again and pick against the new `set_id`. An id pick (`candidate_id`) does not get this error: it falls back to the fresh set, since `candidate_id` is content-addressed.
 - `403 POLICY_DENIED: …`: the effective policy does not permit the selected candidate.
-- `409 cursor set expired`: `search/paged` only; start again without a cursor.
-- A single source such as `nix` or `pkgx` that fails or is missing does not fail the request: the search continues with the other sources and can return an empty list (a pick against it then gives `400 no candidates`). An error the source reports is recorded in its diagnostics (`GET /api/v1/run/sources/{source_id}/diagnostics`), but some sources, `pkgx` among them, turn a missing tool or a failed query into an empty successful result, so the diagnostics can show no error at all. `502` is reserved for a resolution that fails as a whole.
-- `404 job not found`: the job id is unknown or its TTL ran out (see example 7).
+- `409 CURSOR_SET_EXPIRED` (`cursor set expired`): `search/paged` only; start again without a cursor.
+- A single source such as `nix` or `pkgx` that fails or is missing does not fail the request: the search continues with the other sources and can return an empty list (a pick against it then gives `400 NO_CANDIDATES`). An error the source reports is recorded in its diagnostics (`GET /api/v1/run/sources/{source_id}/diagnostics`), but some sources, `pkgx` among them, turn a missing tool or a failed query into an empty successful result, so the diagnostics can show no error at all. `502 SOURCE_RESOLUTION_FAILED` is reserved for a resolution that fails as a whole.
+- `404 JOB_NOT_FOUND` (`job not found`): the job id is unknown or its TTL ran out (see example 7).
 
 ## Related namespaces
 
@@ -25946,7 +25991,7 @@ Each example below has a copy-pasteable code block in the mode you're reading (c
 **Step 1 — search.** Returns a `set_id` (a later `pick:"index"` sent with it selects from this exact candidate list; `set_id` expires after ~300s) and the candidates (`candidates[]` over HTTP, `items[]` from the SDK and CLI search, which is the cursor-paged one), ordered by source priority, then score. Each candidate carries a `kind` (`gui`/`cli`/`any`).
 
 ```typescript
-const r = await client.run.search({ selector: { app: 'firefox', kind: 'any', limit: 5 } });
+const r = await client.run.search({ selector: { app: 'firefox', kind: 'any' }, page_size: 5 });
 const setId = (r.data as any).set_id;
 const top = (r.data as any).items[0];
 console.log(top.candidate_id, top.kind, top.score);
@@ -25965,7 +26010,7 @@ console.log((run.data as any).shell_command);
 
 **Goal:** get the exact command plus its structured plan. Lightweight CLI app (`echo`) used so we don't leak GUI state.
 
-The response carries `shell_command` plus the full selected entry: `run_plan.{command,env,cwd}` (the shell-form, always present) and, when the source provides one, `execution_plan.{argv,env,cwd}` (the argv-form; trusted-list, manifest and AppImage candidates have none). `shell_command` is the command to run either way. A picked response also carries `handoff`; its `preview_display_url` / `preview_terminal_url` are present only when the kit's URL templates are configured, and they are built for the target terminal, not from the candidate. Resolve itself never launches anything.
+The response carries `shell_command` plus the full selected entry: `run_plan.{command,env,cwd}` (the shell-form, always present) and, when the source provides one, `execution_plan.{argv,env,cwd}` (the argv-form; trusted-list, manifest and AppImage candidates have none). `shell_command` is the command to run either way. A picked response also carries `handoff`; its `preview_display_url` / `preview_terminal_url` come from an operator URL template when one is set, else from the container's own kit host form, and are absent only when neither is available; they are built for the target terminal, not from the candidate. Resolve itself never launches anything.
 
 ```typescript
 const r = await client.run.resolve({
@@ -25973,7 +26018,7 @@ const r = await client.run.resolve({
 });
 console.log('argv:', (r.data as any).selected.execution_plan?.argv); // absent for some sources
 console.log('command:', (r.data as any).shell_command);
-console.log('preview:', (r.data as any).handoff?.preview_terminal_url); // absent when no URL template is configured
+console.log('preview:', (r.data as any).handoff?.preview_terminal_url); // absent only when neither an operator URL template nor the container's kit routing is available
 ```
 
 ### 3. Pick a non-default candidate by index when multiple match
@@ -25983,7 +26028,7 @@ console.log('preview:', (r.data as any).handoff?.preview_terminal_url); // absen
 **Step 1 — list candidates with `set_id`.**
 
 ```typescript
-const list = await client.run.search({ selector: { app: 'git', kind: 'cli', limit: 5 } });
+const list = await client.run.search({ selector: { app: 'git', kind: 'cli' }, page_size: 5 });
 (list.data as any).items.forEach((c: any, i: number) =>
   console.log(i, c.candidate_id, c.provider, c.score));
 const setId = (list.data as any).set_id;
@@ -26016,7 +26061,8 @@ await client.run.resolve({
 
 ```typescript
 const r = await client.run.search({
-  selector: { app: 'jq', os: 'linux', arch: 'amd64', kind: 'cli', source: ['system'], limit: 5 },
+  selector: { app: 'jq', os: 'linux', arch: 'amd64', kind: 'cli', source: ['system'] },
+  page_size: 5,
 });
 const providers = new Set((r.data as any).items.map((c: any) => c.provider));
 // providers = Set { 'system' }
@@ -26085,7 +26131,7 @@ const sub = await client.run.jobs.createSearch({ app: 'firefox', kind: 'any' });
 const jid = (sub.data as any).job_id;
 ```
 
-**Step 2 — wait for the result.** Status transitions `queued → running → done`, or ends in `error`, or in `cancelled` after a cancel request; all three are final, so stop polling on any of them. The job's TTL restarts only when its state changes, not when it is read, so polling does not keep a finished job alive; a caller that comes back too late gets `404 job not found`. Long-poll with `wait=done` and `timeout_ms` (max 120000) so the call returns as soon as the job finishes, and read the result from that response.
+**Step 2 — wait for the result.** Status transitions `queued → running → done`, or ends in `error`, or in `cancelled` after a cancel request; all three are final, so stop polling on any of them. The job's TTL restarts only when its state changes, not when it is read, so polling does not keep a finished job alive; a caller that comes back too late gets `404 JOB_NOT_FOUND`. Long-poll with `wait=done` and `timeout_ms` (max 120000) so the call returns as soon as the job finishes, and read the result from that response.
 
 ```typescript
 // Keep timeout_ms below the SDK's default 30 s request timeout.
@@ -26100,7 +26146,7 @@ console.log(job.status, job.result);
 
 **Goal:** the agent decided on three apps at once (`ls`, `echo`, `git`); resolve all to commands without three separate HTTP hits.
 
-`resolveMany` accepts items with `mode: 'search' | 'run'` (NOT `'preflight'`). Each item has its own `request_id` for correlation; results come back in the same order with one of `result: 'search'` (full search response), `result: 'run'` (with `selected` + `shell_command`) or `result: 'error'` (with `error: { error, code }` for that item only; the rest of the batch still runs).
+`resolveMany` accepts items with `mode: 'search' | 'run'` (NOT `'preflight'`). Each item has its own `request_id` for correlation; results come back in the same order with one of `result: 'search'` (full search response), `result: 'run'` (with `selected` + `shell_command`) or `result: 'error'` (with `error: { error, code, status }` for that item only; the rest of the batch still runs).
 
 ```typescript
 const batch = await client.run.resolveMany({
@@ -26142,7 +26188,7 @@ const one  = await client.run.recipes.get('team-js-runtime');
 await client.run.recipes.update('team-js-runtime', {
   description: 'Updated: now also resolves bun/deno via override',
 });
-await client.run.recipes.delete('team-js-runtime');
+// After example 10 (it uses this recipe): await client.run.recipes.delete('team-js-runtime');
 ```
 
 ### 10. Invoke a recipe with overrides — `recipes.resolve(name, { overrides })`
@@ -26174,7 +26220,7 @@ console.log((s.data as any).candidates.length, 'candidates across',
 
 **Accessor:** `client.run`  |  **Import:** `import * as run from 'hoody-sdk/run'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.run.config` (1) — APIs for retrieving consolidated runtime configuration state including active profile selection
 
@@ -26635,11 +26681,11 @@ client.run.sources.update(source_id: string, data: RunSourcesUpdateRequest)
 - `run_SourceUpdate` — `{ enabled: bool, priority: int, pin: run_SourcePin|null, config: object }`
   - Partial source update. Only the fields present in the body are applied; everything else keeps its stored value. The merged source is re-validated before it is committed, so a patch that would downgrade a signed remote index is refused.
 - `run_ProfileConfig` — `{ name*: string, description: string, defaults: run_ProfileDefaults, sources_mode: run_ProfileSourceMode, sources: run_ProfileSourceOverride[], policy: run_PolicyConfig }`
-- `run_ProfileUpdate` — `{ description: string|null, defaults: run_ProfileDefaults, sources_mode: run_ProfileSourceMode, sources: run_ProfileSourceOverride[], policy: run_PolicyConfig }`
-  - Partial profile update. Only the fields present in the body are applied; everything else keeps its stored value. The profile's name is taken from the path and cannot be changed here.
+- `run_ProfileUpdate` — `{ description: string|null, defaults: run_ProfileDefaultsUpdate, sources_mode: "inherit" | "allowlist" | null, sources: run_ProfileSourceOverride[]|null, policy: run_PolicyConfigUpdate }`
+  - … The merged profile is validated before it is stored, and an invalid value or an unknown top-level field is a 400 with nothing stored (unknown keys inside a nested object are ignored, as on create). The profile's name is taken from the path and cannot be changed here.
 - `run_RecipeConfig` — `{ name*: string, description: string, selector_template: run_SelectorTemplate, allowed_overrides: string[] }`
-- `run_RecipeUpdate` — `{ description: string|null, selector_template: run_SelectorTemplate, allowed_overrides: string[] }`
-  - Partial recipe update. Only the fields present in the body are applied; everything else keeps its stored value. The recipe's name is taken from the path and cannot be changed here.
+- `run_RecipeUpdate` — `{ description: string|null, selector_template: run_SelectorTemplateUpdate, allowed_overrides: string[]|null }`
+  - … The merged recipe is validated before it is stored, and an invalid value or an unknown top-level field is a 400 with nothing stored (unknown keys inside a nested object are ignored, as on create). The recipe's name is taken from the path and cannot be changed here.
 - `run_RecipeExecutionRequest` — `{ overrides: run_SelectorTemplate }`
 - `run_Os` — `"linux" | "windows" | "any"`
 - `run_AppKind` — `"gui" | "cli" | "any"`
@@ -26656,7 +26702,12 @@ client.run.sources.update(source_id: string, data: RunSourcesUpdateRequest)
 - `run_ProfileSourceMode` — `"inherit" | "allowlist"`
 - `run_ProfileSourceOverride` — `{ source_id*: string, enabled: bool, priority: int }`
 - `run_PolicyConfig` — `{ require_verified: bool, require_integrity: bool, deny_providers: run_SourceKind[], deny_source_ids: string[] }`
+- `run_ProfileDefaultsUpdate` — `{ os: "linux" | "windows" | "any" | null, kind: "gui" | "cli" | "any" | null, source: run_SourceKind[]|null, pick: "ask" | "first" | "index" | "id" | null, terminal_id: int|null, display: string|null, limit: int|null }|null`
+  - `pick` — Candidate selection mode: ask: return candidate list without selecting (default); first: automatically select the highest-ranked candidate; index: select by 0-based index (requires pick_index); id: select by candidate_id (requires candidate_id)
+- `run_PolicyConfigUpdate` — `{ require_verified: bool|null, require_integrity: bool|null, deny_providers: run_SourceKind[]|null, deny_source_ids: string[]|null }|null`
 - `run_SelectorTemplate` — `{ app: string, os: run_Os, kind: run_AppKind, source: run_SourceKind[], arch: run_Arch, tags: string[], profile: string, channel: string, version: string, variant: string, publisher: string, repo: string, release: string, asset: string, pick: run_PickMode, pick_index: int, candidate_id: string, set_id: string, terminal_id: int, display: string, origin: string, format: run_OutputFormat, dry_run: bool, print_curl: run_PrintCurlMode, limit: int }`
+- `run_SelectorTemplateUpdate` — `{ app: string|null, os: "linux" | "windows" | "any" | null, kind: "gui" | "cli" | "any" | null, source: run_SourceKind[]|null, arch: "amd64" | "arm64" | "any" | null, tags: string[]|null, profile: string|null, channel: string|null, version: string|null, variant: string|null, publisher: string|null, repo: string|null, release: string|null, asset: string|null, pick: "ask" | "first" | "index" | "id" | null, pick_index: int|null, candidate_id: string|null, set_id: string|null, terminal_id: int|null, display: string|null, origin: string|null, format: "json" | "html" | null, dry_run: bool|null, print_curl: "hoody-run" | null, limit: int|null }|null`
+  - `pick` — Candidate selection mode: ask: return candidate list without selecting (default); first: automatically select the highest-ranked candidate; index: select by 0-based index (requires pick_index); id: select by candidate_id (requires candidate_id)
 - `run_BatchMode` — `"search" | "run"`
 
 
@@ -26701,13 +26752,13 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 `databases.create({ path, init_kv: true })` (`path`: bare name, `./name`, or absolute under `/hoody/databases`; `init_kv` creates the KV table) → `sql.runTransaction({ transaction: [{ statement, values?|valuesBatch? }] }, { db, create_db_if_missing: true })` (`create_db_if_missing` makes the create step optional) → `history.list({ db })`.
 
-One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, truncated }` (it sends a `query` item, so a write with `RETURNING` answers its rows too) and `sql.run({ db, sql, params? })` to `{ rowsUpdated }` (a `statement` item), both without the envelope. `params` is an array for `?` or an object for `:name`, each value a string, finite number, boolean or null (anything else throws before sending); `create_db_if_missing` and the request options pass through.
+One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, truncated }` (it sends a `query` item, so a write with `RETURNING` answers its rows too) and `sql.run({ db, sql, params? })` to `{ rowsUpdated }` (a `statement` item; for SQL that produces rows, such as a write with `RETURNING`, to `{ rowsUpdated, rows, truncated? }`, where `rowsUpdated` counts the returned rows and `truncated: true` means rows and count stop at the kit's row cap), both without the envelope. `params` is an array for `?` or an object for `:name`, each value a string, finite number, signed 64-bit `bigint`, boolean or null (anything else throws before sending); `create_db_if_missing` and the request options pass through.
 
 ### KV CRUD + CAS + counters
 
 - `kv.set` — `ttl`, `if_match` (CAS), `path`, `history`.
-- `kv.get` — `path`, `at_timestamp`. `exists` takes `db`, plus optional `table` and `timeout`; `kv.delete` takes `db`/`table`/`history` (`history` keeps the tombstone) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
-- `kv.increment` / `kv.decrement` / `kv.push` / `kv.pop` / `kv.remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. The generated push type is an object, so pushing a string or number needs `as any`.
+- `kv.get` — `path`, `at_timestamp`. `exists` takes `db`, plus optional `table` and `timeout`; `kv.delete` takes `db`/`table`/`history` (`history`, default true, records the deleted value; `false` records only that a delete happened) plus `create_db_if_missing` (alias `auto_create`) and `timeout`.
+- `kv.increment` / `kv.decrement` / `kv.push` / `kv.pop` / `kv.remove` — atomic, `path`-aware (`path` is a JSON path inside the value, such as `.user.tags`). The push body is any JSON value, appended as one element; the remove body is `{"value": <any>}` (matches by value), or pass the `index` query parameter instead. The generated push type accepts any JSON value; pass a string or number directly.
 
 ### Time-travel (needs `history: true`)
 
@@ -26722,18 +26773,18 @@ One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, t
 
 ## Quirks & gotchas
 
-- **Bare-URL auth (no claim/token headers).** Like every kit (including `agent`), the `sqlite` kit accepts the bare per-container kit URL — no `X-Hoody-Container-Claim` or `X-Hoody-Token` headers required. The capability URL itself is the bearer.
+- **Bare-URL auth.** The `sqlite` kit checks no credential of its own; access through the kit URL is governed by the container proxy's permission policy. Under the default policy (no rules configured) the bare kit URL works with no extra headers and is itself the bearer; where the owner has configured auth groups, send the credential the group expects, or the proxy answers 401 or 403. → See `SKILL-SDK.md § Kit URLs as credentials`.
 - **Tx item keys: `"query"` and `statement`.** Each `transaction[i]` MUST carry exactly one of `"query"` or `statement`. A `statement` returns rows (`resultHeaders`/`resultSet`) when its SQL produces columns (a SELECT, or a write with `RETURNING`), and `rowsUpdated` otherwise. Use `"query"` for reads anyway; `valuesBatch` keeps its own restrictions. The `sql` alias maps to `statement`.
 - Path resolution: bare names auto-resolve under `/hoody/databases/` (with `.db` appended if no extension). The `./name` shorthand is the same bare name (`./app` → `/hoody/databases/app.db`). Any other relative path containing `/` or `\` (e.g. `data/app.db`, `./dir/app.db`) is **rejected**, NOT auto-absoluted; only literal absolute paths (e.g. `/hoody/databases/app.db`) are treated as absolute. Absolute paths outside `/hoody/databases` are refused unless the deployment allows any absolute database path. A database filename must be a regular file: a symlink at the filename itself is rejected. Symlinked parent directories are resolved to their real path. `:memory:` databases are rejected.
 - Directory mode takes an absolute directory path. Any other relative path (`sub/dir`) is refused with `directory-mode: invalid path input: path must be absolute`; a bare database name (`app`) is not treated as a directory and is opened as a database instead.
 - Tx items: `statement` or alias `sql`. `sql.runTransaction` caps: 10k items, 100k rows/`valuesBatch`, 1M total rows. `values` and `valuesBatch` are mutually exclusive on a single item; `"query"` items cannot use `valuesBatch`.
-- **GET `/query` rejects mutations**: INSERT/UPDATE/DELETE, `RETURNING` on writes, multi-statement (semicolons), PRAGMA writes, VACUUM, ATTACH/DETACH. Use `sql.runTransaction` with `statement:` items for writes.
+- **GET `/query` rejects mutations**: INSERT/UPDATE/DELETE, `RETURNING` on writes, multi-statement (semicolons), any PRAGMA, VACUUM, ATTACH/DETACH — only a single statement leading with SELECT, or a WITH that contains no write keyword, is accepted. Use `sql.runTransaction` with `statement:` items for writes.
 - **SELECT result-row cap is 10 000** (responses set `truncated: true` when hit) on both transaction `"query"` items and GET `/query`; further rows silently truncated. Paginate explicitly for larger result sets.
-- **`kv.set` body is any JSON value** (object, array, string, number, boolean, null), stored verbatim. The generated SDK type is `unknown`. Pass the JavaScript value itself: the SDK JSON-encodes every body sent as JSON, strings included, so `set(key, 'light')` stores the JSON string `"light"` and `set(key, JSON.stringify(obj))` stores a quoted string, not the object. **`kv.setMany` differs:** each item's `value` is a string, so JSON-encode objects yourself.
-- Time-travel **history is opt-out, not opt-in**: write handlers default `history: true`. Pass `history: false` to skip recording — but later `kv.listHistory` / snapshot / time-travel reads will see gaps (`has_gaps`, `gap_keys`, `candidate_truncated` fields). Per-key history reconstruction is capped at 50 000 ops.
+- **`kv.set` body is any JSON value** (object, array, string, number, boolean, null), stored verbatim. The generated SDK type is `unknown`. Pass objects, arrays, numbers, booleans and null as the JavaScript value itself; the SDK JSON-encodes them. `kv.set` sends a string as a JSON string (`application/json`), so `set(key, 'light', { db })` stores `"light"`, reads back as `light`, and works with `path`. `set(key, JSON.stringify(obj), { db })` therefore stores a JSON string holding escaped JSON text, not the object: pass the object itself. For raw text, pass `contentType: 'text/plain'` (or a `Content-Type` header): it is then stored verbatim, and the kit refuses it at a `path` with 400 `Invalid JSON value`. **`kv.setMany` differs:** each item's `value` is a string, so JSON-encode objects yourself.
+- Time-travel **history is opt-out, not opt-in**: write handlers default `history: true`. Pass `history: false` to record only that the write happened, not what it wrote — but later `kv.listHistory` / snapshot / time-travel reads will see gaps (`has_gaps`, `gap_keys`, `candidate_truncated` fields). Per-key history reconstruction is capped at 50 000 ops.
 - `create_db_if_missing`/`auto_create` aliases; mismatch → `conflicting flags`.
 - `kv.list` w/ `at_timestamp` → time-travel handler (different envelope; `offset` and `limit` still apply, ordered by key as in the regular listing). The history `limit`: 0→50, >1000→1000.
-- `sql.queryReadOnly` `sql` accepts URL-safe base64 (`+`→`-`, `/`→`_`); both padded and unpadded forms are accepted. Inputs that do not decode to a SELECT/WITH query are treated as raw SQL. No workspace scoping — the kit URL alone is the credential, share carefully.
+- `sql.queryReadOnly` `sql` accepts URL-safe base64 (`+`→`-`, `/`→`_`); both padded and unpadded forms are accepted. Inputs that do not decode to a SELECT/WITH query are treated as raw SQL. No workspace scoping — under the default proxy policy the kit URL alone is the credential, share carefully.
 - `databases.delete({ db })` removes a database file and its `-wal`, `-shm` and `-journal` companions, companions first. A missing file is `404 DATABASE_NOT_FOUND`; a directory or a non-SQLite file is `400` and stays untouched; a database other requests still hold past the deadline is `503 DATABASE_BUSY` with nothing removed. `500 DELETE_INCOMPLETE` lists `files_removed` and leaves the database file in place, so retrying the delete finishes it. A delete and a create of the same path wait for each other.
 - A directory-mode KV store keeps a `.hoody_sqlite/cache.db` in each directory it uses and holds it open, so that file and its `-wal`, `-shm` and `-journal` companions can be neither created nor deleted as a database (`400 INVALID_DB_PATH`). Any other database inside a `.hoody_sqlite` directory is an ordinary database.
 
@@ -26747,7 +26798,7 @@ One statement: `sql.query({ db, sql, params? })` resolves to `{ rows, columns, t
 - `400 GET /query only accepts read-only SELECT/WITH queries; use POST /db for mutating SQL` (returned for non-SELECT input; a non-base64 `sql` value is not an error — it is interpreted as raw SQL).
 - `400 Invalid JSON body` on `kv.setMany` — wire shape requires each `value` to be a JSON-encoded string, not an object.
 - `409` with `"error": "TIME_TRAVEL_CHAIN_GAP"` (message `time-travel: chain gap straddles target timestamp`) when the history needed for the answer has an unrecorded (`history: false`) or pruned gap. Timestamp reads, `kv.getSnapshot` at an `op_number`, and the rollbacks (`kv.rollback`, `kv.rollbackTable`) all return it. Per-key rollback puts the detail in `error` after the code (`"TIME_TRAVEL_CHAIN_GAP: ..."`); table rollback returns `error: "TIME_TRAVEL_CHAIN_GAP"` and puts the detail in `message`.
-- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`).
+- A failing transaction item aborts and rolls back the whole transaction by default: the response is that item's HTTP status (4xx or 5xx) with `{ "reqIdx": <index>, "error": "...", "code": "..." }`. A failure of your own SQL is classified: `400 SQL_ERROR` (syntax, unknown table or column) or `400 SQL_BIND_ERROR` (parameters that do not fit the statement), `409 SQL_CONSTRAINT` or `409 DATABASE_READONLY`, which carry SQLite's message, and `503 DATABASE_BUSY` or `503 REQUEST_TIMEOUT`, which carry the generic `internal database error` (no 5xx body carries SQLite's text). Anything else is `500 DATABASE_ERROR` with the same generic message, so do not retry it blindly. Set `"noFail": true` on an item to keep going instead: the call returns `200`, and that item's result is `{ "success": false, "error": "...", "code": "..." }` (no `reqIdx`). A `valuesBatch` item under `noFail` can instead succeed in part: rows with bad parameters are skipped and listed in `rowErrors` while `success` is `true`, so inspect `rowErrors` too. = responseItem{"]
 
 ## Related namespaces
 
@@ -26761,12 +26812,12 @@ Each step has a copy-pasteable code block in the mode you're reading (curl for H
 
 ### 1. Schema setup with idempotent multi-statement transaction
 
-**Goal:** create a fresh database under `/tmp/`, install a 3-statement schema (table + index + seed row) atomically, then read it back. Every statement is `IF NOT EXISTS` / parameterised so the whole step is replay-safe.
+**Goal:** create a fresh database under `/hoody/databases/`, install a 3-statement schema (table + index + seed row) atomically, then read it back. Every statement is `IF NOT EXISTS` / parameterised so the whole step is replay-safe.
 
 **Step 1 — create the db file** with the kv table pre-seeded so KV ops on the same db don't have to bootstrap separately.
 
 ```typescript
-const db = `/tmp/sqlite-examples-${Math.random().toString(36).slice(2)}.db`;
+const db = `/hoody/databases/sqlite-examples-${Math.random().toString(36).slice(2)}.db`;
 await client.sqlite.databases.create({ path: db, init_kv: true });
 ```
 
@@ -26808,9 +26859,8 @@ await client.sqlite.kv.set('session:alex', { user_id: 'd6ec...', scopes: ['read'
 **Step 2 — `HEAD` for existence** (zero-body, cheap). Returns `200` while live, `404` once TTL elapses. A HEAD answer has no body, so the 404 names its reason in the `X-Hoody-Error-Code` header: `KEY_NOT_FOUND` or `KEY_EXPIRED`.
 
 ```typescript
-// exists() resolves to a boolean: true while live, false for a 404 whose
-// X-Hoody-Error-Code is KEY_NOT_FOUND or KEY_EXPIRED. It throws on anything else,
-// including a 404 without that header (an unknown route or a proxy, not this key).
+// exists() resolves to a boolean: true while the key is live, false on a 404 (the
+// kit names the reason, KEY_NOT_FOUND or KEY_EXPIRED). Any other status throws.
 const present = await client.sqlite.kv.exists('session:alex', { db });
 ```
 
@@ -26893,7 +26943,7 @@ const { data: theme } = await client.sqlite.kv.get('profile', { db, path: 'prefs
 **Step 3 — patch one leaf**. The PUT body is the **new leaf value** (here `"light"`), not the full document. `lang` and `name` are untouched.
 
 ```typescript
-await client.sqlite.kv.set('profile', 'light', { db, path: 'prefs.theme' }) // sent as the JSON string "light";
+await client.sqlite.kv.set('profile', 'light', { db, path: 'prefs.theme', headers: { 'Content-Type': 'application/json' } }); // sent as the JSON string "light"
 ```
 
 ### 6. Time-travel — record three states of a feature flag, roll back two
@@ -26992,15 +27042,16 @@ const sqlB64 = Buffer.from(sql).toString('base64url');
 const { data: r } = await client.sqlite.sql.queryReadOnly({ db, sql: sqlB64 });
 ```
 
-**Step 3 — paste-able URL** (e.g. dashboard link). The kit URL itself is the auth grant — guard who you share it with.
+**Step 3 — paste-able URL** (e.g. dashboard link). Under the default proxy policy the kit URL itself is the auth grant — guard who you share it with. Where the owner has configured auth groups, the link also needs the credential the proxy expects, and the query URL grants nothing beyond that policy.
 
 ```typescript
+const kitUrl = `https://${P}-${C}-sqlite-1.${N}.containers.hoody.com`; // P, C, N from containers.get
 const url = `${kitUrl}/api/v1/sqlite/query?db=${encodeURIComponent(db)}&sql=${sqlB64}`;
 ```
 
 ### 10. Bulk insert via `valuesBatch` — one statement, many rows
 
-**Goal:** load 3 rows (or 100k) with one transaction item that repeats a single SQL statement once per parameter row, instead of one tx item per row. The rows of an item commit or fail together. `valuesBatch` is an array of value-arrays positionally aligned with the `?` placeholders. Caps: 100k rows per `valuesBatch`, 1M rows per tx.
+**Goal:** load 3 rows (or 100k) with one transaction item that repeats a single SQL statement once per parameter row, instead of one tx item per row. Without `noFail: true` the rows of an item commit or fail together. With `noFail: true`, a row whose parameters do not parse or do not fit the placeholders is skipped and the valid rows still commit: the item answers `success: true` with a `rowErrors` list, so check it. `valuesBatch` is an array of value-arrays positionally aligned with the `?` placeholders. Caps: 100k rows per `valuesBatch`, 1M rows per tx.
 
 **Step 1 — bulk insert.** Response carries `rowsUpdatedBatch:[1,1,1]` — one entry per row.
 
@@ -27023,7 +27074,7 @@ const r = await client.sqlite.sql.runTransaction(
 const n = (r.data as any).results[0].resultSet[0].n;
 ```
 
-**Step 3 — clean up** (delete the throwaway database through the kit, which also removes its `-wal`, `-shm` and `-journal` files, or leave it under `/tmp/` for the next reboot to reclaim).
+**Step 3 — clean up** (delete the throwaway database through the kit, which also removes its `-wal`, `-shm` and `-journal` files, or leave it in place).
 
 ```typescript
 await client.sqlite.databases.delete({ db });
@@ -27033,7 +27084,7 @@ await client.sqlite.databases.delete({ db });
 
 **Accessor:** `client.sqlite`  |  **Import:** `import * as sqlite from 'hoody-sdk/sqlite'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.sqlite.databases` (4) — Database file lifecycle: create a database, list the databases in a directory, run maintenance
 
@@ -27348,22 +27399,13 @@ client.sqlite.kv.deleteMany(data: SqliteKvDeleteManyRequest, options: { db: stri
 
 ---
 
-#### `exists` — Check if key exists
+#### `exists` — Whether `key` exists: true, or false when the kit answers 404.
 
 ```typescript
-client.sqlite.kv.exists(key: string, options: { db: string; table?: string; timeout?: number; IfNoneMatch?: string })
+client.sqlite.kv.exists(key: string, options: KvExistsOptions, templateVars?: ExistsTarget)
 ```
 
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `key` | `string` | path | Yes | Key name |
-| `db` | `string` | query | Yes | Database file path or directory |
-| `table` | `string` | query | No | Custom table name |
-| `IfNoneMatch` | `string` | header `If-None-Match` | No | Answers 304 while the key's current ETag matches. |
-| `timeout` | `number` | query | No | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
-
-**Returns:** `Promise<boolean>`  |  **HTTP:** `HEAD /api/v1/sqlite/kv/{key}`
-**CLI:** `hoody kv exists`
+**Returns:** `Promise<boolean>`  |  **SDK helper:** added by the SDK library, not generated from an HTTP operation.
 
 ---
 
@@ -28029,7 +28071,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 For interactive coding agents and other long-lived TUIs the user may detach from and come back to:
 
 1. Pick an unused `terminal_id` (1–39999, **never** the ephemeral range 40000–65535, **never** re-use one another program is on).
-2. `sessions.create` with that pinned id, `ephemeral: false`, `shell: '/bin/bash'`, `cwd: '/workspace'` (or wherever).
+2. `sessions.create` with that pinned id, `ephemeral: false`, `shell: '/bin/bash'`, `cwd: '/home/user'` (or wherever).
 3. `commands.run` with body `command: 'claude'` (or `codex`, `aider`, `gemini …`) and body `wait: false` so the agent stays alive in the PTY rather than being treated as a sync request. 
 4. Reattach any time: `sessions.connect`, then connect and send the initial dimensions message (multiplayer — multiple viewers / scripts can attach to the same PTY simultaneously), or REST via `sessions.pressKeys` / `sessions.paste` to drive it.
 5. Tear down only when really done: `sessions.delete(terminal_id)`. The session persists until explicitly deleted or hit by `terminal-idle-timeout` (300 s default with zero attached clients and no running process). Sessions are in-memory only — a container reboot kills the PTY and drops the session; re-create after a reboot.
@@ -28058,7 +28100,7 @@ For a turnkey full desktop instead of a single window, swap step 3 for the `desk
 
 A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and terminal N belongs to it while the program is configured. Nothing spawns there: shell, cwd, user, env, display, `cmd` and `pid` parameters on that id are ignored.
 
-1. Attach: `client.daemon.programs.attachTerminal(container, program, { readonly?, columns?, rows? })` resolves `{ terminalId, ws }`; `ws.disconnect()` leaves the program running. Every client sees the same screen, writable clients type into it (Ctrl-C goes to the program), and the program gets the smallest size among the writable clients (read-only clients count only when none is writable).
+1. Attach: `client.daemon.programs.attachTerminal(program, { readonly?, columns?, rows? })` on a container-scoped client resolves `{ terminalId, ws }`; `ws.disconnect()` leaves the program running. Every client sees the same screen, writable clients type into it (Ctrl-C goes to the program), and the program gets the smallest size among the writable clients (read-only clients count only when none is writable).
 2. Drive without a WebSocket: snapshot, find, press, mouse, paste, write, wait, raw and screenshot connect to the program on demand. Execute and session create on the id answer `409 DAEMON_TERMINAL`: there is no shell to run a command in.
 3. Program not running: the WebSocket closes `4404` `daemon program not running`; REST answers `409 DAEMON_PROGRAM_NOT_RUNNING`. Start it with the daemon, then attach again.
 4. Program ends while attached: clients close with `4404` `daemon program ended`, and a pending wait answers `exited`. The next attach reaches the restarted instance on a clean screen.
@@ -28067,15 +28109,15 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 ## Quirks & gotchas
 
-- **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script or a read-only `display` stream over a live PTY.
+- **Sharing a terminal URL = handing out root.** A `terminal-N` kit URL (or any alias pointed at it) lets anyone who can render it run arbitrary commands as root: read env / tokens / vault, exfiltrate files, install backdoors, mutate state. Capability-token semantics treat the URL itself as the credential — there is no per-recipient gate beyond what's configured in `proxy.containerPermissions`. Share only with people you'd trust with `ssh root@…`. For wider audiences, gate (`setPasswordGroup` / `setTokenGroup` / `setIpGroup`), set an alias `expires_at`, watch `proxyLogs`, and prefer a constrained `exec` script over a live PTY (a `display` URL is no read-only alternative: its readonly setting is client-side only, and its holder can still send input).
 - `terminal_id` numeric **1–65535**. **40000–65535 reserved for ephemeral**; pin manual IDs in 1–39999.
 - `terminal_id=0` = sentinel "treat as absent".
 - **Display pairing.** `sessions.create` builds the session's `DISPLAY` from its `display` field and ignores any `display` in the request URL, so there is no automatic `terminal_id=N ⇒ DISPLAY=:N` mapping — pass `display` explicitly (either `"N"` or `":N"` — the kit normalises a bare number to `:N`). `commands.run` differs: a session it has to create is configured from the request URL, where `display=N` (or the `display_id=N` alias) sets `DISPLAY=:N` — and on a `terminal-N` host that parameter is supplied for you, so a session first created that way already renders on `:N`. `ephemeral=true` still strips it, and an already-running session keeps the `DISPLAY` it spawned with. The `display-N` kit URL surface is independent of session id.
 - `ephemeral=true` strips `DISPLAY`, skips display/dbus init — X11 won't render.
 - `defer_pid` returns `/execute` immediately even with `wait=true`; queues until named PID exits (TUI-safe), for at most `defer_timeout_ms` (60000 ms default) — on expiry the command never runs.
 - **`/execute` body field is `command` (NOT `cmd`); request fails `400 Missing 'command' field` if you send `cmd`. The value is plain UTF-8, not base64; only the URL-form `?cmd=<base64>` is base64-decoded.** The kit wraps the command with shell bookkeeping (optional `cd`, environment prefix, exit-code capture, completion-marker echo) before it reaches the PTY; for direct interactive input use `write`, `sessions.paste` or `sessions.pressKeys`.
-- **`/execute` REQUIRES `?terminal_id=<n>` as a query parameter** unless `?ephemeral=true`; missing/non-numeric returns `400`. A `terminal_id` in the body is ignored; with no `?terminal_id` the request is `400 terminal_id parameter required`.
-- Completion normally comes from the `COMMAND_COMPLETED_MARKER_{id}` tail, stripped before `/result/{id}`. A command is also marked completed when the session's process has died (exit code 1), or — on a non-ephemeral session with no explicit `timeout` — after 10 s of output silence once some output was captured (exit code 0, marker never seen). A `completed` result therefore does not prove a long-running program exited; a program that swallows the marker and never falls silent keeps `wait=true` waiting.
+- **`/execute` REQUIRES `?terminal_id=<n>` as a query parameter** unless `?ephemeral=true`; missing/non-numeric returns `400`. A `terminal_id` in the body is ignored; with no `?terminal_id` the request is `400 terminal_id parameter required`. With body `mode: "raw"` the command runs as a one-shot process with no terminal session, and `terminal_id` is ignored.
+- Completion normally comes from the `COMMAND_COMPLETED_MARKER_{id}` tail, stripped before `/result/{id}`. A command is also marked completed when the session's process has died (exit code 1, `completion: "ended"`), or — on a non-ephemeral session with no explicit `timeout` — after 10 s without output once stdout was captured or the command's start marker was seen (`completion: "output_quiet"`, `exit_code: null`: the exit status is unknown and the program may still be running). A `completed` result therefore does not prove a long-running program exited; check `completion`; a program that swallows the marker and never falls silent keeps `wait=true` waiting.
 - **`wait=false` returns `status:"queued"` or `"running"` immediately** (NOT `"completed"`) — the kit tracks the command through its marker and output, not the underlying PID. Re-check actual output via `sessions.read` / `sessions.getSnapshot`.
 - **Screenshot `?format=` accepts `png | jpeg | jpg | gif`** at the kit level — `json` is invalid. (Note: the generated SDK type only allows `png | jpeg | gif`, so `jpg` works only via raw HTTP.)
 - **`processes.signal` with `{name}` targets EVERY process matching that name** (returns `affected_pids`); use `{pid}` for surgical kills.
@@ -28085,7 +28127,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 ## Common errors
 
-- `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id; the lower-level validator logs a near-identical `0-65535` warning.
+- `400 Invalid terminal_id (must be numeric 1-65535)` on a non-numeric or out-of-range id.
 - `400` config-error on `sessions.create` — SSH/SOCKS5 partial validation (e.g. `ssh_user` without `ssh_host`, `socks5_port` out of range). The kit does NOT enforce mutual exclusion of `ssh_password` + `ssh_key`; both can coexist on a single session.
 - `404` on `commands.get` once the result is gone: its session was removed (an ephemeral session holding results goes after `ephemeral-result-timeout` of inactivity with no attached client), or the session's result buffer filled and evicted it.
 - `Unknown program name "<name>"` (400) on `proxy.aliases.create` → the `program` is not in the platform's program catalog. For a terminal alias use `program=terminal` (not `hoody-terminal` or `terminal-N`); pick the instance with `index`.
@@ -28098,7 +28140,7 @@ A daemon program configured with `terminal_id: N` runs on terminal N's PTY, and 
 
 Each step has a copy-pasteable code block in the mode you're reading (curl for HTTP, `hoody` for CLI, TypeScript for SDK). Set `P`, `C`, `N` (project id, container id, server name) from `containers.get` first.
 
-⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). In the SDK that is `_templateVars: { serviceIndex: N }` (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body parser only consumes the `command`, `id`, `timeout`, the boolean wait sync flag, `cwd` and `env` keys); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output, provided some stdout has already been captured, and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `sessions.read` if in doubt. SDK callers pass `terminal_id` / `ephemeral` / `defer_pid` / `display` / `ssh_*` in the **options object** (2nd arg) and `wait` in the **body**: `client.terminal.commands.run({ command: 'echo hi', wait: true }, { terminal_id: '100' }, { serviceIndex: 100 })`.
+⚠ Through the containers proxy, the **`terminal-N` hostname selects the terminal**: the proxy sets `terminal_id` from `N` and overwrites any value you send, so every example addresses the session's own host (`terminal-100` for session 100; `terminal-0` for ephemeral allocation). A DNS label holds at most 63 characters, so from id 10000 up the `<projectId>-<containerId>-terminal-<N>` label is too long: use the short alias `t-<N>` (`<projectId>-<containerId>-t-<N>.<server>.containers.hoody.com`), which selects the same terminal. The SDK and CLI switch to it automatically."] In the SDK, pass `{ serviceIndex: N }` as the last, template-vars argument (default 1); the CLI derives the host from `--terminal-id`. When calling the kit directly, the HTTP routes take **`terminal_id` as a query parameter on `/execute`**, not in the body — a `terminal_id` field in the JSON body is silently ignored (the body carries `command`, `wait`, `mode` (`pty` by default, or `raw` for a one-shot process with no terminal session), `stdin_b64` and `user` (raw mode only), `id`, `timeout`, `cwd` and `env`); missing the query param returns 400 `terminal_id parameter required` unless `?ephemeral=true`. Always pass `?terminal_id=N`. The `command` body field is **plain UTF-8**, not base64 (only the URL form `?cmd=<base64>` is base64-decoded); the kit wraps it with its own shell bookkeeping and completion-marker echo before PTY delivery. `wait=true` normally returns when the kit sees the completion marker; a non-ephemeral command with no `timeout` is also reported completed after 10 s without new output once stdout was captured or its start marker was seen (`completion: "output_quiet"`, `exit_code: null`; the program may still be running), and programs that swallow the marker or only background-fork can return `status:"completed"` with empty or partial stdout — re-check via `sessions.read` if in doubt. SDK callers pass `terminal_id` / `ephemeral` / `defer_pid` / `display` / `ssh_*` in the **options object** (2nd arg) and `wait` in the **body**: `client.terminal.commands.run({ command: 'echo hi', wait: true }, { terminal_id: '100' }, { serviceIndex: 100 })`.
 
 ### 1. Persistent interactive session — create, run, capture, tear down
 
@@ -28273,7 +28315,7 @@ const slot = { serviceIndex: 50 }; // _templateVars: routes every call to termin
 // No sessions.create: this call creates session 50 and its missing working directory.
 await client.terminal.commands.run(
   { command: 'sleep 600; echo agent-stopped', wait: false },
-  { terminal_id: '50', shell: 'bash', cwd: '/workspace/agent', cwd_auto_create: true },
+  { terminal_id: '50', shell: 'bash', cwd: '/home/user/agent', cwd_auto_create: true },
   slot,
 );
 ```
@@ -28337,7 +28379,7 @@ Cleanup: `sessions.delete(70)`. ⚠ Never call `system.shutdown` / `system.reboo
 
 **Accessor:** `client.terminal`  |  **Import:** `import * as terminal from 'hoody-sdk/terminal'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.terminal.automation` (1) — Agent-facing automation primitives: screen snapshot, regex find, named key presses, text paste, and async wait conditions backed by a server-side terminal emulator
 
@@ -28417,14 +28459,14 @@ client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { termi
 | `defer_timeout_ms` | `number` | query | No | Max time to wait for defer_pid exit before failing (default: 60000) |
 | `defer_poll_ms` | `number` | query | No | Poll interval while waiting for defer_pid exit (default: 50, minimum: 10) |
 | `reset` | `boolean` | query | No | Reset existing session and reconfigure (kills current process, clears state, allows switching from bash to SSH or changing any parameter) - Use 'true', '1', or no value |
-| `cwd` | `string` | query | No | Working directory for local bash sessions (ignored for SSH) |
+| `cwd` | `string` | query | No | Working directory for local bash sessions (ignored for SSH). In raw mode: the command's working directory, when the body has no cwd |
 | `cwd_auto_create` | `boolean` | query | No | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new or reset local session. Enable with 'true', '1', or no value (default: false) |
 | `shell` | `string` | query | No | Shell to use for local sessions: bash (case-insensitive), zsh, fish, sh, etc. (default: server startup command, only applies to new sessions or after reset) |
-| `user` | `string` | query | No | System user to spawn shell as (requires su permissions, only applies to new sessions or after reset) |
+| `user` | `string` | query | No | System user to spawn shell as (requires su permissions, only applies to new sessions or after reset). In raw mode: the user the command runs as, when the body has no user |
 | `cmd` | `string` | query | No | Base64-encoded command to execute automatically (works with both new and active shells, executes every time URL is visited) |
 | `env` | `string` | query | No | Environment variable in KEY=VALUE format (can be repeated for multiple variables, e.g., ?env=DEBUG=1&env=API_KEY=abc) |
-| `skip_display_wait` | `boolean` | query | No | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the endpoint blocks until the session's display server is ready (default: false) |
-| `display_wait_timeout` | `number` | query | No | Timeout in seconds for display readiness wait (default: 10, capped at 10 seconds to prevent event-loop pin; values <=0 or malformed also map to the 10-second cap). Ignored if skip_display_wait=true |
+| `skip_display_wait` | `boolean` | query | No | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the request waits until the session's display server is ready, unless no X server holds the display and none can be started, or a wait for it already timed out on the same shell within the last 30 seconds. Commands of one terminal still run in arrival order, so a request with skip_display_wait=true runs after earlier ones still waiting (default: false) |
+| `display_wait_timeout` | `number` | query | No | Timeout in seconds for display readiness wait, counted from the request (default: 10, capped at 10 seconds; values <=0 or malformed also map to the 10-second cap). When it elapses the command runs anyway. Ignored if skip_display_wait=true |
 | `display` | `string` | query | No | DISPLAY environment variable for X11 applications (auto-formats :display if number provided, e.g., ?display=1 becomes DISPLAY=:1) |
 | `ssh_host` | `string` | query | No | SSH server hostname or IP address (creates SSH session if provided with ssh_user) |
 | `ssh_user` | `string` | query | No | SSH username (required if ssh_host is provided) |
@@ -28437,7 +28479,11 @@ client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { termi
 | `socks5_pass` | `string` | query | No | SOCKS5 proxy password for authentication |
 | `data` | `TerminalCommandsRunRequest` | body | Yes |  |
 
-**Body:** `{ command*: string, id: string, timeout: int, wait: bool, cwd: string, env: object }`
+**Body:** `{ command*: string, mode: "pty" | "raw", stdin_b64: string, user: string, id: string, timeout: int, wait: bool, cwd: string, env: object }`
+
+- `command` — The command to execute. In raw mode at most 131071 bytes
+- `wait` — Whether to wait for completion (default: true; forced false when defer_pid is set). Raw mode refuses false
+- `env` — Environment variables for this command only, as string values. … Keys must be shell variable names ([A-Za-z_][A-Za-z0-9_]*) not starting with __HOODY_ (any case), else 400. …
 
 **Returns:** `Promise<TerminalCommandsRunResponse>`  |  **HTTP:** `POST /api/v1/terminal/execute`
 **CLI:** `hoody terminal commands run`
@@ -28469,7 +28515,7 @@ client.terminal.drops.commit(data: TerminalDropsCommitRequest, options: { drop: 
 | `token` | `string` | query | Yes | Drop token from /drop-begin |
 | `data` | `TerminalDropsCommitRequest` | body | Yes |  |
 
-**Body:** `{ ctx*: string, r: int, c: int, cr: string, items*: object[] }`
+**Body:** `{ ctx*: "drop" | "paste", r: int, c: int, cr: string, items*: { p*: string, d*: 0 | 1, s*: int, name: string, h: string }[] }`
 
 **Returns:** `Promise<TerminalDropsCommitResponse>`  |  **HTTP:** `POST /api/v1/terminal/drop-commit`
 
@@ -28500,7 +28546,7 @@ client.terminal.drops.send(data: TerminalDropsSendRequest, options?: { terminal_
 | `terminal_id` | `string` | query | No | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
 | `data` | `TerminalDropsSendRequest` | body | Yes |  |
 
-**Body:** `{ ctx*: string, r: int, c: int, items*: object[] }`
+**Body:** `{ ctx*: "drop" | "paste", r: int, c: int, items*: { name*: string, b64: string, dir: bool, items: object[] }[] }`
 
 **Returns:** `Promise<TerminalDropsSendResponse>`  |  **HTTP:** `POST /api/v1/terminal/drop`
 
@@ -28577,8 +28623,8 @@ client.terminal.processes.list(options?: { sort?: "cpu" | "memory" | "pid" | "na
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `sort` | `"cpu" \| "memory" \| "pid" \| "name"` | query | No | Sort by field: cpu, memory, pid, name (default: pid) |
-| `limit` | `number` | query | No | Maximum number of processes to return (default: all) |
-| `filter` | `string` | query | No | Filter by process name (substring match, case-insensitive) |
+| `limit` | `number` | query | No | Maximum number of processes to return (default: 1000) |
+| `filter` | `string` | query | No | Keep processes whose name or command line contains this text (case-sensitive) |
 
 **Returns:** `Promise<TerminalProcessesListResponse>`  |  **HTTP:** `GET /api/v1/system/processes`
 **CLI:** `hoody terminal processes list`
@@ -29087,83 +29133,6 @@ client.terminal.system.stopDisplay(display: number)
 **Returns:** `Promise<TerminalSystemStopDisplayResponse>`  |  **HTTP:** `POST /api/v1/system/displays/{display}/stop`
 **CLI:** `hoody terminal system displays stop`
 
----
-
-### `client.terminal.ui` (1) — Web-based terminal interface with customizable display and session parameters
-
-#### `getPage` — Get web terminal interface
-
-```typescript
-client.terminal.ui.getPage(options?: { terminal_id?: string; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; readonly?: boolean; title?: string; fontSize?: number; backgroundColor?: string; panel?: string; panelVisible?: boolean; panelPosition?: string; panelWidth?: string; panelResizable?: boolean; hideToolbar?: boolean; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; desktop?: boolean; desktop_env?: string; redirect?: string; redirect_delay?: number; arg?: string; welcome?: boolean; debug?: boolean; reset?: boolean; pid?: number; env?: string; display?: string; env_inject?: boolean; startup_script?: string; ssh_key?: string; panelHeight?: string; panelWidthPct?: number; panelHeightPct?: number; wait_timeout?: number; rendererType?: "dom" | "canvas" | "webgl"; fontFamily?: string; fontWeight?: string; fontWeightBold?: string; lineHeight?: number; letterSpacing?: number; cursorBlink?: boolean; cursorStyle?: "block" | "underline" | "bar"; cursorWidth?: number; cursorInactiveStyle?: "outline" | "block" | "bar" | "underline" | "none"; theme?: string; minimumContrastRatio?: number; drawBoldTextInBrightColors?: boolean; scrollback?: number; scrollSensitivity?: number; fastScrollSensitivity?: number; smoothScrollDuration?: number; screenReaderMode?: boolean; disableResizeOverlay?: boolean; unicodeVersion?: string })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `terminal_id` | `string` | query | No | Terminal session ID (numeric 1-65535, auto-generated if not provided) - Allows multiple clients to share the same terminal session. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
-| `cwd` | `string` | query | No | Initial working directory for new terminal sessions (only applied when session is first created) |
-| `cwd_auto_create` | `boolean` | query | No | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new session. Enable with 'true', '1', or no value (default: false) |
-| `shell` | `string` | query | No | Shell to use: bash, zsh, fish, sh, etc. (default: server startup command, only applies to new sessions) |
-| `user` | `string` | query | No | System user to spawn shell as (requires su permissions, only applies to new sessions, user must exist on system) |
-| `cmd` | `string` | query | No | Base64-encoded command to execute automatically on spawn (executes once when shell starts) |
-| `readonly` | `boolean` | query | No | Enable read-only mode (blocks keyboard input, allows viewing only) - Use 'true', '1', or no value |
-| `title` | `string` | query | No | Browser window/tab title (default: application default) - HTML tags removed, max 200 characters, useful for organizing multiple terminal tabs |
-| `fontSize` | `number` | query | No | Terminal font size in pixels (default: 13, range: 8-72) - Accepts 'px' suffix (e.g., 16px), applied immediately when terminal loads |
-| `backgroundColor` | `string` | query | No | Terminal background color (default: #2b2b2b) - Supports hex colors (#RGB, #RRGGBB, #RRGGBBAA) or CSS named colors (black, white, red, blue, green, navy, etc.) |
-| `panel` | `string` | query | No | URL to display in side panel iframe (enables panel feature) |
-| `panelVisible` | `boolean` | query `panel-visible` | No | Show panel on load (default: true if panel URL provided, false otherwise) |
-| `panelPosition` | `string` | query `panel-position` | No | Panel position: 'left' or 'right' (default: right) |
-| `panelWidth` | `string` | query `panel-width` | No | Initial panel width in pixels or percentage (default: 400px) |
-| `panelResizable` | `boolean` | query `panel-resizable` | No | Allow panel resizing via drag handle (default: true) |
-| `hideToolbar` | `boolean` | query `hide-toolbar` | No | Hide the terminal toolbar (default: false) |
-| `ssh_host` | `string` | query | No | SSH server hostname or IP address (creates SSH session if provided with ssh_user) |
-| `ssh_user` | `string` | query | No | SSH username (required if ssh_host is provided) |
-| `ssh_port` | `string` | query | No | SSH port number (default: 22) |
-| `ssh_password` | `string` | query | No | SSH password for authentication (use with caution, prefer key-based auth) |
-| `socks5_host` | `string` | query | No | SOCKS5 proxy hostname for SSH connection |
-| `socks5_port` | `string` | query | No | SOCKS5 proxy port (default: 1080) |
-| `socks5_user` | `string` | query | No | SOCKS5 proxy username for authentication |
-| `socks5_pass` | `string` | query | No | SOCKS5 proxy password for authentication |
-| `desktop` | `boolean` | query | No | Enable Hoody Display desktop mode. Provides a full desktop environment instead of seamless individual windows (default: false) |
-| `desktop_env` | `string` | query | No | Desktop environment to launch (implies desktop=true). Starts the specified DE session after the display is ready. Valid values: xfce, mate. Not started again when a window manager already runs on the display; it keeps running after the session is deleted (POST /api/v1/system/displays/{display}/stop ends it) |
-| `redirect` | `string` | query | No | Redirect mode. When set to "display", creates/ensures the terminal session, waits for X11 display readiness, then returns HTTP 302 redirect to the display URL. Requires terminal_id and display params |
-| `redirect_delay` | `number` | query | No | Extra delay in seconds after display is ready before redirecting. Only used when redirect=display (default: 0) |
-| `arg` | `string` | query | No | Command-line arguments to pass to shell; accepted only where the deployment enabled shell arguments, and can be repeated |
-| `welcome` | `boolean` | query | No | Show welcome message on startup (default: false). Supports ?welcome=true, ?welcome=1, or ?welcome (no value = true) |
-| `debug` | `boolean` | query | No | Enable debug output in wrapper script (default: false) |
-| `reset` | `boolean` | query | No | Kill existing terminal process and reconfigure session (default: false). Use to switch shell, user, or from shell to SSH |
-| `pid` | `number` | query | No | Attach to an existing process by PID instead of spawning a new shell. Implies reset |
-| `env` | `string` | query | No | Inject environment variable as KEY=VALUE. Can be repeated for multiple variables (e.g., ?env=FOO=bar&env=BAZ=qux) |
-| `display` | `string` | query | No | X11 display number for GUI applications. Accepts number (e.g., 1) or :number (e.g., :1). Shorthand for ?env=DISPLAY=:N |
-| `env_inject` | `boolean` | query | No | Inject HOODY_* environment variables into shell session (default: true). Set to false to disable |
-| `startup_script` | `string` | query | No | Path to startup script to execute before shell launch (only applied on first session creation) |
-| `ssh_key` | `string` | query | No | Base64-encoded SSH private key for key-based authentication (prefer over password-based auth) |
-| `panelHeight` | `string` | query `panel-height` | No | Initial panel height for top/bottom positioned panels (default: 300px) |
-| `panelWidthPct` | `number` | query `panel-width-pct` | No | Initial panel width as a percentage of the window, 5-95. Takes precedence over panel-width |
-| `panelHeightPct` | `number` | query `panel-height-pct` | No | Initial panel height as a percentage of the window for top/bottom panels, 5-95. Takes precedence over panel-height |
-| `wait_timeout` | `number` | query | No | Seconds to wait for the display to become ready before redirecting (default: 60, capped at 300). Only used when redirect=display |
-| `rendererType` | `"dom" \| "canvas" \| "webgl"` | query | No | Terminal renderer: dom, canvas or webgl (default: webgl, or dom in Firefox) |
-| `fontFamily` | `string` | query | No | Terminal font family, as a CSS font-family list |
-| `fontWeight` | `string` | query | No | Font weight of normal text: normal, bold, or 100 to 900 |
-| `fontWeightBold` | `string` | query | No | Font weight of bold text: normal, bold, or 100 to 900 |
-| `lineHeight` | `number` | query | No | Line height as a multiple of the font size (read as a whole number) |
-| `letterSpacing` | `number` | query | No | Extra space between characters, in whole pixels |
-| `cursorBlink` | `boolean` | query | No | Blink the cursor. Use 'true' or '1' |
-| `cursorStyle` | `"block" \| "underline" \| "bar"` | query | No | Cursor shape: block, underline or bar |
-| `cursorWidth` | `number` | query | No | Width of the bar cursor in pixels |
-| `cursorInactiveStyle` | `"outline" \| "block" \| "bar" \| "underline" \| "none"` | query | No | Cursor shape while the terminal is not focused: outline, block, bar, underline or none |
-| `theme` | `string` | query | No | Color theme as a JSON object of xterm theme keys, e.g. {"background":"#000000","foreground":"#ffffff"} |
-| `minimumContrastRatio` | `number` | query | No | Minimum contrast ratio between text and background, 1 (no adjustment) to 21 |
-| `drawBoldTextInBrightColors` | `boolean` | query | No | Draw bold text in the bright ANSI colors. Use 'true' or '1' |
-| `scrollback` | `number` | query | No | Number of lines kept in the scrollback buffer |
-| `scrollSensitivity` | `number` | query | No | Scroll speed multiplier |
-| `fastScrollSensitivity` | `number` | query | No | Scroll speed multiplier while the fast-scroll modifier key is held |
-| `smoothScrollDuration` | `number` | query | No | Smooth scrolling duration in milliseconds (0 turns it off) |
-| `screenReaderMode` | `boolean` | query | No | Turn on screen reader support. Use 'true' or '1' |
-| `disableResizeOverlay` | `boolean` | query | No | Hide the size overlay shown while the terminal is resized. Use 'true' or '1' |
-| `unicodeVersion` | `string` | query | No | Character width tables: graphemes (default) or 11 |
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /`
-
 
 ### Body schemas
 
@@ -29241,7 +29210,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 ## Quirks & gotchas
 
-- The data plane (expose / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 22.23+ (24.18+ on the 24 line; the listening-server form is Bun-only). The generated `tunnel` namespace covers only the read/observability + admin surface (`tunnel.list`, `sessions.list`, `bindings.list`, `kit.getMetrics`, `sessions.close`) — the driver itself ships alongside it. On a `withContainer()` client use `box.tunnel.expose` / `box.tunnel.pull` / `box.tunnel.serve`: they build the tunnel WebSocket URL from the container and send the client's `kitAuth`. The package-root `tunnelExpose` / `tunnelPull` / `tunnelServe` take an explicit `url` instead.
+- The data plane (expose / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 20.3+ (22+ recommended: Node 20 is end-of-life; the listening-server form is Bun-only). On Node releases whose built-in WebSocket is affected by CVE-2026-12151 (before 22.23.0, all of 23 and 25, 24 before 24.17.0, 26 before 26.3.1) the tunnel socket is opened with the `ws` package instead. The generated `tunnel` namespace covers only the read/observability + admin surface (`tunnel.list`, `sessions.list`, `bindings.list`, `kit.getMetrics`, `sessions.close`) — the driver itself ships alongside it. On a `withContainer()` client use `box.tunnel.expose` / `box.tunnel.pull` / `box.tunnel.serve`: they build the tunnel WebSocket URL from the container and send the client's `kitAuth`. The package-root `tunnelExpose` / `tunnelPull` / `tunnelServe` take an explicit `url` instead.
 - `BIND_OK.publicUrl` is `null` on deployments that do not mint public tunnel URLs — the bind still works, you just reach it another way.
 - `grace_ms` capped at 5000ms; over → `400`.
 - `containerPort: 0` requests an automatically allocated port; ports 1–79 are rejected; `80..=1023` are refused unless the deployment allows privileged ports (gated separately for expose and for pull).
@@ -29251,16 +29220,16 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 - Multi-WS (v2) drop semantics: dropping the **primary** socket closes the whole session; dropping a **secondary** shard makes the driver close streams pinned to that shard while the kit detaches the shard and the session continues.
 - Pre-auth connection cap defaults to 32; exceeding it closes the socket before HELLO (no explicit close code). HELLO timeout defaults to 5 s.
 - **No UDP support.** EXPOSE is HTTP/1.1+WS only; PULL is TCP only.
-- `GET /api/v1/tunnel/connect` (operation `tunnelConnect`) is the WS-upgrade endpoint of the data plane. It has no generated SDK method: a plain HTTP GET cannot perform the upgrade, so the SDK omits it. Use the driver helpers (`box.tunnel.expose` / `pull` / `serve` on a container-scoped client, or the package-root `tunnelConnect` / `TunnelSession`, `tunnelExpose`, `tunnelPull`, `tunnelServe`), which handle the WS subprotocol and HELLO frame; resuming a session takes the low-level `TunnelSession` (`resumeSessionId`).
+- `GET /api/v1/tunnel/connect` (operation `tunnelConnect`) is the WS-upgrade endpoint of the data plane. It has no generated SDK method: a plain HTTP GET cannot perform the upgrade, so the SDK omits it. Use the driver helpers (`box.tunnel.expose` / `pull` / `serve` on a container-scoped client, or the package-root `tunnelConnect` / `TunnelSession`, `tunnelExpose`, `tunnelPull`, `tunnelServe`), which handle the WS subprotocol and HELLO frame. `keepTunnelAlive` resumes a dropped session while the kit still holds its bindings; to resume by hand, use the package-root `tunnelResumeExpose` / `tunnelResumePull` with `sessionId`, or the low-level `TunnelSession` with `resumeSessionId`.
 
 ## Common errors
 
 - `404` on kill — session gone; no retry.
-- `403` — SSRF guard; not via the edge proxy.
+- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The response is a bare 403.
 - Upgrade `400` — missing/unsupported subprotocol; WS `1002` — HELLO rejected after upgrade; plain socket close — HELLO timeout or pre-auth cap reached.
-- `BIND_ERR` codes: `ALREADY_BOUND` (retry `takeover:true`), `PORT_IN_USE`, `RESERVED_PORT`, `INVALID_HOST`, `PRIVILEGED_PORT`, `BIND_CAP_EXCEEDED`, `INVALID_KIND` (unsupported `(kind, mode)` combo, or `takeover:true` on PULL), `INTERNAL` (server-side, e.g. random-port exhaustion).
+- `BIND_ERR` codes: `ALREADY_BOUND` (EXPOSE: retry with `takeover:true`; PULL: pick another port or close the owning session), `PORT_IN_USE`, `RESERVED_PORT`, `INVALID_HOST`, `PRIVILEGED_PORT`, `BIND_CAP_EXCEEDED`, `INVALID_KIND` (unsupported `(kind, mode)` combo, or `takeover:true` on PULL), `INTERNAL` (server-side, e.g. random-port exhaustion).
 - `GOAWAY` on an idle or unanswered-PING session: the body is a JSON object whose `code` is a **number**, `10`, and whose `message` reads `session idle timeout` or `pong timeout`; its two other fields are always `0`. Compare it against the SDK's exported `TunnelResetCode` (`IdleTimeout = 0x000a`, and `BindTakeover = 0x000d` for the RESET case below) rather than a bare literal, and treat `message` as human-readable only. Reconnect via `resume.sessionId`.
-- `503`+`Retry-After:5` at visitor URL — orphan takeover-grace window (set by `expose` driver kill, NOT by admin `sessions.close` which skips orphan parking).
+- `503`+`Retry-After:5` at visitor URL — orphan takeover-grace window. Only a primary socket that drops without a close frame (a killed driver, a lost network), or closes with a code other than 1000, parks its bindings; a client `GOAWAY`, a close frame with no code or code 1000 (what a clean driver close sends), or admin `sessions.close` ends the session without parking.
 
 ## Related namespaces
 
@@ -29310,6 +29279,8 @@ console.log({
 **Goal:** you got a `sessionId` from #2; now you want the session detail (who's connected, how loaded). Returns `peerAddr` (`<ip>:<port>` of the laptop holding the tunnel), `connectionsGranted` (the negotiated WebSocket pool size: 1 for v1, 1–16 for v2), `activeStreams` (right now), `maxStreams` (negotiated cap), `isV2` (control-plane protocol), and `bindings[]`.
 
 ```typescript
+const sid = process.env.SID;
+if (!sid) throw new Error('Set SID to a sessionId returned by example 2');
 const r = await client.tunnel.sessions.list();
 const s = r.data!.sessions.find(x => x.sessionId === sid);
 if (s) console.log({
@@ -29367,7 +29338,7 @@ For a dashboard, register the kit URL as a Prometheus scrape target through an a
 
 **Goal:** a teammate's tunnel expose session is wedged; you want it gone without restarting the kit. `sessions.close` returns `202` with `{sessionId, status}`. `grace_ms` ∈ [0, 5000] (default 50, anything above 5000 → `400`); it bounds how long the kit spends sending a best-effort GOAWAY before teardown. It is not a drain period: in-flight streams can be cut off. Orphan sessions skip the parking grace window and drop immediately.
 
-⚠ Don't run this in the doc as live verification — it kills whoever's actually connected. Recipe only.
+⚠ Closing a session cuts off whoever is connected to it, including its in-flight streams. Pick the intended session before running this recipe.
 
 ```typescript
 const list = await client.tunnel.sessions.list();
@@ -29377,7 +29348,7 @@ const r = await client.tunnel.sessions.close(stuck.sessionId, { grace_ms: 1000 }
 console.log(r.data); // { sessionId, status: 'closing' }
 ```
 
-After a non-admin driver disconnect, visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace (default 60 s). PULL listeners also stay bound during that grace, but drop each new connection while no live session holds them. `sessions.close` (admin) skips orphan parking and starts teardown, so do **not** expect that 503 window from an admin kill; its `202` means teardown was initiated, not that it has finished, so re-list to confirm.
+After an unclean driver disconnect (the socket drops without a close frame, or closes with a code other than 1000), visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace (default 60 s); a clean close (`GOAWAY`, or close code 1000) releases the bindings at once. PULL listeners also stay bound during that grace, but drop each new connection while no live session holds them. `sessions.close` (admin) skips orphan parking and starts teardown, so do **not** expect that 503 window from an admin kill; its `202` means teardown was initiated, not that it has finished, so re-list to confirm.
 
 ### 7. Auto-discover orphans + low-FD alert (monitoring recipe)
 
@@ -29397,7 +29368,7 @@ Only the process that owns a tunnel sees its `GOAWAY` and `RESET` frames: openin
 
 **Accessor:** `client.tunnel`  |  **Import:** `import * as tunnel from 'hoody-sdk/tunnel'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.tunnel.bindings` (1) — Tunnel control plane (WebSocket + health + management)
 
@@ -29559,7 +29530,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ### 3. Bulk replay via pagination
 
-Bulk replay: `client.watch.events.list` with `since_id`, one page per call; persist the highest `id`. `client.watch.events.listAll` and `client.watch.events.listIterator` walk every page.
+Bulk replay: `client.watch.events.list` with `since_id`, one page per call; persist the highest `id`. `client.watch.events.listAll` and `client.watch.events.listIterator` walk at most 1,000 pages (50 events each by default), then throw if more remain: pass `{ limit: 200 }` for large histories, and beyond 200,000 events page by hand with `after_id`.
 
 ### 4. WebSocket consumer
 
@@ -29588,7 +29559,7 @@ List with `client.watch.watchers.list`, inspect with `client.watch.watchers.get`
 
 ## Common errors
 
-- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` is rejected earlier, while the query string is parsed: still HTTP 400, but without the `INVALID_PAGINATION` code
+- `400 INVALID_PAGINATION` — `page=0`, `limit=0` or `limit` above 200; defaults `page=1, limit=50`. A negative or non-numeric `page`/`limit` also answers HTTP 400 `INVALID_PAGINATION`; the message names the parameter
 - `400 INVALID_REQUEST` — empty `paths`, an invalid or missing path, a glob that does not compile, or an invalid `ignore_dirs` entry. All of these answer the same code, so read the message, not the code, to tell them apart
 - `400 INVALID_CURSOR` — both cursor fields, or unparseable timestamp
 - `404 WATCHER_NOT_FOUND` — UUID syntactically valid but no watcher; also raised pre-upgrade on stream endpoints
@@ -29654,24 +29625,28 @@ for await (const frame of stream) {
 **Step 2 — reconnect with `since_id`.** Server replays from the buffer; if the buffer rolled past your cursor you get **HTTP 409 `HISTORY_GAP`** with `details` (a JSON-encoded string) holding `oldest_available_id` / `newest_available_id` / `requested_cursor`. Treat that as data loss and rebuild from a fresh listing.
 
 ```typescript
-// Resume from the last id processed, page by page. A 409 HISTORY_GAP means the
-// buffer no longer reaches back that far and the events in between are lost:
-// restart from since_id=0 (which never gaps) to re-read everything still retained.
-let cursor = lastId;
+// Resume from the last id processed, page by page, with after_id: it answers 409
+// HISTORY_GAP when any event after the cursor was lost (evicted, or too large to
+// keep), where since_id would skip it silently. On a 409, restart once from
+// since_id=0 (which never gaps) to re-read everything still retained.
+let cursor: { since_id?: number; after_id?: number } = { after_id: lastId };
+let recovered = false;
 for (;;) {
   let items: any[];
   try {
-    const page = await client.watch.events.list(wid, { since_id: cursor, limit: 200 });
+    const page = await client.watch.events.list(wid, { ...cursor, limit: 200 });
     items = (page.data as any)?.items ?? [];
   } catch (e: any) {
-    if (e.status !== 409) throw e;
-    cursor = 0; // data loss: rebuild from the oldest retained event
+    if (e.status !== 409 || e.code !== 'HISTORY_GAP' || recovered) throw e;
+    recovered = true;
+    cursor = { since_id: 0 }; // data loss: rebuild from the oldest retained event
     continue;
   }
-  for (const ev of items) { cursor = ev.id; console.log(ev.kind, ev.path); }
+  for (const ev of items) { lastId = ev.id; console.log(ev.kind, ev.path); }
   if (items.length < 200) break;
+  cursor = { after_id: lastId };
 }
-lastId = cursor; // continue the step 1 loop from here
+// lastId now continues the step 1 loop from here
 ```
 
 ### 3. WebSocket consumer — replay buffer + live events on one socket
@@ -29764,11 +29739,11 @@ catch (e: any) { /* e.status === 404, e.code === 'WATCHER_NOT_FOUND' */ }
 
 ### 10. Recent history without a stream — `since_timestamp` for one-shot tail
 
-**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `since_id` set to the last id received. A 409 on one of those later `since_id` pages means the buffer rolled past the cursor while paging: the events between two pages are lost, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
+**Goal:** a forensics caller wants every event in the last 5 min without holding a connection. `since_timestamp` accepts RFC3339, unix seconds, or unix milliseconds (auto-detected when `|n| >= 100_000_000_000`). It is **mutually exclusive** with `since_id` — pass both and you get **400 `INVALID_CURSOR`**. If the oldest retained event is newer than the timestamp (a watcher younger than 5 minutes, or a buffer that has rolled over), the call returns **409 `HISTORY_GAP`**. That only means the history does not reach back that far: every retained event is newer than the timestamp, so read them all from `since_id=0`. One call returns at most 200 events; walk further pages with `after_id` set to the last id received, not `since_id`: `since_id` only checks the oldest retained id, so it misses an event evicted, or too large to keep, between two pages without an error. A 409 on one of those later `after_id` pages means such an event was lost while paging, so the result is incomplete. Treat it as a failure and run the recovery again from the start.
 
 ```typescript
 const events: any[] = [];
-let cursor: { since_timestamp?: string; since_id?: number } = {
+let cursor: { since_timestamp?: string; since_id?: number; after_id?: number } = {
   since_timestamp: new Date(Date.now() - 5 * 60_000).toISOString(),
 };
 for (;;) {
@@ -29779,11 +29754,11 @@ for (;;) {
     // 409 HISTORY_GAP on the timestamp query: every retained event is newer than
     // the timestamp, so read them all (since_id=0 never gaps).
     if (e.status === 409 && cursor.since_timestamp) { cursor = { since_id: 0 }; continue; }
-    throw e; // includes a 409 on a later since_id page: history incomplete, run again
+    throw e; // includes a 409 on a later after_id page: history incomplete, run again
   }
   events.push(...items);
   if (items.length < 200) break;
-  cursor = { since_id: items[items.length - 1].id }; // next page: continue after the last id
+  cursor = { after_id: items[items.length - 1].id }; // next page: after_id detects unread evictions
 }
 ```
 
@@ -29793,7 +29768,7 @@ When the filesystem reports a rename as a single event carrying both paths, the 
 
 **Accessor:** `client.watch`  |  **Import:** `import * as watch from 'hoody-sdk/watch'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.watch.events` (5) — Real-time event streams
 
@@ -30016,6 +29991,7 @@ client.watch.watchers.update(id: string, data: WatchWatchersUpdateRequest)
 ### Body schemas
 
 - `watch_CreateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths*: string[], recursive: bool|null, skip_hidden: bool|null }`
+  - Create a watcher. Only `paths` is required. A field the service does not know (a misspelt option such as `recursiv`) is refused with 400 `INVALID_REQUEST` naming it, as on update, rather than ignored.
   - `include` — Optional include glob patterns. If present, path must match one include.
 - `watch_UpdateWatcherRequest` — `{ coalesce_ms: int|null, exclude: string[]|null, history_size: int|null, ignore_dirs: string[]|null, include: string[]|null, kinds: watch_WatchEventKind[]|null, paths: string[]|null, recursive: bool|null, skip_hidden: bool|null }`
   - Reconfigure a live watcher. Every field is optional; an omitted field keeps the watcher's current value, but at least one field must be given. The watcher keeps its id, its replay history (so `since_id` / `since_timestamp` cursors stay valid) and its connected SSE/WebSocket clients.

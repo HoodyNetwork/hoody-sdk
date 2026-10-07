@@ -1,8 +1,8 @@
-> _**SDK skill (basic)** · ~23,036 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill (basic)** · ~23,683 tokens · hoody-sdk v1.0.0-beta.16_
 
 # SDK mode — drive Hoody from TypeScript/JavaScript
 
-Typed client, 1000+ methods, 21 namespaces. Node, Bun, browser. Opt-in retries (off until you set `retries`), error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
+Typed client, 1000+ methods, 21 namespaces. Node, Bun, browser. Configurable automatic retries, error redaction, async iterators, automatic 401 re-auth, cross-origin auth strip. Tradeoff vs HTTP/CLI: needs JS runtime + `npm install`.
 
 ## What is Hoody
 
@@ -50,7 +50,7 @@ import { HoodyClient } from 'hoody-sdk';
 const hoody = new HoodyClient({ baseURL, credentials: { username, password } });
 ```
 
-Retries are off by default (`retries: 0`). To retry `408/425/429/500/502/503/504` automatically, pass `retries` (and optionally `retryDelayMs` / `retryOnStatuses`) to the constructor or per call. That applies to GET, HEAD, OPTIONS, PUT and DELETE; a POST or PATCH is retried only on `429`, and a request whose body is a stream is never retried.
+Retries are on by default. When neither the client nor the call sets `retries`, eligible requests get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting: a GET, HEAD, OPTIONS, PUT or DELETE on `408/425/429/500/502/503/504` or a lost connection; any other method only when the connection could not be opened (the request never reached a server). Set `retries: 0` to disable retries, or pass `retries` (and optionally `retryDelayMs` / `retryOnStatuses`) to the constructor or per call to set your own budget (250 ms backoff base, no total cap). Connection failures proven never dispatched can be retried for any method. With an explicit retry budget, POST/PATCH can also retry `429` and hoody-files' `409 FILE_PATH_BUSY` refusal (nothing was changed). A streamed body is never replayed; a request marked `responseIsFinal` is replayed only when it never reached a server, and only under an explicit budget.
 
 Recommended `baseURL`: `https://api.hoody.com` (when `baseURL` is omitted outside a browser page, `HoodyClient` uses `HOODY_BASE_URL`, then `HOODY_API_URL`, then `https://api.hoody.com`; a client with `target: 'kit'` gets no default host; in a browser page an omitted base stays relative to the page). Realm-scoped: `https://{realmId}.api.hoody.com`. Token scoping → § Auth model. Kit URLs → § Proxy URLs.
 
@@ -73,7 +73,7 @@ Other paginated methods follow the same `*` / `*All` / `*Iterator` triple (e.g. 
 
 ## Errors
 
-SDK throws **`ApiError`** on every 4xx/5xx. Type guards: `isApiError`, `isRetryableApiError`. Also `ValidationError` (client-side input) and `VaultCryptoError`. Retryable codes: `408/425/429/500/502/503/504` (the client retries them only when you set `retries`). Secrets (`Authorization`, `Cookie`, `?token=…`, body `{password,token,apikey}`, URL userinfo) auto-redacted to `[REDACTED]` before `catch`. See § Reference appendix.
+SDK throws **`ApiError`** on every 4xx/5xx, except where the status is the answer: `files.exists` and `sqlite.kv.exists` resolve `false` on a 404 (a missing or expired key). Type guards: `isApiError`, `isRetryableApiError`. Also `ValidationError` (client-side input) and `VaultCryptoError`. Retryable codes: `408/425/429/500/502/503/504`, plus hoody-files' `409 FILE_PATH_BUSY` (see the retry policy under § Init). Secrets (`Authorization`, `Cookie`, `?token=…`, body `{password,token,apikey}`, URL userinfo) auto-redacted to `[REDACTED]` before `catch`. See § Reference appendix.
 
 ## Streaming
 
@@ -154,7 +154,7 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 > - Use a **dedicated demo container with no secrets** — wallet credentials, vault data, source code only what they need to see.
 > - Set an **`expires_at`** on the alias for auto-expiry.
 > - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias instantly with `proxy.aliases.disable(aliasId)`.
-> - For untrusted reviewers (customers, support tickets, public demos): prefer a **read-only `display`** embed of a screenshot stream over a live terminal, or build a constrained `exec` script that exposes only the operation they need.
+> - For untrusted reviewers (customers, support tickets, public demos): do not hand out a `display` kit URL as a "read-only" view — its readonly setting is client-side only, and anyone holding the URL can still call the display's input API (clicks, typing). Build a constrained `exec` script that exposes only the operation they need, such as serving a captured screenshot.
 
 ### Tips for embedders
 
@@ -163,20 +163,20 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 - Use `proxy.aliases.create({ container_id, program: '<kit>' })` to ship a brandable hostname (`https://repo-acme.{N}.containers.hoody.com`) into the iframe instead of leaking the `{containerId}`.
 - For `display` / `desktop`: clipboard, file-transfer, audio, and notification features are toggleable via query params (`?clipboard=true&sound=true` …) — see the `display` namespace.
 - For `code`: append `?extension=<publisher>.<name>` to embed a single extension (e.g. Cline) without the IDE chrome — perfect for chat-channel "agent" widgets.
-- API kits (`sqlite`, `cron`, `watch`, `curl`, `pipe`, `http-<port>`, …) don't render a UI but you can still iframe them for status-page widgets, long-poll dashboards, etc.
+- Several API kits also serve a browser UI on their kit URL: `cron` (crontab manager) and `watch` at `/`, the `sqlite` studio at `/`, and the `pipe` send / receive / share pages — check a kit's own UI (and its embed views) before building a custom dashboard. `curl` renders no UI, and `http-<port>` shows whatever your app serves.
 - `allow="clipboard-read; clipboard-write"` on the `<iframe>` is recommended for `code`, `terminal`, `display` so paste / copy work inside the embed.
 
-## No local bypass — every call goes through the edge proxy
+## Source IP Guard — every call goes through the kit URL
 
-There is **no raw localhost-port bypass** to a kit. Even from inside the same container, every call to a kit service goes through the edge proxy on HTTPS — the kit binds to an internal interface that requires the proxy's authenticated, capability-checked, hook-instrumented path. An agent script trying to bypass via `http://127.0.0.1:<kit_port>` will not reach the kit. For in-container self-calls, use the full `{projectId}-{containerId}-…` kit URL (or an alias you configured): the proxy does not infer the calling container, so there is no `localhost` shorthand.
+Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403, from inside the same container too. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
 
 Why uniform proxy routing:
 
-- **Security uniformity** — the same `proxy.containerPermissions.*` gates, `proxy.hooks.*` MITM rules, and `proxyLogs.*` capture apply to every request, whether it came from across the internet or from a script in the next process. No "trusted internal" loophole that leaks to attackers via SSRF.
+- **Security uniformity** — requests from inside containers go through the same `proxy.containerPermissions.*` checks and `proxyLogs.*` capture as external requests, whether they came from across the internet or from a script in the next process. `proxy.hooks.*` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`. There is no "trusted internal" loophole that leaks to attackers via SSRF.
 - **One mental model** — same URL works from your laptop, from another container, from inside the container itself. You write the same code; the proxy is transparent.
 - **Cost is negligible** — the proxy hop adds microseconds, not a network round-trip.
 
-Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. Don't try to discover and target the kit's internal port — it is firewalled and won't accept the connection.
+Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. There is no other way in: the Source IP Guard refuses it.
 
 ### Container ↔ container — anyone reaches anyone (with permissions)
 
@@ -191,7 +191,7 @@ Cross-container access still goes through the gate stack — Y's `proxy.containe
 - **By default** (no gates set), Y's URL is a capability — anyone with the URL has access. Within your account that's usually fine; for production / shared / multi-tenant fleets you SHOULD gate.
 - **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`setJwtGroup`) verifies a signed JWT instead.
 
-This is why "no local bypass" matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
+This is why edge routing matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
 
 ## Capability-token semantics — open by default, permission for production
 
@@ -259,7 +259,7 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/home/user/main.py` |
 | Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
 | SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
 | Display 1 (X11) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
@@ -363,12 +363,12 @@ The SSH endpoint is reachable from any IP; the registered key is the access cont
 
 ## User-hosted services — `http-<port>` / `https-<port>`
 
-**Anything you bind on a container port is automatically reachable from the public URL.** No alias, no firewall edit, no proxy registration. Use one of two slugs:
+**Anything you bind on a container port is automatically reachable from the public URL.** Bind your HTTP(S) service to `0.0.0.0:<port>` or the container's network IP to reach it at the public URL. A listener bound only to `127.0.0.1` is not reachable through this proxy. No alias, no firewall edit, no proxy registration. Use one of two slugs:
 
 | Slug form | Inner protocol | Edge URL |
 |---|---|---|
-| `http-<port>` | proxy speaks **HTTP** to `localhost:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
-| `https-<port>` | proxy speaks **HTTPS** to `localhost:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
+| `http-<port>` | proxy speaks **HTTP** to `<container-network-ip>:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
+| `https-<port>` | proxy speaks **HTTPS** to `<container-network-ip>:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
 
 Edge is always `https://` regardless — TLS terminates at the proxy. The `http-` / `https-` slug only describes what the proxy talks on the inside.
 
@@ -409,8 +409,8 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Two independent uniqueness rules, either of which answers `409 ALIAS_IN_USE`: the name must be free on the container's physical server (across every tenant there), AND your own account may hold a given name only once across all servers. |
 | `program` | Which kit/protocol to route to. Valid names, protocols first and then programs, with accepted aliases in parentheses: `http`, `https`, `ssh`, `terminal` (`tty`, `ttyd`, `t`), `display` (`d`), `desktop`, `cron`, `watch` (`w`), `notifications` (`notification`, `n`), `files` (`f`), `daemon`, `code`, `agent`, `exec` (`e`), `browser` (`b`), `cdp`, `curl`, `run`, `sqlite`, `logs` (`log`, `l`), `egress`, `pipe`, `notes` (`note`), `tunnel`, `bot`. Use only these names; `cli`, `proxy` and `proxyLogs`, for example, are refused with `400 Unknown program name`. The proxy-logs kit is `logs` (NOT `proxy` or `proxyLogs`), and `run` is NOT `app`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
-| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`. A request that carries its own path is forwarded as sent, resolved from the container root — `target_path` is never used as a prefix. |
-| `allow_path_override` | Defaults to `true`. Declared intent only: the proxy currently forwards non-root request paths as sent whatever this is set to, so `false` does NOT restrict which paths are reachable — use proxy permissions for access control. |
+| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`; a query written in it is sent too. It is never used as a prefix: with `allow_path_override: true` a request that carries its own path is forwarded as sent, resolved from the container root, and with `false` it is the only path the alias serves (at the root and at its own path). |
+| `allow_path_override` | Defaults to `true`: a root request lands on `target_path` (its query plus the visitor's parameters), and a request that carries its own path is forwarded as sent. With `false` the alias serves only `target_path`: the root `/` and the `target_path` path itself (e.g. `/run-report` when `target_path` is `/run-report`) are both served as `target_path`, and any other path — sub-paths and assets included — is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's value for the same key, and the instance selectors the alias's `index` sets (such as `id`, `terminal_id`, `display`) stay forced; the visitor's method, request body, other query keys, WebSocket upgrade and `Range` header pass through. Either way anyone with the link can open the alias, so restrict who may with proxy permissions. |
 | `expires_at` | Auto-disable timestamp — an ISO 8601 date-time string, or `null` for never. Convert an epoch value to ISO 8601 before sending. Must be in the future. |
 | `enabled` | Toggle without deleting (keeps alias slot reserved). |
 
@@ -427,7 +427,7 @@ Each row below shows the create-call fields and the resulting public URL. Issue 
 | GUI display 1 wrapped in a brandable host | `display` | `1` | — | `true` | `https://gui.{N}.containers.hoody.com` |
 | Read-only HTTPS upstream (target self-terminates TLS) | `https` | `8443` | — | `true` | `https://secureapi.{N}.containers.hoody.com` |
 
-`target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, gate the container (below) or point the alias at a program that serves only that operation.
+With the default `allow_path_override: true`, `target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, set `allow_path_override: false` (the alias then serves only `target_path`, at the root and at its own path; write into `target_path` every query key the visitor must not change), and gate the container (below) to decide who may call it.
 
 ### Gating an alias
 
@@ -453,7 +453,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ## Three credential types
 
-1. **JWT** — `authentication.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
+1. **JWT** — `client.api.auth.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
 2. **Auth token** — `auth.tokens.create`. Prefix `hdy_`. Scopable (realms, `resources.*`), IP-restrictable, rotatable. Long-lived headless credential.
 3. **Kit URL** — `https://{projectId}-{containerId}-{kit_slug}-{serviceIndex}.{server}.containers.hoody.com` is the bearer for that kit while no proxy permissions are configured for the container. See § Proxy URLs.
 
@@ -697,8 +697,8 @@ const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com', token: process
 const box = await hoody.withContainer(containerId);
 ```
 
-A hoody-exec script loads the SDK with `require` (a top-level `import` fails there) and reaches
-the container it runs in through `metadata.containerId`:
+A hoody-exec script can load the SDK with `require` or a top-level `import`, and reaches the
+container it runs in through `metadata.containerId`:
 
 ```typescript
 const { HoodyClient } = require('hoody-sdk');
@@ -799,7 +799,7 @@ if (r.data && 'temp_token' in r.data) {
 
 ```typescript
 const created = await hoody.api.auth.tokens.create({
-  alias: 'Customer: Acme Corp',
+  alias: 'Customer Acme Corp',
   permission_template: 'external_customer',
   realm_ids: ['507f1f77bcf86cd799439011'],
 });
@@ -918,7 +918,7 @@ const out = r.data.stdout;      // envelope: also r.data.stderr, r.data.exit_cod
 // body and answers 400 "Missing 'terminal_id' field" without it.
 const N = 100;  // pick 1-39999 (40000+ is the ephemeral range)
 await box.terminal.sessions.create(
-  { terminal_id: String(N), shell: '/bin/bash', user: 'user', cwd: '/workspace' },
+  { terminal_id: String(N), shell: '/bin/bash', user: 'user', cwd: '/home/user' },
   { serviceIndex: N },
 );
 
@@ -946,16 +946,16 @@ directory path answers its listing). A missing file throws `ApiError` with `err.
 in a browser), a `Uint8Array` or an `ArrayBuffer`.
 
 ```typescript
-const text = await box.files.readText('/workspace/notes.md');               // string
-const settings = await box.files.readJson('/workspace/settings.json');      // parsed value
-const png = await box.files.readBytes('/workspace/logo.png');               // Uint8Array
+const text = await box.files.readText('/home/user/notes.md');               // string
+const settings = await box.files.readJson('/home/user/settings.json');      // parsed value
+const png = await box.files.readBytes('/home/user/logo.png');               // Uint8Array
 
 // Write (creates or replaces)
-await box.files.upload('/workspace/hello.txt', Buffer.from('hello'));
-await box.files.upload('/workspace/settings.json', Buffer.from(JSON.stringify(settings, null, 2)));
+await box.files.upload('/home/user/hello.txt', Buffer.from('hello'));
+await box.files.upload('/home/user/settings.json', Buffer.from(JSON.stringify(settings, null, 2)));
 
 // A directory path lists it (envelope: .data.entries)
-const { data: dir } = await box.files.get('/workspace');
+const { data: dir } = await box.files.get('/home/user');
 const fileNames = (dir as { entries: Array<{ name: string; is_dir: boolean }> }).entries.filter((e) => !e.is_dir).map((e) => e.name);
 ```
 
@@ -971,7 +971,7 @@ const { data: hostname } = await box.files.get('/etc/hostname', { responseType: 
 
 ```typescript
 // The browser-N host picks the instance (default browser-1); add { serviceIndex: N }
-// as the second argument for another one. `browser_id` does not select an instance.
+// as the second argument for another one (a `browser_id` option picks the host too).
 const png = await box.browser.page.captureScreenshot({
   url: 'https://example.com',
   fullPage: true,
@@ -1010,7 +1010,7 @@ const { data: user } = await box.sqlite.kv.get('user:42', { db: '/hoody/database
 // CreateWatcherRequest takes `paths: string[]` (NOT `path`) and `kinds`
 // (NOT `events`). Recursive defaults to server config.
 const w = await box.watch.watchers.create({
-  paths: ['/workspace'],
+  paths: ['/home/user'],
   recursive: true,
   kinds: ['created', 'modified', 'removed'],
 });
@@ -1159,14 +1159,14 @@ const rows = results[0].resultSet;
 
 ### 26. Cron entries
 
-Managed crontab entries of one system user. The user is a positional string (`'user'` is the
+The crontab of one system user: managed entries plus the user's other lines. The user is a positional string (`'user'` is the
 container's login user), never an object.
 
 ```typescript
 const list = await box.cron.entries.list('user');
-const commands = list.data.entries.map((e) => (e.type === 'managed' ? e.command : e.line));  // e: { id, schedule, command, enabled, … }
+const commands = list.data.entries.map((e) => (e.type === 'managed' ? e.command : e.line));  // managed: { type, id, schedule, command, enabled, … }; raw: { type, line }
 
-const created = await box.cron.entries.create('user', { schedule: '*/5 * * * *', command: '/workspace/bin/sync.sh' });
+const created = await box.cron.entries.create('user', { schedule: '*/5 * * * *', command: '/home/user/bin/sync.sh' });
 const id = created.data.id;
 await box.cron.entries.update('user', id, { enabled: false });
 await box.cron.entries.delete('user', id);
@@ -1177,7 +1177,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 
 | Route | Does |
 |---|---|
-| `GET /users/{user}/entries?page=&limit=` | list managed entries: `{ user, entries, total, page, limit }` (limit max 200) |
+| `GET /users/{user}/entries?page=&limit=` | list every crontab line in order: `{ user, entries, total, page, limit }` (limit max 200); managed entries have `type:"managed"` with `id`, `schedule`, `command`; other lines come back as `type:"raw"` with `line` |
 | `POST /users/{user}/entries` | create: JSON `{ schedule, command, name?, comment?, enabled?, expires_at? }` → 201, the entry with its `id` |
 | `GET /users/{user}/entries/{id}` | one entry |
 | `PATCH /users/{user}/entries/{id}` | update the fields you send (`schedule`, `command`, `enabled`, …) |
@@ -1194,7 +1194,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 
 - `baseURL` (recommended `https://api.hoody.com`; when omitted outside a browser page: `HOODY_BASE_URL`, then `HOODY_API_URL`, then `https://api.hoody.com`; none for `target: 'kit'`); `realmId` -> `{realmId}.api.hoody.com`.
 - Auth: `token` and/or `credentials` (`{username,password}` or `{email,password}`; both fields are independent on `HoodyClientConfig`); `autoRefresh`, `autoRetryAuth`; hooks `onTokenExpired`, `refreshToken`, `kitAuth`+`onKitAuthExpired`, `onError`.
-- Retry: `timeout`, `retries` (default `0`: nothing is retried until you set it), `retryDelayMs`, `retryOnStatuses` (default 408/425/429/500/502/503/504); honours `Retry-After`, cap 30s.
+- Retry: `timeout`, `retries` (when omitted, eligible requests get up to two retries, with a 2-second backoff base and at most 10 seconds of total waiting; set `retries: 0` to disable retries; a value you set gets a 250 ms base and no total cap), `retryDelayMs`, `retryOnStatuses` (default 408/425/429/500/502/503/504); honours `Retry-After`, cap 30s per wait.
 - Misc: `headers`, `cache{enabled,ttl}`, `transport.keepAlive`, `forceIPv4`, `forceIPv4Cache{enabled,ttlMs}`, `middlewares`, `clientId`/`clientName`, `urlTemplates`.
 - Per-call: `responseType` (`json|text|arrayBuffer|blob|auto`), `timeoutMs`, `signal`, `rawResponse` (skip envelope; cast `as unknown as RawShape`).
 
@@ -1209,7 +1209,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
   - **Nested `{error:{code,message}}`** — the notes kit's routes and the bot kit's management routes (`not_found`, `invalid_token`, …). The nested value reaches `err.code`.
   - **Header only** — the sqlite kit's KV `HEAD` 404 names `KEY_NOT_FOUND` / `KEY_EXPIRED` in `X-Hoody-Error-Code`.
 - A lower-case `error` value is not a code: the logs kit's `429 {error: "rate_limited"}` leaves `err.code` `undefined`; read the body.
-- Three values of `code` come from the CLIENT, not from any body, always with `status` `0`: **`ABORTED`** when the request timed out or was aborted (message `Request timed out after Nms`; never retried), **`PARSE_ERROR`** when the response body would not parse, and **`ETIMEDOUT`** when the body stalled after the headers arrived. A timeout is the error a caller meets most often, so handle `ABORTED` explicitly.
+- Some values of `code` come from the CLIENT, not from any body. With `status` `0`: **`ABORTED`** when the request timed out, was aborted, or got no response headers in time (never retried), **`PARSE_ERROR`** when the response body would not parse, and **`ETIMEDOUT`** when the connection could not be opened in time or the body stalled after the headers arrived. Stream validation errors (`NOT_AN_EVENT_STREAM`, `STREAM_FRAME_TOO_LARGE`) keep the response status, and `REDIRECT_REFUSED` keeps the refused redirect's status. A timeout is the error a caller meets most often, so handle `ABORTED` explicitly.
 - **So: branch on `status` first, always. Treat `code` as an optional, service-specific refinement, and never assume a documented value will appear there.**
 - `retryAfterMs` is attached to the thrown error when an HTTP **error** response carried a **parseable** `Retry-After` header — any error status, not just 429. It is not attached on the client-side failures above: a `200` whose body will not parse throws `PARSE_ERROR` with `status` `0` and no `retryAfterMs`, even when the response carried the header. Delta-seconds and an HTTP-date both parse; anything else is ignored and the property stays absent, and a date already in the past gives `0` rather than a negative wait. It is set at runtime but is NOT declared on `ApiError`, so TypeScript callers must read it through a cast: `(err as ApiError & { retryAfterMs?: number }).retryAfterMs`.
 
@@ -1219,7 +1219,7 @@ Without the SDK, the cron kit's routes sit at the root of its kit URL
 
 ## Streaming
 
-`proxyLogs.stream` and `exec.logs.stream` return `Promise<AsyncIterable<IStreamEvent>>` — iterate them with `for await (const ev of await box.proxyLogs.stream({...}))` or `for await (const ev of await box.exec.logs.stream({ file, follow: true }))`. `watch.events.stream(id, { since_id })` does the same: `for await (const ev of await box.watch.events.stream(id))`. Check each SSE method's return type; one that returns `Promise<ApiResponse<…>>` buffers the whole response and never resolves on a live stream — use the URL with `EventSource`/`fetch`+ReadableStream, or poll a cursor endpoint, for those. WebSocket-wrapper methods (`notifications.connect`, `terminal.sessions.connect`, `curl.jobs.connect`, `watch.events.connect`) expose `await wrapper.connect()` plus per-wrapper typed callbacks: terminal has `onOutput` (Uint8Array); notifications has `onNotification`/`onHeartbeat`; curl has `onJobstarted`/`onJobprogress`/`onJobcompleted`; watch has `onFileEvent`/`onLag`; lifecycle close on every wrapper is `onDisconnect`. Tunnel `tunnelExpose({ url | container, kitAuth?, containerPort, to: { host, port }, takeover? })` (a `token` option is ignored) from `hoody-sdk` (re-exported); `ExposeOptions` accepts either a fully-qualified `url` or a container WebSocket hostname; when `url` is omitted the helper builds `ws://${container}/api/v1/tunnel/connect` — that default works only for plain-HTTP local dev. For production HTTPS kit URLs you MUST pass `url: 'wss://{P}-{C}-tunnel-1.{N}.containers.hoody.com/api/v1/tunnel/connect'` explicitly.
+`proxyLogs.stream` and `exec.logs.stream` return `Promise<AsyncIterable<IStreamEvent>>` — iterate them with `for await (const ev of await box.proxyLogs.stream({...}))` or `for await (const ev of await box.exec.logs.stream({ file, follow: true }))`. `watch.events.stream(id, { since_id })` does the same: `for await (const ev of await box.watch.events.stream(id))`. Check each SSE method's return type; one that returns `Promise<ApiResponse<…>>` buffers the whole response and never resolves on a live stream — use the URL with `EventSource`/`fetch`+ReadableStream, or poll a cursor endpoint, for those. WebSocket-wrapper methods (`notifications.connect`, `terminal.sessions.connect`, `curl.jobs.connect`, `watch.events.connect`) expose `await wrapper.connect()` plus per-wrapper typed callbacks: terminal has `onOutput` (Uint8Array); notifications has `onNotification`/`onHeartbeat`; curl has `onJobstarted`/`onJobprogress`/`onJobcompleted`; watch has `onFileEvent`/`onLag`; lifecycle close on every wrapper is `onDisconnect`. Tunnel `tunnelExpose({ url | container, kitAuth?, containerPort, to: { host, port }, takeover? })` (a `token` option is ignored) from `hoody-sdk` (re-exported); `ExposeOptions` accepts either a fully-qualified `url` or a `container`. When `url` is omitted, `container` may be a hostname or an HTTP(S)/WS(S) kit URL. Public DNS names use `wss://`; HTTPS becomes WSS and HTTP becomes WS. Loopback, IP literals and single-label hosts use `ws://`. The helper appends `/api/v1/tunnel/connect` when the path lacks it.
 
 ## Type imports
 

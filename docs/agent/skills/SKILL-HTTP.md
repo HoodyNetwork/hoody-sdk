@@ -1,4 +1,4 @@
-> _**HTTP skill (basic)** · ~18,793 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill (basic)** · ~19,497 tokens · hoody-sdk v1.0.0-beta.16_
 
 # HTTP mode — drive Hoody with curl
 
@@ -12,7 +12,7 @@ Hoody is a remote-first computing platform: every workflow — coding, browsing,
 
 **Need a custom API, script-as-service, or multi-step workflow?** Default to `exec`. Drop a `.ts` / `.js` (or shell-out via Bun) into the scripts dir and it auto-mounts as an HTTP endpoint — no framework, no deploy, schema-validated, logged, metric-instrumented, alias-able to a public hostname. Each script is a micro-service, kept warm by the kit; **multi-step workflows** (call agent A → check with agent B → trigger action C) are just one script orchestrating the steps. (Not a sandbox for untrusted code — see `exec` namespace.)
 
-**Need a GET-only URL for something that's actually a POST?** Use `curl` — `GET /api/v1/curl/request?url=…&method=POST` on the curl kit URL turns any REST call into a single GET-able link (the GET surface takes 19 query params — including `data`, `json`, `data_base64` and a repeatable `header`, so bodies AND headers DO work as query params, and supplying a body auto-upgrades the upstream call GET→POST; only multipart `form` uploads stay `POST /api/v1/curl/request`-only). See `curl` namespace.
+**Need a GET-only URL for something that's actually a POST?** Use `curl` — `GET /api/v1/curl/request?url=…&method=POST` on the curl kit URL turns any REST call into a single GET-able link (the GET surface takes 21 query params (`body` and `body_base64` are aliases of `data` and `data_base64`) — including `data`, `json`, `data_base64` and a repeatable `header`, so bodies AND headers DO work as query params, and supplying a body auto-upgrades the upstream call GET→POST; only multipart `form` uploads stay `POST /api/v1/curl/request`-only). See `curl` namespace.
 
 **Stuck, or unsure how to do something?** Ask Hoody's public docs assistant — an unauthenticated MCP endpoint at `https://chatbot.hoody.com/mcp` (one tool, `search_hoody_docs`; or the `POST /api/chat` SSE fallback) answers any "how do I…" with cited doc URLs. Use it for discovery when you're not sure which namespace fits.
 
@@ -138,7 +138,7 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 > - Use a **dedicated demo container with no secrets** — wallet credentials, vault data, source code only what they need to see.
 > - Set an **`expires_at`** on the alias for auto-expiry.
 > - Watch **`proxyLogs`** for unexpected callers; if a URL leaks, disable its alias instantly with `PATCH /api/v1/proxy/aliases/{aliasId}/state` with body `{"enabled":false}`.
-> - For untrusted reviewers (customers, support tickets, public demos): prefer a **read-only `display`** embed of a screenshot stream over a live terminal, or build a constrained `exec` script that exposes only the operation they need.
+> - For untrusted reviewers (customers, support tickets, public demos): do not hand out a `display` kit URL as a "read-only" view — its readonly setting is client-side only, and anyone holding the URL can still call the display's input API (clicks, typing). Build a constrained `exec` script that exposes only the operation they need, such as serving a captured screenshot.
 
 ### Tips for embedders
 
@@ -147,20 +147,20 @@ The point: **don't make people leave their chat.** When someone hits a bug, drop
 - Use `POST /api/v1/proxy/aliases` with `{ container_id, program: '<kit>' }` to ship a brandable hostname (`https://repo-acme.{N}.containers.hoody.com`) into the iframe instead of leaking the `{containerId}`.
 - For `display` / `desktop`: clipboard, file-transfer, audio, and notification features are toggleable via query params (`?clipboard=true&sound=true` …) — see the `display` namespace.
 - For `code`: append `?extension=<publisher>.<name>` to embed a single extension (e.g. Cline) without the IDE chrome — perfect for chat-channel "agent" widgets.
-- API kits (`sqlite`, `cron`, `watch`, `curl`, `pipe`, `http-<port>`, …) don't render a UI but you can still iframe them for status-page widgets, long-poll dashboards, etc.
+- Several API kits also serve a browser UI on their kit URL: `cron` (crontab manager) and `watch` at `/`, the `sqlite` studio at `/`, and the `pipe` send / receive / share pages — check a kit's own UI (and its embed views) before building a custom dashboard. `curl` renders no UI, and `http-<port>` shows whatever your app serves.
 - `allow="clipboard-read; clipboard-write"` on the `<iframe>` is recommended for `code`, `terminal`, `display` so paste / copy work inside the embed.
 
-## No local bypass — every call goes through the edge proxy
+## Source IP Guard — every call goes through the kit URL
 
-There is **no raw localhost-port bypass** to a kit. Even from inside the same container, every call to a kit service goes through the edge proxy on HTTPS — the kit binds to an internal interface that requires the proxy's authenticated, capability-checked, hook-instrumented path. An agent script trying to bypass via `http://127.0.0.1:<kit_port>` will not reach the kit. For in-container self-calls, use the full `{projectId}-{containerId}-…` kit URL (or an alias you configured): the proxy does not infer the calling container, so there is no `localhost` shorthand.
+Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the program's URL gets 403, from inside the same container too. Call kits through the edge proxy on HTTPS, so the proxy's permissions, logging and hooks apply to every call.
 
 Why uniform proxy routing:
 
-- **Security uniformity** — the same `* /api/v1/containers/{id}/proxy/permissions*` gates, `* /api/v1/containers/{id}/proxy/hooks*` MITM rules, and `* /_logs*` capture apply to every request, whether it came from across the internet or from a script in the next process. No "trusted internal" loophole that leaks to attackers via SSRF.
+- **Security uniformity** — requests from inside containers go through the same `* /api/v1/containers/{id}/proxy/permissions*` checks and `* /_logs*` capture as external requests, whether they came from across the internet or from a script in the next process. `* /api/v1/containers/{id}/proxy/hooks*` MITM rules apply the same way, but only to services that accept hooks: `logs`, `egress` and `cdp` reject hook operations with `404`. There is no "trusted internal" loophole that leaks to attackers via SSRF.
 - **One mental model** — same URL works from your laptop, from another container, from inside the container itself. You write the same code; the proxy is transparent.
 - **Cost is negligible** — the proxy hop adds microseconds, not a network round-trip.
 
-Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. Don't try to discover and target the kit's internal port — it is firewalled and won't accept the connection.
+Practical consequence: from inside a container, when calling its OWN kits, use the same kit URL form as anywhere else (`https://{P}-{C}-<kit>-1.{N}.containers.hoody.com/...`). The `hoody` CLI and the Hoody SDK both already do this. There is no other way in: the Source IP Guard refuses it.
 
 ### Container ↔ container — anyone reaches anyone (with permissions)
 
@@ -175,7 +175,7 @@ Cross-container access still goes through the gate stack — Y's `* /api/v1/cont
 - **By default** (no gates set), Y's URL is a capability — anyone with the URL has access. Within your account that's usually fine; for production / shared / multi-tenant fleets you SHOULD gate.
 - **With a gate set** (§ How to gate — an auth group alone is not a gate), X must satisfy it. A Token gate (`setTokenGroup`) is a static shared secret: you choose where it is read (one header, cookie or query parameter) and the exact value it must equal, and X sends that value on every call to Y. It does not check Hoody auth tokens or realms — an `hdy_…` token passes only if it is literally the configured value. A JWT gate (`setJwtGroup`) verifies a signed JWT instead.
 
-This is why "no local bypass" matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
+This is why edge routing matters: if same-container calls were a backdoor, an attacker who pwned X could quietly read Y's data with no gate checked. Routing everything through the proxy means **every** container-to-container call sees the **same** auth + audit machinery as every external call.
 
 ## Capability-token semantics — open by default, permission for production
 
@@ -243,7 +243,7 @@ For project `65f1...c8a`, container `65f2...41e`, server `node-example-1`:
 
 | Surface | URL |
 |---|---|
-| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/workspace/main.py` |
+| Files API | `https://65f1...c8a-65f2...41e-files-1.node-example-1.containers.hoody.com/api/v1/files/home/user/main.py` |
 | Exec script `render.ts` (flat) | `https://65f1...c8a-65f2...41e-exec-1.node-example-1.containers.hoody.com/render` (path; a `scripts/render/` dir would also serve at `render.…-exec-1.…`) |
 | SQLite kit | `https://65f1...c8a-65f2...41e-sqlite-1.node-example-1.containers.hoody.com/api/v1/sqlite/db/...` |
 | Display 1 (X11) | `https://65f1...c8a-65f2...41e-display-1.node-example-1.containers.hoody.com/` |
@@ -345,12 +345,12 @@ The SSH endpoint is reachable from any IP; the registered key is the access cont
 
 ## User-hosted services — `http-<port>` / `https-<port>`
 
-**Anything you bind on a container port is automatically reachable from the public URL.** No alias, no firewall edit, no proxy registration. Use one of two slugs:
+**Anything you bind on a container port is automatically reachable from the public URL.** Bind your HTTP(S) service to `0.0.0.0:<port>` or the container's network IP to reach it at the public URL. A listener bound only to `127.0.0.1` is not reachable through this proxy. No alias, no firewall edit, no proxy registration. Use one of two slugs:
 
 | Slug form | Inner protocol | Edge URL |
 |---|---|---|
-| `http-<port>` | proxy speaks **HTTP** to `localhost:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
-| `https-<port>` | proxy speaks **HTTPS** to `localhost:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
+| `http-<port>` | proxy speaks **HTTP** to `<container-network-ip>:<port>` inside the container | `https://{projectId}-{containerId}-http-<port>.{node}.containers.hoody.com` |
+| `https-<port>` | proxy speaks **HTTPS** to `<container-network-ip>:<port>` (target must terminate TLS) | `https://{projectId}-{containerId}-https-<port>.{node}.containers.hoody.com` |
 
 Edge is always `https://` regardless — TLS terminates at the proxy. The `http-` / `https-` slug only describes what the proxy talks on the inside.
 
@@ -391,8 +391,8 @@ A **proxy alias** is a custom hostname that points at one specific program insid
 | `alias` | 3-61 chars, lowercase alphanumeric **plus hyphens** (`a-z0-9-`, no leading/trailing hyphen). Becomes `<alias>.{N}.containers.hoody.com`. Two independent uniqueness rules, either of which answers `409 ALIAS_IN_USE`: the name must be free on the container's physical server (across every tenant there), AND your own account may hold a given name only once across all servers. |
 | `program` | Which kit/protocol to route to. Valid names, protocols first and then programs, with accepted aliases in parentheses: `http`, `https`, `ssh`, `terminal` (`tty`, `ttyd`, `t`), `display` (`d`), `desktop`, `cron`, `watch` (`w`), `notifications` (`notification`, `n`), `files` (`f`), `daemon`, `code`, `agent`, `exec` (`e`), `browser` (`b`), `cdp`, `curl`, `run`, `sqlite`, `logs` (`log`, `l`), `egress`, `pipe`, `notes` (`note`), `tunnel`, `bot`. Use only these names; `cli`, `proxy` and `proxyLogs`, for example, are refused with `400 Unknown program name`. The proxy-logs kit is `logs` (NOT `proxy` or `proxyLogs`), and `run` is NOT `app`. **`'web'` is rejected — for `hoody_kit` runners use `program: 'exec'`**. |
 | `index` | Optional; defaults to `1`. Set explicitly for multi-instance programs: port for `http`/`https`, `terminal_id` for `terminal`, display number for `display`. |
-| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`. A request that carries its own path is forwarded as sent, resolved from the container root — `target_path` is never used as a prefix. |
-| `allow_path_override` | Defaults to `true`. Declared intent only: the proxy currently forwards non-root request paths as sent whatever this is set to, so `false` does NOT restrict which paths are reachable — use proxy permissions for access control. |
+| `target_path` | Optional landing path served when the alias is opened with no path (a root request), e.g. `/api/v1`; a query written in it is sent too. It is never used as a prefix: with `allow_path_override: true` a request that carries its own path is forwarded as sent, resolved from the container root, and with `false` it is the only path the alias serves (at the root and at its own path). |
+| `allow_path_override` | Defaults to `true`: a root request lands on `target_path` (its query plus the visitor's parameters), and a request that carries its own path is forwarded as sent. With `false` the alias serves only `target_path`: the root `/` and the `target_path` path itself (e.g. `/run-report` when `target_path` is `/run-report`) are both served as `target_path`, and any other path — sub-paths and assets included — is refused with `404 ALIAS_PATH_PINNED`. A query key written in `target_path` wins over the visitor's value for the same key, and the instance selectors the alias's `index` sets (such as `id`, `terminal_id`, `display`) stay forced; the visitor's method, request body, other query keys, WebSocket upgrade and `Range` header pass through. Either way anyone with the link can open the alias, so restrict who may with proxy permissions. |
 | `expires_at` | Auto-disable timestamp — an ISO 8601 date-time string, or `null` for never. Convert an epoch value to ISO 8601 before sending. Must be in the future. |
 | `enabled` | Toggle without deleting (keeps alias slot reserved). |
 
@@ -409,7 +409,7 @@ Each row below shows the create-call fields and the resulting public URL. Issue 
 | GUI display 1 wrapped in a brandable host | `display` | `1` | — | `true` | `https://gui.{N}.containers.hoody.com` |
 | Read-only HTTPS upstream (target self-terminates TLS) | `https` | `8443` | — | `true` | `https://secureapi.{N}.containers.hoody.com` |
 
-`target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, gate the container (below) or point the alias at a program that serves only that operation.
+With the default `allow_path_override: true`, `target_path` only decides what the bare hostname serves: every other path on that program stays reachable through the alias. To expose a single operation, set `allow_path_override: false` (the alias then serves only `target_path`, at the root and at its own path; write into `target_path` every query key the visitor must not change), and gate the container (below) to decide who may call it.
 
 ### Gating an alias
 
@@ -435,7 +435,7 @@ Aliases inherit the container's gate stack — gate the underlying container (§
 
 ## Three credential types
 
-1. **JWT** — `authentication.login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
+1. **JWT** — `POST /api/v1/users/auth/login`. Access token lives `1d`, refresh token `7d`, by default; a deployment may shorten either, so treat both as values to read from the response rather than constants. The interactive, short-lived credential.
 2. **Auth token** — `POST /api/v1/auth/tokens`. Prefix `hdy_`. Scopable (realms, `resources.*`), IP-restrictable, rotatable. Long-lived headless credential.
 3. **Kit URL** — `https://{projectId}-{containerId}-{kit_slug}-{serviceIndex}.{server}.containers.hoody.com` is the bearer for that kit while no proxy permissions are configured for the container. See § Proxy URLs.
 
@@ -664,79 +664,79 @@ State is per-container: `POST /api/v1/containers/{id}/copy` clones the disk incl
 
 # HTTP — Core ops cheat-sheet
 
-Vars (P=projectId, C=containerId, N=`server_name`): `A=https://api.hoody.com/api/v1`; `K(k)=https://{P}-{C}-${k}-1.{N}.containers.hoody.com/api/v1/${k}`; `H=-H "Authorization: Bearer ${TOKEN}"`, `J=-H 'Content-Type: application/json'`; `T=K(terminal)`, `F=K(files)`, `D=K(display)`, `S=K(sqlite)`. Watch exception (routes mounted at root, NOT `/api/v1/watch/...`): `W=https://{P}-{C}-watch-1.{N}.containers.hoody.com/watchers`.
+Vars (P=projectId, C=containerId, N=`server_name`): `API=https://api.hoody.com/api/v1` (already includes `/api/v1`); `K(k)=https://{P}-{C}-${k}-1.{N}.containers.hoody.com/api/v1/${k}`; `T=K(terminal)`, `F=K(files)`, `D=K(display)`, `S=K(sqlite)`. Watch exception (routes mounted at root, NOT `/api/v1/watch/...`): `W=https://{P}-{C}-watch-1.{N}.containers.hoody.com/watchers`.
 
-All curls assume `-sS`; SSE adds `-N`. JSON bodies imply `-H 'Content-Type: application/json'` ($J). API calls require `-H 'Authorization: Bearer $TOKEN'` ($H); kit URLs (T/F/D/S/W) don't. That includes the `bot` kit's management routes; gate kit URLs with proxy permissions.
+All curls assume `-sS`; SSE adds `-N`. Every JSON body needs `-H 'Content-Type: application/json'` (plain `curl -d` sends a form content type, which the API refuses with `415`). API calls need `-H "Authorization: Bearer $TOKEN"` (double quotes, so the shell expands `$TOKEN`); kit URLs (T/F/D/S/W) don't. That includes the `bot` kit's management routes; gate kit URLs with proxy permissions. The commands below spell both headers out.
 
 ### 1. Sign up + verify email — 200 on success / 422 on request-schema validation (missing field, bad email, short password) / 400 on other invalid input (e.g. unknown region) / 403 when registration disabled; user=`<local>-<4hex>`
 ```bash
 # password: 12-128 chars, at most 72 UTF-8 bytes, at least 3 of 4 classes (upper/lower/digit/symbol).
 # Using all four is safest: the interactive `hoody signup` prompt demands all four.
 # Signup + verify-email live under /auth (NOT /users/auth); login + 2FA live under /users/auth.
-curl -X POST $A/auth/signup -d '{"email":"you@example.com","password":"<your-password>"}'
-curl -X POST $A/auth/verify-email -d '{"token":"{64-char-token}"}'
+curl -X POST "$API/auth/signup" -H 'Content-Type: application/json' -d '{"email":"you@example.com","password":"<your-password>"}'
+curl -X POST "$API/auth/verify-email" -H 'Content-Type: application/json' -d '{"token":"{64-char-token}"}'
 ```
 
 ### 2. Login (+ 2FA branch) — returns `{data:{token,refreshToken,expires_in}}`; 2FA branch returns `{data:{requires_2fa:true,temp_token}}`
 ```bash
 # Body takes EITHER {email,password} OR {username,password}: password AND one identifier are required.
 # `username` must match ^[a-zA-Z0-9_-]+$ — an email sent as `username` returns 422.
-TOKEN=$(curl -X POST $A/users/auth/login \
+TOKEN=$(curl -X POST "$API/users/auth/login" -H 'Content-Type: application/json' \
   -d '{"email":"you@example.com","password":"<your-password>"}' | jq -r '.data.token')
 # username form: -d '{"username":"alex","password":"<your-password>"}'
-curl -X POST $A/users/auth/2fa/verify \
+curl -X POST "$API/users/auth/2fa/verify" -H 'Content-Type: application/json' \
   -d '{"temp_token":"{tt}","code":"123456"}'
 ```
 
 ### 3. Refresh — server requires the refresh token in BOTH the body AND a MATCHING `Authorization: Bearer` header; over raw HTTP you send both yourself
 ```bash
-curl -X POST $A/users/auth/refresh \
-  -H "Authorization: Bearer ${REFRESH_TOKEN}" \
+curl -X POST "$API/users/auth/refresh" \
+  -H "Authorization: Bearer ${REFRESH_TOKEN}" -H 'Content-Type: application/json' \
   -d "{\"refreshToken\":\"${REFRESH_TOKEN}\"}"
 ```
 
 ### 4. Long-lived token (one-shot)
 ```bash
-curl -X POST $A/auth/tokens -d '{"alias":"ci"}'
+curl -X POST "$API/auth/tokens" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"alias":"ci"}'
 ```
 
 ### 5. List + create projects — trailing `/`; paginate `?page=2`
 ```bash
-curl $A/projects/ | jq '.data.projects[]|{id,alias}'
-curl -X POST $A/projects/ -d '{"alias":"x"}'
+curl "$API/projects/" -H "Authorization: Bearer $TOKEN" | jq '.data.projects[]|{id,alias}'
+curl -X POST "$API/projects/" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"alias":"x"}'
 ```
 
-### 6. List + create containers — `server_id` from `$A/rentals`; `hoody_kit`/`dev_kit` default true with a login token; with an auth token, an omitted `hoody_kit` follows the token's `containers.features.hoody_kit` permission and an omitted `dev_kit` follows `hoody_kit`, so send both explicitly
+### 6. List + create containers — `server_id` from `$API/rentals`; `hoody_kit`/`dev_kit` default true with a login token; with an auth token, an omitted `hoody_kit` follows the token's `containers.features.hoody_kit` permission and an omitted `dev_kit` follows `hoody_kit`, so send both explicitly
 ```bash
-curl $A/projects/{P}/containers | jq '.data.containers[]|{id,name,status,server_name}'
-curl -X POST $A/projects/{P}/containers \
+curl "$API/projects/{P}/containers" -H "Authorization: Bearer $TOKEN" | jq '.data.containers[]|{id,name,status,server_name}'
+curl -X POST "$API/projects/{P}/containers" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"server_id":"{s}","hoody_kit":true,"dev_kit":true}'
 ```
 
 ### 7. Lifecycle — start/stop/force-stop/restart/pause/resume; poll until `running`
 ```bash
-curl -X POST $A/containers/{C}/start
+curl -X POST "$API/containers/{C}/start" -H "Authorization: Bearer $TOKEN"
 ```
 
 ### 8. Container details — `{N}`=`server_name`; never `subserver_name`
 ```bash
-curl $A/containers/{C} | jq '.data | {id,status,server_name}'
+curl "$API/containers/{C}" -H "Authorization: Bearer $TOKEN" | jq '.data | {id,status,server_name}'
 ```
 
 ### 9. One-off shell — `?ephemeral=true` on the `terminal-0` host (the host index is authoritative: the proxy overwrites `?terminal_id=` from it, so on `terminal-1` an "ephemeral" call lands in session 1)
 ```bash
 T0=https://{P}-{C}-terminal-0.{N}.containers.hoody.com/api/v1/terminal
-curl -X POST "$T0/execute?ephemeral=true" -d '{"command":"ls","wait":true}'
+curl -X POST "$T0/execute?ephemeral=true" -H 'Content-Type: application/json' -d '{"command":"ls","wait":true}'
 ```
 
 ### 10. Terminal session — later calls for session N go to the host `terminal-N` (`T` is session 1). `/create` reads `terminal_id` only from the JSON body (without it it returns `400 Missing 'terminal_id' field`, unless the body sends `"ephemeral":true`, which allocates an id in 40000-65535), so send the same N in the body
 ```bash
-curl -X POST "$T/create" -d '{"terminal_id":"1","shell":"/bin/bash"}'   # T is the terminal-1 host → id "1"
+curl -X POST "$T/create" -H 'Content-Type: application/json' -d '{"terminal_id":"1","shell":"/bin/bash"}'   # T is the terminal-1 host → id "1"
 ```
 
 ### 11. File up/down/append — `FP`=absolute path in the container
 ```bash
-FP=/workspace/n.md
+FP=/home/user/n.md
 curl -o n.md "$F$FP"                           # GET=download (FP starts with /)
 curl -X PUT --data-binary @n.md "$F$FP"        # PUT=upload
 curl -X PUT --data-binary 'x' "$F/append$FP"   # PUT=append (the append/ prefix dispatches inside the kit)
@@ -749,7 +749,7 @@ curl -o s.png "$D/screenshot"
 
 ### 13. Click coord — `button` is **numeric** (1=left, 2=middle, 3=right; 4..7 also valid)
 ```bash
-curl -X POST "$D/input/click-at" -d '{"x":640,"y":480,"button":1}'
+curl -X POST "$D/input/click-at" -H 'Content-Type: application/json' -d '{"x":640,"y":480,"button":1}'
 ```
 
 ### 14. SQLite db — a bare name (resolved under `/hoody/databases`) or an absolute path under `/hoody/databases`; `init_kv=true` adds KV
@@ -757,7 +757,7 @@ curl -X POST "$D/input/click-at" -d '{"x":640,"y":480,"button":1}'
 curl -X POST "$S/db/create?path=/hoody/databases/app.db&init_kv=true"
 ```
 
-### 15. SQLite KV — `/` hierarchy; GET `?path=.foo.bar`. The kit stores the raw request body bytes verbatim and returns them as-is on GET (no `{data:...}` envelope). Pick any content-type / encoding you like; the kit is opaque.
+### 15. SQLite KV — `/` hierarchy; GET `?path=.foo.bar`. KV stores accepted bytes verbatim and returns them as-is on GET (no `{data:...}` envelope). With `Content-Type: application/json`, the body must be valid JSON; invalid JSON returns `400 INVALID_JSON_VALUE`. Send arbitrary text or bytes as `text/plain` or `application/octet-stream`.
 ```bash
 KV="$S/kv/u:42?db=/hoody/databases/app.db"
 curl -X PUT "$KV" -H 'Content-Type: application/json' --data-raw '{"name":"A"}'
@@ -766,7 +766,7 @@ curl "$KV"   # → {"name":"A"}
 
 ### 16. Watch+SSE — req `paths`; replay via `?since_id=` or `?since_timestamp=` (the watch SSE endpoint does NOT honour `Last-Event-ID`; only proxy-logs SSE does)
 ```bash
-WID=$(curl -X POST "$W" -d '{"paths":["/home/user/src"]}' | jq -r '.id')   # watch answers bare JSON, no {data:...} envelope
+WID=$(curl -X POST "$W" -H 'Content-Type: application/json' -d '{"paths":["/home/user/src"]}' | jq -r '.id')   # watch answers bare JSON, no {data:...} envelope
 curl -N -H 'Accept: text/event-stream' "$W/$WID/events/sse"
 ```
 
@@ -778,33 +778,33 @@ curl "$TUN/tunnels" | jq .   # bare JSON {sessions,totalBindings,...}, no envelo
 
 ### 18. Snapshot/restore — restore rewinds FS, kills procs
 ```bash
-SS=$A/containers/{C}/snapshots
-curl -X POST $SS $J -d '{}'   # body required; optional {alias,expiry}
-curl -X PUT $SS/{n}
+SS=$API/containers/{C}/snapshots
+curl -X POST "$SS" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}'   # body required; optional {alias,expiry}
+curl -X PUT "$SS/{n}" -H "Authorization: Bearer $TOKEN"
 ```
 
 ### 19. Vault — stores `value` verbatim (the API does not encrypt it; encrypt secrets client-side first); `GET /vault/keys`=metadata; `DELETE /vault` wipes
 ```bash
-V=$A/vault/keys/gh
-curl -X PUT $V -d '{"value":"<ciphertext or plain value>"}'
-curl $V | jq -r .data.value
+V=$API/vault/keys/gh
+curl -X PUT "$V" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"value":"<ciphertext or plain value>"}'
+curl "$V" -H "Authorization: Bearer $TOKEN" | jq -r .data.value
 ```
 
 ### 20. Wallet — `general`+`ai`; `/wallet/invoices/` returns `200 {statusCode,message,data:{invoices:[],pagination:{...}}}` when empty
 ```bash
-curl $A/wallet/balances | jq .data
-curl $A/wallet/invoices/ | jq .data
+curl "$API/wallet/balances" -H "Authorization: Bearer $TOKEN" | jq .data
+curl "$API/wallet/invoices/" -H "Authorization: Bearer $TOKEN" | jq .data
 ```
 
 ### 21. Proxy alias — public URL is `{alias}.{server_name}.containers.hoody.com` (the alias is a subdomain LABEL, not an external host you choose); `program`=kit; `exec` safe for `hoody_kit`
 ```bash
-curl -X POST $A/proxy/aliases \
+curl -X POST "$API/proxy/aliases" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"container_id":"{C}","alias":"demo-api","program":"exec"}'   # alias: 3-61 chars, a-z 0-9 -
 ```
 
 ### 22. SQLite SQL — `POST $S/db?db=<name>` runs a transaction; a row-returning statement goes in a `query` item (rows in `results[i].resultSet`), CREATE/INSERT/UPDATE/DELETE in a `statement` item (`results[i].rowsUpdated`; a statement whose SQL produces columns, such as `… RETURNING`, answers `resultSet` instead); placeholder values in `values`; the db must exist or take `create_db_if_missing=true`
 ```bash
-curl -X POST "$S/db?db=app&create_db_if_missing=true" $J -d '{"transaction":[
+curl -X POST "$S/db?db=app&create_db_if_missing=true" -H 'Content-Type: application/json' -d '{"transaction":[
   {"statement":"CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY, title TEXT)"},
   {"statement":"INSERT INTO items (title) VALUES (?)","values":["Write docs"]},
   {"query":"SELECT id, title FROM items WHERE title = ?","values":["Write docs"]}]}'
@@ -815,9 +815,9 @@ curl -X POST "$S/db?db=app&create_db_if_missing=true" $J -d '{"transaction":[
 ### 23. Cron entries — routes at the ROOT of the cron kit URL (no `/api/v1`); `{user}` is the system user (`user` is the container's login user)
 ```bash
 CR="https://{P}-{C}-cron-1.{N}.containers.hoody.com"
-curl "$CR/users/user/entries"                                       # → {user, entries:[{id,schedule,command,enabled,…}], total, page, limit}
-curl -X POST "$CR/users/user/entries" $J -d '{"schedule":"*/5 * * * *","command":"/workspace/bin/sync.sh"}'   # → 201 {id,…}
-curl -X PATCH "$CR/users/user/entries/$ID" $J -d '{"enabled":false}'
+curl "$CR/users/user/entries"                                       # → {user, entries:[{type:"managed",id,schedule,command,enabled,…} | {type:"raw",line}], total, page, limit}
+curl -X POST "$CR/users/user/entries" -H 'Content-Type: application/json' -d '{"schedule":"*/5 * * * *","command":"/home/user/bin/sync.sh"}'   # → 201 {id,…}
+curl -X PATCH "$CR/users/user/entries/$ID" -H 'Content-Type: application/json' -d '{"enabled":false}'
 curl -X DELETE "$CR/users/user/entries/$ID"
 curl "$CR/users/user/crontab"                                       # → {user, crontab} (the raw text)
 ```

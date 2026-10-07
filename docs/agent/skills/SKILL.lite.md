@@ -1,4 +1,4 @@
-> _**compact tier-0 skill (always-loaded by agents)** · ~5,173 tokens · hoody-sdk v1.0.0-beta.15_
+> _**compact tier-0 skill (always-loaded by agents)** · ~5,210 tokens · hoody-sdk v1.0.0-beta.16_
 
 # Hoody — lightweight agent skill
 
@@ -86,8 +86,8 @@ all kits (`files`, `terminal`, `display`, `exec`, `browser`, …) attached:
 // An id (one lookup, needs the account token), a list/get row, or { id, project_id, server_name } (no lookup).
 // In an exec script, its own box: await hoody.withContainer({ id: metadata.containerId, project_id: metadata.projectId, server_name: metadata.nodeId })
 const box = await hoody.withContainer(def!.id!);
-await box.files.upload('/workspace/hello.txt', Buffer.from('hello'));  // body = bytes
-const text = await box.files.readText('/workspace/hello.txt');      // plain string
+await box.files.upload('/home/user/hello.txt', Buffer.from('hello'));  // body = bytes
+const text = await box.files.readText('/home/user/hello.txt');      // plain string
 const { stdout, exitCode } = await box.terminal.run('uname -a');         // one-shot command
 const shot = await box.display.screenshots.capture({ displayId: 1 });
 ```
@@ -95,7 +95,8 @@ const shot = await box.display.screenshots.capture({ displayId: 1 });
 ### 4. Expose a port (the auto-public-URL story)
 
 **Anything you bind on a container port is automatically reachable** at
-`https://{P}-{C}-http-<port>.{N}.containers.hoody.com`. No alias, no
+`https://{P}-{C}-http-<port>.{N}.containers.hoody.com`. Bind to `0.0.0.0:<port>`
+(a listener on `127.0.0.1` only is not reachable). No alias, no
 firewall edit, no proxy registration — just bind and the URL works. This
 is the most common "ship a service" path on Hoody; remember it every time
 the user asks for an HTTP service of any kind.
@@ -145,12 +146,12 @@ per-namespace skill page at `https://hoody.com/SKILLS/SKILL-{SDK|HTTP|CLI}/<ns>.
 | `display` | Programmatic X11 desktops — screenshots, input, windows |
 | `browser` | Headless/headful Chromium & Firefox automation, with a stealth (anti-fingerprint) mode |
 | `code` | VS Code in a browser tab (and iframable single-extension surface, e.g. Cline). Its API only manages the editor (extensions, health); it has no notebook or kernel API. Opening `.ipynb` files in the editor needs a Jupyter extension (`extensions.install`) and a kernel in the container; to run a notebook programmatically use `terminal` or `daemon` |
-| `sqlite` | SQL transactions + JSON KV with time-travel history. SQL: `sql.query({ db, sql, params })` → `{ rows }` (a write with `RETURNING` too); other writes: `sql.run({ db, sql, params })` → `{ rowsUpdated }`. KV: `kv.set(key, value, { db, create_db_if_missing: true })`; `(await kv.get(key, { db })).data` is the value; a missing key rejects with `ApiError` 404; `kv.delete(key, { db })`. A database that may not exist yet: pass `create_db_if_missing: true` (SQL and KV writes, e.g. `sql.run({ db, sql: 'CREATE TABLE IF NOT EXISTS …', create_db_if_missing: true })`; reading one that does not exist is 404). KV calls take the key first (`get`/`set`/`delete(key, …, { db })`), except `kv.list({ db, prefix })` → `.data.items[].key` (keys and metadata, no values: `get` each) |
+| `sqlite` | SQL transactions + JSON KV with time-travel history. SQL: `sql.query({ db, sql, params })` → `{ rows }` (a write with `RETURNING` too); other writes: `sql.run({ db, sql, params })` → `{ rowsUpdated }`. KV: `kv.set(key, value, { db, create_db_if_missing: true })`; `(await kv.get(key, { db })).data` is the value; a missing key rejects with `ApiError` 404; `kv.delete(key, { db })`. A database that may not exist yet: pass `create_db_if_missing: true` (SQL and KV writes, e.g. `sql.run({ db, sql: 'CREATE TABLE IF NOT EXISTS …', create_db_if_missing: true })`; reading a database that does not exist is `400 DATABASE_NOT_FOUND`; a missing key in an existing database is 404). KV calls take the key first (`get`/`set`/`delete(key, …, { db })`), except `kv.list({ db, prefix })` → `.data.items[].key` (keys and metadata, no values: `get` each) |
 | `curl` | Full HTTP client gateway (TLS options, redirects, retries, cookie sessions, async jobs, schedules; client certificates and outbound proxies are refused) + **REST-as-GET-URL bridge** (turn any HTTP call into a GET URL) — also where transport-level errors (timeouts, TLS, connection failures) belong |
 | `pipe` | Zero-storage streaming HTTP rendezvous (fan-out, live video, no disk) |
 | `proxyLogs` | **"Who hit my service?"** — reverse-proxy HTTP log: filter kind/method/level/source/service/time window (server-side), path/status/IP/alias (client-side), stats + SSE tail. *Access logs* for `-http-N` ports (`daemon`/`exec` stdout lives elsewhere). |
 | `tunnel` | Reverse tunnels for laptop ↔ container (ngrok built-in) |
-| `watch` | **"Notify me when files change"** — Linux inotify file-change streams (`created`/`modified`/`removed`/`renamed` events) with replay. Use for *reactive* workflows on `/workspace` paths. |
+| `watch` | **"Notify me when files change"** — Linux inotify file-change streams (`created`/`modified`/`removed`/`renamed` events) with replay. Use for *reactive* workflows on `/home/user` paths. |
 | `notifications` | **Reach the human operator remotely** — the agent fires a notification and the user gets a real OS toast on phone/desktop/smartwatch via a backgrounded web page (`{P}-{C}-n-1.{N}.containers.hoody.com/?displays=all`); also drives container X11 desktop toasts |
 | `notes` | **Knowledge notebooks** — Notion-style collaborative pages (sections, pages, structured databases, attachments). NOT for executing code; to run code or notebooks use `terminal` / `daemon`. |
 | `run` | **"Which command runs app X?"** — resolves an app or package name (e.g. `ffmpeg`, `firefox`, `owner/repo`) across nixpkgs/pkgx/AppImage/OCI and returns the shell invocation. It matches names, not task descriptions: pick the tool yourself ("compress this" → `zstd`), then ask `run` for it. Result feeds into `terminal` (run now) or `daemon` (run supervised). |
@@ -204,10 +205,10 @@ URL pattern: `https://{P}-{C}-{kit}-{n}.{N}.containers.hoody.com`. Get `P`/`C`/`
 curl -X POST "https://$P-$C-terminal-0.$N.containers.hoody.com/api/v1/terminal/execute?ephemeral=true" \
   -H "Content-Type: application/json" -d '{"command":"uname -a"}'
 
-# Files — write then read /workspace/hello.txt (GET on the same path = download)
-curl -X PUT "https://$P-$C-files-1.$N.containers.hoody.com/api/v1/files/workspace/hello.txt" \
+# Files — write then read /home/user/hello.txt (GET on the same path = download)
+curl -X PUT "https://$P-$C-files-1.$N.containers.hoody.com/api/v1/files/home/user/hello.txt" \
   --data-binary "hello"
-curl "https://$P-$C-files-1.$N.containers.hoody.com/api/v1/files/workspace/hello.txt"
+curl "https://$P-$C-files-1.$N.containers.hoody.com/api/v1/files/home/user/hello.txt"
 
 # Display — screenshot display 1
 curl "https://$P-$C-display-1.$N.containers.hoody.com/api/v1/display/screenshot?displayId=1" -o shot.png

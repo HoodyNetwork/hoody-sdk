@@ -1,4 +1,4 @@
-> _**SDK skill · `api` namespace** · ~72,862 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `api` namespace** · ~72,235 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -138,18 +138,18 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 ## Quirks & gotchas
 
 - Login accepts `username` OR `email` + `password` (`anyOf`); only the email lookup is lowercased, usernames are matched case-sensitive.
-- JWT lifecycle: `auth.logoutAll` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `auth.tokens.delete`). `auth.refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. The generated method sends the body with the client's current token and takes no per-call headers, so call it on a client whose token IS the refresh token: `new HoodyClient({ baseURL, token: refreshToken }).api.auth.refresh({ refreshToken })`. For headless flows, mint a long-lived `auth.tokens.create` token instead.
-- `servers.listRegions` returns `r.data.regions` (single-wrapped, like every other endpoint — older docs incorrectly called it doubly-wrapped).
+- JWT lifecycle: `auth.logoutAll` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `auth.tokens.delete`). `auth.refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. `client.api.auth.refresh({ refreshToken })` handles both: the client presents the body's `refreshToken` as the bearer for that one request, whatever token the client holds, so no separate client is needed (the call never enters automatic 401 recovery). For headless flows, mint a long-lived `auth.tokens.create` token instead.
+- `servers.listRegions` returns `r.data.regions` (single-wrapped, like every other endpoint).
 - Duplicate signup returns `200` (anti-enumeration). For an unverified user the stored password is left unchanged (first writer wins) and a fresh verification email is sent; for a verified user it is a no-op. A second signup therefore cannot fix a mistyped password: logging in with the new one fails with 401. Change it through `auth.recoverPassword` → `auth.resetPassword`. Do NOT probe with signup.
 - The `agent` kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers: it accepts the bare per-container kit URL, and access is decided by the container's proxy permission policy. No built-in kit asks for more, `bot` included: its management routes ignore an `Authorization` header and check no container ownership, so the proxy permission policy is their only access control. The `containers.createClaim(id)` call mints an *optional* portable container claim for offline verification by your own container programs; no built-in kit requires it. See § Auth model.
 - Vault via auth tokens requires `vault_access === true` AND `resources.vault` on the token; else 403. JWT sessions are not gated.
 - Rate limits: login 1000/30min failures-only; signup 5/hour fail-closed.
-- `containers.start`, `containers.stop`, `containers.restart`, `containers.pause` and `containers.resume` all call `POST /api/v1/containers/{id}/{operation}`: the operation is the last PATH segment, never a body field, and each method fixes it for you. `containers.stop({ force: true })` sends `force-stop`. The optional body field `timeout` (seconds) caps how long the operation may run on the host; for `stop` and `restart` it is also the time the container gets to shut down cleanly.
+- `containers.start`, `containers.stop`, `containers.restart`, `containers.pause` and `containers.resume` all call `POST /api/v1/containers/{id}/{operation}`: the operation is the last PATH segment, never a body field, and each method fixes it for you. `containers.stop(id, undefined, { force: true })` sends `force-stop`. The optional body field `timeout` (seconds) caps how long the operation may run on the host; for `stop` and `restart` it is also the time the container gets to shut down cleanly.
 - `containers.create` needs a `server_id` in its body, and nothing else in workflow 4 produces one: take it from `servers.list` (a server you rent). A `name` that another container in the project already uses is refused with 409. `container_image` is optional (omitted, the default image is used); name a public image from `images.listPublic`, since `images.list` lists only images your account owns and is empty on a new account. A bare `debian` resolves to the canonical base image.
-- Snapshots are addressed by `name`, never by alias: `snapshots.restore`, `snapshots.delete` and `snapshots.setAlias` take the `name` that `snapshots.list` returns. `snapshots.create` derives it from `alias`, keeping only letters, digits, `_` and `-` (no leading `-`), or uses `snap-YYYYMMDD-HHMMSS` (UTC) when no alias is given.
+- Snapshots are addressed by `name`, never by alias: `snapshots.restore`, `snapshots.delete` and `snapshots.setAlias` take the `name` that `snapshots.list` returns. `snapshots.create` derives it from `alias`: it keeps only letters, digits, `_` and `-`, drops any leading or trailing `-` and `_`, and cuts the result to 64 characters. A derived name shorter than 2 characters is refused with 400. With no alias, or one with no usable characters, the name is `snap-YYYYMMDD-HHMMSS` (UTC).
 - `snapshots.create` needs the container `running` or `stopped` (another status is refused with 400). A container holds at most 1000 snapshots, 10 on a free-tier slice; one more is refused with 400 `CONTAINER_SNAPSHOT_LIMIT` until you delete one.
 - `projects.create` names the project with `alias` (required, at most 100 characters); there is no `name` field. An alias that one of your projects already uses is refused with 409.
-- Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com`: with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `proxy.containerPermissions.*` groups, or publish a `proxy.aliases.create` alias instead.
+- Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com` (a terminal id of 10000 or more makes that label longer than DNS allows, so it is `t-<n>` instead of `terminal-<n>`; the SDK and CLI do this for you): with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `proxy.containerPermissions.*` groups, or publish a `proxy.aliases.create` alias instead.
 - `proxy.services.list` lists only the services named in the container's proxy permission rules or hooks, so a container with no custom rules returns `services: []`; it is not a list of running kits. `proxy.aliases.create` takes the kit or protocol as `program` (e.g. `'exec'`, `'terminal'`, or `'http'` with `port`).
 - `wallet.listInvoices` returns `200 {invoices:[],pagination:{...}}` for never-billed accounts (current). `ip.get` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
 - `servers.offers.reserve` charges at once, and every reservation whose total is above zero needs `max_charge_cents`, although the body schema marks it optional. Without it the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED` (409 `SETUP_FEE_CONFIRMATION_REQUIRED` when the offer has a one-time setup fee), and a total above it is refused with 409 `CHARGE_EXCEEDS_MAX`; the error data carries `total_cents`, and nothing is charged. It also needs a caller-generated `idempotency_key`: a retry with the same key returns the first reservation instead of charging again.
@@ -167,7 +167,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - 404 — missing resource OR 403 masked.
 - 409 — uniqueness (duplicate username, proxy-alias).
 - 428 / 412 — on the public routes these come from the If-Match guard on proxy-permission, proxy-settings and proxy-hook writes: 428 means the `If-Match` header is missing, 412 means it is malformed or stale (the document changed since you read it). Re-read the document (`proxy.containerPermissions.get` / `proxy.projectPermissions.get`), send its current `file:v<N>`, and retry. They do not signal a missing payment method, email verification or 2FA.
-- 422 — request-schema validation (`REQUEST_SCHEMA_INVALID`, e.g. a backup code sent where `auth.twoFactor.rotateBackupCodes` wants a 6-digit TOTP) and semantic validation (password complexity, `rental_days` with no pricing).
+- 422 — request-schema validation (e.g. a backup code sent where `auth.twoFactor.rotateBackupCodes` wants a 6-digit TOTP: the body is `{statusCode: 422, error: "Validation Error", message: "Validation failed: …"}`, with no `REQUEST_SCHEMA_INVALID` code on the wire) and semantic validation (password complexity, `rental_days` with no pricing).
 - 429 — login 1000/30min (failures only), signup 5/hour, refresh 30/30min.
 - 400 — the `events` socket accepts the WebSocket transport only (unless the deployment turns polling on); while polling is off, every long-polling request (with or without a `sid`) is refused with 400 `Polling transport is not supported; use the websocket transport`. Only on a deployment that turns polling on does a polling write with a missing or unknown `sid` get 400 `Unknown session`. Connect with `transports: ['websocket']`.
 - Always-200 — `auth.recoverPassword`, `auth.sendVerificationEmail`, duplicate-`signup`; do NOT probe with these.
@@ -239,7 +239,7 @@ client.api.activity.listAll(options?: { page?: number; limit?: number; start_dat
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | query | No | Filter by HTTP method |
 | `realm_id` | `string` | query | No | Filter by realm ID |
 
-**Returns:** `Promise<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown)[]>` — every item of `data`, all pages collected (`list()` fetches one page). Each item is `{ id*: string, user_id: string, realm_id: string, method: string, path: string, status_code: int, ip_address: string, user_agent: string, created_at: string }`. `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/users/auth/activity`
+**Returns:** `Promise<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown)[]>` — every item of `data`, all pages collected (`list()` fetches one page). `listIterator()` streams the same items instead of collecting them.  |  **HTTP:** `GET /api/v1/users/auth/activity`
 **CLI:** `hoody activity list`
 
 ---
@@ -262,7 +262,7 @@ client.api.activity.listIterator(options?: { page?: number; limit?: number; star
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | query | No | Filter by HTTP method |
 | `realm_id` | `string` | query | No | Filter by realm ID |
 
-**Returns:** `AsyncGenerator<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown), void, unknown>` — one item of `data` per step, next page fetched on demand (`list()` fetches one page). Each item is `{ id*: string, user_id: string, realm_id: string, method: string, path: string, status_code: int, ip_address: string, user_agent: string, created_at: string }`.  |  **HTTP:** `GET /api/v1/users/auth/activity`
+**Returns:** `AsyncGenerator<(NonNullable<ApiActivityListResponse> extends { data?: infer T0 } ? (NonNullable<T0> extends readonly (infer TItem)[] ? TItem : unknown) : unknown), void, unknown>` — one item of `data` per step, next page fetched on demand (`list()` fetches one page).  |  **HTTP:** `GET /api/v1/users/auth/activity`
 **CLI:** `hoody activity list`
 
 ---
@@ -873,19 +873,21 @@ client.api.auth.twoFactor.disable(data: ApiAuthTwoFactorDisableRequest)
 #### `disableTokenGate` — Set 2FA token gate preference
 
 ```typescript
-client.api.auth.twoFactor.disableTokenGate(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[0]>, "enabled">, [options?: NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[1]>]>)
+client.api.auth.twoFactor.disableTokenGate(data?: Omit<SetTokenGatePatchRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `object` | body | No |  |
+| `data` | `Omit<SetTokenGatePatchRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool, password: string, otp_code: string }`
+**Body:** `{ password: string, otp_code: string }`
 
 - `password` — Required when setting enabled=false (security downgrade requires primary-factor reauth)
 - `otp_code` — TOTP code or backup code. Required when setting enabled=false.
 
-**Returns:** `ReturnType<AuthTwoFactorServiceBase['__setTokenGate']>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
+
+**Returns:** `Promise<SetTokenGatePatchResponse>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
 **CLI:** `hoody auth 2fa gate disable`
 
 ---
@@ -893,19 +895,21 @@ client.api.auth.twoFactor.disableTokenGate(...args: FacadeBodyArgs<FacadeWithout
 #### `enableTokenGate` — Set 2FA token gate preference
 
 ```typescript
-client.api.auth.twoFactor.enableTokenGate(...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[0]>, "enabled">, [options?: NonNullable<Parameters<AuthTwoFactorServiceBase['__setTokenGate']>[1]>]>)
+client.api.auth.twoFactor.enableTokenGate(data?: Omit<SetTokenGatePatchRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `data` | `object` | body | No |  |
+| `data` | `Omit<SetTokenGatePatchRequest, "enabled">` | body | No |  |
 
-**Body:** `{ enabled*: bool, password: string, otp_code: string }`
+**Body:** `{ password: string, otp_code: string }`
 
 - `password` — Required when setting enabled=false (security downgrade requires primary-factor reauth)
 - `otp_code` — TOTP code or backup code. Required when setting enabled=false.
 
-**Returns:** `ReturnType<AuthTwoFactorServiceBase['__setTokenGate']>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
+
+**Returns:** `Promise<SetTokenGatePatchResponse>`  |  **HTTP:** `PUT /api/v1/users/auth/2fa/token-gate`
 **CLI:** `hoody auth 2fa gate enable`
 
 ---
@@ -1056,14 +1060,17 @@ client.api.containers.delete(id: string)
 #### `disableKvm` — Enable or disable /dev/kvm (run VMs in the container)
 
 ```typescript
-client.api.containers.disableKvm(id: Parameters<ContainersServiceBase['__setContainerKvm']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[1]>, "kvm" | "dev_kvm">, [options?: NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[2]>]>)
+client.api.containers.disableKvm(id: string, data?: Omit<SetContainerKvmPatchRequest, "kvm" | "dev_kvm">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
+| `data` | `Omit<SetContainerKvmPatchRequest, "kvm" \| "dev_kvm">` | body | No |  |
 
-**Returns:** `ReturnType<ContainersServiceBase['__setContainerKvm']>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
+**Fixed by the method:** the method sets `kvm: false`; do not pass `kvm`, `dev_kvm`.
+
+**Returns:** `Promise<SetContainerKvmPatchResponse>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
 **CLI:** `hoody containers kvm disable`
 
 ---
@@ -1071,14 +1078,17 @@ client.api.containers.disableKvm(id: Parameters<ContainersServiceBase['__setCont
 #### `enableKvm` — Enable or disable /dev/kvm (run VMs in the container)
 
 ```typescript
-client.api.containers.enableKvm(id: Parameters<ContainersServiceBase['__setContainerKvm']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[1]>, "kvm" | "dev_kvm">, [options?: NonNullable<Parameters<ContainersServiceBase['__setContainerKvm']>[2]>]>)
+client.api.containers.enableKvm(id: string, data?: Omit<SetContainerKvmPatchRequest, "kvm" | "dev_kvm">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
+| `data` | `Omit<SetContainerKvmPatchRequest, "kvm" \| "dev_kvm">` | body | No |  |
 
-**Returns:** `ReturnType<ContainersServiceBase['__setContainerKvm']>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
+**Fixed by the method:** the method sets `kvm: true`; do not pass `kvm`, `dev_kvm`.
+
+**Returns:** `Promise<SetContainerKvmPatchResponse>`  |  **HTTP:** `PUT /api/v1/containers/{id}/kvm`
 **CLI:** `hoody containers kvm enable`
 
 ---
@@ -1296,19 +1306,19 @@ client.api.containers.listStatusHistory(id: string, options?: { page?: number; l
 #### `pause` — Manage container
 
 ```typescript
-client.api.containers.pause(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.pause(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers pause`
 
 ---
@@ -1316,19 +1326,19 @@ client.api.containers.pause(id: Parameters<ContainersServiceBase['__manageContai
 #### `restart` — Manage container
 
 ```typescript
-client.api.containers.restart(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.restart(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers restart`
 
 ---
@@ -1336,19 +1346,19 @@ client.api.containers.restart(id: Parameters<ContainersServiceBase['__manageCont
 #### `resume` — Manage container
 
 ```typescript
-client.api.containers.resume(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.resume(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers resume`
 
 ---
@@ -1356,19 +1366,19 @@ client.api.containers.resume(id: Parameters<ContainersServiceBase['__manageConta
 #### `start` — Manage container
 
 ```typescript
-client.api.containers.start(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>, options?: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]>)
+client.api.containers.start(id: string, data?: NonNullable<ManageContainerRequest>)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]>` | body | No |  |
+| `data` | `NonNullable<ManageContainerRequest>` | body | No |  |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers start`
 
 ---
@@ -1376,20 +1386,22 @@ client.api.containers.start(id: Parameters<ContainersServiceBase['__manageContai
 #### `stop` — Manage container
 
 ```typescript
-client.api.containers.stop(id: Parameters<ContainersServiceBase['__manageContainer']>[0], data: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]> | undefined, options: NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[3]> & { force: true })
+client.api.containers.stop(id: string, data: NonNullable<ManageContainerRequest> | undefined, options: { force: true })
+client.api.containers.stop(id: string, data?: NonNullable<ManageContainerRequest>, options?: { force?: false })
+client.api.containers.stop(id: string, data?: NonNullable<ManageContainerRequest>, options?: { force?: boolean })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to manage |
-| `data` | `NonNullable<Parameters<ContainersServiceBase['__manageContainer']>[2]> \| undefined` | body | Yes |  |
+| `data` | `NonNullable<ManageContainerRequest> \| undefined` | body | Yes |  |
 | `force` | `boolean` | option | No | Kill the container without a graceful shutdown (the force-stop operation). |
 
 **Body:** `{ timeout: int }|null`
 
 - `timeout` — Upper bound, in seconds, on how long the operation may run before it is cut off. For `stop` and `restart` it is also the time the container is given to shut down cleanly. At most 600. Omit it for the server default.
 
-**Returns:** `ReturnType<ContainersServiceBase['__manageContainer']>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
+**Returns:** `Promise<ManageContainerResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/{operation}`
 **CLI:** `hoody containers stop`
 
 ---
@@ -1689,7 +1701,7 @@ client.api.firewall.createEgressRule(id: string, data: ApiFirewallCreateEgressRu
 
 **Body:** `{ action*: "allow" | "reject" | "drop", protocol*: "tcp" | "udp" | "icmp4", description*: string, destination_port: string, destination: string, source_port: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
-- `destination_port` — Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+- `destination_port` — Port number (1-65535), range with the lower port first (80-90), or comma-separated list (80,443). Required for TCP/UDP; not allowed with icmp4.
 
 **Returns:** `Promise<ApiFirewallCreateEgressRuleResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress create`
@@ -1709,7 +1721,7 @@ client.api.firewall.createIngressRule(id: string, data: ApiFirewallCreateIngress
 
 **Body:** `{ action*: "allow" | "reject" | "drop", protocol*: "tcp" | "udp" | "icmp4", description*: string, destination_port: string, source: string, source_port: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
-- `destination_port` — Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
+- `destination_port` — Port number (1-65535), range with the lower port first (80-90), or comma-separated list (80,443). Required for TCP/UDP; not allowed with icmp4.
 
 **Returns:** `Promise<ApiFirewallCreateIngressRuleResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress create`
@@ -1727,7 +1739,7 @@ client.api.firewall.deleteEgressRule(id: string, data: ApiFirewallDeleteEgressRu
 | `id` | `string` | path | Yes | Container ID |
 | `data` | `ApiFirewallDeleteEgressRuleRequest` | body | Yes |  |
 
-**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, destination: string, source_port: string, description: string, state: "enabled" | "disabled"="enabled", icmp_type: string, icmp_code: string }`
+**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, destination: string, source_port: string, description: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
 **Returns:** `Promise<ApiFirewallDeleteEgressRuleResponse>`  |  **HTTP:** `DELETE /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress delete`
@@ -1745,7 +1757,7 @@ client.api.firewall.deleteIngressRule(id: string, data: ApiFirewallDeleteIngress
 | `id` | `string` | path | Yes | Container ID |
 | `data` | `ApiFirewallDeleteIngressRuleRequest` | body | Yes |  |
 
-**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source: string, source_port: string, description: string, state: "enabled" | "disabled"="enabled", icmp_type: string, icmp_code: string }`
+**Body:** `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source: string, source_port: string, description: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
 
 **Returns:** `Promise<ApiFirewallDeleteIngressRuleResponse>`  |  **HTTP:** `DELETE /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress delete`
@@ -1755,17 +1767,19 @@ client.api.firewall.deleteIngressRule(id: string, data: ApiFirewallDeleteIngress
 #### `disableEgressRule` — Toggle Egress Rule State
 
 ```typescript
-client.api.firewall.disableEgressRule(id: Parameters<FirewallServiceBase['__toggleEgressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[2]>]>)
+client.api.firewall.disableEgressRule(id: string, data?: Omit<ToggleEgressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleEgressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleEgressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
+**Fixed by the method:** the method sets `state: "disabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleEgressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress disable`
 
 ---
@@ -1773,17 +1787,19 @@ client.api.firewall.disableEgressRule(id: Parameters<FirewallServiceBase['__togg
 #### `disableIngressRule` — Toggle Ingress Rule State
 
 ```typescript
-client.api.firewall.disableIngressRule(id: Parameters<FirewallServiceBase['__toggleIngressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[2]>]>)
+client.api.firewall.disableIngressRule(id: string, data?: Omit<ToggleIngressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleIngressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleIngressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
+**Fixed by the method:** the method sets `state: "disabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleIngressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress disable`
 
 ---
@@ -1791,17 +1807,19 @@ client.api.firewall.disableIngressRule(id: Parameters<FirewallServiceBase['__tog
 #### `enableEgressRule` — Toggle Egress Rule State
 
 ```typescript
-client.api.firewall.enableEgressRule(id: Parameters<FirewallServiceBase['__toggleEgressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleEgressRule']>[2]>]>)
+client.api.firewall.enableEgressRule(id: string, data?: Omit<ToggleEgressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleEgressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleEgressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
+**Fixed by the method:** the method sets `state: "enabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleEgressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/egress`
 **CLI:** `hoody firewall egress enable`
 
 ---
@@ -1809,17 +1827,19 @@ client.api.firewall.enableEgressRule(id: Parameters<FirewallServiceBase['__toggl
 #### `enableIngressRule` — Toggle Ingress Rule State
 
 ```typescript
-client.api.firewall.enableIngressRule(id: Parameters<FirewallServiceBase['__toggleIngressRule']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[1]>, "state">, [options?: NonNullable<Parameters<FirewallServiceBase['__toggleIngressRule']>[2]>]>)
+client.api.firewall.enableIngressRule(id: string, data?: Omit<ToggleIngressRuleRequest, "state">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `data` | `object` | body | No |  |
+| `data` | `Omit<ToggleIngressRuleRequest, "state">` | body | No |  |
 
-**Body:** `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
+**Body:** `{ action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, source: string, description: string, icmp_type: string, icmp_code: string }`
 
-**Returns:** `ReturnType<FirewallServiceBase['__toggleIngressRule']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
+**Fixed by the method:** the method sets `state: "enabled"`; do not pass `state`.
+
+**Returns:** `Promise<ToggleIngressRuleResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/firewall/ingress`
 **CLI:** `hoody firewall ingress enable`
 
 ---
@@ -2791,6 +2811,7 @@ client.api.proxy.aliases.create(data: ApiProxyAliasesCreateRequest)
 - `container_id` — Container ID that this alias points to. You must own this container.
 - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. … Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
 - `program` — Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+- `allow_path_override` — When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). …
 
 **Returns:** `Promise<ApiProxyAliasesCreateResponse>`  |  **HTTP:** `POST /api/v1/proxy/aliases`
 **CLI:** `hoody proxy aliases create`
@@ -2815,14 +2836,17 @@ client.api.proxy.aliases.delete(id: string)
 #### `disable` — Enable or disable proxy alias
 
 ```typescript
-client.api.proxy.aliases.disable(id: Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[1]>, "enabled">, [options?: NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[2]>]>)
+client.api.proxy.aliases.disable(id: string, data?: Omit<SetProxyAliasStateRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Proxy alias ID |
+| `data` | `Omit<SetProxyAliasStateRequest, "enabled">` | body | No |  |
 
-**Returns:** `ReturnType<ProxyAliasesServiceBase['__setProxyAliasState']>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
+**Fixed by the method:** the method sets `enabled: false`; do not pass `enabled`.
+
+**Returns:** `Promise<SetProxyAliasStateResponse>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
 **CLI:** `hoody proxy aliases disable`
 
 ---
@@ -2830,14 +2854,17 @@ client.api.proxy.aliases.disable(id: Parameters<ProxyAliasesServiceBase['__setPr
 #### `enable` — Enable or disable proxy alias
 
 ```typescript
-client.api.proxy.aliases.enable(id: Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[1]>, "enabled">, [options?: NonNullable<Parameters<ProxyAliasesServiceBase['__setProxyAliasState']>[2]>]>)
+client.api.proxy.aliases.enable(id: string, data?: Omit<SetProxyAliasStateRequest, "enabled">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Proxy alias ID |
+| `data` | `Omit<SetProxyAliasStateRequest, "enabled">` | body | No |  |
 
-**Returns:** `ReturnType<ProxyAliasesServiceBase['__setProxyAliasState']>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
+**Fixed by the method:** the method sets `enabled: true`; do not pass `enabled`.
+
+**Returns:** `Promise<SetProxyAliasStateResponse>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}/state`
 **CLI:** `hoody proxy aliases enable`
 
 ---
@@ -2929,6 +2956,7 @@ client.api.proxy.aliases.update(id: string, data: ApiProxyAliasesUpdateRequest)
 
 - `alias` — … Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). …
 - `program` — Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
+- `allow_path_override` — When false, only the root, or target_path itself, is served, as target_path; other paths 404, and target_path's own parameters cannot be overridden. When true, a request that carries its own path is forwarded as sent.
 
 **Returns:** `Promise<ApiProxyAliasesUpdateResponse>`  |  **HTTP:** `PATCH /api/v1/proxy/aliases/{id}`
 **CLI:** `hoody proxy aliases update`
@@ -3008,18 +3036,18 @@ client.api.proxy.containerPermissions.deleteGroupPermission(id: string, groupNam
 #### `disable` — Update container proxy enable state
 
 ```typescript
-client.api.proxy.containerPermissions.disable(id: Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[2]>)
+client.api.proxy.containerPermissions.disable(id: string, data: Omit<UpdateContainerProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateContainerProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: false`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateContainerProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
 **CLI:** `hoody containers proxy disable`
 
 ---
@@ -3027,18 +3055,18 @@ client.api.proxy.containerPermissions.disable(id: Parameters<ProxyContainerPermi
 #### `enable` — Update container proxy enable state
 
 ```typescript
-client.api.proxy.containerPermissions.enable(id: Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[2]>)
+client.api.proxy.containerPermissions.enable(id: string, data: Omit<UpdateContainerProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Container ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateContainerProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: true`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyContainerPermissionsServiceBase['__updateContainerProxyState']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateContainerProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/proxy/permissions/state`
 **CLI:** `hoody containers proxy enable`
 
 ---
@@ -3442,18 +3470,18 @@ client.api.proxy.projectPermissions.deleteGroupPermission(id: string, groupName:
 #### `disable` — Update project proxy enable state
 
 ```typescript
-client.api.proxy.projectPermissions.disable(id: Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[2]>)
+client.api.proxy.projectPermissions.disable(id: string, data: Omit<UpdateProjectProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Project ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateProjectProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: false`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateProjectProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
 **CLI:** `hoody projects proxy disable`
 
 ---
@@ -3461,18 +3489,18 @@ client.api.proxy.projectPermissions.disable(id: Parameters<ProxyProjectPermissio
 #### `enable` — Update project proxy enable state
 
 ```typescript
-client.api.proxy.projectPermissions.enable(id: Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[0], data: FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">, options: NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[2]>)
+client.api.proxy.projectPermissions.enable(id: string, data: Omit<UpdateProjectProxyStateRequest, "enable_proxy">, options: { ifMatch: string })
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Project ID |
-| `if-match` | `string` | header | Yes | file:v<N> ETag precondition — read current file_version from GET first |
-| `data` | `FacadeWithout<NonNullable<Parameters<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>[1]>, "enable_proxy">` | body | Yes |  |
+| `ifMatch` | `string` | header `if-match` | Yes | file:v<N> ETag precondition — read current file_version from GET first |
+| `data` | `Omit<UpdateProjectProxyStateRequest, "enable_proxy">` | body | Yes |  |
 
-**Body:** `{ enable_proxy*: bool }`
+**Fixed by the method:** the method sets `enable_proxy: true`; do not pass `enable_proxy`.
 
-**Returns:** `ReturnType<ProxyProjectPermissionsServiceBase['__updateProjectProxyState']>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
+**Returns:** `Promise<UpdateProjectProxyStateResponse>`  |  **HTTP:** `PATCH /api/v1/projects/{id}/proxy/permissions/state`
 **CLI:** `hoody projects proxy enable`
 
 ---
@@ -4166,14 +4194,17 @@ client.api.servers.subscriptions.cancel(id: string)
 #### `disableAutoRenew` — Turn auto-renew on or off
 
 ```typescript
-client.api.servers.subscriptions.disableAutoRenew(id: Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[1]>, "auto_renew">, [options?: NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[2]>]>)
+client.api.servers.subscriptions.disableAutoRenew(id: string, data?: Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes |  |
+| `data` | `Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">` | body | No |  |
 
-**Returns:** `ReturnType<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
+**Fixed by the method:** the method sets `auto_renew: false`; do not pass `auto_renew`.
+
+**Returns:** `Promise<SetSubserverSubscriptionAutoRenewPatchResponse>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
 **CLI:** `hoody servers subscriptions autorenew disable`
 
 ---
@@ -4181,14 +4212,17 @@ client.api.servers.subscriptions.disableAutoRenew(id: Parameters<ServersSubscrip
 #### `enableAutoRenew` — Turn auto-renew on or off
 
 ```typescript
-client.api.servers.subscriptions.enableAutoRenew(id: Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[0], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[1]>, "auto_renew">, [options?: NonNullable<Parameters<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>[2]>]>)
+client.api.servers.subscriptions.enableAutoRenew(id: string, data?: Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes |  |
+| `data` | `Omit<SetSubserverSubscriptionAutoRenewPatchRequest, "auto_renew">` | body | No |  |
 
-**Returns:** `ReturnType<ServersSubscriptionsServiceBase['__setSubserverSubscriptionAutoRenew']>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
+**Fixed by the method:** the method sets `auto_renew: true`; do not pass `auto_renew`.
+
+**Returns:** `Promise<SetSubserverSubscriptionAutoRenewPatchResponse>`  |  **HTTP:** `PUT /api/v1/subserver-subscriptions/{id}/auto-renew`
 **CLI:** `hoody servers subscriptions autorenew enable`
 
 ---
@@ -4300,6 +4334,7 @@ client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest)
 
 **Body:** `{ alias: string, expiry: int }`
 
+- `alias` — … It is kept as the alias and also becomes the snapshot name after sanitizing (letters, digits, underscore and hyphen kept; leading and trailing hyphens and underscores stripped; at most 64 characters). A sanitized name shorter than 2 characters is refused with 400.
 - `expiry` — Expiry in days (1–3650). Values outside this range are rejected before the snapshot is created.
 
 **Returns:** `Promise<ApiSnapshotsCreateResponse>`  |  **HTTP:** `POST /api/v1/containers/{id}/snapshots`
@@ -4316,7 +4351,7 @@ client.api.snapshots.delete(id: string, name: string)
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
-| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 
 **Returns:** `Promise<ApiSnapshotsDeleteResponse>`  |  **HTTP:** `DELETE /api/v1/containers/{id}/snapshots/{name}`
 **CLI:** `hoody snapshots delete`
@@ -4377,7 +4412,7 @@ client.api.snapshots.restore(id: string, name: string)
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container to restore |
-| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 
 **Returns:** `Promise<ApiSnapshotsRestoreResponse>`  |  **HTTP:** `PUT /api/v1/containers/{id}/snapshots/{name}`
 **CLI:** `hoody snapshots restore`
@@ -4393,7 +4428,7 @@ client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAli
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Unique identifier of the container |
-| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | path | Yes | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 | `data` | `ApiSnapshotsSetAliasRequest` | body | Yes |  |
 
 **Body:** `{ alias*: string|null }`
@@ -4629,15 +4664,18 @@ client.api.storage.shares.listIterator(options?: { realm_id?: string })
 #### `mountIncoming` — Toggle incoming share mount
 
 ```typescript
-client.api.storage.shares.mountIncoming(id: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[0], shareId: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[1], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[2]>, "mount">, [options?: NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[3]>]>)
+client.api.storage.shares.mountIncoming(id: string, shareId: string, data?: Omit<ToggleIncomingShareMountRequest, "mount">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Target container ID (receiver container) |
 | `shareId` | `string` | path | Yes | Share ID to toggle |
+| `data` | `Omit<ToggleIncomingShareMountRequest, "mount">` | body | No |  |
 
-**Returns:** `ReturnType<StorageSharesServiceBase['__toggleIncomingShareMount']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
+**Fixed by the method:** the method sets `mount: true`; do not pass `mount`.
+
+**Returns:** `Promise<ToggleIncomingShareMountResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
 **CLI:** `hoody storage incoming mount`
 
 ---
@@ -4645,15 +4683,18 @@ client.api.storage.shares.mountIncoming(id: Parameters<StorageSharesServiceBase[
 #### `unmountIncoming` — Toggle incoming share mount
 
 ```typescript
-client.api.storage.shares.unmountIncoming(id: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[0], shareId: Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[1], ...args: FacadeBodyArgs<FacadeWithout<NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[2]>, "mount">, [options?: NonNullable<Parameters<StorageSharesServiceBase['__toggleIncomingShareMount']>[3]>]>)
+client.api.storage.shares.unmountIncoming(id: string, shareId: string, data?: Omit<ToggleIncomingShareMountRequest, "mount">)
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
 | `id` | `string` | path | Yes | Target container ID (receiver container) |
 | `shareId` | `string` | path | Yes | Share ID to toggle |
+| `data` | `Omit<ToggleIncomingShareMountRequest, "mount">` | body | No |  |
 
-**Returns:** `ReturnType<StorageSharesServiceBase['__toggleIncomingShareMount']>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
+**Fixed by the method:** the method sets `mount: false`; do not pass `mount`.
+
+**Returns:** `Promise<ToggleIncomingShareMountResponse>`  |  **HTTP:** `PATCH /api/v1/containers/{id}/storage/incoming/{shareId}/mount`
 **CLI:** `hoody storage incoming unmount`
 
 ---
@@ -4954,7 +4995,7 @@ client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id
 
 **Body:** `{ value*: string, metadata: object|null }`
 
-- `metadata` — Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. This counts toward your total vault storage limit.
+- `metadata` — Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. …
 
 **Returns:** `Promise<ApiVaultSetResponse>`  |  **HTTP:** `PUT /api/v1/vault/keys/{key}`
 **CLI:** `hoody vault set`

@@ -1,4 +1,4 @@
-> _**HTTP skill · `tunnel` namespace** · ~5,230 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `tunnel` namespace** · ~5,427 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `tunnel` — reverse tunnels for HTTP/WS/TCP via container relay
 
@@ -67,7 +67,7 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 
 ## Quirks & gotchas
 
-- The data plane (expose / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 22.23+ (24.18+ on the 24 line; the listening-server form is Bun-only). The generated `tunnel` namespace covers only the read/observability + admin surface (`GET /api/v1/tunnel/tunnels`, `GET /api/v1/tunnel/sessions`, `GET /api/v1/tunnel/bindings`, `GET /api/v1/tunnel/metrics`, `DELETE /api/v1/tunnel/sessions/{session_id}`) — the driver itself ships alongside it. It has no HTTP form: run it from the SDK (`tunnelExpose` / `tunnelPull`) or the CLI (`hoody tunnel expose` / `hoody tunnel pull`).
+- The data plane (expose / pull) is a long-running driver process, not a request/response call. Runtime: Bun 1.3+ or Node 20.3+ (22+ recommended: Node 20 is end-of-life; the listening-server form is Bun-only). On Node releases whose built-in WebSocket is affected by CVE-2026-12151 (before 22.23.0, all of 23 and 25, 24 before 24.17.0, 26 before 26.3.1) the tunnel socket is opened with the `ws` package instead. The generated `tunnel` namespace covers only the read/observability + admin surface (`GET /api/v1/tunnel/tunnels`, `GET /api/v1/tunnel/sessions`, `GET /api/v1/tunnel/bindings`, `GET /api/v1/tunnel/metrics`, `DELETE /api/v1/tunnel/sessions/{session_id}`) — the driver itself ships alongside it. It has no HTTP form: run it from the SDK (`tunnelExpose` / `tunnelPull`) or the CLI (`hoody tunnel expose` / `hoody tunnel pull`).
 - `BIND_OK.publicUrl` is `null` on deployments that do not mint public tunnel URLs — the bind still works, you just reach it another way.
 - `grace_ms` capped at 5000ms; over → `400`.
 - `containerPort: 0` requests an automatically allocated port; ports 1–79 are rejected; `80..=1023` are refused unless the deployment allows privileged ports (gated separately for expose and for pull).
@@ -82,11 +82,11 @@ Tunnel traffic flows through the same proxy as every other kit URL, so:
 ## Common errors
 
 - `404` on kill — session gone; no retry.
-- `403` — SSRF guard; not via the edge proxy.
+- `403` — Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. The response is a bare 403.
 - Upgrade `400` — missing/unsupported subprotocol; WS `1002` — HELLO rejected after upgrade; plain socket close — HELLO timeout or pre-auth cap reached.
-- `BIND_ERR` codes: `ALREADY_BOUND` (retry `takeover:true`), `PORT_IN_USE`, `RESERVED_PORT`, `INVALID_HOST`, `PRIVILEGED_PORT`, `BIND_CAP_EXCEEDED`, `INVALID_KIND` (unsupported `(kind, mode)` combo, or `takeover:true` on PULL), `INTERNAL` (server-side, e.g. random-port exhaustion).
+- `BIND_ERR` codes: `ALREADY_BOUND` (EXPOSE: retry with `takeover:true`; PULL: pick another port or close the owning session), `PORT_IN_USE`, `RESERVED_PORT`, `INVALID_HOST`, `PRIVILEGED_PORT`, `BIND_CAP_EXCEEDED`, `INVALID_KIND` (unsupported `(kind, mode)` combo, or `takeover:true` on PULL), `INTERNAL` (server-side, e.g. random-port exhaustion).
 - `GOAWAY` on an idle or unanswered-PING session: the body is a JSON object whose `code` is a **number**, `10`, and whose `message` reads `session idle timeout` or `pong timeout`; its two other fields are always `0`. The takeover RESET below carries `13` (`0x000d`). Treat `message` as human-readable only. Reconnect via `resume.sessionId`.
-- `503`+`Retry-After:5` at visitor URL — orphan takeover-grace window (set by `expose` driver kill, NOT by admin `DELETE /api/v1/tunnel/sessions/{session_id}` which skips orphan parking).
+- `503`+`Retry-After:5` at visitor URL — orphan takeover-grace window. Only a primary socket that drops without a close frame (a killed driver, a lost network), or closes with a code other than 1000, parks its bindings; a client `GOAWAY`, a close frame with no code or code 1000 (what a clean driver close sends), or admin `DELETE /api/v1/tunnel/sessions/{session_id}` ends the session without parking.
 
 ## Related namespaces
 
@@ -136,7 +136,7 @@ curl -sf "$KIT/api/v1/tunnel/tunnels" | jq '{
 
 ```bash
 KIT="https://${P}-${C}-tunnel-1.${N}.containers.hoody.com"
-SID="S-466ab70d-92e8-49b5-95a9-8c0d585dc2b9"
+: "${SID:?Set SID to a sessionId returned by example 2}"
 curl -sf "$KIT/api/v1/tunnel/sessions" \
   | jq --arg s "$SID" '.sessions[] | select(.sessionId==$s) | {
       peer: .peerAddr,
@@ -184,7 +184,7 @@ For a dashboard, register the kit URL as a Prometheus scrape target through an a
 
 **Goal:** a teammate's tunnel expose session is wedged; you want it gone without restarting the kit. `DELETE /api/v1/tunnel/sessions/{session_id}` returns `202` with `{sessionId, status}`. `grace_ms` ∈ [0, 5000] (default 50, anything above 5000 → `400`); it bounds how long the kit spends sending a best-effort GOAWAY before teardown. It is not a drain period: in-flight streams can be cut off. Orphan sessions skip the parking grace window and drop immediately.
 
-⚠ Don't run this in the doc as live verification — it kills whoever's actually connected. Recipe only.
+⚠ Closing a session cuts off whoever is connected to it, including its in-flight streams. Pick the intended session before running this recipe.
 
 ```bash
 KIT="https://${P}-${C}-tunnel-1.${N}.containers.hoody.com"
@@ -200,7 +200,7 @@ curl -sX DELETE "$KIT/api/v1/tunnel/sessions/$SID?grace_ms=1000" | jq .
 curl -sf "$KIT/api/v1/tunnel/sessions" | jq --arg s "$SID" '.sessions[] | select(.sessionId==$s) | "still here"'
 ```
 
-After a non-admin driver disconnect, visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace (default 60 s). PULL listeners also stay bound during that grace, but drop each new connection while no live session holds them. `DELETE /api/v1/tunnel/sessions/{session_id}` (admin) skips orphan parking and starts teardown, so do **not** expect that 503 window from an admin kill; its `202` means teardown was initiated, not that it has finished, so re-list to confirm.
+After an unclean driver disconnect (the socket drops without a close frame, or closes with a code other than 1000), visitors of an orphaned `expose` URL see `503 Retry-After:5` during takeover grace (default 60 s); a clean close (`GOAWAY`, or close code 1000) releases the bindings at once. PULL listeners also stay bound during that grace, but drop each new connection while no live session holds them. `DELETE /api/v1/tunnel/sessions/{session_id}` (admin) skips orphan parking and starts teardown, so do **not** expect that 503 window from an admin kill; its `202` means teardown was initiated, not that it has finished, so re-list to confirm.
 
 ### 7. Auto-discover orphans + low-FD alert (monitoring recipe)
 

@@ -1,4 +1,4 @@
-> _**HTTP skill · `api` namespace** · ~27,219 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `api` namespace** · ~27,460 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `api` — Platform control plane: identity, projects, containers, billing, vault
 
@@ -139,17 +139,17 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 - Login accepts `username` OR `email` + `password` (`anyOf`); only the email lookup is lowercased, usernames are matched case-sensitive.
 - JWT lifecycle: `POST /api/v1/users/auth/logout` is a logout-ALL for JWTs — every access and refresh JWT issued before that moment stops working (all sessions, not just the current one); long-lived auth tokens are unaffected (revoke those with `DELETE /api/v1/auth/tokens/{id}`). `POST /api/v1/users/auth/refresh` requires the refresh token in **both** the request body AND a matching `Authorization: Bearer` header, else `401 Invalid refresh token`. Send the same refresh token in the `{"refreshToken":"…"}` body and as `Authorization: Bearer <refreshToken>`. For headless flows, mint a long-lived `POST /api/v1/auth/tokens` token instead.
-- `GET /api/v1/auth/available-regions` returns `r.data.regions` (single-wrapped, like every other endpoint — older docs incorrectly called it doubly-wrapped).
+- `GET /api/v1/auth/available-regions` returns `r.data.regions` (single-wrapped, like every other endpoint).
 - Duplicate signup returns `200` (anti-enumeration). For an unverified user the stored password is left unchanged (first writer wins) and a fresh verification email is sent; for a verified user it is a no-op. A second signup therefore cannot fix a mistyped password: logging in with the new one fails with 401. Change it through `POST /api/v1/auth/forgot-password` → `POST /api/v1/auth/reset-password`. Do NOT probe with signup.
 - The `agent` kit needs **no** `X-Hoody-Container-Claim` / `X-Hoody-Token` headers: it accepts the bare per-container kit URL, and access is decided by the container's proxy permission policy. No built-in kit asks for more, `bot` included: its management routes ignore an `Authorization` header and check no container ownership, so the proxy permission policy is their only access control. The `POST /api/v1/containers/{id}/authorize` call mints an *optional* portable container claim for offline verification by your own container programs; no built-in kit requires it. See § Auth model.
 - Vault via auth tokens requires `vault_access === true` AND `resources.vault` on the token; else 403. JWT sessions are not gated.
 - Rate limits: login 1000/30min failures-only; signup 5/hour fail-closed.
 - `POST /api/v1/containers/{id}/{operation}`, `POST /api/v1/containers/{id}/{operation}`, `POST /api/v1/containers/{id}/{operation}`, `POST /api/v1/containers/{id}/{operation}` and `POST /api/v1/containers/{id}/{operation}` all call `POST /api/v1/containers/{id}/{operation}`: the operation is the last PATH segment, never a body field, and each method fixes it for you.  The optional body field `timeout` (seconds) caps how long the operation may run on the host; for `stop` and `POST /api/v1/containers/{id}/{operation}` it is also the time the container gets to shut down cleanly.
 - `POST /api/v1/projects/{id}/containers` needs a `server_id` in its body, and nothing else in workflow 4 produces one: take it from `GET /api/v1/rentals` (a server you rent). A `name` that another container in the project already uses is refused with 409. `container_image` is optional (omitted, the default image is used); name a public image from `GET /api/v1/images/public`, since `GET /api/v1/images/user` lists only images your account owns and is empty on a new account. A bare `debian` resolves to the canonical base image.
-- Snapshots are addressed by `name`, never by alias: `PUT /api/v1/containers/{id}/snapshots/{name}`, `DELETE /api/v1/containers/{id}/snapshots/{name}` and `PUT /api/v1/containers/{id}/snapshots/{name}/alias` take the `name` that `GET /api/v1/containers/{id}/snapshots` returns. `POST /api/v1/containers/{id}/snapshots` derives it from `alias`, keeping only letters, digits, `_` and `-` (no leading `-`), or uses `snap-YYYYMMDD-HHMMSS` (UTC) when no alias is given.
+- Snapshots are addressed by `name`, never by alias: `PUT /api/v1/containers/{id}/snapshots/{name}`, `DELETE /api/v1/containers/{id}/snapshots/{name}` and `PUT /api/v1/containers/{id}/snapshots/{name}/alias` take the `name` that `GET /api/v1/containers/{id}/snapshots` returns. `POST /api/v1/containers/{id}/snapshots` derives it from `alias`: it keeps only letters, digits, `_` and `-`, drops any leading or trailing `-` and `_`, and cuts the result to 64 characters. A derived name shorter than 2 characters is refused with 400. With no alias, or one with no usable characters, the name is `snap-YYYYMMDD-HHMMSS` (UTC).
 - `POST /api/v1/containers/{id}/snapshots` needs the container `running` or `stopped` (another status is refused with 400). A container holds at most 1000 snapshots, 10 on a free-tier slice; one more is refused with 400 `CONTAINER_SNAPSHOT_LIMIT` until you delete one.
 - `POST /api/v1/projects/` names the project with `alias` (required, at most 100 characters); there is no `name` field. An alias that one of your projects already uses is refused with 409.
-- Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com`: with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `* /api/v1/containers/{id}/proxy/permissions*` groups, or publish a `POST /api/v1/proxy/aliases` alias instead.
+- Kit URL `<projectId>-<containerId>-<kit>-<n>.<server>.containers.hoody.com` (a terminal id of 10000 or more makes that label longer than DNS allows, so it is `t-<n>` instead of `terminal-<n>`; the SDK and CLI do this for you): with the default proxy permissions, holding the URL is enough to use the kit, `bot` management routes included. Treat it as a secret, since it also exposes the project and container ids; restrict it with `* /api/v1/containers/{id}/proxy/permissions*` groups, or publish a `POST /api/v1/proxy/aliases` alias instead.
 - `GET /api/v1/containers/{id}/proxy/services` lists only the services named in the container's proxy permission rules or hooks, so a container with no custom rules returns `services: []`; it is not a list of running kits. `POST /api/v1/proxy/aliases` takes the kit or protocol as `program` (e.g. `'exec'`, `'terminal'`, or `'http'` with `port`).
 - `GET /api/v1/wallet/invoices/` returns `200 {invoices:[],pagination:{...}}` for never-billed accounts (current). `GET /api/v1/ip` returns IP, user-agent, headers, referer, timestamp, auth flag, protocol, and `ip_info` — not just IP.
 - `POST /api/v1/offers/{id}/reserve` charges at once, and every reservation whose total is above zero needs `max_charge_cents`, although the body schema marks it optional. Without it the call is refused with 409 `CHARGE_CONFIRMATION_REQUIRED` (409 `SETUP_FEE_CONFIRMATION_REQUIRED` when the offer has a one-time setup fee), and a total above it is refused with 409 `CHARGE_EXCEEDS_MAX`; the error data carries `total_cents`, and nothing is charged. It also needs a caller-generated `idempotency_key`: a retry with the same key returns the first reservation instead of charging again.
@@ -167,7 +167,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 - 404 — missing resource OR 403 masked.
 - 409 — uniqueness (duplicate username, proxy-alias).
 - 428 / 412 — on the public routes these come from the If-Match guard on proxy-permission, proxy-settings and proxy-hook writes: 428 means the `If-Match` header is missing, 412 means it is malformed or stale (the document changed since you read it). Re-read the document (`GET /api/v1/containers/{id}/proxy/permissions` / `GET /api/v1/projects/{id}/proxy/permissions`), send its current `file:v<N>`, and retry. They do not signal a missing payment method, email verification or 2FA.
-- 422 — request-schema validation (`REQUEST_SCHEMA_INVALID`, e.g. a backup code sent where `POST /api/v1/users/auth/2fa/backup-codes/regenerate` wants a 6-digit TOTP) and semantic validation (password complexity, `rental_days` with no pricing).
+- 422 — request-schema validation (e.g. a backup code sent where `POST /api/v1/users/auth/2fa/backup-codes/regenerate` wants a 6-digit TOTP: the body is `{statusCode: 422, error: "Validation Error", message: "Validation failed: …"}`, with no `REQUEST_SCHEMA_INVALID` code on the wire) and semantic validation (password complexity, `rental_days` with no pricing).
 - 429 — login 1000/30min (failures only), signup 5/hour, refresh 30/30min.
 - 400 — the `events` socket accepts the WebSocket transport only (unless the deployment turns polling on); while polling is off, every long-polling request (with or without a `sid`) is refused with 400 `Polling transport is not supported; use the websocket transport`. Only on a deployment that turns polling on does a polling write with a missing or unknown `sid` get 400 `Unknown session`. Connect with `transports: ['websocket']`.
 - Always-200 — `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/resend-verification`, duplicate-`POST /api/v1/auth/signup`; do NOT probe with these.
@@ -542,16 +542,16 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `action` — Action to take: allow (permit), reject (deny with response), drop (deny silently)
   - `protocol` — Network protocol
   - `description` — Human-readable rule description
-  - `destination_port` — Port number, range (80-90), or comma-separated list (80,443). Required for TCP/UDP.
-  - `destination` — Destination IPv4 address or CIDR range. Use 0.0.0.0/0 for any destination.
+  - `destination_port` — Port number (1-65535), range with the lower port first (80-90), or comma-separated list (80,443). Required for TCP/UDP; not allowed with icmp4.
+  - `destination` — Destination IPv4 address or CIDR range, or a comma-separated list of them. Use 0.0.0.0/0 for any destination. IPv6 is not supported.
   - `source_port` — Source port filter (rarely used)
   - `state` — Rule state (defaults to enabled)
   - `icmp_type` — ICMP type number
   - `icmp_code` — ICMP code number
 - `POST /api/v1/containers/{id}/firewall/ingress` body — `{ action*: "allow" | "reject" | "drop", protocol*: "tcp" | "udp" | "icmp4", description*: string, destination_port: string, source: string, source_port: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
-  - `source` — Source IPv4 address or CIDR range. Use 0.0.0.0/0 for any source.
+  - `source` — Source IPv4 address or CIDR range, or a comma-separated list of them. Use 0.0.0.0/0 for any source. IPv6 is not supported.
   - `icmp_type` — ICMP type number (e.g., 8 for echo request/ping)
-- `DELETE /api/v1/containers/{id}/firewall/egress` body — `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, destination: string, source_port: string, description: string, state: "enabled" | "disabled"="enabled", icmp_type: string, icmp_code: string }`
+- `DELETE /api/v1/containers/{id}/firewall/egress` body — `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, destination: string, source_port: string, description: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
   - `all` — Remove all matching rules (default: first match only). Set to true with no other filters to remove all egress rules.
   - `action` — Action for matching traffic
   - `protocol` — Protocol type
@@ -559,10 +559,10 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `destination` — Destination IPv4/CIDR address(es)
   - `source_port` — Source port, range, or list
   - `description` — Rule description
-  - `state` — Rule state
+  - `state` — Match only rules in this state. Omit to match rules in either state.
   - `icmp_type` — ICMP type number for icmp4 protocol
   - `icmp_code` — ICMP code number for icmp4 protocol
-- `DELETE /api/v1/containers/{id}/firewall/ingress` body — `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source: string, source_port: string, description: string, state: "enabled" | "disabled"="enabled", icmp_type: string, icmp_code: string }`
+- `DELETE /api/v1/containers/{id}/firewall/ingress` body — `{ all: bool, action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source: string, source_port: string, description: string, state: "enabled" | "disabled", icmp_type: string, icmp_code: string }`
   - `all` — Remove all matching rules (default: first match only). Set to true with no other filters to remove all ingress rules.
   - `source` — Source IPv4/CIDR address(es)
 - `PATCH /api/v1/containers/{id}/firewall/egress` body — `{ state*: "enabled" | "disabled", action: "allow" | "reject" | "drop", protocol: "tcp" | "udp" | "icmp4", destination_port: string, source_port: string, destination: string, description: string, icmp_type: string, icmp_code: string }`
@@ -762,8 +762,8 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `program` — Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
   - `port` — Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000 → http://<container>:3000). … Ignored for built-in Hoody programs, which have fixed kit ports.
   - `index` — Instance index, or target port for the "http"/"https" protocol. Defaults to 1. For a built-in Hoody program it selects which running instance to route to (e.g. terminal 2). …
-  - `target_path` — Landing path served when https://{alias}.../ is requested with no path (a root request). A request that carries its own path is forwarded as-sent, resolved from the container root — this value is never used as a prefix. Auto-prefixed with / if missing.
-  - `allow_path_override` — Declared intent for whether request paths may replace target_path. Currently has no effect: non-root request paths are always forwarded as sent (target_path applies to root requests only) — do not rely on false to restrict reachable paths; use proxy permissions for access control.
+  - `target_path` — Landing path served when https://{alias}.../ is requested with no path (a root request); a query written in it is sent too. With allow_path_override true, a request that carries its own path is forwarded as-sent, resolved from the container root — this value is never used as a prefix. …
+  - `allow_path_override` — When false, the alias serves only the root, or target_path itself: once the proxy permissions allow the request, a request to either lands on target_path and any other path is refused (404). …
   - `expires_at` — Optional ISO 8601 expiration date. Alias will be automatically disabled after this date.
   - `enabled` — Whether the alias is initially enabled (defaults to true)
 - `PATCH /api/v1/proxy/aliases/{id}` body — `{ alias: string, program: string, port: int, index: int, target_path: string|null, allow_path_override: bool, expires_at: string|null | number, enabled: bool }`
@@ -771,8 +771,8 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
   - `program` — Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). … Must be a known Hoody program name (or one of its aliases) or protocol.
   - `port` — Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000). Preferred over "index"; takes precedence over "index" and over any port embedded in the program string. Ignored for built-in Hoody programs.
   - `index` — Instance index, or target port when program is "http"/"https". Prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index.
-  - `target_path` — Landing path served for root requests (requests carrying their own path are forwarded as-sent; never a prefix). Set to null to remove it.
-  - `allow_path_override` — Declared path-replacement intent; currently has no effect (non-root paths are always forwarded as sent)
+  - `target_path` — Landing path served for root requests, with its own query. With allow_path_override true, requests carrying their own path are forwarded as-sent (never a prefix); with false, it is the only path served. Set to null to remove it.
+  - `allow_path_override` — When false, only the root, or target_path itself, is served, as target_path; other paths 404, and target_path's own parameters cannot be overridden. When true, a request that carries its own path is forwarded as sent.
   - `expires_at` — Expiration date (ISO string, Unix timestamp seconds/ms, or null to remove expiration)
   - `enabled` — Whether the alias is enabled
 
@@ -1095,12 +1095,12 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 **Param notes:**
 
-- `name` — The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS.
+- `name` — The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS.
 
 **Body shapes:**
 
 - `POST /api/v1/containers/{id}/snapshots` body — `{ alias: string, expiry: int }`
-  - `alias` — Optional user-friendly alias for the snapshot
+  - `alias` — … It is kept as the alias and also becomes the snapshot name after sanitizing (letters, digits, underscore and hyphen kept; leading and trailing hyphens and underscores stripped; at most 64 characters). A sanitized name shorter than 2 characters is refused with 400.
   - `expiry` — Expiry in days (1–3650). Values outside this range are rejected before the snapshot is created.
 - `PUT /api/v1/containers/{id}/snapshots/{name}/alias` body — `{ alias*: string|null }`
   - `alias` — New alias for the snapshot (set to null to remove alias)
@@ -1201,7 +1201,7 @@ Vault, pools (+ pool members + pool invitations), notifications/events/activity 
 
 - `PUT /api/v1/vault/keys/{key}` body — `{ value*: string, metadata: object|null }`
   - `value` — Value to store. Can be any UTF-8 string: JSON, encrypted data, plain text, etc. The API does NOT validate or verify the content - encryption is highly recommended for sensitive data such as secrets, passwords, or API keys.
-  - `metadata` — Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. This counts toward your total vault storage limit.
+  - `metadata` — Optional JSON metadata (max 256KB). Useful for file uploads to store content-type, filename, upload date, etc. Must be valid JSON or null. …
 
 ### `wallet` (26) — Wallet
 

@@ -1,4 +1,4 @@
-> _**guided onboarding skill (agent-directed)** · ~6,764 tokens · hoody-sdk v1.0.0-beta.15_
+> _**guided onboarding skill (agent-directed)** · ~6,852 tokens · hoody-sdk v1.0.0-beta.16_
 
 # Hoody — Onboarding (a brief for the agent running this)
 
@@ -158,7 +158,7 @@ Tell them: *"Open this in your browser and log in with the account you just made
 
 ## Step 4 — Ship something live in under a minute (a website + a friendly link)
 
-This is the "wow." **Anything you run on a port inside the container is instantly public at a URL** — no deploy, no config, no proxy setup. Start a tiny web server and hand them the link:
+This is the "wow." **Anything you run on a port inside the container is instantly public at a URL** — no deploy, no config, no proxy setup. It must listen on `0.0.0.0` (not only `127.0.0.1`); `python3 -m http.server` below does by default. Start a tiny web server and hand them the link:
 
 ```bash
 # Start a simple site on port 8080 inside their container (the terminal kit URL is itself the credential).
@@ -229,7 +229,7 @@ curl -sX POST "https://{P}-{C}-terminal-100.{N}.containers.hoody.com/api/v1/term
   -d '{"terminal_id":"100","display":":100","shell":"bash","user":"user"}'
 ```
 
-This call can take **~20–30s** while the screen (a virtual X server) boots — **that's expected, not a hang. Wait it out.** **Do not retry-create** on a slow or timeout-looking response (re-creating an existing `terminal_id` just returns success, but a second call will block again while the screen boots); instead, when it returns, check that the HTTP status is 2xx (add `-w '%{http_code}'`); a failure is a non-2xx status with a `{"error":"<message>","code":"<CODE>"}` body. Because we pinned `display:":100"`, the create only returns once the screen is ready, so Firefox will have something to draw on.
+This call can take **~20–30s** while the screen (a virtual X server) boots — **that's expected, not a hang. Wait it out.** **Do not retry-create** on a slow or timeout-looking response (re-creating an existing `terminal_id` just returns success, but a second call will block again while the screen boots); instead, when it returns, check both the HTTP status (add `-w '%{http_code}'`) and the JSON body. Continue only when the response is 2xx, `status` is `"ok"`, and `display_ready` is `true`. Most failures are a non-2xx status with a `{"error":"<message>","code":"<CODE>"}` body, but a display-readiness timeout returns HTTP 200 with `"status":"error"` and `"code":"timeout"`; do not treat that response as success. Because we pinned `display:":100"`, a successful create returns only once the screen is ready, so Firefox will have something to draw on.
 
 2. **Launch Firefox inside that session** — call the `terminal-100` host: the host index IS the session (the proxy overwrites any `?terminal_id=` from it, so a `terminal-1` URL would run Firefox in session 1). Background it with `&` so the shell stays free. First confirm Firefox is installed — if `which firefox` is empty, install it (`apt-get install -y firefox-esr`):
 

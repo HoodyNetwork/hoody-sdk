@@ -1,4 +1,4 @@
-> _**SDK skill · `pipe` namespace** · ~16,732 tokens · hoody-sdk v1.0.0-beta.15_
+> _**SDK skill · `pipe` namespace** · ~16,972 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `pipe` — Zero-storage streaming HTTP transfers
 
@@ -36,7 +36,7 @@ Edge is always `https://`. No alias, firewall edit, or proxy registration needed
 
 ## Common workflows
 
-Send with `client.pipe.send` (per-call request headers go in `{ headers }`). The generated pipe service has no receive method: receive with `PipeStream` (Node entry of `hoody-sdk`; `const ps = PipeStream.fromClient(client, container)`), whose `ps.receive(path, { n, download, filename, wait, sha256, live, signal })` resolves once the sender starts, with `{ body, headers, status, transferId }`: `body` is a `ReadableStream<Uint8Array>` and `headers` the forwarded response headers. A non-2xx answer throws. In a browser, `PipeBrowser.receive` gives the same shape.
+Send with `client.pipe.send` (per-call request headers go in `{ headers }`). The generated `client.pipe.receive(path, options)` returns the whole body buffered in `data`; for a streaming body and the forwarded response headers, receive with `PipeStream` (Node entry of `hoody-sdk`; `const ps = PipeStream.fromClient(client, container)`), whose `ps.receive(path, { n, download, filename, wait, sha256, live, signal })` resolves once the sender starts, with `{ body, headers, status, transferId }`: `body` is a `ReadableStream<Uint8Array>` and `headers` the forwarded response headers. A non-2xx answer throws. In a browser, `PipeBrowser.receive(path, { n, live, signal })` returns `{ body, headers, status }` with no `transferId`: read it from `headers.get('X-Hoody-Pipe-Transfer-Id')`. A `live` receiver gets no transfer id (`transferId: null`, and the header lookup returns null); inspect a live stream by name with `status(path)`.
 
 ### 1. One-to-one
 
@@ -71,7 +71,7 @@ Send page `<kit>/api/v1/pipe/?name=<name>&…`:
 | `text` | ≤100000 chars | text to send; selects text mode |
 | `mode` | `file` \| `text` | form mode |
 | `filename` | ≤255 chars | name the receiver gets for a text or pasted image |
-| `autostart` | `1` | text mode with a text and a name: send on open, no click |
+| `autostart` | `1` | text mode with non-empty text: send on open, no click (no `name` needed: an absent one is generated, and the page still sends) |
 
 Receive page `<kit>/api/v1/pipe/<name>?receive&…`:
 
@@ -95,13 +95,13 @@ Share page `<kit>/api/v1/pipe/<name>?share&…` (viewers open the video page):
 
 Video page `<kit>/api/v1/pipe/<name>?video&n=<n>&live=1&wait=<s>` (`n` only when >1, not with `live`; `live=1` plays a live broadcast; `wait` 1-3600 s is how long the player waits for the stream; opening it receives). Progress page `<kit>/api/v1/pipe/<name>?progress` (no params, no slot). No-JS form `<kit>/api/v1/pipe/noscript?path=<name>&mode=file|text&wait=<s>&sha256=1` (`wait` and `sha256` go on to its upload).
 
-In a browser, `PipeBrowser` and `PipeMedia` (from `hoody-sdk`, `fromClient(client, container)` or `{ pipeBaseUrl }`) have `getPageUrl(page, name, options)` and `openPage(page, name, options)` for `send`, `receive`, `share`, `video`, `progress`, `noscript`; options use the param names above (`autostart: true`, `audio: true|false`, `sha256: true`, `live: true`, `wait: <s>`; `wait`/`sha256` on receive and noscript, `live`/`wait` on video). A wrong option, out-of-range value, reserved name (see Quirks), `.`/`..` segment or over-long name throws. The `noscript` link carries the name encoded as in the pipe URL in its `path` (so its form posts to the same pipe) and refuses a name with `/`. `PipeBrowser` also has `sendFile(path, File|Blob|string|ArrayBuffer, { n, filename, contentType, transfer, onProgress, onStatus, signal })` (resolves when the transfer completes, rejects with `PipeTransferError`), `receive(path, { n, signal })` → `{ body, headers, status }`, `download(path, { n, filename })` (browser download manager) and `subscribeProgress(path)` (same events as `PipeStream`). `PipeMedia.shareAudio({ microphone, systemAudio, n })` streams audio only; listeners open `session.url` (`?video`). A share session (`shareScreen`, `shareWebcam`, `shareAudio`) uploads with its own transfer id (`?transfer=`, `session.transferId`) and follows only that transfer (`?status&transfer=<id>` and its `done` event), so another transfer on the name never ends it. It stops the capture when its transfer ends; `session.done` rejects with `PipeTransferError` when it failed (nobody joined in 5 minutes, every viewer left, idle timeout, network, an id in use (409), or its transfer unknown to the kit for about 30 s after it was seen), and a bad `path` throws before capture starts. The recording follows the upload: once 8 MiB of it wait to be sent (no receiver reading yet, a slow network) the recorder pauses (`session.paused` is true), and it resumes when the upload is back to 4 MiB behind; a pause by `session.pause()` stays until `session.resume()`. More than 16 MiB waiting ends the share and `session.done` rejects. Embed views `pipe.send`, `pipe.share`, `pipe.receive` take the same params except `autostart`; framing the share page needs `allow="display-capture; camera; microphone; autoplay"`.
+In a browser, `PipeBrowser` and `PipeMedia` (from `hoody-sdk`, `fromClient(client, container)` or `{ pipeBaseUrl }`) have `getPageUrl(page, name, options)` and `openPage(page, name, options)` for `send`, `receive`, `share`, `video`, `progress`, `noscript`; options use the param names above (`autostart: true`, `audio: true|false`, `sha256: true`, `live: true`, `wait: <s>`; `wait`/`sha256` on receive and noscript, `live`/`wait` on video). A wrong option, out-of-range value, reserved name (see Quirks), `.`/`..` segment or over-long name throws. The `noscript` link carries the name encoded as in the pipe URL in its `path` (so its form posts to the same pipe) and refuses a name with `/`. `PipeBrowser` also has `sendFile(path, File|Blob|string|ArrayBuffer, { n, filename, contentType, transfer, onProgress, onStatus, signal })` (resolves when the transfer completes, rejects with `PipeTransferError` when the transfer fails; built with `fromClient`, a refused request (non-2xx) throws the client's `ApiError` instead), `receive(path, { n, signal })` → `{ body, headers, status }`, `download(path, { n, filename })` (browser download manager) and `subscribeProgress(path)` (same events as `PipeStream`). `PipeMedia.shareAudio({ microphone, systemAudio, n })` streams audio only; listeners open `session.url` (`?video`). A share session (`shareScreen`, `shareWebcam`, `shareAudio`) uploads with its own transfer id (`?transfer=`, `session.transferId`) and follows only that transfer (`?status&transfer=<id>` and its `done` event), so another transfer on the name never ends it. It stops the capture when its transfer ends; `session.done` rejects with `PipeTransferError` when it failed (nobody joined in 5 minutes, every viewer left, idle timeout, network, an id in use (409), or its transfer unknown to the kit for about 30 s after it was seen), and a bad `path` throws before capture starts. The recording follows the upload: once 8 MiB of it wait to be sent (no receiver reading yet, a slow network) the recorder pauses (`session.paused` is true), and it resumes when the upload is back to 4 MiB behind; a pause by `session.pause()` stays until `session.resume()`. More than 16 MiB waiting ends the share and `session.done` rejects. Embed views `pipe.send`, `pipe.share`, `pipe.receive` take the same params except `autostart`; framing the share page needs `allow="display-capture; camera; microphone; autoplay"`.
 
 ### 7. Status, waiting time and checksums
 
-`?status` is one JSON snapshot of a name, with no receiver slot: `state` (`idle`, `waiting`, `streaming`, `complete`, `failed`), `kind` (`pipe`, `ws`, `live` or null), `peers`, `transferId`, `hasSender`, `activeReceivers`, `totalReceivers`, `bytesTransferred`, `totalBytes`, `speed`, `eta`, `elapsed`, `reason`, `sha256`. `?wait=<s>` (1-3600, default 300) sets how long one sender or receiver waits for the other side. `?sha256` (sender or any receiver) has the kit hash the stream; receivers get the transfer id in `X-Hoody-Pipe-Transfer-Id`, and `?status&transfer=<id>` returns that transfer, for a hashed one also for 10 min after it ends. Prometheus metrics: `GET /api/v1/pipe/metrics`.
+`?status` is one JSON snapshot of a name, with no receiver slot: `state` (`idle`, `waiting`, `streaming`, `complete`, `failed`), `kind` (`pipe`, `ws`, `live` or null), `peers`, `transferId`, `hasSender`, `activeReceivers`, `totalReceivers`, `bytesTransferred`, `totalBytes`, `speed`, `eta`, `elapsed`, `reason`, `sha256`. `?wait=<s>` (1-3600, default 300) sets how long one sender or receiver waits for the other side. `?sha256` (sender or any receiver) has the kit hash the stream; receivers of an ordinary (not `?live`) transfer get the transfer id in `X-Hoody-Pipe-Transfer-Id`, and `?status&transfer=<id>` returns that transfer, for a hashed one also for up to 10 min after it ends (the kit keeps at most 1,000 receipts in all and evicts the oldest first, so a busy kit can drop one sooner). Prometheus metrics: `GET /api/v1/pipe/metrics`.
 
-Through `PipeStream` (`const ps = PipeStream.fromClient(client, container)`; `PipeBrowser` has `status` too): `ps.status(path, { transfer? })` returns the snapshot. `ps.send` also takes `transfer` (its own transfer id, 16-64 of A-Z a-z 0-9 `_` `-`; the kit uses it as the transfer id, so `ps.status(path, { transfer })` reads this transfer from admission on; an id in use → 409; `PipeBrowser.sendFile` too). `ps.send` and `ps.receive` take `wait` and `sha256`: on send the result's `sha256` promise gives the kit's digest (null when not hashed or failed); on receive `sha256: true` hashes the body while it is read and `verified` rejects with `PipeIntegrityError` (`kind` `mismatch`, `unavailable` or `incomplete`) unless it matches the kit's digest. `ps.send` returns once the kit takes the upload. Its `done` resolves only when the kit's last status line confirms the transfer (`Transfer complete.`, or `Live stream ended (peak N viewers).` for `live`); otherwise it rejects with `PipeTransferError`, whose `message` is the kit's text (`Timed out waiting for receivers.`, `All receivers disconnected before transfer completed.`, an idle timeout) or `pipe send failed: the response ended before the transfer completed`, with `status` and the status lines in `messages`. A refused send (non-2xx) throws `PipeTransferError` with that `status`. `ps.send` `filename` goes in `Content-Disposition` as `PipeBrowser.sendFile` sends it: a non-ASCII name as RFC 5987 `filename*` plus an ASCII fallback. `ps.metrics()` returns the metrics text.
+Through `PipeStream` (`const ps = PipeStream.fromClient(client, container)`; `PipeBrowser` has `status` too): `ps.status(path, { transfer? })` returns the snapshot. `ps.send` also takes `transfer` (its own transfer id, 16-64 of A-Z a-z 0-9 `_` `-`; the kit uses it as the transfer id, so `ps.status(path, { transfer })` reads this transfer from admission on; an id in use → 409; `PipeBrowser.sendFile` too). `ps.send` and `ps.receive` take `wait` and `sha256`: on send the result's `sha256` promise gives the kit's digest (null when not hashed or failed); on receive `sha256: true` hashes the body while it is read and `verified` rejects with `PipeIntegrityError` (`kind` `mismatch`, `unavailable` or `incomplete`) unless it matches the kit's digest. `ps.send` returns once the kit takes the upload. Its `done` resolves only when the kit's last status line confirms the transfer (`Transfer complete.`, or `Live stream ended (peak N viewers).` for `live`); otherwise it rejects with `PipeTransferError`, whose `message` is the kit's text (`Timed out waiting for receivers.`, `All receivers disconnected before transfer completed.`, an idle timeout) or `pipe send failed: the response ended before the transfer completed`, with `status` and the status lines in `messages`. A refused send (non-2xx) throws the client's `ApiError` when `ps` was built with `fromClient`, and `PipeTransferError` with that `status` on the global-fetch transport (`{ pipeBaseUrl }`). `ps.send` `filename` goes in `Content-Disposition` as `PipeBrowser.sendFile` sends it: a non-ASCII name as RFC 5987 `filename*` plus an ASCII fallback. `ps.metrics()` returns the metrics text.
 
 ### 8. Live broadcast (`?live`)
 
@@ -119,17 +119,17 @@ A live sender streams at once, with nobody watching; any number of viewers (256 
 - Dangerous sender MIME (HTML/SVG/JS) → `text/plain`; `nosniff` forced.
 - Forwarded sender→receiver headers: `Content-Type` (sanitized — dangerous MIME → `text/plain`), `Content-Length` (only for a non-multipart body, and only when the value is 1–19 plain digits; multipart transfers are sent without it), `X-Piping`, `X-Hoody-Pipe` (each ≤8 KiB, CRLF-stripped). `Content-Disposition` is rebuilt per-receiver from sender metadata + receiver `?download`/`?filename` params.
 - `?download` enum (SDK-validated): `"true"`/`"false"`/`"yes"`/`"no"`/`"1"`/`"0"` (attach / inline). The kit is more permissive — bare `?download` (no value) and any non-`false`/`no`/`0` string are treated as truthy. `?filename=<v>` implies attach, sanitised (255 chars, RFC 5987), unless the same receiver also sent an explicit `download=false`/`no`/`0`, which suppresses Content-Disposition entirely. 
-- `?video` HTML player only on `Accept: text/html`; no receiver slot. A valid `?wait` on the player URL is used by each of its receives; an invalid one is ignored. It plays each stream to its end, even a short file that arrives all at once, then waits on the same path: the next stream sent there replaces it. Audio-only WebM (Opus/Vorbis) plays as audio; with `?n=N` the players may be tabs of one browser. It never skips content (a stream that fell behind stays behind; it reads at most 45 s ahead). Playback stopped 1.5 s with media buffered ahead moves on to it.
+- `?video` HTML player only on `Accept: text/html`; no receiver slot. A valid `?wait` on the player URL is used by each of its receives; an invalid one is ignored. It plays each stream to its end, even a short file that arrives all at once, then waits on the same path: the next stream sent there replaces it. Audio-only WebM (Opus/Vorbis) plays as audio; with `?n=N` the players may be tabs of one browser. Without `live` it never skips content (a stream that fell behind stays behind; it reads at most 45 s ahead); with `live` (`?video&live=1`), a player that falls behind may jump to the newest buffered media. Playback stopped 1.5 s with media buffered ahead moves on to it.
 - `?progress` no receiver slot. Caps: 50/path, 500 groups, 30 min TTL.
 - `?receive` and `?share` serve pages only on `Accept: text/html` (a browser); any other client gets the data as a plain receiver, like `?video`. With several page params on one URL a browser gets `?progress`, then `?video`, then `?share`, then `?receive`; `=0`/`false`/`no` turns one off.
 - `?receive` page: shows the name and whether a sender waits (from `?progress`, no slot). On the person's click — or by itself with `autostart=1` — the browser's download manager receives `?download` (plus `n`, `filename`, and the page's own `wait` and `sha256`), so any size goes to disk without passing through the page. Progress and the result are only in the browser's downloads list: the page cannot see the download, so after Receive it stays `Receiving in your browser` and never reports success. Its only outcome is `Failed` with the kit's error text when the download frame gets one (`Timed out waiting for sender.` after 5 min or the page's `wait`, an `n` mismatch, a taken slot); `?progress` state snapshots fill an info line labelled "Status for this name" (all its senders and receivers, not this download: no sender yet / sender waiting for receivers / transfer running; "Status unavailable, retrying…" while the stream is down) and never set an outcome. Cancel frees the slot while waiting (a started download goes on in the browser's downloads); Receive again after a failure retries. Pre-fill: `n` (invalid → 1, max 256), `filename` (sanitized like `?filename`), `autostart=1` (only `1`/`true`/`yes`/bare), `wait` (1-3600 s; invalid → dropped), `sha256` (forwarded only; the page shows no checksum).
 - `?share` page: shares the screen (with its audio if ticked), the camera with the microphone, or the microphone only, live to the `?video` player.
   - Start sharing asks the browser for the capture (the person's click), then sends one WebM stream to the name and shows a viewer link (Copy + QR) to `<name>?video` (plus `&n=`).
-  - The stream starts when all `n` viewers have opened the link; until then the page shows `Waiting for viewers… x of n connected`. Live shows viewers, elapsed time and bytes sent (from `?progress`, no slot).
+  - Without Live, the stream starts when all `n` viewers have opened the link; until then the page shows `Waiting for viewers… x of n connected`. With Live (the Live box or `live=1`), it is a `?live` broadcast that starts at once and viewers join and leave at any time. The page shows viewers, elapsed time and bytes sent (from `?progress`, no slot).
   - Stop, or the browser's own stop-sharing control, ends the stream; Start sharing again shares on the same name and players still open on the link play it.
-  - It ends with a message when nobody (or not all `n`) opened the link within 5 min, all viewers left, the name is busy, the kit refused the share (its error text), or the connection cannot keep up.
+  - Without Live, it ends with a message when nobody (or not all `n`) opened the link within 5 min, or all viewers left. In either mode it ends with a message when the name is busy, the kit refused the share (its error text), or the connection cannot keep up.
   - It needs a browser that can stream an upload (Chromium-based) over HTTPS with HTTP/2 or HTTP/3; any other browser gets a message instead of a start. It stores nothing in the browser.
-  - Pre-fill: `source=screen|camera|audio`, `audio=1` (screen audio), `surface=monitor|window|browser` (offered first in the picker), `quality=low|medium|high` (up to 480p/720p/1080p), `fps` (1–60, default 30), `n` (1–256). Invalid values fall back to the defaults; capture still needs the click on Start sharing.
+  - Pre-fill: `source=screen|camera|audio`, `audio=1` (screen audio), `surface=monitor|window|browser` (offered first in the picker), `quality=low|medium|high` (up to 480p/720p/1080p), `fps` (1–60, default 30), `n` (1–256), `live=1` (Live). Invalid values fall back to the defaults; capture still needs the click on Start sharing.
 - `/` (also `/api/v1/pipe/`) is the send page.
   - It sends one file, a typed or pasted text, or a pasted image (sent as a file).
   - It fills in a random name that the person can edit, plus `n`. Send/Cancel uses one POST to `/api/v1/pipe/<name>`: each `/`-separated part of the name is encoded, so `?`, `#` and `%` stay in the name, and leading `/` are kept. A name with a `.` or `..` part (also `%2e`) is refused before sending, as in the SDK.
@@ -279,6 +279,8 @@ Only `done` says how a transfer ended. A failed one sends `{"state":"failed",…
 
 ```typescript
 // Browser/Node: use EventSource with the kit URL directly
+const kitUrl = `https://${P}-${C}-pipe-1.${N}.containers.hoody.com`; // P, C, N from containers.get
+const pathName = `watched-${crypto.randomUUID().slice(0, 8)}`; // the sender uses this same name
 const url = `${kitUrl}/api/v1/pipe/${pathName}?progress=1`;
 const es = new EventSource(url, { withCredentials: false });
 es.addEventListener('state',    e => console.log('state', JSON.parse((e as MessageEvent).data)));
@@ -294,6 +296,8 @@ es.addEventListener('done',     e => { console.log('done', (e as MessageEvent).d
 
 ```typescript
 // Just point the browser at the URL — no SDK call needed:
+const kitUrl = `https://${P}-${C}-pipe-1.${N}.containers.hoody.com`; // P, C, N from containers.get
+const pathName = `watched-${crypto.randomUUID().slice(0, 8)}`; // the sender uses this same name
 const dashUrl = `${kitUrl}/api/v1/pipe/${pathName}?progress=1`;
 window.open(dashUrl, '_blank');
 // Or embed:
@@ -308,6 +312,8 @@ window.open(dashUrl, '_blank');
 
 ```typescript
 // Player URL is just a browser navigation — open it directly:
+const kitUrl = `https://${P}-${C}-pipe-1.${N}.containers.hoody.com`; // P, C, N from containers.get
+const pathName = `screencast-${crypto.randomUUID().slice(0, 8)}`; // the sender uses this same name
 const playerUrl = `${kitUrl}/api/v1/pipe/${pathName}?video=1`;
 window.open(playerUrl, '_blank');
 // To push the encode from Node, stream a ReadableStream into pipe.send (raw fetch
@@ -359,7 +365,7 @@ try {
 
 **Response headers** with `X-Hoody-Pipe: build-id=42; commit=abc1234` + `X-Piping: legacy-meta=true`:
 ```
-access-control-expose-headers: X-Piping, X-Hoody-Pipe
+access-control-expose-headers: X-Hoody-Pipe-Transfer-Id, X-Piping, X-Hoody-Pipe
 x-hoody-pipe: build-id=42; commit=abc1234
 x-piping: legacy-meta=true
 ```
@@ -386,7 +392,7 @@ console.log(res.headers.get('x-piping'));     // → "legacy-meta=true"
 
 **Accessor:** `client.pipe`  |  **Import:** `import * as pipe from 'hoody-sdk/pipe'`
 
-Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`.
+Every `…Response` type here, and `ApiResponse<T>`, is the envelope `{ statusCode: number; message: string; data: T }`: read the payload from `.data`. Signatures list only the operation's own parameters. Kit methods also take `_templateVars` — `{ projectId?, containerId?, serviceIndex?, server? }`, which retargets the call — as a positional argument these signatures omit, and the per-call transport options `signal`, `timeoutMs`, `retries`, `retryDelayMs`, `retryOnStatuses`, `rawResponse`, `responseType`, `authRetry`, `middlewareContext`, `headers` (extra request headers for this call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are refused) and `cache` (a GET's response cache: `true`, a TTL in ms, or `false` to bypass) (no `_realm`: that one is control-plane only). When the signature shows an options object, the transport options go inside it and `_templateVars` is the argument right after it. When it does not, `_templateVars` is the next argument and the transport options an object after that — so pass `undefined` for the target you are not overriding: `method(…, undefined, { timeoutMs: 5000 })`. A signature that shows `_templateVars` itself is complete as written: the object after it takes the transport options too.
 
 ### `client.pipe.kit` (3) — info
 
@@ -425,19 +431,22 @@ client.pipe.kit.getMetrics()
 
 ### `client.pipe` (3) — pipe
 
-#### `getStatus` — Pipe status headers (HEAD ?status)
+#### `getStatus` — One snapshot of a pipe name (GET ?status): state, sender, receivers, bytes. Takes no receiver slot.
 
 ```typescript
-client.pipe.getStatus(path: string, options: { status: "" | "true" | "yes" | "1" })
+client.pipe.getStatus(path: string, options: { headersOnly: true })  // → Promise<ApiResponse<Record<string, string>>>
+client.pipe.getStatus(path: string, options?: { transfer?: string; headersOnly?: false })  // → FacadeJson<Promise<ApiResponse<ArrayBuffer> | PipeReceiveDataResponse>>
+client.pipe.getStatus(path: string, options?: { transfer?: string; headersOnly?: boolean })  // → Promise<ApiResponse<Record<string, string>>> | FacadeJson<Promise<ApiResponse<ArrayBuffer> | PipeReceiveDataResponse>>
 ```
 
 | Parameter | Type | In | Required | Description |
 |-----------|------|------|----------|-------------|
-| `path` | `string` | path | Yes | Pipe path name |
-| `status` | `"" \| "true" \| "yes" \| "1"` | query | Yes | Must be on (`?status`, `true`, `yes`, `1`) |
+| `path` | `string` | path | Yes | Pipe path name to receive from — must match the path used by the sender. Reserved paths (`/help`, `/noscript`, etc.) return their own content on GET instead of acting as pipe receivers. |
+| `transfer` | `string` | query | No | With `status`: answer for one transfer, by the id a receiver got in `X-Hoody-Pipe-Transfer-Id` or the id a sender chose with its own `transfer`, even after the name was reused or its 30 s linger ended. A `?sha256` transfer, and every transfer with a sender-chosen id, leaves a receipt (state, reason, digest, bytes) kept 10 minutes (at most 1000; the oldest go first), so a receiver verifies its bytes after it has read them all: `complete` with the same `sha256` means the bytes match. A sender-chosen id answers from the sender's arrival on (`waiting`). An id that is neither the name's current transfer nor a kept receipt for this name is 404. Not with `ws` (400). |
+| `headersOnly` | `boolean` | option | No | Answer only the response headers (HEAD ?status): a liveness probe with no snapshot. |
 
-**Returns:** `Promise<ApiResponse<Record<string, string>>>`  |  **HTTP:** `HEAD /api/v1/pipe/{path}`
-**CLI:** `hoody pipe status`
+**Returns:** see each form above  |  **HTTP:** `GET /api/v1/pipe/{path}`
+**CLI:** `hoody pipe receive`
 
 ---
 
@@ -470,7 +479,7 @@ client.pipe.receive(path: string, options?: { n?: number; download?: "true" | "f
 | `live` | `"" \| "true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | query | No | Watch a live stream (a sender with `?live`): join at any time, leave and rejoin at will. With no live sender yet, the viewer waits like a receiver (`wait`, default 300 s, then 408 `Timed out waiting for sender.`). The body is a **suffix** of the stream: no `Content-Length`, `X-Hoody-Pipe-Live: 1`, `Cache-Control: no-store`, no `X-Hoody-Pipe-Transfer-Id`. A WebM stream starts with its header, then a Cluster that begins with a video keyframe (any Cluster for audio-only); other bodies start at the next chunk. **Slow viewers:** a viewer that falls 2 MiB behind skips whole Clusters (WebM) until it has caught up to 512 KiB, resuming at a keyframe Cluster. One more than 8 MiB or 4096 pieces behind, one that takes nothing for 60 s, or the most-behind one when the server's live memory budget is full, is cut: its body ends without the chunked terminator. The others are never slowed. **Ending:** after the sender's clean end a viewer takes what it was already sent (up to 60 s), then its body ends normally; if the sender fails, every viewer is cut. A viewer's response counts against the limits until it disconnects, or until 35 s after its body ended. **Plain GET:** a GET without `live` on a name whose live stream is running joins it the same way (a suffix, marked `X-Hoody-Pipe-Live: 1`). While `?live` viewers wait for a sender, a plain GET or `live=0` is 409. `?video&live` serves the player for a live stream; on `?share` (a browser), `live=1` pre-ticks the page's Live box. Not with `n` above 1, `sha256` or `ws` (400). At most 256 viewers per stream and 4096 live viewer responses in all (429). **Values:** `?live` (bare), `true`, `yes`, `1` → watch live; `false`, `no`, `0` → an ordinary receiver (409 on a live name). |
 | `sha256` | `"" \| "true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | query | No | Ask the server to hash the transfer (a receiver can switch it on alone). Read `X-Hoody-Pipe-Transfer-Id`, hash the bytes as you receive them, then compare with `?status&transfer=<id>` (see `transfer`). The digest cannot come in-band: response headers go out before the body, and HTTP trailers are not sent. **Values:** `?sha256` (bare), `true`, `yes`, `1` → on; `false`, `no`, `0` → off. |
 
-**Returns:** `Promise<ApiResponse<ArrayBuffer> | PipeReceiveResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /api/v1/pipe/{path}`
+**Returns:** `Promise<ApiResponse<ArrayBuffer> | PipeReceiveDataResponse>` — the response Content-Type picks the branch: JSON gives the payload in `.data`, a binary type gives the bytes  |  **HTTP:** `GET /api/v1/pipe/{path}`
 **CLI:** `hoody pipe receive`
 
 ---
@@ -493,42 +502,4 @@ client.pipe.send(path: string, data?: string | FormData | Blob | ArrayBuffer | U
 
 **Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `POST /api/v1/pipe/{path}`
 **CLI:** `hoody pipe send`
-
----
-
-### `client.pipe.ui` (2) — ui
-
-#### `getNoScriptPage` — No-JavaScript upload page
-
-```typescript
-client.pipe.ui.getNoScriptPage(options?: { path?: string; mode?: "file" | "text"; wait?: number; sha256?: "" | "1" | "true" | "yes" | "0" | "false" | "no" })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `path` | `string` | query | No | Pre-fill the pipe path. Only URL-safe characters allowed. |
-| `mode` | `"file" \| "text"` | query | No | Input mode: `file` for file picker, `text` for textarea |
-| `wait` | `number` | query | No | Seconds the upload waits for its receivers (1-3600), forwarded to the form's POST. An invalid value is dropped. |
-| `sha256` | `"" \| "1" \| "true" \| "yes" \| "0" \| "false" \| "no"` | query | No | `1`, `true`, `yes` or bare: the upload is hashed with SHA-256, forwarded to the form's POST. `0`, `false`, `no` or absent: not hashed. |
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/pipe/noscript`
-
----
-
-#### `getPage` — Send page
-
-```typescript
-client.pipe.ui.getPage(options?: { name?: string; n?: number; text?: string; mode?: "file" | "text"; filename?: string; autostart?: "1" | "true" | "yes" | "0" | "false" | "no" })
-```
-
-| Parameter | Type | In | Required | Description |
-|-----------|------|------|----------|-------------|
-| `name` | `string` | query | No | Pre-fills the pipe name (up to 1024 characters). Absent → a random name. |
-| `n` | `number` | query | No | Pre-fills the receiver count (1-256). Invalid → 1. |
-| `text` | `string` | query | No | Pre-fills the text to send (up to 100000 characters) and selects text mode. |
-| `mode` | `"file" \| "text"` | query | No | Selects file or text mode. Default `file`, or `text` when `text` is given. |
-| `filename` | `string` | query | No | Pre-fills the file name used for a text or pasted send (up to 255 characters). |
-| `autostart` | `"1" \| "true" \| "yes" \| "0" \| "false" \| "no"` | query | No | Text mode only — `1`, `true`, `yes` or bare sends the pre-filled text without a click once the page has loaded (needs a text; a name the page refuses shows the reason instead). A file send always needs the user to pick the file. |
-
-**Returns:** `Promise<ApiResponse<string>>`  |  **HTTP:** `GET /api/v1/pipe/`
 

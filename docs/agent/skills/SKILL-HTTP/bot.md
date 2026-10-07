@@ -1,4 +1,4 @@
-> _**HTTP skill · `bot` namespace** · ~4,591 tokens · hoody-sdk v1.0.0-beta.15_
+> _**HTTP skill · `bot` namespace** · ~4,606 tokens · hoody-sdk v1.0.0-beta.16_
 
 # `bot` — chat-app control of a container, Telegram first
 
@@ -77,7 +77,7 @@ Create the bot in the chat app first and keep its token. `POST /api/v1/bot/regis
 - The kit holds no token of its own; every working token belongs to a chat user. A login typed into the chat form lives for at most two minutes, while a token a user pastes is kept, encrypted, and used for that user's later commands. The bot tries to delete each chat message that carried a credential, and when the channel refuses the delete it tells the user to delete it themselves. Deleting a registration therefore does not revoke what its users still hold; that is what the revoke operations are for.
 - The channel token is write-only. Registration posts it once, the kit validates it with the channel before storing it, encrypts it, and no read ever returns it. A registration whose token was rotated in the chat app has to be deleted and registered again with the new token: registering the same bot while the old registration exists is refused `409 registration_duplicate` (and deleting a registration does not revoke the credentials its users hold).
 - Health is unauthenticated by design and reports exactly nine fields. `open_by_default` stays null until the self-probe resolves and is never reported as safe by default, so treat null as unknown rather than as protected.
-- The port refuses private, loopback, link-local and CGNAT peers, so a curl from inside the same container or a sibling on the same bridge fails where a request arriving through the proxy succeeds.
+- Refused by the Source IP Guard: Hoody Kit programs are reached through their URLs only. A request that does not come through the bot's kit URL, also from inside the same container, gets 403 with the JSON body `{ "error": { "code": "forbidden", ... } }`.
 - Bare `/health` is 404. The management API and health live under the versioned prefix; the only route outside it is the management UI page at the root.
 - Errors do not use the account-plane envelope. Management refusals answer `{ error: { code, message } }` with an enumerated code, and the message never carries a credential or an upstream error string, though a validation message may name a query parameter or body field you sent. An unknown path (404) or method (405) answers a bare string instead, `{ error: "not_found" }` or `{ error: "method_not_allowed" }`.
 - A repeated query parameter is refused rather than resolved on every management route. Sending the same control twice makes the request say two things at once, and no handler answers it. The manifest route (which parses no query string) and the unauthenticated health route are outside that rule.
