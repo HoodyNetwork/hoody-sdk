@@ -409,7 +409,7 @@ await box.display.input.click({ x: 100, y: 200 }, { displayId: 1 });
 // box.display.input.* also supports typing, dragging, and batching (actMany); box.display.mouse, keyboard and windows hold the device primitives
 
 await box.terminal.commands.run(
-  { command: 'firefox https://hoody.com' },
+  { command: 'firefox https://hoody.com', wait: false }, // firefox does not exit: don't wait for it
   { terminal_id: '1', display: '1' },
 );
 
@@ -592,7 +592,7 @@ Rules an agent must hold:
 
 ## The traps
 
-**1. No stdout from `box.terminal.commands.run()`.** It returns immediately with `command_id`; poll `box.terminal.commands.get(command_id)`. Use `box.terminal.run(cmd)` to wait for output or `hoody shell <container-id> -- <cmd>` in a shell.
+**1. `box.terminal.commands.run()` waits for the command to finish.** `wait` defaults to `true`, so a command that never exits (a GUI app, a server) holds the call until its timeout. Pass `wait: false` in the body to get `command_id` at once, then poll `box.terminal.commands.get(command_id)`. For one-shot output, `box.terminal.run(cmd)` is simpler; in a shell, `hoody shell <container-id> -- <cmd>`.
 
 **2. `box.agent.sessions.startTurnAndStream()` is not the streaming path.** It returns a WebSocket client whose protocol differs from the agent daemon's SSE stream. Use the package-root `streamAgentPrompt` helper from [recipe 4](#4-the-built-in-agent) instead.
 

@@ -9,13 +9,13 @@
 <p align="center"><strong>Everything is a URL.</strong></p>
 
 <p align="center"><em>Durable Linux containers, every capability as a typed HTTP API.</em><br/>
-<em>terminal, files, cloud browser, GUI display, AI agent, cron, and tunnels, callable from Node.js, Bun, or a plain browser tab. No proxy server or backend of your own to run.</em></p>
+<em>terminal, files, cloud browser, GUI display, AI agent, cron, and tunnels, callable from Node.js, Bun, Deno, or a plain browser tab. No proxy server or backend of your own to run.</em></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/hoody-sdk"><img src="https://img.shields.io/npm/v/hoody-sdk.svg" alt="npm version"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="license Apache-2.0"></a>
   <img src="https://img.shields.io/badge/TypeScript-5.0+-3178c6.svg" alt="TypeScript 5.0+">
-  <img src="https://img.shields.io/badge/runtime-Node.js_%7C_Bun_%7C_Browser-green.svg" alt="Node.js | Bun | Browser">
+  <img src="https://img.shields.io/badge/runtime-Node.js_%7C_Bun_%7C_Deno_%7C_Browser-green.svg" alt="Node.js | Bun | Deno | Browser">
 </p>
 
 <p align="center">
@@ -27,14 +27,14 @@
 
 ---
 
-TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers and exposes their terminal, files, browsers, AI agent, GUI display, cron, databases, notifications, and tunnels through one typed HTTP API, callable from Node.js, Bun, a browser, or any network device (including IoT devices). You build on stable primitives: the client, auth model, and URL layout do not change as your product grows. Think of it as **"Linux as HTTP".**
+TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers and exposes their terminal, files, browsers, AI agent, GUI display, cron, databases, notifications, and tunnels through one typed HTTP API, callable from Node.js, Bun, Deno, a browser, or any network device (including IoT devices). You build on stable primitives: the client, auth model, and URL layout do not change as your product grows. Think of it as **"Linux as HTTP".**
 
 | | |
 |---|---|
 | **Batteries included** | Create a container with the Kit (`hoody_kit: true`) and the full service layer is available at stable HTTPS URLs: shell, files, cloud browser, GUI desktop, databases, cron, tunnels, and a built-in AI agent, each starting on demand with the first call. |
 | **Who it's for** | Cloud IDEs, AI-agent platforms, browser-automation pipelines, remote-desktop products, and education: anything that needs a real Linux environment on demand without running the infrastructure. |
 | **The economics** | Flat-rate bare metal: a dedicated machine, marketplace-priced from ~$30/month, with no per-container fee or usage meter. Run dev through prod for every project on one box. [How ↓](#bare-metal-underneath) |
-| **The surface** | <!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces · <!-- ref:sdk-methods -->1181<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->1020<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
+| **The surface** | <!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces · <!-- ref:sdk-methods -->1179<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->1023<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
 
 **Prefer references?** Nearly the whole surface fits in three lists: [CLI commands](./docs/reference/CLI-COMMANDS.md) · [SDK methods](./docs/reference/SDK-METHODS.md) · [HTTP endpoints](./docs/reference/HTTP-METHODS.md). The HTTP list maps every endpoint to its SDK method and to a CLI command wherever one exists.
 
@@ -179,9 +179,22 @@ console.log(hoody.getKitUrl('http', container, { port: 8080 }));                
 
 ## Installation
 
-> **Requires** Node.js >= 22.23.0 (or >= 24.18.0 on the 24 line) or Bun; the browser build has no runtime requirement.
-> The minimums exist because the tunnel client uses Node's built-in WebSocket, and Node releases that bundle an
-> undici affected by CVE-2026-12151 are not supported.
+> **Requires** Node.js 20.3 or later, Bun, or Deno; the browser build has no runtime requirement. Node.js 22 or later
+> is recommended: Node.js 20 is end-of-life and gets no more security fixes from the Node.js project.
+>
+> On Node.js releases whose built-in WebSocket is affected by CVE-2026-12151 (before 22.23.0, all of 23 and 25, 24
+> before 24.17.0, 26 before 26.3.1) the SDK opens its WebSockets with the `ws` package instead. Upgrading Node.js is
+> still recommended. This covers the sockets the SDK opens itself: a `webSocketFactory` or socket.io transport you
+> supply, and a global `WebSocket` your application replaces, are yours to keep current.
+>
+> Before Node.js 22.19 the SDK sends its HTTP requests through Node's built-in `fetch`, which ends a request after 300
+> seconds, and a configured proxy is refused with an error instead of being ignored.
+>
+> On Node.js 20.3 to 22.18 npm prints an engine warning for `undici`, which the SDK does not load there (it uses Node's
+> built-in `fetch`); installs with `engine-strict=true` need Node.js 22.19 or later. CLI proxy settings (`--proxy`,
+> `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY`, the config `proxy` key) need Node.js 22.19 or later or the standalone
+> binary; on older Node.js, with a proxy configured, requests stop with `PROXY_UNSUPPORTED` and are not sent, except to
+> hosts in `NO_PROXY`.
 
 ```bash
 npm install hoody-sdk@beta
@@ -192,14 +205,14 @@ bun add hoody-sdk@beta
 Browser (IIFE global, exposes `window.HoodySDK`). Pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.15/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.16/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.15/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.16/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -291,13 +304,18 @@ const box       = await hoody.withContainer(container);
 - `withContainer()` accepts a container object or a container ID and returns a client with Kit URL templates pre-filled.
 - Open containers ([the default](#containers-are-open-by-default)) need no Kit auth; for gated ones, pass `kitAuth` in `withContainer()`'s options to supply the initial credential, and an `onKitAuthExpired` callback to refresh it and replay the request once on a 401. When the proxy rule reads its token from a query parameter, name it: `{ type: 'token', value, param: 'access_token' }` sends the token in the URL instead of a header, on WebSocket upgrades too, which is the only way a browser socket can carry one.
 - `getKitUrl(service, container, serviceIndex?)` builds an embeddable URL for any Kit service; it's what printed the display URL in the opener. For a raw port on the container, `hoody.getKitUrl('http', container, { port: 8080 })` makes the service segment `http-8080`.
-- A client whose `baseURL` is the account API refuses Kit calls until you `withContainer()`, instead of sending them to the API host. The client treats `baseURL` as the account API when it is a Hoody API host (`api.hoody.<tld>` or a realm host under it), when you pass `credentials`, or when you pass no `baseURL`; any other host is used as given, as a Kit or daemon reached directly. Set `target: 'account'` or `target: 'kit'` to say which when the host does not tell.
+- A client whose `baseURL` is the account API refuses Kit calls until you `withContainer()`, instead of sending them to the API host. The client treats `baseURL` as the account API when it is a Hoody API host (`api.hoody.com` or a realm host under it), when you pass `credentials`, or when you pass no `baseURL`; any other host is used as given, as a Kit or daemon reached directly. Set `target: 'account'` or `target: 'kit'` to say which when the host does not tell.
 
 Three conventions every snippet relies on:
 
 - **Response envelope.** By default every request method resolves to a typed `{ statusCode, message, data }`; payloads live on `response.data` (streaming, WebSocket, and iterator helpers return their own types, and `rawResponse: true` skips envelope normalization to hand back the parsed body directly, which you cast, since the declared return type stays enveloped).
 - **Options object.** Most methods take a trailing options bag that mixes query params with per-request overrides (`retries`, `timeoutMs`, `responseType`, `signal`, …); the opener's `{ display: '1' }` is one.
 - **Pagination triad.** A list endpoint that pages ships three forms: `list()` (one page), `listAll()` (collect all pages), `listIterator()` (async iterator). The helpers follow the page, offset or cursor parameter the operation actually takes, and start where your arguments say (a `page`, `offset` or cursor you pass). An operation that declares pagination but takes no page, offset or cursor parameter gets a `listAll()` that is one request; a list that declares no pagination, such as `daemon.programs.list()`, has only `list()`. A walk that stops advancing throws instead of returning a partial list when two consecutive pages echo the same numeric page or offset position; when, with no position echo on the current page, two consecutive pages hold the same ordered ids (at least two rows, each with a string or number id unique within the page); when a walk from the first row returns more rows than the largest numeric total the server reported; or when it needs more than 1000 requests. Singleton pages and rows without usable ids can evade the id comparison, leaving the other checks and the request cap. A cursor walk started without a cursor also throws when it stops while a numeric total says more rows exist, as does a one-request `listAll()` whose response holds fewer rows than its own numeric total. A page or offset walk ends on an empty page.
+
+  A page or offset walk is not a snapshot: every page is a new query against the live list. A row deleted during the walk moves the rows after it back across the position already passed, so some are never returned. A row added at the head of a newest-first list pushes rows forward, so some are returned twice. Neither case throws. Where the operation takes a stable position, walk with that: `afterId` or a fixed `untilMs` on `proxyLogs.list`, `after_id` on `watch.events.list`, `after` on `sqlite.kv.list`, `cursor` on `notifications.list`.
+
+  `notifications.list` called with none of `since`, `after_id` or `cursor` returns the newest page only. `listAll()` / `listIterator()` called that way return that page and stop, until the notifications service states where a full walk begins; from then on they start at the oldest row. Passing `since: 0` walks the whole history in either case. Each page comes newest first, so sort the collected rows yourself if their order matters.
+- **64-bit integers (sqlite).** `box.sqlite` methods return an integer above 2^53 - 1 as a `bigint` instead of rounding it to the nearest `number`; every other number is a `number` as before. A `bigint` you pass in a request body, such as a bound parameter, is sent as a plain integer.
 
 And the feel of the surface, in four calls on the Quickstart `box`:
 
@@ -315,7 +333,7 @@ await box.cron.entries.create('user', { schedule: '0 * * * *', command: 'backup.
 const rows = await box.sqlite.sql.queryReadOnly({ db: 'app', sql: btoa('select count(*) from users') });
 ```
 
-The same client, types, and auth work in Node.js, Bun, and the browser. Generated namespace methods run everywhere. Hand-written conveniences that need Node built-ins (`box.terminal.run`, `agent.importLocalConfig`/`importLocalConfigs`/`listLocalConfigTools`, the screenshot-to-disk helper, and the `tunnel*`/`mount` helpers) are stubbed out of the browser build; there, call the generated method directly, such as `box.terminal.commands.run(...)`. The full surface is in [Namespaces](#namespaces).
+The same client, types, and auth work in Node.js, Bun, Deno, and the browser. Generated namespace methods run everywhere, and so does `box.terminal.run`. Hand-written conveniences that need Node built-ins (`agent.importLocalConfig`/`importLocalConfigs`/`listLocalConfigTools`, the screenshot-to-disk helper, and the `tunnel*`/`mount` helpers) are left out of the browser build: there the method does not exist, so calling it throws a `TypeError`. Where a generated method does the same job, call it directly, such as `box.display.screenshots.capture(...)` in place of the save-to-disk helper. The full surface is in [Namespaces](#namespaces).
 
 ### Anatomy of a Hoody URL
 
@@ -442,7 +460,17 @@ For token-only flows with no credentials on file, pair `token:` with an [`onToke
 
 - `setToken(token)` changes the token of that one client, which leaves the shared session; clients derived from it afterwards share its new one. `setSessionToken(token)` changes the token of every client in the session.
 - `adoptSession(tokens)` adopts a session issued outside `login()`: the result of `api.auth.twoFactor.verify()` or `api.auth.oauth.exchange()`, or tokens you saved. It keeps the refresh token for automatic refresh and drops the previous session's credentials.
-- `logout()` calls `api.auth.logoutAll()`, which ends every session of the account on every device, then clears the token, refresh token, credentials and `kitAuth` of every client in the session, even when the request fails. It also ends the `hoody.events` session, as every session change does ([Real-time events](#real-time-events)). Other streams and sockets you opened stay open until you close them.
+- `logout()` ends this session only and makes no request: every client in the session drops its token, refresh token, credentials and `kitAuth`, and the account stays signed in on other devices. The dropped access token stays valid on the server until it expires. `logoutAll()` signs the account out everywhere (it calls `api.auth.logoutAll()`), then clears this session the same way, even when the request fails. Both end the `hoody.events` session, as every session change does ([Real-time events](#real-time-events)). Other streams and sockets you opened stay open until you close them.
+- `onSession` in the client config is called each time the SDK itself obtains a token pair: on `login()` (`reason: 'login'`), and when it recovers from a 401 by exchanging the refresh token (`'refresh'`) or by signing in again with the stored credentials (`'relogin'`). A refresh spends the previous refresh token, so a long-running service saves each new pair and starts its next run with `adoptSession()`. The callback is not awaited and what it throws is discarded, so handle errors inside it. It is not called for tokens you supply yourself.
+
+  ```typescript
+  const hoody = new HoodyClient({
+    baseURL: 'https://api.hoody.com',
+    onSession: ({ token, refreshToken, reason }) => {
+      saveSession({ token, refreshToken }).catch((err) => console.error('session not saved', reason, err));
+    },
+  });
+  ```
 
 **Browser-token hygiene.** A token in JS storage is a bearer credential; anyone who reads it can act as that user. Treat it like a password. Never put account credentials or an account-wide token in a static page. Give browser apps a short-lived, realm-scoped token minted by your control plane with the narrowest workable permission template ([how to mint one](#give-your-own-users-their-own-hoody-api)).
 
@@ -461,7 +489,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.15/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.16/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
@@ -482,7 +510,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 </script>
 ```
 
-The `prompt(...)` login is for the demo. In production, give the page a short-lived, realm-scoped token minted by your control plane (see [Authentication](#authentication)). The URL comes from [`hoody.embeds`](#embed-urls).
+The `prompt(...)` login is for the demo; an account that signs in with a username passes `username` in place of `email`. In production, give the page a short-lived, realm-scoped token minted by your control plane (see [Authentication](#authentication)). The URL comes from [`hoody.embeds`](#embed-urls).
 
 This works because the Hoody API supports CORS and uses bearer tokens rather than cookies. The static page calls `api.hoody.com` directly, then reaches Kit capability URLs the same way. For every kit, the URL itself is the credential ([why that's the default](#containers-are-open-by-default)). For a service you have locked down, the SDK attaches configured proxy-auth headers to `box.*` requests. A bare iframe `src` cannot carry those headers, so front gated embeds with an [alias + permission rules](#aliases-and-custom-domains). **No proxy server on your side:** the page talks to Hoody's edge, which routes to the container. Keep provisioning, billing, abuse controls, and customer-scoped token minting in code you control. Calls to container services (shell, file, Chromium, desktop) go directly from wherever your code runs.
 
@@ -530,6 +558,8 @@ return { stdout: out.stdout, exit_code: out.exitCode };
 
 This is a full Debian shell with real stdout and exit codes, not a mock or restricted eval environment. The model can `npm install`, `git clone`, run tests, and edit files. With `box.files.*` and `box.browser.*`, it can also read, write, and browse. Because each capability is an HTTP endpoint returning typed JSON, the three-line handler needs no MCP server, plugin protocol, or other driver between the model and machine.
 
+An interactive `box.shell({ reconnect: true })` comes back to the same session after a drop. Input, signals and resizes sent while it reconnects are held until the session is confirmed to be the same one, then sent in order. If the session is gone, the shell ends with a "session was lost" error and what was held is dropped, never sent to another session.
+
 When the model needs an interactive TUI instead of one-shot exec, `box.terminal.sessions.*` can screen-scrape and drive it: `wait` (wait for a regex match or output stability), `getSnapshot`, `search`, `pressKeys`, `paste`, `sendMouseEvents`. The system surface, `box.terminal.processes.*` (`list`, `signal`, `pause` / `resume`) and `box.terminal.system.*` (`listPorts`, `getStats`), lets your supervisor code see and control what those commands actually spawned.
 
 Before giving an agent control, take a snapshot (`hoody -c <containerId> snapshots create` in the CLI, `hoody.api.snapshots.create(...)` in the SDK). A copy-on-write snapshot makes a bad change reversible.
@@ -555,7 +585,7 @@ await box.display.input.click({ x: 100, y: 200 }, { displayId: 1 });
 
 `box.display.input` includes `type` (move + click + type in one call), `drag`, `select`, `actMany` (a whole action sequence in one request), and `reset`, an emergency release of all held inputs. `box.display.mouse` and `box.display.keyboard` hold the key and mouse primitives, and `box.display.windows` handles window management (`search`, `focus`, `move`, `resize`, `close`). Clipboard read/write is available through `box.display.clipboard.get()` / `box.display.clipboard.set({ text: '…' })`. Pair a screenshot loop with `actMany` and a vision model can drive desktop applications that have no API.
 
-**One-shot shortcut.** A request to the terminal URL with `redirect=display` (the endpoint behind `box.terminal.ui.getPage`) creates the session, waits for X11 readiness, and returns a 302 to the display URL:
+**One-shot shortcut.** A request to the terminal page URL (the one `hoody.embeds.terminal.session()` builds) with `redirect=display` creates the session, waits for X11 readiness, and returns a 302 to the display URL:
 
 ```typescript
 // `btoa` is native in Node.js 22+ and every modern browser.
@@ -609,11 +639,13 @@ await pulled.close();
 
 EXPOSE makes a local HTTP/WebSocket service reachable over public HTTPS at `https://{projectId}-{containerId}-http-{port}.{server}.containers.hoody.com` without router or NAT configuration or a separate tunnel account. The handle's `publicUrl` is the URL the kit returns, or the public HTTPS URL derived locally from a recognized Hoody tunnel hostname, so it can be set without `HOODY_TUNNEL_PUBLIC_URL_PATTERN`; it is unset when neither applies. PULL instead carries raw TCP onto container loopback, letting in-container code reach a local service such as Postgres. `box.tunnel.serve()` (Bun only) accepts a `Bun.serve`-compatible `fetch` handler for a one-call listener without a separate HTTP server.
 
+`keepTunnelAlive(handle, { mode, container, to })` keeps an `expose()` or `pull()` tunnel up across connection drops: the kit holds a dropped session's binds for 60 seconds by default, and the helper reconnects with the session id inside that window so the same ports keep serving. Its `ended` promise never rejects. It settles with `{ deliberate, reason, code? }`, and `code === 'RESUME_EXPIRED'` means a drop could not be resumed before the hold ran out. A single resume attempt (`tunnelResumeExpose`, `tunnelResumePull`) takes `signal` and `handshakeTimeoutMs`; aborting it rejects with `TunnelResumeAbortedError` and releases any binds the kit had already handed back.
+
 A tunnel gated by a proxy permission rule takes the credential as `kitAuth` (from `withContainer(container, { kitAuth })`, or per call); the account token is never sent to the tunnel. Each call opens its own session. Without a scoped client, the package-root `tunnelExpose` / `tunnelPull` / `tunnelServe` take the WebSocket URL as `url`, or the tunnel host as `container`. For several bindings on one session and the low-level bind / frame primitives, import `TunnelSession` from the package root; `box.tunnel.*` also lists or kills sessions and reads bindings and metrics.
 
 ### The built-in agent
 
-Every Hoody Kit container ships an agent. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->293<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the SDK's largest container-scoped namespace.
+Every Hoody Kit container ships an agent. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->294<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the SDK's largest container-scoped namespace.
 
 The agent kit takes the same auth as the rest: none of its own. A bare
 `withContainer(container)` can list models, create a session, and prompt it, because
@@ -650,7 +682,7 @@ import { streamAgentPrompt } from 'hoody-sdk';
 const run = await streamAgentPrompt(hoody, {
   container,
   sessionId,
-  text: 'Audit /workspace, run the tests, and summarize what you changed.',
+  text: 'Audit /home/user, run the tests, and summarize what you changed.',
   policy: 'auto_approve',   // approve ordinary confirmations; deny tool-call-rule confirmations
 });
 for await (const delta of run.text) process.stdout.write(delta);
@@ -693,8 +725,8 @@ The SDK namespaces provide the infrastructure; your code provides the product:
 // Your AI coding agent — you write the AI logic, Hoody handles everything else
 const box = await hoody.withContainer(container);
 await box.terminal.run('git clone ...');
-const files = await box.files.list('/workspace');
-await box.terminal.run('git apply /workspace/patch.diff');
+const files = await box.files.list('/home/user');
+await box.terminal.run('git apply /home/user/patch.diff');
 // Run a CLI agent as an ephemeral program (not sandboxable; use programs.create for a confined one); read its output with ephemeralPrograms.getLogs():
 await box.daemon.ephemeralPrograms.start({ user: 'user', command: 'aider --message "review the diff"' });
 ```
@@ -816,8 +848,8 @@ const a = await hoody.api.proxy.aliases.create({
   alias: 'team-dashboard',          // optional; auto-48-hex if omitted
   container_id,
   program: 'exec', index: 1,        // an exec endpoint: a service you would publish anyway
-  target_path: '/report',           // landing path for root requests only
-  allow_path_override: false,       // currently has no effect; restrict access with proxy permissions
+  target_path: '/report',           // what a root request ("/") serves
+  allow_path_override: false,       // pins the alias: "/" and target_path itself; any other path is a 404
   expires_at: '2026-12-31T00:00:00Z',
 });
 console.log(a.data!.url);
@@ -828,8 +860,8 @@ console.log(a.data!.url);
 |------------------------|-------------------------------------------------------------------------|
 | `alias`                | Custom label (`a-z`, `0-9`, `-`, 3 to 61 chars), or auto 48-hex         |
 | `program` + `index`    | Which Kit service the alias points to                                   |
-| `target_path`          | Landing path for root requests; non-root paths are forwarded as sent    |
-| `allow_path_override`  | Currently has no effect; use proxy permissions to restrict access       |
+| `target_path`          | What a root request serves, with its own query; while `allow_path_override` is false, the root and `target_path` itself are the only paths served |
+| `allow_path_override`  | `false` pins the alias: `/` (which lands on `target_path`) and `target_path` itself are served, any other path (sub-paths and page assets included) is a 404 `ALIAS_PATH_PINNED`, and `target_path`'s own query keys win over the visitor's; the method, body and other query keys pass. `true` (the default) forwards paths as sent. Either way anyone with the link can open it: restrict who may with proxy permissions |
 | `expires_at`           | Timestamp after which the alias is automatically disabled               |
 | `enabled`              | Disable without deleting (404s while off)                               |
 
@@ -989,7 +1021,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 
 ## Namespaces
 
-<!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces, <!-- ref:sdk-methods -->1181<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
+<!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces, <!-- ref:sdk-methods -->1179<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
 
 <details>
 <summary>The full namespace map: scope, coverage, and a one-liner you'd actually call</summary>
@@ -1005,7 +1037,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 | `exec`            | Container | Drop-a-script-get-an-endpoint; see [Drop a script, get an endpoint](#drop-a-script-get-an-endpoint) | `box.exec.run('build')`                                      |
 | `daemon`          | Container | Long-running processes; ephemeral one-shots                                             | `box.daemon.ephemeralPrograms.start({ user, command })`                          |
 | `cron`            | Container | REST-driven cron entries and crontab edits                                              | `box.cron.entries.create('user', { schedule, command })`                  |
-| `watch`           | Container | Filesystem watchers, event streams                                                     | `box.watch.watchers.create({ paths: ['/workspace'] })`                     |
+| `watch`           | Container | Filesystem watchers, event streams                                                     | `box.watch.watchers.create({ paths: ['/home/user'] })`                     |
 | `sqlite`          | Container | SQL queries, KV store, query history                                                    | `box.sqlite.sql.queryReadOnly({ db: 'app', sql })`                    |
 | `curl`            | Container | Outbound HTTP with scheduling, sessions, cookie persistence                             | `box.curl.run({ url, method: 'GET' })`                                 |
 | `egress`          | Container | Outbound HTTP/CONNECT proxy; set a `socks5h`/`socks5`/`http`/`https` upstream to change the container's exit IP | `box.egress.upstream.set('socks5h://user:pass@host:1080')`                  |
@@ -1016,7 +1048,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 | `tunnel`          | Container | Reverse tunnels: publish HTTP/WebSocket to a public URL, or pull TCP onto container-loopback ([recipe](#reverse-tunnel-localhost-to-a-public-url)) | `box.tunnel.sessions.list()`                                                |
 | `proxyLogs`       | Container | Reverse-proxy access logs and stats                                                     | `box.proxyLogs.list()`                                                |
 | `bot`             | Container | Chat-app control: register a chat bot, run its poll loop, set who it serves, read its audit log ([front doors](#every-front-door)) | `box.bot.registrations.list()`                                             |
-| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->293<!-- /ref:agent-sdk-methods --> methods): sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.turns.run(id, { text })`                              |
+| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->294<!-- /ref:agent-sdk-methods --> methods): sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.turns.run(id, { text })`                              |
 
 </details>
 
@@ -1101,7 +1133,7 @@ The iterator marks the first event after any loss with `gap_before: { reason, dr
 - Account-wide events (notifications, pools, billing, image library) never reach a realm-scoped client.
 - Global events (broadcast notifications and `server.offer.*`) arrive on the stream and through cursor history, never through offset-paged history (`GET /api/v1/events` without `after`).
 - A token receives the event types its permissions allow for the matching reads. A permission or realm added to a token applies from its next connection. One removed applies at once.
-- `logout()`, `login()`, `adoptSession()`, `setToken()`, `setSessionToken()` and a direct `api.auth.logoutAll()` end the stream's session. Pending waits reject with `EventsSessionChangedError`, handlers stay registered and reconnect once the new session has a token, and no resume point carries over into it.
+- `logout()`, `logoutAll()`, `login()`, `adoptSession()`, `setToken()`, `setSessionToken()` and a direct `api.auth.logoutAll()` end the stream's session. Pending waits reject with `EventsSessionChangedError`, handlers stay registered and reconnect once the new session has a token, and no resume point carries over into it.
 - A token restricted to realms must be used through `withRealm()`. An unscoped client is refused with `REALM_REQUIRED`, which is terminal.
 - A refused or revoked stream raises `EventsAuthError`.
 
@@ -1163,6 +1195,8 @@ await box.files.get('/bigfile', {
   signal: AbortSignal.timeout(120_000),
 });
 ```
+
+Per-call `headers` add request headers to one call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are set by the client and refused there. A direct call to a kit service that takes its own `headers`, such as `box.exec.run(…)` with `headers: { Authorization: 'Bearer …' }` in its options, does deliver that `Authorization` to the script. The account token is still never sent to a kit.
 
 `timeoutMs` bounds the wait for the response headers; a buffered body then fails with code `ETIMEDOUT` only when no data arrives for that long. GET responses are not cached unless you turn it on, with `cache: { enabled: true, ttl }` on the client or `cache: true` (or a TTL in milliseconds) on one call.
 
