@@ -20,6 +20,12 @@ export type FacadeRequire<T, K extends PropertyKey> = Required<Pick<T, Extract<K
  */
 export type FacadeBodyArgs<B, Tail extends unknown[]> = {} extends B ? [data?: B, ...Tail] : [data: B, ...Tail];
 
+/**
+ * The JSON answer of an operation that also answers bytes under the same status: the promise
+ * without its byte members (`data` an ArrayBuffer or a Blob). A promise with none is unchanged.
+ */
+export type FacadeJson<P> = P extends Promise<infer R> ? Promise<Exclude<R, { data: ArrayBuffer | Blob }>> : P;
+
 /** Refuse a caller-supplied value for a key the method fixes or does not take. */
 export function facadeRefuse(label: string, given: Record<string, unknown>, keys: readonly string[]): void {
   for (const key of keys) {

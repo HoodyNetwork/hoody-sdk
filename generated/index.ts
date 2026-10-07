@@ -98,4 +98,4 @@ export type {
 } from './http-client.js';
 
 export { HoodyClient } from './client.js';
-export { TwoFactorRequiredError, isRealmScopeError, type RealmScopeApiError, type HoodySessionTokens } from './client.js';
+export { TwoFactorRequiredError, isRealmScopeError, type RealmScopeApiError, type HoodySessionTokens, type HoodySessionUpdate } from './client.js';

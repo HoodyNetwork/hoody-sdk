@@ -56,10 +56,10 @@ export interface HoodyClientConfig extends IHttpClientConfig {
    * Realm to scope account-API requests to: 24 hexadecimal characters, or
    * "all" / "default" / "*" for no realm. Anything else throws ValidationError.
    * On an account client (see target), a baseURL that already names a realm
-   * ({realmId}.api.example) selects that realm when this is omitted. On a
+   * ({realmId}.api.hoody.com) selects that realm when this is omitted. On a
    * client whose target is 'kit', a raw request on client.http bound for the
    * base host throws ValidationError, unless that host already carries the
-   * realm ({realmId}.api.example); the generated services apply it to their URLs.
+   * realm ({realmId}.api.hoody.com); the generated services apply it to their URLs.
    */
   realmId?: string;
   kitAuth?: ProxyAuth | ProxyAuthPolicy;
@@ -73,16 +73,44 @@ export interface HoodyClientConfig extends IHttpClientConfig {
    */
   realmErrorIntrospection?: boolean;
   /**
+   * Called each time the SDK itself obtains a session from the account API:
+   * login() (reason 'login'), and the automatic recovery of a 401, which
+   * exchanges the refresh token ('refresh') or signs in again with the stored
+   * credentials ('relogin'). It receives the access token now in use and the
+   * refresh token that goes with it, so a long-running service can save the
+   * pair and start its next run with adoptSession(). hoody-api rotates the
+   * refresh token on every refresh: the one saved before is spent.
+   *
+   * Concurrent 401s share one recovery, so it is called once per new pair,
+   * before the failed requests are replayed. Clients derived with
+   * withRealm() / withContainer() carry it. It is not called for tokens the
+   * caller supplied (adoptSession(), setToken(), setSessionToken(),
+   * onTokenExpired, refreshToken). It is not awaited, and whatever it throws
+   * or rejects with is discarded: a failed save must not fail the request
+   * that triggered the refresh, so handle errors inside it.
+   */
+  onSession?: (session: HoodySessionUpdate) => void | Promise<void>;
+  /**
    * What baseURL points at.
    *  - 'account': the Hoody account API. Kit namespaces refuse to send there
    *    (call withContainer() first), and a realm label on the host
-   *    ({realmId}.api.example) is read as the client's realm.
+   *    ({realmId}.api.hoody.com) is read as the client's realm.
    *  - 'kit': a kit or daemon reached directly. The URL is used as given.
    * When omitted: 'account' if the client has credentials, has no baseURL, has
    * a relative baseURL ('/proxy', resolved against the page), or baseURL is a
-   * Hoody API host (api.hoody.<tld>, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withContainer() keep it.
+   * Hoody API host (api.hoody.com, or a host under it); otherwise 'kit'. Clients derived with withRealm()/withContainer() keep it.
    */
   target?: 'account' | 'kit';
+}
+
+/** What HoodyClientConfig.onSession receives. */
+export interface HoodySessionUpdate {
+  /** The access token the session now uses. */
+  token: string;
+  /** The refresh token issued with it; undefined when the response carried none. */
+  refreshToken: string | undefined;
+  /** How the SDK obtained it: login(), a refresh-token exchange, or an automatic sign-in with the stored credentials. */
+  reason: 'login' | 'refresh' | 'relogin';
 }
 
 /**
@@ -755,14 +783,16 @@ export function isRealmScopeError(error: unknown): error is RealmScopeApiError {
  * server-details object, and its `name` is used.
  */
 export interface ContainerLike {
-  id: string;
-  // project_id is optional (containers.list / containers.create declare it
-  // project_id?: string). server / server_name flow through the index signature
-  // so a raw API container object — where server_name is string | null and
-  // server may be a server-details object — is assignable without a cast.
-  // getKitUrl() validates id + project_id + a resolvable server at runtime and
-  // throws "Invalid container object" when any is missing. withContainer() looks
-  // an object with an id but no project_id or server up by that id first.
+  // Every routing field is optional in the TYPE, because the SDK's own container responses
+  // declare them so: containers.get / create return `id?: string; project_id?: string;
+  // server_name?: string | null`, and a containers.list item carries `server` as a
+  // server-details object. A response is therefore assignable unchanged, with no cast and no
+  // re-assembly. server / server_name flow through the index signature.
+  // Nothing is optional at RUNTIME: getKitUrl() validates id + project_id + a resolvable
+  // server and throws "Invalid container object" when any is missing; withContainer() looks
+  // an object with an id but no project_id or server up by that id first, and refuses one
+  // with no id.
+  id?: string;
   project_id?: string;
   [key: string]: unknown;
 }
@@ -876,6 +906,8 @@ export class HoodyClient {
    */
   private readonly userOnTokenExpired: ((error: ApiError) => Promise<string | undefined>) | undefined;
   private readonly userRefreshToken: (() => Promise<string | undefined>) | undefined;
+  /** The caller's onSession hook; derived clients inherit it like the two above. */
+  private readonly userOnSession: ((session: HoodySessionUpdate) => void | Promise<void>) | undefined;
   /**
    * The last recovery result handed to this client's transport, with the
    * generation it belongs to. The transport asks acceptRefreshedToken() right
@@ -960,7 +992,7 @@ export class HoodyClient {
     viewport: browser.ViewportService;
   };
 
-  public readonly code: {
+  public readonly code: code.CodeService & {
     extensions: code.ExtensionsService;
     kit: code.KitService;
     ui: code.UiService;
@@ -989,7 +1021,6 @@ export class HoodyClient {
     mouse: display.MouseService;
     screenshots: display.ScreenshotsService;
     thumbnails: display.ThumbnailsService;
-    ui: display.UiService;
     windows: display.WindowsService;
   };
 
@@ -1049,7 +1080,6 @@ export class HoodyClient {
     processes: terminal.ProcessesService;
     sessions: terminal.SessionsService;
     system: terminal.SystemService;
-    ui: terminal.UiService;
   };
 
   public readonly watch: {
@@ -1066,7 +1096,6 @@ export class HoodyClient {
 
   public readonly pipe: pipe.PipeService & {
     kit: pipe.KitService;
-    ui: pipe.UiService;
   };
 
   public readonly notes: notes.NotesService & {
@@ -1162,7 +1191,7 @@ export class HoodyClient {
     this.urlTemplates = _withServerNameAlias(config.urlTemplates);
     this.target = _resolveClientTarget(config);
     // An account client's HTTP client holds the ACCOUNT base URL; the realm is
-    // kept apart. A realm-host baseURL ({realmId}.api.example) is split here,
+    // kept apart. A realm-host baseURL ({realmId}.api.hoody.com) is split here,
     // so withRealm('all') can clear the realm it named and switching realms
     // keeps the bearer: credential scope is the account origin plus its realm
     // subdomains. The realm still reaches every request: the services build
@@ -1185,6 +1214,7 @@ export class HoodyClient {
     this.onKitAuthExpired = config.onKitAuthExpired;
     this.userOnTokenExpired = config.onTokenExpired;
     this.userRefreshToken = config.refreshToken;
+    this.userOnSession = typeof config.onSession === 'function' ? config.onSession : undefined;
 
     // Setup request error/auth handlers
     const configWithRetry: IHttpClientConfig = {
@@ -1209,6 +1239,8 @@ export class HoodyClient {
       acceptRefreshedToken: (token: string) => this.acceptRefreshedToken(token),
     };
     delete (configWithRetry as { refreshToken?: unknown }).refreshToken;
+    // A HoodyClient hook: the transport has no use for it.
+    delete (configWithRetry as { onSession?: unknown }).onSession;
 
     if (config.kitAuth || config.onKitAuthExpired) {
       const proxyAuthMiddleware = createProxyAuthMiddleware(
@@ -1309,7 +1341,7 @@ export class HoodyClient {
     // inside the API's credential scope: withholding the header alone would
     // still post the credential in the body to wherever a middleware pointed
     // the request. The scope is the account host and EVERY subdomain of it,
-    // not only realm labels: the deployment owns the whole *.api.hoody.<tld>
+    // not only realm labels: the deployment owns the whole *.api.hoody.com
     // zone, and this check trusts it.
     const accountBaseURL = splitBase.baseURL;
     const refreshCredential = (context: IHttpClientMiddlewareRequestContext, routeTag: object | undefined) => {
@@ -1473,11 +1505,11 @@ export class HoodyClient {
       viewport: new browser.ViewportService(kitHttp('browser'), 'browser', this.urlTemplates?.['browser'] as any, this.getKitUrlTemplatePattern('browser')),
     };
 
-    this.code = {
+    this.code = Object.assign(new code.CodeService(kitHttp('code'), 'code', this.urlTemplates?.['code'] as any, this.getKitUrlTemplatePattern('code')), {
       extensions: new code.ExtensionsService(kitHttp('code'), 'code', this.urlTemplates?.['code'] as any, this.getKitUrlTemplatePattern('code')),
       kit: new code.KitService(kitHttp('code'), 'code', this.urlTemplates?.['code'] as any, this.getKitUrlTemplatePattern('code')),
       ui: new code.UiService(kitHttp('code'), 'code', this.urlTemplates?.['code'] as any, this.getKitUrlTemplatePattern('code')),
-    };
+    });
 
     this.curl = Object.assign(new curl.CurlService(kitHttp('curl'), 'curl', this.urlTemplates?.['curl'] as any, this.getKitUrlTemplatePattern('curl')), {
       channel: new curl.ChannelService(kitHttp('curl'), 'curl', this.urlTemplates?.['curl'] as any, this.getKitUrlTemplatePattern('curl')),
@@ -1502,7 +1534,6 @@ export class HoodyClient {
       mouse: new display.MouseService(kitHttp('display'), 'display', this.urlTemplates?.['display'] as any, this.getKitUrlTemplatePattern('display')),
       screenshots: new display.ScreenshotsService(kitHttp('display'), 'display', this.urlTemplates?.['display'] as any, this.getKitUrlTemplatePattern('display')),
       thumbnails: new display.ThumbnailsService(kitHttp('display'), 'display', this.urlTemplates?.['display'] as any, this.getKitUrlTemplatePattern('display')),
-      ui: new display.UiService(kitHttp('display'), 'display', this.urlTemplates?.['display'] as any, this.getKitUrlTemplatePattern('display')),
       windows: new display.WindowsService(kitHttp('display'), 'display', this.urlTemplates?.['display'] as any, this.getKitUrlTemplatePattern('display')),
     });
 
@@ -1562,7 +1593,6 @@ export class HoodyClient {
       processes: new terminal.ProcessesService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       sessions: new terminal.SessionsService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
       system: new terminal.SystemService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
-      ui: new terminal.UiService(kitHttp('terminal'), 'terminal', this.urlTemplates?.['terminal'] as any, this.getKitUrlTemplatePattern('terminal')),
     };
 
     this.watch = {
@@ -1579,7 +1609,6 @@ export class HoodyClient {
 
     this.pipe = Object.assign(new pipe.PipeService(kitHttp('pipe'), 'pipe', this.urlTemplates?.['pipe'] as any, this.getKitUrlTemplatePattern('pipe')), {
       kit: new pipe.KitService(kitHttp('pipe'), 'pipe', this.urlTemplates?.['pipe'] as any, this.getKitUrlTemplatePattern('pipe')),
-      ui: new pipe.UiService(kitHttp('pipe'), 'pipe', this.urlTemplates?.['pipe'] as any, this.getKitUrlTemplatePattern('pipe')),
     });
 
     this.notes = Object.assign(new notes.NotesService(kitHttp('notes'), 'notes', this.urlTemplates?.['notes'] as any, this.getKitUrlTemplatePattern('notes')), {
@@ -1888,14 +1917,18 @@ export class HoodyClient {
   }
 
   /**
-   * Log out. hoody-api's logout revokes EVERY session of the account (all
-   * devices, the CLI, other apps), not only this client's token. Afterwards
-   * this client, and every client derived from it or from the same parent,
-   * drops its access token, refresh token, stored credentials and kit
-   * credential (kitAuth), and automatic re-authentication stays off until
-   * login(), adoptSession(), setSessionToken() or setToken() starts a new
-   * session. Local state is cleared even when the request fails; the failure
-   * is then rethrown.
+   * Log out THIS session: this client, and every client derived from it or
+   * from the same parent, drops its access token, refresh token, stored
+   * credentials and kit credential (kitAuth), and automatic
+   * re-authentication stays off until login(), adoptSession(),
+   * setSessionToken() or setToken() starts a new session. No request is
+   * made, so it cannot fail, and the account's other sessions (other
+   * devices, the CLI, other apps) stay signed in. It is what the CLI's
+   * hoody logout does.
+   *
+   * hoody-api has no call that revokes one session: the dropped access token
+   * stays valid on the server until it expires. Use logoutAll() when the
+   * token may have leaked, or to sign the account out everywhere.
    *
    * kitAuth is cleared because it is sent on the session's behalf (it often
    * holds the account token itself); pass it again with withContainer() when
@@ -1905,6 +1938,17 @@ export class HoodyClient {
    * EventsClient reconnects with the current (now empty) token.
    */
   public async logout(): Promise<void> {
+    this.clearSession();
+  }
+
+  /**
+   * Log out EVERYWHERE: api.auth.logoutAll() revokes every session of the
+   * account (all devices, the CLI, other apps), not only this client's
+   * token, and then this session is cleared as logout() clears it. Local
+   * state is cleared even when the request fails; the failure is then
+   * rethrown.
+   */
+  public async logoutAll(): Promise<void> {
     const auth = (this as any).api && (this as any).api.auth;
     try {
       if (auth && typeof auth.logoutAll === 'function') {
@@ -2023,7 +2067,7 @@ export class HoodyClient {
       // @ts-ignore
       const response = await (this as any).api.auth.login(credentials) as ApiAuthLoginResponse;
       // A logout, adoption or newer login that landed meanwhile wins.
-      if (this.isCurrentSession(generation)) this.updateTokensFromAuthResponse(response);
+      if (this.isCurrentSession(generation)) this.updateTokensFromAuthResponse(response, 'login');
       return response;
     } else {
       throw new Error('Authentication service not available');
@@ -2054,7 +2098,7 @@ export class HoodyClient {
   /**
    * Extract and persist auth tokens from login/refresh responses.
    */
-  private updateTokensFromAuthResponse(response: any): string | undefined {
+  private updateTokensFromAuthResponse(response: any, reason: HoodySessionUpdate['reason']): string | undefined {
     const responseData = response?.data;
     if (!responseData || typeof responseData !== 'object') {
       return undefined;
@@ -2072,7 +2116,26 @@ export class HoodyClient {
       this.session.refreshToken = responseData.refreshToken;
     }
 
+    this.notifySession({ token, refreshToken: this.session.refreshToken, reason });
     return token;
+  }
+
+  /**
+   * Hand a pair the SDK just obtained to the caller's onSession hook. Never
+   * awaited and never allowed to throw: it runs inside login() and inside the
+   * 401 recovery, whose result must not depend on the caller's storage.
+   */
+  private notifySession(update: HoodySessionUpdate): void {
+    const hook = this.userOnSession;
+    if (!hook) return;
+    try {
+      const pending = hook(update);
+      if (pending && typeof (pending as Promise<void>).then === 'function') {
+        (pending as Promise<void>).then(undefined, () => undefined);
+      }
+    } catch {
+      // See above: the hook's failure is the hook's to report.
+    }
   }
 
   /**
@@ -2112,7 +2175,7 @@ export class HoodyClient {
         // A logout or session replacement that landed while the refresh was
         // in flight wins.
         if (!this.isCurrentSession(generation)) return undefined;
-        const refreshed = this.updateTokensFromAuthResponse(refreshResponse);
+        const refreshed = this.updateTokensFromAuthResponse(refreshResponse, 'refresh');
         if (refreshed) {
           return refreshed;
         }
@@ -2129,7 +2192,7 @@ export class HoodyClient {
         // @ts-ignore
         const loginResponse = await (this as any).api.auth.login(credentials, { authRetry: false });
         if (!this.isCurrentSession(generation)) return undefined;
-        return this.updateTokensFromAuthResponse(loginResponse);
+        return this.updateTokensFromAuthResponse(loginResponse, 'relogin');
       } catch {
         // Login failed
       }
@@ -2287,7 +2350,8 @@ export class HoodyClient {
         // its project or server) is looked up by id, and the API's answer routes the client.
         // A routing field the caller did give must match that answer: it is checked, never
         // replaced. A failed lookup throws the API's own error.
-        const response = await this.api.containers.get(containerOrId.id) as any;
+        // _containerNeedsLookup() answered true, so id is a non-empty string (the type has it optional).
+        const response = await this.api.containers.get(containerOrId.id as string) as any;
         container = _containerFromLookup(containerOrId, response?.data);
       } else {
         container = containerOrId;
@@ -2329,6 +2393,7 @@ export class HoodyClient {
     // session (setToken) would keep recovering through this one's.
     if (this.userOnTokenExpired) newConfig.onTokenExpired = this.userOnTokenExpired;
     if (this.userRefreshToken) newConfig.refreshToken = this.userRefreshToken;
+    if (this.userOnSession) newConfig.onSession = this.userOnSession;
     if (config.autoRetryAuth !== undefined) newConfig.autoRetryAuth = config.autoRetryAuth;
     // The CALLER's transport options, never the normalised `config.transport`: that one has every
     // default filled in, so each derived browser client warned about Node-only knobs nobody set.
@@ -2581,6 +2646,7 @@ export class HoodyClient {
     // session (setToken) would keep recovering through this one's.
     if (this.userOnTokenExpired) newConfig.onTokenExpired = this.userOnTokenExpired;
     if (this.userRefreshToken) newConfig.refreshToken = this.userRefreshToken;
+    if (this.userOnSession) newConfig.onSession = this.userOnSession;
     if (config.autoRetryAuth !== undefined) newConfig.autoRetryAuth = config.autoRetryAuth;
     // The CALLER's transport options, never the normalised `config.transport`: that one has every
     // default filled in, so each derived browser client warned about Node-only knobs nobody set.
@@ -2790,7 +2856,13 @@ export class HoodyClient {
       throw new Error('Invalid container object');
     }
 
-    return `https://${container.project_id}-${container.id}-${serviceSegment}.${containerServer}.${containersDomain}`;
+    // A DNS label holds 63 characters. Two 24-character ids and terminal-<N> make 64 from
+    // N = 10000 up (every ephemeral terminal), a host no resolver accepts. The containers proxy
+    // answers to the short alias t-<N> with the same index handling, so the label switches to it
+    // only when the long one does not fit (the rule of lib/terminal-host.ts).
+    const kitLabel = `${container.project_id}-${container.id}-${serviceSegment}`;
+    const hostLabel = kitLabel.length > 63 ? kitLabel.replace(/-terminal-(\d+)$/, '-t-$1') : kitLabel;
+    return `https://${hostLabel}.${containerServer}.${containersDomain}`;
   }
 
   /**
