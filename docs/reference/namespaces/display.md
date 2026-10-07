@@ -1,6 +1,6 @@
-# `display` — 47 methods
+# `display` — 46 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.display`
 
 ```typescript
@@ -719,87 +719,6 @@ client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: nu
 **Returns:** `ApiResponse<ArrayBuffer> | DisplayThumbnailsGetLatestResponse`
 
 **CLI:** `hoody display thumbnails latest get`
-
----
-
-## `client.display.ui` (1 method)
-
-### `getPage`
-
-**GET** `/api/v1/display/`
-
-Access the HTML5 Display client interface
-
-```typescript
-client.display.ui.getPage(options?: { displayId?: number; decorations?: boolean; toolbar?: boolean; menu?: boolean; maximize_new_windows?: boolean; readonly?: boolean; dark_mode?: boolean; node?: string; project_id?: string; container_id?: string; url_display_id?: string; ssl?: boolean; webtransport?: boolean; path?: string; action?: "connect" | "start" | "shadow"; display?: string; encoding?: string; offscreen?: boolean; bandwidth_limit?: number; override_width?: string; override_height?: string; vrefresh?: number; suspend_inactive_tab?: boolean; sound?: boolean; audio_codec?: string; keyboard?: boolean; keyboard_layout?: string; swap_keys?: boolean; clipboard?: boolean; clipboard_preferred_format?: "text/plain" | "text/html" | "UTF8_STRING"; clipboard_poll?: boolean; printing?: boolean; file_transfer?: boolean; video?: boolean; mediasource_video?: boolean; open_url?: boolean; notification_server_url?: string; web_notifications?: boolean; display_notifications?: boolean; notification_connection_type?: "websocket" | "polling"; sharing?: boolean; steal?: boolean; reconnect?: boolean; floating_menu?: boolean; clock?: boolean; scroll_reverse_y?: "auto" | "true" | "false"; scroll_reverse_x?: boolean; title_show_hoody?: boolean; title_show_display_id?: boolean; app?: string; remote_logging?: boolean; insecure?: boolean; debug_main?: boolean; debug_keyboard?: boolean; debug_geometry?: boolean; debug_mouse?: boolean; debug_clipboard?: boolean; debug_draw?: boolean; debug_audio?: boolean; debug_network?: boolean; debug_file?: boolean; cache?: boolean | number }): Promise<ApiResponse<string>>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `decorations` | `boolean` | No | query | Show window decorations (title bar with close/minimize/maximize buttons). Set to false for headless/kiosk mode. |
-| `toolbar` | `boolean` | No | query | Show entire toolbar/menu area (menu trigger + menu). Set to false to hide all menu UI elements. Takes precedence over the menu parameter. |
-| `menu` | `boolean` | No | query | Show Hoody menu trigger icon. Set to false to hide menu completely. Note: toolbar parameter takes precedence over this. |
-| `maximize_new_windows` | `boolean` | No | query | Open new top-level application windows maximized instead of centered at the default size (max 1024x1024). Only applies to windows that do not request their own position, and skips override-redirect windows, dialogs, other non-NORMAL window types, and windows the app itself marks undecorated via metadata (which would have no title bar to un-maximize from). Windows can still be un-maximized from their title bar. Combining with the global decorations=false parameter is honoured as explicit kiosk intent: windows open maximized without a title bar. |
-| `readonly` | `boolean` | No | query | Enable read-only/view-only mode. Blocks all keyboard and mouse input from the client. Perfect for dashboards, monitoring, or demo scenarios. Works independently or combines with server readonly setting. |
-| `dark_mode` | `boolean` | No | query | Enable dark mode theme |
-| `node` | `string` | No | query | Hoody node identifier (e.g., node-example-1) |
-| `project_id` | `string` | No | query | Hoody project ID |
-| `container_id` | `string` | No | query | Hoody container ID |
-| `url_display_id` | `string` | No | query | Display ID for URL construction |
-| `ssl` | `boolean` | No | query | Use SSL/TLS for WebSocket connection |
-| `webtransport` | `boolean` | No | query | Use WebTransport (HTTP3) instead of WebSocket |
-| `path` | `string` | No | query | Connection path for the display server |
-| `action` | `"connect" \| "start" \| "shadow"` | No | query | Connection action type. - `connect` - Connect to existing session - `start` - Start new session - `shadow` - Shadow existing display |
-| `display` | `string` | No | query | Display number to connect to |
-| `encoding` | `string` | No | query | Pre-selects the encoding in the settings dialog; does not change the stream encoding. |
-| `offscreen` | `boolean` | No | query | Use offscreen canvas for rendering |
-| `bandwidth_limit` | `number` | No | query | Bandwidth limit in bits per second (0 = unlimited) |
-| `override_width` | `string` | No | query | Override virtual desktop width (auto or numeric value) |
-| `override_height` | `string` | No | query | Override virtual desktop height (auto or numeric value 480-4320) |
-| `vrefresh` | `number` | No | query | Vertical refresh rate in Hz. Use -1 for auto-detect. Minimum 30 when explicitly set. |
-| `suspend_inactive_tab` | `boolean` | No | query | Suspend client updates when browser tab is inactive. Enables power saving by calling client.suspend() on tab hide and client.resume() on tab show. Recommended to keep enabled for better performance. |
-| `sound` | `boolean` | No | query | Enable audio forwarding |
-| `audio_codec` | `string` | No | query | Preferred audio codec |
-| `keyboard` | `boolean` | No | query | Show on-screen virtual keyboard |
-| `keyboard_layout` | `string` | No | query | Keyboard layout (us, gb, fr, de, etc.) |
-| `swap_keys` | `boolean` | No | query | Swap Cmd/Ctrl keys (useful for macOS) |
-| `clipboard` | `boolean` | No | query | Enable clipboard sharing |
-| `clipboard_preferred_format` | `"text/plain" \| "text/html" \| "UTF8_STRING"` | No | query | Preferred clipboard format |
-| `clipboard_poll` | `boolean` | No | query | Enable clipboard polling (browser-dependent default) |
-| `printing` | `boolean` | No | query | Enable printing support |
-| `file_transfer` | `boolean` | No | query | Enable file transfer support |
-| `video` | `boolean` | No | query | Enable video encoding support |
-| `mediasource_video` | `boolean` | No | query | Enable MediaSource API for video |
-| `open_url` | `boolean` | No | query | Allow opening URLs from the remote session in the local browser |
-| `notification_server_url` | `string` | No | query | External notification server URL for real-time notification integration. **URL Format:** `https://{project}-{container}-n-{display}.{node}.containers.hoody.com/notification-client.js` **Auto-detection:** If not provided, the client will attempt to auto-detect from the current hostname pattern. The client transforms the display URL pattern by replacing 'display' with 'n'. **Examples:** - Manual: `?notification_server_url=https://my-project-container-n-6.node.containers.hoody.com/notification-client.js` - Auto-detected from: `https://my-project-container-display-6.node.containers.hoody.com` **Integration:** The notification server (port 3999) provides: - Historical notification retrieval - Real-time WebSocket notification updates - Notification icons serving - Desktop notification triggering See external notification server OpenAPI spec for complete API documentation. |
-| `web_notifications` | `boolean` | No | query | Enable browser web notifications (native OS notifications) |
-| `display_notifications` | `boolean` | No | query | Show notifications within display UI |
-| `notification_connection_type` | `"websocket" \| "polling"` | No | query | Notification server connection type. - websocket: Real-time updates via WebSocket (recommended) - polling: Periodic HTTP polling (fallback) |
-| `sharing` | `boolean` | No | query | Allow session sharing |
-| `steal` | `boolean` | No | query | Steal existing sessions |
-| `reconnect` | `boolean` | No | query | Auto-reconnect on connection loss |
-| `floating_menu` | `boolean` | No | query | Show floating menu |
-| `clock` | `boolean` | No | query | Show server clock |
-| `scroll_reverse_y` | `"auto" \| "true" \| "false"` | No | query | Reverse vertical scrolling direction (auto, true, false) |
-| `scroll_reverse_x` | `boolean` | No | query | Reverse horizontal scrolling direction |
-| `title_show_hoody` | `boolean` | No | query | Show "Hoody" in browser title |
-| `title_show_display_id` | `boolean` | No | query | Show display ID in browser title |
-| `app` | `string` | No | query | Target application to launch or focus. Can be an application name, a REGEX pattern, or a window ID. |
-| `remote_logging` | `boolean` | No | query | Enable remote logging to the display server |
-| `insecure` | `boolean` | No | query | Allow insecure authentication (not recommended for production) |
-| `debug_main` | `boolean` | No | query | Enable main debug logging |
-| `debug_keyboard` | `boolean` | No | query | Enable keyboard debug logging |
-| `debug_geometry` | `boolean` | No | query | Enable geometry debug logging |
-| `debug_mouse` | `boolean` | No | query | Enable mouse debug logging |
-| `debug_clipboard` | `boolean` | No | query | Enable clipboard debug logging |
-| `debug_draw` | `boolean` | No | query | Enable draw debug logging |
-| `debug_audio` | `boolean` | No | query | Enable audio debug logging |
-| `debug_network` | `boolean` | No | query | Enable network debug logging |
-| `debug_file` | `boolean` | No | query | Enable file transfer debug logging |
-| `cache` | `boolean \| number` | No | query |  |
-
-**Returns:** `ApiResponse<string>`
 
 ---
 

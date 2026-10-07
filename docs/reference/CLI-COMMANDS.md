@@ -1,7 +1,7 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.15
-**Total commands:** 1020
+**Version:** 1.0.0-beta.16
+**Total commands:** 1023
 **Command groups:** 40
 **Top-level utility commands:** 20
 
@@ -52,12 +52,13 @@ HTTP activity logs and access statistics
 | `hoody activity list` |  | read | Get activity logs | `api.activity.list` | `hoody activity list --page 1 --limit 50` |
 | `hoody activity stats` |  | read | Get activity stats | `api.activity.getStats` | `hoody activity stats` |
 
-## `hoody agent` — 238 commands
+## `hoody agent` — 239 commands
 
 AI agent — sessions, prompting, models, skills, memory, todos, workflows
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
+| `hoody agent login` |  | write | Sign the container's agent in to Hoody with an API token read from stdin | `client.agent.signIn` | `hoody agent login -c CONTAINER_ID < token.txt` |
 | `hoody agent open` |  | action | Open the Hoody Agent kit in your browser |  | `hoody agent open` |
 | `hoody agent acp disable` |  | write | Disable a delegated ACP agent | `agent.acp.disable` | `hoody agent acp disable --agent my-agent` |
 | `hoody agent acp enable` |  | write | Enable a delegated ACP agent | `agent.acp.enable` | `hoody agent acp enable --agent my-agent` |
@@ -407,7 +408,7 @@ Browser automation and control
 | `hoody browser viewport set` |  | write | Change the viewport of a running instance | `browser.viewport.set` | `hoody browser viewport set --viewport-width 10 --viewport-height 10 --browser-id 1` |
 | `hoody browser wait` |  | action | Wait for a condition in a tab | `browser.page.wait` | `hoody browser wait --browser-id 1 --tab-id 10 --condition-kind target --condition-target-selector '#submit' --condition-state attached` |
 
-## `hoody code` — 7 commands
+## `hoody code` — 8 commands
 
 VS Code server
 
@@ -419,6 +420,7 @@ VS Code server
 | `hoody code extensions list` |  | read | List staged extensions and the extensions the instance reports as installed | `code.extensions.list` | `hoody code extensions list` |
 | `hoody code health` |  | read | Service health check | `code.kit.getHealth` | `hoody code health` |
 | `hoody code status` |  | read | Orchestrator configuration and running editor instances | `code.kit.getStatus` | `hoody code status` |
+| `hoody code stop` |  | action | Stop an editor instance; its settings, extensions and workspace state are kept | `code.stop` | `hoody code stop 1` |
 | `hoody code version` |  | read | Versions of the running orchestrator and its packaged editor | `code.kit.getVersion` | `hoody code version` |
 
 ## `hoody containers` (alias: c) — 50 commands
@@ -428,7 +430,7 @@ Container lifecycle, stats, and proxy permissions. Proxy subcommands (`hoody con
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
 | `hoody containers wait` |  | read | Wait until a container reaches a runtime state (running, stopped, paused, failed); prints the result as JSON |  | `hoody containers wait CONTAINER_ID --state running --timeout 120s` |
-| `hoody containers claims create` |  | write | Authorize Container Access | `api.containers.createClaim` | `hoody containers claims create 64f1a2b3c4d5e6f7a8b9c0d1` |
+| `hoody containers claims create` |  | write | Authorize Container Access | `api.containers.createClaim` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers claims create` |
 | `hoody containers copy` |  | write | Copy a container | `api.containers.copy` | `hoody containers copy 64f1a2b3c4d5e6f7a8b9c0d1 --target-project-id 64f1a2b3c4d5e6f7a8b9c0d1 --target-server-id 64f1a2b3c4d5e6f7a8b9c0d1 --name my-resource` |
 | `hoody containers create` |  | write | Create a new container | `api.containers.create` | `hoody containers create --project abc-123 --server-id abc-123 --name my-resource --color '#ff0000'` |
 | `hoody containers delete` |  | destructive | Delete a container | `api.containers.delete` | `hoody containers delete 64f1a2b3c4d5e6f7a8b9c0d1 -y` |
@@ -437,8 +439,8 @@ Container lifecycle, stats, and proxy permissions. Proxy subcommands (`hoody con
 | `hoody containers env set` |  | write | Set a single environment variable | `api.containers.env.set` | `hoody containers env set --key <key> --value hello` |
 | `hoody containers env update` |  | write | Bulk set container environment variables | `api.containers.env.update` | `hoody containers env update --body '{"APP_MODE":"hello"}'` |
 | `hoody containers get` |  | read | Get a container by ID | `api.containers.get` | `hoody containers get 64f1a2b3c4d5e6f7a8b9c0d1 --include-proxy-domains` |
-| `hoody containers kvm disable` |  | write | Disable /dev/kvm passthrough. Rented/dedicated servers only; the container must be stopped. | `api.containers.disableKvm` | `hoody containers kvm disable 64f1a2b3c4d5e6f7a8b9c0d1` |
-| `hoody containers kvm enable` |  | write | Enable /dev/kvm passthrough (run full VMs inside the container). Rented/dedicated servers only; the container must be stopped. | `api.containers.enableKvm` | `hoody containers kvm enable 64f1a2b3c4d5e6f7a8b9c0d1` |
+| `hoody containers kvm disable` |  | write | Disable /dev/kvm passthrough. Rented/dedicated servers only; the container must be stopped. | `api.containers.disableKvm` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers kvm disable` |
+| `hoody containers kvm enable` |  | write | Enable /dev/kvm passthrough (run full VMs inside the container). Rented/dedicated servers only; the container must be stopped. | `api.containers.enableKvm` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers kvm enable` |
 | `hoody containers list` |  | read | Get all containers | `api.containers.list` | `hoody containers list --page 1 --limit 50` |
 | `hoody containers pause` |  | action | Pause a container | `api.containers.pause` | `hoody containers pause 64f1a2b3c4d5e6f7a8b9c0d1 --timeout 120` |
 | `hoody containers proxy default set` |  | write | Update container default proxy permission policy | `api.proxy.containerPermissions.setDefault` | `hoody containers proxy default set --if-match file:v42 --default allow` |
@@ -447,33 +449,33 @@ Container lifecycle, stats, and proxy permissions. Proxy subcommands (`hoody con
 | `hoody containers proxy groups delete` |  | destructive | Remove container authentication group | `api.proxy.containerPermissions.deleteAuthGroup` | `hoody containers proxy groups delete --group-name <group_name> --if-match file:v42 -y` |
 | `hoody containers proxy groups ip set` |  | write | Set IP authentication group (container) | `api.proxy.containerPermissions.setIpGroup` | `hoody containers proxy groups ip set --group-name <group_name> --if-match file:v42 --range 192.0.2.0/24` |
 | `hoody containers proxy groups jwt set` |  | write | Set JWT authentication group (container) | `api.proxy.containerPermissions.setJwtGroup` | `hoody containers proxy groups jwt set --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello` |
-| `hoody containers proxy groups list` |  | read | List container proxy groups | `api.proxy.groups.list` | `hoody containers proxy groups list 64f1a2b3c4d5e6f7a8b9c0d1` |
+| `hoody containers proxy groups list` |  | read | List container proxy groups | `api.proxy.groups.list` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy groups list` |
 | `hoody containers proxy groups password set` |  | write | Set password authentication group (container) | `api.proxy.containerPermissions.setPasswordGroup` | `hoody containers proxy groups password set --group-name <group_name> --if-match file:v42 --auth-username alice --auth-password <password> --algorithm sha256 --salt <salt>` |
 | `hoody containers proxy groups permissions clear` |  | destructive | Remove all program permissions for a container group | `api.proxy.containerPermissions.clearGroupPermissions` | `hoody containers proxy groups permissions clear --group-name <group_name> --if-match file:v42 -y` |
 | `hoody containers proxy groups permissions delete` |  | destructive | Remove a single program permission for a container group | `api.proxy.containerPermissions.deleteGroupPermission` | `hoody containers proxy groups permissions delete --group-name <group_name> --program http --if-match file:v42 -y` |
 | `hoody containers proxy groups permissions set` |  | write | Set container group program permission | `api.proxy.containerPermissions.setGroupPermission` | `hoody containers proxy groups permissions set --group-name <group_name> --if-match file:v42 --program http --access true` |
 | `hoody containers proxy groups token set` |  | write | Set token authentication group (container) | `api.proxy.containerPermissions.setTokenGroup` | `hoody containers proxy groups token set --group-name <group_name> --if-match file:v42 --body '{"header":"X-Api-Key","value":"<token>"}'` |
-| `hoody containers proxy hooks create` |  | write | Append or insert a new hook | `api.proxy.hooks.create` | `hoody containers proxy hooks create 64f1a2b3c4d5e6f7a8b9c0d1 <service> --if-match file:v42 --match-path /home/user/file.txt --match-headers key=hello --script-path /home/user/file.txt` |
-| `hoody containers proxy hooks delete` |  | destructive | Remove a hook | `api.proxy.hooks.delete` | `hoody containers proxy hooks delete 64f1a2b3c4d5e6f7a8b9c0d1 <service> <hook_id> --if-match file:v42 -y` |
-| `hoody containers proxy hooks get` |  | read | Get a single hook by id | `api.proxy.hooks.get` | `hoody containers proxy hooks get 64f1a2b3c4d5e6f7a8b9c0d1 <service> <hook_id>` |
-| `hoody containers proxy hooks list` |  | read | List all proxy hooks for a container | `api.proxy.hooks.list` | `hoody containers proxy hooks list 64f1a2b3c4d5e6f7a8b9c0d1` |
-| `hoody containers proxy hooks move` |  | write | Move a hook to a new position | `api.proxy.hooks.move` | `hoody containers proxy hooks move 64f1a2b3c4d5e6f7a8b9c0d1 <service> <hook_id> --if-match file:v42 --position 10` |
-| `hoody containers proxy hooks set` |  | write | Replace a hook in place | `api.proxy.hooks.set` | `hoody containers proxy hooks set 64f1a2b3c4d5e6f7a8b9c0d1 <service> <hook_id> --if-match file:v42 --match-path /home/user/file.txt --match-headers key=hello --script-path /home/user/file.txt` |
+| `hoody containers proxy hooks create` |  | write | Append or insert a new hook | `api.proxy.hooks.create` | `hoody containers proxy hooks create <service> --if-match file:v42 --match-path /home/user/file.txt --match-headers key=hello --script-path /home/user/file.txt` |
+| `hoody containers proxy hooks delete` |  | destructive | Remove a hook | `api.proxy.hooks.delete` | `hoody containers proxy hooks delete <service> <hook_id> --if-match file:v42 -y` |
+| `hoody containers proxy hooks get` |  | read | Get a single hook by id | `api.proxy.hooks.get` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy hooks get <service> <hook_id>` |
+| `hoody containers proxy hooks list` |  | read | List all proxy hooks for a container | `api.proxy.hooks.list` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy hooks list` |
+| `hoody containers proxy hooks move` |  | write | Move a hook to a new position | `api.proxy.hooks.move` | `hoody containers proxy hooks move <service> <hook_id> --if-match file:v42 --position 10` |
+| `hoody containers proxy hooks set` |  | write | Replace a hook in place | `api.proxy.hooks.set` | `hoody containers proxy hooks set <service> <hook_id> --if-match file:v42 --match-path /home/user/file.txt --match-headers key=hello --script-path /home/user/file.txt` |
 | `hoody containers proxy permissions delete` |  | destructive | Delete container proxy permissions | `api.proxy.containerPermissions.delete` | `hoody containers proxy permissions delete --if-match file:v42 -y` |
 | `hoody containers proxy permissions get` |  | read | Get container proxy permissions | `api.proxy.containerPermissions.get` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy permissions get` |
 | `hoody containers proxy permissions set` |  | write | Replace container proxy permissions JSON | `api.proxy.containerPermissions.set` | `hoody containers proxy permissions set --if-match file:v42 --project 64f1a2b3c4d5e6f7a8b9c0d1 --groups 'key={"type":"ip","range":"192.0.2.0/24"}' --permissions 'key={}' --default allow --enable-proxy` |
-| `hoody containers proxy services get` |  | read | Get merged proxy view for a service | `api.proxy.services.get` | `hoody containers proxy services get 64f1a2b3c4d5e6f7a8b9c0d1 <service>` |
-| `hoody containers proxy services hooks clear` |  | destructive | Clear all hooks for a service | `api.proxy.hooks.clear` | `hoody containers proxy services hooks clear 64f1a2b3c4d5e6f7a8b9c0d1 <service> --if-match file:v42` |
-| `hoody containers proxy services hooks list` |  | read | List hooks for a specific service | `api.proxy.hooks.listByService` | `hoody containers proxy services hooks list 64f1a2b3c4d5e6f7a8b9c0d1 <service>` |
-| `hoody containers proxy services list` |  | read | List services referenced in proxy config | `api.proxy.services.list` | `hoody containers proxy services list 64f1a2b3c4d5e6f7a8b9c0d1` |
-| `hoody containers proxy settings get` |  | read | Get container proxy root settings | `api.proxy.settings.get` | `hoody containers proxy settings get 64f1a2b3c4d5e6f7a8b9c0d1` |
-| `hoody containers proxy settings update` |  | write | Update container proxy root settings | `api.proxy.settings.update` | `hoody containers proxy settings update 64f1a2b3c4d5e6f7a8b9c0d1 --if-match file:v42 --enable-proxy --default allow` |
-| `hoody containers proxy usage` |  | read | Get proxied-usage documents for a container | `api.containers.getProxyUsage` | `hoody containers proxy usage 64f1a2b3c4d5e6f7a8b9c0d1 --from <from> --to <to>` |
+| `hoody containers proxy services get` |  | read | Get merged proxy view for a service | `api.proxy.services.get` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy services get <service>` |
+| `hoody containers proxy services hooks clear` |  | destructive | Clear all hooks for a service | `api.proxy.hooks.clear` | `hoody containers proxy services hooks clear <service> --if-match file:v42 -y` |
+| `hoody containers proxy services hooks list` |  | read | List hooks for a specific service | `api.proxy.hooks.listByService` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy services hooks list <service>` |
+| `hoody containers proxy services list` |  | read | List services referenced in proxy config | `api.proxy.services.list` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy services list` |
+| `hoody containers proxy settings get` |  | read | Get container proxy root settings | `api.proxy.settings.get` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy settings get` |
+| `hoody containers proxy settings update` |  | write | Update container proxy root settings | `api.proxy.settings.update` | `hoody containers proxy settings update --if-match file:v42 --enable-proxy --default allow` |
+| `hoody containers proxy usage` |  | read | Get proxied-usage documents for a container | `api.containers.getProxyUsage` | `hoody containers proxy usage --from <from> --to <to>` |
 | `hoody containers restart` |  | action | Restart a container | `api.containers.restart` | `hoody containers restart 64f1a2b3c4d5e6f7a8b9c0d1 --timeout 120` |
 | `hoody containers resume` |  | action | Resume a container | `api.containers.resume` | `hoody containers resume 64f1a2b3c4d5e6f7a8b9c0d1 --timeout 120` |
 | `hoody containers start` |  | action | Start a container | `api.containers.start` | `hoody containers start 64f1a2b3c4d5e6f7a8b9c0d1 --timeout 120` |
 | `hoody containers stats` |  | read | Get container resource statistics | `api.containers.getStats` | `hoody containers stats 507f1f77bcf86cd799439011` |
-| `hoody containers status history list` |  | read | Get status logs for a container | `api.containers.listStatusHistory` | `hoody containers status history list 64f1a2b3c4d5e6f7a8b9c0d1 --page 1 --limit 10` |
+| `hoody containers status history list` |  | read | Get status logs for a container | `api.containers.listStatusHistory` | `hoody containers status history list --page 1 --limit 10` |
 | `hoody containers stop` |  | action | Stop a container; Force-stop a container immediately, without waiting for a clean shutdown | `api.containers.stop` | `hoody containers stop 64f1a2b3c4d5e6f7a8b9c0d1 --force --timeout 120` |
 | `hoody containers sync` |  | action | Sync a copied container with its source | `api.containers.sync` | `hoody containers sync 64f1a2b3c4d5e6f7a8b9c0d1` |
 | `hoody containers update` |  | write | Update a container | `api.containers.update` | `hoody containers update 64f1a2b3c4d5e6f7a8b9c0d1 --name my-resource --color '#ff0000'` |
@@ -486,12 +488,12 @@ Cron scheduling
 |---------|---------|----------|---------|----------|---------|
 | `hoody cron open` |  | action | Open the Cron kit job manager in your browser |  | `hoody cron open` |
 | `hoody cron crontabs get` |  | read | get crontab | `cron.crontabs.get` | `hoody cron crontabs get alice` |
-| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 10` |
+| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 50` |
 | `hoody cron crontabs set` |  | write | put crontab | `cron.crontabs.set` | `hoody cron crontabs set alice --crontab <crontab>` |
 | `hoody cron entries create` |  | write | create entry | `cron.entries.create` | `hoody cron entries create alice --command 'ls -la' --comment Hello --enabled --schedule '0 * * * *'` |
 | `hoody cron entries delete` |  | destructive | delete entry | `cron.entries.delete` | `hoody cron entries delete alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 -y` |
 | `hoody cron entries get` |  | read | get entry | `cron.entries.get` | `hoody cron entries get alice 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 10` |
+| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 50` |
 | `hoody cron entries update` |  | write | update entry | `cron.entries.update` | `hoody cron entries update alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 --clear-expiration --command 'ls -la'` |
 | `hoody cron health` |  | read | health check | `cron.kit.getHealth` | `hoody cron health` |
 
@@ -507,7 +509,7 @@ cURL jobs and schedules
 | `hoody curl jobs get` |  | read | Get detailed job information | `curl.jobs.get` | `hoody curl jobs get 550e8400-e29b-41d4-a716-446655440000` |
 | `hoody curl jobs list` |  | read | List all async jobs | `curl.jobs.list` | `hoody curl jobs list --page 1 --limit 50` |
 | `hoody curl jobs result get` |  | read | Get job response body | `curl.jobs.getResult` | `hoody curl jobs result get 550e8400-e29b-41d4-a716-446655440000` |
-| `hoody curl jobs stream` |  | read | Stream job lifecycle events live | `curl.jobs.stream` | `hoody curl jobs stream --job-id 550e8400-e29b-41d4-a716-446655440000` |
+| `hoody curl jobs stream` |  | read | Stream job lifecycle events live | `curl.jobs.stream` | `hoody curl jobs stream --job-id 550e8400-e29b-41d4-a716-446655440000 --since 0` |
 | `hoody curl metrics` |  | read | Prometheus metrics | `curl.kit.getMetrics` | `hoody curl metrics` |
 | `hoody curl run` |  | action | Execute HTTP request with full cURL capabilities | `curl.run` | `hoody curl run --compressed --connect-timeout 10 --url https://example.com` |
 | `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --request-compressed --request-connect-timeout 10 --request-url https://example.com` |
@@ -519,7 +521,7 @@ cURL jobs and schedules
 | `hoody curl sessions delete` |  | destructive | Delete a session | `curl.sessions.delete` | `hoody curl sessions delete user-session-123 -y` |
 | `hoody curl sessions get` |  | read | Get session details | `curl.sessions.get` | `hoody curl sessions get user-session-123` |
 | `hoody curl sessions list` |  | read | List all cookie sessions | `curl.sessions.list` | `hoody curl sessions list --page 1 --limit 50` |
-| `hoody curl storage delete` |  | destructive | Delete a saved file | `curl.storage.delete` | `hoody curl storage delete by-job/550e8400-e29b-41d4-a716-446655440000/report.pdf -y` |
+| `hoody curl storage delete` |  | destructive | Delete a saved file | `curl.storage.delete` | `hoody curl storage delete by-job/550e8400-e29b-41d4-a716-446655440000/report.pdf --recursive -y` |
 | `hoody curl storage get` |  | read | Download a saved file | `curl.storage.get` | `hoody curl storage get by-job/550e8400-e29b-41d4-a716-446655440000/report.pdf` |
 | `hoody curl storage list` |  | read | List all saved downloads | `curl.storage.list` | `hoody curl storage list --page 1 --limit 50` |
 
@@ -531,7 +533,7 @@ Daemon and ephemeral programs
 |---------|---------|----------|---------|----------|---------|
 | `hoody daemon ephemeral programs list` |  | read | List all ephemeral programs | `daemon.ephemeralPrograms.list` | `hoody daemon ephemeral programs list` |
 | `hoody daemon ephemeral programs logs get` |  | read | Get ephemeral program logs | `daemon.ephemeralPrograms.getLogs` | `hoody daemon ephemeral programs logs get <id> --type stdout --lines 100` |
-| `hoody daemon ephemeral programs start` |  | write | Launch ephemeral CUSTOM program | `daemon.ephemeralPrograms.start` | `hoody daemon ephemeral programs start --command 'python my_batch_job.py' --user worker --autorestart true --directory /opt/app` |
+| `hoody daemon ephemeral programs start` |  | write | Launch ephemeral CUSTOM program | `daemon.ephemeralPrograms.start` | `hoody daemon ephemeral programs start --command 'python my_batch_job.py' --user worker --directory /opt/app --inject-container-env` |
 | `hoody daemon ephemeral programs status` |  | read | Get ephemeral program status | `daemon.ephemeralPrograms.getStatus` | `hoody daemon ephemeral programs status quick_1731605123456_0` |
 | `hoody daemon ephemeral programs stop` |  | write | Stop ephemeral program | `daemon.ephemeralPrograms.stop` | `hoody daemon ephemeral programs stop quick_1731605123456_0` |
 | `hoody daemon health` |  | read | Service health check | `daemon.kit.getHealth` | `hoody daemon health` |
@@ -543,7 +545,7 @@ Daemon and ephemeral programs
 | `hoody daemon programs list` |  | read | List all programs | `daemon.programs.list` | `hoody daemon programs list --hoody-kit true --lazy-load true` |
 | `hoody daemon programs logs get` |  | read | Get program logs | `daemon.programs.getLogs` | `hoody daemon programs logs get 10 --type stdout --lines 100` |
 | `hoody daemon programs logs stream` |  | read | Follow a program's log live: replays the last --lines lines, then prints every new line. A reconnect resumes after the last line received | `daemon.programs.streamLogs` | `hoody daemon programs logs stream --id 10 --type stdout --port 8080` |
-| `hoody daemon programs reset` |  | write | Reset programs to default | `daemon.programs.reset` | `hoody daemon programs reset` |
+| `hoody daemon programs reset` |  | write | Reset programs to default | `daemon.programs.reset` | `hoody daemon programs reset -y` |
 | `hoody daemon programs sandbox get` |  | read | Show a program's sandbox: the stored block, the policy revision, what it resolves to, and what the firewall is holding | `daemon.programs.getSandbox` | `hoody daemon programs sandbox get 1` |
 | `hoody daemon programs start` |  | write | Start a program or port instance | `daemon.programs.start` | `hoody daemon programs start 1 --port 8042 --wait` |
 | `hoody daemon programs status` |  | read | Get the status of every program (no id); Get the status of one program | `daemon.programs.listStatus`, `daemon.programs.getStatus` | `hoody daemon programs status --port 8080` |
@@ -622,7 +624,7 @@ Display control — screenshots, input, windows, clipboard
 | `hoody display windows title get` |  | read | Get window title | `display.windows.getTitle` | `hoody display windows title get 1 --display-id 10` |
 | `hoody display windows wait` |  | read | Wait for a window to appear or disappear | `display.windows.wait` | `hoody display windows wait --display-id 10 --condition window-present --pattern Firefox` |
 
-## `hoody egress` — 5 commands
+## `hoody egress` — 6 commands
 
 Container egress proxy — outbound HTTP/CONNECT with an optional upstream
 
@@ -632,7 +634,8 @@ Container egress proxy — outbound HTTP/CONNECT with an optional upstream
 | `hoody egress health` |  | read | Egress service health | `egress.kit.getHealth` | `hoody egress health` |
 | `hoody egress upstream disable` |  | destructive | Stop chaining through an upstream; egress goes direct | `egress.upstream.disable` | `hoody egress upstream disable` |
 | `hoody egress upstream get` |  | read | Show the upstream proxy the container chains through | `egress.upstream.get` | `hoody egress upstream get` |
-| `hoody egress upstream set` |  | action | Route the container's egress through an upstream proxy | `egress.upstream.set` | `hoody egress upstream set socks5h://user:pass@host:1080` |
+| `hoody egress upstream renew` |  | action | Renew the upstream lease, pushing its deadline out by its ttl from now | `egress.upstream.renewLease` | `hoody egress upstream renew --lease-id 64f1a2b3c4d5e6f7a8b9c0d1` |
+| `hoody egress upstream set` |  | action | Route the container's egress through an upstream proxy | `egress.upstream.set` | `hoody egress upstream set socks5h://user:pass@host:1080 --lease 10` |
 
 ## `hoody events` (alias: ev) — 7 commands
 
@@ -662,10 +665,10 @@ Script execution and templates
 | `hoody exec logs list` |  | read | List Logs | `exec.logs.list` | `hoody exec logs list --limit 10` |
 | `hoody exec logs search` |  | read | Search Logs | `exec.logs.search` | `hoody exec logs search --query 'my search' --limit 1000` |
 | `hoody exec logs stream` |  | read | Stream Logs | `exec.logs.stream` | `hoody exec logs stream --file /home/user/file.txt --follow` |
-| `hoody exec magic comments batch update` |  | write | Bulk Update Magic Comments | `exec.magicComments.updateMany` | `hoody exec magic comments batch update --exec-id 64f1a2b3c4d5e6f7a8b9c0d1 --comments-enabled` |
-| `hoody exec magic comments get` |  | read | Read Magic Comments | `exec.magicComments.get` | `hoody exec magic comments get --path /home/user/file.txt` |
+| `hoody exec magic comments batch update` |  | write | Bulk Update Magic Comments | `exec.magicComments.updateMany` | `hoody exec magic comments batch update --directory /home/user/src --exec-id 64f1a2b3c4d5e6f7a8b9c0d1` |
+| `hoody exec magic comments get` |  | read | Read Magic Comments | `exec.magicComments.get` | `hoody exec magic comments get --path reports/report.pdf --exec-id 64f1a2b3c4d5e6f7a8b9c0d1` |
 | `hoody exec magic comments schema get` |  | read | Get Magic Comments Schema | `exec.magicComments.getSchema` | `hoody exec magic comments schema get` |
-| `hoody exec magic comments update` |  | write | Update Magic Comments Handler | `exec.magicComments.update` | `hoody exec magic comments update --path /home/user/file.txt --comments-enabled --comments-mode worker` |
+| `hoody exec magic comments update` |  | write | Update Magic Comments Handler | `exec.magicComments.update` | `hoody exec magic comments update --exec-id 64f1a2b3c4d5e6f7a8b9c0d1 --path reports/report.pdf --comments-enabled` |
 | `hoody exec magic comments validate` |  | read | Validate Magic Comments | `exec.magicComments.validate` | `hoody exec magic comments validate --code <code>` |
 | `hoody exec metrics` |  | read | Prometheus Export | `exec.kit.getMetrics` | `hoody exec metrics` |
 | `hoody exec modules install` |  | write | Install Dependencies | `exec.modules.install` | `hoody exec modules install --modules <modules>` |
@@ -686,7 +689,7 @@ Script execution and templates
 | `hoody exec packages pin` |  | write | Pin Versions | `exec.packages.pin` | `hoody exec packages pin --packages axios` |
 | `hoody exec requests list` |  | read | Get Active Requests | `exec.kit.listRequests` | `hoody exec requests list` |
 | `hoody exec restart` |  | destructive | Restart Server | `exec.kit.restart` | `hoody exec restart --graceful --drain-timeout-ms 5000 -y` |
-| `hoody exec routes list` |  | read | Discover Routes | `exec.routes.list` | `hoody exec routes list --include-metadata` |
+| `hoody exec routes list` |  | read | Discover Routes | `exec.routes.list` | `hoody exec routes list --include-metadata --hostname example.com` |
 | `hoody exec routes resolve` |  | read | Resolve Route | `exec.routes.resolve` | `hoody exec routes resolve --path /home/user/file.txt --hostname default` |
 | `hoody exec routes test` |  | read | Test Route | `exec.routes.test` | `hoody exec routes test --paths /home/user/src --hostname default` |
 | `hoody exec schedules history list` |  | read | Schedule History | `exec.schedules.listHistory` | `hoody exec schedules history list --script-path reports/report.pdf --since 2026-01-01T00:00:00Z` |
@@ -717,7 +720,7 @@ Script execution and templates
 | `hoody exec store set` |  | write | Set Shared State | `exec.store.set` | `hoody exec store set --hostname example.com --path /home/user/file.txt --value @path.json --merge` |
 | `hoody exec templates create` |  | write | Create Custom Template | `exec.templates.create` | `hoody exec templates create --name my-resource --code <code> --metadata-category custom --metadata-tags tag1,tag2` |
 | `hoody exec templates delete` |  | destructive | Delete Custom Template | `exec.templates.delete` | `hoody exec templates delete --name my-resource -y` |
-| `hoody exec templates generate` |  | action | Generate From Template | `exec.templates.generate` | `hoody exec templates generate --name my-resource --output-path /home/user/file.txt --save-file` |
+| `hoody exec templates generate` |  | action | Generate From Template | `exec.templates.generate` | `hoody exec templates generate --exec-id 64f1a2b3c4d5e6f7a8b9c0d1 --name my-resource --save-file` |
 | `hoody exec templates list` |  | read | List Templates | `exec.templates.list` | `hoody exec templates list --category api --include-builtin` |
 | `hoody exec templates preview` |  | read | Preview Template | `exec.templates.preview` | `hoody exec templates preview --name my-resource` |
 | `hoody exec templates update` |  | write | Update Custom Template | `exec.templates.update` | `hoody exec templates update --name my-resource` |
@@ -753,7 +756,7 @@ File operations and remote backends
 | `hoody files backends hdfs create` |  | write | Connect to hdfs backend | `files.backends.createHdfs` | `hoody files backends hdfs create --description 'My description' --encoding 50430082 --namenode namenode-1:8020,namenode-2:8020` |
 | `hoody files backends hidrive create` |  | write | Connect to hidrive backend | `files.backends.createHidrive` | `hoody files backends hidrive create --auth-url https://example.com/auth --chunk-size 50331648` |
 | `hoody files backends http create` |  | write | Connect to http backend | `files.backends.createHttp` | `hoody files backends http create --description 'My description' --headers '{}' --url https://example.com` |
-| `hoody files backends iclouddrive create` |  | write | Connect to iclouddrive backend | `files.backends.createIclouddrive` | `hoody files backends iclouddrive create --apple-id abc-123 --client-id d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d --description 'My description' --password <password> --service drive` |
+| `hoody files backends iclouddrive create` |  | write | Connect to iclouddrive backend | `files.backends.createIclouddrive` | `hoody files backends iclouddrive create --apple-id abc-123 --client-id d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d --description 'My description' --password <password>` |
 | `hoody files backends imagekit create` |  | write | Connect to imagekit backend | `files.backends.createImagekit` | `hoody files backends imagekit create --description 'My description' --encoding 117553486 --endpoint https://example.com --private-key <private_key> --public-key pk_abc123` |
 | `hoody files backends internetarchive create` |  | write | Connect to internetarchive backend | `files.backends.createInternetarchive` | `hoody files backends internetarchive create --description 'My description' --disable-checksum` |
 | `hoody files backends jottacloud create` |  | write | Connect to jottacloud backend | `files.backends.createJottacloud` | `hoody files backends jottacloud create --auth-url https://example.com/auth --client-credentials` |
@@ -767,15 +770,15 @@ File operations and remote backends
 | `hoody files backends opendrive create` |  | write | Connect to opendrive backend | `files.backends.createOpendrive` | `hoody files backends opendrive create --access private --chunk-size 10485760 --password <password> --username alice` |
 | `hoody files backends oracleobjectstorage create` |  | write | Connect to oracleobjectstorage backend | `files.backends.createOracleobjectstorage` | `hoody files backends oracleobjectstorage create --attempt-resume-upload --chunk-size 5242880 --namespace <namespace> --provider no_auth --region eu-west-1` |
 | `hoody files backends pcloud create` |  | write | Connect to pcloud backend | `files.backends.createPcloud` | `hoody files backends pcloud create --auth-url https://example.com/auth --client-credentials` |
-| `hoody files backends pikpak create` |  | write | Connect to pikpak backend | `files.backends.createPikpak` | `hoody files backends pikpak create --chunk-size 5242880 --description 'My description' --pass <pass> --user alice` |
-| `hoody files backends pixeldrain create` |  | write | Connect to pixeldrain backend | `files.backends.createPixeldrain` | `hoody files backends pixeldrain create --api-url https://pixeldrain.com/api --description 'My description' --root-folder-id me` |
+| `hoody files backends pikpak create` |  | write | Connect to pikpak backend | `files.backends.createPikpak` | `hoody files backends pikpak create --chunk-size 5242880 --description 'My description'` |
+| `hoody files backends pixeldrain create` |  | write | Connect to pixeldrain backend | `files.backends.createPixeldrain` | `hoody files backends pixeldrain create --api-url https://pixeldrain.com/api --description 'My description'` |
 | `hoody files backends premiumizeme create` |  | write | Connect to premiumizeme backend | `files.backends.createPremiumizeme` | `hoody files backends premiumizeme create --auth-url https://example.com/auth --client-credentials` |
-| `hoody files backends protondrive create` |  | write | Connect to protondrive backend | `files.backends.createProtondrive` | `hoody files backends protondrive create --description 'My description' --enable-caching --password <password> --username alice` |
+| `hoody files backends protondrive create` |  | write | Connect to protondrive backend | `files.backends.createProtondrive` | `hoody files backends protondrive create --description 'My description' --enable-caching` |
 | `hoody files backends putio create` |  | write | Connect to putio backend | `files.backends.createPutio` | `hoody files backends putio create --auth-url https://example.com/auth --client-credentials` |
 | `hoody files backends qingstor create` |  | write | Connect to qingstor backend | `files.backends.createQingstor` | `hoody files backends qingstor create --chunk-size 4194304 --connection-retries 3` |
 | `hoody files backends quatrix create` |  | write | Connect to quatrix backend | `files.backends.createQuatrix` | `hoody files backends quatrix create --api-key <api_key> --description 'My description' --effective-upload-time 4s --host example.com` |
 | `hoody files backends s3 create` |  | write | Connect to s3 backend | `files.backends.createS3` | `hoody files backends s3 create --bucket-object-lock-enabled --bypass-governance-retention` |
-| `hoody files backends seafile create` |  | write | Connect to seafile backend | `files.backends.createSeafile` | `hoody files backends seafile create --2fa --create-library --url https://cloud.seafile.com/ --user alice` |
+| `hoody files backends seafile create` |  | write | Connect to seafile backend | `files.backends.createSeafile` | `hoody files backends seafile create --2fa --create-library --url https://cloud.seafile.com/` |
 | `hoody files backends sftp create` |  | write | Connect to sftp backend | `files.backends.createSftp` | `hoody files backends sftp create --ask-password --chunk-size 32768 --host example.com --user user` |
 | `hoody files backends sharefile create` |  | write | Connect to sharefile backend | `files.backends.createSharefile` | `hoody files backends sharefile create --auth-url https://example.com/auth --chunk-size 67108864` |
 | `hoody files backends sia create` |  | write | Connect to sia backend | `files.backends.createSia` | `hoody files backends sia create --api-url https://example.com --description 'My description' --encoding 50436354` |
@@ -794,19 +797,19 @@ File operations and remote backends
 | `hoody files copy` |  | write | Copy file or directory | `files.copy` | `hoody files copy /home/user/file.txt --copy-to <copy_to> --overwrite true` |
 | `hoody files delete` |  | destructive | Delete file or directory | `files.delete` | `hoody files delete /home/user/file.txt -y` |
 | `hoody files downloads cancel` |  | action | Cancel a running download | `files.downloads.cancel` | `hoody files downloads cancel 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody files downloads create` |  | write | Download a file from a URL into a directory (--owner sets the owner of the new file; the reply is then shorter); Download a file from a URL with an owner for the new file (answers success and message only) | `files.downloads.create`, `files.mkdir` | `hoody files downloads create /home/user/src --download <download_from> --timeout 300 --owner <owner>` |
-| `hoody files downloads history list` |  | read | Download history | `files.downloads.listHistory` | `hoody files downloads history list --download-history` |
-| `hoody files downloads list` |  | read | List all active downloads; List active downloads of a directory | `files.downloads.list`, `files.downloads.listByDirectory` | `hoody files downloads list --downloads` |
+| `hoody files downloads create` |  | write | Download a file from a URL into a directory (--owner sets the owner of the new file; the reply is then shorter); Download a file from a URL with an owner for the new file (answers success and message only) | `files.downloads.create`, `files.mkdir` | `hoody files downloads create /home/user/src --download <download_from> --timeout 10 --owner <owner>` |
+| `hoody files downloads history list` |  | read | Download history | `files.downloads.listHistory` | `hoody files downloads history list` |
+| `hoody files downloads list` |  | read | List all active downloads; List active downloads of a directory | `files.downloads.list`, `files.downloads.listByDirectory` | `hoody files downloads list` |
 | `hoody files exists` |  | read | Get file metadata | `files.exists` | `hoody files exists /home/user/file.txt --history` |
 | `hoody files extractions cancel` |  | action | Cancel a running extraction | `files.extractions.cancel` | `hoody files extractions cancel 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody files extractions history list` |  | read | Extraction history | `files.extractions.listHistory` | `hoody files extractions history list --extraction-history` |
+| `hoody files extractions history list` |  | read | Extraction history | `files.extractions.listHistory` | `hoody files extractions history list` |
 | `hoody files extractions list` |  | read | List active extractions | `files.extractions.list` | `hoody files extractions list` |
 | `hoody files ftp get` |  | read | Access file via FTP | `files.ftp.get` | `hoody files ftp get /home/user/file.txt --type ftp --server ftp.example.com:21 --user anonymous --ftp-secure` |
 | `hoody files get` |  | read | List directory or download file | `files.get` | `hoody files get /home/user/file.txt --hash --size 800x600` |
 | `hoody files glob` |  | read | Find files by glob pattern | `files.glob` | `hoody files glob /home/user/src --pattern '*.ts' --max-results 1000 --max-depth 50` |
 | `hoody files grep` |  | read | Search file contents (grep) | `files.grep` | `hoody files grep /home/user/file.txt --pattern TODO --ignore-case --fixed-string` |
 | `hoody files health` |  | read | Service health check | `files.kit.getHealth` | `hoody files health` |
-| `hoody files images convert` |  | read | Process and convert images | `files.images.convert` | `hoody files images convert img-abc --thumbnail --format jpeg --size 800x600` |
+| `hoody files images convert` |  | read | Process and convert images | `files.images.convert` | `hoody files images convert img-abc --format jpeg --size 800x600` |
 | `hoody files journal flush` |  | write | Flush journal to disk | `files.journal.flush` | `hoody files journal flush` |
 | `hoody files journal list` |  | read | Query journal entries | `files.journal.list` | `hoody files journal list --path /home/user/file.txt --op write,delete` |
 | `hoody files journal stats` |  | read | Get journal statistics | `files.journal.getStats` | `hoody files journal stats` |
@@ -823,7 +826,7 @@ File operations and remote backends
 | `hoody files ssh get` |  | read | Access file via SSH/SFTP | `files.ssh.get` | `hoody files ssh get /home/user/file.txt --type ssh --server nas.local:22 --user alice` |
 | `hoody files ssh upload` |  | write | Upload file via SSH/SFTP | `files.ssh.upload` | `hoody files ssh upload /home/user/file.txt --server nas.local:22 --user alice --input ./local-file` |
 | `hoody files stat` |  | read | Get file metadata (stat) | `files.stat` | `hoody files stat /home/user/file.txt` |
-| `hoody files touch` |  | write | Touch file (create or update mtime) | `files.touch` | `hoody files touch /home/user/file.txt --touch` |
+| `hoody files touch` |  | write | Touch file (create or update mtime) | `files.touch` | `hoody files touch /home/user/file.txt` |
 | `hoody files update` |  | write | Modify file properties or move/rename | `files.update` | `hoody files update /home/user/file.txt --body '{"move_to":"/new/dir/file.txt"}'` |
 | `hoody files upload` |  | write | Upload or append file | `files.upload` | `hoody files upload /home/user/file.txt --append --input ./local-file` |
 | `hoody files uploads delete` |  | destructive | Delete every held file of a pending upload. They are the only copy of those changes; the backend is not touched | `files.uploads.delete` | `hoody files uploads delete abc-123 -y` |
@@ -837,7 +840,7 @@ File operations and remote backends
 | `hoody files version` |  | read | Get API version | `files.kit.getVersion` | `hoody files version` |
 | `hoody files webdav get` |  | read | Access file via WebDAV | `files.webdav.get` | `hoody files webdav get /home/user/file.txt --type webdav --server cloud.nextcloud.com --user alice --webdav-path /` |
 | `hoody files whoami` |  | read | Show the user your credentials authenticate as | `files.whoami` | `hoody files whoami /home/user/file.txt` |
-| `hoody files zip` |  | read | Download directory as ZIP | `files.zip` | `hoody files zip /home/user/src --zip` |
+| `hoody files zip` |  | read | Download directory as ZIP | `files.zip` | `hoody files zip /home/user/src` |
 
 ## `hoody firewall` (alias: fw) — 10 commands
 
@@ -951,7 +954,7 @@ Hoody Notes — notebooks, nodes, documents, comments, versions, and databases
 |---------|---------|----------|---------|----------|---------|
 | `hoody notes open` |  | action | Open the Notes kit in your browser |  | `hoody notes open` |
 | `hoody notes avatars download` |  | read | Download an avatar image by id | `notes.avatars.download` | `hoody notes avatars download --avatar-id abc-123` |
-| `hoody notes avatars upload` |  | write | Upload an avatar image and get its id (JPEG, PNG or WebP; resized to 500x500) | `notes.avatars.upload` | `hoody notes avatars upload` |
+| `hoody notes avatars upload` |  | write | Upload an avatar image and get its id (JPEG, PNG or WebP; resized to 500x500) | `notes.avatars.upload` | `hoody notes avatars upload --input ./local-file` |
 | `hoody notes collaborators add` |  | write | Add a collaborator to a node | `notes.collaborators.add` | `hoody notes collaborators add --notebook-id abc-123 --node-id 1 --collaborator-id abc-123 --role admin` |
 | `hoody notes collaborators list` |  | read | List collaborators on a node | `notes.collaborators.list` | `hoody notes collaborators list --notebook-id abc-123 --node-id 1` |
 | `hoody notes collaborators remove` |  | destructive | Remove a collaborator from a node | `notes.collaborators.remove` | `hoody notes collaborators remove --notebook-id abc-123 --node-id 1 --collaborator-id abc-123` |
@@ -1018,7 +1021,7 @@ Notifications
 | `hoody notifications metrics` |  | read | Prometheus-compatible metrics endpoint | `notifications.kit.getMetrics` | `hoody notifications metrics` |
 | `hoody notifications restore` |  | destructive | Clear dismissed notifications | `notifications.restore` | `hoody notifications restore --display-id 1` |
 | `hoody notifications send` |  | write | Trigger a new desktop notification | `notifications.send` | `hoody notifications send --body 'This is a test message from the API.' --category test-api --display 1 --summary 'Test Notification'` |
-| `hoody notifications stream` |  | read | Real-time notification stream via WebSocket | `notifications.connect` | `hoody notifications stream --displays all` |
+| `hoody notifications stream` |  | read | Follow new notifications as they arrive (Server-Sent Events) | `notifications.connect` | `hoody notifications stream --displays all` |
 
 ## `hoody pools` — 11 commands
 
@@ -1076,7 +1079,7 @@ Global proxy routing, aliases, and logs. For per-container request hooks, permis
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
-| `hoody proxy aliases create` |  | write | Create a new proxy alias | `api.proxy.aliases.create` | `hoody --container-id 64f1a2b3c4d5e6f7a8b9c0d1 proxy aliases create --program <program> --target-path /home/user/file.txt --allow-path-override` |
+| `hoody proxy aliases create` |  | write | Create a new proxy alias | `api.proxy.aliases.create` | `hoody --container-id 64f1a2b3c4d5e6f7a8b9c0d1 proxy aliases create --program <program> --target-path /home/user/file.txt --expires-at 2026-01-01T00:00:00Z` |
 | `hoody proxy aliases delete` |  | destructive | Delete proxy alias | `api.proxy.aliases.delete` | `hoody proxy aliases delete 64f1a2b3c4d5e6f7a8b9c0d1 -y` |
 | `hoody proxy aliases disable` |  | write | Disable a proxy alias | `api.proxy.aliases.disable` | `hoody proxy aliases disable 64f1a2b3c4d5e6f7a8b9c0d1` |
 | `hoody proxy aliases enable` |  | write | Enable a proxy alias | `api.proxy.aliases.enable` | `hoody proxy aliases enable 64f1a2b3c4d5e6f7a8b9c0d1` |
@@ -1121,7 +1124,7 @@ Application resolution across multiple package sources (Hoody Run)
 | `hoody run recipes search` |  | read | Search candidates using a saved recipe | `run.recipes.search` | `hoody run recipes search my-resource --overrides-app firefox --overrides-os linux` |
 | `hoody run recipes update` |  | write | Update a saved recipe | `run.recipes.update` | `hoody run recipes update my-resource --description 'My description' --selector-template-app firefox` |
 | `hoody run resolve` |  | action | Resolve an app to an exact shell command; Resolve an app by path to an exact shell command | `run.resolve` | `hoody run resolve --app firefox --os linux --kind gui` |
-| `hoody run search` |  | read | Search candidates page by page with a cursor | `run.search` | `hoody run search --selector-app firefox --selector-os linux --selector-kind gui` |
+| `hoody run search` |  | read | Search candidates page by page with a cursor | `run.search` | `hoody run search --app firefox --selector-os linux --selector-kind gui` |
 | `hoody run sources create` |  | write | Add a package source | `run.sources.create` | `hoody run sources create --source-id nixpkgs --enabled --priority 100 --provider nix --source-type nix-pkgs --pin-url https://github.com/numtide/llm-agents.nix --source-config flake=nixpkgs` |
 | `hoody run sources delete` |  | destructive | Remove a package source | `run.sources.delete` | `hoody run sources delete abc-123 -y` |
 | `hoody run sources diagnostics get` |  | read | Show runtime health for a source: last error, last search latency, last sync job | `run.sources.getDiagnostics` | `hoody run sources diagnostics get abc-123` |
@@ -1228,8 +1231,8 @@ Terminal sessions and execution
 | `hoody terminal system displays list` |  | read | Get display information | `terminal.system.listDisplays` | `hoody terminal system displays list` |
 | `hoody terminal system displays stop` |  | destructive | Stop an X display and everything drawing on it, including a display a deleted terminal session left running | `terminal.system.stopDisplay` | `hoody terminal system displays stop 1 -y` |
 | `hoody terminal system ports list` |  | read | List all listening network ports | `terminal.system.listPorts` | `hoody terminal system ports list --protocol tcp --user root` |
-| `hoody terminal system reboot` |  | write | Reboot the system | `terminal.system.reboot` | `hoody terminal system reboot --delay 60` |
-| `hoody terminal system shutdown` |  | write | Shutdown the system | `terminal.system.shutdown` | `hoody terminal system shutdown --delay 60` |
+| `hoody terminal system reboot` |  | write | Reboot the system | `terminal.system.reboot` | `hoody terminal system reboot --delay 60 -y` |
+| `hoody terminal system shutdown` |  | write | Shutdown the system | `terminal.system.shutdown` | `hoody terminal system shutdown --delay 60 -y` |
 | `hoody terminal system stats` |  | read | Get system resources and statistics | `terminal.system.getStats` | `hoody terminal system stats` |
 
 ## `hoody tunnel` (alias: tun) — 8 commands
@@ -1267,7 +1270,7 @@ Secure key-value vault
 
 | Command | Aliases | Category | Summary | SDK Link | Example |
 |---------|---------|----------|---------|----------|---------|
-| `hoody vault clear` |  | destructive | Clear entire vault | `api.vault.clear` | `hoody vault clear` |
+| `hoody vault clear` |  | destructive | Clear entire vault | `api.vault.clear` | `hoody vault clear -y` |
 | `hoody vault delete` |  | destructive | Delete vault key | `api.vault.delete` | `hoody vault delete <key> -y` |
 | `hoody vault get` |  | read | Get vault key | `api.vault.get` | `hoody vault get <key>` |
 | `hoody vault list` |  | read | List vault keys | `api.vault.list` | `hoody vault list` |

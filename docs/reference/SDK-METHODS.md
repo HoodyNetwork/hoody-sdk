@@ -1,12 +1,12 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.15
-**Total methods:** 1181
+**Version:** 1.0.0-beta.16
+**Total methods:** 1179
 **Namespaces:** 21
 
 ---
 
-## `agent` (293 methods)
+## `agent` (294 methods)
 
 ### `client.agent.acp`
 
@@ -22,6 +22,7 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
+| `signIn` | POST | `/api/v1/agent/hoody/auth/bootstrap` | Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in". |
 | `stopAllWork` | POST | `/api/v1/agent/stop` | Stop everything running in the realm. |
 | `whoami` | GET | `/api/v1/agent/hoody/auth/status` | Hoody platform identity and realm scope. |
 
@@ -1077,6 +1078,12 @@
 
 ## `code` (10 methods)
 
+### `client.code`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `stop` | DELETE | `/api/v1/code` | Stop an editor instance |
+
 ### `client.code.extensions`
 
 | Method | HTTP | Path | Summary |
@@ -1098,7 +1105,6 @@
 |--------|------|------|---------|
 | `getFavicon` | GET | `/favicon.ico` | Site icon |
 | `getManifest` | GET | `/api/v1/code/manifest.json` | Web application manifest for installing the editor |
-| `getPage` | GET | `/api/v1/code` | Open the editor (canonical kit path) |
 | `getRobots` | GET | `/robots.txt` | Crawler policy |
 | `getSecurityPolicy` | GET | `/security.txt` | Security contact information |
 
@@ -1194,7 +1200,7 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `delete` | DELETE | `/api/v1/curl/storage/{path}` | Delete a saved file |
+| `delete` | DELETE | `/api/v1/curl/storage/{path}` | Delete a saved file or directory |
 | `get` | GET | `/api/v1/curl/storage/{path}` | Download a saved file |
 | `list` | GET | `/api/v1/curl/storage` | List all saved downloads |
 | `listAll` | GET | `/api/v1/curl/storage` | List all saved downloads (collect all pages) |
@@ -1238,7 +1244,7 @@
 | `streamLogs` | GET | `/api/v1/daemon/programs/{id}/logs/stream` | Follow program logs (SSE) |
 | `update` | POST | `/api/v1/daemon/programs/edit/{id}` | Edit a program |
 
-## `display` (47 methods)
+## `display` (46 methods)
 
 ### `client.display.clipboard`
 
@@ -1312,12 +1318,6 @@
 | `get` | GET | `/api/v1/display/thumbnail/{timestamp}` | Retrieve a specific thumbnail by timestamp |
 | `getLatest` | GET | `/api/v1/display/thumbnail/last` | Retrieve the most recent thumbnail |
 
-### `client.display.ui`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `getPage` | GET | `/api/v1/display/` | Access the HTML5 Display client interface |
-
 ### `client.display.windows`
 
 | Method | HTTP | Path | Summary |
@@ -1337,7 +1337,7 @@
 | `search` | POST | `/api/v1/display/window/search` | Search for windows by pattern |
 | `wait` | POST | `/api/v1/display/input/wait-until` | Wait for a window to appear or disappear |
 
-## `egress` (4 methods)
+## `egress` (5 methods)
 
 ### `client.egress.kit`
 
@@ -1351,6 +1351,7 @@
 |--------|------|------|---------|
 | `disable` | DELETE | `/api/v1/egress/upstream` | Disable upstream |
 | `get` | GET | `/api/v1/egress/upstream` | Get upstream status |
+| `renewLease` | POST | `/api/v1/egress/upstream/renew` | Renew the upstream lease |
 | `set` | PUT | `/api/v1/egress/upstream` | Set upstream |
 
 ## `exec` (67 methods)
@@ -1877,7 +1878,7 @@
 | `restore` | DELETE | `/api/v1/notifications/dismiss` | Clear dismissed notifications |
 | `send` | POST | `/api/v1/notifications/notify` | Trigger a new desktop notification |
 
-## `pipe` (8 methods)
+## `pipe` (6 methods)
 
 ### `client.pipe.kit`
 
@@ -1891,16 +1892,9 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `getStatus` | HEAD | `/api/v1/pipe/{path}` | Pipe status headers (HEAD ?status) |
+| `getStatus` | GET | `/api/v1/pipe/{path}` | One snapshot of a pipe name (GET ?status): state, sender, receivers, bytes. Takes no receiver slot. |
 | `receive` | GET | `/api/v1/pipe/{path}` | Receive data from a pipe |
 | `send` | POST | `/api/v1/pipe/{path}` | Send data to a pipe |
-
-### `client.pipe.ui`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `getNoScriptPage` | GET | `/api/v1/pipe/noscript` | No-JavaScript upload page |
-| `getPage` | GET | `/api/v1/pipe/` | Send page |
 
 ## `proxyLogs` (5 methods)
 
@@ -2045,7 +2039,7 @@
 | `queryReadOnly` | GET | `/api/v1/sqlite/query` | Execute shareable SQL query |
 | `runTransaction` | POST | `/api/v1/sqlite/db` | Execute SQL transaction |
 
-## `terminal` (39 methods)
+## `terminal` (38 methods)
 
 ### `client.terminal.automation`
 
@@ -2124,12 +2118,6 @@
 | `reboot` | POST | `/api/v1/system/reboot` | Reboot the system |
 | `shutdown` | POST | `/api/v1/system/shutdown` | Shutdown the system |
 | `stopDisplay` | POST | `/api/v1/system/displays/{display}/stop` | Stop a display |
-
-### `client.terminal.ui`
-
-| Method | HTTP | Path | Summary |
-|--------|------|------|---------|
-| `getPage` | GET | `/` | Get web terminal interface |
 
 ## `tunnel` (6 methods)
 

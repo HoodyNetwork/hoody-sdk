@@ -1,6 +1,6 @@
 # `curl` — 31 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.curl`
 
 ```typescript
@@ -33,7 +33,7 @@ client.curl.channel.connect(options?: { max_concurrent?: number; max_concurrent_
 | `stream_timeout_secs` | `number` | No | query | Per-stream execution timeout in seconds |
 | `idle_timeout_secs` | `number` | No | query | Idle channel timeout in seconds |
 | `max_outbound_messages` | `number` | No | query | Maximum queued outbound channel messages |
-| `binary` | `boolean` | No | query | `true` negotiates binary frames: response bodies arrive as binary BODY frames and request.start may set binary_body (see x-async-api x-binary-frames). Default false |
+| `binary` | `boolean` | No | query | `true` negotiates binary frames: response bodies arrive as binary BODY frames and `request.start` may set `binary_body` to send its body as binary REQUEST_BODY frames. Every binary frame starts with a 16-byte little-endian header: version, kind, flags (bit 0 marks the last chunk) and the stream id. Default false |
 
 **Returns:** `void`
 
@@ -90,12 +90,14 @@ client.curl.jobs.cancel(id: string): Promise<curl_CurlJobDeleteResult>
 Subscribe to job events over WebSocket
 
 ```typescript
-client.curl.jobs.connect(options?: { job_id?: string; cache?: boolean | number }): Promise<CurlWsJobEventsWebSocket>
+client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string; cache?: boolean | number }): Promise<CurlWsJobEventsWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `job_id` | `string` | No | query | Optional job ID filter |
+| `since` | `number` | No | query | Resume cursor: the last `seq` (or `replay_boundary.max_seq`) received; `0` for everything still kept. The lifecycle events after it are replayed first, then a `replay_boundary` frame |
+| `incarnation` | `string` | No | query | The `incarnation` of the last control frame received; a different one means the server restarted since |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlWsJobEventsWebSocket`
@@ -231,12 +233,15 @@ client.curl.jobs.listIterator(options?: { page?: number; limit?: number; cache?:
 Subscribe to job events over Server-Sent Events
 
 ```typescript
-client.curl.jobs.stream(options?: { job_id?: string; cache?: boolean | number }): Promise<IEventStream>
+client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string; LastEventID?: string | null; cache?: boolean | number }): Promise<IEventStream>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `job_id` | `string` | No | query | Optional job ID filter |
+| `since` | `number` | No | query | Resume cursor: the last `seq` (SSE `id:`) received; `0` for everything still kept. Wins over `Last-Event-ID` |
+| `incarnation` | `string` | No | query | The `incarnation` of the last `lagged` event received; a different one means the server restarted since |
+| `LastEventID` | `string \| null` | No | header | Resume cursor as sent by an EventSource reconnect: the last `id:` received. Ignored when it is not a number or when `since` is given |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `IEventStream`
@@ -554,15 +559,17 @@ client.curl.sessions.listIterator(options?: { page?: number; limit?: number; cac
 
 **DELETE** `/api/v1/curl/storage/{path}`
 
-Delete a saved file
+Delete a saved file or directory
 
 ```typescript
-client.curl.storage.delete(path: string): Promise<ApiResponse<unknown>>
+client.curl.storage.delete(path: string, options?: { recursive?: boolean; cache?: boolean | number }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `path` | `string` | Yes | path | Relative path to file in storage |
+| `path` | `string` | Yes | path | Relative path to a file or directory in storage |
+| `recursive` | `boolean` | No | query | `true` deletes a directory and everything in it (default false) |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 

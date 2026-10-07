@@ -1,6 +1,6 @@
-# `egress` — 4 methods
+# `egress` — 5 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.egress`
 
 ```typescript
@@ -27,7 +27,7 @@ client.egress.kit.getHealth(): Promise<EgressKitGetHealthResponse>
 
 ---
 
-## `client.egress.upstream` (3 methods)
+## `client.egress.upstream` (4 methods)
 
 ### `disable`
 
@@ -61,6 +61,27 @@ client.egress.upstream.get(): Promise<EgressUpstreamGetResponse>
 
 ---
 
+### `renewLease`
+
+**POST** `/api/v1/egress/upstream/renew`
+
+Renew the upstream lease
+
+```typescript
+client.egress.upstream.renewLease(options: { lease_id: string; cache?: boolean | number }): Promise<EgressUpstreamRenewLeaseResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `lease_id` | `string` | Yes | query | The `lease.id` returned when the upstream was set |
+| `cache` | `boolean \| number` | No | query |  |
+
+**Returns:** `EgressUpstreamRenewLeaseResponse`
+
+**CLI:** `hoody egress upstream renew`
+
+---
+
 ### `set`
 
 **PUT** `/api/v1/egress/upstream`
@@ -68,12 +89,14 @@ client.egress.upstream.get(): Promise<EgressUpstreamGetResponse>
 Set upstream
 
 ```typescript
-client.egress.upstream.set(data: string): Promise<EgressUpstreamSetResponse>
+client.egress.upstream.set(data: string, options?: { lease?: number; cache?: boolean | number }): Promise<EgressUpstreamSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `string` | Yes | body |  |
+| `lease` | `number` | No | query | Lease the upstream for this many seconds. The service disables the upstream (as `DELETE` does) unless the lease is renewed before then with `POST /api/v1/egress/upstream/renew`. For an upstream that only works while its client is alive, such as the loopback exit `hoody egress local start` installs. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `EgressUpstreamSetResponse`
 

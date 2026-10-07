@@ -1,6 +1,6 @@
 # `sqlite` — 42 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.sqlite`
 
 ```typescript
@@ -426,7 +426,7 @@ client.sqlite.kv.deleteMany(data: SqliteKvDeleteManyRequest, options: { db: stri
 Check if key exists
 
 ```typescript
-client.sqlite.kv.exists(key: string, options: { db: string; table?: string; timeout?: number; IfNoneMatch?: string; cache?: boolean | number }): Promise<boolean>
+client.sqlite.kv.exists(options: { key: string; db: string; table?: string; IfNoneMatch?: string; timeout?: number }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -434,11 +434,10 @@ client.sqlite.kv.exists(key: string, options: { db: string; table?: string; time
 | `key` | `string` | Yes | path | Key name |
 | `db` | `string` | Yes | query | Database file path or directory |
 | `table` | `string` | No | query | Custom table name |
-| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 | `IfNoneMatch` | `string` | No | header | Answers 304 while the key's current ETag matches. |
-| `cache` | `boolean \| number` | No | query |  |
+| `timeout` | `number` | No | query | Deadline for this request, in whole seconds, clamped to [1, 300]. Once it passes, a long operation stops at its next checkpoint rather than being cut off mid-step; a step already running, such as a filesystem scan or a wait for another writer, finishes first. A request that has not finished by then answers 503 REQUEST_TIMEOUT, except that a write which has already committed still returns its success. A value that is not a whole number is ignored and the default applies. This is a server-side deadline, not a client transport timeout. Omitted, the server default applies (30 seconds unless the deployment overrides it). |
 
-**Returns:** `boolean`
+**Returns:** `any`
 
 **CLI:** `hoody kv exists`
 

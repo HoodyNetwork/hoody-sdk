@@ -1,6 +1,6 @@
 # `files` — 120 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.files`
 
 ```typescript
@@ -1220,7 +1220,7 @@ client.files.downloads.create(directory: string, options: { download: string; fi
 | `directory` | `string` | Yes | path | Destination directory |
 | `download` | `string` | Yes | query | URL to download from |
 | `filename` | `string` | No | query | Custom filename for downloaded file |
-| `timeout` | `number` | No | query | Download timeout in seconds |
+| `timeout` | `number` | No | query | Download timeout in seconds. Default and maximum: 43200 (12 hours) |
 | `owner` | `string` | No | query | Create-time owner for newly-created inodes as user[:group] or uid[:gid]. Requires the deployment to have enabled chown, and must resolve to one of the owners it permits; refuses root (uid/gid 0). Absent → the server default create owner. Applies to mkdir/extract/download_from/copy_to. |
 
 **Returns:** `files_DownloadResult`
@@ -1274,15 +1274,14 @@ client.files.downloads.listByDirectory(directory: string, options: { downloads: 
 Download history
 
 ```typescript
-client.files.downloads.listHistory(options: { download_history: ""; cache?: boolean | number }): Promise<FilesDownloadsListHistoryResponse>
+client.files.downloads.listHistory(options: { download_history: string }): Promise<files_DownloadHistory>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `download_history` | `""` | Yes | query |  |
-| `cache` | `boolean \| number` | No | query |  |
+| `download_history` | `string` | Yes | query |  |
 
-**Returns:** `FilesDownloadsListHistoryResponse`
+**Returns:** `files_DownloadHistory`
 
 **CLI:** `hoody files downloads history list`
 
@@ -1352,15 +1351,14 @@ client.files.extractions.listByDirectory(options: { extractions: ""; cache?: boo
 Extraction history
 
 ```typescript
-client.files.extractions.listHistory(options: { extraction_history: ""; cache?: boolean | number }): Promise<FilesExtractionsListHistoryResponse>
+client.files.extractions.listHistory(options: { extraction_history: string }): Promise<files_ExtractionHistory>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `extraction_history` | `""` | Yes | query |  |
-| `cache` | `boolean \| number` | No | query |  |
+| `extraction_history` | `string` | Yes | query |  |
 
-**Returns:** `FilesExtractionsListHistoryResponse`
+**Returns:** `files_ExtractionHistory`
 
 **CLI:** `hoody files extractions history list`
 
@@ -1375,7 +1373,7 @@ client.files.extractions.listHistory(options: { extraction_history: ""; cache?: 
 Append data to file
 
 ```typescript
-client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<FilesAppendResponse>
+client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<FilesAppendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1383,6 +1381,9 @@ client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `path` | `string` | Yes | path | File path |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) when this append creates a new file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Absent → server default. |
+| `IfMatch` | `string` | No | header | Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | No | header | '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | No | header | Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
@@ -1449,7 +1450,7 @@ client.files.copy(path: string, options: { copy_to: string; overwrite?: "true" |
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Source file or directory path |
-| `copy_to` | `string` | Yes | query | Destination path to copy the file/directory to |
+| `copy_to` | `string` | Yes | query | Destination path to copy the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `overwrite` | `"true" \| "false"` | No | query | Allow overwriting existing destination (default: false) |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for newly-created copies. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwritten existing files preserve their owner. Absent → server default. |
 | `cache` | `boolean \| number` | No | query |  |
@@ -1546,7 +1547,7 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 | `grep` | `string` | No | query | Search file/directory contents for regex pattern (or literal if fixed_string=true). Only where the deployment enabled content search. |
 | `ignore_case` | `boolean` | No | query | Case-insensitive grep matching |
 | `fixed_string` | `boolean` | No | query | Treat grep pattern as literal string, not regex |
-| `glob` | `string` | No | query | Without grep, finds files and folders matching this glob (e.g. '**/*.rs', 'src/**/*.{ts,tsx}'); directory paths only, where the deployment enabled search. With grep, the content-search file filter. Only search files matching this glob (ripgrep -g syntax, one pattern per request, at most 1024 bytes). A pattern without '/' matches file names at any depth ('*.rs', '*.{ts,tsx}'). A pattern with a '/' other than a trailing one matches the path relative to the searched folder, and a leading '/' anchors it there ('src/**/*.go'). '*' stays within one folder and '**' crosses folders. A leading '!' excludes instead ('!*_test.go'; '!vendor/' skips every folder named vendor); write '\!' for a literal '!' and '\#' for a leading '#'. Matching is case-sensitive whatever ignore_case says. A positive pattern ending in '/' names folders only and so selects no files; use 'src/**' for everything under a folder. A pattern that is only whitespace or a comment (an unescaped leading '#') is refused. The filter only narrows the search: it never brings back a file that ignore files or the default exclusion of names starting with '.' leave out; no_ignore and hidden do that. Not applied when the path is a single file. Repeating glob in a content search is refused. |
+| `glob` | `string` | No | query | Without grep, finds files and folders matching this glob (e.g. '**/*.rs', 'src/**/*.{ts,tsx}'); directory paths only, where the deployment enabled search. The pattern is matched against each path relative to the searched folder: '*' stays within one folder and '**' crosses folders, so '*.md' finds only the folder's own files and '**/*.md' finds them at any depth. A pattern starting with '/' or holding a '..' segment is refused with 400. Symbolic links are listed but the search does not go into a linked folder. With grep, the content-search file filter. Only search files matching this glob (ripgrep -g syntax, one pattern per request, at most 1024 bytes). A pattern without '/' matches file names at any depth ('*.rs', '*.{ts,tsx}'). A pattern with a '/' other than a trailing one matches the path relative to the searched folder, and a leading '/' anchors it there ('src/**/*.go'). '*' stays within one folder and '**' crosses folders. A leading '!' excludes instead ('!*_test.go'; '!vendor/' skips every folder named vendor); write '\!' for a literal '!' and '\#' for a leading '#'. Matching is case-sensitive whatever ignore_case says. A positive pattern ending in '/' names folders only and so selects no files; use 'src/**' for everything under a folder. A pattern that is only whitespace or a comment (an unescaped leading '#') is refused. The filter only narrows the search: it never brings back a file that ignore files or the default exclusion of names starting with '.' leave out; no_ignore and hidden do that. Not applied when the path is a single file. Repeating glob in a content search is refused. |
 | `context` | `number` | No | query | Number of context lines before/after each grep match |
 | `max_count` | `number` | No | query | Max matches per file for grep |
 | `max_matches` | `number` | No | query | Total max matches across all files for grep |
@@ -1594,7 +1595,7 @@ client.files.glob(path: string, options: { pattern: string; max_results?: number
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Directory path to search within |
-| `pattern` | `string` | Yes | query | Glob pattern (e.g. '**/*.rs', 'src/**/*.{ts,tsx}', '*.md') |
+| `pattern` | `string` | Yes | query | Glob pattern, matched against paths relative to the searched folder (e.g. '**/*.rs', 'src/**/*.{ts,tsx}', '*.md'). '*' stays within one folder, '**' crosses folders. Cannot start with '/' or contain a '..' segment. |
 | `max_results` | `number` | No | query | Maximum entries to return |
 | `max_depth` | `number` | No | query | Maximum directory recursion depth |
 | `max_files_scanned` | `number` | No | query | Maximum filesystem entries to scan |
@@ -1697,7 +1698,7 @@ client.files.move(path: string, options: { move_to: string; owner?: string; cach
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Source file or directory path |
-| `move_to` | `string` | Yes | query | Destination path to move the file/directory to |
+| `move_to` | `string` | Yes | query | Destination path to move the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for newly-created destination PARENT directories. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. The moved inode itself preserves its existing owner. Absent → server default. |
 | `cache` | `boolean \| number` | No | query |  |
 
@@ -1789,16 +1790,15 @@ client.files.stat(path: string): Promise<FilesStatResponse>
 Touch file (create or update mtime)
 
 ```typescript
-client.files.touch(path: string, options: { touch: ""; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.touch(path: string, options: { touch: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File path to touch |
-| `touch` | `""` | Yes | query | Flag to indicate touch operation |
-| `cache` | `boolean \| number` | No | query |  |
+| `touch` | `string` | Yes | query | Flag to indicate touch operation |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `any`
 
 **CLI:** `hoody files touch`
 
@@ -1836,7 +1836,7 @@ client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?:
 Upload or append file
 
 ```typescript
-client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<FilesUploadResponse>
+client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<FilesUploadResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1847,6 +1847,9 @@ client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `append` | `""` | No | query | Append body to end of existing file (create if missing) instead of overwriting |
 | `chmod` | `string` | No | query | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response echoes them in `mode`. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Every refusal comes before the body is read: nothing is created or changed. |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
+| `IfMatch` | `string` | No | header | Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | No | header | Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | No | header | Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
@@ -1883,12 +1886,15 @@ client.files.whoami(path: string): Promise<ApiResponse<string>>
 File operations
 
 ```typescript
-client.files.writeChunk(path: string, data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>): Promise<void>
+client.files.writeChunk(path: string, data?: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: { IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string }): Promise<void>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
+| `IfMatch` | `string` | No | header | Writes of content (X-Update-Range) only. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
+| `IfNoneMatch` | `string` | No | header | Writes of content (X-Update-Range) only. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
+| `IfUnmodifiedSince` | `string` | No | header | Writes of content (X-Update-Range) only. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt;` | No | body |  |
 
 **Returns:** `void`
@@ -1904,16 +1910,15 @@ client.files.writeChunk(path: string, data?: Blob | ArrayBuffer | Uint8Array | R
 Download directory as ZIP
 
 ```typescript
-client.files.zip(directory: string, options: { zip: ""; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.files.zip(directory: string, options: { zip: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `directory` | `string` | Yes | path |  |
-| `zip` | `""` | Yes | query |  |
-| `cache` | `boolean \| number` | No | query |  |
+| `zip` | `string` | Yes | query |  |
 
-**Returns:** `ApiResponse<ArrayBuffer>`
+**Returns:** `any`
 
 **CLI:** `hoody files zip`
 
@@ -1957,26 +1962,25 @@ client.files.ftp.get(path: string, options: { type: "ftp"; server: string; user?
 Process and convert images
 
 ```typescript
-client.files.images.convert(image: string, options: { thumbnail: ""; format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; q?: number; blur?: number; grayscale?: ""; bg?: string; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.files.images.convert(image: string, options: { thumbnail: string; format?: string; size?: string; width?: integer; height?: integer; resize?: string; quality?: string; q?: integer; blur?: number; grayscale?: string; bg?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `image` | `string` | Yes | path | Path to image file |
-| `thumbnail` | `""` | Yes | query | Enable image processing |
-| `format` | `"jpeg" \| "png" \| "webp" \| "gif" \| "bmp"` | No | query | Output format (default: jpeg) |
+| `thumbnail` | `string` | Yes | query | Enable image processing |
+| `format` | `string` | No | query | Output format (default: jpeg) |
 | `size` | `string` | No | query | Target box in pixels: WIDTHxHEIGHT, or a single N for an N×N box (max: 2000×2000) |
 | `width` | `number` | No | query | Width in pixels (height auto-calculated) |
 | `height` | `number` | No | query | Height in pixels (width auto-calculated) |
-| `resize` | `"fit" \| "fill" \| "cover" \| "exact"` | No | query | How the image meets a target box given by size, or by width and height together: fit (default) keeps the aspect ratio and fits inside the box; fill keeps the aspect ratio, covers the box and centre-crops to exactly WIDTH×HEIGHT; cover keeps the aspect ratio and covers the box, so one side may be larger than the box; exact forces WIDTH×HEIGHT and may distort. With only width or only height, the other side follows the aspect ratio. |
-| `quality` | `"low" \| "medium" \| "high"` | No | query | Resampling filter for resizing: low (box), medium (bilinear, the default) or high (Lanczos3). It does not set compression; q sets JPEG quality. |
+| `resize` | `string` | No | query | How the image meets a target box given by size, or by width and height together: fit (default) keeps the aspect ratio and fits inside the box; fill keeps the aspect ratio, covers the box and centre-crops to exactly WIDTH×HEIGHT; cover keeps the aspect ratio and covers the box, so one side may be larger than the box; exact forces WIDTH×HEIGHT and may distort. With only width or only height, the other side follows the aspect ratio. |
+| `quality` | `string` | No | query | Resampling filter for resizing: low (box), medium (bilinear, the default) or high (Lanczos3). It does not set compression; q sets JPEG quality. |
 | `q` | `number` | No | query | JPEG quality, 1-100 (higher is better). Only JPEG output uses it: PNG, WebP (lossless), GIF and BMP ignore it. |
 | `blur` | `number` | No | query | Gaussian blur radius (0-50) |
-| `grayscale` | `""` | No | query | Convert to grayscale/black-and-white |
+| `grayscale` | `string` | No | query | Convert to grayscale/black-and-white |
 | `bg` | `string` | No | query | Background color for transparency (hex RGB, e.g., 'ffffff' for white) |
-| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `ApiResponse<ArrayBuffer>`
+**Returns:** `any`
 
 **CLI:** `hoody files images convert`
 
@@ -2567,13 +2571,13 @@ client.files.webdav.getOptions(path: string): Promise<ApiResponse<unknown>>
 Get WebDAV properties
 
 ```typescript
-client.files.webdav.getProperties(path: string, data?: object, options?: { Depth?: "0" | "1" | "infinity"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.webdav.getProperties(path: string, data?: string, options?: { Depth?: "0" | "1" | "infinity"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
-| `data` | `object` | No | body |  |
+| `data` | `string` | No | body |  |
 | `Depth` | `"0" \| "1" \| "infinity"` | No | header | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
 | `cache` | `boolean \| number` | No | query |  |
 
@@ -2588,13 +2592,13 @@ client.files.webdav.getProperties(path: string, data?: object, options?: { Depth
 Lock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.lock(path: string, data?: object, options?: { Depth?: "0" | "infinity"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | "infinity"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
-| `data` | `object` | No | body |  |
+| `data` | `string` | No | body |  |
 | `Depth` | `"0" \| "infinity"` | No | header |  |
 | `cache` | `boolean \| number` | No | query |  |
 
@@ -2648,13 +2652,13 @@ client.files.webdav.unlock(path: string): Promise<ApiResponse<unknown>>
 Update WebDAV properties
 
 ```typescript
-client.files.webdav.updateProperties(path: string, data?: object): Promise<ApiResponse<unknown>>
+client.files.webdav.updateProperties(path: string, data?: string): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
-| `data` | `object` | No | body |  |
+| `data` | `string` | No | body |  |
 
 **Returns:** `ApiResponse<unknown>`
 

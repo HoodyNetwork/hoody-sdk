@@ -1,6 +1,6 @@
 # `cron` — 13 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.cron`
 
 ```typescript
@@ -43,8 +43,8 @@ client.cron.crontabs.list(options?: { page?: number; limit?: number; cache?: boo
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number (1-based) |
-| `limit` | `number` | No | query | Items per page (max 200) |
+| `page` | `number` | No | query | Page number (1-based, default 1) |
+| `limit` | `number` | No | query | Items per page (default 50, max 200) |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CronCrontabsListResponse`
@@ -65,8 +65,8 @@ client.cron.crontabs.listAll(options?: { page?: number; limit?: number; cache?: 
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number (1-based) |
-| `limit` | `number` | No | query | Items per page (max 200) |
+| `page` | `number` | No | query | Page number (1-based, default 1) |
+| `limit` | `number` | No | query | Items per page (default 50, max 200) |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
@@ -85,8 +85,8 @@ client.cron.crontabs.listIterator(options?: { page?: number; limit?: number; cac
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `page` | `number` | No | query | Page number (1-based) |
-| `limit` | `number` | No | query | Items per page (max 200) |
+| `page` | `number` | No | query | Page number (1-based, default 1) |
+| `limit` | `number` | No | query | Items per page (default 50, max 200) |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
@@ -192,8 +192,8 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
-| `page` | `number` | No | query | Page number (1-based) |
-| `limit` | `number` | No | query | Items per page (max 200) |
+| `page` | `number` | No | query | Page number (1-based, default 1) |
+| `limit` | `number` | No | query | Items per page (default 50, max 200) |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CronEntriesListResponse`
@@ -215,8 +215,8 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
-| `page` | `number` | No | query | Page number (1-based) |
-| `limit` | `number` | No | query | Items per page (max 200) |
+| `page` | `number` | No | query | Page number (1-based, default 1) |
+| `limit` | `number` | No | query | Items per page (default 50, max 200) |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
@@ -236,8 +236,8 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `user` | `string` | Yes | path | System username |
-| `page` | `number` | No | query | Page number (1-based) |
-| `limit` | `number` | No | query | Items per page (max 200) |
+| `page` | `number` | No | query | Page number (1-based, default 1) |
+| `limit` | `number` | No | query | Items per page (default 50, max 200) |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`

@@ -1,6 +1,6 @@
-# `terminal` — 39 methods
+# `terminal` — 38 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.terminal`
 
 ```typescript
@@ -110,14 +110,14 @@ client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { termi
 | `defer_timeout_ms` | `number` | No | query | Max time to wait for defer_pid exit before failing (default: 60000) |
 | `defer_poll_ms` | `number` | No | query | Poll interval while waiting for defer_pid exit (default: 50, minimum: 10) |
 | `reset` | `boolean` | No | query | Reset existing session and reconfigure (kills current process, clears state, allows switching from bash to SSH or changing any parameter) - Use 'true', '1', or no value |
-| `cwd` | `string` | No | query | Working directory for local bash sessions (ignored for SSH) |
+| `cwd` | `string` | No | query | Working directory for local bash sessions (ignored for SSH). In raw mode: the command's working directory, when the body has no cwd |
 | `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new or reset local session. Enable with 'true', '1', or no value (default: false) |
 | `shell` | `string` | No | query | Shell to use for local sessions: bash (case-insensitive), zsh, fish, sh, etc. (default: server startup command, only applies to new sessions or after reset) |
-| `user` | `string` | No | query | System user to spawn shell as (requires su permissions, only applies to new sessions or after reset) |
+| `user` | `string` | No | query | System user to spawn shell as (requires su permissions, only applies to new sessions or after reset). In raw mode: the user the command runs as, when the body has no user |
 | `cmd` | `string` | No | query | Base64-encoded command to execute automatically (works with both new and active shells, executes every time URL is visited) |
 | `env` | `string` | No | query | Environment variable in KEY=VALUE format (can be repeated for multiple variables, e.g., ?env=DEBUG=1&env=API_KEY=abc) |
-| `skip_display_wait` | `boolean` | No | query | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the endpoint blocks until the session's display server is ready (default: false) |
-| `display_wait_timeout` | `number` | No | query | Timeout in seconds for display readiness wait (default: 10, capped at 10 seconds to prevent event-loop pin; values &lt;=0 or malformed also map to the 10-second cap). Ignored if skip_display_wait=true |
+| `skip_display_wait` | `boolean` | No | query | Skip waiting for Hoody Display readiness before executing command. By default, if a DISPLAY is configured, the request waits until the session's display server is ready, unless no X server holds the display and none can be started, or a wait for it already timed out on the same shell within the last 30 seconds. Commands of one terminal still run in arrival order, so a request with skip_display_wait=true runs after earlier ones still waiting (default: false) |
+| `display_wait_timeout` | `number` | No | query | Timeout in seconds for display readiness wait, counted from the request (default: 10, capped at 10 seconds; values &lt;=0 or malformed also map to the 10-second cap). When it elapses the command runs anyway. Ignored if skip_display_wait=true |
 | `display` | `string` | No | query | DISPLAY environment variable for X11 applications (auto-formats :display if number provided, e.g., ?display=1 becomes DISPLAY=:1) |
 | `ssh_host` | `string` | No | query | SSH server hostname or IP address (creates SSH session if provided with ssh_user) |
 | `ssh_user` | `string` | No | query | SSH username (required if ssh_host is provided) |
@@ -295,8 +295,8 @@ client.terminal.processes.list(options?: { sort?: "cpu" | "memory" | "pid" | "na
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `sort` | `"cpu" \| "memory" \| "pid" \| "name"` | No | query | Sort by field: cpu, memory, pid, name (default: pid) |
-| `limit` | `number` | No | query | Maximum number of processes to return (default: all) |
-| `filter` | `string` | No | query | Filter by process name (substring match, case-insensitive) |
+| `limit` | `number` | No | query | Maximum number of processes to return (default: 1000) |
+| `filter` | `string` | No | query | Keep processes whose name or command line contains this text (case-sensitive) |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalProcessesListResponse`
@@ -863,88 +863,6 @@ client.terminal.system.stopDisplay(display: number): Promise<TerminalSystemStopD
 **Returns:** `TerminalSystemStopDisplayResponse`
 
 **CLI:** `hoody terminal system displays stop`
-
----
-
-## `client.terminal.ui` (1 method)
-
-### `getPage`
-
-**GET** `/`
-
-Get web terminal interface
-
-```typescript
-client.terminal.ui.getPage(options?: { terminal_id?: string; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; readonly?: boolean; title?: string; fontSize?: number; backgroundColor?: string; panel?: string; panelVisible?: boolean; panelPosition?: string; panelWidth?: string; panelResizable?: boolean; hideToolbar?: boolean; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; desktop?: boolean; desktop_env?: string; redirect?: string; redirect_delay?: number; arg?: string; welcome?: boolean; debug?: boolean; reset?: boolean; pid?: number; env?: string; display?: string; env_inject?: boolean; startup_script?: string; ssh_key?: string; panelHeight?: string; panelWidthPct?: number; panelHeightPct?: number; wait_timeout?: number; rendererType?: "dom" | "canvas" | "webgl"; fontFamily?: string; fontWeight?: string; fontWeightBold?: string; lineHeight?: number; letterSpacing?: number; cursorBlink?: boolean; cursorStyle?: "block" | "underline" | "bar"; cursorWidth?: number; cursorInactiveStyle?: "outline" | "block" | "bar" | "underline" | "none"; theme?: string; minimumContrastRatio?: number; drawBoldTextInBrightColors?: boolean; scrollback?: number; scrollSensitivity?: number; fastScrollSensitivity?: number; smoothScrollDuration?: number; screenReaderMode?: boolean; disableResizeOverlay?: boolean; unicodeVersion?: string; cache?: boolean | number }): Promise<ApiResponse<string>>
-```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, auto-generated if not provided) - Allows multiple clients to share the same terminal session. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
-| `cwd` | `string` | No | query | Initial working directory for new terminal sessions (only applied when session is first created) |
-| `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new session. Enable with 'true', '1', or no value (default: false) |
-| `shell` | `string` | No | query | Shell to use: bash, zsh, fish, sh, etc. (default: server startup command, only applies to new sessions) |
-| `user` | `string` | No | query | System user to spawn shell as (requires su permissions, only applies to new sessions, user must exist on system) |
-| `cmd` | `string` | No | query | Base64-encoded command to execute automatically on spawn (executes once when shell starts) |
-| `readonly` | `boolean` | No | query | Enable read-only mode (blocks keyboard input, allows viewing only) - Use 'true', '1', or no value |
-| `title` | `string` | No | query | Browser window/tab title (default: application default) - HTML tags removed, max 200 characters, useful for organizing multiple terminal tabs |
-| `fontSize` | `number` | No | query | Terminal font size in pixels (default: 13, range: 8-72) - Accepts 'px' suffix (e.g., 16px), applied immediately when terminal loads |
-| `backgroundColor` | `string` | No | query | Terminal background color (default: #2b2b2b) - Supports hex colors (#RGB, #RRGGBB, #RRGGBBAA) or CSS named colors (black, white, red, blue, green, navy, etc.) |
-| `panel` | `string` | No | query | URL to display in side panel iframe (enables panel feature) |
-| `panelVisible` | `boolean` | No | query | Show panel on load (default: true if panel URL provided, false otherwise) |
-| `panelPosition` | `string` | No | query | Panel position: 'left' or 'right' (default: right) |
-| `panelWidth` | `string` | No | query | Initial panel width in pixels or percentage (default: 400px) |
-| `panelResizable` | `boolean` | No | query | Allow panel resizing via drag handle (default: true) |
-| `hideToolbar` | `boolean` | No | query | Hide the terminal toolbar (default: false) |
-| `ssh_host` | `string` | No | query | SSH server hostname or IP address (creates SSH session if provided with ssh_user) |
-| `ssh_user` | `string` | No | query | SSH username (required if ssh_host is provided) |
-| `ssh_port` | `string` | No | query | SSH port number (default: 22) |
-| `ssh_password` | `string` | No | query | SSH password for authentication (use with caution, prefer key-based auth) |
-| `socks5_host` | `string` | No | query | SOCKS5 proxy hostname for SSH connection |
-| `socks5_port` | `string` | No | query | SOCKS5 proxy port (default: 1080) |
-| `socks5_user` | `string` | No | query | SOCKS5 proxy username for authentication |
-| `socks5_pass` | `string` | No | query | SOCKS5 proxy password for authentication |
-| `desktop` | `boolean` | No | query | Enable Hoody Display desktop mode. Provides a full desktop environment instead of seamless individual windows (default: false) |
-| `desktop_env` | `string` | No | query | Desktop environment to launch (implies desktop=true). Starts the specified DE session after the display is ready. Valid values: xfce, mate. Not started again when a window manager already runs on the display; it keeps running after the session is deleted (POST /api/v1/system/displays/{display}/stop ends it) |
-| `redirect` | `string` | No | query | Redirect mode. When set to "display", creates/ensures the terminal session, waits for X11 display readiness, then returns HTTP 302 redirect to the display URL. Requires terminal_id and display params |
-| `redirect_delay` | `number` | No | query | Extra delay in seconds after display is ready before redirecting. Only used when redirect=display (default: 0) |
-| `arg` | `string` | No | query | Command-line arguments to pass to shell; accepted only where the deployment enabled shell arguments, and can be repeated |
-| `welcome` | `boolean` | No | query | Show welcome message on startup (default: false). Supports ?welcome=true, ?welcome=1, or ?welcome (no value = true) |
-| `debug` | `boolean` | No | query | Enable debug output in wrapper script (default: false) |
-| `reset` | `boolean` | No | query | Kill existing terminal process and reconfigure session (default: false). Use to switch shell, user, or from shell to SSH |
-| `pid` | `number` | No | query | Attach to an existing process by PID instead of spawning a new shell. Implies reset |
-| `env` | `string` | No | query | Inject environment variable as KEY=VALUE. Can be repeated for multiple variables (e.g., ?env=FOO=bar&env=BAZ=qux) |
-| `display` | `string` | No | query | X11 display number for GUI applications. Accepts number (e.g., 1) or :number (e.g., :1). Shorthand for ?env=DISPLAY=:N |
-| `env_inject` | `boolean` | No | query | Inject HOODY_* environment variables into shell session (default: true). Set to false to disable |
-| `startup_script` | `string` | No | query | Path to startup script to execute before shell launch (only applied on first session creation) |
-| `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key-based authentication (prefer over password-based auth) |
-| `panelHeight` | `string` | No | query | Initial panel height for top/bottom positioned panels (default: 300px) |
-| `panelWidthPct` | `number` | No | query | Initial panel width as a percentage of the window, 5-95. Takes precedence over panel-width |
-| `panelHeightPct` | `number` | No | query | Initial panel height as a percentage of the window for top/bottom panels, 5-95. Takes precedence over panel-height |
-| `wait_timeout` | `number` | No | query | Seconds to wait for the display to become ready before redirecting (default: 60, capped at 300). Only used when redirect=display |
-| `rendererType` | `"dom" \| "canvas" \| "webgl"` | No | query | Terminal renderer: dom, canvas or webgl (default: webgl, or dom in Firefox) |
-| `fontFamily` | `string` | No | query | Terminal font family, as a CSS font-family list |
-| `fontWeight` | `string` | No | query | Font weight of normal text: normal, bold, or 100 to 900 |
-| `fontWeightBold` | `string` | No | query | Font weight of bold text: normal, bold, or 100 to 900 |
-| `lineHeight` | `number` | No | query | Line height as a multiple of the font size (read as a whole number) |
-| `letterSpacing` | `number` | No | query | Extra space between characters, in whole pixels |
-| `cursorBlink` | `boolean` | No | query | Blink the cursor. Use 'true' or '1' |
-| `cursorStyle` | `"block" \| "underline" \| "bar"` | No | query | Cursor shape: block, underline or bar |
-| `cursorWidth` | `number` | No | query | Width of the bar cursor in pixels |
-| `cursorInactiveStyle` | `"outline" \| "block" \| "bar" \| "underline" \| "none"` | No | query | Cursor shape while the terminal is not focused: outline, block, bar, underline or none |
-| `theme` | `string` | No | query | Color theme as a JSON object of xterm theme keys, e.g. {"background":"#000000","foreground":"#ffffff"} |
-| `minimumContrastRatio` | `number` | No | query | Minimum contrast ratio between text and background, 1 (no adjustment) to 21 |
-| `drawBoldTextInBrightColors` | `boolean` | No | query | Draw bold text in the bright ANSI colors. Use 'true' or '1' |
-| `scrollback` | `number` | No | query | Number of lines kept in the scrollback buffer |
-| `scrollSensitivity` | `number` | No | query | Scroll speed multiplier |
-| `fastScrollSensitivity` | `number` | No | query | Scroll speed multiplier while the fast-scroll modifier key is held |
-| `smoothScrollDuration` | `number` | No | query | Smooth scrolling duration in milliseconds (0 turns it off) |
-| `screenReaderMode` | `boolean` | No | query | Turn on screen reader support. Use 'true' or '1' |
-| `disableResizeOverlay` | `boolean` | No | query | Hide the size overlay shown while the terminal is resized. Use 'true' or '1' |
-| `unicodeVersion` | `string` | No | query | Character width tables: graphemes (default) or 11 |
-| `cache` | `boolean \| number` | No | query |  |
-
-**Returns:** `ApiResponse<string>`
 
 ---
 

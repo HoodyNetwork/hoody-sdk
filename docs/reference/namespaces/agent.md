@@ -1,6 +1,6 @@
-# `agent` — 293 methods
+# `agent` — 294 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.agent`
 
 ```typescript
@@ -121,7 +121,25 @@ client.agent.acp.setSecret(agent: string, key: string, data?: AgentAcpSetSecretR
 
 ---
 
-## `client.agent` (2 methods)
+## `client.agent` (3 methods)
+
+### `signIn`
+
+**POST** `/api/v1/agent/hoody/auth/bootstrap`
+
+Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in".
+
+```typescript
+client.agent.signIn(data: object): Promise<any>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `object` | Yes | body |  |
+
+**Returns:** `any`
+
+---
 
 ### `stopAllWork`
 
@@ -2576,7 +2594,7 @@ client.agent.logs.getStats(options?: { XHoodyCwd?: string; XHoodyConfigDir?: str
 Query logs.
 
 ```typescript
-client.agent.logs.list(options?: { source?: string; level?: string; host?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLogsListResponse>
+client.agent.logs.list(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLogsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2584,6 +2602,8 @@ client.agent.logs.list(options?: { source?: string; level?: string; host?: strin
 | `source` | `string` | No | query | Filter to a log source/facet (see logsSources). One local source, or exactly ONE platform source (activity\|events\|proxy) — mixing them is rejected. |
 | `level` | `string` | No | query | Filter to a minimum log level. |
 | `host` | `string` | No | query | Filter to a host. |
+| `session_id` | `string` | No | query | Only entries correlated with this session id (exact match on the entry's session_id). |
+| `run_id` | `string` | No | query | Only entries correlated with this workflow/task run id (exact match on the entry's run_id). |
 | `since` | `string` | No | query | Lower TIME bound: RFC3339, or a relative duration like "1h"/"30m"/"7d". This is NOT a cursor — a bare sequence number is rejected 400 (use since_seq). Unparseable values are rejected the same way. |
 | `until` | `string` | No | query | Upper TIME bound, same forms as since. Paging BACKWARDS by repeatedly lowering until works, but it is coarse (rows sharing a timestamp repeat); before_seq is the exact backwards cursor. |
 | `since_seq` | `number` | No | query | Forward cursor: return only entries NEWER than this gateway seq. Take it from the previous reply's latest_seq to poll incrementally without re-reading rows. A non-numeric value is rejected 400. |
@@ -2628,7 +2648,7 @@ client.agent.logs.listSources(options?: { XHoodyCwd?: string; XHoodyConfigDir?: 
 Stream the log tail (SSE).
 
 ```typescript
-client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<IEventStream>
+client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<IEventStream>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2636,6 +2656,8 @@ client.agent.logs.stream(options?: { source?: string; level?: string; host?: str
 | `source` | `string` | No | query | Filter the tail to a log source/facet. |
 | `level` | `string` | No | query | Filter to a minimum log level. |
 | `host` | `string` | No | query | Filter to a host. |
+| `session_id` | `string` | No | query | Only entries correlated with this session id. |
+| `run_id` | `string` | No | query | Only entries correlated with this workflow/task run id. |
 | `since_seq` | `number` | No | query | Initial resume cursor (the Last-Event-ID header overrides it). A non-numeric value is rejected 400. |
 | `limit` | `number` | No | query | Caps each poll batch. A non-numeric value is rejected 400. |
 | `LastEventID` | `string` | No | header | SSE resume cursor — the gateway int64 seq to resume from; OVERRIDES the ?since_seq query param. Sent automatically by an SSE client on reconnect. |
@@ -3679,14 +3701,14 @@ client.agent.models.listIterator(options?: { page?: number; limit?: number; XHoo
 Bootstrap the Hoody platform credential (install-if-absent).
 
 ```typescript
-client.agent.platform.bootstrapToken(data: AgentPlatformBootstrapTokenRequest): Promise<AgentPlatformBootstrapTokenResponse>
+client.agent.platform.bootstrapToken(data: object): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `data` | `AgentPlatformBootstrapTokenRequest` | Yes | body |  |
+| `data` | `object` | Yes | body |  |
 
-**Returns:** `AgentPlatformBootstrapTokenResponse`
+**Returns:** `any`
 
 ---
 

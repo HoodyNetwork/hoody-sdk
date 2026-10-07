@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.15
-**Total endpoints:** 1020
+**Version:** 1.0.0-beta.16
+**Total endpoints:** 1016
 **Namespaces:** 21
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -74,7 +74,7 @@ Grouped by SDK namespace, sorted by path.
 | POST | `/api/v1/agent/github/worktrees/remove` | `agent.github.deleteWorktree` | `hoody agent github worktrees delete` | Remove a linked worktree. |
 | POST | `/api/v1/agent/headless/runs` | `agent.headless.start` | — | Create a headless one-shot run. |
 | GET | `/api/v1/agent/health` | `agent.kit.getHealth` | `hoody agent health` | Standardized health check. |
-| POST | `/api/v1/agent/hoody/auth/bootstrap` | `agent.platform.bootstrapToken` | — | Bootstrap the Hoody platform credential (install-if-absent). |
+| POST | `/api/v1/agent/hoody/auth/bootstrap` | `agent.signIn` | — | Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in". |
 | GET | `/api/v1/agent/hoody/auth/status` | `agent.whoami` | `hoody agent whoami` | Hoody platform identity and realm scope. |
 | PUT | `/api/v1/agent/hoody/realm` | `agent.realms.use` | `hoody agent realms use` | Switch the agent's active realm. |
 | DELETE | `/api/v1/agent/hooks` | `agent.hooks.delete` | `hoody agent hooks delete` | Delete a hook. |
@@ -571,7 +571,7 @@ Grouped by SDK namespace, sorted by path.
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
-| GET | `/api/v1/code` | `code.ui.getPage` | — | Open the editor (canonical kit path) |
+| DELETE | `/api/v1/code` | `code.stop` | `hoody code stop` | Stop an editor instance |
 | POST | `/api/v1/code/extensions/install` | `code.extensions.install` | `hoody code extensions install` | Stage a VS Code extension from a URL |
 | GET | `/api/v1/code/extensions/list` | `code.extensions.list` | `hoody code extensions list` | Staged extensions, and what the instance appears to have installed |
 | GET | `/api/v1/code/health` | `code.kit.getHealth` | `hoody code health` | Service health check |
@@ -622,7 +622,7 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/curl/sessions/{id}/cookies` | `curl.sessions.listCookies` | `hoody curl sessions cookies list` | Get session cookies only |
 | GET | `/api/v1/curl/sse` | `curl.jobs.stream` | `hoody curl jobs stream` | Subscribe to job events over Server-Sent Events |
 | GET | `/api/v1/curl/storage` | `curl.storage.list` | `hoody curl storage list` | List all saved downloads |
-| DELETE | `/api/v1/curl/storage/{path}` | `curl.storage.delete` | `hoody curl storage delete` | Delete a saved file |
+| DELETE | `/api/v1/curl/storage/{path}` | `curl.storage.delete` | `hoody curl storage delete` | Delete a saved file or directory |
 | GET | `/api/v1/curl/storage/{path}` | `curl.storage.get` | `hoody curl storage get` | Download a saved file |
 | GET | `/api/v1/curl/ws` | `curl.jobs.connect` | — | Subscribe to job events over WebSocket |
 | GET | `/metrics` | `curl.kit.getMetrics` | `hoody curl metrics` | Prometheus metrics |
@@ -657,11 +657,10 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `display` — 47 endpoints
+## `display` — 46 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
-| GET | `/api/v1/display/` | `display.ui.getPage` | — | Access the HTML5 Display client interface |
 | GET | `/api/v1/display/clipboard` | `display.clipboard.get` | `hoody display clipboard get` | Read clipboard text |
 | POST | `/api/v1/display/clipboard` | `display.clipboard.set` | `hoody display clipboard set` | Write clipboard text |
 | GET | `/api/v1/display/health` | `display.kit.getHealth` | `hoody display health` | Service health check |
@@ -711,7 +710,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `egress` — 4 endpoints
+## `egress` — 5 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -719,6 +718,7 @@ Grouped by SDK namespace, sorted by path.
 | DELETE | `/api/v1/egress/upstream` | `egress.upstream.disable` | `hoody egress upstream disable` | Disable upstream |
 | GET | `/api/v1/egress/upstream` | `egress.upstream.get` | `hoody egress upstream get` | Get upstream status |
 | PUT | `/api/v1/egress/upstream` | `egress.upstream.set` | `hoody egress upstream set` | Set upstream |
+| POST | `/api/v1/egress/upstream/renew` | `egress.upstream.renewLease` | `hoody egress upstream renew` | Renew the upstream lease |
 
 ---
 
@@ -1005,18 +1005,15 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `pipe` — 8 endpoints
+## `pipe` — 5 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
-| GET | `/api/v1/pipe/` | `pipe.ui.getPage` | — | Send page |
 | GET | `/api/v1/pipe/{path}` | `pipe.receive` | — | Receive data from a pipe |
-| HEAD | `/api/v1/pipe/{path}` | `pipe.getStatus` | — | Pipe status headers (HEAD ?status) |
 | POST | `/api/v1/pipe/{path}` | `pipe.send` | — | Send data to a pipe |
 | GET | `/api/v1/pipe/health` | `pipe.kit.getHealth` | — | Service health check |
 | GET | `/api/v1/pipe/help` | `pipe.kit.getHelp` | — | Get help text with curl examples |
 | GET | `/api/v1/pipe/metrics` | `pipe.kit.getMetrics` | — | Service metrics (Prometheus) |
-| GET | `/api/v1/pipe/noscript` | `pipe.ui.getNoScriptPage` | — | No-JavaScript upload page |
 
 ---
 
@@ -1108,11 +1105,10 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `terminal` — 39 endpoints
+## `terminal` — 38 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
-| GET | `/` | `terminal.ui.getPage` | — | Get web terminal interface |
 | GET | `/api/v1/system/daemon` | `terminal.system.listDaemonPrograms` | `hoody terminal system daemon programs list` | Get daemon programs configuration |
 | GET | `/api/v1/system/displays` | `terminal.system.listDisplays` | `hoody terminal system displays list` | Get display information |
 | POST | `/api/v1/system/displays/{display}/stop` | `terminal.system.stopDisplay` | `hoody terminal system displays stop` | Stop a display |

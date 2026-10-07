@@ -1,6 +1,6 @@
 # `exec` — 67 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.exec`
 
 ```typescript
@@ -276,12 +276,15 @@ client.exec.logs.stream(options: { file: string; follow?: boolean; cache?: boole
 Read Magic Comments
 
 ```typescript
-client.exec.magicComments.get(options: { path: string; cache?: boolean | number }): Promise<ExecMagicCommentsGetResponse>
+client.exec.magicComments.get(options: { path: string; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecMagicCommentsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `path` | `string` | Yes | query | Path query parameter |
+| `path` | `string` | Yes | query | A script path resolved like scripts/read: under the call's scope first (`execId` / `exec_id` / `subdomain`, else the Host's `[&lt;subdomain&gt;.]…-exec-&lt;execId&gt;`), as `&lt;subdomain\|default&gt;/&lt;execId&gt;/&lt;path&gt;` unless it already starts with that prefix; when no file is there, relative to the scripts directory (so `default/1/x.ts` still works from any Host). An absolute path inside the scripts directory is read relative to it. `resolvedPath` in the answer names the file used. |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecMagicCommentsGetResponse`
@@ -313,12 +316,16 @@ client.exec.magicComments.getSchema(): Promise<ExecMagicCommentsGetSchemaRespons
 Update Magic Comments Handler
 
 ```typescript
-client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest): Promise<ExecMagicCommentsUpdateResponse>
+client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecMagicCommentsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ExecMagicCommentsUpdateRequest` | Yes | body |  |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecMagicCommentsUpdateResponse`
 
@@ -1329,12 +1336,16 @@ client.exec.templates.delete(name: string): Promise<ExecTemplatesDeleteResponse>
 Generate From Template
 
 ```typescript
-client.exec.templates.generate(data: ExecTemplatesGenerateRequest): Promise<ExecTemplatesGenerateResponse>
+client.exec.templates.generate(data: ExecTemplatesGenerateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecTemplatesGenerateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ExecTemplatesGenerateRequest` | Yes | body |  |
+| `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
+| `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecTemplatesGenerateResponse`
 

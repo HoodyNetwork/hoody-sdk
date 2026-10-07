@@ -1,6 +1,6 @@
 # `api` — 303 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.api`
 
 ```typescript
@@ -5200,7 +5200,7 @@ client.api.snapshots.delete(id: string, name: string, options?: { cache?: boolea
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container |
-| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiSnapshotsDeleteResponse`
@@ -5281,7 +5281,7 @@ client.api.snapshots.restore(id: string, name: string, options?: { cache?: boole
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to restore |
-| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiSnapshotsRestoreResponse`
@@ -5303,7 +5303,7 @@ client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAli
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container |
-| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading hyphens stripped); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
+| `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 | `data` | `ApiSnapshotsSetAliasRequest` | Yes | body |  |
 | `cache` | `boolean \| number` | No | query |  |
 

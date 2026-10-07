@@ -1,6 +1,6 @@
 # `notes` — 74 methods
 
-**Version:** 1.0.0-beta.15
+**Version:** 1.0.0-beta.16
 **Accessor:** `client.notes`
 
 ```typescript
@@ -18,14 +18,14 @@ import * as notes from 'hoody-sdk/notes';
 Download an avatar image
 
 ```typescript
-client.notes.avatars.download(avatarId: string): Promise<ApiResponse<unknown>>
+client.notes.avatars.download(avatarId: string): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `avatarId` | `string` | Yes | path |  |
 
-**Returns:** `ApiResponse<unknown>`
+**Returns:** `ApiResponse<ArrayBuffer>`
 
 **CLI:** `hoody notes avatars download`
 
@@ -409,7 +409,7 @@ client.notes.comments.update(notebookId: string, nodeId: string, commentId: stri
 Append blocks to a document
 
 ```typescript
-client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { XIdempotencyKey?: string; cache?: boolean | number }): Promise<NotesDocumentAppendResponse>
+client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { IfMatch?: string; XIdempotencyKey?: string; cache?: boolean | number }): Promise<NotesDocumentAppendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -417,6 +417,7 @@ client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocu
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentAppendRequest` | Yes | body |  |
+| `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `XIdempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
 | `cache` | `boolean \| number` | No | query |  |
 
@@ -480,7 +481,7 @@ client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: s
 Get document content
 
 ```typescript
-client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; cache?: boolean | number }): Promise<NotesDocumentGetResponse>
+client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; IfNoneMatch?: string; cache?: boolean | number }): Promise<NotesDocumentGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -492,6 +493,7 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 | `output` | `"json" \| "md" \| "html"` | No | query |  |
 | `includeComments` | `"none" \| "appendix"` | No | query |  |
 | `ticket` | `string` | No | query |  |
+| `IfNoneMatch` | `string` | No | header | Optional (RFC 9110): ETags of copies the caller already holds, or `*`. When the document is still at one of them the JSON output answers 304 with no body. Ignored by the Markdown and HTML outputs. |
 | `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesDocumentGetResponse`
@@ -507,7 +509,7 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 Create or replace document
 
 ```typescript
-client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest): Promise<NotesDocumentSetResponse>
+client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest, options?: { IfMatch?: string; cache?: boolean | number }): Promise<NotesDocumentSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -515,6 +517,8 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentSetRequest` | Yes | body |  |
+| `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesDocumentSetResponse`
 
@@ -529,7 +533,7 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 Merge document content
 
 ```typescript
-client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest): Promise<NotesDocumentUpdateResponse>
+client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest, options?: { IfMatch?: string; cache?: boolean | number }): Promise<NotesDocumentUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -537,6 +541,8 @@ client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocu
 | `notebookId` | `string` | Yes | path |  |
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentUpdateRequest` | Yes | body |  |
+| `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
+| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesDocumentUpdateResponse`
 
