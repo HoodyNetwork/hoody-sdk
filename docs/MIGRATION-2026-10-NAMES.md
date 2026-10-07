@@ -30,7 +30,7 @@ One word means one thing, on both surfaces. CLI `agent sessions model set` is SD
 | D1 | `use` is the verb for "make this item the current one". |
 | D2 | The agent definitions group is `agent definitions` (CLI) and `agent.definitions` (SDK), not `agent agents`. |
 | D3 | Pull requests are `prs` on the CLI and `Pr` in the SDK (`agent github prs`, `createPr`, `mergePr`). |
-| D4 | `hoody logout` signs out this device only. `hoody logout --all` ends every session of the account, and the SDK spells that `api.auth.logoutAll()`. `HoodyClient.logout()` keeps its behavior and calls `logoutAll()`. |
+| D4 | `hoody logout` signs out this device only. `hoody logout --all` ends every session of the account, and the SDK spells that `api.auth.logoutAll()`. **Breaking since 1.0.0-beta.16:** `HoodyClient.logout()` matches the CLI: it ends this session only and makes no request. Call `HoodyClient.logoutAll()` to sign the account out everywhere. |
 | D5 | `db` and `kv` stay as CLI groups (SDK: `sqlite.sql`, `sqlite.kv`). |
 | D6 | `upsert` stays for `agent hooks` and `agent mcp`. |
 
@@ -1517,7 +1517,7 @@ Pagination helpers (`listAll`, `listIterator`) moved with their base method and 
 | `client.code.static.getWellKnownSecurityTxt` | removed | Use `client.code.ui.getSecurityPolicy()`. |
 | `client.code.vscode.embedUrl()` | `removed: client.embeds builder` |  |
 | `client.code.vscode.getManifest` | `client.code.ui.getManifest` |  |
-| `client.code.vscode.getVSCode` | `client.code.ui.getPage` |  |
+| `client.code.vscode.getVSCode` | removed | Was `client.code.ui.getPage` until 1.0.0-beta.16. Build the page URL with `client.embeds.code.editor()` (also `.root()`, `.extension()`) and open or embed it. |
 
 ### `cron`
 
@@ -1575,7 +1575,7 @@ Pagination helpers (`listAll`, `listIterator`) moved with their base method and 
 
 | Old | New | Note |
 |---|---|---|
-| `client.display.accessClient` | `client.display.ui.getPage` |  |
+| `client.display.accessClient` | removed | Was `client.display.ui.getPage` until 1.0.0-beta.16. Build the page URL with `client.embeds.display.client()` and open or embed it. |
 | `client.display.getClipboard` | `client.display.clipboard.get` |  |
 | `client.display.getInformation` | `client.display.get` |  |
 | `client.display.getWindowProperties` | `client.display.windows.get` |  |
@@ -1857,8 +1857,8 @@ Pagination helpers (`listAll`, `listIterator`) moved with their base method and 
 | `client.pipe.health.check` | `client.pipe.kit.getHealth` |  |
 | `client.pipe.info.getHelp` | `client.pipe.kit.getHelp` |  |
 | `client.pipe.info.getMetrics` | `client.pipe.kit.getMetrics` |  |
-| `client.pipe.ui.getIndex` | `client.pipe.ui.getPage` |  |
-| `client.pipe.ui.getNoScript` | `client.pipe.ui.getNoScriptPage` |  |
+| `client.pipe.ui.getIndex` | removed | Was `client.pipe.ui.getPage` until 1.0.0-beta.16. Build the page URL with `client.embeds.pipe.send()` and open or embed it. |
+| `client.pipe.ui.getNoScript` | removed | Was `client.pipe.ui.getNoScriptPage` until 1.0.0-beta.16. Build the page URL with `client.embeds.pipe.noscript()` and open or embed it. |
 
 ### `proxyLogs`
 
@@ -1986,7 +1986,7 @@ Pagination helpers (`listAll`, `listIterator`) moved with their base method and 
 | `client.terminal.terminalDragAndDrop.oneShotTerminalDrop` | `client.terminal.drops.send` |  |
 | `client.terminal.terminalDragAndDrop.uploadTerminalDropSlice` | `client.terminal.drops.writeChunk` |  |
 | `client.terminal.terminalState.postTerminalState` | `client.terminal.sessions.reportDiagnostics` |  |
-| `client.terminal.web.get` | `client.terminal.ui.getPage` |  |
+| `client.terminal.web.get` | removed | Was `client.terminal.ui.getPage` until 1.0.0-beta.16. Build the page URL with `client.embeds.terminal.session()` and open or embed it. |
 | `client.terminal.write` | `client.terminal.sessions.write` |  |
 
 ### `tunnel`
