@@ -44,6 +44,13 @@ export declare function findServiceIndexParam(namespace: string | undefined, que
 /** The host index `query` names for `namespace`; undefined when it names none. */
 export declare function serviceIndexFromQuery(namespace: string | undefined, query: Record<string, unknown> | null | undefined): number | undefined;
 /**
+ * Request BODY fields that name a kit's host index. The proxy never reads the
+ * body, and the terminal kit refuses a `/create` body id that differs from the
+ * query id the host forces (400 TERMINAL_ID_MISMATCH), so the body id has to
+ * pick the host too. `terminal` is the kit's short alias of `terminal_id`.
+ */
+export declare const SERVICE_INDEX_BODY_PARAMS: Readonly<Record<string, readonly string[]>>;
+/**
  * The parameter that asks a kit for a FRESH instance, per kit. The terminal kit
  * generates a new terminal id (40000-65535) for `ephemeral=true` only when the
  * request names no terminal id; through the proxy that means the `-terminal-0`
@@ -57,14 +64,25 @@ export declare const SERVICE_FRESH_INSTANCE_PARAMS: Readonly<Record<string, stri
  *
  * 1. a PATH parameter of the table (`/history/{terminal_id}`,
  *    `DELETE /{terminal_id}`, `/{terminal_id}/automation`). The proxy never
- *    rewrites the path, and the kit reads the path id before the query, so
- *    the call acts on that id from any host; but the proxy checks access on
- *    the host's index, so the host must be the one the id names.
+ *    rewrites the path and checks access on the host's index, and the kit
+ *    refuses a path id that differs from the query id the host forces, so
+ *    the host must be the one the id names.
  * 2. a query parameter of the table (`?terminal_id=`), which the proxy
  *    overwrites with the host's index.
- * 3. the kit's fresh-instance flag with no id (`ephemeral=true`): index 0,
- *    the proxy's "no terminal id" host.
+ * 3. a body field of SERVICE_INDEX_BODY_PARAMS (`/create`'s `terminal_id`),
+ *    for the same reason as the path.
+ * 4. the kit's fresh-instance flag with no id (`ephemeral=true`, in the query
+ *    or the body): index 0, the proxy's "no terminal id" host.
  *
  * Undefined when the request names none: the client's own index applies.
  */
-export declare function findRequestServiceIndex(namespace: string | undefined, query: Record<string, unknown> | null | undefined, pathParams?: Record<string, unknown> | null): ServiceIndexParamMatch | undefined;
+export declare function findRequestServiceIndex(namespace: string | undefined, query: Record<string, unknown> | null | undefined, pathParams?: Record<string, unknown> | null, body?: unknown): ServiceIndexParamMatch | undefined;
+/**
+ * The message for a request whose host index is named twice, differently, or undefined when
+ * every name agrees. Compared: the id in the path, the query and the body (the first parameter
+ * of each that is present), and a per-call serviceIndex against each of them, or against the
+ * fresh-instance flag when no id is named. Through the proxy the host decides, so a silent pick
+ * would run the call somewhere the caller did not name. An id named with the flag is the kit's
+ * own business (it turns that session ephemeral, or refuses), not a conflict.
+ */
+export declare function serviceIndexConflict(namespace: string | undefined, serviceIndex: unknown, query: Record<string, unknown> | null | undefined, pathParams?: Record<string, unknown> | null, body?: unknown): string | undefined;

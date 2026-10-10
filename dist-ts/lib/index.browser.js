@@ -25,7 +25,7 @@ export { HoodyClient, } from './hoody-client.js';
 // browser-compatible; they must be reachable from the browser entry.
 export { EventsClient } from './events-client.js';
 export { EventsManager } from './events-manager.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, } from '../generated/errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, } from '../generated/errors.js';
 export { listKits, } from './kit-catalog.js';
 export { normalizeContainerStatsResponse, normalizeProjectStatsResponse, } from './metrics.js';
 export { encrypt, decrypt, isEncrypted, parseEnvelope, VaultCryptoError } from './vault-crypto.js';
@@ -56,6 +56,8 @@ export { EventsSession } from './events-session.js';
 export { EVENT_TYPES, EVENT_CATALOG, isEventType, isEventPattern, isEphemeralEventType, isPersistedEventType, isReservedEventType, expandEventPattern, eventCatalogInfo, } from './events-catalog.js';
 // -- Notes TUS upload (box.notes.files.upload / resumeUpload / …) --
 export { generateNotesFileId, encodeTusMetadata, NOTES_UPLOAD_CHUNK_BYTES, } from './notes-upload.js';
+// -- Bot chat (box.agent.bots.ask / follow) --
+export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
 // -- Pipe media streaming helpers (browser-only) --
 export { PipeMedia, mediaStreamToReadableStream } from './pipe-media.js';
 // -- Pipe browser data transfer: sendFile / receive / download / subscribeProgress --

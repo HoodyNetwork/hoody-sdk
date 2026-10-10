@@ -13,6 +13,114 @@ export const RETRY_SAFE_CODES = ['FILE_PATH_BUSY', 'PATH_BUSY'];
 /** Methods the retry rule may send again after a lost connection. */
 export const IDEMPOTENT_METHODS = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
 /**
+ * True when the request carries a non-empty value under the idempotency-key header its
+ * operation declares (IRequestData.declaredIdempotencyKeyHeader). Header names are compared ignoring
+ * case. A header the operation does not declare counts for nothing: the server would not
+ * deduplicate on it.
+ */
+export function sendsIdempotencyKey(headers, declared) {
+    if (typeof declared !== 'string' || declared.length === 0 || !headers)
+        return false;
+    const wanted = declared.toLowerCase();
+    return Object.entries(headers).some(([name, value]) => name.toLowerCase() === wanted && typeof value === 'string' && value.trim().length > 0);
+}
+/**
+ * The request every attempt of a keyed request sends (IRequestData.declaredIdempotencyKeyHeader): the key
+ * header as the first keyed attempt dispatched it, after request middleware, and the body as it
+ * went on the wire. The server deduplicates on the key and compares the body: a retry under
+ * another key runs the operation a second time, and another body under the same key is refused
+ * (idempotency_key_reused). So a retry sends these two, whatever request middleware does on that
+ * attempt.
+ *
+ * The body is fixed here: bytes are copied (the caller may reuse its buffer), a Blob is
+ * immutable, a string is itself, and a value the transport would JSON-encode is encoded once with
+ * `encode`, the transport's own encoder, so every attempt carries the same text. Returns
+ * undefined when the body cannot be sent twice byte for byte: a stream or an async iterable (read
+ * once), FormData (fetch writes a new multipart boundary each time), or a value `encode` refuses.
+ * Such a request is not retried. Also undefined when the request sends no key.
+ *
+ * `headers` are the ones applyRequestMiddleware returned, folded by case (one spelling per name,
+ * the last value set), so the key found here is the only key fetch sends.
+ */
+export function keyedReplayOf(headers, declared, wire, encode) {
+    if (typeof declared !== 'string' || declared.length === 0)
+        return undefined;
+    const wanted = declared.toLowerCase();
+    const name = Object.keys(headers).find((key) => key.toLowerCase() === wanted && typeof headers[key] === 'string' && headers[key].trim().length > 0);
+    if (name === undefined)
+        return undefined;
+    const value = headers[name];
+    if (wire === undefined || wire === null || typeof wire === 'string')
+        return { name, value, body: wire };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g = globalThis;
+    if (typeof g.FormData !== 'undefined' && wire instanceof g.FormData)
+        return undefined;
+    if (typeof g.ReadableStream !== 'undefined' && wire instanceof g.ReadableStream)
+        return undefined;
+    if (typeof wire[Symbol.asyncIterator] === 'function')
+        return undefined;
+    if (typeof g.Blob !== 'undefined' && wire instanceof g.Blob)
+        return { name, value, body: wire };
+    if (wire instanceof Uint8Array)
+        return { name, value, body: new Uint8Array(wire) };
+    if (wire instanceof ArrayBuffer)
+        return { name, value, body: wire.slice(0) };
+    try {
+        const text = encode(wire);
+        return typeof text === 'string' ? { name, value, body: text } : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
+/**
+ * The headers of a later attempt of a keyed request: every spelling of the declared header is
+ * removed and the first keyed attempt's name and value put back (keyedReplayOf).
+ */
+export function withKeyedReplayHeader(headers, declared, replay) {
+    const wanted = declared.toLowerCase();
+    const out = {};
+    for (const [name, value] of Object.entries(headers))
+        if (name.toLowerCase() !== wanted)
+            out[name] = value;
+    out[replay.name] = replay.value;
+    return out;
+}
+/**
+ * A fresh idempotency key (a random UUID). A generated POST method that declares an
+ * `Idempotency-Key` header sends one per call when the caller gives none. Falls back to
+ * getRandomValues where randomUUID is missing (a page served over plain http).
+ */
+export function newIdempotencyKey() {
+    const c = globalThis.crypto;
+    if (typeof c.randomUUID === 'function')
+        return c.randomUUID();
+    const b = c.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+/**
+ * The headers of a request that carries an idempotency key under `name`: one key per call,
+ * kept across its retries. A non-blank key the caller set wins, per call or client-wide
+ * (`clientHeaders`); a blank one counts as none, since the server ignores it. Otherwise the
+ * call gets a fresh key.
+ */
+export function withIdempotencyKey(callHeaders, clientHeaders, name) {
+    const lower = name.toLowerCase();
+    const named = (headers) => Object.entries(headers ?? {}).filter(([header]) => header.toLowerCase() === lower);
+    const isSet = (headers) => named(headers).some(([, value]) => String(value).trim() !== '');
+    if (isSet(callHeaders))
+        return callHeaders;
+    const out = Object.fromEntries(Object.entries(callHeaders ?? {}).filter(([header]) => header.toLowerCase() !== lower));
+    // Under the client's own spelling of a blank one, so the fresh key replaces it.
+    if (!isSet(clientHeaders))
+        out[named(clientHeaders)[0]?.[0] ?? name] = newIdempotencyKey();
+    return out;
+}
+/**
  * The default retry policy, used when neither the request nor the client sets `retries`: up to
  * DEFAULT_RETRIES more attempts (none for a responseIsFinal request), spent as
  * shouldRetryFailure(..., byDefault = true) allows, DEFAULT_RETRY_DELAY_MS as the backoff base
@@ -23,6 +131,37 @@ export const IDEMPOTENT_METHODS = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
 export const DEFAULT_RETRIES = 2;
 export const DEFAULT_RETRY_DELAY_MS = 2000;
 export const DEFAULT_RETRY_WAIT_CAP_MS = 10_000;
+/**
+ * A kit of a container that has just come up answers 502 BACKEND_GATEWAY_ERROR until it is
+ * listening, about 10 s after the container reports `running`. Under the default policy a failure
+ * isKitStarting() accepts may go again, at most KIT_STARTING_MAX_DELAY_MS apart (a Retry-After is
+ * honoured as sent), within the client's `kitStartingWaitMs` of waiting in all
+ * (KIT_STARTING_WAIT_MS unless set; 0 turns the wait off). Which requests may go again is still
+ * shouldRetryFailure's answer: an idempotent method, never a responseIsFinal request. When the
+ * wait runs out, the request fails with KIT_NOT_READY (kitNotReadyMessage).
+ */
+export const KIT_STARTING_MAX_DELAY_MS = 5000;
+export const KIT_STARTING_WAIT_MS = 20_000;
+export const KIT_NOT_READY = 'KIT_NOT_READY';
+export function isKitStarting(error) {
+    return error.status === 502 && error.code === 'BACKEND_GATEWAY_ERROR';
+}
+/** The `kitStartingWaitMs` a client runs with: KIT_STARTING_WAIT_MS when unset, else a whole number of milliseconds, 0 or more. */
+export function resolveKitStartingWaitMs(value) {
+    if (value === undefined)
+        return KIT_STARTING_WAIT_MS;
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+        throw new RangeError(`kitStartingWaitMs must be a number of milliseconds, 0 or more (0 turns the wait off); got ${String(value)}`);
+    }
+    return Math.floor(value);
+}
+/** How many more attempts a kit still starting may take within `waitMs`: one per KIT_STARTING_MAX_DELAY_MS, plus one. */
+export function kitStartingRetries(waitMs) {
+    return waitMs > 0 ? Math.ceil(waitMs / KIT_STARTING_MAX_DELAY_MS) + 1 : 0;
+}
+export function kitNotReadyMessage(waitedMs) {
+    return `The kit did not answer within ${Math.round(waitedMs / 1000)} s; it may still be starting, stopped or not installed.`;
+}
 /**
  * True in a web browser's page or worker. Its fetch hides where a manual redirect leads (an
  * opaqueredirect response) and reports every network failure as a bare TypeError, so there a
@@ -65,9 +204,34 @@ export function neverDispatched(error) {
     }
     return false;
 }
+function isAbortError(error) {
+    if (error instanceof Error && error.name === 'AbortError')
+        return true;
+    return typeof error === 'object' && error !== null && error.code === 'ABORT_ERR';
+}
+/**
+ * The reason a client's deadline aborts a request with. fetch rejects with the signal's reason, so
+ * toApiError can tell its own timeout from a caller abort that landed after the timer fired.
+ */
+const DEADLINE_REASONS = new WeakSet();
+export function deadlineReason() {
+    const reason = new DOMException('The operation timed out', 'AbortError');
+    DEADLINE_REASONS.add(reason);
+    return reason;
+}
+export function isDeadlineReason(error) {
+    return typeof error === 'object' && error !== null && DEADLINE_REASONS.has(error);
+}
+/** The message of a request the caller's signal aborted, with the reason it gave (if any). */
+export function callerAbortMessage(reason) {
+    const detail = typeof reason === 'string' ? reason
+        : reason instanceof Error && reason.name !== 'AbortError' ? reason.message
+            : '';
+    return detail ? `Request aborted by the caller: ${detail}` : 'Request aborted by the caller';
+}
 /**
  * Whether a failed attempt may be sent again. One rule, in this order:
- *   1. This client's own timeout or abort, a refused redirect and a missing fetch are final.
+ *   1. The caller's abort, this client's own timeout, a refused redirect and a missing fetch are final.
  *   2. A request that never reached a server (the connection could not be opened) ran
  *      nothing: any method goes again.
  *   3. A refusal whose code says nothing was done (RETRY_SAFE_CODES): any method goes again.
@@ -77,9 +241,16 @@ export function neverDispatched(error) {
  *      PUT, DELETE) goes again on a lost connection or a status in retryOnStatuses; any
  *      other method only on 429, which refuses before handling.
  * `byDefault` (nobody set `retries`): a method that is not idempotent goes again only by rule 2.
+ * `keyed`: the request sends the idempotency key its server honours (the header its operation declares),
+ * so any method counts as idempotent in rule 5 and under `byDefault`: a repeat is answered from the
+ * server's record.
  */
-export function shouldRetryFailure(error, method, retryOnStatuses, responseIsFinal = false, byDefault = false) {
+export function shouldRetryFailure(error, method, retryOnStatuses, responseIsFinal = false, byDefault = false, keyed = false) {
+    // The caller's abort (ABORTED) and this client's own deadline (ETIMEDOUT from its timer's
+    // AbortError) are final; a body stall is ETIMEDOUT too, and goes by the rules below.
     if (error.status === 0 && error.code === 'ABORTED')
+        return false;
+    if (error.status === 0 && error.code === 'ETIMEDOUT' && isAbortError(error.cause))
         return false;
     if (error.code === 'REDIRECT_REFUSED')
         return false;
@@ -88,13 +259,13 @@ export function shouldRetryFailure(error, method, retryOnStatuses, responseIsFin
         return false;
     if (error.status === 0 && neverDispatched(error))
         return true;
-    if (byDefault && !IDEMPOTENT_METHODS.includes(method))
+    const idempotentMethod = keyed || IDEMPOTENT_METHODS.includes(method);
+    if (byDefault && !idempotentMethod)
         return false;
     if (error.status > 0 && !responseIsFinal && typeof error.code === 'string' && RETRY_SAFE_CODES.includes(error.code))
         return true;
     if (responseIsFinal)
         return false;
-    const idempotentMethod = IDEMPOTENT_METHODS.includes(method);
     if (error.status === 0)
         return idempotentMethod;
     if (!idempotentMethod && error.status !== 429)

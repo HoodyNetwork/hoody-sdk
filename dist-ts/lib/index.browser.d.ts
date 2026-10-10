@@ -25,7 +25,7 @@ export { EventsClient } from './events-client.js';
 export { EventsManager } from './events-manager.js';
 export type { HoodyClientConfig } from '../generated/client.js';
 export type { HoodyCredentials } from '../generated/client.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, } from '../generated/errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, } from '../generated/errors.js';
 export type { ApiErrorRequestContext, ApiErrorResponseDetails, RetryableApiError, RetryableStatus, } from '../generated/errors.js';
 export type { IHttpClientConfig, IRequestData, IHttpClientMiddleware, IHttpClientMiddlewareRequestContext, IHttpClientMiddlewareResponseContext, IHttpClientMiddlewareErrorContext, } from '../generated/http-client.js';
 export { listKits, } from './kit-catalog.js';
@@ -77,6 +77,8 @@ export type { SqliteBindValue, SqliteParams, SqliteSqlRequest, SqliteQueryResult
 export type { KvReadOptions, KvExistsOptions, KvSetTextOptions, KvReadArgs, KvKeyArgs, KvKeyValueArgs, KvKeyMethod, KvKeyValueMethod, KvStoreObjectForms, SqliteKvStore } from './kv-helpers.js';
 export { generateNotesFileId, encodeTusMetadata, NOTES_UPLOAD_CHUNK_BYTES, } from './notes-upload.js';
 export type { NotesUploadData, NotesUploadProgress, NotesChunkOptions, NotesUploadFileOptions, NotesUploadResult, NotesUploadFileResult, } from './notes-upload.js';
+export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
+export type { BotAskOptions, BotAskResult, BotFollowOptions, BotLogRow, BotMessageReceipt, BotStreamFrame, } from './bot-chat.js';
 export { PipeMedia, mediaStreamToReadableStream } from './pipe-media.js';
 export type { PipeMediaConfig, MediaSession, ReceiveSession, ShareScreenOptions, ShareWebcamOptions, ShareAudioOptions, ReceiveMediaOptions, PipePage, PipePageOptionsMap, PipeOpenPageOptions, PipeSendPageOptions, PipeSharePageOptions, PipeReceivePageOptions, PipeVideoPageOptions, PipeNoscriptPageOptions, } from './pipe-media.js';
 export { PipeBrowser, PipeTransferError } from './pipe-browser.js';

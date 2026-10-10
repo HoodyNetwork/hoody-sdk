@@ -47,6 +47,21 @@ export type RetryableApiError = ApiError & {
  */
 export declare const RETRY_SAFE_CODES: readonly string[];
 export declare function isRetryableApiError(error: unknown): error is RetryableApiError;
+/**
+ * Whether `error` is an ApiError carrying one of `codes`; narrows `code` to them.
+ * Each operation that documents its error codes has an `{Ns}{Service}{Method}ErrorCode`
+ * type (types.ts), named like its Request and Response types. Pass it as the type argument
+ * and a code the operation does not document is a compile error; `code` then has that
+ * type (without a type argument it has exactly the codes passed):
+ *
+ *     if (isApiErrorCode<AgentBotsSendMessageErrorCode>(e, 'rate_limited')) { e.code; }
+ *
+ * Like isRetryableApiError it narrows to a subtype of ApiError, so an ApiError with any
+ * other code still reaches the negative branch.
+ */
+export declare function isApiErrorCode<C extends string>(error: unknown, ...codes: C[]): error is ApiError & {
+    readonly code: C;
+};
 export declare class ValidationError extends Error {
     field?: string | undefined;
     constructor(message: string, field?: string | undefined);

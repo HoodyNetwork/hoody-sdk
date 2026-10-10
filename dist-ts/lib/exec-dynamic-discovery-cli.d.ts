@@ -12,6 +12,8 @@
 import type { DiscoveredScript } from './exec-dynamic-discovery.js';
 /**
  * Parse a raw API response from openapi.listScripts into DiscoveredScript[].
- * Works with both `{ data: [...] }` and `{ data: { data: [...] } }` shapes.
+ * The script array is found by `extractRawScriptList`, which accepts the
+ * client envelope around the kit body as well as a bare array or `scripts`
+ * list at any of the first `data` levels.
  */
 export declare function discoverScriptsFromRawResponse(response: unknown): DiscoveredScript[];

@@ -10,7 +10,7 @@
  *   - No .md companion content is included (prompt injection vector)
  *   - Path traversal prevented via assertBasePath
  */
-import { parseRawScriptEntries } from './exec-dynamic-parse.js';
+import { extractRawScriptList, parseRawScriptEntries } from './exec-dynamic-parse.js';
 // ─── Constants ───────────────────────────────────────────────────────────────
 export const MAX_PARAMS_PER_SCRIPT = 20;
 export const MAX_SCHEMA_SIZE_BYTES = 10_240;
@@ -157,17 +157,11 @@ export function sanitizeDescription(text) {
  */
 export async function discoverScripts(openapiService, scriptsService, options) {
     const templateVars = options?.templateVars;
-    // listScripts is not paginated (spec returns a union with inline scripts
-    // array); call it directly and extract the array from the response.
+    // listScripts is not paginated; call it directly and extract the array
+    // from the response.
     const requestOptions = options?.signal ? { signal: options.signal } : undefined;
     const response = await openapiService.listScripts(requestOptions, templateVars);
-    // Response shape is a union (anyOf — its branches have subset `required` sets,
-    // so `oneOf` would reject a full response) — look for `scripts` or `items` in .data.
-    const data = response.data ?? response;
-    const scriptsArr = data.scripts
-        ?? data.items
-        ?? data;
-    const rawScripts = (Array.isArray(scriptsArr) ? scriptsArr : []);
+    const rawScripts = extractRawScriptList(response);
     // Pre-enrich: load companion .schema.json for scripts that declare hasSchema
     // but don't include an inline schema. Skipped when no ScriptsService handle
     // is available (the raw-response adapter has no way to fetch companions).

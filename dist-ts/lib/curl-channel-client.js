@@ -63,6 +63,82 @@ export function createAbortError(message = "The operation was aborted", cause) {
     return new AbortError(message, cause !== undefined ? { cause } : undefined);
 }
 export const WS_OPEN = 1;
+/**
+ * True when Node's built-in WebSocket must not be constructed: the bundled
+ * undici cannot be shown to carry the fix for CVE-2026-12151 (unbounded
+ * message fragments). The text between the sentinels is shared verbatim with
+ * hoody-sdk (its lib and its generated WebSocket clients).
+ */
+export const nodeBuiltinWebSocketUnsafe = 
+// <node-builtin-ws-unsafe>
+(v) => {
+    if (!v?.node || v.bun || v.deno)
+        return false; // not Node: browser/worker/Bun/Deno keep their own
+    const m = /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})$/.exec(v.undici ?? ""); // canonical, no leading 0, finite
+    if (!m)
+        return true; // absent (shared/distro undici) or not a canonical release → ws
+    const [a, b, c] = [+m[1], +m[2], +m[3]];
+    const ge = (x, y, z) => a !== x ? a > x : b !== y ? b > y : c >= z;
+    if (a === 6)
+        return !ge(6, 27, 0);
+    if (a === 7)
+        return !ge(7, 28, 0);
+    if (a === 8)
+        return !ge(8, 5, 0);
+    return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
+};
+/**
+ * Maximum inbound WS frame size the SDK will JSON.parse. Frames larger than this drop the connection.
+ * On a `ws` socket it is a byte limit on the whole message (`maxPayload`); the SDK's own check on
+ * the global WebSocket path counts decoded characters. A the upstream curl kit server never sends a message
+ * near either (its frames are bounded by hello `limits.max_frame_bytes`, 1 MiB by default).
+ */
+export const MAX_INBOUND_FRAME_BYTES = 16 * 1024 * 1024;
+/**
+ * Receive caps passed to every `ws` socket this module constructs: the `ws`
+ * >= 8.21.1 fragment defaults, stated, and `maxPayload` at the SDK's own frame
+ * cap, so `ws` refuses an oversized message from its header instead of
+ * buffering up to its 100 MiB default first (WS_ERR_UNSUPPORTED_MESSAGE_LENGTH,
+ * terminal like the other local caps).
+ */
+const WS_CAPS = { maxFragments: 16 * 1024, maxBufferedChunks: 262_144, maxPayload: MAX_INBOUND_FRAME_BYTES };
+/** Codes `ws` puts on an error it raises because a frame or message broke one of its own receive limits. */
+const LOCAL_WS_CAP_CODES = new Set([
+    "WS_ERR_TOO_MANY_BUFFERED_PARTS",
+    "WS_ERR_UNSUPPORTED_MESSAGE_LENGTH",
+    "WS_ERR_UNSUPPORTED_DATA_PAYLOAD_LENGTH",
+]);
+/**
+ * The local receive-cap code behind a WebSocket `error` event (`ws` puts the
+ * Error on the event's `.error`), or undefined for any other failure.
+ */
+export function localWsCapCode(ev) {
+    let cur = ev;
+    for (let depth = 0; depth < 4 && cur && typeof cur === "object"; depth++) {
+        const o = cur;
+        if (typeof o.code === "string" && LOCAL_WS_CAP_CODES.has(o.code))
+            return o.code;
+        cur = o.error ?? o.cause;
+    }
+    return undefined;
+}
+function processVersions() {
+    return typeof process !== "undefined" ? process.versions : undefined;
+}
+function unsafeBuiltinMessage(cause) {
+    const v = processVersions() ?? {};
+    const why = cause instanceof Error ? cause.message : String(cause);
+    // Node 20 and older have no built-in WebSocket at all: nothing to blame on it.
+    if (typeof globalThis.WebSocket !== "function") {
+        return (`hoody-sdk: Node ${v.node ?? "unknown"} has no built-in WebSocket and the \`ws\` package ` +
+            `could not be loaded (${why}). Install \`ws\` (\`npm install ws\`), or use an official Node 22.23.0+, 24.17.0+ or 26.3.1+.`);
+    }
+    const undici = v.undici ? `undici ${v.undici}` : "undici version not reported";
+    return (`hoody-sdk: The built-in WebSocket of Node ${v.node ?? "unknown"} (${undici}) cannot be shown ` +
+        "to be free of CVE-2026-12151 and the `ws` package could not be loaded (" +
+        why +
+        "). Reinstall hoody-sdk, or use an official Node 22.23.0+, 24.17.0+ or 26.3.1+.");
+}
 /** Force binary frames to surface as ArrayBuffer on whichever WS impl we got. */
 function preferArrayBuffer(ws) {
     try {
@@ -76,7 +152,23 @@ function preferArrayBuffer(ws) {
 export async function openWebSocket(url, headers) {
     const isBrowser = typeof globalThis.window !== "undefined" &&
         typeof globalThis.document !== "undefined";
-    if (headers && Object.keys(headers).length > 0 && !isBrowser) {
+    const hasHeaders = !!headers && Object.keys(headers).length > 0;
+    // Checked before the browser test: a Node process with DOM globals is still
+    // Node. `nodeBuiltinWebSocketUnsafe` is false for Bun, Deno and browsers.
+    const prohibited = nodeBuiltinWebSocketUnsafe(processVersions());
+    if (prohibited) {
+        let mod;
+        try {
+            mod = (await import(/* @vite-ignore */ "ws"));
+        }
+        catch (e) {
+            throw new Error(unsafeBuiltinMessage(e));
+        }
+        const ws = new mod.default(url, undefined, hasHeaders ? { headers, ...WS_CAPS } : { ...WS_CAPS });
+        preferArrayBuffer(ws);
+        return ws;
+    }
+    if (hasHeaders && !isBrowser) {
         // Upgrade headers need the `ws` package. Never fall back to a
         // connection without them: the headers usually carry the credential.
         let mod;
@@ -88,7 +180,7 @@ export async function openWebSocket(url, headers) {
                 "(`npm install ws`); refusing to connect without them. Original error: " +
                 (e instanceof Error ? e.message : String(e)));
         }
-        const ws = new mod.default(url, undefined, { headers });
+        const ws = new mod.default(url, undefined, { headers, ...WS_CAPS });
         preferArrayBuffer(ws);
         return ws;
     }
@@ -113,7 +205,7 @@ export async function openWebSocket(url, headers) {
             "a global WebSocket) or `npm install ws`. Original error: " +
             (e instanceof Error ? e.message : String(e)));
     }
-    const ws = new mod.default(url);
+    const ws = new mod.default(url, undefined, { ...WS_CAPS });
     preferArrayBuffer(ws);
     return ws;
 }
@@ -130,8 +222,6 @@ export async function openWebSocket(url, headers) {
 // `request.cancel` on the wire.
 /** Maximum buffered SSE events per stream before the SDK cancels the upstream and emits a `dropped` synthetic event. Protects against memory-DoS from hostile/fast upstreams. */
 export const SSE_EVENT_QUEUE_CAP = 4096;
-/** Maximum inbound WS frame size the SDK will JSON.parse. Frames larger than this drop the connection. */
-export const MAX_INBOUND_FRAME_BYTES = 16 * 1024 * 1024;
 // ---- binary frame format (negotiated via the `binary` channel option) -----
 //
 // Mirrors the Rust relay's framing in the upstream curl protocol. A binary
@@ -151,6 +241,20 @@ const BIN_KIND_REQUEST_BODY = 2;
 /** Reused UTF-8 decoder for the legacy non-string-frame fallback path —
  * allocating a fresh TextDecoder per frame is needless GC churn. */
 const SHARED_TEXT_DECODER = new TextDecoder();
+/**
+ * The method the server puts on the wire (`CurlRequest::effective_method`):
+ * an explicit method as given, else POST when the request carries a body
+ * (`data`, `json` — explicit null included —, `form`, binary upload), else GET.
+ */
+function effectiveMethod(req) {
+    if (req.method !== undefined)
+        return req.method.toUpperCase();
+    const hasBody = req.data !== undefined ||
+        req.json !== undefined ||
+        req.form !== undefined ||
+        req.data_binary !== undefined;
+    return hasBody ? "POST" : "GET";
+}
 /** Encode a client→server binary frame: 16-byte header + payload. */
 function encodeBinFrame(kind, flags, streamId, payload) {
     const out = new Uint8Array(BIN_FRAME_HEADER_LEN + payload.byteLength);
@@ -413,6 +517,15 @@ export class CurlChannel {
     rejectConnectionReady;
     hello = null;
     closed = false;
+    /**
+     * Set when this client ended the connection itself because the server sent
+     * something a local limit refuses (an oversize frame, or a `ws` receive
+     * cap). Terminal: the same server would send it again, so nothing
+     * reconnects, and this error is what pending and later work rejects with.
+     */
+    localFatal;
+    /** Disconnect routine of the socket currently in `this.ws` (one per connect()). */
+    disconnectCurrent;
     closeError = null;
     pingTimer;
     reconnectTimer;
@@ -654,7 +767,7 @@ export class CurlChannel {
         this.callHook("onRequestStart", {
             streamId,
             url: req.url,
-            method: (req.method ?? "GET").toUpperCase(),
+            method: effectiveMethod(req),
         });
         // Per-request timeout — independent of AbortSignal. Fires AbortError
         // through the same cancel path if no response.start arrives within the
@@ -688,7 +801,7 @@ export class CurlChannel {
             }
             else {
                 const signal = opts.signal;
-                signal.addEventListener("abort", () => {
+                const onAbort = () => {
                     // Reject the caller's promises IMMEDIATELY on abort. Previously
                     // we only sent the cancel frame to the server and waited for the
                     // server's `cancelled` ack to reject — but if the WS is slow,
@@ -703,7 +816,13 @@ export class CurlChannel {
                     stream._errorBody(err);
                     stream._errorEvents(err);
                     this.streams.delete(streamId);
-                }, { once: true });
+                };
+                signal.addEventListener("abort", onAbort, { once: true });
+                // `end` settles on every terminal path. Without this a signal reused
+                // across requests (or one that never aborts) kept each finished
+                // stream reachable through its listener.
+                const detach = () => signal.removeEventListener("abort", onAbort);
+                stream.end.then(detach, detach);
             }
         }
         // Defer the actual send until the CURRENT connection is ready. `whenReady`
@@ -786,7 +905,9 @@ export class CurlChannel {
         catch {
             /* ignore */
         }
-        const err = new ChannelError("channel closed by client", "cancelled");
+        // A close() during local-failure teardown (e.g. from an onClose hook)
+        // keeps the local error: it is the reason the channel ended.
+        const err = this.localFatal ?? new ChannelError("channel closed by client", "cancelled");
         this.closeError = err;
         for (const s of this.streams.values()) {
             s._rejectStart(err);
@@ -898,14 +1019,27 @@ export class CurlChannel {
         // makes this idempotent across the timer + close + error + watchdog
         // entry points.
         let disconnected = false;
+        // When this socket last delivered anything, and how many pings went out
+        // since then (see the half-open check below).
+        let lastInboundAt = Date.now();
+        let unansweredPings = 0;
+        // Nothing is counted before this socket's first message (the hello):
+        // until then the hello timeout owns the handshake.
+        let heardFromServer = false;
+        const markInbound = () => {
+            heardFromServer = true;
+            lastInboundAt = Date.now();
+            unansweredPings = 0;
+        };
         let helloTimer;
         const handleDisconnect = (code, reason) => {
             if (disconnected)
                 return;
             disconnected = true;
             clearTimeout(helloTimer);
-            const err = new ChannelError(`WebSocket closed (code ${code}): ${reason || "no reason"}`, "internal_error");
+            const err = this.localFatal ?? new ChannelError(`WebSocket closed (code ${code}): ${reason || "no reason"}`, "internal_error");
             const willReconnect = !this.closed &&
+                !this.localFatal &&
                 this.reconnectCfg.enabled &&
                 this.reconnectAttempt < this.reconnectCfg.maxAttempts;
             // do NOT clobber a client-initiated close error.
@@ -953,6 +1087,7 @@ export class CurlChannel {
                 this.permanentlyClose();
             }
         };
+        this.disconnectCurrent = handleDisconnect;
         helloTimer = setTimeout(() => {
             // hello timed out (or the connection silently died and we never saw an
             // event). Drive the disconnect path DIRECTLY — do not depend on a
@@ -988,6 +1123,7 @@ export class CurlChannel {
             // `this.ws !== myWs` covers the reconnected-to-a-new-socket case.
             if (disconnected || this.ws !== myWs)
                 return;
+            markInbound();
             // Binary frames carry response body chunks on a binary-negotiated
             // channel. JSON control/data messages always arrive as text frames.
             if (typeof ev.data !== "string") {
@@ -1045,19 +1181,69 @@ export class CurlChannel {
         ws.addEventListener("close", (ev) => {
             handleDisconnect(ev.code, ev.reason);
         });
-        ws.addEventListener("error", () => {
+        // The server also sends WebSocket-protocol pings (every min(idle, 30) s).
+        // The browser API hides them; the `ws` package reports them, and they
+        // prove the link is alive even when a JSON pong was dropped.
+        const on = ws.on;
+        if (typeof on === "function") {
+            on.call(ws, "ping", () => {
+                if (!disconnected && this.ws === myWs && heardFromServer)
+                    markInbound();
+            });
+        }
+        ws.addEventListener("error", (ev) => {
+            // A local receive cap of the `ws` package ended this socket. That is
+            // terminal for the channel (see `localFatal`), not a network drop. The
+            // listener belongs to this socket, so a stale socket's error never
+            // marks a later connection.
+            const capCode = localWsCapCode(ev);
+            if (capCode !== undefined && !disconnected && this.ws === myWs) {
+                this.failLocal(ws, new ChannelError(`WebSocket receive limit exceeded (${capCode}); not reconnecting`, "internal_error"), 1008);
+                return;
+            }
             // undici fires `error` with no useful payload and NO subsequent
             // `close`. Synthesize a 1006 (abnormal closure) disconnect. If a
             // `close` does follow (Node `ws`), the `disconnected` guard makes it
             // a no-op.
             handleDisconnect(1006, "connection error");
         });
+        // Half-open detection: the server answers every `ping` with a `pong`, so
+        // a live link never leaves two pings in a row unanswered. A link that
+        // does (dead peer, dropped route, sleeping laptop) produces no close
+        // event at all; treat the silence as the disconnect it is. Counted in
+        // pings sent, not wall-clock time: a hidden browser tab runs this timer
+        // as rarely as once a minute, and the pong to each of those late pings
+        // still arrives.
         const pingInterval = options.pingIntervalMs ?? 25_000;
         if (pingInterval > 0) {
             this.pingTimer = setInterval(() => {
+                if (disconnected || this.ws !== myWs)
+                    return;
+                if (unansweredPings >= 2) {
+                    const silentMs = Date.now() - lastInboundAt;
+                    try {
+                        ws.close();
+                    }
+                    catch {
+                        /* ignore */
+                    }
+                    const terminate = ws.terminate;
+                    if (typeof terminate === "function") {
+                        try {
+                            terminate.call(ws);
+                        }
+                        catch {
+                            /* ignore */
+                        }
+                    }
+                    handleDisconnect(1006, `no data from the server for ${silentMs} ms`);
+                    return;
+                }
                 if (this.ws.readyState === WS_OPEN) {
                     try {
                         this.ws.send(JSON.stringify({ type: "ping" }));
+                        if (heardFromServer)
+                            unansweredPings++;
                     }
                     catch {
                         /* ignore */
@@ -1068,13 +1254,45 @@ export class CurlChannel {
     }
     /** Tear down the connection when an inbound frame exceeds the SDK's hard cap. */
     closeForOversizeFrame(ws) {
-        const err = new ChannelError(`inbound WS frame exceeded ${MAX_INBOUND_FRAME_BYTES} bytes`, "internal_error");
+        this.failLocal(ws, new ChannelError(`inbound WS frame exceeded ${MAX_INBOUND_FRAME_BYTES} bytes; not reconnecting`, "internal_error"), 1009);
+    }
+    /**
+     * End the channel for a local limit. The terminal state is set FIRST, so the
+     * disconnect it drives rejects pending work once with `err`, stops the
+     * timers and schedules no reconnect, and every later message is ignored.
+     * Only then is the socket closed: with 1000, because the WebSocket API
+     * accepts only 1000 or 3000-4999 from a client (a `close(1009)` throws and
+     * used to leave the socket open and the channel reconnecting). `reportCode`
+     * is what the `onClose` hook is told; it never goes on the wire.
+     */
+    failLocal(ws, err, reportCode) {
+        if (this.localFatal || this.closed)
+            return;
+        this.localFatal = err;
         this.closeError = err;
+        if (this.ws === ws && this.disconnectCurrent) {
+            this.disconnectCurrent(reportCode, err.message);
+        }
+        else {
+            this.permanentlyClose();
+        }
         try {
-            ws.close(1009, "frame too large");
+            ws.close(1000, "message too big");
         }
         catch {
             /* ignore */
+        }
+        // A peer that never completes the close handshake would hold the socket
+        // open; drop it where the transport can (`ws` has terminate(), the
+        // WebSocket API does not).
+        const terminate = ws.terminate;
+        if (typeof terminate === "function") {
+            try {
+                terminate.call(ws);
+            }
+            catch {
+                /* ignore */
+            }
         }
     }
     warnBinaryFrameOnce(reason) {
@@ -1324,8 +1542,10 @@ export function createCurlFetch(options) {
         return channel;
     };
     return async function fetch(input, init = {}) {
-        const ch = await getChannel();
+        // Build (and validate) first: an invalid request is a TypeError whether
+        // or not a channel can be opened, as with WHATWG fetch.
         const req = await buildCurlRequest(input, init, defaults);
+        const ch = await getChannel();
         if (requestEncoding === "gzip") {
             await applyRequestGzip(req);
         }
@@ -1403,6 +1623,14 @@ async function buildCurlRequest(input, init, defaults) {
     }
     if (!method)
         method = "GET";
+    // WHATWG fetch (Request constructor step 34): a GET or HEAD request cannot
+    // carry a body; `fetch(url, { body })` with no method is a GET and throws.
+    // This SDK is a drop-in fetch, so it throws the same TypeError instead of
+    // putting a GET with a body on the wire.
+    const upperMethod = method.toUpperCase();
+    if ((upperMethod === "GET" || upperMethod === "HEAD") && body !== null && body !== undefined) {
+        throw new TypeError("Request with GET/HEAD method cannot have body.");
+    }
     const headers = {};
     inboundHeaders.forEach((v, k) => {
         const lk = k.toLowerCase();

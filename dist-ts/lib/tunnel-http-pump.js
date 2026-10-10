@@ -74,6 +74,21 @@ function safeHeaderEntries(raw) {
     return out;
 }
 /**
+ * Whether the visitor's headers declare a request body: any Transfer-Encoding, or a
+ * Content-Length other than 0. Such a request goes the streaming way whatever its method,
+ * so the body that follows is forwarded with framing that matches it.
+ */
+function declaresBody(raw) {
+    for (const [name, value] of safeHeaderEntries(raw)) {
+        const lower = String(name).toLowerCase();
+        if (lower === "transfer-encoding")
+            return true;
+        if (lower === "content-length" && String(value).trim() !== "0")
+            return true;
+    }
+    return false;
+}
+/**
  * One request's end. The first of the peer's RESET, our RESET or our EOF decides it, and
  * nothing is sent after it. Several paths can end one request (the local response failing,
  * the pump's catch, the visitor's RESET and the abort it causes), and each goes through this,
@@ -174,7 +189,8 @@ async function forwardFetch(session, streamId, openPayload, target) {
     }
     // The visitor's RESET aborts the local request at once: an idle response (server-sent
     // events, long-poll) would otherwise keep its local connection until it sent again. The
-    // request's EOF only ends a body this request does not have.
+    // request's EOF only ends a body this request does not have: one that declares a body is
+    // routed to forwardHttpStream, and DATA arriving here anyway is dropped.
     const end = streamEnd(session, streamId);
     const visitorGone = new AbortController();
     end.on((f) => {
@@ -197,6 +213,7 @@ async function forwardFetch(session, streamId, openPayload, target) {
         const lower = String(name).toLowerCase();
         if (lower === "host" || lower === "connection" || lower === "upgrade"
             || lower === "keep-alive" || lower === "transfer-encoding"
+            || lower === "content-length"
             || lower === "proxy-authenticate" || lower === "proxy-authorization"
             || lower === "te" || lower === "trailer")
             continue;
@@ -279,7 +296,7 @@ async function forwardHttpStream(session, streamId, openPayload, target) {
         headerLines += `${name}: ${value}\r\n`;
     }
     const methodUpper = String(method).toUpperCase();
-    const hasBody = !["GET", "HEAD"].includes(methodUpper);
+    const hasBody = !["GET", "HEAD"].includes(methodUpper) || declaresBody(reqHeaders);
     let finished = false;
     const earlyBuffer = [];
     // Cap pre-ready earlyBuffer bytes to defend against peer-driven OOM:
@@ -790,8 +807,11 @@ function routeAutoForwarded(frame, ws, session, httpTarget, tcpTarget) {
                 forwardUpgradeToLocal(session, streamId, payload, httpTarget);
                 return;
             }
+            // GET/HEAD take the body-less fast path only when they declare no body: forwarding
+            // a Content-Length without the bytes behind it hangs the local app, or leaves the owed
+            // bytes to be read from the next request on the pooled connection.
             const methodUpper = String(payload.method || "GET").toUpperCase();
-            if (methodUpper === "GET" || methodUpper === "HEAD") {
+            if ((methodUpper === "GET" || methodUpper === "HEAD") && !declaresBody(payload.headers)) {
                 forwardFetch(session, streamId, payload, httpTarget);
             }
             else {

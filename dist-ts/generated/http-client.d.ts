@@ -74,7 +74,8 @@ export interface IHttpClientConfig {
     /**
      * How many more times a failed request may be sent. Absent (here and on the
      * request): the default policy. An idempotent method (GET, HEAD, OPTIONS,
-     * PUT, DELETE) goes again up to 2 times on a status in `retryOnStatuses` and
+     * PUT, DELETE), or a request that sends the idempotency key its operation
+     * declares, goes again up to 2 times on a status in `retryOnStatuses` and
      * when it never reached a server; any other method only when it never
      * reached a server; a `responseIsFinal` request and a streamed body never.
      * Backoff about 2 s, then 4 s, plus jitter (`retryDelayMs` sets the base),
@@ -85,6 +86,15 @@ export interface IHttpClientConfig {
      */
     retries?: number;
     retryDelayMs?: number;
+    /**
+     * How long, under the default policy, a request waits for a kit that is still starting (a
+     * container that has just come up answers 502 BACKEND_GATEWAY_ERROR until its kits listen):
+     * the retries are at most 5 s apart and wait this many milliseconds in all. Default 20000;
+     * 0 turns the wait off. When it runs out the request fails with code KIT_NOT_READY. Only the
+     * requests the default policy may send again wait (no POST without its declared idempotency
+     * key, no responseIsFinal request).
+     */
+    kitStartingWaitMs?: number;
     retryOnStatuses?: number[];
     headers?: Record<string, string>;
     /**
@@ -257,6 +267,16 @@ export interface IRequestData {
      */
     routeTag?: object;
     /**
+     * The idempotency-key header the operation declares (`Idempotency-Key` or
+     * `X-Idempotency-Key`), set by the generated method. A request that sends a non-empty value
+     * under it is retried as an idempotent method is, whatever its method: the server answers a
+     * repeat with the same key from its record of the first one instead of doing the work again.
+     * Every attempt sends the first attempt's key and body (see _keyedReplayOf). The client mints a
+     * key only under idempotencyKeyHeader (a create); here a call that sends none keeps its
+     * method's rule.
+     */
+    declaredIdempotencyKeyHeader?: string;
+    /**
      * Any HTTP answer to this request is final, whatever its status. For a call whose handler is
      * arbitrary code (an exec script): a 500, 502 or 429 it returned cannot be told from a
      * platform failure, and sending the request again runs the code again. With this set,
@@ -264,6 +284,13 @@ export interface IRequestData {
      * opened).
      */
     responseIsFinal?: boolean;
+    /**
+     * The header of the idempotency key its server honours (the generated method of a POST that
+     * declares `Idempotency-Key` sets this). The request carries one key per call (see
+     * withIdempotencyKey), and a repeat is answered with the first result, so a lost connection or
+     * a status in retryOnStatuses is retried as for an idempotent method.
+     */
+    idempotencyKeyHeader?: string;
     /**
      * Read the JSON answer without rounding its integers. JSON.parse turns every
      * number into a double, so an integer past Number.MAX_SAFE_INTEGER (2^53 - 1)
@@ -324,6 +351,28 @@ export interface NodeTransport {
 export declare function nodeTransportSupported(): boolean;
 /** Whether a request sent now, by a client with no injected fetch, goes through the SDK's own transport. */
 export declare function nodeTransportInUse(): boolean;
+/**
+ * A fresh idempotency key (a random UUID). A generated POST method that declares an
+ * `Idempotency-Key` header sends one per call when the caller gives none. Falls back to
+ * getRandomValues where randomUUID is missing (a page served over plain http).
+ */
+export declare function newIdempotencyKey(): string;
+/**
+ * The headers of a request that carries an idempotency key under `name`: one key per call,
+ * kept across its retries. A non-blank key the caller set wins, per call or client-wide
+ * (`clientHeaders`); a blank one counts as none, since the server ignores it. Otherwise the
+ * call gets a fresh key.
+ */
+export declare function withIdempotencyKey(callHeaders: Record<string, string> | undefined, clientHeaders: Record<string, string> | undefined, name: string): Record<string, string>;
+export declare function isKitStarting(error: {
+    status: number;
+    code?: string | undefined;
+}): boolean;
+/** The kitStartingWaitMs a client runs with: _KIT_STARTING_WAIT_MS when unset, else a whole number of milliseconds, 0 or more. */
+export declare function resolveKitStartingWaitMs(value: unknown): number;
+/** How many more attempts a kit still starting may take within waitMs: one per _KIT_STARTING_MAX_DELAY_MS, plus one. */
+export declare function kitStartingRetries(waitMs: number): number;
+export declare function kitNotReadyMessage(waitedMs: number): string;
 /**
  * True for a media type whose body is text: text/*, or one of the subtypes or
  * structured suffixes above. Matched on the exact subtype or suffix, never on
@@ -392,6 +441,33 @@ export interface IStreamEvent {
     /** The server's reconnection hint in milliseconds, from a `retry:` line. */
     retry?: number;
 }
+/**
+ * A frame of a stream whose operation declares its event types (`TFrames`:
+ * event name to payload type, from the spec's x-async-api messages). Such a
+ * stream is an `IEventStream<TDocumented, ITypedStreamEvent<TFrames>>`.
+ *
+ * `data` is the payload parsed as JSON (undefined when it is not JSON);
+ * `raw` is still the text. `declared` is true when the frame's name is one
+ * the spec declares and its payload parsed: narrow on it and on `event`,
+ * and `data` has the spec's type for that event:
+ *
+ *   if (frame.declared && frame.event === 'row') frame.data.text;
+ *
+ * Any other frame (a name the spec does not list, or a payload that is not
+ * JSON) is still yielded, with `declared: false`. The payload is parsed, not
+ * validated: the type is the spec's promise, as for a response body.
+ */
+export type ITypedStreamEvent<TFrames extends object> = Omit<IStreamEvent, 'event'> & ({
+    [K in keyof TFrames & string]: {
+        declared: true;
+        event: K;
+        data: TFrames[K];
+    };
+}[keyof TFrames & string] | {
+    declared: false;
+    event: string;
+    data: unknown;
+});
 export interface IStreamEventsOptions {
     /**
      * Cancels the stream. Aborting after the response headers have arrived
@@ -446,6 +522,23 @@ export interface IStreamEventsOptions {
      * client's `onStreamDiagnostic` receives them.
      */
     onDiagnostic?: (error: unknown) => void;
+    /**
+     * The event names whose payload types the operation's spec declares. When
+     * set, every frame also carries `data` and `declared` (see
+     * ITypedStreamEvent); no frame is dropped or refused for its name or its
+     * payload. Generated stream methods fill this in.
+     */
+    declaredEvents?: readonly string[];
+    /**
+     * Closes a stream that sends nothing for this many ms, with an `ApiError`
+     * of code `ETIMEDOUT`. Any bytes count, a heartbeat comment included, so
+     * set it above the server's heartbeat period (a few missed heartbeats): a
+     * stream that stops sending without closing (a dead peer behind a proxy
+     * that holds the connection open) otherwise waits forever. The clock runs
+     * only while the stream waits for the network, never while the caller is
+     * handling a frame. Unset, 0 or not a finite number: no bound.
+     */
+    idleTimeoutMs?: number;
 }
 /**
  * The frame size a stream holds when neither the call nor the client sets
@@ -492,13 +585,17 @@ export interface IStreamResponse<TDocumented extends object = Record<never, stri
  * response was accepted. A rejection nobody awaits is never reported as
  * unhandled: the iteration raises it anyway. `return()` and `throw()`
  * cancel the body at once, even while a read is waiting for a frame.
+ *
+ * `TEvent` is what the stream yields: IStreamEvent, or for an operation
+ * whose spec declares its frames ITypedStreamEvent (see there). Each is an
+ * IStreamEvent, so a typed stream is also an IEventStream<TDocumented>.
  */
-export interface IEventStream<TDocumented extends object = Record<never, string>> extends AsyncIterableIterator<IStreamEvent> {
+export interface IEventStream<TDocumented extends object = Record<never, string>, TEvent extends IStreamEvent = IStreamEvent> extends AsyncIterableIterator<TEvent> {
     /** Settles once the stream is accepted or has failed; see the interface. */
     readonly response: Promise<IStreamResponse<TDocumented>>;
-    next(): Promise<IteratorResult<IStreamEvent, void>>;
-    return(value?: void): Promise<IteratorResult<IStreamEvent, void>>;
-    throw(error?: unknown): Promise<IteratorResult<IStreamEvent, void>>;
+    next(): Promise<IteratorResult<TEvent, void>>;
+    return(value?: void): Promise<IteratorResult<TEvent, void>>;
+    throw(error?: unknown): Promise<IteratorResult<TEvent, void>>;
 }
 /**
  * Parser state, carried across chunk boundaries.
@@ -734,8 +831,12 @@ export declare class HttpClient {
      * Response: `stream.response` resolves with the accepted stream's status
      * and headers before the first event is yielded, and carries the headers
      * `options.documentedHeaders` names on `documented`; see IEventStream.
+     *
+     * Typed frames: with `options.declaredEvents` each frame also carries its
+     * parsed `data` and `declared`, and `TEvent` (an ITypedStreamEvent) types
+     * them; see ITypedStreamEvent.
      */
-    streamEvents<TDocumented extends object = Record<never, string>>(method: string, path: string, data?: IRequestData, options?: IStreamEventsOptions): IEventStream<TDocumented>;
+    streamEvents<TDocumented extends object = Record<never, string>, TEvent extends IStreamEvent = IStreamEvent>(method: string, path: string, data?: IRequestData, options?: IStreamEventsOptions): IEventStream<TDocumented, TEvent>;
     /**
      * The frames of streamEvents(); accept() is told the response before the first one.
      *
@@ -834,7 +935,7 @@ export declare class HttpClient {
     private toApiError;
     /**
      * Whether a failed attempt may be sent again. One rule, in this order:
-     *   1. This client's own timeout or abort, a refused redirect and a missing fetch are final.
+     *   1. The caller's abort, this client's own timeout, a refused redirect and a missing fetch are final.
      *   2. A request that never reached a server (the connection could not be opened) ran
      *      nothing: any method goes again.
      *   3. A refusal whose code says nothing was done (RETRY_SAFE_CODES): any method goes again.
@@ -844,6 +945,9 @@ export declare class HttpClient {
      *      PUT, DELETE) goes again on a lost connection or a status in retryOnStatuses; any
      *      other method only on 429, which refuses before handling.
      * `byDefault` (nobody set `retries`): a method that is not idempotent goes again only by rule 2.
+     * `keyed`: the request sends the idempotency key its server honours (the header its operation declares),
+     * so any method counts as idempotent in rule 5 and under `byDefault`: a repeat is answered from the
+     * server's record.
      */
     private shouldRetry;
     /**
@@ -862,12 +966,17 @@ export declare class HttpClient {
     private doRefreshToken;
     /**
      * True when url is inside the API's credential scope: the baseURL's origin
-     * and path, or a realm subdomain of its host ({realmId}.api.hoody.com).
+     * and path, or a realm host of it ({realmId}.api.hoody.com).
      *
      * The path matches on a segment boundary: a base of /v1/ covers /v1 and
      * /v1/x but not /v10/x. The realm exception requires the base's scheme AND
      * port: a realm name on another port is another service. Both used to
      * match, so the API bearer went to /v10 and to realm:8443.
+     *
+     * A realm host is exactly one label, a 24-hex realm id, in front of the
+     * base host. Any subdomain used to count, and the kit hosts withContainer()
+     * derives from a base with no api. label (containers.<base host>) are
+     * subdomains of it, so every kit request carried the account bearer.
      *
      * Both URLs are resolved as the transport resolves them (resolveDestination),
      * and an omitted baseURL is the page's origin, where the browser transport
@@ -905,7 +1014,7 @@ export declare class HttpClient {
     private deleteAuthorization;
     /**
      * The credential scope a URL belongs to: 'api' for the API (the baseURL and
-     * its realm subdomains), otherwise the origin the URL resolves to.
+     * its realm hosts), otherwise the origin the URL resolves to.
      *
      * A URL that does not resolve (a relative URL with no page to resolve it
      * against, which Node's fetch refuses) is the API's only when it provably
@@ -980,8 +1089,13 @@ export declare class HttpClient {
     private sleep;
     private nextRequestId;
     /**
-     * Normalize all responses into a stable API envelope:
-     * { statusCode, message, data }
+     * Normalize all responses into a stable API envelope: { statusCode, message, data }.
+     *
+     * A body that already is the envelope keeps every other top-level field it carries
+     * (`propagation`, `pagination`, `total`/`limit`/`offset`, `metadata`): those are documented
+     * parts of the answer, and dropping them left the caller no way to read them. Its `message`
+     * may be absent (`{statusCode, data}`, hoody-api's `/auth/available-regions`); it is filled in
+     * from the status text. The generated types (RESPONSE_ENVELOPE_FIELDS) follow the same rule.
      */
     private normalizeResponseEnvelope;
 }

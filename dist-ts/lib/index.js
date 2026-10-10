@@ -58,7 +58,7 @@ export { formatEd25519SshPublicKey, parseEd25519SshPublicKey, generateEd25519Ssh
 export { getHoodySignatureHeader, parseHoodySignatureHeader, parseHoodySignatureFrom, verifyHoodySignatureHeader, verifyHoodySignatureFrom, verifyHoodySignatureFromContext, hoodySignaturePath, } from './signing.js';
 export { HoodyClient, } from './hoody-client.js';
 // Public API surface: errors, config, middleware contract.
-export { ApiError, isApiError, isRetryableApiError, ValidationError, } from '../generated/errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, } from '../generated/errors.js';
 // Session lifecycle: the two-factor challenge HoodyClient.login() raises, the token
 // shape adoptSession() takes, and the enriched realm-scope 403.
 export { TwoFactorRequiredError, isRealmScopeError } from '../generated/client.js';
@@ -122,6 +122,8 @@ export { CurlChannel, CurlChannelStream, createCurlFetch, ChannelError as CurlCh
 // Helpers the browser entry already exports (index.browser.ts); the Node entry
 // must not be the smaller one.
 export { generateNotesFileId, encodeTusMetadata, NOTES_UPLOAD_CHUNK_BYTES, } from './notes-upload.js';
+// -- Bot chat (box.agent.bots.ask / follow) --
+export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
 export { pipeTransportFromClient } from './pipe-transport.js';
 // -- Remote control of a live exec script (#674): `exec.connect(url, { token })` --
 export { ExecRemoteError, ExecRemoteTokenError, ExecRemotePermissionError, ExecRemoteThrewError, ExecRemoteTimeoutError, ExecRemoteUnsupportedError, ExecRemoteConnectionError, isExecRemoteError, formatExecRemoteFix, createExecRemoteConnection, } from './exec-remote.js';

@@ -18,4 +18,5 @@ export { PackagesService } from './packages.service.js';
 export { OpenapiService } from './openapi.service.js';
 export { SdksService } from './sdks.service.js';
 export { NamespacesService } from './namespaces.service.js';
+export { SdkTypesService } from './sdk-types.service.js';
 export { SchedulesService } from './schedules.service.js';

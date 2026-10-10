@@ -1588,7 +1588,7 @@ export declare const EMBEDS_CATALOG: {
             readonly ui: "app";
             readonly views: readonly ["notifications.landing"];
             readonly refused: {};
-            readonly publicDescription: "Notification landing page: recent notifications and a live feed from all displays, plus a test sender for one display.";
+            readonly publicDescription: "Notification landing page: recent notifications and a live feed from all displays, plus a test sender for one display or all of them.";
             readonly defaultView: "notifications.landing";
         };
         readonly pipe: {
@@ -4574,15 +4574,15 @@ export declare const EMBEDS_CATALOG: {
                     readonly in: "query";
                     readonly type: "string";
                     readonly class: "typed";
-                    readonly pattern: "^\\d{1,5}$";
-                    readonly publicDescription: "Display number to send the test notification to. Takes precedence over the display named by the host. The feed always shows every display.";
+                    readonly pattern: "^(\\d{1,5}|all|\\*)$";
+                    readonly publicDescription: "Display number to send the test notification to, or all (also *) to send it to every display the page has seen notifications from. Takes precedence over the display named by the host. The feed always shows every display.";
                 };
                 readonly displays: {
                     readonly wire: "displays";
                     readonly in: "query";
                     readonly type: "string";
                     readonly class: "typed";
-                    readonly pattern: "^\\d{1,5}$";
+                    readonly pattern: "^(\\d{1,5}|all|\\*)$";
                     readonly publicDescription: "Alternative name for display; read only when display is absent.";
                 };
             };

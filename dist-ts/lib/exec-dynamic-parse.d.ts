@@ -24,6 +24,17 @@ export interface RawScriptEntry {
     [key: string]: unknown;
 }
 /**
+ * Find the script array in an `openapi.listScripts` response.
+ *
+ * The kit answers `{success, data: {directory, totalScripts, withSchemas,
+ * scripts: [...]}}`, and the SDK HttpClient wraps that body as
+ * `{statusCode, message, data: <body>}`, so the array sits two `data` levels
+ * below the response. Each level is probed for an array, `scripts` or
+ * `items` before stepping into its `data`; reading one fixed level found
+ * nothing and discovery was always empty (BT2-EXEC-001).
+ */
+export declare function extractRawScriptList(response: unknown): RawScriptEntry[];
+/**
  * Parse a single raw script entry into zero or more DiscoveredScript objects.
  *
  * Returns an empty array if the entry is invalid (missing path, invalid name,

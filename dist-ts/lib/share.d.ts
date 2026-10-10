@@ -248,7 +248,7 @@ export declare function rcloneServeArgs(localPath: string, readOnly: boolean, pl
 /**
  * The container mount's own settings, the one place they are decided. Create,
  * the restart repair's PATCH and its check all use what this builds, and the
- * journal records it (plan v3.1):
+ * journal records it:
  *   - `writes`: in-place edits work; a write is uploaded within seconds,
  *     and stop drains what is not uploaded yet (`uploads.state`);
  *   - `dir_cache_time: 0`: no stale "does not exist" view of the folder;

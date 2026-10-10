@@ -60,7 +60,7 @@ export { getHoodySignatureHeader, parseHoodySignatureHeader, parseHoodySignature
 export type { HoodySignatureResponseContext, HoodySignatureHeader, HoodySignatureHeaderCarrier, VerifyHoodySignatureInput, VerifyHoodySignatureOptions, } from './signing.js';
 export { HoodyClient, } from './hoody-client.js';
 export type { DaemonProgramRef, ProgramTerminalAttachOptions, ProgramTerminalAttachment, } from './hoody-client.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, } from '../generated/errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, } from '../generated/errors.js';
 export type { ApiErrorRequestContext, ApiErrorResponseDetails, RetryableApiError, RetryableStatus, } from '../generated/errors.js';
 export type { HoodyClientConfig } from '../generated/client.js';
 export type { HoodyCredentials } from '../generated/client.js';
@@ -68,7 +68,7 @@ export { TwoFactorRequiredError, isRealmScopeError } from '../generated/client.j
 export type { HoodySessionTokens, HoodySessionUpdate, RealmScopeApiError, ContainerLike } from '../generated/client.js';
 export { HttpClient } from '../generated/http-client.js';
 export { nodeTransportInUse } from '../generated/http-client.js';
-export type { HoodyFetch, IEventStream, IStreamEvent, IStreamEventsOptions, IStreamResponse } from '../generated/http-client.js';
+export type { HoodyFetch, IEventStream, IStreamEvent, ITypedStreamEvent, IStreamEventsOptions, IStreamResponse } from '../generated/http-client.js';
 export type * from '../generated/types.js';
 export type { IHttpClientConfig, IRequestData, IHttpClientMiddleware, IHttpClientMiddlewareRequestContext, IHttpClientMiddlewareResponseContext, IHttpClientMiddlewareErrorContext, } from '../generated/http-client.js';
 export { listKits, } from './kit-catalog.js';
@@ -140,6 +140,8 @@ export type { CurlRequest, ExecutionMode as CurlExecutionMode, SseEvent as CurlS
 export type { CurlChannelHelperOptions } from './curl-channel-helper.js';
 export { generateNotesFileId, encodeTusMetadata, NOTES_UPLOAD_CHUNK_BYTES, } from './notes-upload.js';
 export type { NotesUploadData, NotesUploadProgress, NotesChunkOptions, NotesUploadFileOptions, NotesUploadResult, NotesUploadFileResult, } from './notes-upload.js';
+export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
+export type { BotAskOptions, BotAskResult, BotFollowOptions, BotLogRow, BotMessageReceipt, BotStreamFrame, } from './bot-chat.js';
 export { pipeTransportFromClient } from './pipe-transport.js';
 export type { PipeTransport, PipeTransportRequest } from './pipe-transport.js';
 export type { ExecScriptCallOptions, ExecScriptMethod } from './exec-script-execution.js';

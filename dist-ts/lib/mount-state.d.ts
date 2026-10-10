@@ -74,6 +74,13 @@ export declare function listStates(home?: string): Promise<MountStateFile[]>;
  */
 export declare function checkLiveness(rec: MountStateFile): Promise<LivenessResult>;
 /**
+ * Whether `localPath` is a mount point in the OS mount table: true or false, or null when the
+ * table cannot be read (and on Windows). Reads the table only and never touches the path,
+ * which hangs on a dead FUSE mount. Compares both the path as given and the path with its
+ * parent's symlinks resolved (macOS lists /private/tmp for /tmp).
+ */
+export declare function mountTableHas(localPath: string): Promise<boolean | null>;
+/**
  * Prune dead state files AND their sibling .conf files. After the main
  * sweep, also removes orphan .conf files (no matching .json) — these can
  * appear if a crash interrupted the unmount path between unlinking .json

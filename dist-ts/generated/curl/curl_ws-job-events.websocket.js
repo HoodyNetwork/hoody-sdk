@@ -57,6 +57,14 @@ const nodeBuiltinWebSocketUnsafe =
     return a < 6; // ≥ 9: ASSUMED fixed (a later major carries the fix); T1 row
 };
 export class CurlWsJobEventsWebSocket {
+    /**
+     * The socket constructor every instance of this client uses, in place of
+     * its own choice (the `ws` package on Node, the global WebSocket
+     * elsewhere). It is called as `new ctor(url, protocols)`, like a browser
+     * WebSocket, so headers are not passed. A webSocketFactory in the options
+     * still wins. Unset (the default) restores the client's own choice.
+     */
+    static webSocketImpl = undefined;
     ws = null;
     eventHandlers = new Map();
     options;
@@ -394,10 +402,11 @@ export class CurlWsJobEventsWebSocket {
                         // has been heard for idleMs the link is declared dead.
                         const probe = socket;
                         const canProbe = typeof probe.ping === "function" && typeof probe.on === "function";
+                        const appPing = false;
                         const configuredIdle = this.options.idleTimeoutMs;
                         const idleMs = typeof configuredIdle === "number"
                             ? (Number.isFinite(configuredIdle) && configuredIdle > 0 ? configuredIdle : 0)
-                            : (canProbe ? 75000 : 0);
+                            : (canProbe || appPing ? 75000 : 0);
                         if (idleMs > 0) {
                             if (canProbe) {
                                 // `ws` shows protocol pings and pongs; the client pings too, so
@@ -428,6 +437,13 @@ export class CurlWsJobEventsWebSocket {
                                 if (canProbe && socket.readyState === RAW_WEBSOCKET_OPEN) {
                                     try {
                                         probe.ping();
+                                    }
+                                    catch { /* closing */ }
+                                }
+                                else if (appPing && socket.readyState === RAW_WEBSOCKET_OPEN) {
+                                    // The pong is a message, and every message counts as activity.
+                                    try {
+                                        socket.send('{"type":"ping"}');
                                     }
                                     catch { /* closing */ }
                                 }
@@ -719,6 +735,9 @@ export class CurlWsJobEventsWebSocket {
             }
             return socket;
         }
+        const impl = CurlWsJobEventsWebSocket.webSocketImpl;
+        if (typeof impl === "function")
+            return new impl(connectUrl, this.options.protocols);
         // Runtime detection: on Node >=22 `globalThis.WebSocket` exists but cannot
         // accept custom headers. When the caller supplied `options.headers`, prefer
         // the `ws` module (which accepts a 3rd-arg options bag) so headers actually
@@ -737,11 +756,15 @@ export class CurlWsJobEventsWebSocket {
         const runtime = globalThis.process;
         const runtimeVersions = runtime?.versions;
         const builtinUnsafe = nodeBuiltinWebSocketUnsafe(runtimeVersions);
+        // Node itself (not Bun or Deno) opens with `ws` even without headers: its
+        // built-in WebSocket hides protocol pings, so it could not tell a quiet
+        // stream from a dead link (see idleTimeoutMs).
+        const isNode = !!runtimeVersions?.node && !runtimeVersions.bun && !runtimeVersions.deno;
         const builtinRefused = (cause) => Object.assign(new Error(`The built-in WebSocket of Node ${runtimeVersions?.node ?? "unknown"} (${runtimeVersions?.undici ? "undici " + runtimeVersions.undici : "undici version not reported"}) `
             + "cannot be shown to be free of CVE-2026-12151 and the `ws` package could not be loaded ("
             + (cause instanceof Error ? cause.message : String(cause))
             + "). Reinstall hoody-sdk, or use an official Node 22.23.0+, 24.17.0+ or 26.3.1+."), { cause });
-        if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || !hasHeaders)) {
+        if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || (!hasHeaders && !isNode))) {
             if (isBrowserRuntime && hasHeaders) {
                 // A browser WebSocket cannot send headers, so kitAuth password, jwt
                 // and identity headers never reach the upgrade. The proxy accepts two

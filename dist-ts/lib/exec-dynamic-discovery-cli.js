@@ -9,33 +9,13 @@
  * a ScriptsService should use `discoverScripts()` from
  * `exec-dynamic-discovery.ts` instead.
  */
-import { parseRawScriptEntries } from './exec-dynamic-parse.js';
+import { extractRawScriptList, parseRawScriptEntries } from './exec-dynamic-parse.js';
 /**
  * Parse a raw API response from openapi.listScripts into DiscoveredScript[].
- * Works with both `{ data: [...] }` and `{ data: { data: [...] } }` shapes.
+ * The script array is found by `extractRawScriptList`, which accepts the
+ * client envelope around the kit body as well as a bare array or `scripts`
+ * list at any of the first `data` levels.
  */
 export function discoverScriptsFromRawResponse(response) {
-    if (!response || typeof response !== 'object')
-        return [];
-    const rawData = response.data;
-    let rawScripts;
-    if (Array.isArray(rawData)) {
-        rawScripts = rawData;
-    }
-    else if (rawData && typeof rawData === 'object') {
-        const nested = rawData;
-        if (Array.isArray(nested.data)) {
-            rawScripts = nested.data;
-        }
-        else if (Array.isArray(nested.scripts)) {
-            rawScripts = nested.scripts;
-        }
-        else {
-            return [];
-        }
-    }
-    else {
-        return [];
-    }
-    return parseRawScriptEntries(rawScripts);
+    return parseRawScriptEntries(extractRawScriptList(response));
 }

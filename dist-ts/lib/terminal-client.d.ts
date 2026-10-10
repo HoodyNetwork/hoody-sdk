@@ -269,6 +269,13 @@ export declare class TerminalClient extends Duplex {
     private _holdOnConnect;
     /** The current connection is held: nothing is sent on it (see holdSends). */
     private _sendsHeld;
+    /**
+     * A PAUSE went out on the current connection and no RESUME after it.
+     * disconnect() sends the RESUME before closing: on a kit where a pause
+     * outlives its client, a viewer that left paused froze the session's
+     * program until someone attached again (BT2-TERM-007).
+     */
+    private _remotePaused;
     /** Sends the handshake of the current, held connection; null when none is owed. */
     private _heldHandshake;
     /**

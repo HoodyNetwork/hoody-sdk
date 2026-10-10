@@ -77,7 +77,7 @@ export * as agent from './agent/index.js';
 export * as bot from './bot/index.js';
 // Export shared runtime/types
 export * from './types.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError } from './errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode } from './errors.js';
 export { HttpClient } from './http-client.js';
 export { createStreamFrameBuffer, parseSseChunk, finishSseStream, DEFAULT_MAX_STREAM_FRAME_BYTES } from './http-client.js';
 export { HoodyClient } from './client.js';

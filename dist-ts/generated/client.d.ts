@@ -343,6 +343,7 @@ export declare class HoodyClient {
         routes: exec.RoutesService;
         schedules: exec.SchedulesService;
         scripts: exec.ScriptsService;
+        sdkTypes: exec.SdkTypesService;
         sdks: exec.SdksService;
         store: exec.StoreService;
         templates: exec.TemplatesService;
@@ -434,6 +435,7 @@ export declare class HoodyClient {
     readonly proxyLogs: proxyLogs.ProxyLogsService;
     readonly agent: agent.AgentService & {
         acp: agent.AcpService;
+        bots: agent.BotsService;
         changes: agent.ChangesService;
         completions: agent.CompletionsService;
         containers: agent.ContainersService;
@@ -456,6 +458,7 @@ export declare class HoodyClient {
         providers: agent.ProvidersService;
         realms: agent.RealmsService;
         sessions: agent.SessionsService & {
+            commands: agent.SessionsCommandsService;
             turns: agent.SessionsTurnsService;
         };
         settings: agent.SettingsService;
@@ -545,7 +548,7 @@ export declare class HoodyClient {
     /**
      * Adopt a session that was issued outside login(): the result of
      * api.auth.twoFactor.verify(), api.auth.oauth.exchange() or
-     * oauthDeviceToken(), or tokens saved from an earlier run. Pass the response
+     * api.auth.device.poll(), or tokens saved from an earlier run. Pass the response
      * envelope or its data. The access token becomes this client's bearer and
      * the refresh token is kept for automatic refresh, shared with clients
      * derived from this one. Returns the access token.

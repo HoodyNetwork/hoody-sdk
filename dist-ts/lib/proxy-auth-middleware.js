@@ -8,7 +8,7 @@
 import { isProxyAuthPolicy, base64Encode, withTokenQueryParam } from './proxy-auth.js';
 import { deriveSiblingDomain } from './domain-utils.js';
 import { recordCredentialQueryParam, recordCredentialHeader } from './redact.js';
-/** Check if a URL matches the base URL's origin and path prefix (including realm subdomains). */
+/** Check if a URL matches the base URL's origin and path prefix (including its realm hosts). */
 function isSameOriginAndPath(url, baseURL) {
     try {
         const u = new URL(url);
@@ -16,8 +16,13 @@ function isSameOriginAndPath(url, baseURL) {
         if (u.origin === b.origin) {
             return u.pathname.startsWith(b.pathname.replace(/\/$/, '') || '/');
         }
-        // Realm-scoped subdomains (e.g. {realmId}.api.hoody.com) are same-origin for auth purposes
-        if (u.protocol === b.protocol && u.hostname.endsWith('.' + b.hostname)) {
+        // Realm hosts ({realmId}.api.hoody.com: one realm-id label in front of the
+        // base host) are same-origin for auth purposes. Any subdomain used to count,
+        // so under a base with no api. label (kit hosts are containers.<base host>)
+        // every kit request was taken for an API one and got no kit credential.
+        if (u.protocol === b.protocol
+            && u.hostname.endsWith('.' + b.hostname)
+            && /^[0-9a-f]{24}$/i.test(u.hostname.slice(0, -b.hostname.length - 1))) {
             return u.pathname.startsWith(b.pathname.replace(/\/$/, '') || '/');
         }
         return false;

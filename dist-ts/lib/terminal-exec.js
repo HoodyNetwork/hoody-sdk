@@ -98,6 +98,13 @@ class TerminalShellImpl extends Duplex {
      */
     _verifying = false;
     _heldOutput = [];
+    /**
+     * Without `reconnect`: the transport error of a connection whose close is
+     * still to be reported. The shell ends on that close (see the 'error'
+     * handler); the timer ends it if no close comes.
+     */
+    _lostError = null;
+    _lostTimer = null;
     constructor(url, terminalOptions, fresh) {
         super({
             objectMode: false,
@@ -132,6 +139,20 @@ class TerminalShellImpl extends Duplex {
         // the reconnect behavior. Only destroy when reconnect is disabled.
         this._terminal.on('error', (err) => {
             if (!terminalOptions.reconnect) {
+                // A transport error on an open connection comes just before its
+                // close. Ending the shell at the error reported a lost link as a
+                // normal close (1000 "Stream destroyed", BT2-TERM-004): end it at
+                // the close instead, so 'disconnect' carries the close's own code.
+                if (this._terminal.connected && !this.destroyed) {
+                    if (!this._lostError) {
+                        this._lostError = err;
+                        // The close follows the error at once (the transport's frame
+                        // settle waits at most 1 s); this only bounds a close that never comes.
+                        this._lostTimer = setTimeout(() => this._endLost(), 2000);
+                        this._lostTimer.unref?.();
+                    }
+                    return;
+                }
                 this.destroy(err);
             }
             // When reconnect is enabled, TerminalClient handles retries internally
@@ -180,6 +201,13 @@ class TerminalShellImpl extends Duplex {
         // when new data arrives after reconnection.
         this._terminal.on('disconnect', (code, reason) => {
             this._linkGen++;
+            // The close of a lost connection: ends the shell before the drain
+            // below, whose write errors would end it first with a generic error.
+            if (this._lostError) {
+                this.emit('disconnect', code, reason);
+                this._endLost(code);
+                return;
+            }
             if (!terminalOptions.reconnect) {
                 this._pushEof();
                 // FIX: Set _connectFailed so future writes
@@ -244,7 +272,7 @@ class TerminalShellImpl extends Duplex {
             // waits in the queue, so it can never reach a shell before the input
             // typed ahead of it, or a shell that is not this one.
             if (this._terminal.connected) {
-                if (this._verifying || this._writeQueue.length > 0 || this._flushing) {
+                if (this._verifying || this._lostError || this._writeQueue.length > 0 || this._flushing) {
                     this._writeQueue.push({ chunk: '\x03', encoding: 'utf8', callback: () => undefined });
                 }
                 else {
@@ -279,7 +307,9 @@ class TerminalShellImpl extends Duplex {
         // FIX: Check queue state to prevent out-of-order
         // writes. If the queue is non-empty or currently flushing, new writes
         // must go through the queue to preserve ordering.
-        if (this._terminal.connected && !this._verifying && this._writeQueue.length === 0 && !this._flushing) {
+        // A lost connection (_lostError) still reads as connected until its close
+        // is reported: a write sent into it would fail and end the shell first.
+        if (this._terminal.connected && !this._verifying && !this._lostError && this._writeQueue.length === 0 && !this._flushing) {
             this._terminal.write(chunk, encoding, callback);
         }
         else {
@@ -300,6 +330,9 @@ class TerminalShellImpl extends Duplex {
         callback();
     }
     _destroy(error, callback) {
+        if (this._lostTimer)
+            clearTimeout(this._lostTimer);
+        this._lostTimer = null;
         this._drainQueueWithError(error || new Error('Stream destroyed'));
         this._terminal.disconnect('Stream destroyed');
         this._terminal.destroy();
@@ -370,6 +403,25 @@ class TerminalShellImpl extends Duplex {
             : '';
         this._endSession(new Error(`shell(): terminal session ${id} was lost: ${why}. Input written while disconnected was dropped, not sent to another session.${stray}`));
     }
+    /**
+     * Without `reconnect`: end the shell after its connection was lost (the
+     * transport error held by the 'error' handler). The session itself may
+     * still be running on the kit, so the error says how to rejoin it.
+     */
+    _endLost(code) {
+        if (this._lostTimer)
+            clearTimeout(this._lostTimer);
+        this._lostTimer = null;
+        const cause = this._lostError;
+        this._lostError = null;
+        if (!cause || this.destroyed)
+            return;
+        const id = this._terminal.terminalId;
+        this._connectFailed = true;
+        this._pushEof();
+        this.destroy(Object.assign(new Error(`shell(): the connection was lost${code !== undefined ? ` (code: ${code})` : ''}: ${cause.message}. `
+            + `The session${id ? ` ${id}` : ''} may still be running on the kit: rejoin it with shell({ terminalId${id ? `: '${id}'` : ''} }), or open the shell with reconnect: true`), { cause }));
+    }
     /** End the shell for good: reject held and later writes, end the readable side, stop reconnecting. */
     _endSession(error) {
         this._connectFailed = true;
@@ -425,7 +477,7 @@ class TerminalShellImpl extends Duplex {
     // if TerminalClient.write() invokes callbacks synchronously. This turns
     // the recursive flush into a trampolined iteration.
     _flushQueue() {
-        if (this._flushing || this._verifying || !this._terminal.connected)
+        if (this._flushing || this._verifying || this._lostError || !this._terminal.connected)
             return;
         this._flushing = true;
         const flush = () => {
@@ -437,7 +489,7 @@ class TerminalShellImpl extends Duplex {
             // preserved for reconnection).
             // FIX: Also check destroyed state — if consumer's write
             // callback called destroy(), the scheduled microtask should bail out.
-            if (!this._terminal.connected || this.destroyed) {
+            if (!this._terminal.connected || this.destroyed || this._lostError) {
                 this._flushing = false;
                 return;
             }
@@ -465,12 +517,17 @@ function shellImpl(options) {
     assertContainerScoped(this);
     const { cwd, shell: shellType, user, env, cols = 80, rows = 24, terminalId, serviceIndex = 0, timeout = 30000, reconnect = false, } = options || {};
     // The host index picks the session: the containers proxy takes terminal_id
-    // from it and overwrites the query. Index 0 is "no terminal id"; there the
-    // kit joins the shared terminal 1 unless the connection asks for
-    // `ephemeral=true`, which is what gives each shell() call its own session.
+    // from it and overwrites the query. Index 0 is "no terminal id"; the kit
+    // serves it only with `ephemeral=true`, which is what gives each shell()
+    // call its own session.
     const index = terminalId !== undefined && terminalId !== '' ? Number(terminalId) : serviceIndex;
     if (!Number.isInteger(index) || index < 0 || index > 65535 || (terminalId !== undefined && terminalId !== '' && index === 0)) {
         throw new TypeError(`shell(): ${terminalId !== undefined && terminalId !== '' ? `terminalId must be an integer from 1 to 65535, got ${JSON.stringify(terminalId)}` : `serviceIndex must be an integer from 0 to 65535, got ${JSON.stringify(serviceIndex)}`}`);
+    }
+    // Both given and different: refused, as a per-call serviceIndex that
+    // disagrees with terminal_id is everywhere else, never one silently picked.
+    if (terminalId !== undefined && terminalId !== '' && options?.serviceIndex !== undefined && options.serviceIndex !== index) {
+        throw new TypeError(`shell(): serviceIndex ${JSON.stringify(options.serviceIndex)} conflicts with terminalId ${JSON.stringify(terminalId)}; pass terminalId alone`);
     }
     const wsUrl = getTerminalWsUrl(this, index);
     const terminalOptions = {

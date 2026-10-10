@@ -151,7 +151,7 @@ export function rcloneServeArgs(localPath, readOnly, platform = process.platform
 /**
  * The container mount's own settings, the one place they are decided. Create,
  * the restart repair's PATCH and its check all use what this builds, and the
- * journal records it (plan v3.1):
+ * journal records it:
  *   - `writes`: in-place edits work; a write is uploaded within seconds,
  *     and stop drains what is not uploaded yet (`uploads.state`);
  *   - `dir_cache_time: 0`: no stale "does not exist" view of the folder;
@@ -1211,7 +1211,7 @@ class ShareOwner {
             void this.stop('interrupted', 'interrupted');
     }
     /**
-     * Stop step 1 (plan v3.1): poll the mount, still serving, until its
+     * Stop step 1: poll the mount, still serving, until its
      * `uploads.state` is `idle` on two polls `drainPollMs` apart. Bounded by the
      * drain timeout and a forced stop. When this machine cannot serve (rclone
      * exited, or the tunnel conflicts) the container cannot deliver anything,

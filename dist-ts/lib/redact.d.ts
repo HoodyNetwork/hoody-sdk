@@ -80,7 +80,10 @@ export declare function credentialHeadersOf(middlewareContext: unknown): string[
 export declare function redactUrl(url: string, extraParamNames?: readonly string[]): string;
 /**
  * Recursively clone an object/array with any secret key redacted. Protects
- * against circular references and caps recursion depth.
+ * against circular references and caps recursion depth. A byte or stream
+ * value becomes a placeholder with its type and size (`binaryPlaceholder`),
+ * and an object that throws while it is read becomes `[unreadable]`: this
+ * runs while an error is being built, and must not replace that error.
  *
  * `extraFieldNames`: names to treat as secret in addition to the built-in
  * pattern (the request's recorded credential query parameters). They redact

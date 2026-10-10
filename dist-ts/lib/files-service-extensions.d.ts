@@ -20,6 +20,7 @@
  */
 import { UiService as FilesUiService } from '../generated/files/ui.service.js';
 import type { FilesServiceBase } from '../generated/files/files.service.generated.js';
+import type { FilesUiGetPageResponse } from '../generated/types.js';
 type TemplateVars = {
     projectId?: string;
     containerId?: string;
@@ -50,9 +51,10 @@ declare module '../generated/files/files.service.js' {
         getZipUrl(directory: string, templateVars?: TemplateVars): string;
         /**
          * List a directory as JSON: `files.ui.getPage(path, { json: '' })`. The root HTML listing
-         * stays `files.ui.getPage`.
+         * stays `files.ui.getPage`. It always asks for JSON, so it resolves to the listing
+         * (`r.data.paths`), never to the bytes `getPage` can return.
          */
-        list(path: string, options?: Omit<NonNullable<Parameters<FilesUiService['getPage']>[1]>, 'json'>, templateVars?: Parameters<FilesUiService['getPage']>[2]): ReturnType<FilesUiService['getPage']>;
+        list(path: string, options?: Omit<NonNullable<Parameters<FilesUiService['getPage']>[1]>, 'json' | 'responseType' | 'rawResponse'>, templateVars?: Parameters<FilesUiService['getPage']>[2]): Promise<FilesUiGetPageResponse>;
         /**
          * Read a file as text (UTF-8). Resolves to the string itself, no
          * `{ statusCode, message, data }` envelope. A missing file rejects with

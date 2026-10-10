@@ -8,6 +8,31 @@
  */
 import { scriptPathToName, isValidToolName, extractParamsFromSchema, extractPathParams, sanitizeDescription, MAX_PARAMS_PER_SCRIPT, MAX_TOOL_NAME_LENGTH, } from './exec-dynamic-discovery.js';
 import { assertBasePath } from './exec-path-utils.js';
+// ─── Script list extraction ──────────────────────────────────────────────────
+/**
+ * Find the script array in an `openapi.listScripts` response.
+ *
+ * The kit answers `{success, data: {directory, totalScripts, withSchemas,
+ * scripts: [...]}}`, and the SDK HttpClient wraps that body as
+ * `{statusCode, message, data: <body>}`, so the array sits two `data` levels
+ * below the response. Each level is probed for an array, `scripts` or
+ * `items` before stepping into its `data`; reading one fixed level found
+ * nothing and discovery was always empty (BT2-EXEC-001).
+ */
+export function extractRawScriptList(response) {
+    let node = response;
+    for (let depth = 0; depth < 4 && node && typeof node === 'object'; depth++) {
+        if (Array.isArray(node))
+            return node;
+        const record = node;
+        if (Array.isArray(record.scripts))
+            return record.scripts;
+        if (Array.isArray(record.items))
+            return record.items;
+        node = record.data;
+    }
+    return [];
+}
 // ─── Single-entry parser ─────────────────────────────────────────────────────
 /**
  * Parse a single raw script entry into zero or more DiscoveredScript objects.

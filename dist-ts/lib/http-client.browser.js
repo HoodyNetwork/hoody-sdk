@@ -5,9 +5,9 @@
  * resolution of `http-client.js` imports.
  */
 import { ApiError, isApiError, } from '../generated/errors.js';
-import { isBinaryMediaType, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY_MS, DEFAULT_RETRY_WAIT_CAP_MS, IDEMPOTENT_METHODS, inWebBrowser, isTextMediaType, mergeQueryPairs, parseJsonLossless, shouldRetryFailure, stringifyBody, } from './http-wire.js';
+import { isBinaryMediaType, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY_MS, DEFAULT_RETRY_WAIT_CAP_MS, IDEMPOTENT_METHODS, KIT_NOT_READY, KIT_STARTING_MAX_DELAY_MS, callerAbortMessage, deadlineReason, inWebBrowser, isDeadlineReason, resolveKitStartingWaitMs, isKitStarting, kitNotReadyMessage, kitStartingRetries, isTextMediaType, mergeQueryPairs, parseJsonLossless, keyedReplayOf, sendsIdempotencyKey, shouldRetryFailure, stringifyBody, withKeyedReplayHeader, withIdempotencyKey, } from './http-wire.js';
 // The Node client module exports these wire helpers; the browser client re-exports the shared copies.
-export { isBinaryMediaType, isTextMediaType, parseJsonLossless, stringifyJsonLossless } from './http-wire.js';
+export { isBinaryMediaType, isKitStarting, isTextMediaType, kitNotReadyMessage, kitStartingRetries, newIdempotencyKey, parseJsonLossless, resolveKitStartingWaitMs, stringifyJsonLossless, withIdempotencyKey, } from './http-wire.js';
 /**
  * Stable 32-bit FNV-1a over a string, returned as hex. Used only to partition
  * the GET cache by caller identity — NOT a security primitive. Collisions are
@@ -84,14 +84,17 @@ function _queryString(value) {
     return String(value);
 }
 /**
- * The machine code of an error body: an explicit string code wins, then a
- * code-shaped error field (hoody-api puts its code there: TOKEN_CEILING_EXCEEDED,
+ * The machine code of an error body: an explicit string code wins, then the
+ * containers edge's errorCode (BACKEND_GATEWAY_ERROR), then a code-shaped error
+ * field (hoody-api puts its code there: TOKEN_CEILING_EXCEEDED,
  * SIGNING_NOT_CONFIGURED), then a nested error object's code. Prose in error
  * ("Bad Request", "key not found") is never promoted to a code.
  */
 function _apiErrorCode(record) {
     if (typeof record.code === 'string' && record.code.length > 0)
         return record.code;
+    if (typeof record.errorCode === 'string' && record.errorCode.length > 0)
+        return record.errorCode;
     const error = record.error;
     if (typeof error === 'string' && /^[A-Z][A-Z0-9_]{1,63}$/.test(error))
         return error;
@@ -287,6 +290,22 @@ function isNonReplayableBody(body) {
 // without hurting hit rates for realistic workloads.
 const BROWSER_CACHE_MAX_ENTRIES = 256;
 /**
+ * Adds `data` and `declared` to a frame (see ITypedStreamEvent). `lossless`
+ * is the request's losslessIntegers: a 64-bit integer is not rounded.
+ */
+function _decodeStreamEvent(event, declared, lossless) {
+    let data;
+    let parsed = false;
+    try {
+        data = lossless ? parseJsonLossless(event.raw) : JSON.parse(event.raw);
+        parsed = true;
+    }
+    catch {
+        data = undefined;
+    }
+    return { ...event, declared: parsed && declared.has(event.event), data };
+}
+/**
  * The frame size a stream holds when neither the call nor the client sets
  * one: 16 MiB. Without a bound a server that never ends a line, or never
  * ends a frame, grows the parser's buffer until the process runs out of
@@ -329,7 +348,7 @@ function _cleanApiError(params) {
 }
 /** The fixed sentence for each code an event-stream ApiError may carry. */
 const _STREAM_ERROR_SENTENCES = {
-    ABORTED: 'The event stream request was aborted or timed out',
+    ABORTED: 'The event stream request was aborted by the caller',
     ETIMEDOUT: 'The event stream request timed out',
     REDIRECT_REFUSED: 'The event stream request was redirected, and redirects are refused',
     NOT_AN_EVENT_STREAM: 'Expected an event stream, got a response of another content type',
@@ -646,6 +665,7 @@ export class HttpClient {
             timeout: config.timeout ?? 30000,
             ...(config.retries !== undefined ? { retries: config.retries } : {}),
             ...(config.retryDelayMs ? { retryDelayMs: config.retryDelayMs } : {}),
+            kitStartingWaitMs: resolveKitStartingWaitMs(config.kitStartingWaitMs),
             retryOnStatuses: config.retryOnStatuses || [408, 425, 429, 500, 502, 503, 504],
             headers: config.headers || {},
             cache: config.cache || {},
@@ -754,6 +774,9 @@ export class HttpClient {
         this.config.middlewares = [...middlewares];
     }
     async request(method, path, data = {}) {
+        if (data.idempotencyKeyHeader !== undefined) {
+            data = { ...data, headers: withIdempotencyKey(data.headers, this.config.headers, data.idempotencyKeyHeader) };
+        }
         const upperMethod = method.toUpperCase();
         const isFullUrl = _isFullUrl(path);
         const url = isFullUrl
@@ -812,6 +835,9 @@ export class HttpClient {
         const explicitRetries = data.retries ?? this.config.retries;
         const retryByDefault = explicitRetries === undefined;
         const retries = Math.max(0, explicitRetries ?? (data.responseIsFinal === true ? 0 : DEFAULT_RETRIES));
+        // A kit still starting may take more attempts than `retries` (decided per failure below).
+        const kitStartingWaitMs = this.config.kitStartingWaitMs;
+        const attemptBudget = retryByDefault ? Math.max(retries, kitStartingRetries(kitStartingWaitMs)) : retries;
         const timeoutMs = data.timeoutMs ?? this.config.timeout;
         const retryDelayMs = data.retryDelayMs ?? this.config.retryDelayMs ?? (retryByDefault ? DEFAULT_RETRY_DELAY_MS : 250);
         let retryWaitedMs = 0;
@@ -832,7 +858,13 @@ export class HttpClient {
         // retry would silently send an empty body. Disable auth retry in that case
         // so the caller gets the clear 401 instead of a downstream empty-POST.
         const bodyIsNonReplayable = isNonReplayableBody(data.body);
-        for (let attempt = 1; attempt <= retries + 1; attempt++) {
+        // A keyed request's key and wire body as its first keyed attempt sent them; every later
+        // attempt sends exactly these (keyedReplayOf). keyedUnreplayable: it sent a key with a body
+        // that cannot go out twice byte for byte, so it is not retried.
+        let keyedReplay;
+        let keyedUnreplayable = false;
+        const keyHeader = data.declaredIdempotencyKeyHeader ?? data.idempotencyKeyHeader;
+        for (let attempt = 1; attempt <= attemptBudget + 1; attempt++) {
             // The token this attempt goes out with: a 401 is about THIS token, which may no longer be
             // the client's by the time the answer arrives.
             const tokenSent = this.config.token;
@@ -871,8 +903,20 @@ export class HttpClient {
             let middlewareRequest = requestContext;
             try {
                 middlewareRequest = await this.applyRequestMiddleware(requestContext, data.routeTag);
+                let wire = _wireBody(middlewareRequest.body, middlewareRequest.headers, data.jsonStringBody);
+                if (keyedReplay !== undefined) {
+                    middlewareRequest = { ...middlewareRequest, headers: withKeyedReplayHeader(middlewareRequest.headers, keyHeader, keyedReplay) };
+                    wire = keyedReplay.body;
+                }
+                else if (!keyedUnreplayable && sendsIdempotencyKey(middlewareRequest.headers, keyHeader)) {
+                    keyedReplay = keyedReplayOf(middlewareRequest.headers, keyHeader, wire, stringifyBody);
+                    if (keyedReplay === undefined)
+                        keyedUnreplayable = true;
+                    else
+                        wire = keyedReplay.body;
+                }
                 const startedAt = Date.now();
-                const received = await this.sendConfined(middlewareRequest.method, middlewareRequest.url, middlewareRequest.headers, _wireBody(middlewareRequest.body, middlewareRequest.headers, data.jsonStringBody), middlewareRequest.timeoutMs, data.signal, data.redirect, middlewareRequest.middlewareContext, 
+                const received = await this.sendConfined(middlewareRequest.method, middlewareRequest.url, middlewareRequest.headers, wire, middlewareRequest.timeoutMs, data.signal, data.redirect, middlewareRequest.middlewareContext, 
                 // Follow redirects here, where a failure after an answered hop is marked, whenever
                 // "never dispatched" would send the request again where shouldRetry otherwise would
                 // not. Not in a web browser (see inWebBrowser).
@@ -917,7 +961,7 @@ export class HttpClient {
                 return result;
             }
             catch (error) {
-                const apiError = this.toApiError(error, middlewareRequest);
+                let apiError = this.toApiError(error, middlewareRequest, data.signal);
                 lastError = apiError;
                 try {
                     await this.applyErrorMiddleware({
@@ -936,7 +980,8 @@ export class HttpClient {
                 const sentExternal = middlewareRequest.url === url
                     ? isExternalUrl
                     : this.isExternalDestination(_isFullUrl(middlewareRequest.url), middlewareRequest.url);
-                const sentNonReplayable = bodyIsNonReplayable || isNonReplayableBody(middlewareRequest.body);
+                const sentNonReplayable = bodyIsNonReplayable || keyedUnreplayable || isNonReplayableBody(middlewareRequest.body);
+                const sentKeyed = sendsIdempotencyKey(middlewareRequest.headers, keyHeader);
                 // The ways back into this loop, and what each does with responseIsFinal:
                 //   a. 401, API scope, token already replaced  -> replay once (below)
                 //   b. 401, API scope, token refreshed         -> replay once (below)
@@ -1013,17 +1058,34 @@ export class HttpClient {
                 // (ReadableStream / AsyncIterable). The first fetch() drained it,
                 // so a replay would send an empty body to the server → silent data
                 // loss on idempotent PUT/DELETE uploads. Surface the error now.
-                if (attempt <= retries && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, data.responseIsFinal === true, retryByDefault)) {
+                // A kit still starting gets the longer default budget (kitStartingWaitMs, lib/http-wire.ts).
+                const kitStarting = retryByDefault && kitStartingWaitMs > 0 && data.responseIsFinal !== true && isKitStarting(apiError);
+                if (attempt <= (kitStarting ? attemptBudget : retries) && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, data.responseIsFinal === true, retryByDefault, sentKeyed)) {
                     const retryAfterMs = apiError.retryAfterMs;
-                    const delayMs = this.getRetryDelayMs(retryDelayMs, attempt, retryAfterMs);
+                    let delayMs = this.getRetryDelayMs(retryDelayMs, attempt, retryAfterMs);
+                    if (kitStarting && retryAfterMs === undefined)
+                        delayMs = Math.min(delayMs, KIT_STARTING_MAX_DELAY_MS);
                     // The default policy waits at most DEFAULT_RETRY_WAIT_CAP_MS in all. A wait past it
                     // (a long Retry-After) ends the retries: sending sooner than the server asked is not
                     // honouring it.
-                    if (!retryByDefault || retryWaitedMs + delayMs <= DEFAULT_RETRY_WAIT_CAP_MS) {
+                    if (!retryByDefault || retryWaitedMs + delayMs <= (kitStarting ? kitStartingWaitMs : DEFAULT_RETRY_WAIT_CAP_MS)) {
                         retryWaitedMs += delayMs;
                         await this.sleep(delayMs);
                         continue;
                     }
+                }
+                // The kit-starting wait ran out on a request it covered: say so, with a code to match.
+                if (kitStarting && !sentNonReplayable && this.shouldRetry(apiError, sentMethod, retryOnStatuses, false, true, sentKeyed)) {
+                    apiError = new ApiError({
+                        message: kitNotReadyMessage(retryWaitedMs),
+                        status: apiError.status,
+                        code: KIT_NOT_READY,
+                        ...(apiError.url !== undefined ? { url: apiError.url } : {}),
+                        ...(apiError.method !== undefined ? { method: apiError.method } : {}),
+                        ...(apiError.request !== undefined ? { request: apiError.request } : {}),
+                        response: apiError.response,
+                        cause: apiError,
+                    });
                 }
                 // Invoke onError on EVERY failure including terminal ones — hiding
                 // the hook from exactly the errors consumers care about most would
@@ -1037,7 +1099,9 @@ export class HttpClient {
                         // not overrule responseIsFinal (a hook that returns true for every error ran an
                         // exec script twice on its 500).
                         // Nor does it spend the default budget: before the default policy there was none.
-                        if (shouldRetry && attempt <= retries && !sentNonReplayable && data.responseIsFinal !== true && !retryByDefault) {
+                        // A caller's abort is never replayed: its signal stays aborted.
+                        const callerAborted = apiError.status === 0 && apiError.code === 'ABORTED';
+                        if (shouldRetry && attempt <= retries && !sentNonReplayable && data.responseIsFinal !== true && !retryByDefault && !callerAborted) {
                             await this.sleep(this.getRetryDelayMs(retryDelayMs, attempt));
                             continue;
                         }
@@ -1165,7 +1229,7 @@ export class HttpClient {
             response = await this.sendConfined(requestContext.method, requestContext.url, requestContext.headers, _wireBody(requestContext.body, requestContext.headers, data.jsonStringBody), requestContext.timeoutMs, data.signal, data.redirect, requestContext.middlewareContext);
         }
         catch (error) {
-            const openError = this.toApiError(error, requestContext);
+            const openError = this.toApiError(error, requestContext, data.signal);
             try {
                 await this.applyErrorMiddleware({ ...requestContext, error: openError });
             }
@@ -1404,6 +1468,10 @@ export class HttpClient {
      * Response: `stream.response` resolves with the accepted stream's status
      * and headers before the first event is yielded, and carries the headers
      * `options.documentedHeaders` names on `documented`; see IEventStream.
+     *
+     * Typed frames: with `options.declaredEvents` each frame also carries its
+     * parsed `data` and `declared`, and `TEvent` (an ITypedStreamEvent) types
+     * them; see ITypedStreamEvent.
      */
     streamEvents(method, path, data = {}, options = {}) {
         let settled = false;
@@ -1468,6 +1536,8 @@ export class HttpClient {
             control.cancel();
         };
         const frames = this.streamEventFrames(method, path, data, options, accept, control);
+        const declaredEvents = options.declaredEvents ? new Set(options.declaredEvents) : undefined;
+        const lossless = data.losslessIntegers === true;
         // One step of the iteration, with every failure made fixed-text and
         // response settled by it.
         const step = async () => {
@@ -1480,9 +1550,12 @@ export class HttpClient {
                 refuse(clean);
                 throw clean;
             }
-            if (result.done)
+            if (result.done) {
                 refuse(closedError());
-            return result;
+                return result;
+            }
+            const value = declaredEvents ? _decodeStreamEvent(result.value, declaredEvents, lossless) : result.value;
+            return { done: false, value: value };
         };
         // Reading response before the first next() sends the request: the first
         // step runs then, and its result is held for that next(). Otherwise
@@ -1516,13 +1589,13 @@ export class HttpClient {
                 // A held first frame is not given to a next() after the close.
                 held = undefined;
                 close();
-                return frames.return(value);
+                return (await frames.return(value));
             },
             async throw(error) {
                 refuse(error);
                 held = undefined;
                 close();
-                return frames.throw(error);
+                return (await frames.throw(error));
             },
         };
         return stream;
@@ -1732,6 +1805,18 @@ export class HttpClient {
             method: method.toUpperCase(),
             response: { maxFrameBytes, frameBytes: buffer.overflowBytes },
         });
+        const idleMs = typeof options.idleTimeoutMs === 'number' && Number.isFinite(options.idleTimeoutMs) && options.idleTimeoutMs > 0
+            ? options.idleTimeoutMs
+            : undefined;
+        let idled = false;
+        let idleTimer;
+        const idleTimedOut = () => _cleanApiError({
+            message: 'The event stream sent nothing for ' + idleMs + ' ms (idleTimeoutMs); the stream was closed',
+            status: response.status,
+            code: 'ETIMEDOUT',
+            url: _redactUrl(response.url || path, _credentialQueryParamsOf(requestData.middlewareContext)),
+            method: method.toUpperCase(),
+        });
         const onAbort = () => {
             void reader.cancel().catch(() => undefined);
         };
@@ -1753,6 +1838,14 @@ export class HttpClient {
                 // A declared DOM ReadableStreamReadResult is refused under @types/bun
                 // with exactOptionalPropertyTypes (its done result omits value).
                 let read;
+                // The idle clock covers this read only: a caller still handling the
+                // last frame is not the stream going quiet.
+                if (idleMs !== undefined) {
+                    idleTimer = setTimeout(() => {
+                        idled = true;
+                        onAbort();
+                    }, idleMs);
+                }
                 try {
                     read = await reader.read();
                 }
@@ -1762,7 +1855,12 @@ export class HttpClient {
                         throw abortError();
                     if (control.closed)
                         return;
+                    if (idled)
+                        throw idleTimedOut();
                     throw error;
+                }
+                finally {
+                    clearTimeout(idleTimer);
                 }
                 const { done, value } = read;
                 if (signal && signal.aborted) {
@@ -1772,6 +1870,10 @@ export class HttpClient {
                 // whatever the cancel left in the buffer.
                 if (control.closed) {
                     return;
+                }
+                // The idle bound cancelled it: not the server ending the stream.
+                if (idled) {
+                    throw idleTimedOut();
                 }
                 if (done) {
                     // The decoder's last bytes (a character cut by the close), then the
@@ -2168,7 +2270,7 @@ export class HttpClient {
         // dispatched — so only arm the timer for positive finite budgets.
         const hasBudget = Number.isFinite(timeoutMs) && timeoutMs > 0;
         const timeout = hasBudget
-            ? setTimeout(() => controller.abort(), timeoutMs)
+            ? setTimeout(() => controller.abort(deadlineReason()), timeoutMs)
             : undefined;
         let externalAbortListener;
         try {
@@ -2288,19 +2390,27 @@ export class HttpClient {
         }
         return err;
     }
-    toApiError(error, request) {
+    toApiError(error, request, callerSignal) {
         if (isApiError(error)) {
             return error;
         }
         const isAbortError = (error instanceof Error && error.name === 'AbortError')
             || (typeof error === 'object' && error !== null && error.code === 'ABORT_ERR');
         const isParseError = error instanceof SyntaxError;
-        const message = isAbortError
-            ? `Request timed out after ${request.timeoutMs}ms`
-            : (error instanceof Error ? error.message : 'Request failed');
+        // The caller's own signal fired: fetch rejects with an AbortError, or with the signal's
+        // reason when the caller gave one. ABORTED, never the timeout, so a cancel is not taken for a
+        // deadline. Any other AbortError is this client's deadline: ETIMEDOUT, as in the Node and CLI clients.
+        // The deadline's own reason (see deadlineReason) wins a race with a later caller abort.
+        const callerAbort = !isDeadlineReason(error)
+            && callerSignal?.aborted === true && (isAbortError || error === callerSignal.reason);
+        const deadline = isAbortError && !callerAbort;
+        const message = callerAbort
+            ? callerAbortMessage(callerSignal.reason)
+            : deadline ? `Request timed out after ${request.timeoutMs}ms`
+                : (error instanceof Error ? error.message : 'Request failed');
         // A body that stalled after the headers (readBufferedBody): the CLI's code for it.
         const isBodyStall = error instanceof Error && error.name === 'BodyStallError';
-        const code = isAbortError ? 'ABORTED' : isParseError ? 'PARSE_ERROR' : isBodyStall ? 'ETIMEDOUT' : undefined;
+        const code = callerAbort ? 'ABORTED' : isParseError ? 'PARSE_ERROR' : deadline || isBodyStall ? 'ETIMEDOUT' : undefined;
         // Redact URL, body, and query for toApiError path too.
         // The recorded credential query parameters are redacted too, whatever
         // name the operator gave them (kitAuth token rule with a param).
@@ -2327,8 +2437,8 @@ export class HttpClient {
      * Whether a failed attempt may be sent again: the rule the generated Node
      * client follows, from lib/http-wire.ts (shouldRetryFailure has the order).
      */
-    shouldRetry(error, method, retryOnStatuses, responseIsFinal = false, byDefault = false) {
-        return shouldRetryFailure(error, method, retryOnStatuses, responseIsFinal, byDefault);
+    shouldRetry(error, method, retryOnStatuses, responseIsFinal = false, byDefault = false, keyed = false) {
+        return shouldRetryFailure(error, method, retryOnStatuses, responseIsFinal, byDefault, keyed);
     }
     /**
      * Exponential backoff with bounded delay + jitter. `retryAfterMs` (from
@@ -2409,12 +2519,17 @@ export class HttpClient {
     }
     /**
      * True when url is inside the API's credential scope: the baseURL's origin
-     * and path, or a realm subdomain of its host ({realmId}.api.hoody.com).
+     * and path, or a realm host of it ({realmId}.api.hoody.com).
      *
      * The path matches on a segment boundary: a base of /v1/ covers /v1 and
      * /v1/x but not /v10/x. The realm exception requires the base's scheme AND
      * port: a realm name on another port is another service. Both used to
      * match, so the API bearer went to /v10 and to realm:8443.
+     *
+     * A realm host is exactly one label, a 24-hex realm id, in front of the
+     * base host. Any subdomain used to count, and the kit hosts withContainer()
+     * derives from a base with no api. label (containers.<base host>) are
+     * subdomains of it, so every kit request carried the account bearer.
      *
      * Both URLs are resolved as the transport resolves them (resolveDestination),
      * and an omitted baseURL is the page's origin, where the browser transport
@@ -2434,7 +2549,8 @@ export class HttpClient {
         const sameOrigin = target.origin === base.origin;
         const realmSubdomain = target.protocol === base.protocol
             && target.port === base.port
-            && target.hostname.endsWith('.' + base.hostname);
+            && target.hostname.endsWith('.' + base.hostname)
+            && /^[0-9a-f]{24}$/i.test(target.hostname.slice(0, -base.hostname.length - 1));
         if (!sameOrigin && !realmSubdomain) {
             return false;
         }
@@ -2501,7 +2617,7 @@ export class HttpClient {
     }
     /**
      * The credential scope a URL belongs to: 'api' for the API (the baseURL and
-     * its realm subdomains), otherwise the origin the URL resolves to.
+     * its realm hosts), otherwise the origin the URL resolves to.
      *
      * A URL that does not resolve (a relative URL with no page to resolve it
      * against, which Node's fetch refuses) is the API's only when it provably
@@ -2816,33 +2932,31 @@ export class HttpClient {
         return `req-${Date.now()}-${this.requestCounter}`;
     }
     /**
-     * Normalize all responses into a stable API envelope:
-     * { statusCode, message, data }
+     * Normalize all responses into a stable API envelope: { statusCode, message, data }.
+     *
+     * A body that already is the envelope keeps every other top-level field it carries
+     * (`propagation`, `pagination`, `total`/`limit`/`offset`, `metadata`): those are documented
+     * parts of the answer, and dropping them left the caller no way to read them. Its `message`
+     * may be absent (`{statusCode, data}`, hoody-api's `/auth/available-regions`); it is filled in
+     * from the status text. The generated types (RESPONSE_ENVELOPE_FIELDS) follow the same rule.
      */
     normalizeResponseEnvelope(payload, statusCode, statusText) {
         const fallbackMessage = statusText || (statusCode >= 200 && statusCode < 300 ? 'OK' : 'Request completed');
         if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
             const record = payload;
-            // Require the full canonical envelope shape (numeric statusCode, string
-            // message, AND a `data` property) to avoid false-positives against user
-            // resources that happen to have one of those field names.
-            const hasStatusCode = typeof record.statusCode === 'number';
-            const hasMessage = typeof record.message === 'string';
-            const hasDataProp = Object.prototype.hasOwnProperty.call(record, 'data');
-            const looksLikeEnvelope = hasStatusCode && hasMessage && hasDataProp;
+            // Parity with the Node http-client. A numeric `statusCode`, an own `data` key, and a
+            // `message` that is a string when present: a looser gate (`message` OR `data`) would
+            // reshape a resource that merely has one of those field names.
+            const looksLikeEnvelope = typeof record.statusCode === 'number'
+                && (!Object.prototype.hasOwnProperty.call(record, 'message') || typeof record.message === 'string')
+                && Object.prototype.hasOwnProperty.call(record, 'data');
             if (looksLikeEnvelope) {
-                let data;
-                if (Object.prototype.hasOwnProperty.call(record, 'data')) {
-                    data = record.data;
-                }
-                else {
-                    const { statusCode: _statusCode, message: _message, ...rest } = record;
-                    data = Object.keys(rest).length > 0 ? rest : null;
-                }
+                const { statusCode: envelopeStatus, message, data, ...siblings } = record;
                 return {
-                    statusCode: typeof record.statusCode === 'number' ? record.statusCode : statusCode,
-                    message: typeof record.message === 'string' ? record.message : fallbackMessage,
+                    statusCode: envelopeStatus,
+                    message: typeof message === 'string' ? message : fallbackMessage,
                     data,
+                    ...siblings,
                 };
             }
         }

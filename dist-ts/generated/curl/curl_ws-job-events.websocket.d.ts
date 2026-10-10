@@ -180,12 +180,13 @@ export interface IWebSocketConnectionOptions {
      * other drop. Every received message counts as activity.
      *
      * Default: 75000 when the transport can send protocol pings (the `ws`
-     * package, used on Node whenever headers are sent); the client then
-     * pings on its own and counts pings and pongs too, so a quiet but
-     * healthy stream is never cut. A browser WebSocket, and Node's
-     * built-in one, hide pings: there the check is off unless you set this,
-     * and it should exceed the longest silence the server allows itself.
-     * 0 turns it off.
+     * package, which this client uses on Node); the client then pings on
+     * its own and counts pings and pongs too, so a quiet but healthy stream
+     * is never cut. A browser WebSocket (and Bun's or Deno's) hides pings:
+     * there the default is 75000 only on a channel with its own ping frame,
+     * which the client then sends, and off otherwise. Set it there only
+     * above the longest silence the server allows itself, such as its
+     * heartbeat interval. 0 turns it off.
      */
     idleTimeoutMs?: number;
     /**
@@ -350,6 +351,14 @@ export interface WebSocketUpgradeRefusedError extends Error {
     via: "upgrade" | "probe";
 }
 export declare class CurlWsJobEventsWebSocket implements ICurlWsJobEventsWebSocket {
+    /**
+     * The socket constructor every instance of this client uses, in place of
+     * its own choice (the `ws` package on Node, the global WebSocket
+     * elsewhere). It is called as `new ctor(url, protocols)`, like a browser
+     * WebSocket, so headers are not passed. A webSocketFactory in the options
+     * still wins. Unset (the default) restores the client's own choice.
+     */
+    static webSocketImpl: IRawWebSocketCtor | undefined;
     private ws;
     private eventHandlers;
     private options;

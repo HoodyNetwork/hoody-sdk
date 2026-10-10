@@ -27,6 +27,15 @@ declare class TargetPool {
     private busy;
     private waiters;
     private maxSockets;
+    /**
+     * Connections being opened (waiting for an FD permit or for the connect itself). They
+     * count against maxSockets with `busy`, so concurrent opens never overshoot it.
+     */
+    private connecting;
+    /** Sockets of those opens, so destroy() can close them before they connect. */
+    private connectingSockets;
+    /** After destroy(): nothing is opened or pooled any more. */
+    private destroyed;
     constructor(host: string, port: number, maxSockets?: number);
     private parseHeadersBlock;
     private onData;
@@ -46,7 +55,14 @@ declare class TargetPool {
     private completeResponse;
     /** Back to the idle list, or closed, once nothing is in flight on it. */
     private afterResponse;
+    /** Callers check capacity first; the count taken here holds the slot until it settles. */
     private createSocket;
+    /**
+     * A closed socket frees a slot without passing through the idle list (one closed instead
+     * of reused, or one that failed): a request waiting for a slot gets a new connection,
+     * not the null of its wait timing out.
+     */
+    private serveWaiter;
     private acquire;
     /**
      * One body-less request. `signal` aborts it: the request rejects (a streamed response's

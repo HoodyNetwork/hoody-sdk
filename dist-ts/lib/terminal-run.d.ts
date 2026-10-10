@@ -20,7 +20,11 @@ export interface TerminalExecOptions {
     signal?: AbortSignal;
     /** Polling interval in ms (default: 250, min: 100) */
     pollIntervalMs?: number;
-    /** Terminal service instance index (default: 0 — ephemeral PTY uses terminal-0) */
+    /**
+     * The terminal to run in. 0 (the default) is a fresh ephemeral session on the terminal-0
+     * host, cleaned up after the run. N >= 1 runs the command in terminal N itself (created
+     * when it does not exist yet), as a plain execute: its display and environment stay.
+     */
     serviceIndex?: number;
 }
 export interface TerminalExecResult {

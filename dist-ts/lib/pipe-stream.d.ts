@@ -381,8 +381,8 @@ export declare class PipeStream {
      * apply (lib/pipe-transport.ts).
      */
     static fromClient(client: {
-        getKitUrl: (kit: string, container: unknown, idx?: number) => string;
-    }, container: unknown, serviceIndex?: number): PipeStream;
+        getKitUrl(kit: string, container: import('../generated/client.js').ContainerLike | null, serviceIndex?: number): string;
+    }, container: import('../generated/client.js').ContainerLike, serviceIndex?: number): PipeStream;
     /** Build a full pipe URL for `path` with optional query params. A reserved name throws (see validatePipePath). */
     getUrl(path: string, query?: Record<string, string | number | boolean | undefined>): string;
     /**

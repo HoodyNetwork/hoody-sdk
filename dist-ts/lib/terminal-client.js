@@ -91,6 +91,13 @@ export class TerminalClient extends Duplex {
     _holdOnConnect = false;
     /** The current connection is held: nothing is sent on it (see holdSends). */
     _sendsHeld = false;
+    /**
+     * A PAUSE went out on the current connection and no RESUME after it.
+     * disconnect() sends the RESUME before closing: on a kit where a pause
+     * outlives its client, a viewer that left paused froze the session's
+     * program until someone attached again (BT2-TERM-007).
+     */
+    _remotePaused = false;
     /** Sends the handshake of the current, held connection; null when none is owed. */
     _heldHandshake = null;
     /**
@@ -485,11 +492,18 @@ export class TerminalClient extends Duplex {
         const client = this.client;
         this.client = null;
         if (client) {
+            if (this._remotePaused && client.connected && !this._sendsHeld) {
+                try {
+                    client.sendResume();
+                }
+                catch { /* best effort, the close follows */ }
+            }
             try {
                 client.disconnect(reason ?? 'Normal closure');
             }
             catch { /* ignore */ }
         }
+        this._remotePaused = false;
         // Detach BEFORE emitting so consumers see exactly one synchronous
         // 'disconnect' event (the bridge would otherwise also re-emit when
         // the typed client's onclose fires asynchronously).
@@ -774,6 +788,7 @@ export class TerminalClient extends Duplex {
         if (this.connected && this.client && !this._sendsHeld) {
             try {
                 this.client.sendPause();
+                this._remotePaused = true;
             }
             catch { /* swallow — best effort */ }
         }
@@ -784,6 +799,7 @@ export class TerminalClient extends Duplex {
         if (this.connected && this.client && !this._sendsHeld) {
             try {
                 this.client.sendResume();
+                this._remotePaused = false;
             }
             catch { /* swallow — best effort */ }
         }
@@ -888,6 +904,8 @@ export class TerminalClient extends Duplex {
             if (isStale())
                 return;
             opened = true;
+            // A pause belongs to the connection that sent it.
+            this._remotePaused = false;
             this._unopenedFailures = 0;
             this._state = 'connected';
             this._lastActivityAt = Date.now();
@@ -944,6 +962,7 @@ export class TerminalClient extends Duplex {
             this._state = 'disconnected';
             this._sendsHeld = false;
             this._heldHandshake = null;
+            this._remotePaused = false;
             this.stopLiveness();
             // A socket the liveness check tore down closes with whatever the
             // transport says about a local terminate (1006 and no reason on

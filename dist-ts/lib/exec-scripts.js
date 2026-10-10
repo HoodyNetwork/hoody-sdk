@@ -53,7 +53,10 @@ function parseBooleanLike(value, fallback) {
  *   - dir: defaults to '' (root) and validates via assertPath if non-empty
  *   - filter: defaults to '*' (match all)
  *   - metadata: coerced to boolean (false by default)
- *   - label, tags, mode, enabled, websocket: default to '' (no constraint)
+ *   - label, tags, mode, enabled, websocket: left out when unset or empty
+ *     (no constraint). They are never sent empty: the server reads a
+ *     recursive listing's `enabled=` as enabled=false and drops every
+ *     enabled script.
  *   - recursive, include_comments: default to 'false'
  *
  * An exhaustive listing (exhaustive true or 'true') gets none of these defaults,
@@ -90,14 +93,12 @@ function normalizeListScriptsOptions(options) {
         normalized.filter = '*';
     }
     normalized.metadata = parseBooleanLike(normalized.metadata, false);
-    // Supply safe defaults for remaining required query params so the generated
-    // base validation does not reject the request. These are pass-through filters
-    // that the server treats as "no constraint" when empty or default-valued.
-    normalized.label ??= '';
-    normalized.tags ??= '';
-    normalized.mode ??= '';
-    normalized.enabled ??= '';
-    normalized.websocket ??= '';
+    // An unset filter is left out of the query rather than sent empty.
+    for (const key of ['label', 'tags', 'mode', 'enabled', 'websocket']) {
+        if (normalized[key] === undefined || normalized[key] === null || normalized[key] === '') {
+            delete normalized[key];
+        }
+    }
     normalized.recursive ??= 'false';
     normalized.include_comments ??= 'false';
     return normalized;
@@ -194,7 +195,7 @@ export function patchExecScriptsServicePrototype() {
     };
     // Patched write: validates path, applies default behaviors:
     //   - createDirs defaults to true (auto-create parent directories)
-    //   - validate defaults to false, except forced false for .md files
+    //   - validate defaults to true, as on the server, except forced false for .md files
     //     (Markdown files should not go through script validation)
     prototype.write = function patchedWrite(data, requestOptions, templateVars) {
         const source = asAnyRecord(data);
@@ -209,7 +210,7 @@ export function patchExecScriptsServicePrototype() {
         const normalizedPayload = {
             ...source,
             createDirs: source.createDirs ?? true,
-            validate: isMarkdown ? false : parseBooleanLike(source.validate, false),
+            validate: isMarkdown ? false : parseBooleanLike(source.validate, true),
         };
         return originalWrite.call(this, normalizedPayload, requestOptions, templateVars);
     };
@@ -250,7 +251,7 @@ export function patchExecScriptsServicePrototype() {
             createDirs: options?.createDirs ?? true,
             // Only a generic file may ask for script validation; every other kind is data.
             validate: kind === undefined || kind === 'file'
-                ? parseBooleanLike(options?.validate, false)
+                ? parseBooleanLike(options?.validate, true)
                 : false,
         };
         return this.write(payload, requestOptions, templateVars);

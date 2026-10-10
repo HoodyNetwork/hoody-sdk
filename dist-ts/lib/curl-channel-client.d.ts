@@ -5,10 +5,11 @@ export type ExecutionMode = "sync" | "async";
  * in sync with the upstream curl protocol `CurlRequest`.
  *
  * Note: the following fields exist server-side but are REJECTED at validation
- * (`proxy`, `proxy_user`, `proxy_password`, `cacert`, `cert`, `key`) — they
- * are NOT exposed here because sending any of them returns 400. The TLS
- * client-cert fields (cacert/cert/key) accept filesystem paths; until the
- * server gets a `--cert-dir` flag they remain rejected.
+ * (`proxy`, `proxy_user`, `proxy_password`, `cacert`, `cert`, `key`,
+ * `schedule`) — they are NOT exposed here because sending any of them returns
+ * 400. The TLS client-cert fields (cacert/cert/key) accept filesystem paths;
+ * until the server gets a `--cert-dir` flag they remain rejected. Recurring
+ * requests are created with `POST /api/v1/curl/schedule`.
  */
 export interface CurlRequest {
     url: string;
@@ -55,8 +56,6 @@ export interface CurlRequest {
     session_id?: string;
     retry_count?: number;
     retry_delay?: number;
-    /** Cron expression for /schedule (not used on the channel). */
-    schedule?: string;
 }
 export interface ResponseHeader {
     name: string;
@@ -242,11 +241,28 @@ export interface WsLike {
     addEventListener(type: "error", listener: (ev: unknown) => void): void;
 }
 export declare const WS_OPEN = 1;
+/**
+ * True when Node's built-in WebSocket must not be constructed: the bundled
+ * undici cannot be shown to carry the fix for CVE-2026-12151 (unbounded
+ * message fragments). The text between the sentinels is shared verbatim with
+ * hoody-sdk (its lib and its generated WebSocket clients).
+ */
+export declare const nodeBuiltinWebSocketUnsafe: (v: Record<string, string | undefined> | undefined) => boolean;
+/**
+ * Maximum inbound WS frame size the SDK will JSON.parse. Frames larger than this drop the connection.
+ * On a `ws` socket it is a byte limit on the whole message (`maxPayload`); the SDK's own check on
+ * the global WebSocket path counts decoded characters. A the upstream curl kit server never sends a message
+ * near either (its frames are bounded by hello `limits.max_frame_bytes`, 1 MiB by default).
+ */
+export declare const MAX_INBOUND_FRAME_BYTES: number;
+/**
+ * The local receive-cap code behind a WebSocket `error` event (`ws` puts the
+ * Error on the event's `.error`), or undefined for any other failure.
+ */
+export declare function localWsCapCode(ev: unknown): string | undefined;
 export declare function openWebSocket(url: string, headers?: Record<string, string>): Promise<WsLike>;
 /** Maximum buffered SSE events per stream before the SDK cancels the upstream and emits a `dropped` synthetic event. Protects against memory-DoS from hostile/fast upstreams. */
 export declare const SSE_EVENT_QUEUE_CAP = 4096;
-/** Maximum inbound WS frame size the SDK will JSON.parse. Frames larger than this drop the connection. */
-export declare const MAX_INBOUND_FRAME_BYTES: number;
 /** Configuration for opening a channel. */
 export interface ChannelOptions {
     /** WebSocket URL, e.g. `wss://example.com/api/v1/curl/channel`. */
@@ -399,6 +415,15 @@ export declare class CurlChannel {
     private rejectConnectionReady;
     private hello;
     private closed;
+    /**
+     * Set when this client ended the connection itself because the server sent
+     * something a local limit refuses (an oversize frame, or a `ws` receive
+     * cap). Terminal: the same server would send it again, so nothing
+     * reconnects, and this error is what pending and later work rejects with.
+     */
+    private localFatal;
+    /** Disconnect routine of the socket currently in `this.ws` (one per connect()). */
+    private disconnectCurrent;
     private closeError;
     private pingTimer;
     private reconnectTimer;
@@ -462,6 +487,16 @@ export declare class CurlChannel {
     private connect;
     /** Tear down the connection when an inbound frame exceeds the SDK's hard cap. */
     private closeForOversizeFrame;
+    /**
+     * End the channel for a local limit. The terminal state is set FIRST, so the
+     * disconnect it drives rejects pending work once with `err`, stops the
+     * timers and schedules no reconnect, and every later message is ignored.
+     * Only then is the socket closed: with 1000, because the WebSocket API
+     * accepts only 1000 or 3000-4999 from a client (a `close(1009)` throws and
+     * used to leave the socket open and the channel reconnecting). `reportCode`
+     * is what the `onClose` hook is told; it never goes on the wire.
+     */
+    private failLocal;
     private warnBinaryFrameOnce;
     /** Normalize an inbound binary WS payload to bytes, then route it.
      *

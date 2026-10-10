@@ -1,6 +1,7 @@
 /**
- * Custom HTTP/1.1 client for body-less requests (GET/HEAD). Bypasses
- * node:http entirely for ~56% throughput improvement under sustained load.
+ * Custom HTTP/1.1 client for the tunnel's local requests: body-less ones (`request`) and
+ * ones whose body is streamed chunked (`requestStreaming`). Bypasses node:http entirely for
+ * ~56% throughput improvement under sustained load.
  */
 import * as net from "node:net";
 import { sdkLocalFdBudget } from "./tunnel-fd-budget.js";
@@ -33,6 +34,15 @@ class TargetPool {
     busy = new Set();
     waiters = [];
     maxSockets;
+    /**
+     * Connections being opened (waiting for an FD permit or for the connect itself). They
+     * count against maxSockets with `busy`, so concurrent opens never overshoot it.
+     */
+    connecting = 0;
+    /** Sockets of those opens, so destroy() can close them before they connect. */
+    connectingSockets = new Set();
+    /** After destroy(): nothing is opened or pooled any more. */
+    destroyed = false;
     constructor(host, port, maxSockets = 64) {
         this.host = host;
         this.port = port;
@@ -387,7 +397,7 @@ class TargetPool {
         if (ps.inflight.length === 0) {
             this.busy.delete(ps);
             ps.busy = false;
-            if (ps.alive && ps.socket.writable) {
+            if (ps.alive && !ps.bodyOpen && ps.socket.writable) {
                 this.idle.push(ps);
                 const w = this.waiters.shift();
                 if (w) {
@@ -408,13 +418,34 @@ class TargetPool {
             }
         }
     }
+    /** Callers check capacity first; the count taken here holds the slot until it settles. */
     async createSocket() {
-        const ok = await sdkLocalFdBudget.acquire(5000);
-        if (!ok)
+        if (this.destroyed)
             return null;
-        return new Promise((resolve) => {
+        this.connecting++;
+        const ok = await sdkLocalFdBudget.acquire(5000);
+        if (!ok || this.destroyed) {
+            if (ok)
+                sdkLocalFdBudget.release();
+            this.connecting--;
+            return null;
+        }
+        return new Promise((done) => {
             const socket = net.createConnection({ host: this.host, port: this.port });
             socket.setNoDelay(true);
+            this.connectingSockets.add(socket);
+            let settled = false;
+            // Once: the slot passes from `connecting` to `busy` in the same step, or is freed.
+            const resolve = (v) => {
+                if (settled)
+                    return;
+                settled = true;
+                this.connecting--;
+                this.connectingSockets.delete(socket);
+                if (v)
+                    this.busy.add(v);
+                done(v);
+            };
             let connected = false;
             // FD permit is released exactly once across all exit paths (error,
             // close, connect-timeout, completeResponse dead-socket cleanup).
@@ -441,9 +472,23 @@ class TargetPool {
                 busy: true,
                 alive: true,
                 stream: null,
+                bodyOpen: false,
                 releaseFd,
             };
-            socket.on("connect", () => { connected = true; resolve(ps); });
+            socket.on("connect", () => {
+                connected = true;
+                // A connect that completes after destroy() is closed, never pooled.
+                if (this.destroyed) {
+                    ps.alive = false;
+                    resolve(null);
+                    try {
+                        socket.destroy();
+                    }
+                    catch { }
+                    return;
+                }
+                resolve(ps);
+            });
             socket.on("data", (chunk) => this.onData(ps, chunk));
             socket.on("error", () => {
                 ps.alive = false;
@@ -478,6 +523,13 @@ class TargetPool {
                     this.idle.splice(idleIdx, 1);
                 if (connected)
                     releaseFd();
+                // Closed before it connected (destroy() closes it without an error): nothing else
+                // gives back its permit or settles the open before the connect timeout.
+                if (!connected) {
+                    releaseFd();
+                    resolve(null);
+                }
+                this.serveWaiter();
             });
             setTimeout(() => {
                 if (connected)
@@ -494,6 +546,19 @@ class TargetPool {
             }, 5000);
         });
     }
+    /**
+     * A closed socket frees a slot without passing through the idle list (one closed instead
+     * of reused, or one that failed): a request waiting for a slot gets a new connection,
+     * not the null of its wait timing out.
+     */
+    serveWaiter() {
+        if (this.destroyed || this.waiters.length === 0)
+            return;
+        if (this.busy.size + this.connecting >= this.maxSockets)
+            return;
+        const w = this.waiters.shift();
+        void this.createSocket().then(w);
+    }
     async acquire() {
         const idle = this.idle.pop();
         if (idle) {
@@ -501,13 +566,8 @@ class TargetPool {
             this.busy.add(idle);
             return idle;
         }
-        if (this.busy.size < this.maxSockets) {
-            const sock = await this.createSocket();
-            if (!sock)
-                return null;
-            this.busy.add(sock);
-            return sock;
-        }
+        if (this.busy.size + this.connecting < this.maxSockets)
+            return this.createSocket();
         return new Promise((resolve) => {
             this.waiters.push(resolve);
             setTimeout(() => {
@@ -579,8 +639,14 @@ class TargetPool {
             throw new Error("local pool acquire failed");
         let responsePromise;
         responsePromise = new Promise((resolve, reject) => {
-            ps.inflight.push({ resolve, reject, ...(sink ? { sink } : {}) });
+            ps.inflight.push({
+                resolve,
+                reject,
+                ...(sink ? { sink } : {}),
+                ...(method.toUpperCase() === "HEAD" ? { head: true } : {}),
+            });
         });
+        ps.bodyOpen = true;
         const reqLine = `${method} ${path} HTTP/1.1\r\n${headerLines}Transfer-Encoding: chunked\r\n\r\n`;
         ps.socket.write(reqLine);
         return {
@@ -590,13 +656,15 @@ class TargetPool {
             // peer + slow local target would buffer the entire body in Node's
             // socket writable queue → OOM.
             writeBody: (chunk) => {
-                if (chunk.length === 0)
+                // A socket already closed (the response came first, or it failed): the request is
+                // over, and the rest of its body goes nowhere. Waiting for its drain would never end.
+                if (chunk.length === 0 || ps.socket.destroyed)
                     return Promise.resolve();
                 const sizeHex = chunk.length.toString(16);
                 ps.socket.write(`${sizeHex}\r\n`);
                 ps.socket.write(Buffer.from(chunk));
                 const ok = ps.socket.write("\r\n");
-                if (ok)
+                if (ok || ps.socket.destroyed)
                     return Promise.resolve();
                 return new Promise((resolve) => {
                     const onDrain = () => {
@@ -611,7 +679,10 @@ class TargetPool {
                     ps.socket.once("close", onClose);
                 });
             },
-            endBody: () => { ps.socket.write("0\r\n\r\n"); },
+            endBody: () => {
+                ps.bodyOpen = false;
+                ps.socket.write("0\r\n\r\n");
+            },
             waitResponse: () => responsePromise,
             abort: () => {
                 ps.alive = false;
@@ -623,6 +694,12 @@ class TargetPool {
         };
     }
     destroy() {
+        this.destroyed = true;
+        for (const socket of this.connectingSockets)
+            try {
+                socket.destroy();
+            }
+            catch { }
         for (const ps of this.idle)
             try {
                 ps.socket.destroy();
