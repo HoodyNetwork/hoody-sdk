@@ -1,6 +1,6 @@
 # `bot` — 17 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.bot`
 
 ```typescript
@@ -50,13 +50,12 @@ client.bot.kit.getManifest(): Promise<BotKitGetManifestResponse>
 Re-encrypt every sealed column under a new kit key.
 
 ```typescript
-client.bot.kit.rotateKeys(options?: { force?: "true" | "false"; cache?: boolean | number }): Promise<BotKitRotateKeysResponse>
+client.bot.kit.rotateKeys(options?: { force?: "true" | "false" }): Promise<BotKitRotateKeysResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `force` | `"true" \| "false"` | No | query | Rotate even though a poller is running. Without it an active poller refuses the rotation. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BotKitRotateKeysResponse`
 
@@ -169,7 +168,7 @@ client.bot.registrations.list(): Promise<BotRegistrationsListResponse>
 Read the redacted audit log of a registration, newest first.
 
 ```typescript
-client.bot.registrations.listLogs(registrationId: string, options?: { actor?: string; since?: number; limit?: number; before_id?: number; cache?: boolean | number }): Promise<BotRegistrationsListLogsResponse>
+client.bot.registrations.listLogs(registrationId: string, options?: { actor?: string; since?: number; limit?: number; before_id?: number }): Promise<BotRegistrationsListLogsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -179,7 +178,6 @@ client.bot.registrations.listLogs(registrationId: string, options?: { actor?: st
 | `since` | `number` | No | query | Drop entries older than this epoch-millisecond timestamp. A filter on the page, not a cursor: paging continues past it. |
 | `limit` | `number` | No | query | Page size; capped by the store at 500. The answer reports the size actually used. |
 | `before_id` | `number` | No | query | The cursor: the `next_before_id` of the previous page. Omit for the newest page. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BotRegistrationsListLogsResponse`
 
@@ -194,7 +192,7 @@ client.bot.registrations.listLogs(registrationId: string, options?: { actor?: st
 Delete audit rows older than a cutoff, never inside the retention window.
 
 ```typescript
-client.bot.registrations.purgeLogs(registrationId: string, options?: { older_than?: number; all?: "true" | "false"; cache?: boolean | number }): Promise<BotRegistrationsPurgeLogsResponse>
+client.bot.registrations.purgeLogs(registrationId: string, options?: { older_than?: number; all?: "true" | "false" }): Promise<BotRegistrationsPurgeLogsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -202,7 +200,6 @@ client.bot.registrations.purgeLogs(registrationId: string, options?: { older_tha
 | `registrationId` | `string` | Yes | path | Registration id returned by register or list. |
 | `older_than` | `number` | No | query | Delete entries at or below this epoch-millisecond timestamp. Defaults to the 90-day retention boundary. |
 | `all` | `"true" \| "false"` | No | query | Waive the 90-day retention floor. Without it a cutoff inside the retention window is refused, never clamped. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BotRegistrationsPurgeLogsResponse`
 

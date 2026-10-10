@@ -1,6 +1,6 @@
 # `cron` — 13 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.cron`
 
 ```typescript
@@ -13,7 +13,7 @@ import * as cron from 'hoody-sdk/cron';
 
 ### `get`
 
-**GET** `/users/{user}/crontab`
+**GET** `/api/v1/cron/users/{user}/crontab`
 
 Get Crontab
 
@@ -33,19 +33,18 @@ client.cron.crontabs.get(user: string): Promise<CronCrontabsGetResponse>
 
 ### `list`
 
-**GET** `/crontab`
+**GET** `/api/v1/cron/crontab`
 
 List All Crontabs
 
 ```typescript
-client.cron.crontabs.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CronCrontabsListResponse>
+client.cron.crontabs.list(options?: { page?: number; limit?: number }): Promise<CronCrontabsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number (1-based, default 1) |
 | `limit` | `number` | No | query | Items per page (default 50, max 200) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CronCrontabsListResponse`
 
@@ -55,19 +54,18 @@ client.cron.crontabs.list(options?: { page?: number; limit?: number; cache?: boo
 
 ### `listAll`
 
-**GET** `/crontab`
+**GET** `/api/v1/cron/crontab`
 
 List All Crontabs (collect all pages)
 
 ```typescript
-client.cron.crontabs.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.cron.crontabs.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number (1-based, default 1) |
 | `limit` | `number` | No | query | Items per page (default 50, max 200) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -75,19 +73,18 @@ client.cron.crontabs.listAll(options?: { page?: number; limit?: number; cache?: 
 
 ### `listIterator`
 
-**GET** `/crontab`
+**GET** `/api/v1/cron/crontab`
 
 List All Crontabs (async iterator)
 
 ```typescript
-client.cron.crontabs.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.cron.crontabs.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number (1-based, default 1) |
 | `limit` | `number` | No | query | Items per page (default 50, max 200) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -95,7 +92,7 @@ client.cron.crontabs.listIterator(options?: { page?: number; limit?: number; cac
 
 ### `set`
 
-**PUT** `/users/{user}/crontab`
+**PUT** `/api/v1/cron/users/{user}/crontab`
 
 Put Crontab
 
@@ -118,7 +115,7 @@ client.cron.crontabs.set(user: string, data: CronCrontabsSetRequest): Promise<Cr
 
 ### `create`
 
-**POST** `/users/{user}/entries`
+**POST** `/api/v1/cron/users/{user}/entries`
 
 Create Entry
 
@@ -139,7 +136,7 @@ client.cron.entries.create(user: string, data: CronEntriesCreateRequest): Promis
 
 ### `delete`
 
-**DELETE** `/users/{user}/entries/{id}`
+**DELETE** `/api/v1/cron/users/{user}/entries/{id}`
 
 Delete Entry
 
@@ -160,7 +157,7 @@ client.cron.entries.delete(user: string, id: string): Promise<CronEntriesDeleteR
 
 ### `get`
 
-**GET** `/users/{user}/entries/{id}`
+**GET** `/api/v1/cron/users/{user}/entries/{id}`
 
 Get Entry
 
@@ -181,12 +178,12 @@ client.cron.entries.get(user: string, id: string): Promise<CronEntriesGetRespons
 
 ### `list`
 
-**GET** `/users/{user}/entries`
+**GET** `/api/v1/cron/users/{user}/entries`
 
 List Entries
 
 ```typescript
-client.cron.entries.list(user: string, options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CronEntriesListResponse>
+client.cron.entries.list(user: string, options?: { page?: number; limit?: number }): Promise<CronEntriesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -194,7 +191,6 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 | `user` | `string` | Yes | path | System username |
 | `page` | `number` | No | query | Page number (1-based, default 1) |
 | `limit` | `number` | No | query | Items per page (default 50, max 200) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CronEntriesListResponse`
 
@@ -204,12 +200,12 @@ client.cron.entries.list(user: string, options?: { page?: number; limit?: number
 
 ### `listAll`
 
-**GET** `/users/{user}/entries`
+**GET** `/api/v1/cron/users/{user}/entries`
 
 List Entries (collect all pages)
 
 ```typescript
-client.cron.entries.listAll(user: string, options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.cron.entries.listAll(user: string, options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -217,7 +213,6 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 | `user` | `string` | Yes | path | System username |
 | `page` | `number` | No | query | Page number (1-based, default 1) |
 | `limit` | `number` | No | query | Items per page (default 50, max 200) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -225,12 +220,12 @@ client.cron.entries.listAll(user: string, options?: { page?: number; limit?: num
 
 ### `listIterator`
 
-**GET** `/users/{user}/entries`
+**GET** `/api/v1/cron/users/{user}/entries`
 
 List Entries (async iterator)
 
 ```typescript
-client.cron.entries.listIterator(user: string, options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.cron.entries.listIterator(user: string, options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -238,7 +233,6 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 | `user` | `string` | Yes | path | System username |
 | `page` | `number` | No | query | Page number (1-based, default 1) |
 | `limit` | `number` | No | query | Items per page (default 50, max 200) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -246,7 +240,7 @@ client.cron.entries.listIterator(user: string, options?: { page?: number; limit?
 
 ### `update`
 
-**PATCH** `/users/{user}/entries/{id}`
+**PATCH** `/api/v1/cron/users/{user}/entries/{id}`
 
 Update Entry
 
@@ -270,7 +264,7 @@ client.cron.entries.update(user: string, id: string, data: CronEntriesUpdateRequ
 
 ### `getHealth`
 
-**GET** `/health`
+**GET** `/api/v1/cron/health`
 
 Health Check
 

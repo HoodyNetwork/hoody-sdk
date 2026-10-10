@@ -1,6 +1,6 @@
 # `egress` — 5 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.egress`
 
 ```typescript
@@ -68,13 +68,12 @@ client.egress.upstream.get(): Promise<EgressUpstreamGetResponse>
 Renew the upstream lease
 
 ```typescript
-client.egress.upstream.renewLease(options: { lease_id: string; cache?: boolean | number }): Promise<EgressUpstreamRenewLeaseResponse>
+client.egress.upstream.renewLease(options: { lease_id: string }): Promise<EgressUpstreamRenewLeaseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `lease_id` | `string` | Yes | query | The `lease.id` returned when the upstream was set |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `EgressUpstreamRenewLeaseResponse`
 
@@ -89,14 +88,13 @@ client.egress.upstream.renewLease(options: { lease_id: string; cache?: boolean |
 Set upstream
 
 ```typescript
-client.egress.upstream.set(data: string, options?: { lease?: number; cache?: boolean | number }): Promise<EgressUpstreamSetResponse>
+client.egress.upstream.set(data: string, options?: { lease?: number }): Promise<EgressUpstreamSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `string` | Yes | body |  |
 | `lease` | `number` | No | query | Lease the upstream for this many seconds. The service disables the upstream (as `DELETE` does) unless the lease is renewed before then with `POST /api/v1/egress/upstream/renew`. For an upstream that only works while its client is alive, such as the loopback exit `hoody egress local start` installs. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `EgressUpstreamSetResponse`
 

@@ -1,6 +1,6 @@
-# `exec` — 67 methods
+# `exec` — 68 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.exec`
 
 ```typescript
@@ -40,7 +40,7 @@ client.exec.cache.clear(data?: ExecCacheClearRequest): Promise<ExecCacheClearRes
 Run a user script with any HTTP method (GET by default), a query, a body and headers
 
 ```typescript
-client.exec.run(options: { path: string; method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; query?: Record<string, unknown>; body?: unknown; headers?: Record<string, string> }): Promise<any>
+client.exec.run<TResponse = unknown>(path: string, options?: ExecScriptCallOptions): Promise<ApiResponse<TResponse>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -51,7 +51,7 @@ client.exec.run(options: { path: string; method?: 'GET' | 'HEAD' | 'POST' | 'PUT
 | `body` | `unknown` | No | option | Request body (ignored for GET and HEAD). Objects are sent as JSON. |
 | `headers` | `Record&lt;string, string&gt;` | No | option | Per-request headers. |
 
-**Returns:** `any`
+**Returns:** `ApiResponse<TResponse>`
 
 ---
 
@@ -166,16 +166,15 @@ client.exec.kit.restart(data?: ExecKitRestartRequest): Promise<ExecKitRestartRes
 Clear Logs
 
 ```typescript
-client.exec.logs.clear(options: { confirm: "true"; file?: string; type?: string; olderThanDays?: string; cache?: boolean | number }): Promise<ExecLogsClearResponse>
+client.exec.logs.clear(options: { confirm: "true"; file?: string; type?: "all" | "request" | "access" | "cron" | "other"; olderThanDays?: string }): Promise<ExecLogsClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `confirm` | `"true"` | Yes | query | Safety confirmation; must be the literal `true` or the request is rejected with 400. |
 | `file` | `string` | No | query | File query parameter |
-| `type` | `string` | No | query | Type query parameter |
+| `type` | `"all" \| "request" \| "access" \| "cron" \| "other"` | No | query | Which logs to clear. Any other value is refused with 400. |
 | `olderThanDays` | `string` | No | query | OlderThanDays query parameter |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecLogsClearResponse`
 
@@ -210,14 +209,13 @@ client.exec.logs.get(data: ExecLogsGetRequest): Promise<ExecLogsGetResponse>
 List Logs
 
 ```typescript
-client.exec.logs.list(options?: { type?: string; limit?: string; cache?: boolean | number }): Promise<ExecLogsListResponse>
+client.exec.logs.list(options?: { type?: "all" | "request" | "access" | "cron" | "other"; limit?: string }): Promise<ExecLogsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `type` | `string` | No | query | Type query parameter |
+| `type` | `"all" \| "request" \| "access" \| "cron" \| "other"` | No | query | Which logs to list. Any other value is refused with 400. |
 | `limit` | `string` | No | query | Limit query parameter |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecLogsListResponse`
 
@@ -252,14 +250,13 @@ client.exec.logs.search(data?: ExecLogsSearchRequest): Promise<ExecLogsSearchRes
 Stream Logs
 
 ```typescript
-client.exec.logs.stream(options: { file: string; follow?: boolean; cache?: boolean | number }): Promise<IEventStream>
+client.exec.logs.stream(options: { file: string; follow?: boolean }): Promise<IEventStream>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `file` | `string` | Yes | query | File query parameter |
 | `follow` | `boolean` | No | query | Keep the stream open and send new lines as they are written. Default `true`. Accepts `true`/`false`/`1`/`0`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `IEventStream`
 
@@ -276,7 +273,7 @@ client.exec.logs.stream(options: { file: string; follow?: boolean; cache?: boole
 Read Magic Comments
 
 ```typescript
-client.exec.magicComments.get(options: { path: string; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecMagicCommentsGetResponse>
+client.exec.magicComments.get(options: { path: string; execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecMagicCommentsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -285,7 +282,6 @@ client.exec.magicComments.get(options: { path: string; execId?: string; exec_id?
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecMagicCommentsGetResponse`
 
@@ -316,7 +312,7 @@ client.exec.magicComments.getSchema(): Promise<ExecMagicCommentsGetSchemaRespons
 Update Magic Comments Handler
 
 ```typescript
-client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecMagicCommentsUpdateResponse>
+client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecMagicCommentsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -325,7 +321,6 @@ client.exec.magicComments.update(data: ExecMagicCommentsUpdateRequest, options?:
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecMagicCommentsUpdateResponse`
 
@@ -478,7 +473,7 @@ client.exec.openapi.generate(data?: ExecOpenapiGenerateRequest): Promise<ExecOpe
 Serve Generated Spec
 
 ```typescript
-client.exec.openapi.get(options?: { dir?: string; directory?: string; format?: "json" | "yaml"; subdomain?: string; execId?: string; cache?: boolean | number }): Promise<ExecOpenapiGetResponse>
+client.exec.openapi.get(options?: { dir?: string; directory?: string; format?: "json" | "yaml"; subdomain?: string; execId?: string }): Promise<ExecOpenapiGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -488,7 +483,6 @@ client.exec.openapi.get(options?: { dir?: string; directory?: string; format?: "
 | `format` | `"json" \| "yaml"` | No | query | Output format. `json` (default) or `yaml`. |
 | `subdomain` | `string` | No | query | Limit scan to scripts under this subdomain. Falls back to the Host header when omitted. |
 | `execId` | `string` | No | query | Limit scan to scripts under this execId. Falls back to the Host header when omitted. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecOpenapiGetResponse`
 
@@ -503,7 +497,7 @@ client.exec.openapi.get(options?: { dir?: string; directory?: string; format?: "
 Serve Schema File
 
 ```typescript
-client.exec.openapi.getSchema(options?: { file?: string; path?: string; subdomain?: string; execId?: string; cache?: boolean | number }): Promise<ExecOpenapiGetSchemaResponse>
+client.exec.openapi.getSchema(options?: { file?: string; path?: string; subdomain?: string; execId?: string }): Promise<ExecOpenapiGetSchemaResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -512,7 +506,6 @@ client.exec.openapi.getSchema(options?: { file?: string; path?: string; subdomai
 | `path` | `string` | No | query | Alias of `file`. Either `file` or `path` must be provided. |
 | `subdomain` | `string` | No | query | Resolve `file` under this subdomain. Falls back to the Host header when omitted. |
 | `execId` | `string` | No | query | Resolve `file` under this execId. Falls back to the Host header when omitted. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecOpenapiGetSchemaResponse`
 
@@ -527,7 +520,7 @@ client.exec.openapi.getSchema(options?: { file?: string; path?: string; subdomai
 List User Scripts
 
 ```typescript
-client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; subdomain?: string; execId?: string; cache?: boolean | number }): Promise<ExecOpenapiListScriptsResponse>
+client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; subdomain?: string; execId?: string }): Promise<ExecOpenapiListScriptsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -536,7 +529,6 @@ client.exec.openapi.listScripts(options?: { directory?: string; dir?: string; su
 | `dir` | `string` | No | query | Alias of `directory`. Ignored when `directory` is provided. |
 | `subdomain` | `string` | No | query | Limit scan to scripts under this subdomain. Falls back to the Host header when omitted. |
 | `execId` | `string` | No | query | Limit scan to scripts under this execId. Falls back to the Host header when omitted. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecOpenapiListScriptsResponse`
 
@@ -789,7 +781,7 @@ client.exec.schedules.list(): Promise<ExecListSchedulesResponse>
 Schedule History
 
 ```typescript
-client.exec.schedules.listHistory(options?: { scriptPath?: string; since?: string; limit?: number; includeRotated?: boolean; cursor?: string; cache?: boolean | number }): Promise<ExecSchedulesListHistoryResponse>
+client.exec.schedules.listHistory(options?: { scriptPath?: string; since?: string; limit?: number; includeRotated?: boolean; cursor?: string }): Promise<ExecSchedulesListHistoryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -799,7 +791,6 @@ client.exec.schedules.listHistory(options?: { scriptPath?: string; since?: strin
 | `limit` | `number` | No | query | Max entries to return. Default 100, hard max 1000. |
 | `includeRotated` | `boolean` | No | query | When true, also scan rotated fires.log.* files (slower). |
 | `cursor` | `string` | No | query | Continuation token from a previous truncated response; resumes the backward scan where it stopped. Optional. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecSchedulesListHistoryResponse`
 
@@ -856,7 +847,7 @@ client.exec.schedules.run(data: ExecSchedulesRunRequest): Promise<ExecSchedulesR
 Delete Script
 
 ```typescript
-client.exec.scripts.delete(options: { path: string; confirm: "true"; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsDeleteResponse>
+client.exec.scripts.delete(options: { path: string; confirm: "true"; execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -866,7 +857,6 @@ client.exec.scripts.delete(options: { path: string; confirm: "true"; execId?: st
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsDeleteResponse`
 
@@ -901,7 +891,7 @@ client.exec.scripts.getStats(data?: ExecScriptsGetStatsRequest): Promise<ExecScr
 Get Script Tree
 
 ```typescript
-client.exec.scripts.getTree(data?: ExecScriptsGetTreeRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsGetTreeResponse>
+client.exec.scripts.getTree(data?: ExecScriptsGetTreeRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsGetTreeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -910,7 +900,6 @@ client.exec.scripts.getTree(data?: ExecScriptsGetTreeRequest, options?: { execId
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsGetTreeResponse`
 
@@ -925,7 +914,7 @@ client.exec.scripts.getTree(data?: ExecScriptsGetTreeRequest, options?: { execId
 List Scripts
 
 ```typescript
-client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: string; label?: string; tags?: string; mode?: string; enabled?: string; websocket?: string; remote?: "any" | "none" | "messages" | "call" | "eval"; recursive?: string; include_comments?: string; exhaustive?: boolean; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsListResponse>
+client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: string; label?: string; tags?: string; mode?: string; enabled?: string; websocket?: string; remote?: "any" | "none" | "messages" | "call" | "eval"; recursive?: string; include_comments?: string; exhaustive?: boolean; execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -945,7 +934,6 @@ client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: s
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsListResponse`
 
@@ -960,14 +948,13 @@ client.exec.scripts.list(options?: { dir?: string; filter?: string; metadata?: s
 List Monitor Scripts
 
 ```typescript
-client.exec.scripts.listStats(options?: { limit?: number; sort?: "lastActivity" | "requests" | "errors" | "p95" | "ws_active"; cache?: boolean | number }): Promise<ExecScriptsListStatsResponse>
+client.exec.scripts.listStats(options?: { limit?: number; sort?: "lastActivity" | "requests" | "errors" | "p95" | "ws_active" }): Promise<ExecScriptsListStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `limit` | `number` | No | query | Max number of scripts to return. Clamped to [1, 500]. Default 100. |
 | `sort` | `"lastActivity" \| "requests" \| "errors" \| "p95" \| "ws_active"` | No | query | Sort key. `lastActivity` (default) sorts by most recent activity; other keys sort descending by the matching metric. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsListStatsResponse`
 
@@ -982,7 +969,7 @@ client.exec.scripts.listStats(options?: { limit?: number; sort?: "lastActivity" 
 Move Script
 
 ```typescript
-client.exec.scripts.move(data: ExecScriptsMoveRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsMoveResponse>
+client.exec.scripts.move(data: ExecScriptsMoveRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsMoveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -991,7 +978,6 @@ client.exec.scripts.move(data: ExecScriptsMoveRequest, options?: { execId?: stri
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsMoveResponse`
 
@@ -1006,7 +992,7 @@ client.exec.scripts.move(data: ExecScriptsMoveRequest, options?: { execId?: stri
 Read Script
 
 ```typescript
-client.exec.scripts.read(options: { path: string; execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsReadResponse>
+client.exec.scripts.read(options: { path: string; execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsReadResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1015,7 +1001,6 @@ client.exec.scripts.read(options: { path: string; execId?: string; exec_id?: str
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsReadResponse`
 
@@ -1130,7 +1115,7 @@ client.exec.scripts.validateTypes(data: ExecScriptsValidateTypesRequest): Promis
 Write Script
 
 ```typescript
-client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecScriptsWriteResponse>
+client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecScriptsWriteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1139,11 +1124,35 @@ client.exec.scripts.write(data: ExecScriptsWriteRequest, options?: { execId?: st
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecScriptsWriteResponse`
 
 **CLI:** `hoody exec scripts write`
+
+---
+
+## `client.exec.sdkTypes` (1 method)
+
+### `list`
+
+**GET** `/api/v1/exec/sdk-types`
+
+Get Sdk Types
+
+```typescript
+client.exec.sdkTypes.list(options?: { kit?: string; q?: string; limit?: number; raw?: "true" | "false" | "1" | "0" }): Promise<ExecSdkTypesListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `kit` | `string` | No | query | Kit to list: a client property (`files`, `api`, `exec`, `sqlite`, …), or `client` for the client's own methods (`withContainer`, `login`, …). Any letter case. An unknown kit is a 404 with `details.kits`. |
+| `q` | `string` | No | query | Words, all of which must appear in the method's path, name or summary (any letter case). |
+| `limit` | `number` | No | query | Most methods to return, 1 to 100 (default 20). `total` counts every match. |
+| `raw` | `"true" \| "false" \| "1" \| "0"` | No | query | When true, also return the `.d.ts` text of the files declaring the returned methods (`dts`, at most 256 KB). Needs `kit` or `q`. |
+
+**Returns:** `ExecSdkTypesListResponse`
+
+**CLI:** `hoody exec sdk types list`
 
 ---
 
@@ -1336,7 +1345,7 @@ client.exec.templates.delete(name: string): Promise<ExecTemplatesDeleteResponse>
 Generate From Template
 
 ```typescript
-client.exec.templates.generate(data: ExecTemplatesGenerateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string; cache?: boolean | number }): Promise<ExecTemplatesGenerateResponse>
+client.exec.templates.generate(data: ExecTemplatesGenerateRequest, options?: { execId?: string; exec_id?: string; subdomain?: string }): Promise<ExecTemplatesGenerateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1345,7 +1354,6 @@ client.exec.templates.generate(data: ExecTemplatesGenerateRequest, options?: { e
 | `execId` | `string` | No | query | Optional execution scope. When provided, relative paths resolve under default/{execId}/ unless subdomain is also set. Query value takes precedence over body. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `exec_id` | `string` | No | query | Alias for execId (snake_case). Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400. |
 | `subdomain` | `string` | No | query | Optional subdomain namespace used with execId for path resolution. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecTemplatesGenerateResponse`
 
@@ -1360,7 +1368,7 @@ client.exec.templates.generate(data: ExecTemplatesGenerateRequest, options?: { e
 List Templates
 
 ```typescript
-client.exec.templates.list(options?: { category?: string; includeBuiltin?: boolean; includeCustom?: boolean; cache?: boolean | number }): Promise<ExecTemplatesListResponse>
+client.exec.templates.list(options?: { category?: string; includeBuiltin?: boolean; includeCustom?: boolean }): Promise<ExecTemplatesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1368,7 +1376,6 @@ client.exec.templates.list(options?: { category?: string; includeBuiltin?: boole
 | `category` | `string` | No | query | Filter templates to a single metadata category (e.g. `api`, `utility`). Omit to list all categories. |
 | `includeBuiltin` | `boolean` | No | query | Include built-in templates in the result set. Default `true`. Accepts `true`/`false`/`1`/`0`. |
 | `includeCustom` | `boolean` | No | query | Include user-supplied templates (from `_hoody/templates/`) in the result set. Default `true`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecTemplatesListResponse`
 
@@ -1383,14 +1390,13 @@ client.exec.templates.list(options?: { category?: string; includeBuiltin?: boole
 Preview Template
 
 ```typescript
-client.exec.templates.preview(options: { name: string; variables?: string; cache?: boolean | number }): Promise<ExecTemplatesPreviewResponse>
+client.exec.templates.preview(options: { name: string; variables?: string }): Promise<ExecTemplatesPreviewResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | query | Name query parameter |
 | `variables` | `string` | No | query | Variables query parameter |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ExecTemplatesPreviewResponse`
 

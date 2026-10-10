@@ -1,6 +1,6 @@
 # `api` — 303 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.api`
 
 ```typescript
@@ -18,12 +18,8 @@ import * as api from 'hoody-sdk/api';
 Get activity stats
 
 ```typescript
-client.api.activity.getStats(options?: { cache?: boolean | number }): Promise<ApiActivityGetStatsResponse>
+client.api.activity.getStats(): Promise<ApiActivityGetStatsResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiActivityGetStatsResponse`
 
@@ -38,7 +34,7 @@ client.api.activity.getStats(options?: { cache?: boolean | number }): Promise<Ap
 Get activity logs
 
 ```typescript
-client.api.activity.list(options?: { page?: number; limit?: number; start_date?: string; end_date?: string; errors_only?: boolean; min_status?: number; max_status?: number; method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; realm_id?: string; cache?: boolean | number }): Promise<ApiActivityListResponse>
+client.api.activity.list(options?: { page?: number; limit?: number; start_date?: string; end_date?: string; errors_only?: boolean; min_status?: number; max_status?: number; method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; realm_id?: string }): Promise<ApiActivityListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -52,7 +48,6 @@ client.api.activity.list(options?: { page?: number; limit?: number; start_date?:
 | `max_status` | `number` | No | query | Maximum status code |
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | No | query | Filter by HTTP method |
 | `realm_id` | `string` | No | query | Filter by realm ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiActivityListResponse`
 
@@ -67,7 +62,7 @@ client.api.activity.list(options?: { page?: number; limit?: number; start_date?:
 Get activity logs (collect all pages)
 
 ```typescript
-client.api.activity.listAll(options?: { page?: number; limit?: number; start_date?: string; end_date?: string; errors_only?: boolean; min_status?: number; max_status?: number; method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; realm_id?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.activity.listAll(options?: { page?: number; limit?: number; start_date?: string; end_date?: string; errors_only?: boolean; min_status?: number; max_status?: number; method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -81,7 +76,6 @@ client.api.activity.listAll(options?: { page?: number; limit?: number; start_dat
 | `max_status` | `number` | No | query | Maximum status code |
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | No | query | Filter by HTTP method |
 | `realm_id` | `string` | No | query | Filter by realm ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -94,7 +88,7 @@ client.api.activity.listAll(options?: { page?: number; limit?: number; start_dat
 Get activity logs (async iterator)
 
 ```typescript
-client.api.activity.listIterator(options?: { page?: number; limit?: number; start_date?: string; end_date?: string; errors_only?: boolean; min_status?: number; max_status?: number; method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; realm_id?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.activity.listIterator(options?: { page?: number; limit?: number; start_date?: string; end_date?: string; errors_only?: boolean; min_status?: number; max_status?: number; method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -108,7 +102,6 @@ client.api.activity.listIterator(options?: { page?: number; limit?: number; star
 | `max_status` | `number` | No | query | Maximum status code |
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | No | query | Filter by HTTP method |
 | `realm_id` | `string` | No | query | Filter by realm ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -123,12 +116,8 @@ client.api.activity.listIterator(options?: { page?: number; limit?: number; star
 List available AI models (Hoody catalog)
 
 ```typescript
-client.api.ai.listModels(options?: { cache?: boolean | number }): Promise<ApiAiListModelsResponse>
+client.api.ai.listModels(): Promise<ApiAiListModelsResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAiListModelsResponse`
 
@@ -145,13 +134,12 @@ client.api.ai.listModels(options?: { cache?: boolean | number }): Promise<ApiAiL
 Issue a fresh audience-bound identity claim
 
 ```typescript
-client.api.auth.createIdentityClaim(data: ApiAuthCreateIdentityClaimRequest, options?: { cache?: boolean | number }): Promise<ApiAuthCreateIdentityClaimResponse>
+client.api.auth.createIdentityClaim(data: ApiAuthCreateIdentityClaimRequest): Promise<ApiAuthCreateIdentityClaimResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthCreateIdentityClaimRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthCreateIdentityClaimResponse`
 
@@ -166,12 +154,8 @@ client.api.auth.createIdentityClaim(data: ApiAuthCreateIdentityClaimRequest, opt
 Get the public sign-in configuration
 
 ```typescript
-client.api.auth.getConfig(options?: { cache?: boolean | number }): Promise<ApiAuthGetConfigResponse>
+client.api.auth.getConfig(): Promise<ApiAuthGetConfigResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthGetConfigResponse`
 
@@ -186,13 +170,12 @@ client.api.auth.getConfig(options?: { cache?: boolean | number }): Promise<ApiAu
 Login with username and password
 
 ```typescript
-client.api.auth.login(data: ApiAuthLoginRequest, options?: { cache?: boolean | number }): Promise<ApiAuthLoginResponse>
+client.api.auth.login(data: ApiAuthLoginRequest): Promise<ApiAuthLoginResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthLoginRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthLoginResponse`
 
@@ -205,12 +188,8 @@ client.api.auth.login(data: ApiAuthLoginRequest, options?: { cache?: boolean | n
 Log out everywhere
 
 ```typescript
-client.api.auth.logoutAll(options?: { cache?: boolean | number }): Promise<ApiAuthLogoutAllResponse>
+client.api.auth.logoutAll(): Promise<ApiAuthLogoutAllResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthLogoutAllResponse`
 
@@ -223,13 +202,12 @@ client.api.auth.logoutAll(options?: { cache?: boolean | number }): Promise<ApiAu
 Request password reset
 
 ```typescript
-client.api.auth.recoverPassword(data: ApiAuthRecoverPasswordRequest, options?: { cache?: boolean | number }): Promise<ApiAuthRecoverPasswordResponse>
+client.api.auth.recoverPassword(data: ApiAuthRecoverPasswordRequest): Promise<ApiAuthRecoverPasswordResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthRecoverPasswordRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthRecoverPasswordResponse`
 
@@ -244,13 +222,12 @@ client.api.auth.recoverPassword(data: ApiAuthRecoverPasswordRequest, options?: {
 Refresh access token
 
 ```typescript
-client.api.auth.refresh(data: ApiAuthRefreshRequest, options?: { cache?: boolean | number }): Promise<ApiAuthRefreshResponse>
+client.api.auth.refresh(data: ApiAuthRefreshRequest): Promise<ApiAuthRefreshResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthRefreshRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthRefreshResponse`
 
@@ -265,13 +242,12 @@ client.api.auth.refresh(data: ApiAuthRefreshRequest, options?: { cache?: boolean
 Reset password
 
 ```typescript
-client.api.auth.resetPassword(data: ApiAuthResetPasswordRequest, options?: { cache?: boolean | number }): Promise<ApiAuthResetPasswordResponse>
+client.api.auth.resetPassword(data: ApiAuthResetPasswordRequest): Promise<ApiAuthResetPasswordResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthResetPasswordRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthResetPasswordResponse`
 
@@ -286,13 +262,12 @@ client.api.auth.resetPassword(data: ApiAuthResetPasswordRequest, options?: { cac
 Resend verification email
 
 ```typescript
-client.api.auth.sendVerificationEmail(data: ApiAuthSendVerificationEmailRequest, options?: { cache?: boolean | number }): Promise<ApiAuthSendVerificationEmailResponse>
+client.api.auth.sendVerificationEmail(data: ApiAuthSendVerificationEmailRequest): Promise<ApiAuthSendVerificationEmailResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthSendVerificationEmailRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthSendVerificationEmailResponse`
 
@@ -307,13 +282,12 @@ client.api.auth.sendVerificationEmail(data: ApiAuthSendVerificationEmailRequest,
 Sign up with email and password
 
 ```typescript
-client.api.auth.signup(data: ApiAuthSignupRequest, options?: { cache?: boolean | number }): Promise<ApiAuthSignupResponse>
+client.api.auth.signup(data: ApiAuthSignupRequest): Promise<ApiAuthSignupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthSignupRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthSignupResponse`
 
@@ -326,13 +300,12 @@ client.api.auth.signup(data: ApiAuthSignupRequest, options?: { cache?: boolean |
 Verify email address
 
 ```typescript
-client.api.auth.verifyEmail(data: ApiAuthVerifyEmailRequest, options?: { cache?: boolean | number }): Promise<ApiAuthVerifyEmailResponse>
+client.api.auth.verifyEmail(data: ApiAuthVerifyEmailRequest): Promise<ApiAuthVerifyEmailResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthVerifyEmailRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthVerifyEmailResponse`
 
@@ -347,12 +320,8 @@ client.api.auth.verifyEmail(data: ApiAuthVerifyEmailRequest, options?: { cache?:
 Get current user profile
 
 ```typescript
-client.api.auth.whoami(options?: { cache?: boolean | number }): Promise<ApiAuthWhoamiResponse>
+client.api.auth.whoami(): Promise<ApiAuthWhoamiResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthWhoamiResponse`
 
@@ -369,13 +338,12 @@ client.api.auth.whoami(options?: { cache?: boolean | number }): Promise<ApiAuthW
 Refuse the device ('Don't authorize')
 
 ```typescript
-client.api.auth.device.deny(data: ApiAuthDeviceDenyRequest, options?: { cache?: boolean | number }): Promise<ApiAuthDeviceDenyResponse>
+client.api.auth.device.deny(data: ApiAuthDeviceDenyRequest): Promise<ApiAuthDeviceDenyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthDeviceDenyRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthDeviceDenyResponse`
 
@@ -388,13 +356,12 @@ client.api.auth.device.deny(data: ApiAuthDeviceDenyRequest, options?: { cache?: 
 Password sign-in for the device authorize step (cookie + ticket gated)
 
 ```typescript
-client.api.auth.device.login(data: ApiAuthDeviceLoginRequest, options?: { cache?: boolean | number }): Promise<ApiAuthDeviceLoginResponse>
+client.api.auth.device.login(data: ApiAuthDeviceLoginRequest): Promise<ApiAuthDeviceLoginResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthDeviceLoginRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthDeviceLoginResponse`
 
@@ -407,13 +374,12 @@ client.api.auth.device.login(data: ApiAuthDeviceLoginRequest, options?: { cache?
 Poll for device-flow tokens (RFC-8628-inspired)
 
 ```typescript
-client.api.auth.device.poll(data: ApiAuthDevicePollRequest, options?: { cache?: boolean | number }): Promise<ApiAuthDevicePollResponse>
+client.api.auth.device.poll(data: ApiAuthDevicePollRequest): Promise<ApiAuthDevicePollResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthDevicePollRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthDevicePollResponse`
 
@@ -428,13 +394,12 @@ client.api.auth.device.poll(data: ApiAuthDevicePollRequest, options?: { cache?: 
 Start a device authorization flow (RFC-8628-inspired)
 
 ```typescript
-client.api.auth.device.start(data: ApiAuthDeviceStartRequest, options?: { cache?: boolean | number }): Promise<ApiAuthDeviceStartResponse>
+client.api.auth.device.start(data: ApiAuthDeviceStartRequest): Promise<ApiAuthDeviceStartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthDeviceStartRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthDeviceStartResponse`
 
@@ -449,13 +414,12 @@ client.api.auth.device.start(data: ApiAuthDeviceStartRequest, options?: { cache?
 Confirm a device user_code (verification page)
 
 ```typescript
-client.api.auth.device.verifyCode(data: ApiAuthDeviceVerifyCodeRequest, options?: { cache?: boolean | number }): Promise<ApiAuthDeviceVerifyCodeResponse>
+client.api.auth.device.verifyCode(data: ApiAuthDeviceVerifyCodeRequest): Promise<ApiAuthDeviceVerifyCodeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthDeviceVerifyCodeRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthDeviceVerifyCodeResponse`
 
@@ -470,13 +434,12 @@ client.api.auth.device.verifyCode(data: ApiAuthDeviceVerifyCodeRequest, options?
 Begin a PKCE OAuth authorization
 
 ```typescript
-client.api.auth.oauth.authorize(data: ApiAuthOauthAuthorizeRequest, options?: { cache?: boolean | number }): Promise<ApiAuthOauthAuthorizeResponse>
+client.api.auth.oauth.authorize(data: ApiAuthOauthAuthorizeRequest): Promise<ApiAuthOauthAuthorizeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthOauthAuthorizeRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthOauthAuthorizeResponse`
 
@@ -491,12 +454,8 @@ client.api.auth.oauth.authorize(data: ApiAuthOauthAuthorizeRequest, options?: { 
 Cancel a pending OAuth intent or 2FA temp_token
 
 ```typescript
-client.api.auth.oauth.cancelIntent(options?: { cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.api.auth.oauth.cancelIntent(): Promise<ApiResponse<unknown>>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -511,13 +470,12 @@ client.api.auth.oauth.cancelIntent(options?: { cache?: boolean | number }): Prom
 Exchange a PKCE authorization code for tokens
 
 ```typescript
-client.api.auth.oauth.exchange(data: ApiAuthOauthExchangeRequest, options?: { cache?: boolean | number }): Promise<ApiAuthOauthExchangeResponse>
+client.api.auth.oauth.exchange(data: ApiAuthOauthExchangeRequest): Promise<ApiAuthOauthExchangeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthOauthExchangeRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthOauthExchangeResponse`
 
@@ -532,13 +490,12 @@ client.api.auth.oauth.exchange(data: ApiAuthOauthExchangeRequest, options?: { ca
 Initiate OAuth popup-handoff launch
 
 ```typescript
-client.api.auth.oauth.startLaunch(data: ApiAuthOauthStartLaunchRequest, options?: { cache?: boolean | number }): Promise<ApiAuthOauthStartLaunchResponse>
+client.api.auth.oauth.startLaunch(data: ApiAuthOauthStartLaunchRequest): Promise<ApiAuthOauthStartLaunchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthOauthStartLaunchRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthOauthStartLaunchResponse`
 
@@ -553,14 +510,13 @@ client.api.auth.oauth.startLaunch(data: ApiAuthOauthStartLaunchRequest, options?
 Add realm to auth token
 
 ```typescript
-client.api.auth.tokens.addRealm(id: string, data: ApiAuthTokensAddRealmRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTokensAddRealmResponse>
+client.api.auth.tokens.addRealm(id: string, data: ApiAuthTokensAddRealmRequest): Promise<ApiAuthTokensAddRealmResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Auth token ID |
 | `data` | `ApiAuthTokensAddRealmRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensAddRealmResponse`
 
@@ -575,14 +531,13 @@ client.api.auth.tokens.addRealm(id: string, data: ApiAuthTokensAddRealmRequest, 
 Copy auth token
 
 ```typescript
-client.api.auth.tokens.copy(id: string, data: ApiAuthTokensCopyRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTokensCopyResponse>
+client.api.auth.tokens.copy(id: string, data: ApiAuthTokensCopyRequest): Promise<ApiAuthTokensCopyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the token |
 | `data` | `ApiAuthTokensCopyRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensCopyResponse`
 
@@ -597,13 +552,12 @@ client.api.auth.tokens.copy(id: string, data: ApiAuthTokensCopyRequest, options?
 Create a new auth token
 
 ```typescript
-client.api.auth.tokens.create(data: ApiAuthTokensCreateRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTokensCreateResponse>
+client.api.auth.tokens.create(data: ApiAuthTokensCreateRequest): Promise<ApiAuthTokensCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthTokensCreateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensCreateResponse`
 
@@ -618,13 +572,12 @@ client.api.auth.tokens.create(data: ApiAuthTokensCreateRequest, options?: { cach
 Delete auth token
 
 ```typescript
-client.api.auth.tokens.delete(id: string, options?: { cache?: boolean | number }): Promise<ApiAuthTokensDeleteResponse>
+client.api.auth.tokens.delete(id: string): Promise<ApiAuthTokensDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the token |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensDeleteResponse`
 
@@ -639,13 +592,12 @@ client.api.auth.tokens.delete(id: string, options?: { cache?: boolean | number }
 Get auth token by ID
 
 ```typescript
-client.api.auth.tokens.get(id: string, options?: { cache?: boolean | number }): Promise<ApiAuthTokensGetResponse>
+client.api.auth.tokens.get(id: string): Promise<ApiAuthTokensGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the token |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensGetResponse`
 
@@ -660,12 +612,8 @@ client.api.auth.tokens.get(id: string, options?: { cache?: boolean | number }): 
 Get current auth token details
 
 ```typescript
-client.api.auth.tokens.getCurrent(options?: { cache?: boolean | number }): Promise<ApiAuthTokensGetCurrentResponse>
+client.api.auth.tokens.getCurrent(): Promise<ApiAuthTokensGetCurrentResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensGetCurrentResponse`
 
@@ -680,13 +628,12 @@ client.api.auth.tokens.getCurrent(options?: { cache?: boolean | number }): Promi
 Get auth token public profile by public key
 
 ```typescript
-client.api.auth.tokens.getPublicProfile(public_key: string, options?: { cache?: boolean | number }): Promise<ApiAuthTokensGetPublicProfileResponse>
+client.api.auth.tokens.getPublicProfile(public_key: string): Promise<ApiAuthTokensGetPublicProfileResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `public_key` | `string` | Yes | path | ED25519 public key to resolve |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensGetPublicProfileResponse`
 
@@ -701,12 +648,8 @@ client.api.auth.tokens.getPublicProfile(public_key: string, options?: { cache?: 
 List auth tokens
 
 ```typescript
-client.api.auth.tokens.list(options?: { cache?: boolean | number }): Promise<ApiAuthTokensListResponse>
+client.api.auth.tokens.list(): Promise<ApiAuthTokensListResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensListResponse`
 
@@ -721,12 +664,8 @@ client.api.auth.tokens.list(options?: { cache?: boolean | number }): Promise<Api
 List auth tokens (collect all pages)
 
 ```typescript
-client.api.auth.tokens.listAll(options?: { cache?: boolean | number }): Promise<unknown[]>
+client.api.auth.tokens.listAll(): Promise<unknown[]>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -739,12 +678,8 @@ client.api.auth.tokens.listAll(options?: { cache?: boolean | number }): Promise<
 List auth tokens (async iterator)
 
 ```typescript
-client.api.auth.tokens.listIterator(options?: { cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.auth.tokens.listIterator(): AsyncIterableIterator<unknown>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -757,12 +692,8 @@ client.api.auth.tokens.listIterator(options?: { cache?: boolean | number }): Asy
 List permission templates
 
 ```typescript
-client.api.auth.tokens.listTemplates(options?: { cache?: boolean | number }): Promise<ApiAuthTokensListTemplatesResponse>
+client.api.auth.tokens.listTemplates(): Promise<ApiAuthTokensListTemplatesResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensListTemplatesResponse`
 
@@ -777,14 +708,13 @@ client.api.auth.tokens.listTemplates(options?: { cache?: boolean | number }): Pr
 Remove realm from auth token
 
 ```typescript
-client.api.auth.tokens.removeRealm(id: string, data: ApiAuthTokensRemoveRealmRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTokensRemoveRealmResponse>
+client.api.auth.tokens.removeRealm(id: string, data: ApiAuthTokensRemoveRealmRequest): Promise<ApiAuthTokensRemoveRealmResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Auth token ID |
 | `data` | `ApiAuthTokensRemoveRealmRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensRemoveRealmResponse`
 
@@ -799,14 +729,13 @@ client.api.auth.tokens.removeRealm(id: string, data: ApiAuthTokensRemoveRealmReq
 Update auth token
 
 ```typescript
-client.api.auth.tokens.update(id: string, data: ApiAuthTokensUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTokensUpdateResponse>
+client.api.auth.tokens.update(id: string, data: ApiAuthTokensUpdateRequest): Promise<ApiAuthTokensUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the token to update |
 | `data` | `ApiAuthTokensUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensUpdateResponse`
 
@@ -821,13 +750,12 @@ client.api.auth.tokens.update(id: string, data: ApiAuthTokensUpdateRequest, opti
 Update current auth token public profile
 
 ```typescript
-client.api.auth.tokens.updatePublicProfile(data: ApiAuthTokensUpdatePublicProfileRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTokensUpdatePublicProfileResponse>
+client.api.auth.tokens.updatePublicProfile(data: ApiAuthTokensUpdatePublicProfileRequest): Promise<ApiAuthTokensUpdatePublicProfileResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthTokensUpdatePublicProfileRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTokensUpdatePublicProfileResponse`
 
@@ -844,13 +772,12 @@ client.api.auth.tokens.updatePublicProfile(data: ApiAuthTokensUpdatePublicProfil
 Complete 2FA Setup
 
 ```typescript
-client.api.auth.twoFactor.confirmSetup(data: ApiAuthTwoFactorConfirmSetupRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTwoFactorConfirmSetupResponse>
+client.api.auth.twoFactor.confirmSetup(data: ApiAuthTwoFactorConfirmSetupRequest): Promise<ApiAuthTwoFactorConfirmSetupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthTwoFactorConfirmSetupRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTwoFactorConfirmSetupResponse`
 
@@ -865,13 +792,12 @@ client.api.auth.twoFactor.confirmSetup(data: ApiAuthTwoFactorConfirmSetupRequest
 Disable 2FA
 
 ```typescript
-client.api.auth.twoFactor.disable(data: ApiAuthTwoFactorDisableRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTwoFactorDisableResponse>
+client.api.auth.twoFactor.disable(data: ApiAuthTwoFactorDisableRequest): Promise<ApiAuthTwoFactorDisableResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthTwoFactorDisableRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTwoFactorDisableResponse`
 
@@ -926,12 +852,8 @@ client.api.auth.twoFactor.enableTokenGate(data?: object): Promise<any>
 Get 2FA Status
 
 ```typescript
-client.api.auth.twoFactor.getStatus(options?: { cache?: boolean | number }): Promise<ApiAuthTwoFactorGetStatusResponse>
+client.api.auth.twoFactor.getStatus(): Promise<ApiAuthTwoFactorGetStatusResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTwoFactorGetStatusResponse`
 
@@ -946,13 +868,12 @@ client.api.auth.twoFactor.getStatus(options?: { cache?: boolean | number }): Pro
 Regenerate Backup Codes
 
 ```typescript
-client.api.auth.twoFactor.rotateBackupCodes(data: ApiAuthTwoFactorRotateBackupCodesRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTwoFactorRotateBackupCodesResponse>
+client.api.auth.twoFactor.rotateBackupCodes(data: ApiAuthTwoFactorRotateBackupCodesRequest): Promise<ApiAuthTwoFactorRotateBackupCodesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthTwoFactorRotateBackupCodesRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTwoFactorRotateBackupCodesResponse`
 
@@ -967,13 +888,12 @@ client.api.auth.twoFactor.rotateBackupCodes(data: ApiAuthTwoFactorRotateBackupCo
 Initialize 2FA Setup
 
 ```typescript
-client.api.auth.twoFactor.startSetup(data: ApiAuthTwoFactorStartSetupRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTwoFactorStartSetupResponse>
+client.api.auth.twoFactor.startSetup(data: ApiAuthTwoFactorStartSetupRequest): Promise<ApiAuthTwoFactorStartSetupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthTwoFactorStartSetupRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTwoFactorStartSetupResponse`
 
@@ -988,13 +908,12 @@ client.api.auth.twoFactor.startSetup(data: ApiAuthTwoFactorStartSetupRequest, op
 Verify 2FA Code During Login
 
 ```typescript
-client.api.auth.twoFactor.verify(data: ApiAuthTwoFactorVerifyRequest, options?: { cache?: boolean | number }): Promise<ApiAuthTwoFactorVerifyResponse>
+client.api.auth.twoFactor.verify(data: ApiAuthTwoFactorVerifyRequest): Promise<ApiAuthTwoFactorVerifyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiAuthTwoFactorVerifyRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiAuthTwoFactorVerifyResponse`
 
@@ -1011,14 +930,13 @@ client.api.auth.twoFactor.verify(data: ApiAuthTwoFactorVerifyRequest, options?: 
 Copy a container
 
 ```typescript
-client.api.containers.copy(id: string, data: ApiContainersCopyRequest, options?: { cache?: boolean | number }): Promise<ApiContainersCopyResponse>
+client.api.containers.copy(id: string, data: ApiContainersCopyRequest): Promise<ApiContainersCopyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the source container to copy |
 | `data` | `ApiContainersCopyRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersCopyResponse`
 
@@ -1033,14 +951,13 @@ client.api.containers.copy(id: string, data: ApiContainersCopyRequest, options?:
 Create a new container
 
 ```typescript
-client.api.containers.create(id: string, data: ApiContainersCreateRequest, options?: { cache?: boolean | number }): Promise<ApiContainersCreateResponse>
+client.api.containers.create(id: string, data: ApiContainersCreateRequest): Promise<ApiContainersCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiContainersCreateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersCreateResponse`
 
@@ -1055,13 +972,12 @@ client.api.containers.create(id: string, data: ApiContainersCreateRequest, optio
 Authorize Container Access
 
 ```typescript
-client.api.containers.createClaim(id: string, options?: { cache?: boolean | number }): Promise<ApiContainersCreateClaimResponse>
+client.api.containers.createClaim(id: string): Promise<ApiContainersCreateClaimResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID (24-char hex) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersCreateClaimResponse`
 
@@ -1076,13 +992,12 @@ client.api.containers.createClaim(id: string, options?: { cache?: boolean | numb
 Delete a container
 
 ```typescript
-client.api.containers.delete(id: string, options?: { cache?: boolean | number }): Promise<ApiContainersDeleteResponse>
+client.api.containers.delete(id: string): Promise<ApiContainersDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to delete |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersDeleteResponse`
 
@@ -1137,7 +1052,7 @@ client.api.containers.enableKvm(id: string): Promise<any>
 Get a container by ID
 
 ```typescript
-client.api.containers.get(id: string, options?: { runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; cache?: boolean | number }): Promise<ApiContainersGetResponse>
+client.api.containers.get(id: string, options?: { runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean }): Promise<ApiContainersGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1146,7 +1061,6 @@ client.api.containers.get(id: string, options?: { runtime?: string; include_prox
 | `runtime` | `string` | No | query | Include live runtime information. Accepts "true", "false", or a URL-encoded JSON string like `{"displays":true}`. An empty JSON object `{}` fetches all info. Runtime information may be up to 2 seconds old. |
 | `include_proxy_domains` | `boolean` | No | query | Include proxy domains (aliases) for this container. When true, adds a proxy_domains array to the container object. |
 | `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersGetResponse`
 
@@ -1161,7 +1075,7 @@ client.api.containers.get(id: string, options?: { runtime?: string; include_prox
 Get proxied-usage documents for a container
 
 ```typescript
-client.api.containers.getProxyUsage(id: string, options: { from: string; to: string; cache?: boolean | number }): Promise<ApiContainersGetProxyUsageResponse>
+client.api.containers.getProxyUsage(id: string, options: { from: string; to: string }): Promise<ApiContainersGetProxyUsageResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1169,7 +1083,6 @@ client.api.containers.getProxyUsage(id: string, options: { from: string; to: str
 | `id` | `string` | Yes | path | Container id |
 | `from` | `string` | Yes | query | First month, inclusive (YYYY-MM) |
 | `to` | `string` | Yes | query | Last month, inclusive (YYYY-MM). Max 12 months. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersGetProxyUsageResponse`
 
@@ -1184,13 +1097,12 @@ client.api.containers.getProxyUsage(id: string, options: { from: string; to: str
 Get container resource statistics
 
 ```typescript
-client.api.containers.getStats(id: string, options?: { cache?: boolean | number }): Promise<ApiContainersGetStatsResponse>
+client.api.containers.getStats(id: string): Promise<ApiContainersGetStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersGetStatsResponse`
 
@@ -1205,7 +1117,7 @@ client.api.containers.getStats(id: string, options?: { cache?: boolean | number 
 Get all containers
 
 ```typescript
-client.api.containers.list(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean; cache?: boolean | number }): Promise<ApiContainersListResponse>
+client.api.containers.list(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<ApiContainersListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1220,7 +1132,6 @@ client.api.containers.list(options?: { page?: number; limit?: number; sort_by?: 
 | `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
 | `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
 | `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersListResponse`
 
@@ -1235,7 +1146,7 @@ client.api.containers.list(options?: { page?: number; limit?: number; sort_by?: 
 Get all containers (collect all pages)
 
 ```typescript
-client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean; cache?: boolean | number }): Promise<unknown[]>
+client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1250,7 +1161,6 @@ client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by
 | `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
 | `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
 | `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -1263,7 +1173,7 @@ client.api.containers.listAll(options?: { page?: number; limit?: number; sort_by
 Get all containers for a project
 
 ```typescript
-client.api.containers.listByProject(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean; cache?: boolean | number }): Promise<ApiContainersListByProjectResponse>
+client.api.containers.listByProject(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<ApiContainersListByProjectResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1278,7 +1188,6 @@ client.api.containers.listByProject(id: string, options?: { page?: number; limit
 | `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
 | `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
 | `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersListByProjectResponse`
 
@@ -1291,7 +1200,7 @@ client.api.containers.listByProject(id: string, options?: { page?: number; limit
 Get all containers for a project (collect all pages)
 
 ```typescript
-client.api.containers.listByProjectAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean; cache?: boolean | number }): Promise<unknown[]>
+client.api.containers.listByProjectAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1306,7 +1215,6 @@ client.api.containers.listByProjectAll(id: string, options?: { page?: number; li
 | `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
 | `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
 | `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -1319,7 +1227,7 @@ client.api.containers.listByProjectAll(id: string, options?: { page?: number; li
 Get all containers for a project (async iterator)
 
 ```typescript
-client.api.containers.listByProjectIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.containers.listByProjectIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1334,7 +1242,6 @@ client.api.containers.listByProjectIterator(id: string, options?: { page?: numbe
 | `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
 | `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
 | `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1347,7 +1254,7 @@ client.api.containers.listByProjectIterator(id: string, options?: { page?: numbe
 Get all containers (async iterator)
 
 ```typescript
-client.api.containers.listIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.containers.listIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "name" | "status" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; runtime?: string; include_proxy_domains?: boolean; include_proxy_permissions?: boolean; include_expired?: boolean; include_deleting?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1362,7 +1269,6 @@ client.api.containers.listIterator(options?: { page?: number; limit?: number; so
 | `include_proxy_permissions` | `boolean` | No | query | Include the full proxy-permissions documents (container-level proxy_permissions and parent-project-level project_proxy_permissions) for each container. Returns proxy authentication group configuration including credentials — request only when explicitly needed. Auth tokens additionally require the resources.proxy_aliases permission. |
 | `include_expired` | `boolean` | No | query | Include containers that have expired due to server termination. By default, expired containers are excluded from results. |
 | `include_deleting` | `boolean` | No | query | Include containers currently being deleted. By default, deleting containers are excluded from results. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1375,7 +1281,7 @@ client.api.containers.listIterator(options?: { page?: number; limit?: number; so
 Get status logs for a container
 
 ```typescript
-client.api.containers.listStatusHistory(id: string, options?: { page?: number; limit?: number; sort_by?: "transition_time" | "created_at" | "to_status" | "from_status"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<ApiContainersListStatusHistoryResponse>
+client.api.containers.listStatusHistory(id: string, options?: { page?: number; limit?: number; sort_by?: "transition_time" | "created_at" | "to_status" | "from_status"; sort_order?: "asc" | "desc" }): Promise<ApiContainersListStatusHistoryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1385,7 +1291,6 @@ client.api.containers.listStatusHistory(id: string, options?: { page?: number; l
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"transition_time" \| "created_at" \| "to_status" \| "from_status"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersListStatusHistoryResponse`
 
@@ -1506,13 +1411,12 @@ client.api.containers.stop(id: string, data?: object, options?: { force?: boolea
 Sync a copied container with its source
 
 ```typescript
-client.api.containers.sync(id: string, options?: { cache?: boolean | number }): Promise<ApiContainersSyncResponse>
+client.api.containers.sync(id: string): Promise<ApiContainersSyncResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to sync (must have been created via copy) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersSyncResponse`
 
@@ -1527,14 +1431,13 @@ client.api.containers.sync(id: string, options?: { cache?: boolean | number }): 
 Update a container
 
 ```typescript
-client.api.containers.update(id: string, data: ApiContainersUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiContainersUpdateResponse>
+client.api.containers.update(id: string, data: ApiContainersUpdateRequest): Promise<ApiContainersUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to update |
 | `data` | `ApiContainersUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersUpdateResponse`
 
@@ -1551,14 +1454,13 @@ client.api.containers.update(id: string, data: ApiContainersUpdateRequest, optio
 Delete a single environment variable
 
 ```typescript
-client.api.containers.env.delete(id: string, key: string, options?: { cache?: boolean | number }): Promise<ApiContainersEnvDeleteResponse>
+client.api.containers.env.delete(id: string, key: string): Promise<ApiContainersEnvDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `key` | `string` | Yes | path | Environment variable key |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersEnvDeleteResponse`
 
@@ -1573,13 +1475,12 @@ client.api.containers.env.delete(id: string, key: string, options?: { cache?: bo
 List container environment variables
 
 ```typescript
-client.api.containers.env.list(id: string, options?: { cache?: boolean | number }): Promise<ApiContainersEnvListResponse>
+client.api.containers.env.list(id: string): Promise<ApiContainersEnvListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersEnvListResponse`
 
@@ -1594,7 +1495,7 @@ client.api.containers.env.list(id: string, options?: { cache?: boolean | number 
 Set a single environment variable
 
 ```typescript
-client.api.containers.env.set(id: string, key: string, data: ApiContainersEnvSetRequest, options?: { cache?: boolean | number }): Promise<ApiContainersEnvSetResponse>
+client.api.containers.env.set(id: string, key: string, data: ApiContainersEnvSetRequest): Promise<ApiContainersEnvSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1602,7 +1503,6 @@ client.api.containers.env.set(id: string, key: string, data: ApiContainersEnvSet
 | `id` | `string` | Yes | path | Container ID |
 | `key` | `string` | Yes | path | Environment variable key |
 | `data` | `ApiContainersEnvSetRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersEnvSetResponse`
 
@@ -1617,14 +1517,13 @@ client.api.containers.env.set(id: string, key: string, data: ApiContainersEnvSet
 Bulk set container environment variables
 
 ```typescript
-client.api.containers.env.update(id: string, data: ApiContainersEnvUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiContainersEnvUpdateResponse>
+client.api.containers.env.update(id: string, data: ApiContainersEnvUpdateRequest): Promise<ApiContainersEnvUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `data` | `ApiContainersEnvUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiContainersEnvUpdateResponse`
 
@@ -1641,13 +1540,12 @@ client.api.containers.env.update(id: string, data: ApiContainersEnvUpdateRequest
 Bulk delete events
 
 ```typescript
-client.api.events.clear(data: ApiEventsClearRequest, options?: { cache?: boolean | number }): Promise<ApiEventsClearResponse>
+client.api.events.clear(data: ApiEventsClearRequest): Promise<ApiEventsClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiEventsClearRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiEventsClearResponse`
 
@@ -1662,13 +1560,12 @@ client.api.events.clear(data: ApiEventsClearRequest, options?: { cache?: boolean
 Delete a single event
 
 ```typescript
-client.api.events.delete(id: string, options?: { cache?: boolean | number }): Promise<ApiEventsDeleteResponse>
+client.api.events.delete(id: string): Promise<ApiEventsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Event ID to delete |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiEventsDeleteResponse`
 
@@ -1683,13 +1580,12 @@ client.api.events.delete(id: string, options?: { cache?: boolean | number }): Pr
 Get event details by ID
 
 ```typescript
-client.api.events.get(id: string, options?: { cache?: boolean | number }): Promise<ApiEventsGetResponse>
+client.api.events.get(id: string): Promise<ApiEventsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Event ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiEventsGetResponse`
 
@@ -1704,7 +1600,7 @@ client.api.events.get(id: string, options?: { cache?: boolean | number }): Promi
 Get event statistics
 
 ```typescript
-client.api.events.getStats(options?: { start_date?: string; end_date?: string; realm_id?: string; cache?: boolean | number }): Promise<ApiEventsGetStatsResponse>
+client.api.events.getStats(options?: { start_date?: string; end_date?: string; realm_id?: string }): Promise<ApiEventsGetStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1712,7 +1608,6 @@ client.api.events.getStats(options?: { start_date?: string; end_date?: string; r
 | `start_date` | `string` | No | query | Start of time range |
 | `end_date` | `string` | No | query | End of time range |
 | `realm_id` | `string` | No | query | Filter by realm |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiEventsGetStatsResponse`
 
@@ -1727,7 +1622,7 @@ client.api.events.getStats(options?: { start_date?: string; end_date?: string; r
 List event history
 
 ```typescript
-client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean; cache?: boolean | number }): Promise<ApiEventsListResponse>
+client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): Promise<ApiEventsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1746,7 +1641,6 @@ client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "c
 | `realm_id` | `string` | No | query | Selects the realm scope in all modes; 403 on a realm-host or token conflict |
 | `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, container_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
 | `bootstrap` | `boolean` | No | query | Return no events, only the resumable boundary (`next_cursor`) and `latest_cursor` for this scope. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiEventsListResponse`
 
@@ -1761,7 +1655,7 @@ client.api.events.list(options?: { limit?: number; offset?: number; sort_by?: "c
 List event history (collect all pages)
 
 ```typescript
-client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean; cache?: boolean | number }): Promise<unknown[]>
+client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1780,7 +1674,6 @@ client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?:
 | `realm_id` | `string` | No | query | Selects the realm scope in all modes; 403 on a realm-host or token conflict |
 | `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, container_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
 | `bootstrap` | `boolean` | No | query | Return no events, only the resumable boundary (`next_cursor`) and `latest_cursor` for this scope. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -1793,7 +1686,7 @@ client.api.events.listAll(options?: { limit?: number; offset?: number; sort_by?:
 List event history (async iterator)
 
 ```typescript
-client.api.events.listIterator(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.events.listIterator(options?: { limit?: number; offset?: number; sort_by?: "created_at" | "event_type"; sort_order?: "asc" | "desc"; event_type?: "container.creating" | "container.running" | "container.stopped" | "container.failed" | "container.deleting" | "container.deleted" | "container.autostart_enabled" | "container.autostart_disabled" | "container.renamed" | "container.resource_updated" | "container.ssh_key.added" | "container.ssh_key.removed" | "container.snapshot.created" | "container.snapshot.deleted" | "container.snapshot.restored" | "container.snapshot.renamed" | "container.display.enabled" | "container.paused" | "container.copying" | "container.updated" | "container.env.updated" | "container.env.applied" | "container.env.failed" | "container.network.created" | "container.network.updated" | "container.network.running" | "container.network.stopped" | "container.network.failed" | "container.network.deleted" | "container.access_suspended" | "container.access_restored" | "container.operation.completed" | "container.operation.failed" | "storage.share.created" | "storage.share.updated" | "storage.share.deleted" | "storage.share.enabled" | "storage.share.disabled" | "storage.share.expiring_soon" | "storage.share.expired" | "storage.share.mount_changed" | "notification.created" | "notification.read" | "notification.deleted" | "notification.updated" | "project.created" | "project.updated" | "project.deleted" | "project.permission.granted" | "project.permission.updated" | "project.permission.revoked" | "server.created" | "server.updated" | "server.enabled" | "server.disabled" | "server.health_changed" | "server.rental_expiring" | "server.deleted" | "server.rental_started" | "server.rental_extended" | "server.rental_expired" | "server.rental_terminated" | "server.rental_hold_started" | "server.rental_updated" | "server.command.completed" | "server.command.failed" | "server.reservation.created" | "server.reservation.fulfilled" | "server.reservation.refunded" | "server.offer.published" | "server.offer.updated" | "server.offer.withdrawn" | "firewall.rule.added" | "firewall.rule.removed" | "firewall.rule.updated" | "firewall.rule.enabled" | "firewall.rule.disabled" | "proxy.alias.created" | "proxy.alias.updated" | "proxy.alias.deleted" | "proxy.alias.enabled" | "proxy.alias.disabled" | "proxy.alias.expiring_soon" | "proxy.alias.expired" | "proxy.permissions.updated" | "proxy.permissions.default_changed" | "proxy.permissions.group_added" | "proxy.permissions.group_updated" | "proxy.permissions.group_removed" | "auth.token.created" | "auth.token.updated" | "auth.token.deleted" | "auth.token.enabled" | "auth.token.disabled" | "pool.member.joined" | "pool.member.left" | "pool.member.role_changed" | "pool.invited" | "pool.invitation_revoked" | "pool.created" | "pool.updated" | "pool.deleted" | "activity.logged" | "vault.key.set" | "vault.key.deleted" | "vault.cleared" | "account.updated" | "billing.balance_changed" | "billing.payment.succeeded" | "billing.payment.failed" | "billing.payment.updated" | "billing.invoice.created" | "billing.payment_method.added" | "billing.payment_method.removed" | "billing.payment_method.default_changed" | "billing.payment_method.updated" | "image.library.added"; resource_type?: "container" | "storage_share" | "notification" | "project" | "server" | "firewall" | "proxy_alias" | "proxy_permissions" | "auth_token" | "pool" | "activity_log" | "container_network" | "project_permission" | "vault" | "account" | "wallet" | "payment" | "invoice" | "payment_method" | "user_image" | "reservation" | "server_offer"; resource_id?: string; project_id?: string; container_id?: string; start_date?: string; end_date?: string; realm_id?: string; after?: string; bootstrap?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1812,7 +1705,6 @@ client.api.events.listIterator(options?: { limit?: number; offset?: number; sort
 | `realm_id` | `string` | No | query | Selects the realm scope in all modes; 403 on a realm-host or token conflict |
 | `after` | `string` | No | query | Cursor mode: return events after this cursor, oldest first. Cannot be combined with offset, sort_by, sort_order other than asc, event_type, resource_type, resource_id, project_id, container_id, start_date or end_date. In every mode `realm_id` selects the realm exactly as it does in offset mode: the cursor is bound to that realm, and a `realm_id` that conflicts with the realm host or lies outside the realms of the token is refused with 403. |
 | `bootstrap` | `boolean` | No | query | Return no events, only the resumable boundary (`next_cursor`) and `latest_cursor` for this scope. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1825,13 +1717,12 @@ client.api.events.listIterator(options?: { limit?: number; offset?: number; sort
 Cleanup old events
 
 ```typescript
-client.api.events.purge(data: ApiEventsPurgeRequest, options?: { cache?: boolean | number }): Promise<ApiEventsPurgeResponse>
+client.api.events.purge(data: ApiEventsPurgeRequest): Promise<ApiEventsPurgeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiEventsPurgeRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiEventsPurgeResponse`
 
@@ -1848,14 +1739,13 @@ client.api.events.purge(data: ApiEventsPurgeRequest, options?: { cache?: boolean
 Add Egress Rule
 
 ```typescript
-client.api.firewall.createEgressRule(id: string, data: ApiFirewallCreateEgressRuleRequest, options?: { cache?: boolean | number }): Promise<ApiFirewallCreateEgressRuleResponse>
+client.api.firewall.createEgressRule(id: string, data: ApiFirewallCreateEgressRuleRequest): Promise<ApiFirewallCreateEgressRuleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `data` | `ApiFirewallCreateEgressRuleRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiFirewallCreateEgressRuleResponse`
 
@@ -1870,14 +1760,13 @@ client.api.firewall.createEgressRule(id: string, data: ApiFirewallCreateEgressRu
 Add Ingress Rule
 
 ```typescript
-client.api.firewall.createIngressRule(id: string, data: ApiFirewallCreateIngressRuleRequest, options?: { cache?: boolean | number }): Promise<ApiFirewallCreateIngressRuleResponse>
+client.api.firewall.createIngressRule(id: string, data: ApiFirewallCreateIngressRuleRequest): Promise<ApiFirewallCreateIngressRuleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `data` | `ApiFirewallCreateIngressRuleRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiFirewallCreateIngressRuleResponse`
 
@@ -1892,14 +1781,13 @@ client.api.firewall.createIngressRule(id: string, data: ApiFirewallCreateIngress
 Remove Egress Rule(s)
 
 ```typescript
-client.api.firewall.deleteEgressRule(id: string, data: ApiFirewallDeleteEgressRuleRequest, options?: { cache?: boolean | number }): Promise<ApiFirewallDeleteEgressRuleResponse>
+client.api.firewall.deleteEgressRule(id: string, data: ApiFirewallDeleteEgressRuleRequest): Promise<ApiFirewallDeleteEgressRuleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `data` | `ApiFirewallDeleteEgressRuleRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiFirewallDeleteEgressRuleResponse`
 
@@ -1914,14 +1802,13 @@ client.api.firewall.deleteEgressRule(id: string, data: ApiFirewallDeleteEgressRu
 Remove Ingress Rule(s)
 
 ```typescript
-client.api.firewall.deleteIngressRule(id: string, data: ApiFirewallDeleteIngressRuleRequest, options?: { cache?: boolean | number }): Promise<ApiFirewallDeleteIngressRuleResponse>
+client.api.firewall.deleteIngressRule(id: string, data: ApiFirewallDeleteIngressRuleRequest): Promise<ApiFirewallDeleteIngressRuleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `data` | `ApiFirewallDeleteIngressRuleRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiFirewallDeleteIngressRuleResponse`
 
@@ -2020,13 +1907,12 @@ client.api.firewall.enableIngressRule(id: string, data?: object): Promise<any>
 List container firewall rules
 
 ```typescript
-client.api.firewall.listRules(id: string, options?: { cache?: boolean | number }): Promise<ApiFirewallListRulesResponse>
+client.api.firewall.listRules(id: string): Promise<ApiFirewallListRulesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiFirewallListRulesResponse`
 
@@ -2041,13 +1927,12 @@ client.api.firewall.listRules(id: string, options?: { cache?: boolean | number }
 Reset container firewall
 
 ```typescript
-client.api.firewall.reset(id: string, options?: { cache?: boolean | number }): Promise<ApiFirewallResetResponse>
+client.api.firewall.reset(id: string): Promise<ApiFirewallResetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiFirewallResetResponse`
 
@@ -2064,13 +1949,12 @@ client.api.firewall.reset(id: string, options?: { cache?: boolean | number }): P
 Purchase image
 
 ```typescript
-client.api.images.buy(id: string, options?: { cache?: boolean | number }): Promise<ApiImagesBuyResponse>
+client.api.images.buy(id: string): Promise<ApiImagesBuyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the paid container image to purchase |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiImagesBuyResponse`
 
@@ -2085,13 +1969,12 @@ client.api.images.buy(id: string, options?: { cache?: boolean | number }): Promi
 Get image icon
 
 ```typescript
-client.api.images.getIcon(id: string, options?: { cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | ApiImagesGetIconResponse>
+client.api.images.getIcon(id: string): Promise<ApiResponse<ArrayBuffer> | ApiImagesGetIconResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container image to retrieve icon for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | ApiImagesGetIconResponse`
 
@@ -2106,13 +1989,12 @@ client.api.images.getIcon(id: string, options?: { cache?: boolean | number }): P
 Get public image details
 
 ```typescript
-client.api.images.getPublic(id: string, options?: { cache?: boolean | number }): Promise<ApiImagesGetPublicResponse>
+client.api.images.getPublic(id: string): Promise<ApiImagesGetPublicResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the public container image to retrieve details for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiImagesGetPublicResponse`
 
@@ -2127,13 +2009,12 @@ client.api.images.getPublic(id: string, options?: { cache?: boolean | number }):
 Import free image
 
 ```typescript
-client.api.images.import(id: string, options?: { cache?: boolean | number }): Promise<ApiImagesImportResponse>
+client.api.images.import(id: string): Promise<ApiImagesImportResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the public container image to import |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiImagesImportResponse`
 
@@ -2148,7 +2029,7 @@ client.api.images.import(id: string, options?: { cache?: boolean | number }): Pr
 List user images
 
 ```typescript
-client.api.images.list(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<ApiImagesListResponse>
+client.api.images.list(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): Promise<ApiImagesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2157,7 +2038,6 @@ client.api.images.list(options?: { page?: number; limit?: number; sort_by?: "cre
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"created_at"` | No | query | Field to sort user images by - currently only supports creation date |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiImagesListResponse`
 
@@ -2172,7 +2052,7 @@ client.api.images.list(options?: { page?: number; limit?: number; sort_by?: "cre
 List user images (collect all pages)
 
 ```typescript
-client.api.images.listAll(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<unknown[]>
+client.api.images.listAll(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2181,7 +2061,6 @@ client.api.images.listAll(options?: { page?: number; limit?: number; sort_by?: "
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"created_at"` | No | query | Field to sort user images by - currently only supports creation date |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -2194,7 +2073,7 @@ client.api.images.listAll(options?: { page?: number; limit?: number; sort_by?: "
 List user images (async iterator)
 
 ```typescript
-client.api.images.listIterator(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc"; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.images.listIterator(options?: { page?: number; limit?: number; sort_by?: "created_at"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2203,7 +2082,6 @@ client.api.images.listIterator(options?: { page?: number; limit?: number; sort_b
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"created_at"` | No | query | Field to sort user images by - currently only supports creation date |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -2216,7 +2094,7 @@ client.api.images.listIterator(options?: { page?: number; limit?: number; sort_b
 List public images
 
 ```typescript
-client.api.images.listPublic(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: number; limit?: number; sort_by?: "alias" | "added_date" | "price" | "rating"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<ApiImagesListPublicResponse>
+client.api.images.listPublic(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: number; limit?: number; sort_by?: "alias" | "added_date" | "price" | "rating"; sort_order?: "asc" | "desc" }): Promise<ApiImagesListPublicResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2232,7 +2110,6 @@ client.api.images.listPublic(options?: { os?: string; architecture?: string; min
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"alias" \| "added_date" \| "price" \| "rating"` | No | query | Field to sort images by - name, date added, price, or average rating |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiImagesListPublicResponse`
 
@@ -2247,7 +2124,7 @@ client.api.images.listPublic(options?: { os?: string; architecture?: string; min
 List public images (collect all pages)
 
 ```typescript
-client.api.images.listPublicAll(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: number; limit?: number; sort_by?: "alias" | "added_date" | "price" | "rating"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<unknown[]>
+client.api.images.listPublicAll(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: number; limit?: number; sort_by?: "alias" | "added_date" | "price" | "rating"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2263,7 +2140,6 @@ client.api.images.listPublicAll(options?: { os?: string; architecture?: string; 
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"alias" \| "added_date" \| "price" \| "rating"` | No | query | Field to sort images by - name, date added, price, or average rating |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -2276,7 +2152,7 @@ client.api.images.listPublicAll(options?: { os?: string; architecture?: string; 
 List public images (async iterator)
 
 ```typescript
-client.api.images.listPublicIterator(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: number; limit?: number; sort_by?: "alias" | "added_date" | "price" | "rating"; sort_order?: "asc" | "desc"; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.images.listPublicIterator(options?: { os?: string; architecture?: string; min_price?: number; max_price?: number; min_rating?: number; max_rating?: number; search?: string; page?: number; limit?: number; sort_by?: "alias" | "added_date" | "price" | "rating"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2292,7 +2168,6 @@ client.api.images.listPublicIterator(options?: { os?: string; architecture?: str
 | `limit` | `number` | No | query | Number of images to return per page - maximum 100 items |
 | `sort_by` | `"alias" \| "added_date" \| "price" \| "rating"` | No | query | Field to sort images by - name, date added, price, or average rating |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction - ascending or descending |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -2305,14 +2180,13 @@ client.api.images.listPublicIterator(options?: { os?: string; architecture?: str
 Rate image
 
 ```typescript
-client.api.images.rate(id: string, data: ApiImagesRateRequest, options?: { cache?: boolean | number }): Promise<ApiImagesRateResponse>
+client.api.images.rate(id: string, data: ApiImagesRateRequest): Promise<ApiImagesRateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container image to rate |
 | `data` | `ApiImagesRateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiImagesRateResponse`
 
@@ -2329,12 +2203,8 @@ client.api.images.rate(id: string, data: ApiImagesRateRequest, options?: { cache
 Unread notification count and newest position
 
 ```typescript
-client.api.inbox.getSummary(options?: { cache?: boolean | number }): Promise<ApiInboxGetSummaryResponse>
+client.api.inbox.getSummary(): Promise<ApiInboxGetSummaryResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiInboxGetSummaryResponse`
 
@@ -2349,7 +2219,7 @@ client.api.inbox.getSummary(options?: { cache?: boolean | number }): Promise<Api
 List notifications for the authenticated user
 
 ```typescript
-client.api.inbox.list(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string; cache?: boolean | number }): Promise<ApiInboxListResponse>
+client.api.inbox.list(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string }): Promise<ApiInboxListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2359,7 +2229,6 @@ client.api.inbox.list(options?: { page?: number; limit?: number; unread_only?: b
 | `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
 | `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
 | `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiInboxListResponse`
 
@@ -2374,7 +2243,7 @@ client.api.inbox.list(options?: { page?: number; limit?: number; unread_only?: b
 List notifications for the authenticated user (collect all pages)
 
 ```typescript
-client.api.inbox.listAll(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.inbox.listAll(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2384,7 +2253,6 @@ client.api.inbox.listAll(options?: { page?: number; limit?: number; unread_only?
 | `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
 | `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
 | `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -2397,12 +2265,8 @@ client.api.inbox.listAll(options?: { page?: number; limit?: number; unread_only?
 Get all public notifications
 
 ```typescript
-client.api.inbox.listAnnouncements(options?: { cache?: boolean | number }): Promise<ApiInboxListAnnouncementsResponse>
+client.api.inbox.listAnnouncements(): Promise<ApiInboxListAnnouncementsResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiInboxListAnnouncementsResponse`
 
@@ -2417,12 +2281,8 @@ client.api.inbox.listAnnouncements(options?: { cache?: boolean | number }): Prom
 Get all public notifications (collect all pages)
 
 ```typescript
-client.api.inbox.listAnnouncementsAll(options?: { cache?: boolean | number }): Promise<unknown[]>
+client.api.inbox.listAnnouncementsAll(): Promise<unknown[]>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -2435,12 +2295,8 @@ client.api.inbox.listAnnouncementsAll(options?: { cache?: boolean | number }): P
 Get all public notifications (async iterator)
 
 ```typescript
-client.api.inbox.listAnnouncementsIterator(options?: { cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.inbox.listAnnouncementsIterator(): AsyncIterableIterator<unknown>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -2453,7 +2309,7 @@ client.api.inbox.listAnnouncementsIterator(options?: { cache?: boolean | number 
 List notifications for the authenticated user (async iterator)
 
 ```typescript
-client.api.inbox.listIterator(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.inbox.listIterator(options?: { page?: number; limit?: number; unread_only?: boolean; read_only?: boolean; before?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2463,7 +2319,6 @@ client.api.inbox.listIterator(options?: { page?: number; limit?: number; unread_
 | `unread_only` | `boolean` | No | query | Return only notifications the user has not read. Mutually exclusive with read_only. |
 | `read_only` | `boolean` | No | query | Return only notifications the user HAS read — the archive half of the inbox. `pagination.total` counts the same filtered set, so it can drive page numbers directly. Mutually exclusive with unread_only (sending both is a 400, not an empty page). |
 | `before` | `string` | No | query | Keyset cursor from a previous response's pagination.next_cursor ("&lt;created_at&gt;,&lt;id&gt;"). Prefer this over `page` for an inbox: offset paging duplicates or skips rows when a new notification arrives mid-read. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -2476,12 +2331,8 @@ client.api.inbox.listIterator(options?: { page?: number; limit?: number; unread_
 Mark all notifications as read
 
 ```typescript
-client.api.inbox.markAllRead(options?: { cache?: boolean | number }): Promise<ApiInboxMarkAllReadResponse>
+client.api.inbox.markAllRead(): Promise<ApiInboxMarkAllReadResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiInboxMarkAllReadResponse`
 
@@ -2496,13 +2347,12 @@ client.api.inbox.markAllRead(options?: { cache?: boolean | number }): Promise<Ap
 Mark a notification as read
 
 ```typescript
-client.api.inbox.markRead(id: string, options?: { cache?: boolean | number }): Promise<ApiInboxMarkReadResponse>
+client.api.inbox.markRead(id: string): Promise<ApiInboxMarkReadResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the notification to mark as read |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiInboxMarkReadResponse`
 
@@ -2519,12 +2369,8 @@ client.api.inbox.markRead(id: string, options?: { cache?: boolean | number }): P
 Get IP Information
 
 ```typescript
-client.api.ip.get(options?: { cache?: boolean | number }): Promise<ApiIpGetResponse>
+client.api.ip.get(): Promise<ApiIpGetResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiIpGetResponse`
 
@@ -2541,12 +2387,8 @@ client.api.ip.get(options?: { cache?: boolean | number }): Promise<ApiIpGetRespo
 Get Hoody API Signing Public Key
 
 ```typescript
-client.api.meta.getPublicKey(options?: { cache?: boolean | number }): Promise<ApiMetaGetPublicKeyResponse>
+client.api.meta.getPublicKey(): Promise<ApiMetaGetPublicKeyResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiMetaGetPublicKeyResponse`
 
@@ -2563,13 +2405,12 @@ client.api.meta.getPublicKey(options?: { cache?: boolean | number }): Promise<Ap
 Remove container network configuration
 
 ```typescript
-client.api.network.delete(id: string, options?: { cache?: boolean | number }): Promise<ApiNetworkDeleteResponse>
+client.api.network.delete(id: string): Promise<ApiNetworkDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to remove network configuration from |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiNetworkDeleteResponse`
 
@@ -2584,13 +2425,12 @@ client.api.network.delete(id: string, options?: { cache?: boolean | number }): P
 Get container network configuration
 
 ```typescript
-client.api.network.get(id: string, options?: { cache?: boolean | number }): Promise<ApiNetworkGetResponse>
+client.api.network.get(id: string): Promise<ApiNetworkGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to retrieve network configuration for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiNetworkGetResponse`
 
@@ -2605,13 +2445,12 @@ client.api.network.get(id: string, options?: { cache?: boolean | number }): Prom
 Start container network proxy/blocking
 
 ```typescript
-client.api.network.start(id: string, options?: { cache?: boolean | number }): Promise<ApiNetworkStartResponse>
+client.api.network.start(id: string): Promise<ApiNetworkStartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to start network for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiNetworkStartResponse`
 
@@ -2626,13 +2465,12 @@ client.api.network.start(id: string, options?: { cache?: boolean | number }): Pr
 Stop container network proxy/blocking
 
 ```typescript
-client.api.network.stop(id: string, options?: { cache?: boolean | number }): Promise<ApiNetworkStopResponse>
+client.api.network.stop(id: string): Promise<ApiNetworkStopResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to stop network for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiNetworkStopResponse`
 
@@ -2647,14 +2485,13 @@ client.api.network.stop(id: string, options?: { cache?: boolean | number }): Pro
 Update container network configuration
 
 ```typescript
-client.api.network.update(id: string, data: ApiNetworkUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiNetworkUpdateResponse>
+client.api.network.update(id: string, data: ApiNetworkUpdateRequest): Promise<ApiNetworkUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to configure network for |
 | `data` | `ApiNetworkUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiNetworkUpdateResponse`
 
@@ -2671,13 +2508,12 @@ client.api.network.update(id: string, data: ApiNetworkUpdateRequest, options?: {
 Create pool
 
 ```typescript
-client.api.pools.create(data: ApiPoolsCreateRequest, options?: { cache?: boolean | number }): Promise<ApiPoolsCreateResponse>
+client.api.pools.create(data: ApiPoolsCreateRequest): Promise<ApiPoolsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiPoolsCreateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsCreateResponse`
 
@@ -2692,13 +2528,12 @@ client.api.pools.create(data: ApiPoolsCreateRequest, options?: { cache?: boolean
 Delete pool
 
 ```typescript
-client.api.pools.delete(id: string, options?: { cache?: boolean | number }): Promise<ApiPoolsDeleteResponse>
+client.api.pools.delete(id: string): Promise<ApiPoolsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsDeleteResponse`
 
@@ -2713,13 +2548,12 @@ client.api.pools.delete(id: string, options?: { cache?: boolean | number }): Pro
 Get pool details
 
 ```typescript
-client.api.pools.get(id: string, options?: { cache?: boolean | number }): Promise<ApiPoolsGetResponse>
+client.api.pools.get(id: string): Promise<ApiPoolsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsGetResponse`
 
@@ -2734,12 +2568,8 @@ client.api.pools.get(id: string, options?: { cache?: boolean | number }): Promis
 List user pools
 
 ```typescript
-client.api.pools.list(options?: { cache?: boolean | number }): Promise<ApiPoolsListResponse>
+client.api.pools.list(): Promise<ApiPoolsListResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsListResponse`
 
@@ -2754,12 +2584,8 @@ client.api.pools.list(options?: { cache?: boolean | number }): Promise<ApiPoolsL
 List user pools (collect all pages)
 
 ```typescript
-client.api.pools.listAll(options?: { cache?: boolean | number }): Promise<unknown[]>
+client.api.pools.listAll(): Promise<unknown[]>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -2772,12 +2598,8 @@ client.api.pools.listAll(options?: { cache?: boolean | number }): Promise<unknow
 List user pools (async iterator)
 
 ```typescript
-client.api.pools.listIterator(options?: { cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.pools.listIterator(): AsyncIterableIterator<unknown>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -2790,14 +2612,13 @@ client.api.pools.listIterator(options?: { cache?: boolean | number }): AsyncIter
 Update pool
 
 ```typescript
-client.api.pools.update(id: string, data: ApiPoolsUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiPoolsUpdateResponse>
+client.api.pools.update(id: string, data: ApiPoolsUpdateRequest): Promise<ApiPoolsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiPoolsUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsUpdateResponse`
 
@@ -2814,13 +2635,12 @@ client.api.pools.update(id: string, data: ApiPoolsUpdateRequest, options?: { cac
 Accept invitation
 
 ```typescript
-client.api.pools.invitations.accept(id: string, options?: { cache?: boolean | number }): Promise<ApiPoolsInvitationsAcceptResponse>
+client.api.pools.invitations.accept(id: string): Promise<ApiPoolsInvitationsAcceptResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsInvitationsAcceptResponse`
 
@@ -2835,12 +2655,8 @@ client.api.pools.invitations.accept(id: string, options?: { cache?: boolean | nu
 List pending invitations
 
 ```typescript
-client.api.pools.invitations.list(options?: { cache?: boolean | number }): Promise<ApiPoolsInvitationsListResponse>
+client.api.pools.invitations.list(): Promise<ApiPoolsInvitationsListResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsInvitationsListResponse`
 
@@ -2855,13 +2671,12 @@ client.api.pools.invitations.list(options?: { cache?: boolean | number }): Promi
 Reject invitation
 
 ```typescript
-client.api.pools.invitations.reject(id: string, options?: { cache?: boolean | number }): Promise<ApiPoolsInvitationsRejectResponse>
+client.api.pools.invitations.reject(id: string): Promise<ApiPoolsInvitationsRejectResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsInvitationsRejectResponse`
 
@@ -2878,14 +2693,13 @@ client.api.pools.invitations.reject(id: string, options?: { cache?: boolean | nu
 Invite member
 
 ```typescript
-client.api.pools.members.invite(id: string, data: ApiPoolsMembersInviteRequest, options?: { cache?: boolean | number }): Promise<ApiPoolsMembersInviteResponse>
+client.api.pools.members.invite(id: string, data: ApiPoolsMembersInviteRequest): Promise<ApiPoolsMembersInviteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiPoolsMembersInviteRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsMembersInviteResponse`
 
@@ -2900,14 +2714,13 @@ client.api.pools.members.invite(id: string, data: ApiPoolsMembersInviteRequest, 
 Remove member
 
 ```typescript
-client.api.pools.members.remove(id: string, userId: string, options?: { cache?: boolean | number }): Promise<ApiPoolsMembersRemoveResponse>
+client.api.pools.members.remove(id: string, userId: string): Promise<ApiPoolsMembersRemoveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `userId` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsMembersRemoveResponse`
 
@@ -2922,7 +2735,7 @@ client.api.pools.members.remove(id: string, userId: string, options?: { cache?: 
 Update member role
 
 ```typescript
-client.api.pools.members.setRole(id: string, userId: string, data: ApiPoolsMembersSetRoleRequest, options?: { cache?: boolean | number }): Promise<ApiPoolsMembersSetRoleResponse>
+client.api.pools.members.setRole(id: string, userId: string, data: ApiPoolsMembersSetRoleRequest): Promise<ApiPoolsMembersSetRoleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2930,7 +2743,6 @@ client.api.pools.members.setRole(id: string, userId: string, data: ApiPoolsMembe
 | `id` | `string` | Yes | path |  |
 | `userId` | `string` | Yes | path |  |
 | `data` | `ApiPoolsMembersSetRoleRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiPoolsMembersSetRoleResponse`
 
@@ -2947,13 +2759,12 @@ client.api.pools.members.setRole(id: string, userId: string, data: ApiPoolsMembe
 Create a new project
 
 ```typescript
-client.api.projects.create(data: ApiProjectsCreateRequest, options?: { cache?: boolean | number }): Promise<ApiProjectsCreateResponse>
+client.api.projects.create(data: ApiProjectsCreateRequest): Promise<ApiProjectsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiProjectsCreateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsCreateResponse`
 
@@ -2968,14 +2779,13 @@ client.api.projects.create(data: ApiProjectsCreateRequest, options?: { cache?: b
 Grant project access
 
 ```typescript
-client.api.projects.createPermission(id: string, data: ApiProjectsCreatePermissionRequest, options?: { cache?: boolean | number }): Promise<ApiProjectsCreatePermissionResponse>
+client.api.projects.createPermission(id: string, data: ApiProjectsCreatePermissionRequest): Promise<ApiProjectsCreatePermissionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID |
 | `data` | `ApiProjectsCreatePermissionRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsCreatePermissionResponse`
 
@@ -2990,14 +2800,13 @@ client.api.projects.createPermission(id: string, data: ApiProjectsCreatePermissi
 Delete project
 
 ```typescript
-client.api.projects.delete(id: string, options?: { include_deleted_items?: boolean; cache?: boolean | number }): Promise<ApiProjectsDeleteResponse>
+client.api.projects.delete(id: string, options?: { include_deleted_items?: boolean }): Promise<ApiProjectsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID to delete |
 | `include_deleted_items` | `boolean` | No | query | Include a short list of the deleted container IDs and names in the response. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsDeleteResponse`
 
@@ -3012,14 +2821,13 @@ client.api.projects.delete(id: string, options?: { include_deleted_items?: boole
 Revoke project access
 
 ```typescript
-client.api.projects.deletePermission(id: string, permissionId: string, options?: { cache?: boolean | number }): Promise<ApiProjectsDeletePermissionResponse>
+client.api.projects.deletePermission(id: string, permissionId: string): Promise<ApiProjectsDeletePermissionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID |
 | `permissionId` | `string` | Yes | path | Permission ID to remove |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsDeletePermissionResponse`
 
@@ -3034,14 +2842,13 @@ client.api.projects.deletePermission(id: string, permissionId: string, options?:
 Get project by ID
 
 ```typescript
-client.api.projects.get(id: string, options?: { include_permissions?: boolean; cache?: boolean | number }): Promise<ApiProjectsGetResponse>
+client.api.projects.get(id: string, options?: { include_permissions?: boolean }): Promise<ApiProjectsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID |
 | `include_permissions` | `boolean` | No | query | Include project permissions with user details in response |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsGetResponse`
 
@@ -3056,7 +2863,7 @@ client.api.projects.get(id: string, options?: { include_permissions?: boolean; c
 Get proxied-usage documents for every container in a project
 
 ```typescript
-client.api.projects.getProxyUsage(id: string, options: { from: string; to: string; cache?: boolean | number }): Promise<ApiProjectsGetProxyUsageResponse>
+client.api.projects.getProxyUsage(id: string, options: { from: string; to: string }): Promise<ApiProjectsGetProxyUsageResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3064,7 +2871,6 @@ client.api.projects.getProxyUsage(id: string, options: { from: string; to: strin
 | `id` | `string` | Yes | path | Project id |
 | `from` | `string` | Yes | query | First month, inclusive (YYYY-MM) |
 | `to` | `string` | Yes | query | Last month, inclusive (YYYY-MM). Max 12 months. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsGetProxyUsageResponse`
 
@@ -3079,13 +2885,12 @@ client.api.projects.getProxyUsage(id: string, options: { from: string; to: strin
 Get statistics for all containers in a project
 
 ```typescript
-client.api.projects.getStats(id: string, options?: { cache?: boolean | number }): Promise<ApiProjectsGetStatsResponse>
+client.api.projects.getStats(id: string): Promise<ApiProjectsGetStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the project |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsGetStatsResponse`
 
@@ -3100,7 +2905,7 @@ client.api.projects.getStats(id: string, options?: { cache?: boolean | number })
 List all projects
 
 ```typescript
-client.api.projects.list(options?: { page?: number; limit?: number; sort_by?: "id" | "alias" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; cache?: boolean | number }): Promise<ApiProjectsListResponse>
+client.api.projects.list(options?: { page?: number; limit?: number; sort_by?: "id" | "alias" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string }): Promise<ApiProjectsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3110,7 +2915,6 @@ client.api.projects.list(options?: { page?: number; limit?: number; sort_by?: "i
 | `sort_by` | `"id" \| "alias" \| "created_at" \| "updated_at"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
 | `realm_id` | `string` | No | query | Filter by realm ID. Only returns projects that belong to this realm. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsListResponse`
 
@@ -3125,7 +2929,7 @@ client.api.projects.list(options?: { page?: number; limit?: number; sort_by?: "i
 List all projects (collect all pages)
 
 ```typescript
-client.api.projects.listAll(options?: { page?: number; limit?: number; sort_by?: "id" | "alias" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.projects.listAll(options?: { page?: number; limit?: number; sort_by?: "id" | "alias" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3135,7 +2939,6 @@ client.api.projects.listAll(options?: { page?: number; limit?: number; sort_by?:
 | `sort_by` | `"id" \| "alias" \| "created_at" \| "updated_at"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
 | `realm_id` | `string` | No | query | Filter by realm ID. Only returns projects that belong to this realm. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3148,7 +2951,7 @@ client.api.projects.listAll(options?: { page?: number; limit?: number; sort_by?:
 List all projects (async iterator)
 
 ```typescript
-client.api.projects.listIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "alias" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.projects.listIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "alias" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3158,7 +2961,6 @@ client.api.projects.listIterator(options?: { page?: number; limit?: number; sort
 | `sort_by` | `"id" \| "alias" \| "created_at" \| "updated_at"` | No | query | Field to sort by |
 | `sort_order` | `"asc" \| "desc"` | No | query | Sort direction |
 | `realm_id` | `string` | No | query | Filter by realm ID. Only returns projects that belong to this realm. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -3171,7 +2973,7 @@ client.api.projects.listIterator(options?: { page?: number; limit?: number; sort
 List project permissions
 
 ```typescript
-client.api.projects.listPermissions(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<ApiProjectsListPermissionsResponse>
+client.api.projects.listPermissions(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): Promise<ApiProjectsListPermissionsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3181,7 +2983,6 @@ client.api.projects.listPermissions(id: string, options?: { page?: number; limit
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsListPermissionsResponse`
 
@@ -3196,7 +2997,7 @@ client.api.projects.listPermissions(id: string, options?: { page?: number; limit
 List project permissions (collect all pages)
 
 ```typescript
-client.api.projects.listPermissionsAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<unknown[]>
+client.api.projects.listPermissionsAll(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3206,7 +3007,6 @@ client.api.projects.listPermissionsAll(id: string, options?: { page?: number; li
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3219,7 +3019,7 @@ client.api.projects.listPermissionsAll(id: string, options?: { page?: number; li
 List project permissions (async iterator)
 
 ```typescript
-client.api.projects.listPermissionsIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.projects.listPermissionsIterator(id: string, options?: { page?: number; limit?: number; sort_by?: "id" | "user_id" | "permission_level" | "created_at" | "updated_at"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3229,7 +3029,6 @@ client.api.projects.listPermissionsIterator(id: string, options?: { page?: numbe
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"id" \| "user_id" \| "permission_level" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -3242,14 +3041,13 @@ client.api.projects.listPermissionsIterator(id: string, options?: { page?: numbe
 Update project
 
 ```typescript
-client.api.projects.update(id: string, data: ApiProjectsUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiProjectsUpdateResponse>
+client.api.projects.update(id: string, data: ApiProjectsUpdateRequest): Promise<ApiProjectsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID to update |
 | `data` | `ApiProjectsUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsUpdateResponse`
 
@@ -3264,7 +3062,7 @@ client.api.projects.update(id: string, data: ApiProjectsUpdateRequest, options?:
 Update project permission
 
 ```typescript
-client.api.projects.updatePermission(id: string, permissionId: string, data: ApiProjectsUpdatePermissionRequest, options?: { cache?: boolean | number }): Promise<ApiProjectsUpdatePermissionResponse>
+client.api.projects.updatePermission(id: string, permissionId: string, data: ApiProjectsUpdatePermissionRequest): Promise<ApiProjectsUpdatePermissionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3272,7 +3070,6 @@ client.api.projects.updatePermission(id: string, permissionId: string, data: Api
 | `id` | `string` | Yes | path | Project ID |
 | `permissionId` | `string` | Yes | path | Permission ID to update |
 | `data` | `ApiProjectsUpdatePermissionRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProjectsUpdatePermissionResponse`
 
@@ -3289,13 +3086,12 @@ client.api.projects.updatePermission(id: string, permissionId: string, data: Api
 Create a new proxy alias
 
 ```typescript
-client.api.proxy.aliases.create(data: ApiProxyAliasesCreateRequest, options?: { cache?: boolean | number }): Promise<ApiProxyAliasesCreateResponse>
+client.api.proxy.aliases.create(data: ApiProxyAliasesCreateRequest): Promise<ApiProxyAliasesCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiProxyAliasesCreateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyAliasesCreateResponse`
 
@@ -3310,13 +3106,12 @@ client.api.proxy.aliases.create(data: ApiProxyAliasesCreateRequest, options?: { 
 Delete proxy alias
 
 ```typescript
-client.api.proxy.aliases.delete(id: string, options?: { cache?: boolean | number }): Promise<ApiProxyAliasesDeleteResponse>
+client.api.proxy.aliases.delete(id: string): Promise<ApiProxyAliasesDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Proxy alias ID to delete |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyAliasesDeleteResponse`
 
@@ -3371,13 +3166,12 @@ client.api.proxy.aliases.enable(id: string): Promise<any>
 Get proxy alias by ID
 
 ```typescript
-client.api.proxy.aliases.get(id: string, options?: { cache?: boolean | number }): Promise<ApiProxyAliasesGetResponse>
+client.api.proxy.aliases.get(id: string): Promise<ApiProxyAliasesGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Proxy alias ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyAliasesGetResponse`
 
@@ -3392,7 +3186,7 @@ client.api.proxy.aliases.get(id: string, options?: { cache?: boolean | number })
 List proxy aliases
 
 ```typescript
-client.api.proxy.aliases.list(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean; cache?: boolean | number }): Promise<ApiProxyAliasesListResponse>
+client.api.proxy.aliases.list(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): Promise<ApiProxyAliasesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3402,7 +3196,6 @@ client.api.proxy.aliases.list(options?: { project_id?: string; container_id?: st
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `expired` | `boolean` | No | query | Filter by expiration: true = only expired, false = only non-expired |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyAliasesListResponse`
 
@@ -3417,7 +3210,7 @@ client.api.proxy.aliases.list(options?: { project_id?: string; container_id?: st
 List proxy aliases (collect all pages)
 
 ```typescript
-client.api.proxy.aliases.listAll(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean; cache?: boolean | number }): Promise<unknown[]>
+client.api.proxy.aliases.listAll(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3427,7 +3220,6 @@ client.api.proxy.aliases.listAll(options?: { project_id?: string; container_id?:
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `expired` | `boolean` | No | query | Filter by expiration: true = only expired, false = only non-expired |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3440,7 +3232,7 @@ client.api.proxy.aliases.listAll(options?: { project_id?: string; container_id?:
 List proxy aliases (async iterator)
 
 ```typescript
-client.api.proxy.aliases.listIterator(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.proxy.aliases.listIterator(options?: { project_id?: string; container_id?: string; realm_id?: string; enabled?: boolean; expired?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3450,7 +3242,6 @@ client.api.proxy.aliases.listIterator(options?: { project_id?: string; container
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `expired` | `boolean` | No | query | Filter by expiration: true = only expired, false = only non-expired |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -3463,14 +3254,13 @@ client.api.proxy.aliases.listIterator(options?: { project_id?: string; container
 Update proxy alias
 
 ```typescript
-client.api.proxy.aliases.update(id: string, data: ApiProxyAliasesUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiProxyAliasesUpdateResponse>
+client.api.proxy.aliases.update(id: string, data: ApiProxyAliasesUpdateRequest): Promise<ApiProxyAliasesUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Proxy alias ID to update |
 | `data` | `ApiProxyAliasesUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyAliasesUpdateResponse`
 
@@ -3487,7 +3277,7 @@ client.api.proxy.aliases.update(id: string, data: ApiProxyAliasesUpdateRequest, 
 Remove all program permissions for a container group
 
 ```typescript
-client.api.proxy.containerPermissions.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsClearGroupPermissionsResponse>
+client.api.proxy.containerPermissions.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsClearGroupPermissionsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3495,7 +3285,6 @@ client.api.proxy.containerPermissions.clearGroupPermissions(id: string, groupNam
 | `id` | `string` | Yes | path | Container ID |
 | `groupName` | `string` | Yes | path | Group name |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsClearGroupPermissionsResponse`
 
@@ -3510,14 +3299,13 @@ client.api.proxy.containerPermissions.clearGroupPermissions(id: string, groupNam
 Delete container proxy permissions
 
 ```typescript
-client.api.proxy.containerPermissions.delete(id: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsDeleteResponse>
+client.api.proxy.containerPermissions.delete(id: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsDeleteResponse`
 
@@ -3532,7 +3320,7 @@ client.api.proxy.containerPermissions.delete(id: string, options: { ifMatch: str
 Remove container authentication group
 
 ```typescript
-client.api.proxy.containerPermissions.deleteAuthGroup(id: string, groupName: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsDeleteAuthGroupResponse>
+client.api.proxy.containerPermissions.deleteAuthGroup(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsDeleteAuthGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3540,7 +3328,6 @@ client.api.proxy.containerPermissions.deleteAuthGroup(id: string, groupName: str
 | `id` | `string` | Yes | path | Container ID |
 | `groupName` | `string` | Yes | path | Group name to remove |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsDeleteAuthGroupResponse`
 
@@ -3555,7 +3342,7 @@ client.api.proxy.containerPermissions.deleteAuthGroup(id: string, groupName: str
 Remove a single program permission for a container group
 
 ```typescript
-client.api.proxy.containerPermissions.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsDeleteGroupPermissionResponse>
+client.api.proxy.containerPermissions.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsDeleteGroupPermissionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3564,7 +3351,6 @@ client.api.proxy.containerPermissions.deleteGroupPermission(id: string, groupNam
 | `groupName` | `string` | Yes | path | Group name |
 | `program` | `string` | Yes | path | Program name (e.g., http, ssh, files) |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsDeleteGroupPermissionResponse`
 
@@ -3623,13 +3409,12 @@ client.api.proxy.containerPermissions.enable(id: string, data: object, options: 
 Get container proxy permissions
 
 ```typescript
-client.api.proxy.containerPermissions.get(id: string, options?: { cache?: boolean | number }): Promise<ApiProxyContainerPermissionsGetResponse>
+client.api.proxy.containerPermissions.get(id: string): Promise<ApiProxyContainerPermissionsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsGetResponse`
 
@@ -3644,7 +3429,7 @@ client.api.proxy.containerPermissions.get(id: string, options?: { cache?: boolea
 Replace container proxy permissions JSON
 
 ```typescript
-client.api.proxy.containerPermissions.set(id: string, data: ApiProxyContainerPermissionsSetRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsSetResponse>
+client.api.proxy.containerPermissions.set(id: string, data: ApiProxyContainerPermissionsSetRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3652,7 +3437,6 @@ client.api.proxy.containerPermissions.set(id: string, data: ApiProxyContainerPer
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiProxyContainerPermissionsSetRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsSetResponse`
 
@@ -3667,7 +3451,7 @@ client.api.proxy.containerPermissions.set(id: string, data: ApiProxyContainerPer
 Update container default proxy permission policy
 
 ```typescript
-client.api.proxy.containerPermissions.setDefault(id: string, data: ApiProxyContainerPermissionsSetDefaultRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsSetDefaultResponse>
+client.api.proxy.containerPermissions.setDefault(id: string, data: ApiProxyContainerPermissionsSetDefaultRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetDefaultResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3675,7 +3459,6 @@ client.api.proxy.containerPermissions.setDefault(id: string, data: ApiProxyConta
 | `id` | `string` | Yes | path | Container ID |
 | `data` | `ApiProxyContainerPermissionsSetDefaultRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsSetDefaultResponse`
 
@@ -3690,7 +3473,7 @@ client.api.proxy.containerPermissions.setDefault(id: string, data: ApiProxyConta
 Set container group program permission
 
 ```typescript
-client.api.proxy.containerPermissions.setGroupPermission(id: string, groupName: string, data: ApiProxyContainerPermissionsSetGroupPermissionRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsSetGroupPermissionResponse>
+client.api.proxy.containerPermissions.setGroupPermission(id: string, groupName: string, data: ApiProxyContainerPermissionsSetGroupPermissionRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetGroupPermissionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3699,7 +3482,6 @@ client.api.proxy.containerPermissions.setGroupPermission(id: string, groupName: 
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyContainerPermissionsSetGroupPermissionRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsSetGroupPermissionResponse`
 
@@ -3714,7 +3496,7 @@ client.api.proxy.containerPermissions.setGroupPermission(id: string, groupName: 
 Set IP authentication group (container)
 
 ```typescript
-client.api.proxy.containerPermissions.setIpGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetIpGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsSetIpGroupResponse>
+client.api.proxy.containerPermissions.setIpGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetIpGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetIpGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3723,7 +3505,6 @@ client.api.proxy.containerPermissions.setIpGroup(id: string, groupName: string, 
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyContainerPermissionsSetIpGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsSetIpGroupResponse`
 
@@ -3738,7 +3519,7 @@ client.api.proxy.containerPermissions.setIpGroup(id: string, groupName: string, 
 Set JWT authentication group (container)
 
 ```typescript
-client.api.proxy.containerPermissions.setJwtGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetJwtGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsSetJwtGroupResponse>
+client.api.proxy.containerPermissions.setJwtGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetJwtGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetJwtGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3747,7 +3528,6 @@ client.api.proxy.containerPermissions.setJwtGroup(id: string, groupName: string,
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyContainerPermissionsSetJwtGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsSetJwtGroupResponse`
 
@@ -3762,7 +3542,7 @@ client.api.proxy.containerPermissions.setJwtGroup(id: string, groupName: string,
 Set password authentication group (container)
 
 ```typescript
-client.api.proxy.containerPermissions.setPasswordGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetPasswordGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsSetPasswordGroupResponse>
+client.api.proxy.containerPermissions.setPasswordGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetPasswordGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetPasswordGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3771,7 +3551,6 @@ client.api.proxy.containerPermissions.setPasswordGroup(id: string, groupName: st
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyContainerPermissionsSetPasswordGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsSetPasswordGroupResponse`
 
@@ -3786,7 +3565,7 @@ client.api.proxy.containerPermissions.setPasswordGroup(id: string, groupName: st
 Set token authentication group (container)
 
 ```typescript
-client.api.proxy.containerPermissions.setTokenGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetTokenGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyContainerPermissionsSetTokenGroupResponse>
+client.api.proxy.containerPermissions.setTokenGroup(id: string, groupName: string, data: ApiProxyContainerPermissionsSetTokenGroupRequest, options: { ifMatch: string }): Promise<ApiProxyContainerPermissionsSetTokenGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3795,7 +3574,6 @@ client.api.proxy.containerPermissions.setTokenGroup(id: string, groupName: strin
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyContainerPermissionsSetTokenGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyContainerPermissionsSetTokenGroupResponse`
 
@@ -3812,13 +3590,12 @@ client.api.proxy.containerPermissions.setTokenGroup(id: string, groupName: strin
 List container proxy groups
 
 ```typescript
-client.api.proxy.groups.list(id: string, options?: { cache?: boolean | number }): Promise<ApiProxyGroupsListResponse>
+client.api.proxy.groups.list(id: string): Promise<ApiProxyGroupsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyGroupsListResponse`
 
@@ -3835,7 +3612,7 @@ client.api.proxy.groups.list(id: string, options?: { cache?: boolean | number })
 Clear all hooks for a service
 
 ```typescript
-client.api.proxy.hooks.clear(id: string, service: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyHooksClearResponse>
+client.api.proxy.hooks.clear(id: string, service: string, options: { ifMatch: string }): Promise<ApiProxyHooksClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3843,7 +3620,6 @@ client.api.proxy.hooks.clear(id: string, service: string, options: { ifMatch: st
 | `id` | `string` | Yes | path | Container ID |
 | `service` | `string` | Yes | path | Service name |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksClearResponse`
 
@@ -3858,7 +3634,7 @@ client.api.proxy.hooks.clear(id: string, service: string, options: { ifMatch: st
 Append or insert a new hook
 
 ```typescript
-client.api.proxy.hooks.create(id: string, service: string, data: ApiProxyHooksCreateRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyHooksCreateResponse>
+client.api.proxy.hooks.create(id: string, service: string, data: ApiProxyHooksCreateRequest, options: { ifMatch: string }): Promise<ApiProxyHooksCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3867,7 +3643,6 @@ client.api.proxy.hooks.create(id: string, service: string, data: ApiProxyHooksCr
 | `service` | `string` | Yes | path | Service name |
 | `data` | `ApiProxyHooksCreateRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksCreateResponse`
 
@@ -3882,7 +3657,7 @@ client.api.proxy.hooks.create(id: string, service: string, data: ApiProxyHooksCr
 Remove a hook
 
 ```typescript
-client.api.proxy.hooks.delete(id: string, service: string, hookId: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyHooksDeleteResponse>
+client.api.proxy.hooks.delete(id: string, service: string, hookId: string, options: { ifMatch: string }): Promise<ApiProxyHooksDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3891,7 +3666,6 @@ client.api.proxy.hooks.delete(id: string, service: string, hookId: string, optio
 | `service` | `string` | Yes | path | Service name |
 | `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksDeleteResponse`
 
@@ -3906,7 +3680,7 @@ client.api.proxy.hooks.delete(id: string, service: string, hookId: string, optio
 Get a single hook by id
 
 ```typescript
-client.api.proxy.hooks.get(id: string, service: string, hookId: string, options?: { cache?: boolean | number }): Promise<ApiProxyHooksGetResponse>
+client.api.proxy.hooks.get(id: string, service: string, hookId: string): Promise<ApiProxyHooksGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3914,7 +3688,6 @@ client.api.proxy.hooks.get(id: string, service: string, hookId: string, options?
 | `id` | `string` | Yes | path | Container ID |
 | `service` | `string` | Yes | path | Service name |
 | `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksGetResponse`
 
@@ -3929,13 +3702,12 @@ client.api.proxy.hooks.get(id: string, service: string, hookId: string, options?
 List all proxy hooks for a container
 
 ```typescript
-client.api.proxy.hooks.list(id: string, options?: { cache?: boolean | number }): Promise<ApiProxyHooksListResponse>
+client.api.proxy.hooks.list(id: string): Promise<ApiProxyHooksListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksListResponse`
 
@@ -3950,14 +3722,13 @@ client.api.proxy.hooks.list(id: string, options?: { cache?: boolean | number }):
 List hooks for a specific service
 
 ```typescript
-client.api.proxy.hooks.listByService(id: string, service: string, options?: { cache?: boolean | number }): Promise<ApiProxyHooksListByServiceResponse>
+client.api.proxy.hooks.listByService(id: string, service: string): Promise<ApiProxyHooksListByServiceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `service` | `string` | Yes | path | Service name |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksListByServiceResponse`
 
@@ -3972,7 +3743,7 @@ client.api.proxy.hooks.listByService(id: string, service: string, options?: { ca
 Move a hook to a new position
 
 ```typescript
-client.api.proxy.hooks.move(id: string, service: string, hookId: string, data: ApiProxyHooksMoveRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyHooksMoveResponse>
+client.api.proxy.hooks.move(id: string, service: string, hookId: string, data: ApiProxyHooksMoveRequest, options: { ifMatch: string }): Promise<ApiProxyHooksMoveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3982,7 +3753,6 @@ client.api.proxy.hooks.move(id: string, service: string, hookId: string, data: A
 | `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
 | `data` | `ApiProxyHooksMoveRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksMoveResponse`
 
@@ -3997,7 +3767,7 @@ client.api.proxy.hooks.move(id: string, service: string, hookId: string, data: A
 Replace a hook in place
 
 ```typescript
-client.api.proxy.hooks.set(id: string, service: string, hookId: string, data: ApiProxyHooksSetRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyHooksSetResponse>
+client.api.proxy.hooks.set(id: string, service: string, hookId: string, data: ApiProxyHooksSetRequest, options: { ifMatch: string }): Promise<ApiProxyHooksSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4007,7 +3777,6 @@ client.api.proxy.hooks.set(id: string, service: string, hookId: string, data: Ap
 | `hookId` | `string` | Yes | path | 26-char Crockford base32 ULID (lowercase) |
 | `data` | `ApiProxyHooksSetRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyHooksSetResponse`
 
@@ -4024,7 +3793,7 @@ client.api.proxy.hooks.set(id: string, service: string, hookId: string, data: Ap
 Remove all program permissions for a project group
 
 ```typescript
-client.api.proxy.projectPermissions.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsClearGroupPermissionsResponse>
+client.api.proxy.projectPermissions.clearGroupPermissions(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsClearGroupPermissionsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4032,7 +3801,6 @@ client.api.proxy.projectPermissions.clearGroupPermissions(id: string, groupName:
 | `id` | `string` | Yes | path | Project ID |
 | `groupName` | `string` | Yes | path | Group name |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsClearGroupPermissionsResponse`
 
@@ -4047,14 +3815,13 @@ client.api.proxy.projectPermissions.clearGroupPermissions(id: string, groupName:
 Delete project proxy permissions
 
 ```typescript
-client.api.proxy.projectPermissions.delete(id: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsDeleteResponse>
+client.api.proxy.projectPermissions.delete(id: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsDeleteResponse`
 
@@ -4069,7 +3836,7 @@ client.api.proxy.projectPermissions.delete(id: string, options: { ifMatch: strin
 Remove project authentication group
 
 ```typescript
-client.api.proxy.projectPermissions.deleteAuthGroup(id: string, groupName: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsDeleteAuthGroupResponse>
+client.api.proxy.projectPermissions.deleteAuthGroup(id: string, groupName: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsDeleteAuthGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4077,7 +3844,6 @@ client.api.proxy.projectPermissions.deleteAuthGroup(id: string, groupName: strin
 | `id` | `string` | Yes | path | Project ID |
 | `groupName` | `string` | Yes | path | Group name to remove |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsDeleteAuthGroupResponse`
 
@@ -4092,7 +3858,7 @@ client.api.proxy.projectPermissions.deleteAuthGroup(id: string, groupName: strin
 Remove a single program permission for a project group
 
 ```typescript
-client.api.proxy.projectPermissions.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsDeleteGroupPermissionResponse>
+client.api.proxy.projectPermissions.deleteGroupPermission(id: string, groupName: string, program: string, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsDeleteGroupPermissionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4101,7 +3867,6 @@ client.api.proxy.projectPermissions.deleteGroupPermission(id: string, groupName:
 | `groupName` | `string` | Yes | path | Group name |
 | `program` | `string` | Yes | path | Program name (e.g., http, ssh, files) |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsDeleteGroupPermissionResponse`
 
@@ -4160,13 +3925,12 @@ client.api.proxy.projectPermissions.enable(id: string, data: object, options: { 
 Get project proxy permissions
 
 ```typescript
-client.api.proxy.projectPermissions.get(id: string, options?: { cache?: boolean | number }): Promise<ApiProxyProjectPermissionsGetResponse>
+client.api.proxy.projectPermissions.get(id: string): Promise<ApiProxyProjectPermissionsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Project ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsGetResponse`
 
@@ -4181,7 +3945,7 @@ client.api.proxy.projectPermissions.get(id: string, options?: { cache?: boolean 
 Replace project proxy permissions JSON
 
 ```typescript
-client.api.proxy.projectPermissions.set(id: string, data: ApiProxyProjectPermissionsSetRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsSetResponse>
+client.api.proxy.projectPermissions.set(id: string, data: ApiProxyProjectPermissionsSetRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4189,7 +3953,6 @@ client.api.proxy.projectPermissions.set(id: string, data: ApiProxyProjectPermiss
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiProxyProjectPermissionsSetRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsSetResponse`
 
@@ -4204,7 +3967,7 @@ client.api.proxy.projectPermissions.set(id: string, data: ApiProxyProjectPermiss
 Update project default proxy permission policy
 
 ```typescript
-client.api.proxy.projectPermissions.setDefault(id: string, data: ApiProxyProjectPermissionsSetDefaultRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsSetDefaultResponse>
+client.api.proxy.projectPermissions.setDefault(id: string, data: ApiProxyProjectPermissionsSetDefaultRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetDefaultResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4212,7 +3975,6 @@ client.api.proxy.projectPermissions.setDefault(id: string, data: ApiProxyProject
 | `id` | `string` | Yes | path | Project ID |
 | `data` | `ApiProxyProjectPermissionsSetDefaultRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsSetDefaultResponse`
 
@@ -4227,7 +3989,7 @@ client.api.proxy.projectPermissions.setDefault(id: string, data: ApiProxyProject
 Set project group program permission
 
 ```typescript
-client.api.proxy.projectPermissions.setGroupPermission(id: string, groupName: string, data: ApiProxyProjectPermissionsSetGroupPermissionRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsSetGroupPermissionResponse>
+client.api.proxy.projectPermissions.setGroupPermission(id: string, groupName: string, data: ApiProxyProjectPermissionsSetGroupPermissionRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetGroupPermissionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4236,7 +3998,6 @@ client.api.proxy.projectPermissions.setGroupPermission(id: string, groupName: st
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyProjectPermissionsSetGroupPermissionRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsSetGroupPermissionResponse`
 
@@ -4251,7 +4012,7 @@ client.api.proxy.projectPermissions.setGroupPermission(id: string, groupName: st
 Set IP authentication group (project)
 
 ```typescript
-client.api.proxy.projectPermissions.setIpGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetIpGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsSetIpGroupResponse>
+client.api.proxy.projectPermissions.setIpGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetIpGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetIpGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4260,7 +4021,6 @@ client.api.proxy.projectPermissions.setIpGroup(id: string, groupName: string, da
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyProjectPermissionsSetIpGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsSetIpGroupResponse`
 
@@ -4275,7 +4035,7 @@ client.api.proxy.projectPermissions.setIpGroup(id: string, groupName: string, da
 Set JWT authentication group (project)
 
 ```typescript
-client.api.proxy.projectPermissions.setJwtGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetJwtGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsSetJwtGroupResponse>
+client.api.proxy.projectPermissions.setJwtGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetJwtGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetJwtGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4284,7 +4044,6 @@ client.api.proxy.projectPermissions.setJwtGroup(id: string, groupName: string, d
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyProjectPermissionsSetJwtGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsSetJwtGroupResponse`
 
@@ -4299,7 +4058,7 @@ client.api.proxy.projectPermissions.setJwtGroup(id: string, groupName: string, d
 Set password authentication group (project)
 
 ```typescript
-client.api.proxy.projectPermissions.setPasswordGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetPasswordGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsSetPasswordGroupResponse>
+client.api.proxy.projectPermissions.setPasswordGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetPasswordGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetPasswordGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4308,7 +4067,6 @@ client.api.proxy.projectPermissions.setPasswordGroup(id: string, groupName: stri
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyProjectPermissionsSetPasswordGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsSetPasswordGroupResponse`
 
@@ -4323,7 +4081,7 @@ client.api.proxy.projectPermissions.setPasswordGroup(id: string, groupName: stri
 Set token authentication group (project)
 
 ```typescript
-client.api.proxy.projectPermissions.setTokenGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetTokenGroupRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxyProjectPermissionsSetTokenGroupResponse>
+client.api.proxy.projectPermissions.setTokenGroup(id: string, groupName: string, data: ApiProxyProjectPermissionsSetTokenGroupRequest, options: { ifMatch: string }): Promise<ApiProxyProjectPermissionsSetTokenGroupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4332,7 +4090,6 @@ client.api.proxy.projectPermissions.setTokenGroup(id: string, groupName: string,
 | `groupName` | `string` | Yes | path |  |
 | `data` | `ApiProxyProjectPermissionsSetTokenGroupRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition — read current file_version from GET first |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyProjectPermissionsSetTokenGroupResponse`
 
@@ -4349,14 +4106,13 @@ client.api.proxy.projectPermissions.setTokenGroup(id: string, groupName: string,
 Get merged proxy view for a service
 
 ```typescript
-client.api.proxy.services.get(id: string, service: string, options?: { cache?: boolean | number }): Promise<ApiProxyServicesGetResponse>
+client.api.proxy.services.get(id: string, service: string): Promise<ApiProxyServicesGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
 | `service` | `string` | Yes | path | Service name |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyServicesGetResponse`
 
@@ -4371,13 +4127,12 @@ client.api.proxy.services.get(id: string, service: string, options?: { cache?: b
 List services referenced in proxy config
 
 ```typescript
-client.api.proxy.services.list(id: string, options?: { cache?: boolean | number }): Promise<ApiProxyServicesListResponse>
+client.api.proxy.services.list(id: string): Promise<ApiProxyServicesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxyServicesListResponse`
 
@@ -4394,13 +4149,12 @@ client.api.proxy.services.list(id: string, options?: { cache?: boolean | number 
 Get container proxy root settings
 
 ```typescript
-client.api.proxy.settings.get(id: string, options?: { cache?: boolean | number }): Promise<ApiProxySettingsGetResponse>
+client.api.proxy.settings.get(id: string): Promise<ApiProxySettingsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxySettingsGetResponse`
 
@@ -4415,7 +4169,7 @@ client.api.proxy.settings.get(id: string, options?: { cache?: boolean | number }
 Update container proxy root settings
 
 ```typescript
-client.api.proxy.settings.update(id: string, data: ApiProxySettingsUpdateRequest, options: { ifMatch: string; cache?: boolean | number }): Promise<ApiProxySettingsUpdateResponse>
+client.api.proxy.settings.update(id: string, data: ApiProxySettingsUpdateRequest, options: { ifMatch: string }): Promise<ApiProxySettingsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4423,7 +4177,6 @@ client.api.proxy.settings.update(id: string, data: ApiProxySettingsUpdateRequest
 | `id` | `string` | Yes | path | Container ID |
 | `data` | `ApiProxySettingsUpdateRequest` | Yes | body |  |
 | `ifMatch` | `string` | Yes | header | file:v&lt;N&gt; ETag precondition |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiProxySettingsUpdateResponse`
 
@@ -4440,13 +4193,12 @@ client.api.proxy.settings.update(id: string, data: ApiProxySettingsUpdateRequest
 List your realm IDs
 
 ```typescript
-client.api.realms.list(options?: { include_usage?: boolean; cache?: boolean | number }): Promise<ApiRealmsListResponse>
+client.api.realms.list(options?: { include_usage?: boolean }): Promise<ApiRealmsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `include_usage` | `boolean` | No | query | Include resource counts per realm_id (projects, containers, servers, auth_tokens). Adds "usage" object to response data. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiRealmsListResponse`
 
@@ -4463,14 +4215,13 @@ client.api.realms.list(options?: { include_usage?: boolean; cache?: boolean | nu
 Extend rental
 
 ```typescript
-client.api.servers.extend(id: string, data: ApiServersExtendRequest, options?: { cache?: boolean | number }): Promise<ApiServersExtendResponse>
+client.api.servers.extend(id: string, data: ApiServersExtendRequest): Promise<ApiServersExtendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiServersExtendRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersExtendResponse`
 
@@ -4485,13 +4236,12 @@ client.api.servers.extend(id: string, data: ApiServersExtendRequest, options?: {
 Get rental details
 
 ```typescript
-client.api.servers.get(id: string, options?: { cache?: boolean | number }): Promise<ApiServersGetResponse>
+client.api.servers.get(id: string): Promise<ApiServersGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersGetResponse`
 
@@ -4506,13 +4256,12 @@ client.api.servers.get(id: string, options?: { cache?: boolean | number }): Prom
 Get live runtime info for a rented server or subserver
 
 ```typescript
-client.api.servers.getStats(id: string, options?: { cache?: boolean | number }): Promise<ApiServersGetStatsResponse>
+client.api.servers.getStats(id: string): Promise<ApiServersGetStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersGetStatsResponse`
 
@@ -4527,12 +4276,8 @@ client.api.servers.getStats(id: string, options?: { cache?: boolean | number }):
 List user rentals
 
 ```typescript
-client.api.servers.list(options?: { cache?: boolean | number }): Promise<ApiServersListResponse>
+client.api.servers.list(): Promise<ApiServersListResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersListResponse`
 
@@ -4547,12 +4292,8 @@ client.api.servers.list(options?: { cache?: boolean | number }): Promise<ApiServ
 List user rentals (collect all pages)
 
 ```typescript
-client.api.servers.listAll(options?: { cache?: boolean | number }): Promise<unknown[]>
+client.api.servers.listAll(): Promise<unknown[]>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4565,12 +4306,8 @@ client.api.servers.listAll(options?: { cache?: boolean | number }): Promise<unkn
 List user rentals (async iterator)
 
 ```typescript
-client.api.servers.listIterator(options?: { cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.servers.listIterator(): AsyncIterableIterator<unknown>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4583,7 +4320,7 @@ client.api.servers.listIterator(options?: { cache?: boolean | number }): AsyncIt
 Browse rental marketplace
 
 ```typescript
-client.api.servers.listMarketplace(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean; cache?: boolean | number }): Promise<ApiServersListMarketplaceResponse>
+client.api.servers.listMarketplace(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean }): Promise<ApiServersListMarketplaceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4604,7 +4341,6 @@ client.api.servers.listMarketplace(options?: { country?: string; region?: string
 | `unlimited_traffic_only` | `boolean` | No | query | Show only servers with unlimited traffic |
 | `category` | `"compute" \| "memory" \| "storage" \| "general" \| "gpu"` | No | query | Filter by server category |
 | `featured_only` | `boolean` | No | query | Show only featured servers |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersListMarketplaceResponse`
 
@@ -4619,7 +4355,7 @@ client.api.servers.listMarketplace(options?: { country?: string; region?: string
 Browse rental marketplace (collect all pages)
 
 ```typescript
-client.api.servers.listMarketplaceAll(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean; cache?: boolean | number }): Promise<unknown[]>
+client.api.servers.listMarketplaceAll(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4640,7 +4376,6 @@ client.api.servers.listMarketplaceAll(options?: { country?: string; region?: str
 | `unlimited_traffic_only` | `boolean` | No | query | Show only servers with unlimited traffic |
 | `category` | `"compute" \| "memory" \| "storage" \| "general" \| "gpu"` | No | query | Filter by server category |
 | `featured_only` | `boolean` | No | query | Show only featured servers |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4653,7 +4388,7 @@ client.api.servers.listMarketplaceAll(options?: { country?: string; region?: str
 Browse rental marketplace (async iterator)
 
 ```typescript
-client.api.servers.listMarketplaceIterator(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.servers.listMarketplaceIterator(options?: { country?: string; region?: string; max_price_per_day?: number; available_durations?: number[]; min_cpu_cores?: number; min_cpu_score?: number; cpu_score_type?: "passmark" | "geekbench_single" | "geekbench_multi"; min_ram_gb?: number; ram_types?: ("DDR3" | "DDR4" | "DDR5" | "ECC DDR4" | "ECC DDR5")[]; min_total_storage_gb?: number; disk_types?: ("HDD" | "SSD" | "NVMe" | "SAS")[]; min_bandwidth_mbps?: number; min_traffic_tb?: number; unlimited_traffic_only?: boolean; category?: "compute" | "memory" | "storage" | "general" | "gpu"; featured_only?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4674,7 +4409,6 @@ client.api.servers.listMarketplaceIterator(options?: { country?: string; region?
 | `unlimited_traffic_only` | `boolean` | No | query | Show only servers with unlimited traffic |
 | `category` | `"compute" \| "memory" \| "storage" \| "general" \| "gpu"` | No | query | Filter by server category |
 | `featured_only` | `boolean` | No | query | Show only featured servers |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4687,12 +4421,8 @@ client.api.servers.listMarketplaceIterator(options?: { country?: string; region?
 Get available server regions
 
 ```typescript
-client.api.servers.listRegions(options?: { cache?: boolean | number }): Promise<ApiServersListRegionsResponse>
+client.api.servers.listRegions(): Promise<ApiServersListRegionsResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersListRegionsResponse`
 
@@ -4707,14 +4437,13 @@ client.api.servers.listRegions(options?: { cache?: boolean | number }): Promise<
 Rent server
 
 ```typescript
-client.api.servers.rent(id: string, data: ApiServersRentRequest, options?: { cache?: boolean | number }): Promise<ApiServersRentResponse>
+client.api.servers.rent(id: string, data: ApiServersRentRequest): Promise<ApiServersRentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiServersRentRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersRentResponse`
 
@@ -4731,7 +4460,7 @@ client.api.servers.rent(id: string, data: ApiServersRentRequest, options?: { cac
 Get available commands
 
 ```typescript
-client.api.servers.commands.list(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical"; cache?: boolean | number }): Promise<ApiServersCommandsListResponse>
+client.api.servers.commands.list(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): Promise<ApiServersCommandsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4739,7 +4468,6 @@ client.api.servers.commands.list(serverId: string, options?: { category?: string
 | `serverId` | `string` | Yes | path | Server ID to get available commands for |
 | `category` | `string` | No | query | Filter by command category |
 | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersCommandsListResponse`
 
@@ -4754,7 +4482,7 @@ client.api.servers.commands.list(serverId: string, options?: { category?: string
 Get available commands (collect all pages)
 
 ```typescript
-client.api.servers.commands.listAll(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical"; cache?: boolean | number }): Promise<unknown[]>
+client.api.servers.commands.listAll(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4762,7 +4490,6 @@ client.api.servers.commands.listAll(serverId: string, options?: { category?: str
 | `serverId` | `string` | Yes | path | Server ID to get available commands for |
 | `category` | `string` | No | query | Filter by command category |
 | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4775,7 +4502,7 @@ client.api.servers.commands.listAll(serverId: string, options?: { category?: str
 Get available commands (async iterator)
 
 ```typescript
-client.api.servers.commands.listIterator(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical"; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.servers.commands.listIterator(serverId: string, options?: { category?: string; risk_level?: "low" | "medium" | "high" | "critical" }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4783,7 +4510,6 @@ client.api.servers.commands.listIterator(serverId: string, options?: { category?
 | `serverId` | `string` | Yes | path | Server ID to get available commands for |
 | `category` | `string` | No | query | Filter by command category |
 | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | No | query | Filter by maximum risk level |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4796,14 +4522,13 @@ client.api.servers.commands.listIterator(serverId: string, options?: { category?
 Execute server command
 
 ```typescript
-client.api.servers.commands.run(serverId: string, data: ApiServersCommandsRunRequest, options?: { cache?: boolean | number }): Promise<ApiServersCommandsRunResponse>
+client.api.servers.commands.run(serverId: string, data: ApiServersCommandsRunRequest): Promise<ApiServersCommandsRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `serverId` | `string` | Yes | path | Server ID to execute command on |
 | `data` | `ApiServersCommandsRunRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersCommandsRunResponse`
 
@@ -4820,13 +4545,12 @@ client.api.servers.commands.run(serverId: string, data: ApiServersCommandsRunReq
 Status of a paid subserver operation
 
 ```typescript
-client.api.servers.jobs.get(id: string, options?: { cache?: boolean | number }): Promise<ApiServersJobsGetResponse>
+client.api.servers.jobs.get(id: string): Promise<ApiServersJobsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersJobsGetResponse`
 
@@ -4843,12 +4567,8 @@ client.api.servers.jobs.get(id: string, options?: { cache?: boolean | number }):
 Browse machines available to order
 
 ```typescript
-client.api.servers.offers.list(options?: { cache?: boolean | number }): Promise<ApiServersOffersListResponse>
+client.api.servers.offers.list(): Promise<ApiServersOffersListResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersOffersListResponse`
 
@@ -4863,14 +4583,13 @@ client.api.servers.offers.list(options?: { cache?: boolean | number }): Promise<
 Reserve an offer (charges immediately)
 
 ```typescript
-client.api.servers.offers.reserve(id: string, data: ApiServersOffersReserveRequest, options?: { cache?: boolean | number }): Promise<ApiServersOffersReserveResponse>
+client.api.servers.offers.reserve(id: string, data: ApiServersOffersReserveRequest): Promise<ApiServersOffersReserveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiServersOffersReserveRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersOffersReserveResponse`
 
@@ -4887,13 +4606,12 @@ client.api.servers.offers.reserve(id: string, data: ApiServersOffersReserveReque
 List subserver plans available to you
 
 ```typescript
-client.api.servers.plans.list(options?: { locale?: string; cache?: boolean | number }): Promise<ApiServersPlansListResponse>
+client.api.servers.plans.list(options?: { locale?: string }): Promise<ApiServersPlansListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `locale` | `string` | No | query | Language tag such as en, fr or pt-BR. Overrides Accept-Language. Unknown or invalid values are served as en. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersPlansListResponse`
 
@@ -4908,13 +4626,12 @@ client.api.servers.plans.list(options?: { locale?: string; cache?: boolean | num
 Quote a paid subserver purchase
 
 ```typescript
-client.api.servers.plans.quote(options: { plan_id: string; cache?: boolean | number }): Promise<ApiServersPlansQuoteResponse>
+client.api.servers.plans.quote(options: { plan_id: string }): Promise<ApiServersPlansQuoteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `plan_id` | `string` | Yes | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersPlansQuoteResponse`
 
@@ -4931,13 +4648,12 @@ client.api.servers.plans.quote(options: { plan_id: string; cache?: boolean | num
 One of your reservations
 
 ```typescript
-client.api.servers.reservations.get(id: string, options?: { cache?: boolean | number }): Promise<ApiServersReservationsGetResponse>
+client.api.servers.reservations.get(id: string): Promise<ApiServersReservationsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersReservationsGetResponse`
 
@@ -4952,14 +4668,13 @@ client.api.servers.reservations.get(id: string, options?: { cache?: boolean | nu
 Your reservations
 
 ```typescript
-client.api.servers.reservations.list(options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<ApiServersReservationsListResponse>
+client.api.servers.reservations.list(options?: { limit?: number; offset?: number }): Promise<ApiServersReservationsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersReservationsListResponse`
 
@@ -4976,13 +4691,12 @@ client.api.servers.reservations.list(options?: { limit?: number; offset?: number
 Buy a paid subserver (charges immediately)
 
 ```typescript
-client.api.servers.subscriptions.buy(data: ApiServersSubscriptionsBuyRequest, options?: { cache?: boolean | number }): Promise<ApiServersSubscriptionsBuyResponse>
+client.api.servers.subscriptions.buy(data: ApiServersSubscriptionsBuyRequest): Promise<ApiServersSubscriptionsBuyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiServersSubscriptionsBuyRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersSubscriptionsBuyResponse`
 
@@ -4997,13 +4711,12 @@ client.api.servers.subscriptions.buy(data: ApiServersSubscriptionsBuyRequest, op
 Cancel a paid subserver subscription
 
 ```typescript
-client.api.servers.subscriptions.cancel(id: string, options?: { cache?: boolean | number }): Promise<ApiServersSubscriptionsCancelResponse>
+client.api.servers.subscriptions.cancel(id: string): Promise<ApiServersSubscriptionsCancelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersSubscriptionsCancelResponse`
 
@@ -5058,14 +4771,13 @@ client.api.servers.subscriptions.enableAutoRenew(id: string): Promise<any>
 One of your paid subserver subscriptions
 
 ```typescript
-client.api.servers.subscriptions.get(id: string, options?: { locale?: string; cache?: boolean | number }): Promise<ApiServersSubscriptionsGetResponse>
+client.api.servers.subscriptions.get(id: string, options?: { locale?: string }): Promise<ApiServersSubscriptionsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `locale` | `string` | No | query | Language tag for plan.title and plan.type_label, such as en, fr or pt-BR. Overrides Accept-Language. Unknown or invalid values are served as en. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersSubscriptionsGetResponse`
 
@@ -5080,7 +4792,7 @@ client.api.servers.subscriptions.get(id: string, options?: { locale?: string; ca
 List your paid subserver subscriptions
 
 ```typescript
-client.api.servers.subscriptions.list(options?: { limit?: number; offset?: number; locale?: string; cache?: boolean | number }): Promise<ApiServersSubscriptionsListResponse>
+client.api.servers.subscriptions.list(options?: { limit?: number; offset?: number; locale?: string }): Promise<ApiServersSubscriptionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5088,7 +4800,6 @@ client.api.servers.subscriptions.list(options?: { limit?: number; offset?: numbe
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `locale` | `string` | No | query | Language tag for plan.title and plan.type_label, such as en, fr or pt-BR. Overrides Accept-Language. Unknown or invalid values are served as en. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersSubscriptionsListResponse`
 
@@ -5103,14 +4814,13 @@ client.api.servers.subscriptions.list(options?: { limit?: number; offset?: numbe
 Pay a held subscription and resume it (charges one month)
 
 ```typescript
-client.api.servers.subscriptions.pay(id: string, data: ApiServersSubscriptionsPayRequest, options?: { cache?: boolean | number }): Promise<ApiServersSubscriptionsPayResponse>
+client.api.servers.subscriptions.pay(id: string, data: ApiServersSubscriptionsPayRequest): Promise<ApiServersSubscriptionsPayResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiServersSubscriptionsPayRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersSubscriptionsPayResponse`
 
@@ -5125,7 +4835,7 @@ client.api.servers.subscriptions.pay(id: string, data: ApiServersSubscriptionsPa
 Quote an upgrade or a payment
 
 ```typescript
-client.api.servers.subscriptions.quote(id: string, options: { action: "upgrade" | "pay"; plan_id?: string; cache?: boolean | number }): Promise<ApiServersSubscriptionsQuoteResponse>
+client.api.servers.subscriptions.quote(id: string, options: { action: "upgrade" | "pay"; plan_id?: string }): Promise<ApiServersSubscriptionsQuoteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5133,7 +4843,6 @@ client.api.servers.subscriptions.quote(id: string, options: { action: "upgrade" 
 | `id` | `string` | Yes | path |  |
 | `action` | `"upgrade" \| "pay"` | Yes | query |  |
 | `plan_id` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersSubscriptionsQuoteResponse`
 
@@ -5148,14 +4857,13 @@ client.api.servers.subscriptions.quote(id: string, options: { action: "upgrade" 
 Upgrade a paid subserver (charges the difference)
 
 ```typescript
-client.api.servers.subscriptions.upgrade(id: string, data: ApiServersSubscriptionsUpgradeRequest, options?: { cache?: boolean | number }): Promise<ApiServersSubscriptionsUpgradeResponse>
+client.api.servers.subscriptions.upgrade(id: string, data: ApiServersSubscriptionsUpgradeRequest): Promise<ApiServersSubscriptionsUpgradeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiServersSubscriptionsUpgradeRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiServersSubscriptionsUpgradeResponse`
 
@@ -5172,14 +4880,13 @@ client.api.servers.subscriptions.upgrade(id: string, data: ApiServersSubscriptio
 Create container snapshot
 
 ```typescript
-client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest, options?: { cache?: boolean | number }): Promise<ApiSnapshotsCreateResponse>
+client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest): Promise<ApiSnapshotsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to create snapshot for |
 | `data` | `ApiSnapshotsCreateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiSnapshotsCreateResponse`
 
@@ -5194,14 +4901,13 @@ client.api.snapshots.create(id: string, data: ApiSnapshotsCreateRequest, options
 Delete container snapshot
 
 ```typescript
-client.api.snapshots.delete(id: string, name: string, options?: { cache?: boolean | number }): Promise<ApiSnapshotsDeleteResponse>
+client.api.snapshots.delete(id: string, name: string): Promise<ApiSnapshotsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container |
 | `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiSnapshotsDeleteResponse`
 
@@ -5216,13 +4922,12 @@ client.api.snapshots.delete(id: string, name: string, options?: { cache?: boolea
 Get container snapshots
 
 ```typescript
-client.api.snapshots.list(id: string, options?: { cache?: boolean | number }): Promise<ApiSnapshotsListResponse>
+client.api.snapshots.list(id: string): Promise<ApiSnapshotsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to retrieve snapshots for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiSnapshotsListResponse`
 
@@ -5237,13 +4942,12 @@ client.api.snapshots.list(id: string, options?: { cache?: boolean | number }): P
 Get container snapshots (collect all pages)
 
 ```typescript
-client.api.snapshots.listAll(id: string, options?: { cache?: boolean | number }): Promise<unknown[]>
+client.api.snapshots.listAll(id: string): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to retrieve snapshots for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -5256,13 +4960,12 @@ client.api.snapshots.listAll(id: string, options?: { cache?: boolean | number })
 Get container snapshots (async iterator)
 
 ```typescript
-client.api.snapshots.listIterator(id: string, options?: { cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.snapshots.listIterator(id: string): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to retrieve snapshots for |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5275,14 +4978,13 @@ client.api.snapshots.listIterator(id: string, options?: { cache?: boolean | numb
 Restore container from snapshot
 
 ```typescript
-client.api.snapshots.restore(id: string, name: string, options?: { cache?: boolean | number }): Promise<ApiSnapshotsRestoreResponse>
+client.api.snapshots.restore(id: string, name: string): Promise<ApiSnapshotsRestoreResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Unique identifier of the container to restore |
 | `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiSnapshotsRestoreResponse`
 
@@ -5297,7 +4999,7 @@ client.api.snapshots.restore(id: string, name: string, options?: { cache?: boole
 Update snapshot alias
 
 ```typescript
-client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAliasRequest, options?: { cache?: boolean | number }): Promise<ApiSnapshotsSetAliasResponse>
+client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAliasRequest): Promise<ApiSnapshotsSetAliasResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5305,7 +5007,6 @@ client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAli
 | `id` | `string` | Yes | path | Unique identifier of the container |
 | `name` | `string` | Yes | path | The snapshot's canonical name as returned by the list endpoint. For a snapshot created with an alias this is the sanitized alias (letters, digits, underscore, hyphen; leading and trailing hyphens and underscores stripped; at most 64 characters); without an alias — or when sanitization leaves nothing — a timestamped snap-YYYYMMDD-HHMMSS. |
 | `data` | `ApiSnapshotsSetAliasRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiSnapshotsSetAliasResponse`
 
@@ -5322,14 +5023,13 @@ client.api.snapshots.setAlias(id: string, name: string, data: ApiSnapshotsSetAli
 Create storage share
 
 ```typescript
-client.api.storage.shares.create(id: string, data: ApiStorageSharesCreateRequest, options?: { cache?: boolean | number }): Promise<ApiStorageSharesCreateResponse>
+client.api.storage.shares.create(id: string, data: ApiStorageSharesCreateRequest): Promise<ApiStorageSharesCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Source container ID |
 | `data` | `ApiStorageSharesCreateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesCreateResponse`
 
@@ -5344,13 +5044,12 @@ client.api.storage.shares.create(id: string, data: ApiStorageSharesCreateRequest
 Delete storage share
 
 ```typescript
-client.api.storage.shares.delete(shareId: string, options?: { cache?: boolean | number }): Promise<ApiStorageSharesDeleteResponse>
+client.api.storage.shares.delete(shareId: string): Promise<ApiStorageSharesDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `shareId` | `string` | Yes | path | Share ID (globally unique, no container ID needed) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesDeleteResponse`
 
@@ -5365,14 +5064,13 @@ client.api.storage.shares.delete(shareId: string, options?: { cache?: boolean | 
 Get storage share
 
 ```typescript
-client.api.storage.shares.get(id: string, shareId: string, options?: { cache?: boolean | number }): Promise<ApiStorageSharesGetResponse>
+client.api.storage.shares.get(id: string, shareId: string): Promise<ApiStorageSharesGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Source container ID |
 | `shareId` | `string` | Yes | path | Share ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesGetResponse`
 
@@ -5387,13 +5085,12 @@ client.api.storage.shares.get(id: string, shareId: string, options?: { cache?: b
 List all your storage shares
 
 ```typescript
-client.api.storage.shares.list(options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiStorageSharesListResponse>
+client.api.storage.shares.list(options?: { realm_id?: string }): Promise<ApiStorageSharesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesListResponse`
 
@@ -5408,13 +5105,12 @@ client.api.storage.shares.list(options?: { realm_id?: string; cache?: boolean | 
 List all your storage shares (collect all pages)
 
 ```typescript
-client.api.storage.shares.listAll(options?: { realm_id?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.storage.shares.listAll(options?: { realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -5427,7 +5123,7 @@ client.api.storage.shares.listAll(options?: { realm_id?: string; cache?: boolean
 List storage shares
 
 ```typescript
-client.api.storage.shares.listByContainer(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string; cache?: boolean | number }): Promise<ApiStorageSharesListByContainerResponse>
+client.api.storage.shares.listByContainer(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): Promise<ApiStorageSharesListByContainerResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5439,7 +5135,6 @@ client.api.storage.shares.listByContainer(id: string, options?: { target_type?: 
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `include_expired` | `boolean` | No | query | Include expired shares (default: false) |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesListByContainerResponse`
 
@@ -5454,7 +5149,7 @@ client.api.storage.shares.listByContainer(id: string, options?: { target_type?: 
 List storage shares (collect all pages)
 
 ```typescript
-client.api.storage.shares.listByContainerAll(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.storage.shares.listByContainerAll(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5466,7 +5161,6 @@ client.api.storage.shares.listByContainerAll(id: string, options?: { target_type
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `include_expired` | `boolean` | No | query | Include expired shares (default: false) |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -5479,7 +5173,7 @@ client.api.storage.shares.listByContainerAll(id: string, options?: { target_type
 List storage shares (async iterator)
 
 ```typescript
-client.api.storage.shares.listByContainerIterator(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.storage.shares.listByContainerIterator(id: string, options?: { target_type?: "container" | "project"; label?: string; status?: "active" | "failed"; enabled?: boolean; include_expired?: boolean; realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5491,7 +5185,6 @@ client.api.storage.shares.listByContainerIterator(id: string, options?: { target
 | `enabled` | `boolean` | No | query | Filter by enabled status |
 | `include_expired` | `boolean` | No | query | Include expired shares (default: false) |
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5504,13 +5197,12 @@ client.api.storage.shares.listByContainerIterator(id: string, options?: { target
 Get all incoming shares
 
 ```typescript
-client.api.storage.shares.listIncoming(options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiStorageSharesListIncomingResponse>
+client.api.storage.shares.listIncoming(options?: { realm_id?: string }): Promise<ApiStorageSharesListIncomingResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesListIncomingResponse`
 
@@ -5525,13 +5217,12 @@ client.api.storage.shares.listIncoming(options?: { realm_id?: string; cache?: bo
 Get all incoming shares (collect all pages)
 
 ```typescript
-client.api.storage.shares.listIncomingAll(options?: { realm_id?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.storage.shares.listIncomingAll(options?: { realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -5544,13 +5235,12 @@ client.api.storage.shares.listIncomingAll(options?: { realm_id?: string; cache?:
 Get incoming shares
 
 ```typescript
-client.api.storage.shares.listIncomingByContainer(id: string, options?: { cache?: boolean | number }): Promise<ApiStorageSharesListIncomingByContainerResponse>
+client.api.storage.shares.listIncomingByContainer(id: string): Promise<ApiStorageSharesListIncomingByContainerResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | Container ID |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesListIncomingByContainerResponse`
 
@@ -5565,13 +5255,12 @@ client.api.storage.shares.listIncomingByContainer(id: string, options?: { cache?
 Get all incoming shares (async iterator)
 
 ```typescript
-client.api.storage.shares.listIncomingIterator(options?: { realm_id?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.storage.shares.listIncomingIterator(options?: { realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5584,13 +5273,12 @@ client.api.storage.shares.listIncomingIterator(options?: { realm_id?: string; ca
 List all your storage shares (async iterator)
 
 ```typescript
-client.api.storage.shares.listIterator(options?: { realm_id?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.storage.shares.listIterator(options?: { realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Filter by realm ID. Alternative to using realm subdomain in URL. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5645,7 +5333,7 @@ client.api.storage.shares.unmountIncoming(id: string, shareId: string): Promise<
 Update storage share
 
 ```typescript
-client.api.storage.shares.update(id: string, shareId: string, data: ApiStorageSharesUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiStorageSharesUpdateResponse>
+client.api.storage.shares.update(id: string, shareId: string, data: ApiStorageSharesUpdateRequest): Promise<ApiStorageSharesUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5653,7 +5341,6 @@ client.api.storage.shares.update(id: string, shareId: string, data: ApiStorageSh
 | `id` | `string` | Yes | path | Source container ID |
 | `shareId` | `string` | Yes | path | Share ID |
 | `data` | `ApiStorageSharesUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiStorageSharesUpdateResponse`
 
@@ -5670,13 +5357,12 @@ client.api.storage.shares.update(id: string, shareId: string, data: ApiStorageSh
 Mark an onboarding milestone as completed
 
 ```typescript
-client.api.users.completeOnboardingMilestone(data: ApiUsersCompleteOnboardingMilestoneRequest, options?: { cache?: boolean | number }): Promise<ApiUsersCompleteOnboardingMilestoneResponse>
+client.api.users.completeOnboardingMilestone(data: ApiUsersCompleteOnboardingMilestoneRequest): Promise<ApiUsersCompleteOnboardingMilestoneResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiUsersCompleteOnboardingMilestoneRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiUsersCompleteOnboardingMilestoneResponse`
 
@@ -5691,13 +5377,12 @@ client.api.users.completeOnboardingMilestone(data: ApiUsersCompleteOnboardingMil
 Get user by ID
 
 ```typescript
-client.api.users.get(id: string, options?: { cache?: boolean | number }): Promise<ApiUsersGetResponse>
+client.api.users.get(id: string): Promise<ApiUsersGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | User ID to retrieve |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiUsersGetResponse`
 
@@ -5712,12 +5397,8 @@ client.api.users.get(id: string, options?: { cache?: boolean | number }): Promis
 Get free-tier claim status
 
 ```typescript
-client.api.users.getFreeTierStatus(options?: { cache?: boolean | number }): Promise<ApiUsersGetFreeTierStatusResponse>
+client.api.users.getFreeTierStatus(): Promise<ApiUsersGetFreeTierStatusResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiUsersGetFreeTierStatusResponse`
 
@@ -5732,7 +5413,7 @@ client.api.users.getFreeTierStatus(options?: { cache?: boolean | number }): Prom
 Get your account security history
 
 ```typescript
-client.api.users.listSecurityHistory(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean; cache?: boolean | number }): Promise<ApiUsersListSecurityHistoryResponse>
+client.api.users.listSecurityHistory(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean }): Promise<ApiUsersListSecurityHistoryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5741,7 +5422,6 @@ client.api.users.listSecurityHistory(options?: { page?: number; limit?: number; 
 | `limit` | `number` | No | query | Results per page |
 | `include_failed` | `boolean` | No | query | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
 | `include_security` | `boolean` | No | query | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiUsersListSecurityHistoryResponse`
 
@@ -5756,7 +5436,7 @@ client.api.users.listSecurityHistory(options?: { page?: number; limit?: number; 
 Get your account security history (collect all pages)
 
 ```typescript
-client.api.users.listSecurityHistoryAll(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean; cache?: boolean | number }): Promise<unknown[]>
+client.api.users.listSecurityHistoryAll(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5765,7 +5445,6 @@ client.api.users.listSecurityHistoryAll(options?: { page?: number; limit?: numbe
 | `limit` | `number` | No | query | Results per page |
 | `include_failed` | `boolean` | No | query | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
 | `include_security` | `boolean` | No | query | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -5778,7 +5457,7 @@ client.api.users.listSecurityHistoryAll(options?: { page?: number; limit?: numbe
 Get your account security history (async iterator)
 
 ```typescript
-client.api.users.listSecurityHistoryIterator(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.users.listSecurityHistoryIterator(options?: { page?: number; limit?: number; include_failed?: boolean; include_security?: boolean }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5787,7 +5466,6 @@ client.api.users.listSecurityHistoryIterator(options?: { page?: number; limit?: 
 | `limit` | `number` | No | query | Results per page |
 | `include_failed` | `boolean` | No | query | Also return REJECTED sign-in attempts against this account. Opt-in: mixing them in by default would make failed attempts look like your own sessions. |
 | `include_security` | `boolean` | No | query | Also return other account-security events already recorded for you: logout, 2FA enabled/disabled, OTP verification outcomes, backup-code regeneration. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5800,13 +5478,12 @@ client.api.users.listSecurityHistoryIterator(options?: { page?: number; limit?: 
 Redeem a beta invite code
 
 ```typescript
-client.api.users.redeemInvite(data: ApiUsersRedeemInviteRequest, options?: { cache?: boolean | number }): Promise<ApiUsersRedeemInviteResponse>
+client.api.users.redeemInvite(data: ApiUsersRedeemInviteRequest): Promise<ApiUsersRedeemInviteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiUsersRedeemInviteRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiUsersRedeemInviteResponse`
 
@@ -5821,13 +5498,12 @@ client.api.users.redeemInvite(data: ApiUsersRedeemInviteRequest, options?: { cac
 Retry free-tier account setup
 
 ```typescript
-client.api.users.retrySetup(data: ApiUsersRetrySetupRequest, options?: { cache?: boolean | number }): Promise<ApiUsersRetrySetupResponse>
+client.api.users.retrySetup(data: ApiUsersRetrySetupRequest): Promise<ApiUsersRetrySetupResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiUsersRetrySetupRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiUsersRetrySetupResponse`
 
@@ -5842,14 +5518,13 @@ client.api.users.retrySetup(data: ApiUsersRetrySetupRequest, options?: { cache?:
 Update user profile
 
 ```typescript
-client.api.users.update(id: string, data: ApiUsersUpdateRequest, options?: { cache?: boolean | number }): Promise<ApiUsersUpdateResponse>
+client.api.users.update(id: string, data: ApiUsersUpdateRequest): Promise<ApiUsersUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | User ID to update |
 | `data` | `ApiUsersUpdateRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiUsersUpdateResponse`
 
@@ -5866,13 +5541,12 @@ client.api.users.update(id: string, data: ApiUsersUpdateRequest, options?: { cac
 Clear entire vault
 
 ```typescript
-client.api.vault.clear(options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiVaultClearResponse>
+client.api.vault.clear(options?: { realm_id?: string }): Promise<ApiVaultClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiVaultClearResponse`
 
@@ -5887,14 +5561,13 @@ client.api.vault.clear(options?: { realm_id?: string; cache?: boolean | number }
 Delete vault key
 
 ```typescript
-client.api.vault.delete(key: string, options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiVaultDeleteResponse>
+client.api.vault.delete(key: string, options?: { realm_id?: string }): Promise<ApiVaultDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `key` | `string` | Yes | path | Vault key name (alphanumeric, dots, underscores, hyphens) |
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiVaultDeleteResponse`
 
@@ -5909,14 +5582,13 @@ client.api.vault.delete(key: string, options?: { realm_id?: string; cache?: bool
 Get vault key
 
 ```typescript
-client.api.vault.get(key: string, options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiVaultGetResponse>
+client.api.vault.get(key: string, options?: { realm_id?: string }): Promise<ApiVaultGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `key` | `string` | Yes | path | Vault key name (alphanumeric, dots, underscores, hyphens) |
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiVaultGetResponse`
 
@@ -5931,13 +5603,12 @@ client.api.vault.get(key: string, options?: { realm_id?: string; cache?: boolean
 Get vault statistics
 
 ```typescript
-client.api.vault.getStats(options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiVaultGetStatsResponse>
+client.api.vault.getStats(options?: { realm_id?: string }): Promise<ApiVaultGetStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiVaultGetStatsResponse`
 
@@ -5952,13 +5623,12 @@ client.api.vault.getStats(options?: { realm_id?: string; cache?: boolean | numbe
 List vault keys
 
 ```typescript
-client.api.vault.list(options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiVaultListResponse>
+client.api.vault.list(options?: { realm_id?: string }): Promise<ApiVaultListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiVaultListResponse`
 
@@ -5973,13 +5643,12 @@ client.api.vault.list(options?: { realm_id?: string; cache?: boolean | number })
 List vault keys (collect all pages)
 
 ```typescript
-client.api.vault.listAll(options?: { realm_id?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.vault.listAll(options?: { realm_id?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -5992,13 +5661,12 @@ client.api.vault.listAll(options?: { realm_id?: string; cache?: boolean | number
 List vault keys (async iterator)
 
 ```typescript
-client.api.vault.listIterator(options?: { realm_id?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.vault.listIterator(options?: { realm_id?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6011,7 +5679,7 @@ client.api.vault.listIterator(options?: { realm_id?: string; cache?: boolean | n
 Set vault key
 
 ```typescript
-client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id?: string; cache?: boolean | number }): Promise<ApiVaultSetResponse>
+client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id?: string }): Promise<ApiVaultSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6019,7 +5687,6 @@ client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id
 | `key` | `string` | Yes | path | Vault key name (alphanumeric, dots, underscores, hyphens) |
 | `data` | `ApiVaultSetRequest` | Yes | body |  |
 | `realm_id` | `string` | No | query | Target a specific realm (24-char hex). When omitted and not on a realm subdomain, defaults to global scope (realm_id = ""). Case-insensitive — uppercase is normalized to lowercase. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiVaultSetResponse`
 
@@ -6036,12 +5703,8 @@ client.api.vault.set(key: string, data: ApiVaultSetRequest, options?: { realm_id
 Claim the GitHub connection bonus
 
 ```typescript
-client.api.wallet.claimGithubBonus(options?: { cache?: boolean | number }): Promise<ApiWalletClaimGithubBonusResponse>
+client.api.wallet.claimGithubBonus(): Promise<ApiWalletClaimGithubBonusResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletClaimGithubBonusResponse`
 
@@ -6056,13 +5719,12 @@ client.api.wallet.claimGithubBonus(options?: { cache?: boolean | number }): Prom
 Start a crypto payment (hosted invoice)
 
 ```typescript
-client.api.wallet.createCryptoInvoice(data: ApiWalletCreateCryptoInvoiceRequest, options?: { cache?: boolean | number }): Promise<ApiWalletCreateCryptoInvoiceResponse>
+client.api.wallet.createCryptoInvoice(data: ApiWalletCreateCryptoInvoiceRequest): Promise<ApiWalletCreateCryptoInvoiceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiWalletCreateCryptoInvoiceRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletCreateCryptoInvoiceResponse`
 
@@ -6077,13 +5739,12 @@ client.api.wallet.createCryptoInvoice(data: ApiWalletCreateCryptoInvoiceRequest,
 Generate invoice for transaction
 
 ```typescript
-client.api.wallet.createInvoice(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletCreateInvoiceResponse>
+client.api.wallet.createInvoice(id: string): Promise<ApiWalletCreateInvoiceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletCreateInvoiceResponse`
 
@@ -6098,13 +5759,12 @@ client.api.wallet.createInvoice(id: string, options?: { cache?: boolean | number
 Add a new payment method
 
 ```typescript
-client.api.wallet.createPaymentMethod(data: ApiWalletCreatePaymentMethodRequest, options?: { cache?: boolean | number }): Promise<ApiWalletCreatePaymentMethodResponse>
+client.api.wallet.createPaymentMethod(data: ApiWalletCreatePaymentMethodRequest): Promise<ApiWalletCreatePaymentMethodResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiWalletCreatePaymentMethodRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletCreatePaymentMethodResponse`
 
@@ -6119,13 +5779,12 @@ client.api.wallet.createPaymentMethod(data: ApiWalletCreatePaymentMethodRequest,
 Start a card payment (Stripe Checkout)
 
 ```typescript
-client.api.wallet.createStripeCheckout(data: ApiWalletCreateStripeCheckoutRequest, options?: { cache?: boolean | number }): Promise<ApiWalletCreateStripeCheckoutResponse>
+client.api.wallet.createStripeCheckout(data: ApiWalletCreateStripeCheckoutRequest): Promise<ApiWalletCreateStripeCheckoutResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiWalletCreateStripeCheckoutRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletCreateStripeCheckoutResponse`
 
@@ -6140,13 +5799,12 @@ client.api.wallet.createStripeCheckout(data: ApiWalletCreateStripeCheckoutReques
 Delete a payment method
 
 ```typescript
-client.api.wallet.deletePaymentMethod(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletDeletePaymentMethodResponse>
+client.api.wallet.deletePaymentMethod(id: string): Promise<ApiWalletDeletePaymentMethodResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletDeletePaymentMethodResponse`
 
@@ -6161,13 +5819,12 @@ client.api.wallet.deletePaymentMethod(id: string, options?: { cache?: boolean | 
 Download invoice PDF
 
 ```typescript
-client.api.wallet.downloadInvoice(id: string, options?: { cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | ApiWalletDownloadInvoiceResponse>
+client.api.wallet.downloadInvoice(id: string): Promise<ApiResponse<ArrayBuffer> | ApiWalletDownloadInvoiceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | ApiWalletDownloadInvoiceResponse`
 
@@ -6182,12 +5839,8 @@ client.api.wallet.downloadInvoice(id: string, options?: { cache?: boolean | numb
 Get general balance only
 
 ```typescript
-client.api.wallet.getBalance(options?: { cache?: boolean | number }): Promise<ApiWalletGetBalanceResponse>
+client.api.wallet.getBalance(): Promise<ApiWalletGetBalanceResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetBalanceResponse`
 
@@ -6202,12 +5855,8 @@ client.api.wallet.getBalance(options?: { cache?: boolean | number }): Promise<Ap
 Get aggregate balances (general + AI)
 
 ```typescript
-client.api.wallet.getBalances(options?: { cache?: boolean | number }): Promise<ApiWalletGetBalancesResponse>
+client.api.wallet.getBalances(): Promise<ApiWalletGetBalancesResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetBalancesResponse`
 
@@ -6222,12 +5871,8 @@ client.api.wallet.getBalances(options?: { cache?: boolean | number }): Promise<A
 Get AI balance (limit, usage, remaining)
 
 ```typescript
-client.api.wallet.getCredits(options?: { cache?: boolean | number }): Promise<ApiWalletGetCreditsResponse>
+client.api.wallet.getCredits(): Promise<ApiWalletGetCreditsResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetCreditsResponse`
 
@@ -6242,13 +5887,12 @@ client.api.wallet.getCredits(options?: { cache?: boolean | number }): Promise<Ap
 Get a crypto payment intent
 
 ```typescript
-client.api.wallet.getCryptoPaymentIntent(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletGetCryptoPaymentIntentResponse>
+client.api.wallet.getCryptoPaymentIntent(id: string): Promise<ApiWalletGetCryptoPaymentIntentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetCryptoPaymentIntentResponse`
 
@@ -6263,12 +5907,8 @@ client.api.wallet.getCryptoPaymentIntent(id: string, options?: { cache?: boolean
 Get GitHub connection bonus status
 
 ```typescript
-client.api.wallet.getGithubBonus(options?: { cache?: boolean | number }): Promise<ApiWalletGetGithubBonusResponse>
+client.api.wallet.getGithubBonus(): Promise<ApiWalletGetGithubBonusResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetGithubBonusResponse`
 
@@ -6283,13 +5923,12 @@ client.api.wallet.getGithubBonus(options?: { cache?: boolean | number }): Promis
 Get invoice by ID
 
 ```typescript
-client.api.wallet.getInvoice(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletGetInvoiceResponse>
+client.api.wallet.getInvoice(id: string): Promise<ApiWalletGetInvoiceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetInvoiceResponse`
 
@@ -6304,12 +5943,8 @@ client.api.wallet.getInvoice(id: string, options?: { cache?: boolean | number })
 Get top-up payment availability (providers, bounds, AI transfer fee)
 
 ```typescript
-client.api.wallet.getPaymentAvailability(options?: { cache?: boolean | number }): Promise<ApiWalletGetPaymentAvailabilityResponse>
+client.api.wallet.getPaymentAvailability(): Promise<ApiWalletGetPaymentAvailabilityResponse>
 ```
-
-| Parameter | Type | Required | Location | Description |
-|-----------|------|----------|----------|-------------|
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetPaymentAvailabilityResponse`
 
@@ -6324,13 +5959,12 @@ client.api.wallet.getPaymentAvailability(options?: { cache?: boolean | number })
 Get payment method by ID
 
 ```typescript
-client.api.wallet.getPaymentMethod(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletGetPaymentMethodResponse>
+client.api.wallet.getPaymentMethod(id: string): Promise<ApiWalletGetPaymentMethodResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetPaymentMethodResponse`
 
@@ -6345,13 +5979,12 @@ client.api.wallet.getPaymentMethod(id: string, options?: { cache?: boolean | num
 Get a card payment intent
 
 ```typescript
-client.api.wallet.getStripePaymentIntent(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletGetStripePaymentIntentResponse>
+client.api.wallet.getStripePaymentIntent(id: string): Promise<ApiWalletGetStripePaymentIntentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetStripePaymentIntentResponse`
 
@@ -6366,13 +5999,12 @@ client.api.wallet.getStripePaymentIntent(id: string, options?: { cache?: boolean
 Get transaction by ID
 
 ```typescript
-client.api.wallet.getTransaction(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletGetTransactionResponse>
+client.api.wallet.getTransaction(id: string): Promise<ApiWalletGetTransactionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletGetTransactionResponse`
 
@@ -6387,7 +6019,7 @@ client.api.wallet.getTransaction(id: string, options?: { cache?: boolean | numbe
 Get AI credit fee history
 
 ```typescript
-client.api.wallet.listCreditFees(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<ApiWalletListCreditFeesResponse>
+client.api.wallet.listCreditFees(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): Promise<ApiWalletListCreditFeesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6396,7 +6028,6 @@ client.api.wallet.listCreditFees(options?: { page?: number; limit?: number; sort
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletListCreditFeesResponse`
 
@@ -6411,7 +6042,7 @@ client.api.wallet.listCreditFees(options?: { page?: number; limit?: number; sort
 Get AI credit fee history (collect all pages)
 
 ```typescript
-client.api.wallet.listCreditFeesAll(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc"; cache?: boolean | number }): Promise<unknown[]>
+client.api.wallet.listCreditFeesAll(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6420,7 +6051,6 @@ client.api.wallet.listCreditFeesAll(options?: { page?: number; limit?: number; s
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -6433,7 +6063,7 @@ client.api.wallet.listCreditFeesAll(options?: { page?: number; limit?: number; s
 Get AI credit fee history (async iterator)
 
 ```typescript
-client.api.wallet.listCreditFeesIterator(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc"; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.wallet.listCreditFeesIterator(options?: { page?: number; limit?: number; sort_by?: "created_at" | "amount" | "transaction_id"; sort_order?: "asc" | "desc" }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6442,7 +6072,6 @@ client.api.wallet.listCreditFeesIterator(options?: { page?: number; limit?: numb
 | `limit` | `number` | No | query |  |
 | `sort_by` | `"created_at" \| "amount" \| "transaction_id"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6455,14 +6084,13 @@ client.api.wallet.listCreditFeesIterator(options?: { page?: number; limit?: numb
 List crypto payment intents
 
 ```typescript
-client.api.wallet.listCryptoPaymentIntents(options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<ApiWalletListCryptoPaymentIntentsResponse>
+client.api.wallet.listCryptoPaymentIntents(options?: { limit?: number; offset?: number }): Promise<ApiWalletListCryptoPaymentIntentsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletListCryptoPaymentIntentsResponse`
 
@@ -6477,7 +6105,7 @@ client.api.wallet.listCryptoPaymentIntents(options?: { limit?: number; offset?: 
 Get all invoices
 
 ```typescript
-client.api.wallet.listInvoices(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string; cache?: boolean | number }): Promise<ApiWalletListInvoicesResponse>
+client.api.wallet.listInvoices(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<ApiWalletListInvoicesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6487,7 +6115,6 @@ client.api.wallet.listInvoices(options?: { page?: number; limit?: number; sort_b
 | `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletListInvoicesResponse`
 
@@ -6502,7 +6129,7 @@ client.api.wallet.listInvoices(options?: { page?: number; limit?: number; sort_b
 Get all invoices (collect all pages)
 
 ```typescript
-client.api.wallet.listInvoicesAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.wallet.listInvoicesAll(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6512,7 +6139,6 @@ client.api.wallet.listInvoicesAll(options?: { page?: number; limit?: number; sor
 | `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -6525,7 +6151,7 @@ client.api.wallet.listInvoicesAll(options?: { page?: number; limit?: number; sor
 Get all invoices (async iterator)
 
 ```typescript
-client.api.wallet.listInvoicesIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.wallet.listInvoicesIterator(options?: { page?: number; limit?: number; sort_by?: string; sort_order?: "asc" | "desc"; filter?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6535,7 +6161,6 @@ client.api.wallet.listInvoicesIterator(options?: { page?: number; limit?: number
 | `sort_by` | `string` | No | query | Field to sort by. One of: id, invoice_number, status, amount, currency, issue_date, due_date, paid_date, created_at, updated_at, user_id, transaction_id. Unrecognised values fall back to created_at. |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `filter` | `string` | No | query | JSON object string filtering by the sortable fields, e.g. {"status":"paid"} or {"amount":{"gte":10}}. Operators: eq, ne, gt, gte, lt, lte, like, in. Unknown fields or operators are rejected with 400. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6548,14 +6173,13 @@ client.api.wallet.listInvoicesIterator(options?: { page?: number; limit?: number
 Get all payment methods
 
 ```typescript
-client.api.wallet.listPaymentMethods(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<ApiWalletListPaymentMethodsResponse>
+client.api.wallet.listPaymentMethods(options?: { page?: number; limit?: number }): Promise<ApiWalletListPaymentMethodsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number, starting from 1. |
 | `limit` | `number` | No | query | Results per page. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletListPaymentMethodsResponse`
 
@@ -6570,14 +6194,13 @@ client.api.wallet.listPaymentMethods(options?: { page?: number; limit?: number; 
 Get all payment methods (collect all pages)
 
 ```typescript
-client.api.wallet.listPaymentMethodsAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.api.wallet.listPaymentMethodsAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number, starting from 1. |
 | `limit` | `number` | No | query | Results per page. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -6590,14 +6213,13 @@ client.api.wallet.listPaymentMethodsAll(options?: { page?: number; limit?: numbe
 Get all payment methods (async iterator)
 
 ```typescript
-client.api.wallet.listPaymentMethodsIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.wallet.listPaymentMethodsIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | Page number, starting from 1. |
 | `limit` | `number` | No | query | Results per page. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6610,14 +6232,13 @@ client.api.wallet.listPaymentMethodsIterator(options?: { page?: number; limit?: 
 List card payment intents
 
 ```typescript
-client.api.wallet.listStripePaymentIntents(options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<ApiWalletListStripePaymentIntentsResponse>
+client.api.wallet.listStripePaymentIntents(options?: { limit?: number; offset?: number }): Promise<ApiWalletListStripePaymentIntentsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletListStripePaymentIntentsResponse`
 
@@ -6632,7 +6253,7 @@ client.api.wallet.listStripePaymentIntents(options?: { limit?: number; offset?: 
 List transactions
 
 ```typescript
-client.api.wallet.listTransactions(options?: { page?: number; limit?: number; sort_by?: "id" | "transaction_type" | "status" | "amount" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; filter?: string; cache?: boolean | number }): Promise<ApiWalletListTransactionsResponse>
+client.api.wallet.listTransactions(options?: { page?: number; limit?: number; sort_by?: "id" | "transaction_type" | "status" | "amount" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; filter?: string }): Promise<ApiWalletListTransactionsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6642,7 +6263,6 @@ client.api.wallet.listTransactions(options?: { page?: number; limit?: number; so
 | `sort_by` | `"id" \| "transaction_type" \| "status" \| "amount" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `filter` | `string` | No | query | Optional JSON object of field filters, e.g. `{"status":"completed"}` or `{"amount":{"gte":10}}`. A plain value matches exactly; an object applies operators `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `like` (case-insensitive substring; `%` and `_` in the value are wildcards) and `in` (array, at most 100 values). Fields: `transaction_type`, `status`, `amount`, `currency`, `reason`, `created_at`, `updated_at`. Any other field or operator, a value that is not a string, number, boolean or null, or a `filter` that is not a JSON object is rejected with 400. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletListTransactionsResponse`
 
@@ -6657,7 +6277,7 @@ client.api.wallet.listTransactions(options?: { page?: number; limit?: number; so
 List transactions (collect all pages)
 
 ```typescript
-client.api.wallet.listTransactionsAll(options?: { page?: number; limit?: number; sort_by?: "id" | "transaction_type" | "status" | "amount" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; filter?: string; cache?: boolean | number }): Promise<unknown[]>
+client.api.wallet.listTransactionsAll(options?: { page?: number; limit?: number; sort_by?: "id" | "transaction_type" | "status" | "amount" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; filter?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6667,7 +6287,6 @@ client.api.wallet.listTransactionsAll(options?: { page?: number; limit?: number;
 | `sort_by` | `"id" \| "transaction_type" \| "status" \| "amount" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `filter` | `string` | No | query | Optional JSON object of field filters, e.g. `{"status":"completed"}` or `{"amount":{"gte":10}}`. A plain value matches exactly; an object applies operators `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `like` (case-insensitive substring; `%` and `_` in the value are wildcards) and `in` (array, at most 100 values). Fields: `transaction_type`, `status`, `amount`, `currency`, `reason`, `created_at`, `updated_at`. Any other field or operator, a value that is not a string, number, boolean or null, or a `filter` that is not a JSON object is rejected with 400. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -6680,7 +6299,7 @@ client.api.wallet.listTransactionsAll(options?: { page?: number; limit?: number;
 List transactions (async iterator)
 
 ```typescript
-client.api.wallet.listTransactionsIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "transaction_type" | "status" | "amount" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; filter?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.api.wallet.listTransactionsIterator(options?: { page?: number; limit?: number; sort_by?: "id" | "transaction_type" | "status" | "amount" | "created_at" | "updated_at"; sort_order?: "asc" | "desc"; filter?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6690,7 +6309,6 @@ client.api.wallet.listTransactionsIterator(options?: { page?: number; limit?: nu
 | `sort_by` | `"id" \| "transaction_type" \| "status" \| "amount" \| "created_at" \| "updated_at"` | No | query |  |
 | `sort_order` | `"asc" \| "desc"` | No | query |  |
 | `filter` | `string` | No | query | Optional JSON object of field filters, e.g. `{"status":"completed"}` or `{"amount":{"gte":10}}`. A plain value matches exactly; an object applies operators `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `like` (case-insensitive substring; `%` and `_` in the value are wildcards) and `in` (array, at most 100 values). Fields: `transaction_type`, `status`, `amount`, `currency`, `reason`, `created_at`, `updated_at`. Any other field or operator, a value that is not a string, number, boolean or null, or a `filter` that is not a JSON object is rejected with 400. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6703,13 +6321,12 @@ client.api.wallet.listTransactionsIterator(options?: { page?: number; limit?: nu
 Set a payment method as default
 
 ```typescript
-client.api.wallet.setDefaultPaymentMethod(id: string, options?: { cache?: boolean | number }): Promise<ApiWalletSetDefaultPaymentMethodResponse>
+client.api.wallet.setDefaultPaymentMethod(id: string): Promise<ApiWalletSetDefaultPaymentMethodResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletSetDefaultPaymentMethodResponse`
 
@@ -6724,13 +6341,12 @@ client.api.wallet.setDefaultPaymentMethod(id: string, options?: { cache?: boolea
 Transfer from general balance to AI credits
 
 ```typescript
-client.api.wallet.transferToCredits(data: ApiWalletTransferToCreditsRequest, options?: { cache?: boolean | number }): Promise<ApiWalletTransferToCreditsResponse>
+client.api.wallet.transferToCredits(data: ApiWalletTransferToCreditsRequest): Promise<ApiWalletTransferToCreditsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `ApiWalletTransferToCreditsRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletTransferToCreditsResponse`
 
@@ -6745,14 +6361,13 @@ client.api.wallet.transferToCredits(data: ApiWalletTransferToCreditsRequest, opt
 Update a payment method
 
 ```typescript
-client.api.wallet.updatePaymentMethod(id: string, data: ApiWalletUpdatePaymentMethodRequest, options?: { cache?: boolean | number }): Promise<ApiWalletUpdatePaymentMethodResponse>
+client.api.wallet.updatePaymentMethod(id: string, data: ApiWalletUpdatePaymentMethodRequest): Promise<ApiWalletUpdatePaymentMethodResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `data` | `ApiWalletUpdatePaymentMethodRequest` | Yes | body |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiWalletUpdatePaymentMethodResponse`
 

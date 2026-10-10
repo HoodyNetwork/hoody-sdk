@@ -1,6 +1,6 @@
 # `tunnel` — 6 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.tunnel`
 
 ```typescript
@@ -70,14 +70,13 @@ client.tunnel.kit.getMetrics(): Promise<ApiResponse<string>>
 Terminate an active tunnel session
 
 ```typescript
-client.tunnel.sessions.close(session_id: string, options?: { grace_ms?: number; cache?: boolean | number }): Promise<TunnelSessionsCloseResponse>
+client.tunnel.sessions.close(session_id: string, options?: { grace_ms?: number }): Promise<TunnelSessionsCloseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `session_id` | `string` | Yes | path | Session ID as returned by GET /sessions |
 | `grace_ms` | `number` | No | query | GOAWAY drain budget in ms (0-5000, default 50) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TunnelSessionsCloseResponse`
 

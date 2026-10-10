@@ -1,6 +1,6 @@
 # `run` — 30 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.run`
 
 ```typescript
@@ -76,7 +76,7 @@ client.run.jobs.createSearch(data: RunJobsCreateSearchRequest): Promise<RunJobsC
 Get job status
 
 ```typescript
-client.run.jobs.get(job_id: string, options?: { wait?: string; timeout_ms?: number; cache?: boolean | number }): Promise<RunJobsGetResponse>
+client.run.jobs.get(job_id: string, options?: { wait?: string; timeout_ms?: number }): Promise<RunJobsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -84,7 +84,6 @@ client.run.jobs.get(job_id: string, options?: { wait?: string; timeout_ms?: numb
 | `job_id` | `string` | Yes | path | Job identifier (UUID) |
 | `wait` | `string` | No | query | Set to 'done' to long-poll until the job completes, fails or is cancelled |
 | `timeout_ms` | `number` | No | query | Long-poll timeout in milliseconds (default 0, max 120000) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `RunJobsGetResponse`
 
@@ -99,14 +98,13 @@ client.run.jobs.get(job_id: string, options?: { wait?: string; timeout_ms?: numb
 List background jobs
 
 ```typescript
-client.run.jobs.list(options?: { kind?: "search-resolve" | "source-sync"; status?: "queued" | "running" | "done" | "error" | "cancelled"; cache?: boolean | number }): Promise<RunJobsListResponse>
+client.run.jobs.list(options?: { kind?: "search-resolve" | "source-sync"; status?: "queued" | "running" | "done" | "error" | "cancelled" }): Promise<RunJobsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `kind` | `"search-resolve" \| "source-sync"` | No | query | Only jobs of this kind |
 | `status` | `"queued" \| "running" \| "done" \| "error" \| "cancelled"` | No | query | Only jobs in this status |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `RunJobsListResponse`
 

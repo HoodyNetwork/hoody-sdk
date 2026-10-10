@@ -1,7 +1,7 @@
 # Hoody CLI — Complete Command Reference
 
-**Version:** 1.0.0-beta.16
-**Total commands:** 1023
+**Version:** 1.0.0-beta.17
+**Total commands:** 1046
 **Command groups:** 40
 **Top-level utility commands:** 20
 
@@ -52,7 +52,7 @@ HTTP activity logs and access statistics
 | `hoody activity list` |  | read | Get activity logs | `api.activity.list` | `hoody activity list --page 1 --limit 50` |
 | `hoody activity stats` |  | read | Get activity stats | `api.activity.getStats` | `hoody activity stats` |
 
-## `hoody agent` — 239 commands
+## `hoody agent` — 261 commands
 
 AI agent — sessions, prompting, models, skills, memory, todos, workflows
 
@@ -65,6 +65,21 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent acp model set` |  | write | Set the delegated ACP agent's model | `agent.acp.setModel` | `hoody agent acp model set --agent my-agent --model openai/gpt-5.4-nano` |
 | `hoody agent acp secrets set` |  | write | Store an ACP per-agent secret value | `agent.acp.setSecret` | `hoody agent acp secrets set --agent my-agent --key <key> --value hello` |
 | `hoody agent acp status` |  | read | Get BYOA ACP backend status | `agent.acp.getStatus` | `hoody agent acp status` |
+| `hoody agent bots archive get` |  | read | Read a Bot's archive | `agent.bots.getArchive` | `hoody agent bots archive get --id abc-123 --since 1750000000000 --limit 10` |
+| `hoody agent bots archive purge` |  | destructive | Delete a Bot's archive | `agent.bots.purgeArchive` | `hoody agent bots archive purge --id abc-123 -y` |
+| `hoody agent bots create` |  | write | Create a Bot | `agent.bots.create` | `hoody agent bots create --name my-resource --role admin` |
+| `hoody agent bots delegates list` |  | read | List the sessions a Bot opened | `agent.bots.listDelegates` | `hoody agent bots delegates list --id abc-123 --state open --page 10` |
+| `hoody agent bots delegates stop` |  | write | Stop one of a Bot's delegates now (--close also closes its session) | `agent.bots.stopDelegate` | `hoody agent bots delegates stop --id abc-123 --sid <sid> --close` |
+| `hoody agent bots delete` |  | destructive | Delete a Bot with its log and archive | `agent.bots.delete` | `hoody agent bots delete --id abc-123 -y` |
+| `hoody agent bots forget` |  | destructive | Make a Bot forget its conversation | `agent.bots.forget` | `hoody agent bots forget --id abc-123 -y` |
+| `hoody agent bots get` |  | read | Get a Bot: settings, pending gate, open delegates | `agent.bots.get` | `hoody agent bots get --id abc-123` |
+| `hoody agent bots guardrails set` |  | write | Replace a Bot's guardrails | `agent.bots.setGuardrails` | `hoody agent bots guardrails set --id abc-123 --guardrails <guardrails>` |
+| `hoody agent bots list` |  | read | List the Bots | `agent.bots.list` | `hoody agent bots list --page 10 --limit 10` |
+| `hoody agent bots log get` |  | read | Read a Bot's log | `agent.bots.getLog` | `hoody agent bots log get --id abc-123 --since 1750000000000 --limit 10` |
+| `hoody agent bots messages send` |  | write | Post a message to a Bot | `agent.bots.sendMessage` | `hoody agent bots messages send --id abc-123 --text Hello` |
+| `hoody agent bots reset` |  | destructive | Give a Bot a new session | `agent.bots.reset` | `hoody agent bots reset --id abc-123 -y` |
+| `hoody agent bots stream` |  | read | Follow a Bot's log (SSE) | `agent.bots.stream` | `hoody agent bots stream --id abc-123 --since 1750000000000` |
+| `hoody agent bots update` |  | write | Change a Bot's settings | `agent.bots.update` | `hoody agent bots update --id abc-123 --name my-resource --role admin` |
 | `hoody agent changes get` |  | read | Change tokens for the Work lists | `agent.changes.get` | `hoody agent changes get` |
 | `hoody agent completions create` |  | write | Run one tool-free model completion; Stream the completion as it is produced | `agent.completions.create` | `hoody agent completions create --stream --model xiaomi-token-plan-sgp/mimo-v2.5 --system linux --messages role=user,content=Hello` |
 | `hoody agent containers list` |  | read | List containers in a realm (for binding) | `agent.containers.list` | `hoody agent containers list --page 10 --limit 10` |
@@ -84,7 +99,7 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent fusions delete` |  | write | Delete a fusion composite | `agent.fusions.delete` | `hoody agent fusions delete --slug <slug>` |
 | `hoody agent fusions list` |  | read | List fusion composites | `agent.fusions.list` | `hoody agent fusions list --include-invalid --page 10` |
 | `hoody agent fusions set` |  | write | Create or update a fusion composite | `agent.fusions.set` | `hoody agent fusions set --slug <slug> --spec '{}'` |
-| `hoody agent gates answer` |  | write | Answer a parked question gate | `agent.gates.answer` | `hoody agent gates answer --id abc-123 --generation 10 --answer <answer> --text Hello` |
+| `hoody agent gates answer` |  | write | Answer a parked question gate | `agent.gates.answer` | `hoody agent gates answer --id abc-123 --generation 10 --answers key=hello` |
 | `hoody agent gates approve` |  | write | Approve a pending gate | `agent.gates.approve` | `hoody agent gates approve --id abc-123 --generation 10 --persist-dirs` |
 | `hoody agent gates deny` |  | write | Deny a pending gate | `agent.gates.deny` | `hoody agent gates deny --id abc-123 --generation 10 --persist-dirs` |
 | `hoody agent gates list` |  | read | List the gates waiting for a human | `agent.gates.list` | `hoody agent gates list --include-system --page 10` |
@@ -160,7 +175,7 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent mcp test` |  | write | Try a candidate MCP server config without saving it (human-only) | `agent.mcp.testServer` | `hoody agent mcp test --session-id abc-123 --server-name my-resource --server-command 'ls -la'` |
 | `hoody agent mcp upsert` |  | write | Create or update an MCP server (needs a begin-write nonce + expect-hash) | `agent.mcp.upsertServer` | `hoody agent mcp upsert --session-id abc-123 --nonce <nonce> --scope user --expect-hash <expect_hash> --server-name my-resource` |
 | `hoody agent memory consolidate` |  | write | Trigger a memory consolidation pass (human-only) | `agent.memory.consolidate` | `hoody agent memory consolidate --project proj-abc --min-observations 10` |
-| `hoody agent memory datahost claim` |  | write | Assign this computer as the memory data host | `agent.memory.claimDataHost` | `hoody agent memory datahost claim --use-self --expect-realm <expect_realm>` |
+| `hoody agent memory datahost claim` |  | write | Assign this computer as the memory data host | `agent.memory.claimDataHost` | `hoody agent memory datahost claim --use-self` |
 | `hoody agent memory datahost get` |  | read | Read the realm's memory data host | `agent.memory.getDataHost` | `hoody agent memory datahost get` |
 | `hoody agent memory disable` |  | write | Disable agent memory | `agent.memory.disable` | `hoody agent memory disable` |
 | `hoody agent memory enable` |  | write | Enable agent memory | `agent.memory.enable` | `hoody agent memory enable` |
@@ -185,6 +200,8 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent providers accounts use` |  | write | Make a pooled OAuth account active | `agent.providers.useAccount` | `hoody agent providers accounts use --id abc-123 --key <key>` |
 | `hoody agent providers auth default set` |  | write | Set a provider's default credential method | `agent.providers.setDefaultAuth` | `hoody agent providers auth default set --id abc-123 --default <default>` |
 | `hoody agent providers auth status` |  | read | Get a provider's auth status | `agent.providers.getAuth` | `hoody agent providers auth status --id abc-123` |
+| `hoody agent providers create` |  | write | Add a custom AI provider | `agent.providers.create` | `hoody agent providers create --id abc-123 --wire-format chat_completions --endpoint https://api.acme.example/v1 --auth-scheme bearer --models model=llama-3.3-70b` |
+| `hoody agent providers delete` |  | destructive | Remove a custom AI provider and its stored key | `agent.providers.delete` | `hoody agent providers delete --id abc-123 -y` |
 | `hoody agent providers get` |  | read | Get a provider | `agent.providers.get` | `hoody agent providers get --id abc-123` |
 | `hoody agent providers keys delete` |  | write | Delete a provider API key | `agent.providers.deleteApiKey` | `hoody agent providers keys delete --id abc-123` |
 | `hoody agent providers keys set` |  | write | Store a provider API key | `agent.providers.setApiKey` | `hoody agent providers keys set --id abc-123 --api-key <api_key>` |
@@ -193,8 +210,10 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent providers oauth poll` |  | read | Poll a provider OAuth login | `agent.providers.pollOauth` | `hoody agent providers oauth poll --id abc-123 --job <job>` |
 | `hoody agent providers oauth start` |  | write | Start a provider OAuth login | `agent.providers.startOauth` | `hoody agent providers oauth start --id abc-123 --add-account` |
 | `hoody agent providers oauth submit` |  | write | Submit a provider OAuth authorization code | `agent.providers.submitOauthCode` | `hoody agent providers oauth submit --id abc-123 --job <job> --code <code>` |
+| `hoody agent providers update` |  | write | Change a custom AI provider | `agent.providers.update` | `hoody agent providers update --id abc-123 --wire-format chat_completions --endpoint https://api.acme.example/v1` |
 | `hoody agent realms list` |  | read | List realms (for binding) | `agent.realms.list` | `hoody agent realms list --page 10 --limit 10` |
 | `hoody agent realms use` |  | write | Switch the agent's active realm | `agent.realms.use` | `hoody agent realms use --active-realm-id abc-123` |
+| `hoody agent sessions aftercompaction set` |  | write | Set the message a session re-adds after every compaction | `agent.sessions.setAfterCompaction` | `hoody agent sessions aftercompaction set --id abc-123 --text Hello` |
 | `hoody agent sessions agent set` |  | write | Switch the chat agent | `agent.sessions.setAgent` | `hoody agent sessions agent set --id abc-123 --agent my-agent` |
 | `hoody agent sessions approval get` |  | read | Read a session's approval policy | `agent.sessions.getApproval` | `hoody agent sessions approval get --id abc-123` |
 | `hoody agent sessions approval rules delete` |  | write | Remove one session permission rule | `agent.sessions.deleteApprovalRule` | `hoody agent sessions approval rules delete --id abc-123 --tool <tool>` |
@@ -209,6 +228,8 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent sessions autoreply set` |  | write | Arm/disarm the auto-reply loop | `agent.sessions.setAutoReply` | `hoody agent sessions autoreply set --id abc-123 --armed --rounds 10` |
 | `hoody agent sessions autoreply writes set` |  | write | Flip the auto-reply write opt-in | `agent.sessions.setAutoReplyWrites` | `hoody agent sessions autoreply writes set --id abc-123 --allow-writes` |
 | `hoody agent sessions close` |  | write | Close the session (teardown) | `agent.sessions.close` | `hoody agent sessions close --id abc-123` |
+| `hoody agent sessions commands get` |  | read | Get a command's receipt | `agent.sessions.commands.get` | `hoody agent sessions commands get --id abc-123 --command-id abc-123` |
+| `hoody agent sessions commands send` |  | write | Send a message, an interrupt or a stop to a session | `agent.sessions.commands.send` | `hoody agent sessions commands send --id abc-123 --idempotency-key <idempotency_key> --kind message --text Hello --close` |
 | `hoody agent sessions create` |  | write | Create, fork, or attach a session | `agent.sessions.create` | `hoody agent sessions create --model openai/gpt-5.4-nano --tool-mode standard` |
 | `hoody agent sessions delete` |  | write | Delete a session and its stored record (`agent sessions close` only tears the live session down) | `agent.sessions.delete` | `hoody agent sessions delete --id abc-123` |
 | `hoody agent sessions directories list` |  | read | List distinct session working directories | `agent.sessions.listDirectories` | `hoody agent sessions directories list` |
@@ -233,6 +254,7 @@ AI agent — sessions, prompting, models, skills, memory, todos, workflows
 | `hoody agent sessions turns get` |  | read | Get a turn's durable receipt | `agent.sessions.turns.get` | `hoody agent sessions turns get --id abc-123 --turn-id abc-123` |
 | `hoody agent sessions turns list` |  | read | List a session's durable turn receipts | `agent.sessions.turns.list` | `hoody agent sessions turns list --id abc-123 --limit 10` |
 | `hoody agent sessions turns run` |  | write | Dispatch a turn and block to completion | `agent.sessions.turns.run` | `hoody agent sessions turns run --id abc-123 --text Hello --tool-mode standard --dir-scope home` |
+| `hoody agent sessions usage get` |  | read | Read a session's per-call LLM usage and totals | `agent.sessions.getUsage` | `hoody agent sessions usage get --id abc-123 --after-id 10 --limit 10` |
 | `hoody agent sessions verbosity set` |  | write | Set response verbosity | `agent.sessions.setVerbosity` | `hoody agent sessions verbosity set --id abc-123 --level normal` |
 | `hoody agent sessions workflows start` |  | write | Run a workflow onto an existing session | `agent.sessions.startWorkflow` | `hoody agent sessions workflows start --id abc-123 --name my-resource` |
 | `hoody agent sessions yolo set` |  | write | Arm or disarm YOLO auto-approve | `agent.sessions.setYolo` | `hoody agent sessions yolo set --id abc-123 --enabled` |
@@ -322,8 +344,8 @@ Authentication, tokens, and 2FA
 | `hoody auth 2fa verify` |  | action | Verify 2FA Code During Login | `api.auth.twoFactor.verify` | `hoody auth 2fa verify --code <code> --response-mode intent --print-token` |
 | `hoody auth claims create` |  | action | Issue a signed identity claim bound to an audience | `api.auth.createIdentityClaim` | `hoody auth claims create --audience myapp.example.com --expires-in 3600` |
 | `hoody auth config get` |  | read | Show the public sign-in configuration | `api.auth.getConfig` | `hoody auth config get` |
-| `hoody auth device poll` |  | action | Poll for device sign-in tokens and save the session | `api.auth.device.poll` | `hoody auth device poll --device-code <device_code> --print-token` |
-| `hoody auth device start` |  | action | Start a device sign-in and print the code to enter in a browser | `api.auth.device.start` | `hoody auth device start` |
+| `hoody auth device poll` |  | action | Poll for device sign-in tokens and save the session | `api.auth.device.poll` | `hoody auth device poll --device-code <device_code> --code-verifier dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk --print-token` |
+| `hoody auth device start` |  | action | Start a device sign-in and print the code to enter in a browser | `api.auth.device.start` | `hoody auth device start --code-challenge E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM` |
 | `hoody auth email verification send` |  | write | Resend verification email | `api.auth.sendVerificationEmail` | `hoody auth email verification send --email user@example.com` |
 | `hoody auth email verify` |  | write | Verify email address | `api.auth.verifyEmail` | `hoody auth email verify --token <token> --response-mode intent --print-token` |
 | `hoody auth oauth authorize` |  | action | Begin a PKCE authorization with a sign-in intent token | `api.auth.oauth.authorize` | `hoody auth oauth authorize --code-challenge <code_challenge> --redirect-uri <redirect_uri>` |
@@ -339,8 +361,8 @@ Authentication, tokens, and 2FA
 | `hoody auth tokens list` |  | read | List auth tokens | `api.auth.tokens.list` | `hoody auth tokens list` |
 | `hoody auth tokens profiles get` |  | read | Get auth token public profile by public key | `api.auth.tokens.getPublicProfile` | `hoody auth tokens profiles get 4a1f8c2d3e5b6079a1c2d3e4f50617283940a1b2c3d4e5f60718293a4b5c6d7e` |
 | `hoody auth tokens profiles update` |  | write | Update current auth token public profile | `api.auth.tokens.updatePublicProfile` | `hoody auth tokens profiles update --public-key 4a1f8c2d3e5b6079a1c2d3e4f50617283940a1b2c3d4e5f60718293a4b5c6d7e` |
-| `hoody auth tokens realms add` |  | write | Add realm to auth token | `api.auth.tokens.addRealm` | `hoody --realm-id 64f1a2b3c4d5e6f7a8b9c0d1 auth tokens realms add 64f1a2b3c4d5e6f7a8b9c0d1` |
-| `hoody auth tokens realms remove` |  | destructive | Remove realm from auth token | `api.auth.tokens.removeRealm` | `hoody --realm-id 64f1a2b3c4d5e6f7a8b9c0d1 auth tokens realms remove 64f1a2b3c4d5e6f7a8b9c0d1 -y` |
+| `hoody auth tokens realms add` |  | write | Add realm to auth token | `api.auth.tokens.addRealm` | `hoody auth tokens realms add 64f1a2b3c4d5e6f7a8b9c0d1 --realm-id 64f1a2b3c4d5e6f7a8b9c0d1` |
+| `hoody auth tokens realms remove` |  | destructive | Remove realm from auth token | `api.auth.tokens.removeRealm` | `hoody auth tokens realms remove 64f1a2b3c4d5e6f7a8b9c0d1 --realm-id 64f1a2b3c4d5e6f7a8b9c0d1 -y` |
 | `hoody auth tokens templates list` |  | read | List auth token permission templates | `api.auth.tokens.listTemplates` | `hoody auth tokens templates list` |
 | `hoody auth tokens update` |  | write | Update auth token | `api.auth.tokens.update` | `hoody auth tokens update 64f1a2b3c4d5e6f7a8b9c0d1 --alias my-resource --public-key 4a1f8c2d3e5b6079a1c2d3e4f50617283940a1b2c3d4e5f60718293a4b5c6d7e` |
 | `hoody auth waitlist join` |  | write | Join the Hoody waitlist |  | `hoody auth waitlist join --email user@example.com` |
@@ -438,7 +460,7 @@ Container lifecycle, stats, and proxy permissions. Proxy subcommands (`hoody con
 | `hoody containers env list` |  | read | List container environment variables | `api.containers.env.list` | `hoody --container abc-123 containers env list` |
 | `hoody containers env set` |  | write | Set a single environment variable | `api.containers.env.set` | `hoody containers env set --key <key> --value hello` |
 | `hoody containers env update` |  | write | Bulk set container environment variables | `api.containers.env.update` | `hoody containers env update --body '{"APP_MODE":"hello"}'` |
-| `hoody containers get` |  | read | Get a container by ID | `api.containers.get` | `hoody containers get 64f1a2b3c4d5e6f7a8b9c0d1 --include-proxy-domains` |
+| `hoody containers get` |  | read | Get a container by ID or name | `api.containers.get` | `hoody containers get 64f1a2b3c4d5e6f7a8b9c0d1 --include-proxy-domains` |
 | `hoody containers kvm disable` |  | write | Disable /dev/kvm passthrough. Rented/dedicated servers only; the container must be stopped. | `api.containers.disableKvm` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers kvm disable` |
 | `hoody containers kvm enable` |  | write | Enable /dev/kvm passthrough (run full VMs inside the container). Rented/dedicated servers only; the container must be stopped. | `api.containers.enableKvm` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers kvm enable` |
 | `hoody containers list` |  | read | Get all containers | `api.containers.list` | `hoody containers list --page 1 --limit 50` |
@@ -448,7 +470,7 @@ Container lifecycle, stats, and proxy permissions. Proxy subcommands (`hoody con
 | `hoody containers proxy enable` |  | write | Enable the proxy permissions of a container | `api.proxy.containerPermissions.enable` | `hoody containers proxy enable --if-match file:v42` |
 | `hoody containers proxy groups delete` |  | destructive | Remove container authentication group | `api.proxy.containerPermissions.deleteAuthGroup` | `hoody containers proxy groups delete --group-name <group_name> --if-match file:v42 -y` |
 | `hoody containers proxy groups ip set` |  | write | Set IP authentication group (container) | `api.proxy.containerPermissions.setIpGroup` | `hoody containers proxy groups ip set --group-name <group_name> --if-match file:v42 --range 192.0.2.0/24` |
-| `hoody containers proxy groups jwt set` |  | write | Set JWT authentication group (container) | `api.proxy.containerPermissions.setJwtGroup` | `hoody containers proxy groups jwt set --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello` |
+| `hoody containers proxy groups jwt set` |  | write | Set JWT authentication group (container) | `api.proxy.containerPermissions.setJwtGroup` | `hoody containers proxy groups jwt set --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello --header-authoritative` |
 | `hoody containers proxy groups list` |  | read | List container proxy groups | `api.proxy.groups.list` | `hoody --container 64f1a2b3c4d5e6f7a8b9c0d1 containers proxy groups list` |
 | `hoody containers proxy groups password set` |  | write | Set password authentication group (container) | `api.proxy.containerPermissions.setPasswordGroup` | `hoody containers proxy groups password set --group-name <group_name> --if-match file:v42 --auth-username alice --auth-password <password> --algorithm sha256 --salt <salt>` |
 | `hoody containers proxy groups permissions clear` |  | destructive | Remove all program permissions for a container group | `api.proxy.containerPermissions.clearGroupPermissions` | `hoody containers proxy groups permissions clear --group-name <group_name> --if-match file:v42 -y` |
@@ -488,12 +510,12 @@ Cron scheduling
 |---------|---------|----------|---------|----------|---------|
 | `hoody cron open` |  | action | Open the Cron kit job manager in your browser |  | `hoody cron open` |
 | `hoody cron crontabs get` |  | read | get crontab | `cron.crontabs.get` | `hoody cron crontabs get alice` |
-| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 50` |
+| `hoody cron crontabs list` |  | read | list all crontabs | `cron.crontabs.list` | `hoody cron crontabs list --page 10 --limit 10` |
 | `hoody cron crontabs set` |  | write | put crontab | `cron.crontabs.set` | `hoody cron crontabs set alice --crontab <crontab>` |
 | `hoody cron entries create` |  | write | create entry | `cron.entries.create` | `hoody cron entries create alice --command 'ls -la' --comment Hello --enabled --schedule '0 * * * *'` |
 | `hoody cron entries delete` |  | destructive | delete entry | `cron.entries.delete` | `hoody cron entries delete alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 -y` |
 | `hoody cron entries get` |  | read | get entry | `cron.entries.get` | `hoody cron entries get alice 3fa85f64-5717-4562-b3fc-2c963f66afa6` |
-| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 50` |
+| `hoody cron entries list` |  | read | list entries | `cron.entries.list` | `hoody cron entries list alice --page 10 --limit 10` |
 | `hoody cron entries update` |  | write | update entry | `cron.entries.update` | `hoody cron entries update alice 3fa85f64-5717-4562-b3fc-2c963f66afa6 --clear-expiration --command 'ls -la'` |
 | `hoody cron health` |  | read | health check | `cron.kit.getHealth` | `hoody cron health` |
 
@@ -512,7 +534,7 @@ cURL jobs and schedules
 | `hoody curl jobs stream` |  | read | Stream job lifecycle events live | `curl.jobs.stream` | `hoody curl jobs stream --job-id 550e8400-e29b-41d4-a716-446655440000 --since 0` |
 | `hoody curl metrics` |  | read | Prometheus metrics | `curl.kit.getMetrics` | `hoody curl metrics` |
 | `hoody curl run` |  | action | Execute HTTP request with full cURL capabilities | `curl.run` | `hoody curl run --compressed --connect-timeout 10 --url https://example.com` |
-| `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --request-compressed --request-connect-timeout 10 --request-url https://example.com` |
+| `hoody curl schedules create` |  | write | Create a recurring scheduled job | `curl.schedules.create` | `hoody curl schedules create --cron '0 0 * * * *' --enabled --request-compressed --request-url https://example.com` |
 | `hoody curl schedules delete` |  | destructive | Delete a schedule | `curl.schedules.delete` | `hoody curl schedules delete 770e8400-e29b-41d4-a716-446655440000 -y` |
 | `hoody curl schedules get` |  | read | Get schedule details | `curl.schedules.get` | `hoody curl schedules get 770e8400-e29b-41d4-a716-446655440000` |
 | `hoody curl schedules list` |  | read | List all scheduled jobs | `curl.schedules.list` | `hoody curl schedules list --page 1 --limit 50` |
@@ -537,20 +559,20 @@ Daemon and ephemeral programs
 | `hoody daemon ephemeral programs status` |  | read | Get ephemeral program status | `daemon.ephemeralPrograms.getStatus` | `hoody daemon ephemeral programs status quick_1731605123456_0` |
 | `hoody daemon ephemeral programs stop` |  | write | Stop ephemeral program | `daemon.ephemeralPrograms.stop` | `hoody daemon ephemeral programs stop quick_1731605123456_0` |
 | `hoody daemon health` |  | read | Service health check | `daemon.kit.getHealth` | `hoody daemon health` |
-| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.create` | `hoody daemon programs create --id 10 --name my-app --description 'My Node.js application' --command 'node app.js' --user nodejs` |
-| `hoody daemon programs delete` |  | destructive | Remove a program | `daemon.programs.delete` | `hoody daemon programs delete 1 -y` |
-| `hoody daemon programs disable` |  | write | Disable a program | `daemon.programs.disable` | `hoody daemon programs disable 1` |
-| `hoody daemon programs enable` |  | write | Enable a program | `daemon.programs.enable` | `hoody daemon programs enable 1` |
-| `hoody daemon programs get` |  | read | Get a specific program | `daemon.programs.get` | `hoody daemon programs get 1` |
+| `hoody daemon programs create` |  | write | Add a new CUSTOM program | `daemon.programs.create` | `hoody daemon programs create --id 100 --name my-app --description 'My Node.js application' --command 'node app.js' --user nodejs` |
+| `hoody daemon programs delete` |  | destructive | Remove a program | `daemon.programs.delete` | `hoody daemon programs delete 100 -y` |
+| `hoody daemon programs disable` |  | write | Disable a program | `daemon.programs.disable` | `hoody daemon programs disable 100` |
+| `hoody daemon programs enable` |  | write | Enable a program | `daemon.programs.enable` | `hoody daemon programs enable 100` |
+| `hoody daemon programs get` |  | read | Get a specific program | `daemon.programs.get` | `hoody daemon programs get 100` |
 | `hoody daemon programs list` |  | read | List all programs | `daemon.programs.list` | `hoody daemon programs list --hoody-kit true --lazy-load true` |
-| `hoody daemon programs logs get` |  | read | Get program logs | `daemon.programs.getLogs` | `hoody daemon programs logs get 10 --type stdout --lines 100` |
-| `hoody daemon programs logs stream` |  | read | Follow a program's log live: replays the last --lines lines, then prints every new line. A reconnect resumes after the last line received | `daemon.programs.streamLogs` | `hoody daemon programs logs stream --id 10 --type stdout --port 8080` |
-| `hoody daemon programs reset` |  | write | Reset programs to default | `daemon.programs.reset` | `hoody daemon programs reset -y` |
-| `hoody daemon programs sandbox get` |  | read | Show a program's sandbox: the stored block, the policy revision, what it resolves to, and what the firewall is holding | `daemon.programs.getSandbox` | `hoody daemon programs sandbox get 1` |
-| `hoody daemon programs start` |  | write | Start a program or port instance | `daemon.programs.start` | `hoody daemon programs start 1 --port 8042 --wait` |
+| `hoody daemon programs logs get` |  | read | Get program logs | `daemon.programs.getLogs` | `hoody daemon programs logs get 100 --type stdout --lines 100` |
+| `hoody daemon programs logs stream` |  | read | Follow a program's log live: replays the last --lines lines, then prints every new line. A reconnect resumes after the last line received | `daemon.programs.streamLogs` | `hoody daemon programs logs stream --id 100 --type stdout --port 8080` |
+| `hoody daemon programs reset` |  | destructive | Reset programs to default | `daemon.programs.reset` | `hoody daemon programs reset -y` |
+| `hoody daemon programs sandbox get` |  | read | Show a program's sandbox: the stored block, the policy revision, what it resolves to, and what the firewall is holding | `daemon.programs.getSandbox` | `hoody daemon programs sandbox get 100` |
+| `hoody daemon programs start` |  | write | Start a program or port instance | `daemon.programs.start` | `hoody daemon programs start 100 --port 8042 --wait` |
 | `hoody daemon programs status` |  | read | Get the status of every program (no id); Get the status of one program | `daemon.programs.listStatus`, `daemon.programs.getStatus` | `hoody daemon programs status --port 8080` |
-| `hoody daemon programs stop` |  | write | Stop a program or port instance | `daemon.programs.stop` | `hoody daemon programs stop 1 --port 8042` |
-| `hoody daemon programs update` |  | write | Edit a program | `daemon.programs.update` | `hoody daemon programs update 1 --name my-app --description 'My Node.js application'` |
+| `hoody daemon programs stop` |  | write | Stop a program or port instance | `daemon.programs.stop` | `hoody daemon programs stop 100 --port 8042` |
+| `hoody daemon programs update` |  | write | Edit a program | `daemon.programs.update` | `hoody daemon programs update 100 --name my-app --description 'My Node.js application'` |
 
 ## `hoody db` (alias: sql) — 13 commands
 
@@ -651,7 +673,7 @@ Events and activity logs
 | `hoody events purge` |  | destructive | Cleanup old events | `api.events.purge` | `hoody events purge --retention-days 30 -y` |
 | `hoody events stats` |  | read | Get event statistics | `api.events.getStats` | `hoody events stats --start-date 2026-01-01T00:00:00Z --end-date 2026-01-01T00:00:00Z` |
 
-## `hoody exec` (alias: x) — 67 commands
+## `hoody exec` (alias: x) — 68 commands
 
 Script execution and templates
 
@@ -660,10 +682,10 @@ Script execution and templates
 | `hoody exec open` |  | action | Open the page a script serves (runs the script) in your browser |  | `hoody exec open --path /my-script` |
 | `hoody exec cache clear` |  | destructive | Clear Cache | `exec.cache.clear` | `hoody exec cache clear --hostname example.com --clear-vm` |
 | `hoody exec health` |  | read | Health Check | `exec.kit.getHealth` | `hoody exec health` |
-| `hoody exec logs clear` |  | destructive | Clear Logs | `exec.logs.clear` | `hoody exec logs clear --file /home/user/file.txt --confirm true` |
+| `hoody exec logs clear` |  | destructive | Clear Logs | `exec.logs.clear` | `hoody exec logs clear --file /home/user/file.txt --type all --confirm true` |
 | `hoody exec logs get` |  | read | Read Log | `exec.logs.get` | `hoody exec logs get --file execution.log --lines 100 --tail` |
-| `hoody exec logs list` |  | read | List Logs | `exec.logs.list` | `hoody exec logs list --limit 10` |
-| `hoody exec logs search` |  | read | Search Logs | `exec.logs.search` | `hoody exec logs search --query 'my search' --limit 1000` |
+| `hoody exec logs list` |  | read | List Logs | `exec.logs.list` | `hoody exec logs list --type all --limit 10` |
+| `hoody exec logs search` |  | read | Search Logs | `exec.logs.search` | `hoody exec logs search --query 'my search' --regex '.*'` |
 | `hoody exec logs stream` |  | read | Stream Logs | `exec.logs.stream` | `hoody exec logs stream --file /home/user/file.txt --follow` |
 | `hoody exec magic comments batch update` |  | write | Bulk Update Magic Comments | `exec.magicComments.updateMany` | `hoody exec magic comments batch update --directory /home/user/src --exec-id 64f1a2b3c4d5e6f7a8b9c0d1` |
 | `hoody exec magic comments get` |  | read | Read Magic Comments | `exec.magicComments.get` | `hoody exec magic comments get --path reports/report.pdf --exec-id 64f1a2b3c4d5e6f7a8b9c0d1` |
@@ -685,7 +707,7 @@ Script execution and templates
 | `hoody exec packages install` |  | write | Install Packages | `exec.packages.install` | `hoody exec packages install --packages axios --dev` |
 | `hoody exec packages manifest create` |  | write | Init package.json | `exec.packages.createManifest` | `hoody exec packages manifest create --name hoody-exec-project --version 1.0.0` |
 | `hoody exec packages manifest get` |  | read | Read package.json | `exec.packages.getManifest` | `hoody exec packages manifest get` |
-| `hoody exec packages manifest update` |  | write | Update package.json | `exec.packages.updateManifest` | `hoody exec packages manifest update --dependencies key=hello --scripts key=hello` |
+| `hoody exec packages manifest update` |  | write | Update package.json | `exec.packages.updateManifest` | `hoody exec packages manifest update --dependencies 'lodash=^4.17.21' --scripts 'my-task=node scripts/my-task.js'` |
 | `hoody exec packages pin` |  | write | Pin Versions | `exec.packages.pin` | `hoody exec packages pin --packages axios` |
 | `hoody exec requests list` |  | read | Get Active Requests | `exec.kit.listRequests` | `hoody exec requests list` |
 | `hoody exec restart` |  | destructive | Restart Server | `exec.kit.restart` | `hoody exec restart --graceful --drain-timeout-ms 5000 -y` |
@@ -709,6 +731,7 @@ Script execution and templates
 | `hoody exec scripts types validate` |  | read | Validate TypeScript | `exec.scripts.validateTypes` | `hoody exec scripts types validate --code <code>` |
 | `hoody exec scripts validate` |  | read | Validate Script | `exec.scripts.validate` | `hoody exec scripts validate --code <code>` |
 | `hoody exec scripts write` |  | write | Write Script | `exec.scripts.write` | `hoody exec scripts write --exec-id 64f1a2b3c4d5e6f7a8b9c0d1 --path /home/user/file.txt --content Hello --create-dirs` |
+| `hoody exec sdk types list` |  | read | List SDK methods | `exec.sdkTypes.list` | `hoody exec sdk types list --limit 20 --raw true` |
 | `hoody exec sdks delete` |  | destructive | Delete SDK | `exec.sdks.delete` | `hoody exec sdks delete --id abc-123 -y` |
 | `hoody exec sdks get` |  | read | Get SDK | `exec.sdks.get` | `hoody exec sdks get --id abc-123` |
 | `hoody exec sdks import` |  | write | Import SDK | `exec.sdks.import` | `hoody exec sdks import --exec-id 64f1a2b3c4d5e6f7a8b9c0d1 --source-url https://example.com/openapi.json --source-auth-type bearer --source-auth-token <source_auth.token>` |
@@ -822,13 +845,13 @@ File operations and remote backends
 | `hoody files move` |  | write | Move file or directory | `files.move` | `hoody files move /home/user/file.txt --move-to <move_to>` |
 | `hoody files realpath` |  | read | Resolve canonical path (realpath) | `files.realpath` | `hoody files realpath /home/user/file.txt` |
 | `hoody files s3 get` |  | read | Access file from S3 | `files.s3.get` | `hoody files s3 get /home/user/file.txt --type s3 --server s3.amazonaws.com --s3-bucket <s3_bucket> --s3-region us-east-1 --user alice` |
-| `hoody files search` |  | read | Search directory | `files.search` | `hoody files search /home/user/src --q <q> --json --theme oc-1` |
+| `hoody files search` |  | read | Search directory | `files.search` | `hoody files search /home/user/src --q <q> --theme oc-1 --color-scheme light` |
 | `hoody files ssh get` |  | read | Access file via SSH/SFTP | `files.ssh.get` | `hoody files ssh get /home/user/file.txt --type ssh --server nas.local:22 --user alice` |
 | `hoody files ssh upload` |  | write | Upload file via SSH/SFTP | `files.ssh.upload` | `hoody files ssh upload /home/user/file.txt --server nas.local:22 --user alice --input ./local-file` |
 | `hoody files stat` |  | read | Get file metadata (stat) | `files.stat` | `hoody files stat /home/user/file.txt` |
 | `hoody files touch` |  | write | Touch file (create or update mtime) | `files.touch` | `hoody files touch /home/user/file.txt` |
 | `hoody files update` |  | write | Modify file properties or move/rename | `files.update` | `hoody files update /home/user/file.txt --body '{"move_to":"/new/dir/file.txt"}'` |
-| `hoody files upload` |  | write | Upload or append file | `files.upload` | `hoody files upload /home/user/file.txt --append --input ./local-file` |
+| `hoody files upload` |  | write | Upload or append file | `files.upload` | `hoody files upload /home/user/file.txt --append --x-expected-length 16777216 --input ./local-file` |
 | `hoody files uploads delete` |  | destructive | Delete every held file of a pending upload. They are the only copy of those changes; the backend is not touched | `files.uploads.delete` | `hoody files uploads delete abc-123 -y` |
 | `hoody files uploads deliver` |  | write | Upload held files of a pending upload to a backend, overwriting newer versions there. Without --paths or --paths-b64, every complete file is delivered | `files.uploads.deliver` | `hoody files uploads deliver abc-123 --paths /home/user/src -y` |
 | `hoody files uploads download` |  | read | Write the held copy of one file of a pending upload, byte for byte; save it with --out-file &lt;path&gt;. Name it with exactly one of --path or --path-b64, as listed | `files.uploads.download` | `hoody files uploads download abc-123 --path /home/user/file.txt` |
@@ -1060,7 +1083,7 @@ Manage projects
 | `hoody projects proxy enable` |  | write | Enable the proxy permissions of a project | `api.proxy.projectPermissions.enable` | `hoody projects proxy enable --project 64f1a2b3c4d5e6f7a8b9c0d1 --if-match file:v42` |
 | `hoody projects proxy groups delete` |  | destructive | Remove project authentication group | `api.proxy.projectPermissions.deleteAuthGroup` | `hoody projects proxy groups delete --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 -y` |
 | `hoody projects proxy groups ip set` |  | write | Set IP authentication group (project) | `api.proxy.projectPermissions.setIpGroup` | `hoody projects proxy groups ip set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --range 192.0.2.0/24` |
-| `hoody projects proxy groups jwt set` |  | write | Set JWT authentication group (project) | `api.proxy.projectPermissions.setJwtGroup` | `hoody projects proxy groups jwt set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello` |
+| `hoody projects proxy groups jwt set` |  | write | Set JWT authentication group (project) | `api.proxy.projectPermissions.setJwtGroup` | `hoody projects proxy groups jwt set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --secret <secret> --algorithm HS256 --sources header:Authorization --claims key=hello --header-authoritative` |
 | `hoody projects proxy groups password set` |  | write | Set password authentication group (project) | `api.proxy.projectPermissions.setPasswordGroup` | `hoody projects proxy groups password set --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 --auth-username alice --auth-password <password> --algorithm sha256 --salt <salt>` |
 | `hoody projects proxy groups permissions clear` |  | destructive | Remove all program permissions for a project group | `api.proxy.projectPermissions.clearGroupPermissions` | `hoody projects proxy groups permissions clear --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --if-match file:v42 -y` |
 | `hoody projects proxy groups permissions delete` |  | destructive | Remove a single program permission for a project group | `api.proxy.projectPermissions.deleteGroupPermission` | `hoody projects proxy groups permissions delete --project 64f1a2b3c4d5e6f7a8b9c0d1 --group-name <group_name> --program http --if-match file:v42 -y` |
@@ -1204,7 +1227,7 @@ Terminal sessions and execution
 | `hoody terminal automation stats` |  | read | Get terminal automation metrics | `terminal.automation.getStats` | `hoody terminal automation stats` |
 | `hoody terminal commands cancel` |  | write | Abort a running command | `terminal.commands.cancel` | `hoody terminal commands cancel abc-123 --force` |
 | `hoody terminal commands get` |  | read | Get command result | `terminal.commands.get` | `hoody terminal commands get 45678` |
-| `hoody terminal commands list` |  | read | Get terminal command history | `terminal.commands.list` | `hoody terminal commands list 12345` |
+| `hoody terminal commands list` |  | read | Get terminal command history | `terminal.commands.list` | `hoody terminal commands list 1` |
 | `hoody terminal commands run` |  | action | Execute command in terminal session | `terminal.commands.run` | `hoody terminal commands run --ephemeral --defer-pid 4242 --command 'ls -la'` |
 | `hoody terminal health` |  | read | Service health check | `terminal.kit.getHealth` | `hoody terminal health` |
 | `hoody terminal keys list` |  | read | List supported key names for /press endpoint | `terminal.keys.list` | `hoody terminal keys list` |
@@ -1214,19 +1237,19 @@ Terminal sessions and execution
 | `hoody terminal processes resume` |  | write | Resume a suspended process or process tree (SIGCONT) | `terminal.processes.resume` | `hoody terminal processes resume --pid 1234 --include-descendants` |
 | `hoody terminal processes signal` |  | write | Send signal to process(es) | `terminal.processes.signal` | `hoody terminal processes signal --pid 1234 --force` |
 | `hoody terminal sessions automation status` |  | read | Get per-session automation state | `terminal.sessions.getAutomationStatus` | `hoody terminal sessions automation status 1` |
-| `hoody terminal sessions connect` |  | read | WebSocket terminal connection | `terminal.sessions.connect` | `hoody terminal sessions connect --terminal-id 12345 --readonly` |
+| `hoody terminal sessions connect` |  | read | WebSocket terminal connection | `terminal.sessions.connect` | `hoody terminal sessions connect --terminal-id 1 --readonly` |
 | `hoody terminal sessions create` |  | write | Create a terminal session | `terminal.sessions.create` | `hoody terminal sessions create --ephemeral --display 5` |
-| `hoody terminal sessions delete` |  | destructive | Delete a terminal session | `terminal.sessions.delete` | `hoody terminal sessions delete 12345 -y` |
+| `hoody terminal sessions delete` |  | destructive | Delete a terminal session | `terminal.sessions.delete` | `hoody terminal sessions delete 1 -y` |
 | `hoody terminal sessions list` |  | read | List all terminal sessions | `terminal.sessions.list` | `hoody terminal sessions list --history-limit 50` |
 | `hoody terminal sessions mouse send` |  | write | Send a cell-based mouse event to a terminal session | `terminal.sessions.sendMouseEvents` | `hoody terminal sessions mouse send --terminal-id 1 --event-type move --event-row 10 --event-col 10 --event-button 1` |
 | `hoody terminal sessions paste` |  | write | Paste text into terminal | `terminal.sessions.paste` | `hoody terminal sessions paste --terminal-id 1 --text Hello --bracketed` |
 | `hoody terminal sessions press` |  | write | Send named key presses to terminal | `terminal.sessions.pressKeys` | `hoody terminal sessions press --terminal-id 1 --keys ctrl+c` |
-| `hoody terminal sessions read` |  | read | Get raw terminal output | `terminal.sessions.read` | `hoody terminal sessions read --terminal-id 12345 --format download` |
-| `hoody terminal sessions screenshots capture` |  | read | Capture terminal screenshot | `terminal.sessions.captureScreenshot` | `hoody terminal sessions screenshots capture --terminal-id 12345 --format png --foreground white` |
+| `hoody terminal sessions read` |  | read | Get raw terminal output | `terminal.sessions.read` | `hoody terminal sessions read --terminal-id 1 --format download` |
+| `hoody terminal sessions screenshots capture` |  | read | Capture terminal screenshot | `terminal.sessions.captureScreenshot` | `hoody terminal sessions screenshots capture --terminal-id 1 --format png --foreground white` |
 | `hoody terminal sessions search` |  | read | Search terminal screen with regex | `terminal.sessions.search` | `hoody terminal sessions search --terminal-id 1 --pattern TODO --scope screen --limit 100` |
 | `hoody terminal sessions snapshot get` |  | read | Get rendered terminal snapshot | `terminal.sessions.getSnapshot` | `hoody terminal sessions snapshot get --terminal-id 1 --include-colors --include-highlights` |
 | `hoody terminal sessions wait` |  | write | Wait for terminal condition | `terminal.sessions.wait` | `hoody terminal sessions wait --terminal-id 1 --mode stable --debounce-ms 100` |
-| `hoody terminal sessions write` |  | write | Write input to terminal | `terminal.sessions.write` | `hoody terminal sessions write --terminal-id 40001 --input <input> --enter` |
+| `hoody terminal sessions write` |  | write | Write input to terminal | `terminal.sessions.write` | `hoody terminal sessions write --terminal-id 1 --input <input> --enter` |
 | `hoody terminal system daemon programs list` |  | read | Get daemon programs configuration | `terminal.system.listDaemonPrograms` | `hoody terminal system daemon programs list` |
 | `hoody terminal system displays list` |  | read | Get display information | `terminal.system.listDisplays` | `hoody terminal system displays list` |
 | `hoody terminal system displays stop` |  | destructive | Stop an X display and everything drawing on it, including a display a deleted terminal session left running | `terminal.system.stopDisplay` | `hoody terminal system displays stop 1 -y` |

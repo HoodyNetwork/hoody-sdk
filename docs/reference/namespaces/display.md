@@ -1,6 +1,6 @@
 # `display` — 46 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.display`
 
 ```typescript
@@ -18,14 +18,13 @@ import * as display from 'hoody-sdk/display';
 Read clipboard text
 
 ```typescript
-client.display.clipboard.get(options?: { displayId?: number; selection?: "clipboard" | "primary" | "secondary"; cache?: boolean | number }): Promise<DisplayClipboardGetResponse>
+client.display.clipboard.get(options?: { displayId?: number; selection?: "clipboard" | "primary" | "secondary" }): Promise<DisplayClipboardGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 | `selection` | `"clipboard" \| "primary" \| "secondary"` | No | query | Clipboard buffer selection |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayClipboardGetResponse`
 
@@ -40,14 +39,13 @@ client.display.clipboard.get(options?: { displayId?: number; selection?: "clipbo
 Write clipboard text
 
 ```typescript
-client.display.clipboard.set(data: DisplayClipboardSetRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayClipboardSetResponse>
+client.display.clipboard.set(data: DisplayClipboardSetRequest, options?: { displayId?: number }): Promise<DisplayClipboardSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayClipboardSetRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayClipboardSetResponse`
 
@@ -64,13 +62,12 @@ client.display.clipboard.set(data: DisplayClipboardSetRequest, options?: { displ
 Get display information and screenshots
 
 ```typescript
-client.display.get(options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayGetResponse>
+client.display.get(options?: { displayId?: number }): Promise<DisplayGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayGetResponse`
 
@@ -85,13 +82,12 @@ client.display.get(options?: { displayId?: number; cache?: boolean | number }): 
 Get display dimensions
 
 ```typescript
-client.display.getGeometry(options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayGetGeometryResponse>
+client.display.getGeometry(options?: { displayId?: number }): Promise<DisplayGetGeometryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayGetGeometryResponse`
 
@@ -108,14 +104,13 @@ client.display.getGeometry(options?: { displayId?: number; cache?: boolean | num
 Execute one action with optional screenshot
 
 ```typescript
-client.display.input.act(data: DisplayInputActRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputActResponse>
+client.display.input.act(data: DisplayInputActRequest, options?: { displayId?: number }): Promise<DisplayInputActResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayInputActRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputActResponse`
 
@@ -130,14 +125,13 @@ client.display.input.act(data: DisplayInputActRequest, options?: { displayId?: n
 Execute a sequence of actions
 
 ```typescript
-client.display.input.actMany(data: DisplayInputActManyRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputActManyResponse>
+client.display.input.actMany(data: DisplayInputActManyRequest, options?: { displayId?: number }): Promise<DisplayInputActManyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayInputActManyRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputActManyResponse`
 
@@ -152,14 +146,13 @@ client.display.input.actMany(data: DisplayInputActManyRequest, options?: { displ
 Move cursor and click
 
 ```typescript
-client.display.input.click(data: DisplayInputClickRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputClickResponse>
+client.display.input.click(data: DisplayInputClickRequest, options?: { displayId?: number }): Promise<DisplayInputClickResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayInputClickRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputClickResponse`
 
@@ -174,14 +167,13 @@ client.display.input.click(data: DisplayInputClickRequest, options?: { displayId
 Drag from one position to another
 
 ```typescript
-client.display.input.drag(data: DisplayInputDragRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputDragResponse>
+client.display.input.drag(data: DisplayInputDragRequest, options?: { displayId?: number }): Promise<DisplayInputDragResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayInputDragRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputDragResponse`
 
@@ -196,13 +188,12 @@ client.display.input.drag(data: DisplayInputDragRequest, options?: { displayId?:
 Emergency release all inputs
 
 ```typescript
-client.display.input.reset(options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputResetResponse>
+client.display.input.reset(options?: { displayId?: number }): Promise<DisplayInputResetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputResetResponse`
 
@@ -217,14 +208,13 @@ client.display.input.reset(options?: { displayId?: number; cache?: boolean | num
 Select a range via click + shift-click
 
 ```typescript
-client.display.input.select(data: DisplayInputSelectRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputSelectResponse>
+client.display.input.select(data: DisplayInputSelectRequest, options?: { displayId?: number }): Promise<DisplayInputSelectResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayInputSelectRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputSelectResponse`
 
@@ -239,14 +229,13 @@ client.display.input.select(data: DisplayInputSelectRequest, options?: { display
 Move, click, and type in one operation
 
 ```typescript
-client.display.input.type(data: DisplayInputTypeRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputTypeResponse>
+client.display.input.type(data: DisplayInputTypeRequest, options?: { displayId?: number }): Promise<DisplayInputTypeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayInputTypeRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputTypeResponse`
 
@@ -261,14 +250,13 @@ client.display.input.type(data: DisplayInputTypeRequest, options?: { displayId?:
 Wait for a duration with optional screenshot
 
 ```typescript
-client.display.input.wait(data: DisplayInputWaitRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayInputWaitResponse>
+client.display.input.wait(data: DisplayInputWaitRequest, options?: { displayId?: number }): Promise<DisplayInputWaitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayInputWaitRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayInputWaitResponse`
 
@@ -285,14 +273,13 @@ client.display.input.wait(data: DisplayInputWaitRequest, options?: { displayId?:
 Hold a key down
 
 ```typescript
-client.display.keyboard.down(data: DisplayKeyboardDownRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayKeyboardDownResponse>
+client.display.keyboard.down(data: DisplayKeyboardDownRequest, options?: { displayId?: number }): Promise<DisplayKeyboardDownResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayKeyboardDownRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayKeyboardDownResponse`
 
@@ -307,14 +294,13 @@ client.display.keyboard.down(data: DisplayKeyboardDownRequest, options?: { displ
 Press key combinations
 
 ```typescript
-client.display.keyboard.press(data: DisplayKeyboardPressRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayKeyboardPressResponse>
+client.display.keyboard.press(data: DisplayKeyboardPressRequest, options?: { displayId?: number }): Promise<DisplayKeyboardPressResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayKeyboardPressRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayKeyboardPressResponse`
 
@@ -329,14 +315,13 @@ client.display.keyboard.press(data: DisplayKeyboardPressRequest, options?: { dis
 Type a string of text
 
 ```typescript
-client.display.keyboard.type(data: DisplayKeyboardTypeRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayKeyboardTypeResponse>
+client.display.keyboard.type(data: DisplayKeyboardTypeRequest, options?: { displayId?: number }): Promise<DisplayKeyboardTypeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayKeyboardTypeRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayKeyboardTypeResponse`
 
@@ -351,14 +336,13 @@ client.display.keyboard.type(data: DisplayKeyboardTypeRequest, options?: { displ
 Release a held key
 
 ```typescript
-client.display.keyboard.up(data: DisplayKeyboardUpRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayKeyboardUpResponse>
+client.display.keyboard.up(data: DisplayKeyboardUpRequest, options?: { displayId?: number }): Promise<DisplayKeyboardUpResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayKeyboardUpRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayKeyboardUpResponse`
 
@@ -393,14 +377,13 @@ client.display.kit.getHealth(): Promise<DisplayHealthCheckResponse>
 Click a mouse button
 
 ```typescript
-client.display.mouse.click(data?: DisplayMouseClickRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseClickResponse>
+client.display.mouse.click(data?: DisplayMouseClickRequest, options?: { displayId?: number }): Promise<DisplayMouseClickResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayMouseClickRequest` | No | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseClickResponse`
 
@@ -415,14 +398,13 @@ client.display.mouse.click(data?: DisplayMouseClickRequest, options?: { displayI
 Double-click a mouse button
 
 ```typescript
-client.display.mouse.doubleClick(data?: DisplayMouseDoubleClickRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseDoubleClickResponse>
+client.display.mouse.doubleClick(data?: DisplayMouseDoubleClickRequest, options?: { displayId?: number }): Promise<DisplayMouseDoubleClickResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayMouseDoubleClickRequest` | No | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseDoubleClickResponse`
 
@@ -437,14 +419,13 @@ client.display.mouse.doubleClick(data?: DisplayMouseDoubleClickRequest, options?
 Press and hold a mouse button
 
 ```typescript
-client.display.mouse.down(data?: DisplayMouseDownRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseDownResponse>
+client.display.mouse.down(data?: DisplayMouseDownRequest, options?: { displayId?: number }): Promise<DisplayMouseDownResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayMouseDownRequest` | No | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseDownResponse`
 
@@ -459,13 +440,12 @@ client.display.mouse.down(data?: DisplayMouseDownRequest, options?: { displayId?
 Get cursor position
 
 ```typescript
-client.display.mouse.getPosition(options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseGetPositionResponse>
+client.display.mouse.getPosition(options?: { displayId?: number }): Promise<DisplayMouseGetPositionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseGetPositionResponse`
 
@@ -480,14 +460,13 @@ client.display.mouse.getPosition(options?: { displayId?: number; cache?: boolean
 Move cursor to absolute position
 
 ```typescript
-client.display.mouse.move(data: DisplayMouseMoveRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseMoveResponse>
+client.display.mouse.move(data: DisplayMouseMoveRequest, options?: { displayId?: number }): Promise<DisplayMouseMoveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayMouseMoveRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseMoveResponse`
 
@@ -502,14 +481,13 @@ client.display.mouse.move(data: DisplayMouseMoveRequest, options?: { displayId?:
 Move cursor by offset
 
 ```typescript
-client.display.mouse.moveBy(data: DisplayMouseMoveByRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseMoveByResponse>
+client.display.mouse.moveBy(data: DisplayMouseMoveByRequest, options?: { displayId?: number }): Promise<DisplayMouseMoveByResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayMouseMoveByRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseMoveByResponse`
 
@@ -524,14 +502,13 @@ client.display.mouse.moveBy(data: DisplayMouseMoveByRequest, options?: { display
 Scroll in a direction
 
 ```typescript
-client.display.mouse.scroll(data: DisplayMouseScrollRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseScrollResponse>
+client.display.mouse.scroll(data: DisplayMouseScrollRequest, options?: { displayId?: number }): Promise<DisplayMouseScrollResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayMouseScrollRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseScrollResponse`
 
@@ -546,14 +523,13 @@ client.display.mouse.scroll(data: DisplayMouseScrollRequest, options?: { display
 Release a mouse button
 
 ```typescript
-client.display.mouse.up(data?: DisplayMouseUpRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayMouseUpResponse>
+client.display.mouse.up(data?: DisplayMouseUpRequest, options?: { displayId?: number }): Promise<DisplayMouseUpResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayMouseUpRequest` | No | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayMouseUpResponse`
 
@@ -577,7 +553,7 @@ client.display.screenshots.capture(options?: { base64?: boolean; displayId?: int
 |-----------|------|----------|----------|-------------|
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `region` | `string` | No | query | Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 &gt; x1` and `y2 &gt; y1`; anything else is a 400. The coordinates are **capture coordinates**, not root-window coordinates. A seamless session composites only the windows it is showing, so the capture's origin is the bounding box of those windows. Crop against the width and height reported for the capture itself, not against the geometry from `GET /input/display-geometry`. |
+| `region` | `string` | No | query | Crop the returned image to `x1,y1,x2,y2`. Minimum 10x10 px, maximum 65535 on each axis, `x2 &gt; x1` and `y2 &gt; y1`; anything else is a 400. A capture spans the whole screen, so these are screen coordinates: the same ones `POST /input/click-at` takes and `GET /input/display-geometry` describes. The cropped image starts at `x1,y1`: its pixel (x, y) is screen point (x1 + x, y1 + y). |
 | `cursor` | `boolean` | No | query | Include the pointer position in the response. Only has an effect on the base64 JSON form, which gains a `cursor` object; a binary PNG response has nowhere to put it. Accepted values: `true`, `1`, `` (empty). Anything else is off. |
 | `metadata` | `boolean` | No | option | Answer the screenshot metadata instead of the image. |
 
@@ -594,7 +570,7 @@ client.display.screenshots.capture(options?: { base64?: boolean; displayId?: int
 Retrieve a specific screenshot by timestamp
 
 ```typescript
-client.display.screenshots.get(timestamp: string, options?: { base64?: boolean; displayId?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | DisplayScreenshotsGetResponse>
+client.display.screenshots.get(timestamp: string, options?: { base64?: boolean; displayId?: number }): Promise<ApiResponse<ArrayBuffer> | DisplayScreenshotsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -602,7 +578,6 @@ client.display.screenshots.get(timestamp: string, options?: { base64?: boolean; 
 | `timestamp` | `string` | Yes | path | Unix timestamp of the screenshot. Use the `timestamp` field returned by screenshot metadata/list endpoints. Do not use `timestamp_human` for path queries. Must be numeric only for security. |
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | DisplayScreenshotsGetResponse`
 
@@ -639,13 +614,12 @@ client.display.screenshots.getLatest(options?: { base64?: boolean; displayId?: i
 List all available screenshots
 
 ```typescript
-client.display.screenshots.list(options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayScreenshotsListResponse>
+client.display.screenshots.list(options?: { displayId?: number }): Promise<DisplayScreenshotsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayScreenshotsListResponse`
 
@@ -662,14 +636,13 @@ client.display.screenshots.list(options?: { displayId?: number; cache?: boolean 
 Capture a new screenshot thumbnail
 
 ```typescript
-client.display.thumbnails.capture(options?: { base64?: boolean; displayId?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsCaptureResponse>
+client.display.thumbnails.capture(options?: { base64?: boolean; displayId?: number }): Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsCaptureResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | DisplayThumbnailsCaptureResponse`
 
@@ -684,7 +657,7 @@ client.display.thumbnails.capture(options?: { base64?: boolean; displayId?: numb
 Retrieve a specific thumbnail by timestamp
 
 ```typescript
-client.display.thumbnails.get(timestamp: string, options?: { base64?: boolean; displayId?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsGetResponse>
+client.display.thumbnails.get(timestamp: string, options?: { base64?: boolean; displayId?: number }): Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -692,7 +665,6 @@ client.display.thumbnails.get(timestamp: string, options?: { base64?: boolean; d
 | `timestamp` | `string` | Yes | path | Unix timestamp of the screenshot. Use the `timestamp` field returned by screenshot metadata/list endpoints. Do not use `timestamp_human` for path queries. Must be numeric only for security. |
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | DisplayThumbnailsGetResponse`
 
@@ -707,14 +679,13 @@ client.display.thumbnails.get(timestamp: string, options?: { base64?: boolean; d
 Retrieve the most recent thumbnail
 
 ```typescript
-client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsGetLatestResponse>
+client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: number }): Promise<ApiResponse<ArrayBuffer> | DisplayThumbnailsGetLatestResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `base64` | `boolean` | No | query | Return base64-encoded JSON response instead of binary image. Useful for AI agents and systems that can't handle binary data. Accepted values: - `true`, `1`, `` (empty) - Return base64 JSON - `false`, `0` - Return binary (default) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | DisplayThumbnailsGetLatestResponse`
 
@@ -731,14 +702,13 @@ client.display.thumbnails.getLatest(options?: { base64?: boolean; displayId?: nu
 Close a window
 
 ```typescript
-client.display.windows.close(data: DisplayWindowsCloseRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsCloseResponse>
+client.display.windows.close(data: DisplayWindowsCloseRequest, options?: { displayId?: number }): Promise<DisplayWindowsCloseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsCloseRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsCloseResponse`
 
@@ -753,14 +723,13 @@ client.display.windows.close(data: DisplayWindowsCloseRequest, options?: { displ
 Focus/activate a window
 
 ```typescript
-client.display.windows.focus(data: DisplayWindowsFocusRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsFocusResponse>
+client.display.windows.focus(data: DisplayWindowsFocusRequest, options?: { displayId?: number }): Promise<DisplayWindowsFocusResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsFocusRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsFocusResponse`
 
@@ -775,14 +744,13 @@ client.display.windows.focus(data: DisplayWindowsFocusRequest, options?: { displ
 Get extended properties for a window
 
 ```typescript
-client.display.windows.get(windowId: string, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsGetResponse>
+client.display.windows.get(windowId: string, options?: { displayId?: number }): Promise<DisplayWindowsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `windowId` | `string` | Yes | path | Window ID (decimal or hex 0x...) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsGetResponse`
 
@@ -797,13 +765,12 @@ client.display.windows.get(windowId: string, options?: { displayId?: number; cac
 Get the active window ID
 
 ```typescript
-client.display.windows.getActive(options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsGetActiveResponse>
+client.display.windows.getActive(options?: { displayId?: number }): Promise<DisplayWindowsGetActiveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsGetActiveResponse`
 
@@ -818,14 +785,13 @@ client.display.windows.getActive(options?: { displayId?: number; cache?: boolean
 Get window position and size
 
 ```typescript
-client.display.windows.getGeometry(windowId: string, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsGetGeometryResponse>
+client.display.windows.getGeometry(windowId: string, options?: { displayId?: number }): Promise<DisplayWindowsGetGeometryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `windowId` | `string` | Yes | path | Window ID (decimal or hex) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsGetGeometryResponse`
 
@@ -840,14 +806,13 @@ client.display.windows.getGeometry(windowId: string, options?: { displayId?: num
 Get window title
 
 ```typescript
-client.display.windows.getTitle(windowId: string, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsGetTitleResponse>
+client.display.windows.getTitle(windowId: string, options?: { displayId?: number }): Promise<DisplayWindowsGetTitleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `windowId` | `string` | Yes | path | Window ID (decimal or hex) |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsGetTitleResponse`
 
@@ -862,14 +827,13 @@ client.display.windows.getTitle(windowId: string, options?: { displayId?: number
 List windows on the current display
 
 ```typescript
-client.display.windows.list(options?: { displayId?: number; onlyVisible?: boolean; cache?: boolean | number }): Promise<DisplayWindowsListResponse>
+client.display.windows.list(options?: { displayId?: number; onlyVisible?: boolean }): Promise<DisplayWindowsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
 | `onlyVisible` | `boolean` | No | query | Drop windows carrying `_NET_WM_STATE_HIDDEN`. A minimized window carries that state, so this does exclude minimized windows. This is a different test from the `onlyVisible` on `window/search` and `input/wait-until`, which ask the X server whether the window is viewable and still match a minimized one. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsListResponse`
 
@@ -884,14 +848,13 @@ client.display.windows.list(options?: { displayId?: number; onlyVisible?: boolea
 Minimize a window
 
 ```typescript
-client.display.windows.minimize(data: DisplayWindowsMinimizeRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsMinimizeResponse>
+client.display.windows.minimize(data: DisplayWindowsMinimizeRequest, options?: { displayId?: number }): Promise<DisplayWindowsMinimizeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsMinimizeRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsMinimizeResponse`
 
@@ -906,14 +869,13 @@ client.display.windows.minimize(data: DisplayWindowsMinimizeRequest, options?: {
 Move a window
 
 ```typescript
-client.display.windows.move(data: DisplayWindowsMoveRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsMoveResponse>
+client.display.windows.move(data: DisplayWindowsMoveRequest, options?: { displayId?: number }): Promise<DisplayWindowsMoveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsMoveRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsMoveResponse`
 
@@ -928,14 +890,13 @@ client.display.windows.move(data: DisplayWindowsMoveRequest, options?: { display
 Raise a window to the top
 
 ```typescript
-client.display.windows.raise(data: DisplayWindowsRaiseRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsRaiseResponse>
+client.display.windows.raise(data: DisplayWindowsRaiseRequest, options?: { displayId?: number }): Promise<DisplayWindowsRaiseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsRaiseRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsRaiseResponse`
 
@@ -950,14 +911,13 @@ client.display.windows.raise(data: DisplayWindowsRaiseRequest, options?: { displ
 Resize a window
 
 ```typescript
-client.display.windows.resize(data: DisplayWindowsResizeRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsResizeResponse>
+client.display.windows.resize(data: DisplayWindowsResizeRequest, options?: { displayId?: number }): Promise<DisplayWindowsResizeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsResizeRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsResizeResponse`
 
@@ -972,14 +932,13 @@ client.display.windows.resize(data: DisplayWindowsResizeRequest, options?: { dis
 Restore (un-minimize) a window
 
 ```typescript
-client.display.windows.restore(data: DisplayWindowsRestoreRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsRestoreResponse>
+client.display.windows.restore(data: DisplayWindowsRestoreRequest, options?: { displayId?: number }): Promise<DisplayWindowsRestoreResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsRestoreRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsRestoreResponse`
 
@@ -994,14 +953,13 @@ client.display.windows.restore(data: DisplayWindowsRestoreRequest, options?: { d
 Search for windows by pattern
 
 ```typescript
-client.display.windows.search(data: DisplayWindowsSearchRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsSearchResponse>
+client.display.windows.search(data: DisplayWindowsSearchRequest, options?: { displayId?: number }): Promise<DisplayWindowsSearchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsSearchRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsSearchResponse`
 
@@ -1016,14 +974,13 @@ client.display.windows.search(data: DisplayWindowsSearchRequest, options?: { dis
 Wait for a window to appear or disappear
 
 ```typescript
-client.display.windows.wait(data: DisplayWindowsWaitRequest, options?: { displayId?: number; cache?: boolean | number }): Promise<DisplayWindowsWaitResponse>
+client.display.windows.wait(data: DisplayWindowsWaitRequest, options?: { displayId?: number }): Promise<DisplayWindowsWaitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `DisplayWindowsWaitRequest` | Yes | body |  |
 | `displayId` | `number` | No | query | Display ID to use (overrides the `*-display-N.*` hostname pattern). Valid range: 1-999999 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `DisplayWindowsWaitResponse`
 

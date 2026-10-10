@@ -1,6 +1,6 @@
 # `pipe` — 6 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.pipe`
 
 ```typescript
@@ -127,7 +127,7 @@ client.pipe.receive(path: string, options?: { n?: integer; download?: string; fi
 Send data to a pipe
 
 ```typescript
-client.pipe.send(path: string, data?: string | FormData | Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: { n?: number; wait?: number; sha256?: "" | "true" | "false" | "yes" | "no" | "1" | "0"; transfer?: string; live?: "" | "true" | "false" | "yes" | "no" | "1" | "0"; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<ApiResponse<string>>
+client.pipe.send(path: string, data?: string | FormData | Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array>, options?: { n?: number; wait?: number; sha256?: "" | "true" | "false" | "yes" | "no" | "1" | "0"; transfer?: string; live?: "" | "true" | "false" | "yes" | "no" | "1" | "0"; contentType?: 'application/octet-stream' }): Promise<ApiResponse<string>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -139,7 +139,6 @@ client.pipe.send(path: string, data?: string | FormData | Blob | ArrayBuffer | U
 | `sha256` | `"" \| "true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | No | query | Compute the SHA-256 of the bytes forwarded to receivers (for multipart, of the file part or `input_text`, which is what receivers get). On a complete transfer the status stream gets `[INFO] SHA-256: &lt;64 hex&gt;` between `[INFO] Upload complete.` and `[INFO] Transfer complete.`, and the digest is in the `?progress` `done` event and in `?status`. A failed transfer has no digest. Any receiver can switch hashing on as well. Hashing adds processing overhead per byte, so it is opt-in. **Values:** `?sha256` (bare), `true`, `yes`, `1` → on; `false`, `no`, `0` → off. |
 | `transfer` | `string` | No | query | This transfer's own id instead of a generated one: 16-64 characters `A-Z a-z 0-9 _ -`. A sender cannot read response headers while it uploads, so it picks the id up front to follow its own transfer with `?status&transfer=&lt;id&gt;`. The id is the `transferId` in `?status` from the sender's arrival (also while it waits), the `X-Hoody-Pipe-Transfer-Id` receivers get, and the `done` event's `transferId`. A transfer with its own id leaves a receipt for every outcome, kept 10 minutes: `complete`, or `failed` with its `reason`, also when it ended before streaming (`Timed out waiting for receivers`, `Sender disconnected`, `Server at capacity`). Any other value is 400. An id still held by a waiting, running or finished transfer on any name, or by a kept receipt, is 409. Not with `ws` (400). On a `live` sender it is the live stream's `transferId` in `?status` from the start, and its receipt (`"kind": "live"`, `complete` or `failed`) once it ends; live viewers get no `X-Hoody-Pipe-Transfer-Id`. |
 | `live` | `"" \| "true" \| "false" \| "yes" \| "no" \| "1" \| "0"` | No | query | Live broadcast: start streaming at once, even with no viewers, and let any number of viewers join and leave at any time (`GET /{path}?live`; up to 256 at once). Nothing waits for a receiver and nothing is stored: bytes sent while nobody watches are dropped. Viewers are never in lockstep: one that falls behind skips ahead (WebM: whole Clusters, resuming at a keyframe Cluster) or is cut, and never slows the sender or the others. **WebM bodies** (starting with the EBML magic, e.g. MediaRecorder or `ffmpeg -f webm`) get keyframe joins: a viewer receives the stream header, then the stream from the next Cluster that starts with a video keyframe (any Cluster for audio-only). Join delay is the keyframe interval. **Any other body** (logs, text, other containers) is sent to a viewer from the next chunk on. **Status lines** (at most four): `[INFO] Live: streaming. Viewers can join at any time.`, then `[INFO] Live stream ended (peak N viewers).` on a clean end, or the idle-timeout / failure `[ERROR]` lines. Viewer counts are on `?progress` and `?status` (`kind: "live"`). **Ending:** a clean end lets each viewer take what it was already sent (up to 60 s), then its body ends normally. A sender that disconnects, fails or idles 5 minutes cuts every viewer (their bodies end without the chunked terminator, which clients report as an error). The name is free for reuse as soon as the sender ends. Not with `n` above 1, `sha256`, `ws` or a multipart body (400). A name with waiting or streaming ordinary transfers, or a WebSocket pair, is 409. At most 100 live streams and 4096 viewer responses at once (429). `wait` is validated but a live sender never waits. **Values:** `?live` (bare), `true`, `yes`, `1` → live; `false`, `no`, `0` → an ordinary sender. |
-| `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `ApiResponse<string>`

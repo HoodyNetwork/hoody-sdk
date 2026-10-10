@@ -1,12 +1,12 @@
 # Hoody SDK — Complete Method Reference
 
-**Version:** 1.0.0-beta.16
-**Total methods:** 1179
+**Version:** 1.0.0-beta.17
+**Total methods:** 1212
 **Namespaces:** 21
 
 ---
 
-## `agent` (294 methods)
+## `agent` (326 methods)
 
 ### `client.agent.acp`
 
@@ -25,6 +25,34 @@
 | `signIn` | POST | `/api/v1/agent/hoody/auth/bootstrap` | Sign this container's agent in to the Hoody platform with a token of the box's owner. Until then the agent's shell and file tools answer "not logged in". |
 | `stopAllWork` | POST | `/api/v1/agent/stop` | Stop everything running in the realm. |
 | `whoami` | GET | `/api/v1/agent/hoody/auth/status` | Hoody platform identity and realm scope. |
+
+### `client.agent.bots`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `create` | POST | `/api/v1/agent/bots` | Create a Bot. |
+| `delete` | DELETE | `/api/v1/agent/bots/{id}` | Delete a Bot. |
+| `forget` | POST | `/api/v1/agent/bots/{id}/forget` | Make a Bot forget its conversation. |
+| `get` | GET | `/api/v1/agent/bots/{id}` | Get a Bot. |
+| `getArchive` | GET | `/api/v1/agent/bots/{id}/archive` | Read a Bot's archive. |
+| `getArchiveAll` | GET | `/api/v1/agent/bots/{id}/archive` | Read a Bot's archive. (collect all pages) |
+| `getArchiveIterator` | GET | `/api/v1/agent/bots/{id}/archive` | Read a Bot's archive. (async iterator) |
+| `getLog` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. |
+| `getLogAll` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. (collect all pages) |
+| `getLogIterator` | GET | `/api/v1/agent/bots/{id}/log` | Read a Bot's log. (async iterator) |
+| `list` | GET | `/api/v1/agent/bots` | List the Bots. |
+| `listAll` | GET | `/api/v1/agent/bots` | List the Bots. (collect all pages) |
+| `listDelegates` | GET | `/api/v1/agent/bots/{id}/delegates` | List a Bot's delegates. |
+| `listDelegatesAll` | GET | `/api/v1/agent/bots/{id}/delegates` | List a Bot's delegates. (collect all pages) |
+| `listDelegatesIterator` | GET | `/api/v1/agent/bots/{id}/delegates` | List a Bot's delegates. (async iterator) |
+| `listIterator` | GET | `/api/v1/agent/bots` | List the Bots. (async iterator) |
+| `purgeArchive` | POST | `/api/v1/agent/bots/{id}/purge` | Delete a Bot's archive. |
+| `reset` | POST | `/api/v1/agent/bots/{id}/reset` | Give a Bot a new session. |
+| `sendMessage` | POST | `/api/v1/agent/bots/{id}/messages` | Post a message to a Bot. |
+| `setGuardrails` | PUT | `/api/v1/agent/bots/{id}/guardrails` | Replace a Bot's guardrails. |
+| `stopDelegate` | POST | `/api/v1/agent/bots/{id}/delegates/{sid}/stop` | Stop one of a Bot's delegates now. |
+| `stream` | GET | `/api/v1/agent/bots/{id}/stream` | Follow a Bot's log (SSE). |
+| `update` | PATCH | `/api/v1/agent/bots/{id}` | Change a Bot's settings. |
 
 ### `client.agent.changes`
 
@@ -268,6 +296,8 @@
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `addAccount` | POST | `/api/v1/agent/providers/{id}/auth/accounts` | Add an OAuth account to a provider's pool. |
+| `create` | POST | `/api/v1/agent/providers` | Create a custom provider. |
+| `delete` | DELETE | `/api/v1/agent/providers/{id}` | Delete a custom provider. |
 | `deleteApiKey` | DELETE | `/api/v1/agent/providers/{id}/auth/api-key` | Delete a provider API key. |
 | `get` | GET | `/api/v1/agent/providers/{id}` | Get a provider. |
 | `getAuth` | GET | `/api/v1/agent/providers/{id}/auth` | Get a provider's auth status. |
@@ -284,6 +314,7 @@
 | `setDefaultAuth` | PUT | `/api/v1/agent/providers/{id}/auth/default` | Set a provider's default credential method. |
 | `startOauth` | POST | `/api/v1/agent/providers/{id}/auth/oauth` | Start a provider OAuth login. |
 | `submitOauthCode` | POST | `/api/v1/agent/providers/{id}/auth/oauth/{job}/code` | Submit a provider OAuth authorization code. |
+| `update` | PATCH | `/api/v1/agent/providers/{id}` | Change a custom provider. |
 | `useAccount` | PUT | `/api/v1/agent/providers/{id}/auth/accounts/{key}/active` | Make a pooled OAuth account active. |
 
 ### `client.agent.realms`
@@ -311,6 +342,9 @@
 | `getApproval` | GET | `/api/v1/agent/sessions/{id}/approval` | Read a session's approval policy. |
 | `getSnapshot` | GET | `/api/v1/agent/sessions/{id}/state` | Read a session's recoverable state. |
 | `getTranscript` | GET | `/api/v1/agent/sessions/{id}/transcript` | Read a session's transcript without attaching. |
+| `getUsage` | GET | `/api/v1/agent/sessions/{id}/usage` | Read a session's per-call LLM usage. |
+| `getUsageAll` | GET | `/api/v1/agent/sessions/{id}/usage` | Read a session's per-call LLM usage. (collect all pages) |
+| `getUsageIterator` | GET | `/api/v1/agent/sessions/{id}/usage` | Read a session's per-call LLM usage. (async iterator) |
 | `list` | GET | `/api/v1/agent/sessions` | List sessions. |
 | `listAll` | GET | `/api/v1/agent/sessions` | List sessions. (collect all pages) |
 | `listApplicableRules` | GET | `/api/v1/agent/sessions/{id}/rules/applies` | Which tool-call rules apply. |
@@ -332,6 +366,7 @@
 | `renewAttachment` | PATCH | `/api/v1/agent/sessions/{id}/attachments/{lease_id}` | Renew an attachment lease. |
 | `replay` | GET | `/api/v1/agent/sessions/{id}/replay` | Replay a live session's buffered events. |
 | `runTool` | POST | `/api/v1/agent/sessions/{id}/tools/{name}/run` | Run a tool inside a live session (gated). |
+| `setAfterCompaction` | PUT | `/api/v1/agent/sessions/{id}/after-compaction` | Set the message re-added after every compaction. |
 | `setAgent` | PATCH | `/api/v1/agent/sessions/{id}/agent` | Switch the chat agent. |
 | `setApprovalRule` | PUT | `/api/v1/agent/sessions/{id}/approval/rules/{tool}` | Set one session permission rule. |
 | `setAutoReply` | PATCH | `/api/v1/agent/sessions/{id}/auto-reply` | Arm/disarm the auto-reply loop. |
@@ -346,6 +381,13 @@
 | `startWorkflow` | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | Run a workflow onto an existing session. |
 | `trim` | POST | `/api/v1/agent/sessions/{id}/trim` | Trim session history to a turn index. |
 | `updateApproval` | PUT | `/api/v1/agent/sessions/{id}/approval` | Set a session's approval mode and lock. |
+
+### `client.agent.sessions.commands`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `get` | GET | `/api/v1/agent/sessions/{id}/commands/{command_id}` | Get a command's receipt. |
+| `send` | POST | `/api/v1/agent/sessions/{id}/commands` | Send a message, an interrupt or a stop to a session. |
 
 ### `client.agent.sessions.turns`
 
@@ -1012,69 +1054,69 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `clear` | DELETE | `/cookies` | Clear all cookies |
-| `list` | GET | `/cookies` | Get cookies |
-| `setMany` | POST | `/cookies` | Set cookies |
+| `clear` | DELETE | `/api/v1/browser/cookies` | Clear all cookies |
+| `list` | GET | `/api/v1/browser/cookies` | Get cookies |
+| `setMany` | POST | `/api/v1/browser/cookies` | Set cookies |
 
 ### `client.browser.history`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `clear` | DELETE | `/history` | Delete browsing history |
-| `list` | GET | `/history` | Query browsing history |
+| `clear` | DELETE | `/api/v1/browser/history` | Delete browsing history |
+| `list` | GET | `/api/v1/browser/history` | Query browsing history |
 
 ### `client.browser.instances`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `get` | GET | `/metadata` | Get instance metadata |
-| `getDevtoolsUrls` | GET | `/devtools-url` | Get DevTools URLs |
-| `restart` | GET | `/restart` | Restart browser instance |
-| `shutdown` | GET | `/shutdown` | Shutdown browser instance |
-| `start` | GET | `/start` | Create or retrieve browser instance |
-| `stop` | GET | `/stop` | Stop browser instance |
+| `get` | GET | `/api/v1/browser/metadata` | Get instance metadata |
+| `getDevtoolsUrls` | GET | `/api/v1/browser/devtools-url` | Get DevTools URLs |
+| `restart` | GET | `/api/v1/browser/restart` | Restart browser instance |
+| `shutdown` | GET | `/api/v1/browser/shutdown` | Shutdown browser instance |
+| `start` | GET | `/api/v1/browser/start` | Create or retrieve browser instance |
+| `stop` | GET | `/api/v1/browser/stop` | Stop browser instance |
 
 ### `client.browser.kit`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
 | `getHealth` | GET | `/api/v1/browser/health` | Health check |
-| `getStats` | GET | `/metrics` | Server metrics |
+| `getStats` | GET | `/api/v1/browser/metrics` | Server metrics |
 
 ### `client.browser.logs`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `listConsole` | GET | `/console` | Get console logs |
-| `listNetwork` | GET | `/network` | Get network logs |
+| `listConsole` | GET | `/api/v1/browser/console` | Get console logs |
+| `listNetwork` | GET | `/api/v1/browser/network` | Get network logs |
 
 ### `client.browser.page`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `act` | POST | `/action` | Perform a native element action |
-| `captureScreenshot` | GET | `/screenshot` | Capture browser screenshot |
-| `evaluate` | POST | `/eval` | Execute JavaScript (POST) |
-| `exportPdf` | GET | `/pdf` | Export page as PDF |
-| `getHtml` | GET | `/html` | Get page HTML |
-| `getSnapshot` | GET | `/snapshot` | Accessibility snapshot of a tab with element refs |
-| `getText` | GET | `/text` | Get page text |
-| `navigate` | POST | `/browse` | Navigate to URL (POST) |
-| `wait` | POST | `/wait` | Wait for a condition in a tab |
+| `act` | POST | `/api/v1/browser/action` | Perform a native element action |
+| `captureScreenshot` | GET | `/api/v1/browser/screenshot` | Capture browser screenshot |
+| `evaluate` | POST | `/api/v1/browser/eval` | Execute JavaScript (POST) |
+| `exportPdf` | GET | `/api/v1/browser/pdf` | Export page as PDF |
+| `getHtml` | GET | `/api/v1/browser/html` | Get page HTML |
+| `getSnapshot` | GET | `/api/v1/browser/snapshot` | Accessibility snapshot of a tab with element refs |
+| `getText` | GET | `/api/v1/browser/text` | Get page text |
+| `navigate` | POST | `/api/v1/browser/browse` | Navigate to URL (POST) |
+| `wait` | POST | `/api/v1/browser/wait` | Wait for a condition in a tab |
 
 ### `client.browser.tabs`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `close` | POST | `/tab/close` | Close a browser tab |
-| `list` | GET | `/tabs` | List browser tabs |
+| `close` | POST | `/api/v1/browser/tab/close` | Close a browser tab |
+| `list` | GET | `/api/v1/browser/tabs` | List browser tabs |
 
 ### `client.browser.viewport`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `get` | GET | `/viewport` | Get the current viewport policy |
-| `set` | POST | `/viewport` | Change the viewport at runtime |
+| `get` | GET | `/api/v1/browser/viewport` | Get the current viewport policy |
+| `set` | POST | `/api/v1/browser/viewport` | Change the viewport at runtime |
 
 ## `code` (10 methods)
 
@@ -1114,29 +1156,29 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `get` | GET | `/users/{user}/crontab` | Get Crontab |
-| `list` | GET | `/crontab` | List All Crontabs |
-| `listAll` | GET | `/crontab` | List All Crontabs (collect all pages) |
-| `listIterator` | GET | `/crontab` | List All Crontabs (async iterator) |
-| `set` | PUT | `/users/{user}/crontab` | Put Crontab |
+| `get` | GET | `/api/v1/cron/users/{user}/crontab` | Get Crontab |
+| `list` | GET | `/api/v1/cron/crontab` | List All Crontabs |
+| `listAll` | GET | `/api/v1/cron/crontab` | List All Crontabs (collect all pages) |
+| `listIterator` | GET | `/api/v1/cron/crontab` | List All Crontabs (async iterator) |
+| `set` | PUT | `/api/v1/cron/users/{user}/crontab` | Put Crontab |
 
 ### `client.cron.entries`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `create` | POST | `/users/{user}/entries` | Create Entry |
-| `delete` | DELETE | `/users/{user}/entries/{id}` | Delete Entry |
-| `get` | GET | `/users/{user}/entries/{id}` | Get Entry |
-| `list` | GET | `/users/{user}/entries` | List Entries |
-| `listAll` | GET | `/users/{user}/entries` | List Entries (collect all pages) |
-| `listIterator` | GET | `/users/{user}/entries` | List Entries (async iterator) |
-| `update` | PATCH | `/users/{user}/entries/{id}` | Update Entry |
+| `create` | POST | `/api/v1/cron/users/{user}/entries` | Create Entry |
+| `delete` | DELETE | `/api/v1/cron/users/{user}/entries/{id}` | Delete Entry |
+| `get` | GET | `/api/v1/cron/users/{user}/entries/{id}` | Get Entry |
+| `list` | GET | `/api/v1/cron/users/{user}/entries` | List Entries |
+| `listAll` | GET | `/api/v1/cron/users/{user}/entries` | List Entries (collect all pages) |
+| `listIterator` | GET | `/api/v1/cron/users/{user}/entries` | List Entries (async iterator) |
+| `update` | PATCH | `/api/v1/cron/users/{user}/entries/{id}` | Update Entry |
 
 ### `client.cron.kit`
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `getHealth` | GET | `/health` | Health Check |
+| `getHealth` | GET | `/api/v1/cron/health` | Health Check |
 
 ## `curl` (31 methods)
 
@@ -1354,7 +1396,7 @@
 | `renewLease` | POST | `/api/v1/egress/upstream/renew` | Renew the upstream lease |
 | `set` | PUT | `/api/v1/egress/upstream` | Set upstream |
 
-## `exec` (67 methods)
+## `exec` (68 methods)
 
 ### `client.exec.cache`
 
@@ -1469,6 +1511,12 @@
 | `validateSyntax` | POST | `/api/v1/exec/validate/syntax` | Validate Syntax |
 | `validateTypes` | POST | `/api/v1/exec/validate/typescript` | Validate TypeScript |
 | `write` | POST | `/api/v1/exec/scripts/write` | Write Script |
+
+### `client.exec.sdkTypes`
+
+| Method | HTTP | Path | Summary |
+|--------|------|------|---------|
+| `list` | GET | `/api/v1/exec/sdk-types` | Get Sdk Types |
 
 ### `client.exec.sdks`
 
@@ -2153,11 +2201,11 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `connect` | GET | `/watchers/{id}/events/ws` | Stream Watcher Events Ws |
-| `list` | GET | `/watchers/{id}/events` | List Watcher Events |
-| `listAll` | GET | `/watchers/{id}/events` | List Watcher Events (collect all pages) |
-| `listIterator` | GET | `/watchers/{id}/events` | List Watcher Events (async iterator) |
-| `stream` | GET | `/watchers/{id}/events/sse` | Stream Watcher Events Sse |
+| `connect` | GET | `/api/v1/watch/watchers/{id}/events/ws` | Stream Watcher Events Ws |
+| `list` | GET | `/api/v1/watch/watchers/{id}/events` | List Watcher Events |
+| `listAll` | GET | `/api/v1/watch/watchers/{id}/events` | List Watcher Events (collect all pages) |
+| `listIterator` | GET | `/api/v1/watch/watchers/{id}/events` | List Watcher Events (async iterator) |
+| `stream` | GET | `/api/v1/watch/watchers/{id}/events/sse` | Stream Watcher Events Sse |
 
 ### `client.watch.kit`
 
@@ -2169,13 +2217,13 @@
 
 | Method | HTTP | Path | Summary |
 |--------|------|------|---------|
-| `create` | POST | `/watchers` | Create Watcher |
-| `delete` | DELETE | `/watchers/{id}` | Delete Watcher |
-| `get` | GET | `/watchers/{id}` | Get Watcher |
-| `list` | GET | `/watchers` | List Watchers |
-| `listAll` | GET | `/watchers` | List Watchers (collect all pages) |
-| `listIterator` | GET | `/watchers` | List Watchers (async iterator) |
-| `update` | PATCH | `/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. |
+| `create` | POST | `/api/v1/watch/watchers` | Create Watcher |
+| `delete` | DELETE | `/api/v1/watch/watchers/{id}` | Delete Watcher |
+| `get` | GET | `/api/v1/watch/watchers/{id}` | Get Watcher |
+| `list` | GET | `/api/v1/watch/watchers` | List Watchers |
+| `listAll` | GET | `/api/v1/watch/watchers` | List Watchers (collect all pages) |
+| `listIterator` | GET | `/api/v1/watch/watchers` | List Watchers (async iterator) |
+| `update` | PATCH | `/api/v1/watch/watchers/{id}` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. |
 
 ## Hand-written client helpers
 

@@ -1,6 +1,6 @@
 # `browser` — 28 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.browser`
 
 ```typescript
@@ -13,19 +13,18 @@ import * as browser from 'hoody-sdk/browser';
 
 ### `clear`
 
-**DELETE** `/cookies`
+**DELETE** `/api/v1/browser/cookies`
 
 Clear all cookies
 
 ```typescript
-client.browser.cookies.clear(options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserCookiesClearResponse>
+client.browser.cookies.clear(options?: { browser_id?: string; start?: boolean }): Promise<BrowserCookiesClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserCookiesClearResponse`
 
@@ -35,12 +34,12 @@ client.browser.cookies.clear(options?: { browser_id?: string; start?: boolean; c
 
 ### `list`
 
-**GET** `/cookies`
+**GET** `/api/v1/browser/cookies`
 
 Get cookies
 
 ```typescript
-client.browser.cookies.list(options?: { browser_id?: string; start?: boolean; url?: string; cache?: boolean | number }): Promise<BrowserCookiesListResponse>
+client.browser.cookies.list(options?: { browser_id?: string; start?: boolean; url?: string }): Promise<BrowserCookiesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -48,7 +47,6 @@ client.browser.cookies.list(options?: { browser_id?: string; start?: boolean; ur
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `url` | `string` | No | query | Filter cookies by URL Repeating this key in the query string is a `400 VALIDATION_ERROR` (`url must not be repeated`): the parent's rule is on the key, not on the operation, so it applies here too even though this parameter is declared inline rather than shared. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserCookiesListResponse`
 
@@ -58,12 +56,12 @@ client.browser.cookies.list(options?: { browser_id?: string; start?: boolean; ur
 
 ### `setMany`
 
-**POST** `/cookies`
+**POST** `/api/v1/browser/cookies`
 
 Set cookies
 
 ```typescript
-client.browser.cookies.setMany(data: BrowserCookiesSetManyRequest, options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserCookiesSetManyResponse>
+client.browser.cookies.setMany(data: BrowserCookiesSetManyRequest, options?: { browser_id?: string; start?: boolean }): Promise<BrowserCookiesSetManyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -71,7 +69,6 @@ client.browser.cookies.setMany(data: BrowserCookiesSetManyRequest, options?: { b
 | `data` | `BrowserCookiesSetManyRequest` | Yes | body |  |
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserCookiesSetManyResponse`
 
@@ -83,19 +80,18 @@ client.browser.cookies.setMany(data: BrowserCookiesSetManyRequest, options?: { b
 
 ### `clear`
 
-**DELETE** `/history`
+**DELETE** `/api/v1/browser/history`
 
 Delete browsing history
 
 ```typescript
-client.browser.history.clear(options?: { before?: string; browser_id?: string; cache?: boolean | number }): Promise<BrowserHistoryClearResponse>
+client.browser.history.clear(options?: { before?: string; browser_id?: string }): Promise<BrowserHistoryClearResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `before` | `string` | No | query | Delete entries before this ISO 8601 timestamp |
 | `browser_id` | `string` | No | query | Delete entries for specific browser ID only. Through a `browser-{N}` service hostname it may only be `N` (the default there). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserHistoryClearResponse`
 
@@ -105,12 +101,12 @@ client.browser.history.clear(options?: { before?: string; browser_id?: string; c
 
 ### `list`
 
-**GET** `/history`
+**GET** `/api/v1/browser/history`
 
 Query browsing history
 
 ```typescript
-client.browser.history.list(options?: { since?: string; domain?: string; browser_id?: string; limit?: number; offset?: number; cache?: boolean | number }): Promise<BrowserHistoryListResponse>
+client.browser.history.list(options?: { since?: string; domain?: string; browser_id?: string; limit?: number; offset?: number }): Promise<BrowserHistoryListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -120,7 +116,6 @@ client.browser.history.list(options?: { since?: string; domain?: string; browser
 | `browser_id` | `string` | No | query | Filter by browser ID. Through a `browser-{N}` service hostname it may only be `N` (the default there). |
 | `limit` | `number` | No | query | Maximum entries to return (1-500) |
 | `offset` | `number` | No | query | Number of entries to skip for pagination |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserHistoryListResponse`
 
@@ -132,19 +127,18 @@ client.browser.history.list(options?: { since?: string; domain?: string; browser
 
 ### `get`
 
-**GET** `/metadata`
+**GET** `/api/v1/browser/metadata`
 
 Get instance metadata
 
 ```typescript
-client.browser.instances.get(options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserInstancesGetResponse>
+client.browser.instances.get(options?: { browser_id?: string; start?: boolean }): Promise<BrowserInstancesGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserInstancesGetResponse`
 
@@ -154,19 +148,18 @@ client.browser.instances.get(options?: { browser_id?: string; start?: boolean; c
 
 ### `getDevtoolsUrls`
 
-**GET** `/devtools-url`
+**GET** `/api/v1/browser/devtools-url`
 
 Get DevTools URLs
 
 ```typescript
-client.browser.instances.getDevtoolsUrls(options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserInstancesGetDevtoolsUrlsResponse>
+client.browser.instances.getDevtoolsUrls(options?: { browser_id?: string; start?: boolean }): Promise<BrowserInstancesGetDevtoolsUrlsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserInstancesGetDevtoolsUrlsResponse`
 
@@ -176,12 +169,12 @@ client.browser.instances.getDevtoolsUrls(options?: { browser_id?: string; start?
 
 ### `restart`
 
-**GET** `/restart`
+**GET** `/api/v1/browser/restart`
 
 Restart browser instance
 
 ```typescript
-client.browser.instances.restart(options?: { browser_id?: string; start?: boolean; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: Viewport; noViewport?: boolean; geolocation?: Geolocation; launchArguments?: string[]; browser?: "chromium" | "firefox"; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: Record<string, unknown>; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean; cache?: boolean | number }): Promise<BrowserInstancesRestartResponse>
+client.browser.instances.restart(options?: { browser_id?: string; start?: boolean; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: Viewport; noViewport?: boolean; geolocation?: Geolocation; launchArguments?: string[]; browser?: "chromium" | "firefox"; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: Record<string, unknown>; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean }): Promise<BrowserInstancesRestartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -222,7 +215,6 @@ client.browser.instances.restart(options?: { browser_id?: string; start?: boolea
 | `iframe` | `boolean` | No | query | Enable or disable the full-page display iframe on the root URL. |
 | `iframe_url` | `string` | No | query | Explicit URL for the display iframe. |
 | `maximize_new_windows` | `boolean` | No | query | Control the `maximize_new_windows` flag stamped onto the generated display URL (always explicit `true`/`false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to opt out. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserInstancesRestartResponse`
 
@@ -232,18 +224,17 @@ client.browser.instances.restart(options?: { browser_id?: string; start?: boolea
 
 ### `shutdown`
 
-**GET** `/shutdown`
+**GET** `/api/v1/browser/shutdown`
 
 Shutdown browser instance
 
 ```typescript
-client.browser.instances.shutdown(options?: { browser_id?: string; cache?: boolean | number }): Promise<BrowserInstancesShutdownResponse>
+client.browser.instances.shutdown(options?: { browser_id?: string }): Promise<BrowserInstancesShutdownResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserInstancesShutdownResponse`
 
@@ -253,12 +244,12 @@ client.browser.instances.shutdown(options?: { browser_id?: string; cache?: boole
 
 ### `start`
 
-**GET** `/start`
+**GET** `/api/v1/browser/start`
 
 Create or retrieve browser instance
 
 ```typescript
-client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; launchArguments?: string[]; browser?: "chromium" | "firefox"; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: Record<string, unknown>; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean; cache?: boolean | number }): Promise<BrowserInstancesStartResponse>
+client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?: string; fingerprintId?: string; useRemoteDebuggingPort?: boolean; remoteDebuggingPort?: number; remoteDebuggingAddress?: string; extensions?: string; extensionsDir?: string; extensionsStoreIds?: string; proxyServer?: string; proxyUsername?: string; proxyPassword?: string; proxyBypass?: string; enableQuic?: boolean; enableDnsOverHttps?: boolean; dnsOverHttpsUrl?: string; display?: number | string; showBrowser?: boolean; sessionName?: string; timezoneId?: string; locale?: string; userAgent?: string; viewport?: string; noViewport?: boolean; geolocation?: string; launchArguments?: string[]; browser?: "chromium" | "firefox"; firefoxVersion?: string; firefoxExecutablePath?: string; showDevtools?: boolean; userProfile?: Record<string, unknown>; stealth?: boolean; iframe?: boolean; iframe_url?: string; maximize_new_windows?: boolean }): Promise<BrowserInstancesStartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -298,7 +289,6 @@ client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?
 | `iframe` | `boolean` | No | query | Enable or disable the full-page display iframe on the root URL. When enabled (default), navigating to `/` serves an HTML page with an iframe pointing to the Hoody display URL. |
 | `iframe_url` | `string` | No | query | Explicit URL for the display iframe. If not provided, the URL is auto-detected from the Host header subdomain pattern. |
 | `maximize_new_windows` | `boolean` | No | query | Control the `maximize_new_windows` flag stamped onto generated display URLs (iframe pages, status pages, `iframe_url` metadata). The flag is always explicit (`true` or `false`); when true the hoody-display client opens new top-level app windows maximized. Enabled by default; set to `false` to keep the display client's centered default-size placement (the explicit `false` also overrides a display-side `default-settings.txt` enable). Explicit `iframe_url` values are never modified. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserInstancesStartResponse`
 
@@ -308,18 +298,17 @@ client.browser.instances.start(options?: { browser_id?: string; chromiumVersion?
 
 ### `stop`
 
-**GET** `/stop`
+**GET** `/api/v1/browser/stop`
 
 Stop browser instance
 
 ```typescript
-client.browser.instances.stop(options?: { browser_id?: string; cache?: boolean | number }): Promise<BrowserInstancesStopResponse>
+client.browser.instances.stop(options?: { browser_id?: string }): Promise<BrowserInstancesStopResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserInstancesStopResponse`
 
@@ -347,7 +336,7 @@ client.browser.kit.getHealth(): Promise<BrowserKitGetHealthResponse>
 
 ### `getStats`
 
-**GET** `/metrics`
+**GET** `/api/v1/browser/metrics`
 
 Server metrics
 
@@ -365,12 +354,12 @@ client.browser.kit.getStats(): Promise<BrowserKitGetStatsResponse>
 
 ### `listConsole`
 
-**GET** `/console`
+**GET** `/api/v1/browser/console`
 
 Get console logs
 
 ```typescript
-client.browser.logs.listConsole(options?: { browser_id?: string; tabId?: number; start?: boolean; type?: string; since?: string; clear?: boolean; cache?: boolean | number }): Promise<BrowserLogsListConsoleResponse>
+client.browser.logs.listConsole(options?: { browser_id?: string; tabId?: number; start?: boolean; type?: string; since?: string; clear?: boolean }): Promise<BrowserLogsListConsoleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -381,7 +370,6 @@ client.browser.logs.listConsole(options?: { browser_id?: string; tabId?: number;
 | `type` | `string` | No | query | Filter by message type (log, error, warning, info, etc.). Repeating this key in the query string is a `400 VALIDATION_ERROR` (`type must not be repeated`). |
 | `since` | `string` | No | query | Only return entries at or after this time: an ISO 8601 date or date-time, like `2026-10-05T12:00:00Z`. Any other value (an epoch number, a word like `yesterday`) is a `400 VALIDATION_ERROR` naming `since`, never an unfiltered list. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`since must not be repeated`). |
 | `clear` | `boolean` | No | query | Clear the buffer after reading. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `clear`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`clear must not be repeated`). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserLogsListConsoleResponse`
 
@@ -391,12 +379,12 @@ client.browser.logs.listConsole(options?: { browser_id?: string; tabId?: number;
 
 ### `listNetwork`
 
-**GET** `/network`
+**GET** `/api/v1/browser/network`
 
 Get network logs
 
 ```typescript
-client.browser.logs.listNetwork(options?: { browser_id?: string; tabId?: number; start?: boolean; since?: string; clear?: boolean; cache?: boolean | number }): Promise<BrowserLogsListNetworkResponse>
+client.browser.logs.listNetwork(options?: { browser_id?: string; tabId?: number; start?: boolean; since?: string; clear?: boolean }): Promise<BrowserLogsListNetworkResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -406,7 +394,6 @@ client.browser.logs.listNetwork(options?: { browser_id?: string; tabId?: number;
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
 | `since` | `string` | No | query | Only return entries at or after this time: an ISO 8601 date or date-time, like `2026-10-05T12:00:00Z`. Any other value (an epoch number, a word like `yesterday`) is a `400 VALIDATION_ERROR` naming `since`, never an unfiltered list. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`since must not be repeated`). |
 | `clear` | `boolean` | No | query | Clear the buffer after reading. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `clear`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`clear must not be repeated`). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserLogsListNetworkResponse`
 
@@ -418,19 +405,18 @@ client.browser.logs.listNetwork(options?: { browser_id?: string; tabId?: number;
 
 ### `act`
 
-**POST** `/action`
+**POST** `/api/v1/browser/action`
 
 Perform a native element action
 
 ```typescript
-client.browser.page.act(data: BrowserPageActRequest, options?: { browser_id?: string; cache?: boolean | number }): Promise<BrowserPageActResponse>
+client.browser.page.act(data: BrowserPageActRequest, options?: { browser_id?: string }): Promise<BrowserPageActResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `BrowserPageActRequest` | Yes | body |  |
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserPageActResponse`
 
@@ -440,12 +426,12 @@ client.browser.page.act(data: BrowserPageActRequest, options?: { browser_id?: st
 
 ### `captureScreenshot`
 
-**GET** `/screenshot`
+**GET** `/api/v1/browser/screenshot`
 
 Capture browser screenshot
 
 ```typescript
-client.browser.page.captureScreenshot(options?: { browser_id?: string; start?: boolean; url?: string; tabId?: number; format?: "png" | "jpeg" | "base64"; quality?: number; fullPage?: boolean; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | BrowserPageCaptureScreenshotResponse>
+client.browser.page.captureScreenshot(options?: { browser_id?: string; start?: boolean; url?: string; tabId?: number; format?: "png" | "jpeg" | "base64"; quality?: number; fullPage?: boolean }): Promise<ApiResponse<ArrayBuffer> | BrowserPageCaptureScreenshotResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -457,7 +443,6 @@ client.browser.page.captureScreenshot(options?: { browser_id?: string; start?: b
 | `format` | `"png" \| "jpeg" \| "base64"` | No | query | Output format. `base64` answers JSON with the PNG bytes base64-encoded. Any other value is a `400 VALIDATION_ERROR` naming `format`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`format must not be repeated`). |
 | `quality` | `number` | No | query | Image quality for JPEG format (0-100); not used for `png` or `base64`. A value that is not an integer from 0 to 100 is a `400 VALIDATION_ERROR` naming `quality`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`quality must not be repeated`). |
 | `fullPage` | `boolean` | No | query | Capture the entire scrollable page. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `fullPage`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`fullPage must not be repeated`). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | BrowserPageCaptureScreenshotResponse`
 
@@ -467,12 +452,12 @@ client.browser.page.captureScreenshot(options?: { browser_id?: string; start?: b
 
 ### `evaluate`
 
-**POST** `/eval`
+**POST** `/api/v1/browser/eval`
 
 Execute JavaScript (POST)
 
 ```typescript
-client.browser.page.evaluate(data: BrowserPageEvaluateRequest, options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserPageEvaluateResponse>
+client.browser.page.evaluate(data: BrowserPageEvaluateRequest, options?: { browser_id?: string; start?: boolean }): Promise<BrowserPageEvaluateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -480,7 +465,6 @@ client.browser.page.evaluate(data: BrowserPageEvaluateRequest, options?: { brows
 | `data` | `BrowserPageEvaluateRequest` | Yes | body |  |
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserPageEvaluateResponse`
 
@@ -490,12 +474,12 @@ client.browser.page.evaluate(data: BrowserPageEvaluateRequest, options?: { brows
 
 ### `exportPdf`
 
-**GET** `/pdf`
+**GET** `/api/v1/browser/pdf`
 
 Export page as PDF
 
 ```typescript
-client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: number; start?: boolean; url?: string; format?: string; landscape?: boolean; printBackground?: boolean; margin?: string; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: number; start?: boolean; url?: string; format?: string; landscape?: boolean; printBackground?: boolean; margin?: string }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -508,7 +492,6 @@ client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: number; s
 | `landscape` | `boolean` | No | query | Use landscape orientation. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `landscape`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`landscape must not be repeated`). |
 | `printBackground` | `boolean` | No | query | Include background graphics. `true` or `false`; any other value is a `400 VALIDATION_ERROR` naming `printBackground`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`printBackground must not be repeated`). |
 | `margin` | `string` | No | query | Uniform margin: a non-negative number of pixels, or a number followed by `px`, `in`, `cm` or `mm` (e.g. '1cm', '0.5in'). Any other value is a `400 VALIDATION_ERROR` naming `margin`. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`margin must not be repeated`). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -518,12 +501,12 @@ client.browser.page.exportPdf(options?: { browser_id?: string; tabId?: number; s
 
 ### `getHtml`
 
-**GET** `/html`
+**GET** `/api/v1/browser/html`
 
 Get page HTML
 
 ```typescript
-client.browser.page.getHtml(options?: { browser_id?: string; tabId?: number; start?: boolean; cache?: boolean | number }): Promise<ApiResponse<string>>
+client.browser.page.getHtml(options?: { browser_id?: string; tabId?: number; start?: boolean }): Promise<ApiResponse<string>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -531,7 +514,6 @@ client.browser.page.getHtml(options?: { browser_id?: string; tabId?: number; sta
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `tabId` | `number` | No | query | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<string>`
 
@@ -541,12 +523,12 @@ client.browser.page.getHtml(options?: { browser_id?: string; tabId?: number; sta
 
 ### `getSnapshot`
 
-**GET** `/snapshot`
+**GET** `/api/v1/browser/snapshot`
 
 Accessibility snapshot of a tab with element refs
 
 ```typescript
-client.browser.page.getSnapshot(options?: { browser_id?: string; instanceGeneration?: string; tabId?: number; paramTimeoutMs?: number; maxChars?: number; includeValues?: boolean; cache?: boolean | number }): Promise<BrowserPageGetSnapshotResponse>
+client.browser.page.getSnapshot(options?: { browser_id?: string; instanceGeneration?: string; tabId?: number; paramTimeoutMs?: number; maxChars?: number; includeValues?: boolean }): Promise<BrowserPageGetSnapshotResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -557,7 +539,6 @@ client.browser.page.getSnapshot(options?: { browser_id?: string; instanceGenerat
 | `paramTimeoutMs` | `number` | No | query |  |
 | `maxChars` | `number` | No | query | Hard cut on a line boundary; `truncated` reports it. A truncated excerpt may not parse as standalone YAML. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`maxChars must not be repeated`). |
 | `includeValues` | `boolean` | No | query | Include the CONTENTS of form controls in the snapshot. Off by default: the accessibility tree serialises `input.value`, so a snapshot taken after the agent typed a password, card number or token would hand those back on every subsequent loop iteration. With the default, the value of a non-empty textbox, searchbox, spinbutton, slider or editable combobox (an input with a `&lt;datalist&gt;`, or `role=combobox`) renders as `&lt;value hidden&gt;`, whatever its label contains; only a native `&lt;select&gt;` keeps its option names, when it holds nothing but `&lt;option&gt;`, `&lt;optgroup&gt;` and `&lt;hr&gt;` elements and none of them uses `aria-owns` or `aria-labelledby` or is editable (every other node in it keeps its role and ref but not its name or text), and the content of every other combobox, ARIA autocomplete popups and customizable selects with rich option content included, is hidden whole (an empty one renders with no value at all, so the caller can still tell them apart). A `&lt;select&gt;`'s options are page content, not entered text, and are always included. Content inside an editable region (a `contenteditable` element, or a whole page in `designMode`) is hidden too: the region keeps its role and ref, its contents become `&lt;value hidden&gt;`, and its name is shown only when it is authored (`aria-label`, or `aria-labelledby` pointing at non-editable content); text the snapshot folds from an editor into an enclosing element is hidden there too. If the page cannot be asked in time, the text and computed names on such a page are hidden and the refs are kept. Set to `true` only when the values are known not to be sensitive. Anything but `true`/`false` → 400, and repeating this key in the query string is a `400 VALIDATION_ERROR` (`includeValues must not be repeated`). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserPageGetSnapshotResponse`
 
@@ -567,12 +548,12 @@ client.browser.page.getSnapshot(options?: { browser_id?: string; instanceGenerat
 
 ### `getText`
 
-**GET** `/text`
+**GET** `/api/v1/browser/text`
 
 Get page text
 
 ```typescript
-client.browser.page.getText(options?: { browser_id?: string; tabId?: number; start?: boolean; cache?: boolean | number }): Promise<ApiResponse<string>>
+client.browser.page.getText(options?: { browser_id?: string; tabId?: number; start?: boolean }): Promise<ApiResponse<string>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -580,7 +561,6 @@ client.browser.page.getText(options?: { browser_id?: string; tabId?: number; sta
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `tabId` | `number` | No | query | The ID of the tab to interact with (from `/tabs`). Omitted: the active tab. Supplied: exactly that tab — an unknown id returns `404 TAB_NOT_FOUND` (with `details.openTabs`) and a malformed id `400 VALIDATION_ERROR`; the request never falls back to another tab. Repeating this key in the query string is a `400 VALIDATION_ERROR` (`tabId must not be repeated`); a body property of the same name is governed by the body schema. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<string>`
 
@@ -590,12 +570,12 @@ client.browser.page.getText(options?: { browser_id?: string; tabId?: number; sta
 
 ### `navigate`
 
-**POST** `/browse`
+**POST** `/api/v1/browser/browse`
 
 Navigate to URL (POST)
 
 ```typescript
-client.browser.page.navigate(data: BrowserPageNavigateRequest, options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserPageNavigateResponse>
+client.browser.page.navigate(data: BrowserPageNavigateRequest, options?: { browser_id?: string; start?: boolean }): Promise<BrowserPageNavigateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -603,7 +583,6 @@ client.browser.page.navigate(data: BrowserPageNavigateRequest, options?: { brows
 | `data` | `BrowserPageNavigateRequest` | Yes | body |  |
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserPageNavigateResponse`
 
@@ -613,19 +592,18 @@ client.browser.page.navigate(data: BrowserPageNavigateRequest, options?: { brows
 
 ### `wait`
 
-**POST** `/wait`
+**POST** `/api/v1/browser/wait`
 
 Wait for a condition in a tab
 
 ```typescript
-client.browser.page.wait(data: BrowserPageWaitRequest, options?: { browser_id?: string; cache?: boolean | number }): Promise<BrowserPageWaitResponse>
+client.browser.page.wait(data: BrowserPageWaitRequest, options?: { browser_id?: string }): Promise<BrowserPageWaitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `BrowserPageWaitRequest` | Yes | body |  |
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserPageWaitResponse`
 
@@ -637,12 +615,12 @@ client.browser.page.wait(data: BrowserPageWaitRequest, options?: { browser_id?: 
 
 ### `close`
 
-**POST** `/tab/close`
+**POST** `/api/v1/browser/tab/close`
 
 Close a browser tab
 
 ```typescript
-client.browser.tabs.close(data?: BrowserTabsCloseRequest, options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserTabsCloseResponse>
+client.browser.tabs.close(data?: BrowserTabsCloseRequest, options?: { browser_id?: string; start?: boolean }): Promise<BrowserTabsCloseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -650,7 +628,6 @@ client.browser.tabs.close(data?: BrowserTabsCloseRequest, options?: { browser_id
 | `data` | `BrowserTabsCloseRequest` | No | body |  |
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserTabsCloseResponse`
 
@@ -660,19 +637,18 @@ client.browser.tabs.close(data?: BrowserTabsCloseRequest, options?: { browser_id
 
 ### `list`
 
-**GET** `/tabs`
+**GET** `/api/v1/browser/tabs`
 
 List browser tabs
 
 ```typescript
-client.browser.tabs.list(options?: { browser_id?: string; start?: boolean; cache?: boolean | number }): Promise<BrowserTabsListResponse>
+client.browser.tabs.list(options?: { browser_id?: string; start?: boolean }): Promise<BrowserTabsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `browser_id` | `string` | No | query | Selects the instance: SDK and CLI clients send the request to the `browser-&lt;N&gt;` service host. A value that conflicts with the host's instance is refused with 400 INSTANCE_SELECTOR_CONFLICT. On `/history` it also filters. Against a bare server it selects nothing; address instances there with `browser_host` + `browser_port`. |
 | `start` | `boolean` | No | query | Controls instance creation behavior. - Default mode: instances are created automatically. Set to `false` to prevent creation. - When auto-start is disabled globally: set to `true` to create an instance. Three states, all distinct: omitted means "create one if this deployment creates instances automatically", `false` means "never create one", and `true` means "create one even where automatic creation is turned off". Because omitting it is NOT equivalent to sending `true`, this parameter deliberately declares no schema default — do not add one, and do not let a client materialise schema defaults into the request, or every call silently becomes an explicit `true`. `getDevtoolsUrl` is the exception: it answers 404 when no instance is running and never consults this value. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserTabsListResponse`
 
@@ -684,19 +660,18 @@ client.browser.tabs.list(options?: { browser_id?: string; start?: boolean; cache
 
 ### `get`
 
-**GET** `/viewport`
+**GET** `/api/v1/browser/viewport`
 
 Get the current viewport policy
 
 ```typescript
-client.browser.viewport.get(options?: { browser_host?: string; browser_port?: number; cache?: boolean | number }): Promise<BrowserViewportGetResponse>
+client.browser.viewport.get(options?: { browser_host?: string; browser_port?: number }): Promise<BrowserViewportGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `browser_host` | `string` | No | query | Instance host. Optional — must be paired with browser_port; when both are omitted the single running instance is selected (400 AMBIGUOUS_INSTANCE with more than one). |
 | `browser_port` | `number` | No | query | Instance port. Optional — must be paired with browser_host. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserViewportGetResponse`
 
@@ -706,12 +681,12 @@ client.browser.viewport.get(options?: { browser_host?: string; browser_port?: nu
 
 ### `set`
 
-**POST** `/viewport`
+**POST** `/api/v1/browser/viewport`
 
 Change the viewport at runtime
 
 ```typescript
-client.browser.viewport.set(data: BrowserViewportSetRequest, options?: { browser_host?: string; browser_port?: number; cache?: boolean | number }): Promise<BrowserViewportSetResponse>
+client.browser.viewport.set(data: BrowserViewportSetRequest, options?: { browser_host?: string; browser_port?: number }): Promise<BrowserViewportSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -719,7 +694,6 @@ client.browser.viewport.set(data: BrowserViewportSetRequest, options?: { browser
 | `data` | `BrowserViewportSetRequest` | Yes | body |  |
 | `browser_host` | `string` | No | query | Instance host. Optional — must be paired with browser_port; when both are omitted the single running instance is selected (400 AMBIGUOUS_INSTANCE with more than one). |
 | `browser_port` | `number` | No | query | Instance port. Optional — must be paired with browser_host. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `BrowserViewportSetResponse`
 

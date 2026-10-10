@@ -1,6 +1,6 @@
 # `terminal` — 38 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.terminal`
 
 ```typescript
@@ -82,7 +82,7 @@ client.terminal.commands.list(terminal_id: string): Promise<TerminalCommandsList
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter). The containers proxy injects only the query form on hostname-routed calls — this path segment must always be supplied explicitly |
+| `terminal_id` | `string` | Yes | path | Terminal session ID (numeric 1-65535, can also be provided as query parameter). The containers proxy injects only the query form on hostname-routed calls — this path segment must always be supplied explicitly, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH |
 
 **Returns:** `TerminalCommandsListResponse`
 
@@ -97,14 +97,14 @@ client.terminal.commands.list(terminal_id: string): Promise<TerminalCommandsList
 Execute command in terminal session
 
 ```typescript
-client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: number; defer_start_time_ticks?: string; defer_timeout_ms?: number; defer_poll_ms?: number; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; skip_display_wait?: boolean; display_wait_timeout?: number; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string; cache?: boolean | number }): Promise<TerminalCommandsRunResponse>
+client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { terminal_id?: string; ephemeral?: boolean; defer_pid?: number; defer_start_time_ticks?: string; defer_timeout_ms?: number; defer_poll_ms?: number; reset?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; skip_display_wait?: boolean; display_wait_timeout?: number; display?: string; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; ssh_key?: string; socks5_pass?: string }): Promise<TerminalCommandsRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalCommandsRunRequest` | Yes | body |  |
 | `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Required unless ephemeral=true, in which case it is auto-generated if not provided. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and OVERWRITES any value you send (a ?terminal_id=0 query sentinel never survives the proxy) — use the terminal-0 hostname as the "no terminal ID" sentinel so ephemeral=true can auto-generate; supply this parameter directly only when calling the terminal service without the proxy |
-| `ephemeral` | `boolean` | No | query | When true, auto-generates a unique terminal_id (if not provided), skips display/dbus initialization, and applies aggressive cleanup. Designed for programmatic CLI command execution like a scripted command runner (default: false). WARNING: Do NOT use ephemeral=true for GUI applications that require a display. Ephemeral sessions strip the DISPLAY environment variable, which means X11/GUI applications will not work. Use a regular terminal session with an explicit terminal_id and display parameter instead for GUI workloads |
+| `ephemeral` | `boolean` | No | query | When true, auto-generates a unique terminal_id (if not provided), skips display/dbus initialization, and applies aggressive cleanup. Designed for programmatic CLI command execution like a scripted command runner (default: false). WARNING: Do NOT use ephemeral=true for GUI applications that require a display. Ephemeral sessions strip the DISPLAY environment variable, which means X11/GUI applications will not work. Use a regular terminal session with an explicit terminal_id and display parameter instead for GUI workloads. A terminal_id that names a running terminal with a display is refused with 409 PERSISTENT_SESSION rather than turned ephemeral; on a terminal-N host the proxy sets terminal_id=N, so send ephemeral commands to the terminal-0 host |
 | `defer_pid` | `number` | No | query | Defer command injection until this PID exits (TUI-safe). If set, the API returns immediately regardless of wait=true |
 | `defer_start_time_ticks` | `string` | No | query | Optional /proc/&lt;pid&gt;/stat field 22 (starttime in clock ticks since boot) to avoid PID reuse bugs. If it mismatches, command executes immediately |
 | `defer_timeout_ms` | `number` | No | query | Max time to wait for defer_pid exit before failing (default: 60000) |
@@ -128,7 +128,6 @@ client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { termi
 | `socks5_user` | `string` | No | query | SOCKS5 proxy username for authentication |
 | `ssh_key` | `string` | No | query | Base64-encoded SSH private key for key-based authentication (prefer over password-based auth) |
 | `socks5_pass` | `string` | No | query | SOCKS5 proxy password for authentication |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalCommandsRunResponse`
 
@@ -145,7 +144,7 @@ client.terminal.commands.run(data: TerminalCommandsRunRequest, options?: { termi
 Finalize a drop and inject the OSC frame
 
 ```typescript
-client.terminal.drops.commit(data: TerminalDropsCommitRequest, options: { drop: string; token: string; terminal_id: string; cache?: boolean | number }): Promise<TerminalDropsCommitResponse>
+client.terminal.drops.commit(data: TerminalDropsCommitRequest, options: { drop: string; token: string; terminal_id: string }): Promise<TerminalDropsCommitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -154,7 +153,6 @@ client.terminal.drops.commit(data: TerminalDropsCommitRequest, options: { drop: 
 | `drop` | `string` | Yes | query | Drop id from /drop-begin |
 | `token` | `string` | Yes | query | Drop token from /drop-begin |
 | `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalDropsCommitResponse`
 
@@ -167,13 +165,12 @@ client.terminal.drops.commit(data: TerminalDropsCommitRequest, options: { drop: 
 Begin a drag-and-drop staging transaction
 
 ```typescript
-client.terminal.drops.create(options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalDropsCreateResponse>
+client.terminal.drops.create(options?: { terminal_id: string }): Promise<TerminalDropsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalDropsCreateResponse`
 
@@ -186,14 +183,13 @@ client.terminal.drops.create(options?: { terminal_id: string; cache?: boolean | 
 One-shot drop (begin + stage + commit)
 
 ```typescript
-client.terminal.drops.send(data: TerminalDropsSendRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalDropsSendResponse>
+client.terminal.drops.send(data: TerminalDropsSendRequest, options?: { terminal_id: string }): Promise<TerminalDropsSendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalDropsSendRequest` | Yes | body |  |
 | `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalDropsSendResponse`
 
@@ -206,7 +202,7 @@ client.terminal.drops.send(data: TerminalDropsSendRequest, options?: { terminal_
 Upload a raw file slice into a drop
 
 ```typescript
-client.terminal.drops.writeChunk(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { drop: string; token: string; path: string; offset: number; terminal_id: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<TerminalDropsWriteChunkResponse>
+client.terminal.drops.writeChunk(data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { drop: string; token: string; path: string; offset: number; terminal_id: string; contentType?: 'application/octet-stream' }): Promise<TerminalDropsWriteChunkResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -217,7 +213,6 @@ client.terminal.drops.writeChunk(data: Blob | ArrayBuffer | Uint8Array | Readabl
 | `path` | `string` | Yes | query | Sanitized relative path of the staged file (no `..`, not absolute) |
 | `offset` | `number` | Yes | query | Byte offset to write at (must equal the current staged size) |
 | `terminal_id` | `string` | Yes | query | Terminal session ID (numeric 1-65535). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `TerminalDropsWriteChunkResponse`
@@ -289,7 +284,7 @@ client.terminal.processes.get(pid: number): Promise<TerminalProcessesGetResponse
 List all system processes
 
 ```typescript
-client.terminal.processes.list(options?: { sort?: "cpu" | "memory" | "pid" | "name"; limit?: number; filter?: string; cache?: boolean | number }): Promise<TerminalProcessesListResponse>
+client.terminal.processes.list(options?: { sort?: "cpu" | "memory" | "pid" | "name"; limit?: number; filter?: string }): Promise<TerminalProcessesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -297,7 +292,6 @@ client.terminal.processes.list(options?: { sort?: "cpu" | "memory" | "pid" | "na
 | `sort` | `"cpu" \| "memory" \| "pid" \| "name"` | No | query | Sort by field: cpu, memory, pid, name (default: pid) |
 | `limit` | `number` | No | query | Maximum number of processes to return (default: 1000) |
 | `filter` | `string` | No | query | Keep processes whose name or command line contains this text (case-sensitive) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalProcessesListResponse`
 
@@ -374,7 +368,7 @@ client.terminal.processes.signal(data: TerminalProcessesSignalRequest): Promise<
 Capture terminal screenshot
 
 ```typescript
-client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; format?: "png" | "jpeg" | "gif"; foreground?: string; background?: string; fontsize?: number; save?: boolean; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; format?: "png" | "jpeg" | "gif"; foreground?: string; background?: string; fontsize?: number; save?: boolean }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -385,7 +379,6 @@ client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; form
 | `background` | `string` | No | query | Background color: same as foreground options (default: black) |
 | `fontsize` | `number` | No | query | Font size in pixels (default: 20) |
 | `save` | `boolean` | No | query | Save to storage directory (default: true) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -400,12 +393,12 @@ client.terminal.sessions.captureScreenshot(options?: { terminal_id: string; form
 WebSocket terminal connection
 
 ```typescript
-client.terminal.sessions.connect(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; display?: string; pid?: number; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; ssh_key?: string; display_id?: string; ephemeral?: boolean; reset?: boolean; startup_script?: string; env_inject?: boolean; desktop?: boolean; desktop_env?: "xfce" | "mate"; debug?: boolean; welcome?: boolean; agent?: boolean; onboarding?: boolean; arg?: string; cache?: boolean | number }): Promise<TerminalConnectTerminalWebSocketWebSocket>
+client.terminal.sessions.connect(options?: { terminal_id?: string; readonly?: boolean; cwd?: string; cwd_auto_create?: boolean; shell?: string; user?: string; cmd?: string; env?: string; display?: string; pid?: number; ssh_host?: string; ssh_user?: string; ssh_port?: string; ssh_password?: string; socks5_host?: string; socks5_port?: string; socks5_user?: string; socks5_pass?: string; ssh_key?: string; display_id?: string; ephemeral?: boolean; reset?: boolean; startup_script?: string; env_inject?: boolean; desktop?: boolean; desktop_env?: "xfce" | "mate"; debug?: boolean; welcome?: boolean; agent?: boolean; onboarding?: boolean; arg?: string }): Promise<TerminalConnectTerminalWebSocketWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Omitted, the connection joins the shared terminal "1" that every client without a terminal_id uses; with ephemeral=true it instead gets a fresh ID in 40000-65535, reported in the SET_TERMINAL_ID frame. A value that is present but malformed is refused, never mapped to "1". Multiple clients can share by using the same ID. On connections routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535). Omitted, the connection joins the shared terminal "1" that every client without a terminal_id uses; with ephemeral=true it instead gets a fresh ID in 40000-65535, reported in the SET_TERMINAL_ID frame. A value that is present but malformed is refused, never mapped to "1". 0 (the terminal-0 host) only starts a fresh ephemeral session: without ephemeral=true (or in agent mode) the connection is refused, never mapped to "1". Multiple clients can share by using the same ID. On connections routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
 | `readonly` | `boolean` | No | query | Enable read-only mode for this client (blocks keyboard input) - Use 'true', '1', or no value |
 | `cwd` | `string` | No | query | Working directory for new sessions |
 | `cwd_auto_create` | `boolean` | No | query | Auto-create cwd when the requested working directory does not exist yet. Only applies when cwd is explicitly provided for a new local session. Enable with 'true', '1', or no value (default: false) |
@@ -436,7 +429,6 @@ client.terminal.sessions.connect(options?: { terminal_id?: string; readonly?: bo
 | `agent` | `boolean` | No | query | Launch the server-configured Hoody Agent TUI instead of a shell. A locked-down mode: shell, cmd, user, ssh_*, pid, startup_script, desktop and ephemeral are ignored (default: false) |
 | `onboarding` | `boolean` | No | query | With agent=true, start the agent's first-run onboarding (default: false) |
 | `arg` | `string` | No | query | Command-line argument for the shell, repeatable and kept in order. Accepted only when URL arguments are enabled on this server; ignored otherwise |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalConnectTerminalWebSocketWebSocket`
 
@@ -476,7 +468,7 @@ client.terminal.sessions.delete(terminal_id: string): Promise<TerminalSessionsDe
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID to delete (numeric 1-65535). The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls |
+| `terminal_id` | `string` | Yes | path | Terminal session ID to delete (numeric 1-65535). The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH |
 
 **Returns:** `TerminalSessionsDeleteResponse`
 
@@ -496,7 +488,7 @@ client.terminal.sessions.getAutomationStatus(terminal_id: string): Promise<Termi
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | Yes | path | Terminal session ID. The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls |
+| `terminal_id` | `string` | Yes | path | Terminal session ID. The containers proxy cannot fill this path segment — supply it explicitly even on hostname-routed calls, and it must name the host's terminal: a path id that differs from the query terminal_id (N on a terminal-N host) is refused with 400 TERMINAL_ID_MISMATCH |
 
 **Returns:** `TerminalSessionsGetAutomationStatusResponse`
 
@@ -511,7 +503,7 @@ client.terminal.sessions.getAutomationStatus(terminal_id: string): Promise<Termi
 Get rendered terminal snapshot
 
 ```typescript
-client.terminal.sessions.getSnapshot(options?: { terminal_id: string; include_colors?: boolean; include_highlights?: boolean; scroll_offset?: number; cache?: boolean | number }): Promise<TerminalSessionsGetSnapshotResponse>
+client.terminal.sessions.getSnapshot(options?: { terminal_id: string; include_colors?: boolean; include_highlights?: boolean; scroll_offset?: number }): Promise<TerminalSessionsGetSnapshotResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -520,7 +512,6 @@ client.terminal.sessions.getSnapshot(options?: { terminal_id: string; include_co
 | `include_colors` | `boolean` | No | query | Include ANSI SGR colored_lines array alongside plain text lines. Default: false |
 | `include_highlights` | `boolean` | No | query | Include reverse-video highlight spans. Default: true |
 | `scroll_offset` | `number` | No | query | Lines into scrollback (0 = live viewport). Default: 0 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsGetSnapshotResponse`
 
@@ -535,14 +526,13 @@ client.terminal.sessions.getSnapshot(options?: { terminal_id: string; include_co
 List all terminal sessions
 
 ```typescript
-client.terminal.sessions.list(options?: { history_limit?: number; history_lines?: number; cache?: boolean | number }): Promise<TerminalSessionsListResponse>
+client.terminal.sessions.list(options?: { history_limit?: number; history_lines?: number }): Promise<TerminalSessionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `history_limit` | `number` | No | query | Max command_history entries to include per session (default: 50, max: 1000) |
 | `history_lines` | `number` | No | query | Alias of history_limit |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsListResponse`
 
@@ -557,14 +547,13 @@ client.terminal.sessions.list(options?: { history_limit?: number; history_lines?
 Paste text into terminal
 
 ```typescript
-client.terminal.sessions.paste(data: TerminalSessionsPasteRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsPasteResponse>
+client.terminal.sessions.paste(data: TerminalSessionsPasteRequest, options?: { terminal_id: string }): Promise<TerminalSessionsPasteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsPasteRequest` | Yes | body |  |
 | `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsPasteResponse`
 
@@ -579,14 +568,13 @@ client.terminal.sessions.paste(data: TerminalSessionsPasteRequest, options?: { t
 Send named key presses to terminal
 
 ```typescript
-client.terminal.sessions.pressKeys(data: TerminalSessionsPressKeysRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsPressKeysResponse>
+client.terminal.sessions.pressKeys(data: TerminalSessionsPressKeysRequest, options?: { terminal_id: string }): Promise<TerminalSessionsPressKeysResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsPressKeysRequest` | Yes | body |  |
 | `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsPressKeysResponse`
 
@@ -601,15 +589,14 @@ client.terminal.sessions.pressKeys(data: TerminalSessionsPressKeysRequest, optio
 Get raw terminal output
 
 ```typescript
-client.terminal.sessions.read(options?: { terminal_id?: string; format?: "download" | "text" | "html"; tail?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.terminal.sessions.read(options?: { terminal_id?: string; format?: "download" | "text" | "html"; tail?: number }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, defaults to "1" if not provided). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send |
+| `terminal_id` | `string` | No | query | Terminal session ID (numeric 1-65535, defaults to "1" if not provided). On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send. 0 (the terminal-0 host) names no terminal to read and is refused with 400 TERMINAL_ID_ZERO |
 | `format` | `"download" \| "text" \| "html"` | No | query | Output format: download, text, or html (defaults to "download" if not provided) |
 | `tail` | `number` | No | query | Return only the last N lines of output |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -642,7 +629,7 @@ client.terminal.sessions.reportDiagnostics(data?: TerminalSessionsReportDiagnost
 Search terminal screen with regex
 
 ```typescript
-client.terminal.sessions.search(options: { pattern: string; terminal_id: string; scope?: "screen" | "scrollback" | "all"; limit?: number; case_insensitive?: boolean; scroll_offset?: number; cache?: boolean | number }): Promise<TerminalSessionsSearchResponse>
+client.terminal.sessions.search(options: { pattern: string; terminal_id: string; scope?: "screen" | "scrollback" | "all"; limit?: number; case_insensitive?: boolean; scroll_offset?: number }): Promise<TerminalSessionsSearchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -653,7 +640,6 @@ client.terminal.sessions.search(options: { pattern: string; terminal_id: string;
 | `limit` | `number` | No | query | Maximum number of hits to return (default 100, max 1000) |
 | `case_insensitive` | `boolean` | No | query | Case-insensitive matching. Default: false |
 | `scroll_offset` | `number` | No | query | Scrollback offset for screen scope (0 = live viewport). Default: 0 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsSearchResponse`
 
@@ -668,14 +654,13 @@ client.terminal.sessions.search(options: { pattern: string; terminal_id: string;
 Send cell-based mouse events to terminal
 
 ```typescript
-client.terminal.sessions.sendMouseEvents(data: TerminalSessionsSendMouseEventsRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsSendMouseEventsResponse>
+client.terminal.sessions.sendMouseEvents(data: TerminalSessionsSendMouseEventsRequest, options?: { terminal_id: string }): Promise<TerminalSessionsSendMouseEventsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsSendMouseEventsRequest` | Yes | body |  |
 | `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsSendMouseEventsResponse`
 
@@ -690,14 +675,13 @@ client.terminal.sessions.sendMouseEvents(data: TerminalSessionsSendMouseEventsRe
 Wait for terminal condition
 
 ```typescript
-client.terminal.sessions.wait(data: TerminalSessionsWaitRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsWaitResponse>
+client.terminal.sessions.wait(data: TerminalSessionsWaitRequest, options?: { terminal_id: string }): Promise<TerminalSessionsWaitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsWaitRequest` | Yes | body |  |
 | `terminal_id` | `string` | Yes | query | Terminal session ID. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsWaitResponse`
 
@@ -712,14 +696,13 @@ client.terminal.sessions.wait(data: TerminalSessionsWaitRequest, options?: { ter
 Write input to terminal
 
 ```typescript
-client.terminal.sessions.write(data?: TerminalSessionsWriteRequest, options?: { terminal_id: string; cache?: boolean | number }): Promise<TerminalSessionsWriteResponse>
+client.terminal.sessions.write(data?: TerminalSessionsWriteRequest, options?: { terminal_id: string }): Promise<TerminalSessionsWriteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `TerminalSessionsWriteRequest` | No | body |  |
 | `terminal_id` | `string` | Yes | query | Terminal session ID to write to. On calls routed through a terminal-N containers-proxy hostname, the proxy sets this from the hostname label and overwrites any value you send — pick the terminal via the hostname; supply it directly only when calling the terminal service without the proxy |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSessionsWriteResponse`
 
@@ -784,7 +767,7 @@ client.terminal.system.listDisplays(): Promise<TerminalSystemListDisplaysRespons
 List all listening network ports
 
 ```typescript
-client.terminal.system.listPorts(options?: { protocol?: string; user?: string; port?: number; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean; cache?: boolean | number }): Promise<TerminalSystemListPortsResponse>
+client.terminal.system.listPorts(options?: { protocol?: string; user?: string; port?: number; ip?: string; skip_program?: string; http_only?: boolean; hoody_only?: boolean }): Promise<TerminalSystemListPortsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -796,7 +779,6 @@ client.terminal.system.listPorts(options?: { protocol?: string; user?: string; p
 | `skip_program` | `string` | No | query | Exclude specific programs (comma-separated list) |
 | `http_only` | `boolean` | No | query | Only return HTTP services |
 | `hoody_only` | `boolean` | No | query | Only return Hoody Kit services |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSystemListPortsResponse`
 
@@ -811,13 +793,12 @@ client.terminal.system.listPorts(options?: { protocol?: string; user?: string; p
 Reboot the system
 
 ```typescript
-client.terminal.system.reboot(options?: { delay?: number; cache?: boolean | number }): Promise<TerminalSystemRebootResponse>
+client.terminal.system.reboot(options?: { delay?: number }): Promise<TerminalSystemRebootResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `delay` | `number` | No | query | Delay in seconds before reboot, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSystemRebootResponse`
 
@@ -832,13 +813,12 @@ client.terminal.system.reboot(options?: { delay?: number; cache?: boolean | numb
 Shutdown the system
 
 ```typescript
-client.terminal.system.shutdown(options?: { delay?: number; cache?: boolean | number }): Promise<TerminalSystemShutdownResponse>
+client.terminal.system.shutdown(options?: { delay?: number }): Promise<TerminalSystemShutdownResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `delay` | `number` | No | query | Delay in seconds before shutdown, 0..86400 (default: 0 for immediate). shutdown(8) schedules in whole minutes, so the server rounds UP to the nearest minute and reports the actual scheduled value as `effective_minutes` in the response. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `TerminalSystemShutdownResponse`
 

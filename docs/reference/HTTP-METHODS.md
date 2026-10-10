@@ -1,7 +1,7 @@
 # Hoody API — HTTP Endpoint Reference
 
-**Version:** 1.0.0-beta.16
-**Total endpoints:** 1016
+**Version:** 1.0.0-beta.17
+**Total endpoints:** 1039
 **Namespaces:** 21
 
 Every HTTP endpoint on the public Hoody API, paired with the typed SDK method
@@ -16,7 +16,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `agent` — 240 endpoints
+## `agent` — 262 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -37,6 +37,21 @@ Grouped by SDK namespace, sorted by path.
 | PATCH | `/api/v1/agent/agents/{name}/tools` | `agent.definitions.setTools` | `hoody agent definitions tools set` | Set an agent's tool allow-list. |
 | POST | `/api/v1/agent/agents/{name}/tools/{tool}/toggle` | `agent.definitions.toggleTool` | `hoody agent definitions tools toggle` | Toggle a single tool for an agent. |
 | PATCH | `/api/v1/agent/agents/{name}/turns` | `agent.definitions.setTurnLimit` | `hoody agent definitions turns limit set` | Set an agent's max-turns. |
+| GET | `/api/v1/agent/bots` | `agent.bots.list` | `hoody agent bots list` | List the Bots. |
+| POST | `/api/v1/agent/bots` | `agent.bots.create` | `hoody agent bots create` | Create a Bot. |
+| DELETE | `/api/v1/agent/bots/{id}` | `agent.bots.delete` | `hoody agent bots delete` | Delete a Bot. |
+| GET | `/api/v1/agent/bots/{id}` | `agent.bots.get` | `hoody agent bots get` | Get a Bot. |
+| PATCH | `/api/v1/agent/bots/{id}` | `agent.bots.update` | `hoody agent bots update` | Change a Bot's settings. |
+| GET | `/api/v1/agent/bots/{id}/archive` | `agent.bots.getArchive` | `hoody agent bots archive get` | Read a Bot's archive. |
+| GET | `/api/v1/agent/bots/{id}/delegates` | `agent.bots.listDelegates` | `hoody agent bots delegates list` | List a Bot's delegates. |
+| POST | `/api/v1/agent/bots/{id}/delegates/{sid}/stop` | `agent.bots.stopDelegate` | `hoody agent bots delegates stop` | Stop one of a Bot's delegates now. |
+| POST | `/api/v1/agent/bots/{id}/forget` | `agent.bots.forget` | `hoody agent bots forget` | Make a Bot forget its conversation. |
+| PUT | `/api/v1/agent/bots/{id}/guardrails` | `agent.bots.setGuardrails` | `hoody agent bots guardrails set` | Replace a Bot's guardrails. |
+| GET | `/api/v1/agent/bots/{id}/log` | `agent.bots.getLog` | `hoody agent bots log get` | Read a Bot's log. |
+| POST | `/api/v1/agent/bots/{id}/messages` | `agent.bots.sendMessage` | `hoody agent bots messages send` | Post a message to a Bot. |
+| POST | `/api/v1/agent/bots/{id}/purge` | `agent.bots.purgeArchive` | `hoody agent bots archive purge` | Delete a Bot's archive. |
+| POST | `/api/v1/agent/bots/{id}/reset` | `agent.bots.reset` | `hoody agent bots reset` | Give a Bot a new session. |
+| GET | `/api/v1/agent/bots/{id}/stream` | `agent.bots.stream` | `hoody agent bots stream` | Follow a Bot's log (SSE). |
 | GET | `/api/v1/agent/changes` | `agent.changes.get` | `hoody agent changes get` | Change tokens for the Work lists. |
 | GET | `/api/v1/agent/changes/stream` | `agent.changes.stream` | — | Stream the change tokens (SSE). |
 | POST | `/api/v1/agent/completions` | `agent.completions.create` | `hoody agent completions create` | Run one tool-free model completion. |
@@ -132,7 +147,10 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/agent/models` | `agent.models.list` | `hoody agent models list` | List models. |
 | GET | `/api/v1/agent/models/{spec}` | `agent.models.get` | `hoody agent models get` | Get a model by spec. |
 | GET | `/api/v1/agent/providers` | `agent.providers.list` | `hoody agent providers list` | List LLM providers. |
+| POST | `/api/v1/agent/providers` | `agent.providers.create` | `hoody agent providers create` | Create a custom provider. |
+| DELETE | `/api/v1/agent/providers/{id}` | `agent.providers.delete` | `hoody agent providers delete` | Delete a custom provider. |
 | GET | `/api/v1/agent/providers/{id}` | `agent.providers.get` | `hoody agent providers get` | Get a provider. |
+| PATCH | `/api/v1/agent/providers/{id}` | `agent.providers.update` | `hoody agent providers update` | Change a custom provider. |
 | GET | `/api/v1/agent/providers/{id}/auth` | `agent.providers.getAuth` | `hoody agent providers auth status` | Get a provider's auth status. |
 | GET | `/api/v1/agent/providers/{id}/auth/accounts` | `agent.providers.listAccounts` | `hoody agent providers accounts list` | List a provider's OAuth account pool. |
 | POST | `/api/v1/agent/providers/{id}/auth/accounts` | `agent.providers.addAccount` | `hoody agent providers accounts add` | Add an OAuth account to a provider's pool. |
@@ -151,6 +169,7 @@ Grouped by SDK namespace, sorted by path.
 | DELETE | `/api/v1/agent/sessions/{id}` | `agent.sessions.delete` | `hoody agent sessions delete` | Close (and optionally hard-delete) a session. |
 | GET | `/api/v1/agent/sessions/{id}` | `agent.sessions.get` | `hoody agent sessions get` | Get a session summary. |
 | PATCH | `/api/v1/agent/sessions/{id}` | `agent.sessions.rename` | `hoody agent sessions rename` | Rename a session. |
+| PUT | `/api/v1/agent/sessions/{id}/after-compaction` | `agent.sessions.setAfterCompaction` | `hoody agent sessions aftercompaction set` | Set the message re-added after every compaction. |
 | PATCH | `/api/v1/agent/sessions/{id}/agent` | `agent.sessions.setAgent` | `hoody agent sessions agent set` | Switch the chat agent. |
 | POST | `/api/v1/agent/sessions/{id}/answer` | `agent.gates.answer` | `hoody agent gates answer` | Answer a parked question gate. |
 | POST | `/api/v1/agent/sessions/{id}/answer:assist` | `agent.gates.suggest` | `hoody agent gates suggest` | Propose answers for a parked question (helper model). |
@@ -168,6 +187,8 @@ Grouped by SDK namespace, sorted by path.
 | PATCH | `/api/v1/agent/sessions/{id}/auto-reply/writes` | `agent.sessions.setAutoReplyWrites` | `hoody agent sessions autoreply writes set` | Flip the auto-reply write opt-in. |
 | POST | `/api/v1/agent/sessions/{id}/cancel` | `agent.sessions.turns.cancel` | `hoody agent sessions turns cancel` | Cancel the active turn (Esc), or one named turn. |
 | POST | `/api/v1/agent/sessions/{id}/close` | `agent.sessions.close` | `hoody agent sessions close` | Close the session (teardown). |
+| POST | `/api/v1/agent/sessions/{id}/commands` | `agent.sessions.commands.send` | `hoody agent sessions commands send` | Send a message, an interrupt or a stop to a session. |
+| GET | `/api/v1/agent/sessions/{id}/commands/{command_id}` | `agent.sessions.commands.get` | `hoody agent sessions commands get` | Get a command's receipt. |
 | POST | `/api/v1/agent/sessions/{id}/confirm` | `agent.gates.deny` | `hoody agent gates approve` | Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease). |
 | PATCH | `/api/v1/agent/sessions/{id}/effort` | `agent.sessions.setEffort` | `hoody agent sessions effort set` | Set reasoning effort. |
 | PATCH | `/api/v1/agent/sessions/{id}/hoody-env` | `agent.sessions.setHoodyEnv` | `hoody agent sessions env set` | Toggle Hoody shell-env injection. |
@@ -197,6 +218,7 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/agent/sessions/{id}/turns` | `agent.sessions.turns.list` | `hoody agent sessions turns list` | List a session's durable turn receipts. |
 | POST | `/api/v1/agent/sessions/{id}/turns` | `agent.sessions.turns.create` | `hoody agent sessions turns create` | Dispatch a turn (retry-safe). |
 | GET | `/api/v1/agent/sessions/{id}/turns/{turn_id}` | `agent.sessions.turns.get` | `hoody agent sessions turns get` | Get a turn's durable receipt. |
+| GET | `/api/v1/agent/sessions/{id}/usage` | `agent.sessions.getUsage` | `hoody agent sessions usage get` | Read a session's per-call LLM usage. |
 | PATCH | `/api/v1/agent/sessions/{id}/verbosity` | `agent.sessions.setVerbosity` | `hoody agent sessions verbosity set` | Set response verbosity. |
 | POST | `/api/v1/agent/sessions/{id}/workflow/messages` | `agent.workflows.sendMessage` | `hoody agent workflows messages send` | Send a message to a running workflow. |
 | POST | `/api/v1/agent/sessions/{id}/workflows/{name}/runs` | `agent.sessions.startWorkflow` | `hoody agent sessions workflows start` | Run a workflow onto an existing session. |
@@ -536,34 +558,34 @@ Grouped by SDK namespace, sorted by path.
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
-| POST | `/action` | `browser.page.act` | `hoody browser act` | Perform a native element action |
+| POST | `/api/v1/browser/action` | `browser.page.act` | `hoody browser act` | Perform a native element action |
+| POST | `/api/v1/browser/browse` | `browser.page.navigate` | `hoody browser navigate` | Navigate to URL (POST) |
+| GET | `/api/v1/browser/console` | `browser.logs.listConsole` | `hoody browser logs console list` | Get console logs |
+| DELETE | `/api/v1/browser/cookies` | `browser.cookies.clear` | `hoody browser cookies clear` | Clear all cookies |
+| GET | `/api/v1/browser/cookies` | `browser.cookies.list` | `hoody browser cookies list` | Get cookies |
+| POST | `/api/v1/browser/cookies` | `browser.cookies.setMany` | `hoody browser cookies batch set` | Set cookies |
+| GET | `/api/v1/browser/devtools-url` | `browser.instances.getDevtoolsUrls` | `hoody browser devtools urls get` | Get DevTools URLs |
+| POST | `/api/v1/browser/eval` | `browser.page.evaluate` | `hoody browser evaluate` | Execute JavaScript (POST) |
 | GET | `/api/v1/browser/health` | `browser.kit.getHealth` | `hoody browser health` | Health check |
-| POST | `/browse` | `browser.page.navigate` | `hoody browser navigate` | Navigate to URL (POST) |
-| GET | `/console` | `browser.logs.listConsole` | `hoody browser logs console list` | Get console logs |
-| DELETE | `/cookies` | `browser.cookies.clear` | `hoody browser cookies clear` | Clear all cookies |
-| GET | `/cookies` | `browser.cookies.list` | `hoody browser cookies list` | Get cookies |
-| POST | `/cookies` | `browser.cookies.setMany` | `hoody browser cookies batch set` | Set cookies |
-| GET | `/devtools-url` | `browser.instances.getDevtoolsUrls` | `hoody browser devtools urls get` | Get DevTools URLs |
-| POST | `/eval` | `browser.page.evaluate` | `hoody browser evaluate` | Execute JavaScript (POST) |
-| DELETE | `/history` | `browser.history.clear` | `hoody browser history clear` | Delete browsing history |
-| GET | `/history` | `browser.history.list` | `hoody browser history list` | Query browsing history |
-| GET | `/html` | `browser.page.getHtml` | `hoody browser html get` | Get page HTML |
-| GET | `/metadata` | `browser.instances.get` | `hoody browser get` | Get instance metadata |
-| GET | `/metrics` | `browser.kit.getStats` | `hoody browser stats` | Server metrics |
-| GET | `/network` | `browser.logs.listNetwork` | `hoody browser logs network list` | Get network logs |
-| GET | `/pdf` | `browser.page.exportPdf` | `hoody browser pdf export` | Export page as PDF |
-| GET | `/restart` | `browser.instances.restart` | `hoody browser restart` | Restart browser instance |
-| GET | `/screenshot` | `browser.page.captureScreenshot` | `hoody browser screenshots capture` | Capture browser screenshot |
-| GET | `/shutdown` | `browser.instances.shutdown` | `hoody browser shutdown` | Shutdown browser instance |
-| GET | `/snapshot` | `browser.page.getSnapshot` | `hoody browser snapshot get` | Accessibility snapshot of a tab with element refs |
-| GET | `/start` | `browser.instances.start` | `hoody browser start` | Create or retrieve browser instance |
-| GET | `/stop` | `browser.instances.stop` | `hoody browser stop` | Stop browser instance |
-| POST | `/tab/close` | `browser.tabs.close` | `hoody browser tabs close` | Close a browser tab |
-| GET | `/tabs` | `browser.tabs.list` | `hoody browser tabs list` | List browser tabs |
-| GET | `/text` | `browser.page.getText` | `hoody browser text get` | Get page text |
-| GET | `/viewport` | `browser.viewport.get` | `hoody browser viewport get` | Get the current viewport policy |
-| POST | `/viewport` | `browser.viewport.set` | `hoody browser viewport set` | Change the viewport at runtime |
-| POST | `/wait` | `browser.page.wait` | `hoody browser wait` | Wait for a condition in a tab |
+| DELETE | `/api/v1/browser/history` | `browser.history.clear` | `hoody browser history clear` | Delete browsing history |
+| GET | `/api/v1/browser/history` | `browser.history.list` | `hoody browser history list` | Query browsing history |
+| GET | `/api/v1/browser/html` | `browser.page.getHtml` | `hoody browser html get` | Get page HTML |
+| GET | `/api/v1/browser/metadata` | `browser.instances.get` | `hoody browser get` | Get instance metadata |
+| GET | `/api/v1/browser/metrics` | `browser.kit.getStats` | `hoody browser stats` | Server metrics |
+| GET | `/api/v1/browser/network` | `browser.logs.listNetwork` | `hoody browser logs network list` | Get network logs |
+| GET | `/api/v1/browser/pdf` | `browser.page.exportPdf` | `hoody browser pdf export` | Export page as PDF |
+| GET | `/api/v1/browser/restart` | `browser.instances.restart` | `hoody browser restart` | Restart browser instance |
+| GET | `/api/v1/browser/screenshot` | `browser.page.captureScreenshot` | `hoody browser screenshots capture` | Capture browser screenshot |
+| GET | `/api/v1/browser/shutdown` | `browser.instances.shutdown` | `hoody browser shutdown` | Shutdown browser instance |
+| GET | `/api/v1/browser/snapshot` | `browser.page.getSnapshot` | `hoody browser snapshot get` | Accessibility snapshot of a tab with element refs |
+| GET | `/api/v1/browser/start` | `browser.instances.start` | `hoody browser start` | Create or retrieve browser instance |
+| GET | `/api/v1/browser/stop` | `browser.instances.stop` | `hoody browser stop` | Stop browser instance |
+| POST | `/api/v1/browser/tab/close` | `browser.tabs.close` | `hoody browser tabs close` | Close a browser tab |
+| GET | `/api/v1/browser/tabs` | `browser.tabs.list` | `hoody browser tabs list` | List browser tabs |
+| GET | `/api/v1/browser/text` | `browser.page.getText` | `hoody browser text get` | Get page text |
+| GET | `/api/v1/browser/viewport` | `browser.viewport.get` | `hoody browser viewport get` | Get the current viewport policy |
+| POST | `/api/v1/browser/viewport` | `browser.viewport.set` | `hoody browser viewport set` | Change the viewport at runtime |
+| POST | `/api/v1/browser/wait` | `browser.page.wait` | `hoody browser wait` | Wait for a condition in a tab |
 
 ---
 
@@ -588,15 +610,15 @@ Grouped by SDK namespace, sorted by path.
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
-| GET | `/crontab` | `cron.crontabs.list` | `hoody cron crontabs list` | List All Crontabs |
-| GET | `/health` | `cron.kit.getHealth` | `hoody cron health` | Health Check |
-| GET | `/users/{user}/crontab` | `cron.crontabs.get` | `hoody cron crontabs get` | Get Crontab |
-| PUT | `/users/{user}/crontab` | `cron.crontabs.set` | `hoody cron crontabs set` | Put Crontab |
-| GET | `/users/{user}/entries` | `cron.entries.list` | `hoody cron entries list` | List Entries |
-| POST | `/users/{user}/entries` | `cron.entries.create` | `hoody cron entries create` | Create Entry |
-| DELETE | `/users/{user}/entries/{id}` | `cron.entries.delete` | `hoody cron entries delete` | Delete Entry |
-| GET | `/users/{user}/entries/{id}` | `cron.entries.get` | `hoody cron entries get` | Get Entry |
-| PATCH | `/users/{user}/entries/{id}` | `cron.entries.update` | `hoody cron entries update` | Update Entry |
+| GET | `/api/v1/cron/crontab` | `cron.crontabs.list` | `hoody cron crontabs list` | List All Crontabs |
+| GET | `/api/v1/cron/health` | `cron.kit.getHealth` | `hoody cron health` | Health Check |
+| GET | `/api/v1/cron/users/{user}/crontab` | `cron.crontabs.get` | `hoody cron crontabs get` | Get Crontab |
+| PUT | `/api/v1/cron/users/{user}/crontab` | `cron.crontabs.set` | `hoody cron crontabs set` | Put Crontab |
+| GET | `/api/v1/cron/users/{user}/entries` | `cron.entries.list` | `hoody cron entries list` | List Entries |
+| POST | `/api/v1/cron/users/{user}/entries` | `cron.entries.create` | `hoody cron entries create` | Create Entry |
+| DELETE | `/api/v1/cron/users/{user}/entries/{id}` | `cron.entries.delete` | `hoody cron entries delete` | Delete Entry |
+| GET | `/api/v1/cron/users/{user}/entries/{id}` | `cron.entries.get` | `hoody cron entries get` | Get Entry |
+| PATCH | `/api/v1/cron/users/{user}/entries/{id}` | `cron.entries.update` | `hoody cron entries update` | Update Entry |
 
 ---
 
@@ -722,7 +744,7 @@ Grouped by SDK namespace, sorted by path.
 
 ---
 
-## `exec` — 67 endpoints
+## `exec` — 68 endpoints
 
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
@@ -766,6 +788,7 @@ Grouped by SDK namespace, sorted by path.
 | GET | `/api/v1/exec/scripts/read` | `exec.scripts.read` | `hoody exec scripts read` | Read Script |
 | POST | `/api/v1/exec/scripts/tree` | `exec.scripts.getTree` | `hoody exec scripts tree get` | Get Script Tree |
 | POST | `/api/v1/exec/scripts/write` | `exec.scripts.write` | `hoody exec scripts write` | Write Script |
+| GET | `/api/v1/exec/sdk-types` | `exec.sdkTypes.list` | `hoody exec sdk types list` | Get Sdk Types |
 | DELETE | `/api/v1/exec/sdk/{id}` | `exec.sdks.delete` | `hoody exec sdks delete` | Delete SDK |
 | GET | `/api/v1/exec/sdk/{id}` | `exec.sdks.get` | `hoody exec sdks get` | Get SDK |
 | POST | `/api/v1/exec/sdk/import` | `exec.sdks.import` | `hoody exec sdks import` | Import SDK |
@@ -1168,14 +1191,14 @@ Grouped by SDK namespace, sorted by path.
 | HTTP | Path | SDK Method | CLI Command | Summary |
 |------|------|------------|-------------|---------|
 | GET | `/api/v1/watch/health` | `watch.kit.getHealth` | `hoody watch health` | Health Check |
-| GET | `/watchers` | `watch.watchers.list` | `hoody watch list` | List Watchers |
-| POST | `/watchers` | `watch.watchers.create` | `hoody watch create` | Create Watcher |
-| DELETE | `/watchers/{id}` | `watch.watchers.delete` | `hoody watch delete` | Delete Watcher |
-| GET | `/watchers/{id}` | `watch.watchers.get` | `hoody watch get` | Get Watcher |
-| PATCH | `/watchers/{id}` | `watch.watchers.update` | `hoody watch update` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. |
-| GET | `/watchers/{id}/events` | `watch.events.list` | `hoody watch events list` | List Watcher Events |
-| GET | `/watchers/{id}/events/sse` | `watch.events.stream` | `hoody watch events stream` | Stream Watcher Events Sse |
-| GET | `/watchers/{id}/events/ws` | `watch.events.connect` | — | Stream Watcher Events Ws |
+| GET | `/api/v1/watch/watchers` | `watch.watchers.list` | `hoody watch list` | List Watchers |
+| POST | `/api/v1/watch/watchers` | `watch.watchers.create` | `hoody watch create` | Create Watcher |
+| DELETE | `/api/v1/watch/watchers/{id}` | `watch.watchers.delete` | `hoody watch delete` | Delete Watcher |
+| GET | `/api/v1/watch/watchers/{id}` | `watch.watchers.get` | `hoody watch get` | Get Watcher |
+| PATCH | `/api/v1/watch/watchers/{id}` | `watch.watchers.update` | `hoody watch update` | Reconfigure a live watcher in place. Omitted fields keep their current values. The watcher keeps its id, replay history (so since_id / since_timestamp cursors stay valid) and its connected SSE/WebSocket clients; only the file-system backend is replaced. The new backend starts before the old one stops, and events the old backend had already queued are processed before the handoff completes. So a change under a path watched by both configurations is not lost across the swap (one landing inside that window may be reported twice), and a change under a path only the old configuration watched is delivered if the old backend saw it before stopping. The drain is bounded: if the old backend has not finished within 5 seconds (a backstop against a wedged backend), the handoff completes anyway and events still queued in the old backend at that point are dropped, with a warning in the service log. A request that fails leaves the watcher unchanged. A body with no field is refused with 400 `INVALID_REQUEST`; a body whose fields all equal the current values returns the watcher as it is, without replacing the backend. |
+| GET | `/api/v1/watch/watchers/{id}/events` | `watch.events.list` | `hoody watch events list` | List Watcher Events |
+| GET | `/api/v1/watch/watchers/{id}/events/sse` | `watch.events.stream` | `hoody watch events stream` | Stream Watcher Events Sse |
+| GET | `/api/v1/watch/watchers/{id}/events/ws` | `watch.events.connect` | — | Stream Watcher Events Ws |
 
 ---
 

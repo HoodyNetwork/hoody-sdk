@@ -1,6 +1,6 @@
 # `curl` — 31 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.curl`
 
 ```typescript
@@ -18,7 +18,7 @@ import * as curl from 'hoody-sdk/curl';
 Execute cURL requests over a WebSocket channel
 
 ```typescript
-client.curl.channel.connect(options?: { max_concurrent?: number; max_concurrent_streams?: number; max_pool?: number; max_queue?: number; max_frame_bytes?: number; max_request_bytes?: number; chunk_bytes?: number; stream_timeout_secs?: number; idle_timeout_secs?: number; max_outbound_messages?: number; binary?: boolean }): void
+client.curl.channel.connect(opts?: CurlChannelHelperOptions): Promise<CurlChannel>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -35,7 +35,7 @@ client.curl.channel.connect(options?: { max_concurrent?: number; max_concurrent_
 | `max_outbound_messages` | `number` | No | query | Maximum queued outbound channel messages |
 | `binary` | `boolean` | No | query | `true` negotiates binary frames: response bodies arrive as binary BODY frames and `request.start` may set `binary_body` to send its body as binary REQUEST_BODY frames. Every binary frame starts with a 16-byte little-endian header: version, kind, flags (bit 0 marks the last chunk) and the stream id. Default false |
 
-**Returns:** `void`
+**Returns:** `CurlChannel`
 
 ---
 
@@ -90,7 +90,7 @@ client.curl.jobs.cancel(id: string): Promise<curl_CurlJobDeleteResult>
 Subscribe to job events over WebSocket
 
 ```typescript
-client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string; cache?: boolean | number }): Promise<CurlWsJobEventsWebSocket>
+client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnation?: string }): Promise<CurlWsJobEventsWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -98,7 +98,6 @@ client.curl.jobs.connect(options?: { job_id?: string; since?: number; incarnatio
 | `job_id` | `string` | No | query | Optional job ID filter |
 | `since` | `number` | No | query | Resume cursor: the last `seq` (or `replay_boundary.max_seq`) received; `0` for everything still kept. The lifecycle events after it are replayed first, then a `replay_boundary` frame |
 | `incarnation` | `string` | No | query | The `incarnation` of the last control frame received; a different one means the server restarted since |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlWsJobEventsWebSocket`
 
@@ -171,14 +170,13 @@ client.curl.jobs.getResult(id: string): Promise<ApiResponse<unknown>>
 List all async jobs
 
 ```typescript
-client.curl.jobs.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlJobsListResponse>
+client.curl.jobs.list(options?: { page?: number; limit?: number }): Promise<CurlJobsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlJobsListResponse`
 
@@ -193,14 +191,13 @@ client.curl.jobs.list(options?: { page?: number; limit?: number; cache?: boolean
 List all async jobs (collect all pages)
 
 ```typescript
-client.curl.jobs.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.curl.jobs.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -213,14 +210,13 @@ client.curl.jobs.listAll(options?: { page?: number; limit?: number; cache?: bool
 List all async jobs (async iterator)
 
 ```typescript
-client.curl.jobs.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.curl.jobs.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -233,7 +229,7 @@ client.curl.jobs.listIterator(options?: { page?: number; limit?: number; cache?:
 Subscribe to job events over Server-Sent Events
 
 ```typescript
-client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string; LastEventID?: string | null; cache?: boolean | number }): Promise<IEventStream>
+client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation?: string; LastEventID?: string | null }): Promise<IEventStream>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -242,7 +238,6 @@ client.curl.jobs.stream(options?: { job_id?: string; since?: number; incarnation
 | `since` | `number` | No | query | Resume cursor: the last `seq` (SSE `id:`) received; `0` for everything still kept. Wins over `Last-Event-ID` |
 | `incarnation` | `string` | No | query | The `incarnation` of the last `lagged` event received; a different one means the server restarted since |
 | `LastEventID` | `string \| null` | No | header | Resume cursor as sent by an EventSource reconnect: the last `id:` received. Ignored when it is not a number or when `since` is given |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `IEventStream`
 
@@ -353,14 +348,13 @@ client.curl.schedules.get(id: string): Promise<CurlSchedulesGetResponse>
 List all scheduled jobs
 
 ```typescript
-client.curl.schedules.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlSchedulesListResponse>
+client.curl.schedules.list(options?: { page?: number; limit?: number }): Promise<CurlSchedulesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlSchedulesListResponse`
 
@@ -375,14 +369,13 @@ client.curl.schedules.list(options?: { page?: number; limit?: number; cache?: bo
 List all scheduled jobs (collect all pages)
 
 ```typescript
-client.curl.schedules.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.curl.schedules.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -395,14 +388,13 @@ client.curl.schedules.listAll(options?: { page?: number; limit?: number; cache?:
 List all scheduled jobs (async iterator)
 
 ```typescript
-client.curl.schedules.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.curl.schedules.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -478,14 +470,13 @@ client.curl.sessions.get(id: string): Promise<CurlSessionsGetResponse>
 List all cookie sessions
 
 ```typescript
-client.curl.sessions.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlSessionsListResponse>
+client.curl.sessions.list(options?: { page?: number; limit?: number }): Promise<CurlSessionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlSessionsListResponse`
 
@@ -500,14 +491,13 @@ client.curl.sessions.list(options?: { page?: number; limit?: number; cache?: boo
 List all cookie sessions (collect all pages)
 
 ```typescript
-client.curl.sessions.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.curl.sessions.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -540,14 +530,13 @@ client.curl.sessions.listCookies(id: string): Promise<ApiResponse<unknown>>
 List all cookie sessions (async iterator)
 
 ```typescript
-client.curl.sessions.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.curl.sessions.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -562,14 +551,13 @@ client.curl.sessions.listIterator(options?: { page?: number; limit?: number; cac
 Delete a saved file or directory
 
 ```typescript
-client.curl.storage.delete(path: string, options?: { recursive?: boolean; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.curl.storage.delete(path: string, options?: { recursive?: boolean }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | Relative path to a file or directory in storage |
 | `recursive` | `boolean` | No | query | `true` deletes a directory and everything in it (default false) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -604,14 +592,13 @@ client.curl.storage.get(path: string): Promise<ApiResponse<ArrayBuffer>>
 List all saved downloads
 
 ```typescript
-client.curl.storage.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<CurlStorageListResponse>
+client.curl.storage.list(options?: { page?: number; limit?: number }): Promise<CurlStorageListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CurlStorageListResponse`
 
@@ -626,14 +613,13 @@ client.curl.storage.list(options?: { page?: number; limit?: number; cache?: bool
 List all saved downloads (collect all pages)
 
 ```typescript
-client.curl.storage.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.curl.storage.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -646,14 +632,13 @@ client.curl.storage.listAll(options?: { page?: number; limit?: number; cache?: b
 List all saved downloads (async iterator)
 
 ```typescript
-client.curl.storage.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.curl.storage.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number (optional) |
 | `limit` | `number` | No | query | Items per page (optional; current handler returns all items when omitted) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 

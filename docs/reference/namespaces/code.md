@@ -1,6 +1,6 @@
 # `code` — 10 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.code`
 
 ```typescript
@@ -18,13 +18,12 @@ import * as code from 'hoody-sdk/code';
 Stop an editor instance
 
 ```typescript
-client.code.stop(options?: { id: number; cache?: boolean | number }): Promise<CodeStopResponse>
+client.code.stop(options?: { id: number }): Promise<CodeStopResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `number` | Yes | query | Which instance to stop. On a `code-{N}` service URL the edge proxy sets it from the hostname and overrides any value sent, so a caller there neither needs to send it nor can change it. It is required: there is no default instance to stop, so a request without it is answered `400`. Read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CodeStopResponse`
 
@@ -41,14 +40,13 @@ client.code.stop(options?: { id: number; cache?: boolean | number }): Promise<Co
 Stage a VS Code extension from a URL
 
 ```typescript
-client.code.extensions.install(data: CodeExtensionsInstallRequest, options?: { id: number; cache?: boolean | number }): Promise<CodeExtensionsInstallResponse>
+client.code.extensions.install(data: CodeExtensionsInstallRequest, options?: { id: number }): Promise<CodeExtensionsInstallResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `CodeExtensionsInstallRequest` | Yes | body |  |
 | `id` | `number` | Yes | query | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. ## Where it comes from On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CodeExtensionsInstallResponse`
 
@@ -63,13 +61,12 @@ client.code.extensions.install(data: CodeExtensionsInstallRequest, options?: { i
 Staged extensions, and what the instance appears to have installed
 
 ```typescript
-client.code.extensions.list(options?: { id: number; cache?: boolean | number }): Promise<CodeExtensionsListResponse>
+client.code.extensions.list(options?: { id: number }): Promise<CodeExtensionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `number` | Yes | query | Which instance this request is about. Required here, unlike on `GET /api/v1/code`. That operation has a discovery branch to fall back to when no selector is given; this one does not, so a request without an `id` has named no instance and is rejected rather than defaulted to a first one. The value is read exactly as strictly as the selector on `GET /api/v1/code`: an unsigned decimal integer, under the literal name `id` only, never given more than once, and at most `65535 - basePort`. See that operation for the full rules. ## Where it comes from On a `code-N` service URL the platform's edge proxy sets it from the hostname, so a caller behind the edge neither sends it nor can override it, and the generated clients leave it out of the query for exactly that reason. It is required because there is no discovery branch here to fall back to: a request without an `id` has named no instance and is answered `400`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `CodeExtensionsListResponse`
 

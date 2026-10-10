@@ -1,6 +1,6 @@
-# `agent` — 294 methods
+# `agent` — 326 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.agent`
 
 ```typescript
@@ -18,12 +18,13 @@ import * as agent from 'hoody-sdk/agent';
 Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.acp.disable(agent: string, data?: object): Promise<any>
+client.agent.acp.disable(agent: string, data?: object, options?: { realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `agent` | `string` | Yes | path | The agent. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -39,12 +40,13 @@ client.agent.acp.disable(agent: string, data?: object): Promise<any>
 Enable or disable a BYOA ACP backend.
 
 ```typescript
-client.agent.acp.enable(agent: string, data?: object): Promise<any>
+client.agent.acp.enable(agent: string, data?: object, options?: { realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `agent` | `string` | Yes | path | The agent. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -60,17 +62,15 @@ client.agent.acp.enable(agent: string, data?: object): Promise<any>
 Get BYOA ACP backend status.
 
 ```typescript
-client.agent.acp.getStatus(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentAcpGetStatusResponse>
+client.agent.acp.getStatus(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentAcpGetStatusResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentAcpGetStatusResponse`
 
@@ -85,13 +85,14 @@ client.agent.acp.getStatus(options?: { realm?: string; XHoodyCwd?: string; XHood
 Set a BYOA backend's default model and effort.
 
 ```typescript
-client.agent.acp.setModel(agent: string, data?: AgentAcpSetModelRequest): Promise<AgentAcpSetModelResponse>
+client.agent.acp.setModel(agent: string, data?: AgentAcpSetModelRequest, options?: { realm?: "global" | (string & {}) }): Promise<AgentAcpSetModelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `agent` | `string` | Yes | path | The agent. |
 | `data` | `AgentAcpSetModelRequest` | No | body |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentAcpSetModelResponse`
 
@@ -148,12 +149,13 @@ client.agent.signIn(data: object): Promise<any>
 Stop everything running in the realm.
 
 ```typescript
-client.agent.stopAllWork(data?: AgentStopAllWorkRequest): Promise<AgentStopAllWorkResponse>
+client.agent.stopAllWork(data?: AgentStopAllWorkRequest, options?: { realm?: "global" | (string & {}) }): Promise<AgentStopAllWorkResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentStopAllWorkRequest` | No | body |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentStopAllWorkResponse`
 
@@ -177,6 +179,508 @@ client.agent.whoami(): Promise<AgentWhoamiResponse>
 
 ---
 
+## `client.agent.bots` (23 methods)
+
+### `create`
+
+**POST** `/api/v1/agent/bots`
+
+Create a Bot.
+
+```typescript
+client.agent.bots.create(data?: AgentBotsCreateRequest, options?: { realm?: "global" | (string & {}) }): Promise<AgentBotsCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentBotsCreateRequest` | No | body |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsCreateResponse`
+
+**CLI:** `hoody agent bots create`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/agent/bots/{id}`
+
+Delete a Bot.
+
+```typescript
+client.agent.bots.delete(id: string, options?: { realm?: "global" | (string & {}) }): Promise<ApiResponse<unknown>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `ApiResponse<unknown>`
+
+**CLI:** `hoody agent bots delete`
+
+---
+
+### `forget`
+
+**POST** `/api/v1/agent/bots/{id}/forget`
+
+Make a Bot forget its conversation.
+
+```typescript
+client.agent.bots.forget(id: string, options?: { realm?: "global" | (string & {}) }): Promise<AgentBotsForgetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsForgetResponse`
+
+**CLI:** `hoody agent bots forget`
+
+---
+
+### `get`
+
+**GET** `/api/v1/agent/bots/{id}`
+
+Get a Bot.
+
+```typescript
+client.agent.bots.get(id: string, options?: { realm?: "global" | (string & {}) }): Promise<AgentBotsGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsGetResponse`
+
+**CLI:** `hoody agent bots get`
+
+---
+
+### `getArchive`
+
+**GET** `/api/v1/agent/bots/{id}/archive`
+
+Read a Bot's archive.
+
+```typescript
+client.agent.bots.getArchive(id: string, options?: { since?: number; limit?: number; realm?: "global" | (string & {}) }): Promise<AgentBotsGetArchiveResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `since` | `number` | No | query | Return only rows whose seq is greater than this: the next_since of the previous page. Default 0. |
+| `limit` | `number` | No | query | At most this many rows: 100 when omitted or 0, at most 500 (a larger value reads 500). Negative or non-integer = 400. These routes page by since, not by page number: ?page is 400. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsGetArchiveResponse`
+
+**CLI:** `hoody agent bots archive get`
+
+---
+
+### `getArchiveAll`
+
+**GET** `/api/v1/agent/bots/{id}/archive`
+
+Read a Bot's archive. (collect all pages)
+
+```typescript
+client.agent.bots.getArchiveAll(id: string, options?: { since?: number; limit?: number; realm?: "global" | (string & {}) }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `since` | `number` | No | query | Return only rows whose seq is greater than this: the next_since of the previous page. Default 0. |
+| `limit` | `number` | No | query | At most this many rows: 100 when omitted or 0, at most 500 (a larger value reads 500). Negative or non-integer = 400. These routes page by since, not by page number: ?page is 400. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `getArchiveIterator`
+
+**GET** `/api/v1/agent/bots/{id}/archive`
+
+Read a Bot's archive. (async iterator)
+
+```typescript
+client.agent.bots.getArchiveIterator(id: string, options?: { since?: number; limit?: number; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `since` | `number` | No | query | Return only rows whose seq is greater than this: the next_since of the previous page. Default 0. |
+| `limit` | `number` | No | query | At most this many rows: 100 when omitted or 0, at most 500 (a larger value reads 500). Negative or non-integer = 400. These routes page by since, not by page number: ?page is 400. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `getLog`
+
+**GET** `/api/v1/agent/bots/{id}/log`
+
+Read a Bot's log.
+
+```typescript
+client.agent.bots.getLog(id: string, options?: { since?: number; limit?: number; realm?: "global" | (string & {}) }): Promise<AgentBotsGetLogResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `since` | `number` | No | query | Return only rows whose seq is greater than this: the next_since of the previous page. Default 0. |
+| `limit` | `number` | No | query | At most this many rows: 100 when omitted or 0, at most 500 (a larger value reads 500). Negative or non-integer = 400. These routes page by since, not by page number: ?page is 400. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsGetLogResponse`
+
+**CLI:** `hoody agent bots log get`
+
+---
+
+### `getLogAll`
+
+**GET** `/api/v1/agent/bots/{id}/log`
+
+Read a Bot's log. (collect all pages)
+
+```typescript
+client.agent.bots.getLogAll(id: string, options?: { since?: number; limit?: number; realm?: "global" | (string & {}) }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `since` | `number` | No | query | Return only rows whose seq is greater than this: the next_since of the previous page. Default 0. |
+| `limit` | `number` | No | query | At most this many rows: 100 when omitted or 0, at most 500 (a larger value reads 500). Negative or non-integer = 400. These routes page by since, not by page number: ?page is 400. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `getLogIterator`
+
+**GET** `/api/v1/agent/bots/{id}/log`
+
+Read a Bot's log. (async iterator)
+
+```typescript
+client.agent.bots.getLogIterator(id: string, options?: { since?: number; limit?: number; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `since` | `number` | No | query | Return only rows whose seq is greater than this: the next_since of the previous page. Default 0. |
+| `limit` | `number` | No | query | At most this many rows: 100 when omitted or 0, at most 500 (a larger value reads 500). Negative or non-integer = 400. These routes page by since, not by page number: ?page is 400. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `list`
+
+**GET** `/api/v1/agent/bots`
+
+List the Bots.
+
+```typescript
+client.agent.bots.list(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number }): Promise<AgentBotsListResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (Bots not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves, global included. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
+| `page` | `number` | No | query | 1-based page number for pagination. |
+| `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
+
+**Returns:** `AgentBotsListResponse`
+
+**CLI:** `hoody agent bots list`
+
+---
+
+### `listAll`
+
+**GET** `/api/v1/agent/bots`
+
+List the Bots. (collect all pages)
+
+```typescript
+client.agent.bots.listAll(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (Bots not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves, global included. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
+| `page` | `number` | No | query | 1-based page number for pagination. |
+| `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listDelegates`
+
+**GET** `/api/v1/agent/bots/{id}/delegates`
+
+List a Bot's delegates.
+
+```typescript
+client.agent.bots.listDelegates(id: string, options?: { state?: "open" | "closed"; page?: number; limit?: number; realm?: "global" | (string & {}) }): Promise<AgentBotsListDelegatesResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `state` | `"open" \| "closed"` | No | query | open or closed: list only the delegates in that state. Omitted: both. |
+| `page` | `number` | No | query | 1-based page number for pagination. |
+| `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsListDelegatesResponse`
+
+**CLI:** `hoody agent bots delegates list`
+
+---
+
+### `listDelegatesAll`
+
+**GET** `/api/v1/agent/bots/{id}/delegates`
+
+List a Bot's delegates. (collect all pages)
+
+```typescript
+client.agent.bots.listDelegatesAll(id: string, options?: { state?: "open" | "closed"; page?: number; limit?: number; realm?: "global" | (string & {}) }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `state` | `"open" \| "closed"` | No | query | open or closed: list only the delegates in that state. Omitted: both. |
+| `page` | `number` | No | query | 1-based page number for pagination. |
+| `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `listDelegatesIterator`
+
+**GET** `/api/v1/agent/bots/{id}/delegates`
+
+List a Bot's delegates. (async iterator)
+
+```typescript
+client.agent.bots.listDelegatesIterator(id: string, options?: { state?: "open" | "closed"; page?: number; limit?: number; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `state` | `"open" \| "closed"` | No | query | open or closed: list only the delegates in that state. Omitted: both. |
+| `page` | `number` | No | query | 1-based page number for pagination. |
+| `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `listIterator`
+
+**GET** `/api/v1/agent/bots`
+
+List the Bots. (async iterator)
+
+```typescript
+client.agent.bots.listIterator(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (Bots not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves, global included. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
+| `page` | `number` | No | query | 1-based page number for pagination. |
+| `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
+
+**Returns:** `AsyncIterableIterator<unknown>`
+
+---
+
+### `purgeArchive`
+
+**POST** `/api/v1/agent/bots/{id}/purge`
+
+Delete a Bot's archive.
+
+```typescript
+client.agent.bots.purgeArchive(id: string, options?: { realm?: "global" | (string & {}) }): Promise<AgentBotsPurgeArchiveResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsPurgeArchiveResponse`
+
+**CLI:** `hoody agent bots archive purge`
+
+---
+
+### `reset`
+
+**POST** `/api/v1/agent/bots/{id}/reset`
+
+Give a Bot a new session.
+
+```typescript
+client.agent.bots.reset(id: string, options?: { realm?: "global" | (string & {}) }): Promise<AgentBotsResetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsResetResponse`
+
+**CLI:** `hoody agent bots reset`
+
+---
+
+### `sendMessage`
+
+**POST** `/api/v1/agent/bots/{id}/messages`
+
+Post a message to a Bot.
+
+```typescript
+client.agent.bots.sendMessage(id: string, data: AgentBotsSendMessageRequest, options?: { IdempotencyKey?: string; realm?: "global" | (string & {}) }): Promise<AgentBotsSendMessageResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `data` | `AgentBotsSendMessageRequest` | Yes | body |  |
+| `IdempotencyKey` | `string` | No | header | Opaque retry key (1–255 printable ASCII, no whitespace). A retry with the same key and text returns the same message_id and the message's current state, and queues nothing again; the same key with a different text is 422. A key is remembered while its message is queued and for at least 24 hours after it was accepted. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsSendMessageResponse`
+
+**CLI:** `hoody agent bots messages send`
+
+---
+
+### `setGuardrails`
+
+**PUT** `/api/v1/agent/bots/{id}/guardrails`
+
+Replace a Bot's guardrails.
+
+```typescript
+client.agent.bots.setGuardrails(id: string, data: AgentBotsSetGuardrailsRequest, options?: { realm?: "global" | (string & {}) }): Promise<AgentBotsSetGuardrailsResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `data` | `AgentBotsSetGuardrailsRequest` | Yes | body |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsSetGuardrailsResponse`
+
+**CLI:** `hoody agent bots guardrails set`
+
+---
+
+### `stopDelegate`
+
+**POST** `/api/v1/agent/bots/{id}/delegates/{sid}/stop`
+
+Stop one of a Bot's delegates now.
+
+```typescript
+client.agent.bots.stopDelegate(id: string, sid: string, data?: AgentBotsStopDelegateRequest, options?: { IdempotencyKey?: string; realm?: "global" | (string & {}) }): Promise<AgentBotsStopDelegateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `sid` | `string` | Yes | path | The delegate id. |
+| `data` | `AgentBotsStopDelegateRequest` | No | body |  |
+| `IdempotencyKey` | `string` | No | header | Opaque retry key (1–255 printable ASCII, no whitespace). The same stop sent again with the same key returns its outcome; the same key with a different close is 422. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsStopDelegateResponse`
+
+**CLI:** `hoody agent bots delegates stop`
+
+---
+
+### `stream`
+
+**GET** `/api/v1/agent/bots/{id}/stream`
+
+Follow a Bot's log (SSE).
+
+```typescript
+client.agent.bots.stream(id: string, options?: { since?: number; LastEventID?: string; realm?: "global" | (string & {}) }): Promise<IEventStream<Record<never, string>, ITypedStreamEvent<AgentBotsStreamFrames>>>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `since` | `number` | No | query | Return only rows whose seq is greater than this. Default 0. |
+| `LastEventID` | `string` | No | header | SSE resume cursor: the id (a non-negative integer seq) of the last frame received. It overrides ?since, and an SSE client sends it on reconnect. Another value is 400 bad_request. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `IEventStream<Record<never, string>, ITypedStreamEvent<AgentBotsStreamFrames>>`
+
+**CLI:** `hoody agent bots stream`
+
+---
+
+### `update`
+
+**PATCH** `/api/v1/agent/bots/{id}`
+
+Change a Bot's settings.
+
+```typescript
+client.agent.bots.update(id: string, data?: AgentBotsUpdateRequest, options?: { realm?: "global" | (string & {}) }): Promise<AgentBotsUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The bot id. |
+| `data` | `AgentBotsUpdateRequest` | No | body |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentBotsUpdateResponse`
+
+**CLI:** `hoody agent bots update`
+
+---
+
 ## `client.agent.changes` (2 methods)
 
 ### `get`
@@ -186,14 +690,14 @@ client.agent.whoami(): Promise<AgentWhoamiResponse>
 Change tokens for the Work lists.
 
 ```typescript
-client.agent.changes.get(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentChangesGetResponse>
+client.agent.changes.get(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentChangesGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentChangesGetResponse`
 
@@ -208,16 +712,16 @@ client.agent.changes.get(options?: { XHoodyCwd?: string; XHoodyConfigDir?: strin
 Stream the change tokens (SSE).
 
 ```typescript
-client.agent.changes.stream(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<IEventStream>
+client.agent.changes.stream(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<IEventStream<Record<never, string>, ITypedStreamEvent<AgentChangesStreamFrames>>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
-**Returns:** `IEventStream`
+**Returns:** `IEventStream<Record<never, string>, ITypedStreamEvent<AgentChangesStreamFrames>>`
 
 **CLI:** `hoody agent changes stream`
 
@@ -255,18 +759,16 @@ client.agent.completions.create(data: object, options?: { stream?: boolean }): P
 List containers in a realm (for binding).
 
 ```typescript
-client.agent.containers.list(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentContainersListResponse>
+client.agent.containers.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentContainersListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentContainersListResponse`
 
@@ -281,18 +783,16 @@ client.agent.containers.list(options?: { page?: number; limit?: number; realm?: 
 List containers in a realm (for binding). (collect all pages)
 
 ```typescript
-client.agent.containers.listAll(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.containers.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -305,18 +805,16 @@ client.agent.containers.listAll(options?: { page?: number; limit?: number; realm
 List containers in a realm (for binding). (async iterator)
 
 ```typescript
-client.agent.containers.listIterator(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.containers.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -331,19 +829,17 @@ client.agent.containers.listIterator(options?: { page?: number; limit?: number; 
 Copy a chat agent.
 
 ```typescript
-client.agent.definitions.copy(name: string, data: AgentDefinitionsCopyRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsCopyResponse>
+client.agent.definitions.copy(name: string, data: AgentDefinitionsCopyRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsCopyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentDefinitionsCopyRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsCopyResponse`
 
@@ -358,18 +854,16 @@ client.agent.definitions.copy(name: string, data: AgentDefinitionsCopyRequest, o
 Create a chat-agent definition.
 
 ```typescript
-client.agent.definitions.create(data: AgentDefinitionsCreateRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsCreateResponse>
+client.agent.definitions.create(data: AgentDefinitionsCreateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentDefinitionsCreateRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsCreateResponse`
 
@@ -384,18 +878,16 @@ client.agent.definitions.create(data: AgentDefinitionsCreateRequest, options?: {
 Delete a custom chat agent.
 
 ```typescript
-client.agent.definitions.delete(name: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsDeleteResponse>
+client.agent.definitions.delete(name: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsDeleteResponse`
 
@@ -410,18 +902,16 @@ client.agent.definitions.delete(name: string, options?: { realm?: string; XHoody
 Read a chat agent's source.
 
 ```typescript
-client.agent.definitions.getSource(name: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsGetSourceResponse>
+client.agent.definitions.getSource(name: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsGetSourceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsGetSourceResponse`
 
@@ -436,18 +926,16 @@ client.agent.definitions.getSource(name: string, options?: { realm?: string; XHo
 List chat-agent definitions.
 
 ```typescript
-client.agent.definitions.list(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsListResponse>
+client.agent.definitions.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsListResponse`
 
@@ -462,18 +950,16 @@ client.agent.definitions.list(options?: { page?: number; limit?: number; realm?:
 List chat-agent definitions. (collect all pages)
 
 ```typescript
-client.agent.definitions.listAll(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.definitions.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -486,18 +972,16 @@ client.agent.definitions.listAll(options?: { page?: number; limit?: number; real
 List chat-agent definitions. (async iterator)
 
 ```typescript
-client.agent.definitions.listIterator(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.definitions.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -510,19 +994,17 @@ client.agent.definitions.listIterator(options?: { page?: number; limit?: number;
 Rename a chat agent.
 
 ```typescript
-client.agent.definitions.rename(name: string, data: AgentDefinitionsRenameRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsRenameResponse>
+client.agent.definitions.rename(name: string, data: AgentDefinitionsRenameRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsRenameResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentDefinitionsRenameRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsRenameResponse`
 
@@ -537,18 +1019,16 @@ client.agent.definitions.rename(name: string, data: AgentDefinitionsRenameReques
 Reset an agent to its shipped default.
 
 ```typescript
-client.agent.definitions.reset(name: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsResetResponse>
+client.agent.definitions.reset(name: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsResetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsResetResponse`
 
@@ -563,19 +1043,17 @@ client.agent.definitions.reset(name: string, options?: { realm?: string; XHoodyC
 Set an agent's model.
 
 ```typescript
-client.agent.definitions.setModel(name: string, data?: AgentDefinitionsSetModelRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsSetModelResponse>
+client.agent.definitions.setModel(name: string, data?: AgentDefinitionsSetModelRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsSetModelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentDefinitionsSetModelRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsSetModelResponse`
 
@@ -590,19 +1068,17 @@ client.agent.definitions.setModel(name: string, data?: AgentDefinitionsSetModelR
 Write a chat agent's source.
 
 ```typescript
-client.agent.definitions.setSource(name: string, data: AgentDefinitionsSetSourceRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsSetSourceResponse>
+client.agent.definitions.setSource(name: string, data: AgentDefinitionsSetSourceRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsSetSourceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentDefinitionsSetSourceRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsSetSourceResponse`
 
@@ -617,19 +1093,17 @@ client.agent.definitions.setSource(name: string, data: AgentDefinitionsSetSource
 Set an agent's tool allow-list.
 
 ```typescript
-client.agent.definitions.setTools(name: string, data: AgentDefinitionsSetToolsRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsSetToolsResponse>
+client.agent.definitions.setTools(name: string, data: AgentDefinitionsSetToolsRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsSetToolsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentDefinitionsSetToolsRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsSetToolsResponse`
 
@@ -644,19 +1118,17 @@ client.agent.definitions.setTools(name: string, data: AgentDefinitionsSetToolsRe
 Set an agent's max-turns.
 
 ```typescript
-client.agent.definitions.setTurnLimit(name: string, data?: AgentDefinitionsSetTurnLimitRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsSetTurnLimitResponse>
+client.agent.definitions.setTurnLimit(name: string, data?: AgentDefinitionsSetTurnLimitRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsSetTurnLimitResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentDefinitionsSetTurnLimitRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsSetTurnLimitResponse`
 
@@ -671,7 +1143,7 @@ client.agent.definitions.setTurnLimit(name: string, data?: AgentDefinitionsSetTu
 Toggle a single tool for an agent.
 
 ```typescript
-client.agent.definitions.toggleTool(name: string, tool: string, data?: AgentDefinitionsToggleToolRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentDefinitionsToggleToolResponse>
+client.agent.definitions.toggleTool(name: string, tool: string, data?: AgentDefinitionsToggleToolRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentDefinitionsToggleToolResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -679,12 +1151,10 @@ client.agent.definitions.toggleTool(name: string, tool: string, data?: AgentDefi
 | `name` | `string` | Yes | path | The name. |
 | `tool` | `string` | Yes | path | The tool. |
 | `data` | `AgentDefinitionsToggleToolRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentDefinitionsToggleToolResponse`
 
@@ -701,18 +1171,16 @@ client.agent.definitions.toggleTool(name: string, tool: string, data?: AgentDefi
 List the files that shape the agents.
 
 ```typescript
-client.agent.files.list(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentFilesListResponse>
+client.agent.files.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentFilesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentFilesListResponse`
 
@@ -727,18 +1195,16 @@ client.agent.files.list(options?: { page?: number; limit?: number; realm?: strin
 List the files that shape the agents. (collect all pages)
 
 ```typescript
-client.agent.files.listAll(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.files.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -751,18 +1217,16 @@ client.agent.files.listAll(options?: { page?: number; limit?: number; realm?: st
 List the files that shape the agents. (async iterator)
 
 ```typescript
-client.agent.files.listIterator(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.files.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -777,7 +1241,7 @@ client.agent.files.listIterator(options?: { page?: number; limit?: number; realm
 Delete a fusion composite.
 
 ```typescript
-client.agent.fusions.delete(slug: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentFusionsDeleteResponse>
+client.agent.fusions.delete(slug: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentFusionsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -785,7 +1249,6 @@ client.agent.fusions.delete(slug: string, options?: { XHoodyCwd?: string; XHoody
 | `slug` | `string` | Yes | path | The slug. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentFusionsDeleteResponse`
 
@@ -800,7 +1263,7 @@ client.agent.fusions.delete(slug: string, options?: { XHoodyCwd?: string; XHoody
 List fusion composites.
 
 ```typescript
-client.agent.fusions.list(options?: { include_invalid?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentFusionsListResponse>
+client.agent.fusions.list(options?: { include_invalid?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentFusionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -810,7 +1273,6 @@ client.agent.fusions.list(options?: { include_invalid?: boolean; page?: number; 
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentFusionsListResponse`
 
@@ -825,7 +1287,7 @@ client.agent.fusions.list(options?: { include_invalid?: boolean; page?: number; 
 List fusion composites. (collect all pages)
 
 ```typescript
-client.agent.fusions.listAll(options?: { include_invalid?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.fusions.listAll(options?: { include_invalid?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -835,7 +1297,6 @@ client.agent.fusions.listAll(options?: { include_invalid?: boolean; page?: numbe
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -848,7 +1309,7 @@ client.agent.fusions.listAll(options?: { include_invalid?: boolean; page?: numbe
 List fusion composites. (async iterator)
 
 ```typescript
-client.agent.fusions.listIterator(options?: { include_invalid?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.fusions.listIterator(options?: { include_invalid?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -858,7 +1319,6 @@ client.agent.fusions.listIterator(options?: { include_invalid?: boolean; page?: 
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -871,7 +1331,7 @@ client.agent.fusions.listIterator(options?: { include_invalid?: boolean; page?: 
 Create or update a fusion composite.
 
 ```typescript
-client.agent.fusions.set(slug: string, data: AgentFusionsSetRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentFusionsSetResponse>
+client.agent.fusions.set(slug: string, data: AgentFusionsSetRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentFusionsSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -880,7 +1340,6 @@ client.agent.fusions.set(slug: string, data: AgentFusionsSetRequest, options?: {
 | `data` | `AgentFusionsSetRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentFusionsSetResponse`
 
@@ -897,19 +1356,17 @@ client.agent.fusions.set(slug: string, data: AgentFusionsSetRequest, options?: {
 Answer a parked question gate.
 
 ```typescript
-client.agent.gates.answer(id: string, data: AgentGatesAnswerRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGatesAnswerResponse>
+client.agent.gates.answer(id: string, data?: AgentGatesAnswerRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGatesAnswerResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `data` | `AgentGatesAnswerRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `data` | `AgentGatesAnswerRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGatesAnswerResponse`
 
@@ -924,7 +1381,7 @@ client.agent.gates.answer(id: string, data: AgentGatesAnswerRequest, options?: {
 Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease).
 
 ```typescript
-client.agent.gates.approve(id: string, data?: object, options?: { XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.gates.approve(id: string, data?: object, options?: { XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -934,8 +1391,7 @@ client.agent.gates.approve(id: string, data?: object, options?: { XHoodyApprover
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -951,7 +1407,7 @@ client.agent.gates.approve(id: string, data?: object, options?: { XHoodyApprover
 Answer a parked confirm gate (on an always-approval session also --gate-id, --generation and the approver lease).
 
 ```typescript
-client.agent.gates.deny(id: string, data?: object, options?: { XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.gates.deny(id: string, data?: object, options?: { XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -961,8 +1417,7 @@ client.agent.gates.deny(id: string, data?: object, options?: { XHoodyApproverLea
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -978,17 +1433,17 @@ client.agent.gates.deny(id: string, data?: object, options?: { XHoodyApproverLea
 List the gates waiting for a human.
 
 ```typescript
-client.agent.gates.list(options?: { include_system?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentGatesListResponse>
+client.agent.gates.list(options?: { include_system?: boolean; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentGatesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `include_system` | `boolean` | No | query | When true, also list the gates of daemon-owned system/resident sessions (as listSessions does). |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (gates not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page, at most 100: 0 or omitted means 100, and a larger value is served as 100 (meta.limit echoes the value used). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentGatesListResponse`
 
@@ -1003,17 +1458,17 @@ client.agent.gates.list(options?: { include_system?: boolean; page?: number; lim
 List the gates waiting for a human. (collect all pages)
 
 ```typescript
-client.agent.gates.listAll(options?: { include_system?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.gates.listAll(options?: { include_system?: boolean; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `include_system` | `boolean` | No | query | When true, also list the gates of daemon-owned system/resident sessions (as listSessions does). |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (gates not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page, at most 100: 0 or omitted means 100, and a larger value is served as 100 (meta.limit echoes the value used). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -1026,17 +1481,17 @@ client.agent.gates.listAll(options?: { include_system?: boolean; page?: number; 
 List the gates waiting for a human. (async iterator)
 
 ```typescript
-client.agent.gates.listIterator(options?: { include_system?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.gates.listIterator(options?: { include_system?: boolean; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `include_system` | `boolean` | No | query | When true, also list the gates of daemon-owned system/resident sessions (as listSessions does). |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (gates not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page, at most 100: 0 or omitted means 100, and a larger value is served as 100 (meta.limit echoes the value used). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1049,19 +1504,17 @@ client.agent.gates.listIterator(options?: { include_system?: boolean; page?: num
 Propose answers for a parked question (helper model).
 
 ```typescript
-client.agent.gates.suggest(id: string, data?: AgentGatesSuggestRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGatesSuggestResponse>
+client.agent.gates.suggest(id: string, data?: AgentGatesSuggestRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGatesSuggestResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentGatesSuggestRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGatesSuggestResponse`
 
@@ -1078,18 +1531,16 @@ client.agent.gates.suggest(id: string, data?: AgentGatesSuggestRequest, options?
 Check out a pull request.
 
 ```typescript
-client.agent.github.checkoutPr(data: AgentGithubCheckoutPrRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubCheckoutPrResponse>
+client.agent.github.checkoutPr(data: AgentGithubCheckoutPrRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubCheckoutPrResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubCheckoutPrRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubCheckoutPrResponse`
 
@@ -1104,18 +1555,16 @@ client.agent.github.checkoutPr(data: AgentGithubCheckoutPrRequest, options?: { r
 Clone a GitHub repository.
 
 ```typescript
-client.agent.github.clone(data?: AgentGithubCloneRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubCloneResponse>
+client.agent.github.clone(data?: AgentGithubCloneRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubCloneResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubCloneRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubCloneResponse`
 
@@ -1130,18 +1579,16 @@ client.agent.github.clone(data?: AgentGithubCloneRequest, options?: { realm?: st
 Create a branch.
 
 ```typescript
-client.agent.github.createBranch(data: AgentGithubCreateBranchRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubCreateBranchResponse>
+client.agent.github.createBranch(data: AgentGithubCreateBranchRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubCreateBranchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubCreateBranchRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubCreateBranchResponse`
 
@@ -1156,7 +1603,7 @@ client.agent.github.createBranch(data: AgentGithubCreateBranchRequest, options?:
 Stage all and commit.
 
 ```typescript
-client.agent.github.createCommit(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string; push?: boolean }): Promise<any>
+client.agent.github.createCommit(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string; push?: boolean }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1164,8 +1611,7 @@ client.agent.github.createCommit(data: object, options?: { XHoodyCwd?: string; X
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 | `push` | `boolean` | No | option | Stage, commit and push in one call. |
 
@@ -1182,18 +1628,16 @@ client.agent.github.createCommit(data: object, options?: { XHoodyCwd?: string; X
 Open an issue.
 
 ```typescript
-client.agent.github.createIssue(data: AgentGithubCreateIssueRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubCreateIssueResponse>
+client.agent.github.createIssue(data: AgentGithubCreateIssueRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubCreateIssueResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubCreateIssueRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubCreateIssueResponse`
 
@@ -1208,18 +1652,16 @@ client.agent.github.createIssue(data: AgentGithubCreateIssueRequest, options?: {
 Open a pull request.
 
 ```typescript
-client.agent.github.createPr(data: AgentGithubCreatePrRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubCreatePrResponse>
+client.agent.github.createPr(data: AgentGithubCreatePrRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubCreatePrResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubCreatePrRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubCreatePrResponse`
 
@@ -1234,18 +1676,16 @@ client.agent.github.createPr(data: AgentGithubCreatePrRequest, options?: { realm
 Add a linked worktree.
 
 ```typescript
-client.agent.github.createWorktree(data: AgentGithubCreateWorktreeRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubCreateWorktreeResponse>
+client.agent.github.createWorktree(data: AgentGithubCreateWorktreeRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubCreateWorktreeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubCreateWorktreeRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubCreateWorktreeResponse`
 
@@ -1260,18 +1700,16 @@ client.agent.github.createWorktree(data: AgentGithubCreateWorktreeRequest, optio
 Force-delete a local branch.
 
 ```typescript
-client.agent.github.deleteBranch(data: AgentGithubDeleteBranchRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubDeleteBranchResponse>
+client.agent.github.deleteBranch(data: AgentGithubDeleteBranchRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubDeleteBranchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubDeleteBranchRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubDeleteBranchResponse`
 
@@ -1286,18 +1724,16 @@ client.agent.github.deleteBranch(data: AgentGithubDeleteBranchRequest, options?:
 Remove a linked worktree.
 
 ```typescript
-client.agent.github.deleteWorktree(data: AgentGithubDeleteWorktreeRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubDeleteWorktreeResponse>
+client.agent.github.deleteWorktree(data: AgentGithubDeleteWorktreeRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubDeleteWorktreeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubDeleteWorktreeRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubDeleteWorktreeResponse`
 
@@ -1312,7 +1748,7 @@ client.agent.github.deleteWorktree(data: AgentGithubDeleteWorktreeRequest, optio
 Read the working-tree diff.
 
 ```typescript
-client.agent.github.diff(options?: { staged?: boolean; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentGithubDiffResponse>
+client.agent.github.diff(options?: { staged?: boolean; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubDiffResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1321,7 +1757,7 @@ client.agent.github.diff(options?: { staged?: boolean; XHoodyCwd?: string; XHood
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubDiffResponse`
 
@@ -1336,8 +1772,12 @@ client.agent.github.diff(options?: { staged?: boolean; XHoodyCwd?: string; XHood
 GitHub auth status.
 
 ```typescript
-client.agent.github.getAuth(): Promise<AgentGithubGetAuthResponse>
+client.agent.github.getAuth(options?: { realm?: "global" | (string & {}) }): Promise<AgentGithubGetAuthResponse>
 ```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubGetAuthResponse`
 
@@ -1352,17 +1792,15 @@ client.agent.github.getAuth(): Promise<AgentGithubGetAuthResponse>
 GitHub working-tree status.
 
 ```typescript
-client.agent.github.getStatus(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubGetStatusResponse>
+client.agent.github.getStatus(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubGetStatusResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubGetStatusResponse`
 
@@ -1377,17 +1815,15 @@ client.agent.github.getStatus(options?: { realm?: string; XHoodyCwd?: string; XH
 List GitHub branches.
 
 ```typescript
-client.agent.github.listBranches(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubListBranchesResponse>
+client.agent.github.listBranches(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubListBranchesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubListBranchesResponse`
 
@@ -1402,17 +1838,15 @@ client.agent.github.listBranches(options?: { realm?: string; XHoodyCwd?: string;
 Read recent commit history.
 
 ```typescript
-client.agent.github.listCommits(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubListCommitsResponse>
+client.agent.github.listCommits(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubListCommitsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubListCommitsResponse`
 
@@ -1427,7 +1861,7 @@ client.agent.github.listCommits(options?: { realm?: string; XHoodyCwd?: string; 
 List issues.
 
 ```typescript
-client.agent.github.listIssues(options: { owner: string; repo: string; state?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentGithubListIssuesResponse>
+client.agent.github.listIssues(options: { owner: string; repo: string; state?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubListIssuesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1438,7 +1872,7 @@ client.agent.github.listIssues(options: { owner: string; repo: string; state?: s
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubListIssuesResponse`
 
@@ -1453,7 +1887,7 @@ client.agent.github.listIssues(options: { owner: string; repo: string; state?: s
 List pull requests.
 
 ```typescript
-client.agent.github.listPrs(options: { owner: string; repo: string; state?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentGithubListPrsResponse>
+client.agent.github.listPrs(options: { owner: string; repo: string; state?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubListPrsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1464,7 +1898,7 @@ client.agent.github.listPrs(options: { owner: string; repo: string; state?: stri
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubListPrsResponse`
 
@@ -1479,7 +1913,7 @@ client.agent.github.listPrs(options: { owner: string; repo: string; state?: stri
 List GitHub repos.
 
 ```typescript
-client.agent.github.listRepos(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentGithubListReposResponse>
+client.agent.github.listRepos(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubListReposResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1487,7 +1921,7 @@ client.agent.github.listRepos(options?: { XHoodyCwd?: string; XHoodyConfigDir?: 
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubListReposResponse`
 
@@ -1502,17 +1936,15 @@ client.agent.github.listRepos(options?: { XHoodyCwd?: string; XHoodyConfigDir?: 
 List linked worktrees.
 
 ```typescript
-client.agent.github.listWorktrees(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubListWorktreesResponse>
+client.agent.github.listWorktrees(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubListWorktreesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubListWorktreesResponse`
 
@@ -1527,18 +1959,16 @@ client.agent.github.listWorktrees(options?: { realm?: string; XHoodyCwd?: string
 Start a GitHub device-flow login (or add a PAT).
 
 ```typescript
-client.agent.github.login(data?: AgentGithubLoginRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubLoginResponse>
+client.agent.github.login(data?: AgentGithubLoginRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubLoginResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubLoginRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubLoginResponse`
 
@@ -1553,18 +1983,16 @@ client.agent.github.login(data?: AgentGithubLoginRequest, options?: { realm?: st
 Remove a linked GitHub account.
 
 ```typescript
-client.agent.github.logout(data: AgentGithubLogoutRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubLogoutResponse>
+client.agent.github.logout(data: AgentGithubLogoutRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubLogoutResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubLogoutRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubLogoutResponse`
 
@@ -1579,18 +2007,16 @@ client.agent.github.logout(data: AgentGithubLogoutRequest, options?: { realm?: s
 Merge a pull request.
 
 ```typescript
-client.agent.github.mergePr(data: AgentGithubMergePrRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubMergePrResponse>
+client.agent.github.mergePr(data: AgentGithubMergePrRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubMergePrResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubMergePrRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubMergePrResponse`
 
@@ -1605,18 +2031,16 @@ client.agent.github.mergePr(data: AgentGithubMergePrRequest, options?: { realm?:
 Poll a GitHub device-flow login to completion.
 
 ```typescript
-client.agent.github.pollLogin(data: AgentGithubPollLoginRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubPollLoginResponse>
+client.agent.github.pollLogin(data: AgentGithubPollLoginRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubPollLoginResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubPollLoginRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubPollLoginResponse`
 
@@ -1631,18 +2055,16 @@ client.agent.github.pollLogin(data: AgentGithubPollLoginRequest, options?: { rea
 Restore the most recent stash entry.
 
 ```typescript
-client.agent.github.popStash(data?: AgentGithubPopStashRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubPopStashResponse>
+client.agent.github.popStash(data?: AgentGithubPopStashRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubPopStashResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubPopStashRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubPopStashResponse`
 
@@ -1657,18 +2079,16 @@ client.agent.github.popStash(data?: AgentGithubPopStashRequest, options?: { real
 Stash the working tree.
 
 ```typescript
-client.agent.github.pushStash(data?: AgentGithubPushStashRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubPushStashResponse>
+client.agent.github.pushStash(data?: AgentGithubPushStashRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubPushStashResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubPushStashRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubPushStashResponse`
 
@@ -1683,17 +2103,15 @@ client.agent.github.pushStash(data?: AgentGithubPushStashRequest, options?: { re
 Resolve the bound repository's owner/name.
 
 ```typescript
-client.agent.github.resolveRepo(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubResolveRepoResponse>
+client.agent.github.resolveRepo(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubResolveRepoResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubResolveRepoResponse`
 
@@ -1708,18 +2126,16 @@ client.agent.github.resolveRepo(options?: { realm?: string; XHoodyCwd?: string; 
 Re-write a checkout's GitHub credential.
 
 ```typescript
-client.agent.github.setRepoCredentials(data?: AgentGithubSetRepoCredentialsRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubSetRepoCredentialsResponse>
+client.agent.github.setRepoCredentials(data?: AgentGithubSetRepoCredentialsRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubSetRepoCredentialsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubSetRepoCredentialsRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubSetRepoCredentialsResponse`
 
@@ -1734,18 +2150,16 @@ client.agent.github.setRepoCredentials(data?: AgentGithubSetRepoCredentialsReque
 Draft a commit message with a model.
 
 ```typescript
-client.agent.github.suggestCommitMessage(data: AgentGithubSuggestCommitMessageRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubSuggestCommitMessageResponse>
+client.agent.github.suggestCommitMessage(data: AgentGithubSuggestCommitMessageRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubSuggestCommitMessageResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubSuggestCommitMessageRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubSuggestCommitMessageResponse`
 
@@ -1760,18 +2174,16 @@ client.agent.github.suggestCommitMessage(data: AgentGithubSuggestCommitMessageRe
 Sync (fetch → pull → push).
 
 ```typescript
-client.agent.github.sync(data?: AgentGithubSyncRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubSyncResponse>
+client.agent.github.sync(data?: AgentGithubSyncRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubSyncResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubSyncRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubSyncResponse`
 
@@ -1786,18 +2198,16 @@ client.agent.github.sync(data?: AgentGithubSyncRequest, options?: { realm?: stri
 Switch the active GitHub account.
 
 ```typescript
-client.agent.github.useAccount(data: AgentGithubUseAccountRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubUseAccountResponse>
+client.agent.github.useAccount(data: AgentGithubUseAccountRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubUseAccountResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubUseAccountRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubUseAccountResponse`
 
@@ -1812,18 +2222,16 @@ client.agent.github.useAccount(data: AgentGithubUseAccountRequest, options?: { r
 Switch to an existing branch.
 
 ```typescript
-client.agent.github.useBranch(data: AgentGithubUseBranchRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentGithubUseBranchResponse>
+client.agent.github.useBranch(data: AgentGithubUseBranchRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentGithubUseBranchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentGithubUseBranchRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentGithubUseBranchResponse`
 
@@ -1840,7 +2248,7 @@ client.agent.github.useBranch(data: AgentGithubUseBranchRequest, options?: { rea
 Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.start(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.headless.start(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1848,8 +2256,7 @@ client.agent.headless.start(data?: object, options?: { XHoodyCwd?: string; XHood
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -1865,7 +2272,7 @@ client.agent.headless.start(data?: object, options?: { XHoodyCwd?: string; XHood
 Create a headless one-shot run.
 
 ```typescript
-client.agent.headless.stream(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.headless.stream(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1873,8 +2280,7 @@ client.agent.headless.stream(data?: object, options?: { XHoodyCwd?: string; XHoo
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -1892,18 +2298,16 @@ client.agent.headless.stream(data?: object, options?: { XHoodyCwd?: string; XHoo
 Begin a hook write (nonce).
 
 ```typescript
-client.agent.hooks.createWriteIntent(data: AgentHooksCreateWriteIntentRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentHooksCreateWriteIntentResponse>
+client.agent.hooks.createWriteIntent(data: AgentHooksCreateWriteIntentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksCreateWriteIntentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentHooksCreateWriteIntentRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksCreateWriteIntentResponse`
 
@@ -1918,18 +2322,16 @@ client.agent.hooks.createWriteIntent(data: AgentHooksCreateWriteIntentRequest, o
 Delete a hook.
 
 ```typescript
-client.agent.hooks.delete(data: AgentHooksDeleteRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentHooksDeleteResponse>
+client.agent.hooks.delete(data: AgentHooksDeleteRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentHooksDeleteRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksDeleteResponse`
 
@@ -1944,7 +2346,7 @@ client.agent.hooks.delete(data: AgentHooksDeleteRequest, options?: { realm?: str
 Toggle a hook.
 
 ```typescript
-client.agent.hooks.disable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.hooks.disable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1952,8 +2354,7 @@ client.agent.hooks.disable(data: object, options?: { XHoodyCwd?: string; XHoodyC
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -1969,7 +2370,7 @@ client.agent.hooks.disable(data: object, options?: { XHoodyCwd?: string; XHoodyC
 Disable all hooks.
 
 ```typescript
-client.agent.hooks.disableAll(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.hooks.disableAll(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1977,8 +2378,7 @@ client.agent.hooks.disableAll(data: object, options?: { XHoodyCwd?: string; XHoo
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -1994,7 +2394,7 @@ client.agent.hooks.disableAll(data: object, options?: { XHoodyCwd?: string; XHoo
 Toggle a hook.
 
 ```typescript
-client.agent.hooks.enable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.hooks.enable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2002,8 +2402,7 @@ client.agent.hooks.enable(data: object, options?: { XHoodyCwd?: string; XHoodyCo
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -2019,7 +2418,7 @@ client.agent.hooks.enable(data: object, options?: { XHoodyCwd?: string; XHoodyCo
 Disable all hooks.
 
 ```typescript
-client.agent.hooks.enableAll(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.hooks.enableAll(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2027,8 +2426,7 @@ client.agent.hooks.enableAll(data: object, options?: { XHoodyCwd?: string; XHood
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -2044,14 +2442,14 @@ client.agent.hooks.enableAll(data: object, options?: { XHoodyCwd?: string; XHood
 Get the tool-call rules.
 
 ```typescript
-client.agent.hooks.getRules(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentHooksGetRulesResponse>
+client.agent.hooks.getRules(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksGetRulesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksGetRulesResponse`
 
@@ -2066,7 +2464,7 @@ client.agent.hooks.getRules(options?: { XHoodyCwd?: string; XHoodyConfigDir?: st
 List hooks.
 
 ```typescript
-client.agent.hooks.list(options?: { session_id?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentHooksListResponse>
+client.agent.hooks.list(options?: { session_id?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2074,7 +2472,7 @@ client.agent.hooks.list(options?: { session_id?: string; XHoodyCwd?: string; XHo
 | `session_id` | `string` | No | query | Live session id (hooks are session-scoped; required by the daemon RPC). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksListResponse`
 
@@ -2089,18 +2487,16 @@ client.agent.hooks.list(options?: { session_id?: string; XHoodyCwd?: string; XHo
 Reload hooks from disk.
 
 ```typescript
-client.agent.hooks.reload(data?: AgentHooksReloadRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentHooksReloadResponse>
+client.agent.hooks.reload(data?: AgentHooksReloadRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksReloadResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentHooksReloadRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksReloadResponse`
 
@@ -2115,7 +2511,7 @@ client.agent.hooks.reload(data?: AgentHooksReloadRequest, options?: { realm?: st
 Test-fire a hook.
 
 ```typescript
-client.agent.hooks.run(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.hooks.run(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2123,8 +2519,7 @@ client.agent.hooks.run(data: object, options?: { XHoodyCwd?: string; XHoodyConfi
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -2140,18 +2535,16 @@ client.agent.hooks.run(data: object, options?: { XHoodyCwd?: string; XHoodyConfi
 Set the tool-call rules.
 
 ```typescript
-client.agent.hooks.setRules(data: AgentHooksSetRulesRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentHooksSetRulesResponse>
+client.agent.hooks.setRules(data: AgentHooksSetRulesRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksSetRulesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentHooksSetRulesRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksSetRulesResponse`
 
@@ -2166,7 +2559,7 @@ client.agent.hooks.setRules(data: AgentHooksSetRulesRequest, options?: { realm?:
 Test-fire a hook.
 
 ```typescript
-client.agent.hooks.test(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.hooks.test(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2174,8 +2567,7 @@ client.agent.hooks.test(data: object, options?: { XHoodyCwd?: string; XHoodyConf
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -2191,18 +2583,16 @@ client.agent.hooks.test(data: object, options?: { XHoodyCwd?: string; XHoodyConf
 Acknowledge hook trust.
 
 ```typescript
-client.agent.hooks.trust(data: AgentHooksTrustRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentHooksTrustResponse>
+client.agent.hooks.trust(data: AgentHooksTrustRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksTrustResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentHooksTrustRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksTrustResponse`
 
@@ -2217,18 +2607,16 @@ client.agent.hooks.trust(data: AgentHooksTrustRequest, options?: { realm?: strin
 Upsert a hook.
 
 ```typescript
-client.agent.hooks.upsert(data: AgentHooksUpsertRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentHooksUpsertResponse>
+client.agent.hooks.upsert(data: AgentHooksUpsertRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentHooksUpsertResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentHooksUpsertRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentHooksUpsertResponse`
 
@@ -2245,7 +2633,7 @@ client.agent.hooks.upsert(data: AgentHooksUpsertRequest, options?: { realm?: str
 Ask Jev to decide.
 
 ```typescript
-client.agent.jev.decide(data: AgentJevDecideRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentJevDecideResponse>
+client.agent.jev.decide(data: AgentJevDecideRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentJevDecideResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2254,7 +2642,6 @@ client.agent.jev.decide(data: AgentJevDecideRequest, options?: { XHoodyCwd?: str
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentJevDecideResponse`
 
@@ -2267,13 +2654,14 @@ client.agent.jev.decide(data: AgentJevDecideRequest, options?: { XHoodyCwd?: str
 Ask Jev to decide on behalf of a session.
 
 ```typescript
-client.agent.jev.decideForSession(id: string, data: AgentJevDecideForSessionRequest): Promise<AgentJevDecideForSessionResponse>
+client.agent.jev.decideForSession(id: string, data: AgentJevDecideForSessionRequest, options?: { realm?: "global" | (string & {}) }): Promise<AgentJevDecideForSessionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentJevDecideForSessionRequest` | Yes | body |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentJevDecideForSessionResponse`
 
@@ -2286,7 +2674,7 @@ client.agent.jev.decideForSession(id: string, data: AgentJevDecideForSessionRequ
 Read the Jev settings.
 
 ```typescript
-client.agent.jev.getSettings(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentJevGetSettingsResponse>
+client.agent.jev.getSettings(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentJevGetSettingsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2294,7 +2682,6 @@ client.agent.jev.getSettings(options?: { XHoodyCwd?: string; XHoodyConfigDir?: s
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentJevGetSettingsResponse`
 
@@ -2309,7 +2696,7 @@ client.agent.jev.getSettings(options?: { XHoodyCwd?: string; XHoodyConfigDir?: s
 List the models Jev can use.
 
 ```typescript
-client.agent.jev.listModels(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentJevListModelsResponse>
+client.agent.jev.listModels(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentJevListModelsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2317,7 +2704,6 @@ client.agent.jev.listModels(options?: { XHoodyCwd?: string; XHoodyConfigDir?: st
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentJevListModelsResponse`
 
@@ -2332,7 +2718,7 @@ client.agent.jev.listModels(options?: { XHoodyCwd?: string; XHoodyConfigDir?: st
 Test Jev with one tiny decision.
 
 ```typescript
-client.agent.jev.test(data?: AgentJevTestRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentJevTestResponse>
+client.agent.jev.test(data?: AgentJevTestRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentJevTestResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2341,7 +2727,6 @@ client.agent.jev.test(data?: AgentJevTestRequest, options?: { XHoodyCwd?: string
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentJevTestResponse`
 
@@ -2356,7 +2741,7 @@ client.agent.jev.test(data?: AgentJevTestRequest, options?: { XHoodyCwd?: string
 Change the Jev settings.
 
 ```typescript
-client.agent.jev.updateSettings(data?: AgentJevUpdateSettingsRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; cache?: boolean | number }): Promise<AgentJevUpdateSettingsResponse>
+client.agent.jev.updateSettings(data?: AgentJevUpdateSettingsRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentJevUpdateSettingsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2365,7 +2750,6 @@ client.agent.jev.updateSettings(data?: AgentJevUpdateSettingsRequest, options?: 
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentJevUpdateSettingsResponse`
 
@@ -2476,17 +2860,14 @@ client.agent.kit.getMetrics(): Promise<ApiResponse<string>>
 Agent API version and capabilities.
 
 ```typescript
-client.agent.kit.getVersion(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentKitGetVersionResponse>
+client.agent.kit.getVersion(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentKitGetVersionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentKitGetVersionResponse`
 
@@ -2503,7 +2884,7 @@ client.agent.kit.getVersion(options?: { realm?: string; XHoodyCwd?: string; XHoo
 Export logs as a downloadable file.
 
 ```typescript
-client.agent.logs.export(options?: { source?: string; min_level?: string; comp?: string; session_id?: string; text?: string; since?: string; until?: string; event?: string; tool?: string; model?: string; status?: string; method?: string; min_status?: number; max_status?: number; errors_only?: boolean; event_type?: string; resource_type?: string; container?: string; kind?: string; host?: string; since_seq?: number; limit?: number; format?: string; filename?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.agent.logs.export(options?: { source?: string; min_level?: string; comp?: string; session_id?: string; text?: string; since?: string; until?: string; event?: string; tool?: string; model?: string; status?: string; method?: string; min_status?: number; max_status?: number; errors_only?: boolean; event_type?: string; resource_type?: string; container?: string; kind?: string; host?: string; since_seq?: number; limit?: number; format?: string; filename?: string; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2534,7 +2915,6 @@ client.agent.logs.export(options?: { source?: string; min_level?: string; comp?:
 | `filename` | `string` | No | query | Download filename override (reduced to a safe basename). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2549,7 +2929,7 @@ client.agent.logs.export(options?: { source?: string; min_level?: string; comp?:
 Read a log entry.
 
 ```typescript
-client.agent.logs.get(ref: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLogsGetResponse>
+client.agent.logs.get(ref: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentLogsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2557,7 +2937,6 @@ client.agent.logs.get(ref: string, options?: { XHoodyCwd?: string; XHoodyConfigD
 | `ref` | `string` | Yes | path | The ref. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentLogsGetResponse`
 
@@ -2572,14 +2951,13 @@ client.agent.logs.get(ref: string, options?: { XHoodyCwd?: string; XHoodyConfigD
 Log statistics.
 
 ```typescript
-client.agent.logs.getStats(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLogsGetStatsResponse>
+client.agent.logs.getStats(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentLogsGetStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentLogsGetStatsResponse`
 
@@ -2594,7 +2972,7 @@ client.agent.logs.getStats(options?: { XHoodyCwd?: string; XHoodyConfigDir?: str
 Query logs.
 
 ```typescript
-client.agent.logs.list(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLogsListResponse>
+client.agent.logs.list(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since?: string; until?: string; since_seq?: number; before_seq?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentLogsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2611,7 +2989,6 @@ client.agent.logs.list(options?: { source?: string; level?: string; host?: strin
 | `limit` | `number` | No | query | Caps this page. Omitted it is the daemon default 200; ANY explicit value is clamped to the ring maximum of 500, and limit=0 means 500 rather than 200 — a caller that needs more than 500 rows pages with before_seq/since_seq. A non-numeric value is rejected 400. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentLogsListResponse`
 
@@ -2626,14 +3003,13 @@ client.agent.logs.list(options?: { source?: string; level?: string; host?: strin
 Log sources.
 
 ```typescript
-client.agent.logs.listSources(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLogsListSourcesResponse>
+client.agent.logs.listSources(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentLogsListSourcesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentLogsListSourcesResponse`
 
@@ -2648,7 +3024,7 @@ client.agent.logs.listSources(options?: { XHoodyCwd?: string; XHoodyConfigDir?: 
 Stream the log tail (SSE).
 
 ```typescript
-client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<IEventStream>
+client.agent.logs.stream(options?: { source?: string; level?: string; host?: string; session_id?: string; run_id?: string; since_seq?: number; limit?: number; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<IEventStream<Record<never, string>, ITypedStreamEvent<AgentLogsStreamFrames>>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2663,9 +3039,8 @@ client.agent.logs.stream(options?: { source?: string; level?: string; host?: str
 | `LastEventID` | `string` | No | header | SSE resume cursor — the gateway int64 seq to resume from; OVERRIDES the ?since_seq query param. Sent automatically by an SSE client on reconnect. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
-**Returns:** `IEventStream`
+**Returns:** `IEventStream<Record<never, string>, ITypedStreamEvent<AgentLogsStreamFrames>>`
 
 **CLI:** `hoody agent logs stream`
 
@@ -2680,7 +3055,7 @@ client.agent.logs.stream(options?: { source?: string; level?: string; host?: str
 Create a loop.
 
 ```typescript
-client.agent.loops.create(id: string, data: AgentLoopsCreateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLoopsCreateResponse>
+client.agent.loops.create(id: string, data: AgentLoopsCreateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentLoopsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2689,7 +3064,7 @@ client.agent.loops.create(id: string, data: AgentLoopsCreateRequest, options?: {
 | `data` | `AgentLoopsCreateRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentLoopsCreateResponse`
 
@@ -2704,7 +3079,7 @@ client.agent.loops.create(id: string, data: AgentLoopsCreateRequest, options?: {
 Delete a loop.
 
 ```typescript
-client.agent.loops.delete(id: string, loopId: string, data?: AgentLoopsDeleteRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLoopsDeleteResponse>
+client.agent.loops.delete(id: string, loopId: string, data?: AgentLoopsDeleteRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentLoopsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2714,7 +3089,7 @@ client.agent.loops.delete(id: string, loopId: string, data?: AgentLoopsDeleteReq
 | `data` | `AgentLoopsDeleteRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentLoopsDeleteResponse`
 
@@ -2729,16 +3104,16 @@ client.agent.loops.delete(id: string, loopId: string, data?: AgentLoopsDeleteReq
 List loops across all sessions.
 
 ```typescript
-client.agent.loops.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLoopsListResponse>
+client.agent.loops.list(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentLoopsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (loops not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentLoopsListResponse`
 
@@ -2753,16 +3128,16 @@ client.agent.loops.list(options?: { page?: number; limit?: number; XHoodyCwd?: s
 List loops across all sessions. (collect all pages)
 
 ```typescript
-client.agent.loops.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.loops.listAll(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (loops not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -2775,16 +3150,16 @@ client.agent.loops.listAll(options?: { page?: number; limit?: number; XHoodyCwd?
 List loops across all sessions. (async iterator)
 
 ```typescript
-client.agent.loops.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.loops.listIterator(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (loops not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -2797,7 +3172,7 @@ client.agent.loops.listIterator(options?: { page?: number; limit?: number; XHood
 Run a loop immediately.
 
 ```typescript
-client.agent.loops.startRun(id: string, loopId: string, data?: AgentLoopsStartRunRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLoopsStartRunResponse>
+client.agent.loops.startRun(id: string, loopId: string, data?: AgentLoopsStartRunRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentLoopsStartRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2807,7 +3182,7 @@ client.agent.loops.startRun(id: string, loopId: string, data?: AgentLoopsStartRu
 | `data` | `AgentLoopsStartRunRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentLoopsStartRunResponse`
 
@@ -2822,7 +3197,7 @@ client.agent.loops.startRun(id: string, loopId: string, data?: AgentLoopsStartRu
 Update a loop.
 
 ```typescript
-client.agent.loops.update(id: string, loopId: string, data?: AgentLoopsUpdateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentLoopsUpdateResponse>
+client.agent.loops.update(id: string, loopId: string, data?: AgentLoopsUpdateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentLoopsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2832,7 +3207,7 @@ client.agent.loops.update(id: string, loopId: string, data?: AgentLoopsUpdateReq
 | `data` | `AgentLoopsUpdateRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentLoopsUpdateResponse`
 
@@ -2849,18 +3224,16 @@ client.agent.loops.update(id: string, loopId: string, data?: AgentLoopsUpdateReq
 Begin an MCP config write.
 
 ```typescript
-client.agent.mcp.createWriteIntent(data: AgentMcpCreateWriteIntentRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentMcpCreateWriteIntentResponse>
+client.agent.mcp.createWriteIntent(data: AgentMcpCreateWriteIntentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentMcpCreateWriteIntentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentMcpCreateWriteIntentRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMcpCreateWriteIntentResponse`
 
@@ -2875,18 +3248,16 @@ client.agent.mcp.createWriteIntent(data: AgentMcpCreateWriteIntentRequest, optio
 Delete an MCP server.
 
 ```typescript
-client.agent.mcp.deleteServer(data: AgentMcpDeleteServerRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentMcpDeleteServerResponse>
+client.agent.mcp.deleteServer(data: AgentMcpDeleteServerRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentMcpDeleteServerResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentMcpDeleteServerRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMcpDeleteServerResponse`
 
@@ -2901,7 +3272,7 @@ client.agent.mcp.deleteServer(data: AgentMcpDeleteServerRequest, options?: { rea
 Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.disableServer(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.mcp.disableServer(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2909,8 +3280,7 @@ client.agent.mcp.disableServer(data: object, options?: { XHoodyCwd?: string; XHo
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -2926,7 +3296,7 @@ client.agent.mcp.disableServer(data: object, options?: { XHoodyCwd?: string; XHo
 Enable or disable an MCP server.
 
 ```typescript
-client.agent.mcp.enableServer(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.mcp.enableServer(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2934,8 +3304,7 @@ client.agent.mcp.enableServer(data: object, options?: { XHoodyCwd?: string; XHoo
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -2951,18 +3320,16 @@ client.agent.mcp.enableServer(data: object, options?: { XHoodyCwd?: string; XHoo
 Import MCP servers from another tool's config.
 
 ```typescript
-client.agent.mcp.importServers(data: AgentMcpImportServersRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentMcpImportServersResponse>
+client.agent.mcp.importServers(data: AgentMcpImportServersRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentMcpImportServersResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentMcpImportServersRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMcpImportServersResponse`
 
@@ -2977,18 +3344,16 @@ client.agent.mcp.importServers(data: AgentMcpImportServersRequest, options?: { r
 List configured MCP servers.
 
 ```typescript
-client.agent.mcp.listServers(options: { session_id: string; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentMcpListServersResponse>
+client.agent.mcp.listServers(options: { session_id: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentMcpListServersResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `session_id` | `string` | Yes | query | Live session id (MCP config is resolved against the session's settings layers). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMcpListServersResponse`
 
@@ -3003,18 +3368,16 @@ client.agent.mcp.listServers(options: { session_id: string; realm?: string; XHoo
 Preview an MCP config import.
 
 ```typescript
-client.agent.mcp.previewImport(data: AgentMcpPreviewImportRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentMcpPreviewImportResponse>
+client.agent.mcp.previewImport(data: AgentMcpPreviewImportRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentMcpPreviewImportResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentMcpPreviewImportRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMcpPreviewImportResponse`
 
@@ -3029,18 +3392,16 @@ client.agent.mcp.previewImport(data: AgentMcpPreviewImportRequest, options?: { r
 Reload MCP config and reconnect.
 
 ```typescript
-client.agent.mcp.reconnect(data: AgentMcpReconnectRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentMcpReconnectResponse>
+client.agent.mcp.reconnect(data: AgentMcpReconnectRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentMcpReconnectResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentMcpReconnectRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMcpReconnectResponse`
 
@@ -3055,18 +3416,16 @@ client.agent.mcp.reconnect(data: AgentMcpReconnectRequest, options?: { realm?: s
 Probe an MCP server without saving it.
 
 ```typescript
-client.agent.mcp.testServer(data: AgentMcpTestServerRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.agent.mcp.testServer(data: AgentMcpTestServerRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentMcpTestServerRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -3081,18 +3440,16 @@ client.agent.mcp.testServer(data: AgentMcpTestServerRequest, options?: { realm?:
 Create or update an MCP server.
 
 ```typescript
-client.agent.mcp.upsertServer(data: AgentMcpUpsertServerRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentMcpUpsertServerResponse>
+client.agent.mcp.upsertServer(data: AgentMcpUpsertServerRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentMcpUpsertServerResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentMcpUpsertServerRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMcpUpsertServerResponse`
 
@@ -3109,7 +3466,7 @@ client.agent.mcp.upsertServer(data: AgentMcpUpsertServerRequest, options?: { rea
 Assign this computer as the memory data host.
 
 ```typescript
-client.agent.memory.claimDataHost(data: AgentMemoryClaimDataHostRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryClaimDataHostResponse>
+client.agent.memory.claimDataHost(data: AgentMemoryClaimDataHostRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryClaimDataHostResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3117,7 +3474,7 @@ client.agent.memory.claimDataHost(data: AgentMemoryClaimDataHostRequest, options
 | `data` | `AgentMemoryClaimDataHostRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryClaimDataHostResponse`
 
@@ -3132,7 +3489,7 @@ client.agent.memory.claimDataHost(data: AgentMemoryClaimDataHostRequest, options
 Trigger a memory consolidation pass (human-only).
 
 ```typescript
-client.agent.memory.consolidate(data: AgentMemoryConsolidateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.agent.memory.consolidate(data: AgentMemoryConsolidateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3140,7 +3497,7 @@ client.agent.memory.consolidate(data: AgentMemoryConsolidateRequest, options?: {
 | `data` | `AgentMemoryConsolidateRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -3155,7 +3512,7 @@ client.agent.memory.consolidate(data: AgentMemoryConsolidateRequest, options?: {
 Save a memory item.
 
 ```typescript
-client.agent.memory.createItem(data: AgentMemoryCreateItemRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryCreateItemResponse>
+client.agent.memory.createItem(data: AgentMemoryCreateItemRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryCreateItemResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3163,7 +3520,7 @@ client.agent.memory.createItem(data: AgentMemoryCreateItemRequest, options?: { X
 | `data` | `AgentMemoryCreateItemRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryCreateItemResponse`
 
@@ -3178,7 +3535,7 @@ client.agent.memory.createItem(data: AgentMemoryCreateItemRequest, options?: { X
 Begin a guarded memory write (intent).
 
 ```typescript
-client.agent.memory.createWriteIntent(data: AgentMemoryCreateWriteIntentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryCreateWriteIntentResponse>
+client.agent.memory.createWriteIntent(data: AgentMemoryCreateWriteIntentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryCreateWriteIntentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3186,7 +3543,7 @@ client.agent.memory.createWriteIntent(data: AgentMemoryCreateWriteIntentRequest,
 | `data` | `AgentMemoryCreateWriteIntentRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryCreateWriteIntentResponse`
 
@@ -3201,7 +3558,7 @@ client.agent.memory.createWriteIntent(data: AgentMemoryCreateWriteIntentRequest,
 Delete a memory item.
 
 ```typescript
-client.agent.memory.deleteItem(data?: AgentMemoryDeleteItemRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryDeleteItemResponse>
+client.agent.memory.deleteItem(data?: AgentMemoryDeleteItemRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryDeleteItemResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3209,7 +3566,7 @@ client.agent.memory.deleteItem(data?: AgentMemoryDeleteItemRequest, options?: { 
 | `data` | `AgentMemoryDeleteItemRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryDeleteItemResponse`
 
@@ -3224,7 +3581,7 @@ client.agent.memory.deleteItem(data?: AgentMemoryDeleteItemRequest, options?: { 
 Erase a memory project.
 
 ```typescript
-client.agent.memory.deleteProject(project: string, data: AgentMemoryDeleteProjectRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryDeleteProjectResponse>
+client.agent.memory.deleteProject(project: string, data: AgentMemoryDeleteProjectRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryDeleteProjectResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3233,7 +3590,7 @@ client.agent.memory.deleteProject(project: string, data: AgentMemoryDeleteProjec
 | `data` | `AgentMemoryDeleteProjectRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryDeleteProjectResponse`
 
@@ -3248,13 +3605,14 @@ client.agent.memory.deleteProject(project: string, data: AgentMemoryDeleteProjec
 Toggle memory capture.
 
 ```typescript
-client.agent.memory.disable(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<any>
+client.agent.memory.disable(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -3270,13 +3628,14 @@ client.agent.memory.disable(data?: object, options?: { XHoodyCwd?: string; XHood
 Toggle memory capture.
 
 ```typescript
-client.agent.memory.enable(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<any>
+client.agent.memory.enable(data?: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 
 **Returns:** `any`
@@ -3292,7 +3651,7 @@ client.agent.memory.enable(data?: object, options?: { XHoodyCwd?: string; XHoody
 Flush the memory store.
 
 ```typescript
-client.agent.memory.flush(data?: AgentMemoryFlushRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryFlushResponse>
+client.agent.memory.flush(data?: AgentMemoryFlushRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryFlushResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3300,7 +3659,7 @@ client.agent.memory.flush(data?: AgentMemoryFlushRequest, options?: { XHoodyCwd?
 | `data` | `AgentMemoryFlushRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryFlushResponse`
 
@@ -3315,14 +3674,14 @@ client.agent.memory.flush(data?: AgentMemoryFlushRequest, options?: { XHoodyCwd?
 Read the realm's memory data host.
 
 ```typescript
-client.agent.memory.getDataHost(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryGetDataHostResponse>
+client.agent.memory.getDataHost(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryGetDataHostResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryGetDataHostResponse`
 
@@ -3337,7 +3696,7 @@ client.agent.memory.getDataHost(options?: { XHoodyCwd?: string; XHoodyConfigDir?
 Read a project's memory relation graph.
 
 ```typescript
-client.agent.memory.getGraph(options?: { project?: string; node_type?: string; limit?: number; offset?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryGetGraphResponse>
+client.agent.memory.getGraph(options?: { project?: string; node_type?: string; limit?: number; offset?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryGetGraphResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3348,7 +3707,7 @@ client.agent.memory.getGraph(options?: { project?: string; node_type?: string; l
 | `offset` | `number` | No | query | Pagination offset into the graph. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryGetGraphResponse`
 
@@ -3363,7 +3722,7 @@ client.agent.memory.getGraph(options?: { project?: string; node_type?: string; l
 Read a memory item.
 
 ```typescript
-client.agent.memory.getItem(id: string, options?: { project?: string; kind?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryGetItemResponse>
+client.agent.memory.getItem(id: string, options?: { project?: string; kind?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryGetItemResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3373,7 +3732,7 @@ client.agent.memory.getItem(id: string, options?: { project?: string; kind?: str
 | `kind` | `string` | No | query | Memory kind/store the record lives in. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryGetItemResponse`
 
@@ -3388,7 +3747,7 @@ client.agent.memory.getItem(id: string, options?: { project?: string; kind?: str
 Read memory subsystem status.
 
 ```typescript
-client.agent.memory.getStatus(options?: { project?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryGetStatusResponse>
+client.agent.memory.getStatus(options?: { project?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryGetStatusResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3396,7 +3755,7 @@ client.agent.memory.getStatus(options?: { project?: string; XHoodyCwd?: string; 
 | `project` | `string` | No | query | Project key to report per-project counts, embedding coverage and last-consolidation for. Omitted: only the whole-store totals are returned. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryGetStatusResponse`
 
@@ -3411,7 +3770,7 @@ client.agent.memory.getStatus(options?: { project?: string; XHoodyCwd?: string; 
 List memory items.
 
 ```typescript
-client.agent.memory.listItems(options?: { project?: string; kind?: string; type?: string; query?: string; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryListItemsResponse>
+client.agent.memory.listItems(options?: { project?: string; kind?: string; type?: string; query?: string; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryListItemsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3424,7 +3783,7 @@ client.agent.memory.listItems(options?: { project?: string; kind?: string; type?
 | `limit` | `number` | No | query | Items per page (1..200). 0 or omitted pages at the 200 ceiling; a value over 200 is clamped to 200. The effective page size is echoed in meta.limit. NOT "no pagination" — the daemon never returns an unbounded set. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryListItemsResponse`
 
@@ -3439,7 +3798,7 @@ client.agent.memory.listItems(options?: { project?: string; kind?: string; type?
 List memory items. (collect all pages)
 
 ```typescript
-client.agent.memory.listItemsAll(options?: { project?: string; kind?: string; type?: string; query?: string; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.memory.listItemsAll(options?: { project?: string; kind?: string; type?: string; query?: string; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3452,7 +3811,7 @@ client.agent.memory.listItemsAll(options?: { project?: string; kind?: string; ty
 | `limit` | `number` | No | query | Items per page (1..200). 0 or omitted pages at the 200 ceiling; a value over 200 is clamped to 200. The effective page size is echoed in meta.limit. NOT "no pagination" — the daemon never returns an unbounded set. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3465,7 +3824,7 @@ client.agent.memory.listItemsAll(options?: { project?: string; kind?: string; ty
 List memory items. (async iterator)
 
 ```typescript
-client.agent.memory.listItemsIterator(options?: { project?: string; kind?: string; type?: string; query?: string; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.memory.listItemsIterator(options?: { project?: string; kind?: string; type?: string; query?: string; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3478,7 +3837,7 @@ client.agent.memory.listItemsIterator(options?: { project?: string; kind?: strin
 | `limit` | `number` | No | query | Items per page (1..200). 0 or omitted pages at the 200 ceiling; a value over 200 is clamped to 200. The effective page size is echoed in meta.limit. NOT "no pagination" — the daemon never returns an unbounded set. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -3491,7 +3850,7 @@ client.agent.memory.listItemsIterator(options?: { project?: string; kind?: strin
 List memory projects.
 
 ```typescript
-client.agent.memory.listProjects(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryListProjectsResponse>
+client.agent.memory.listProjects(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryListProjectsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3500,7 +3859,7 @@ client.agent.memory.listProjects(options?: { page?: number; limit?: number; XHoo
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryListProjectsResponse`
 
@@ -3515,7 +3874,7 @@ client.agent.memory.listProjects(options?: { page?: number; limit?: number; XHoo
 List memory projects. (collect all pages)
 
 ```typescript
-client.agent.memory.listProjectsAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.memory.listProjectsAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3524,7 +3883,7 @@ client.agent.memory.listProjectsAll(options?: { page?: number; limit?: number; X
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3537,7 +3896,7 @@ client.agent.memory.listProjectsAll(options?: { page?: number; limit?: number; X
 List memory projects. (async iterator)
 
 ```typescript
-client.agent.memory.listProjectsIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.memory.listProjectsIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3546,7 +3905,7 @@ client.agent.memory.listProjectsIterator(options?: { page?: number; limit?: numb
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -3559,7 +3918,7 @@ client.agent.memory.listProjectsIterator(options?: { page?: number; limit?: numb
 Search memory (hybrid recall).
 
 ```typescript
-client.agent.memory.search(data?: AgentMemorySearchRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemorySearchResponse>
+client.agent.memory.search(data?: AgentMemorySearchRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemorySearchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3567,7 +3926,7 @@ client.agent.memory.search(data?: AgentMemorySearchRequest, options?: { XHoodyCw
 | `data` | `AgentMemorySearchRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemorySearchResponse`
 
@@ -3582,7 +3941,7 @@ client.agent.memory.search(data?: AgentMemorySearchRequest, options?: { XHoodyCw
 Edit a memory item.
 
 ```typescript
-client.agent.memory.updateItem(id: string, data?: AgentMemoryUpdateItemRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentMemoryUpdateItemResponse>
+client.agent.memory.updateItem(id: string, data?: AgentMemoryUpdateItemRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentMemoryUpdateItemResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3591,7 +3950,7 @@ client.agent.memory.updateItem(id: string, data?: AgentMemoryUpdateItemRequest, 
 | `data` | `AgentMemoryUpdateItemRequest` | No | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentMemoryUpdateItemResponse`
 
@@ -3608,7 +3967,7 @@ client.agent.memory.updateItem(id: string, data?: AgentMemoryUpdateItemRequest, 
 Get a model by spec.
 
 ```typescript
-client.agent.models.get(spec: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentModelsGetResponse>
+client.agent.models.get(spec: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentModelsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3616,7 +3975,6 @@ client.agent.models.get(spec: string, options?: { XHoodyCwd?: string; XHoodyConf
 | `spec` | `string` | Yes | path | The spec. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentModelsGetResponse`
 
@@ -3631,7 +3989,7 @@ client.agent.models.get(spec: string, options?: { XHoodyCwd?: string; XHoodyConf
 List models.
 
 ```typescript
-client.agent.models.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentModelsListResponse>
+client.agent.models.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentModelsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3640,7 +3998,6 @@ client.agent.models.list(options?: { page?: number; limit?: number; XHoodyCwd?: 
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentModelsListResponse`
 
@@ -3655,7 +4012,7 @@ client.agent.models.list(options?: { page?: number; limit?: number; XHoodyCwd?: 
 List models. (collect all pages)
 
 ```typescript
-client.agent.models.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.models.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3664,7 +4021,6 @@ client.agent.models.listAll(options?: { page?: number; limit?: number; XHoodyCwd
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3677,7 +4033,7 @@ client.agent.models.listAll(options?: { page?: number; limit?: number; XHoodyCwd
 List models. (async iterator)
 
 ```typescript
-client.agent.models.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.models.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3686,7 +4042,6 @@ client.agent.models.listIterator(options?: { page?: number; limit?: number; XHoo
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -3712,7 +4067,7 @@ client.agent.platform.bootstrapToken(data: object): Promise<any>
 
 ---
 
-## `client.agent.providers` (18 methods)
+## `client.agent.providers` (21 methods)
 
 ### `addAccount`
 
@@ -3732,6 +4087,47 @@ client.agent.providers.addAccount(id: string, data?: AgentProvidersAddAccountReq
 **Returns:** `AgentProvidersAddAccountResponse`
 
 **CLI:** `hoody agent providers accounts add`
+
+---
+
+### `create`
+
+**POST** `/api/v1/agent/providers`
+
+Create a custom provider.
+
+```typescript
+client.agent.providers.create(data: AgentProvidersCreateRequest, options?: { IdempotencyKey?: string }): Promise<AgentProvidersCreateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `data` | `AgentProvidersCreateRequest` | Yes | body |  |
+| `IdempotencyKey` | `string` | No | header | Opaque retry key (1-255 printable ASCII, no whitespace). A retry with the same key and body answers 201 with the provider the first try created; the same key with another body is 422 idempotency_key_reused. Keys are remembered for 24 hours, until the agent restarts. |
+
+**Returns:** `AgentProvidersCreateResponse`
+
+**CLI:** `hoody agent providers create`
+
+---
+
+### `delete`
+
+**DELETE** `/api/v1/agent/providers/{id}`
+
+Delete a custom provider.
+
+```typescript
+client.agent.providers.delete(id: string): Promise<AgentProvidersDeleteResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The provider id. |
+
+**Returns:** `AgentProvidersDeleteResponse`
+
+**CLI:** `hoody agent providers delete`
 
 ---
 
@@ -3802,14 +4198,13 @@ client.agent.providers.getAuth(id: string): Promise<AgentProvidersGetAuthRespons
 List LLM providers.
 
 ```typescript
-client.agent.providers.list(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<AgentProvidersListResponse>
+client.agent.providers.list(options?: { page?: number; limit?: number }): Promise<AgentProvidersListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentProvidersListResponse`
 
@@ -3824,7 +4219,7 @@ client.agent.providers.list(options?: { page?: number; limit?: number; cache?: b
 List a provider's OAuth account pool.
 
 ```typescript
-client.agent.providers.listAccounts(id: string, options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<AgentProvidersListAccountsResponse>
+client.agent.providers.listAccounts(id: string, options?: { page?: number; limit?: number }): Promise<AgentProvidersListAccountsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3832,7 +4227,6 @@ client.agent.providers.listAccounts(id: string, options?: { page?: number; limit
 | `id` | `string` | Yes | path | The provider id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentProvidersListAccountsResponse`
 
@@ -3847,7 +4241,7 @@ client.agent.providers.listAccounts(id: string, options?: { page?: number; limit
 List a provider's OAuth account pool. (collect all pages)
 
 ```typescript
-client.agent.providers.listAccountsAll(id: string, options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.agent.providers.listAccountsAll(id: string, options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3855,7 +4249,6 @@ client.agent.providers.listAccountsAll(id: string, options?: { page?: number; li
 | `id` | `string` | Yes | path | The provider id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3868,7 +4261,7 @@ client.agent.providers.listAccountsAll(id: string, options?: { page?: number; li
 List a provider's OAuth account pool. (async iterator)
 
 ```typescript
-client.agent.providers.listAccountsIterator(id: string, options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.providers.listAccountsIterator(id: string, options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -3876,7 +4269,6 @@ client.agent.providers.listAccountsIterator(id: string, options?: { page?: numbe
 | `id` | `string` | Yes | path | The provider id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -3889,14 +4281,13 @@ client.agent.providers.listAccountsIterator(id: string, options?: { page?: numbe
 List LLM providers. (collect all pages)
 
 ```typescript
-client.agent.providers.listAll(options?: { page?: number; limit?: number; cache?: boolean | number }): Promise<unknown[]>
+client.agent.providers.listAll(options?: { page?: number; limit?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -3909,14 +4300,13 @@ client.agent.providers.listAll(options?: { page?: number; limit?: number; cache?
 List LLM providers. (async iterator)
 
 ```typescript
-client.agent.providers.listIterator(options?: { page?: number; limit?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.providers.listIterator(options?: { page?: number; limit?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4069,6 +4459,27 @@ client.agent.providers.submitOauthCode(id: string, job: string, data: AgentProvi
 
 ---
 
+### `update`
+
+**PATCH** `/api/v1/agent/providers/{id}`
+
+Change a custom provider.
+
+```typescript
+client.agent.providers.update(id: string, data?: AgentProvidersUpdateRequest): Promise<AgentProvidersUpdateResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The provider id. |
+| `data` | `AgentProvidersUpdateRequest` | No | body |  |
+
+**Returns:** `AgentProvidersUpdateResponse`
+
+**CLI:** `hoody agent providers update`
+
+---
+
 ### `useAccount`
 
 **PUT** `/api/v1/agent/providers/{id}/auth/accounts/{key}/active`
@@ -4100,18 +4511,15 @@ client.agent.providers.useAccount(id: string, key: string, data?: AgentProviders
 List realms (for binding).
 
 ```typescript
-client.agent.realms.list(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentRealmsListResponse>
+client.agent.realms.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentRealmsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentRealmsListResponse`
 
@@ -4126,18 +4534,15 @@ client.agent.realms.list(options?: { page?: number; limit?: number; realm?: stri
 List realms (for binding). (collect all pages)
 
 ```typescript
-client.agent.realms.listAll(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.realms.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4150,18 +4555,15 @@ client.agent.realms.listAll(options?: { page?: number; limit?: number; realm?: s
 List realms (for binding). (async iterator)
 
 ```typescript
-client.agent.realms.listIterator(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.realms.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4187,7 +4589,7 @@ client.agent.realms.use(data: AgentRealmsUseRequest): Promise<AgentRealmsUseResp
 
 ---
 
-## `client.agent.sessions` (47 methods)
+## `client.agent.sessions` (51 methods)
 
 ### `cancelTasks`
 
@@ -4196,18 +4598,16 @@ client.agent.realms.use(data: AgentRealmsUseRequest): Promise<AgentRealmsUseResp
 Cancel all background tasks.
 
 ```typescript
-client.agent.sessions.cancelTasks(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsCancelTasksResponse>
+client.agent.sessions.cancelTasks(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsCancelTasksResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsCancelTasksResponse`
 
@@ -4222,19 +4622,17 @@ client.agent.sessions.cancelTasks(id: string, options?: { realm?: string; XHoody
 Acquire the right to answer this session's gates.
 
 ```typescript
-client.agent.sessions.claimApproverLease(id: string, data: AgentSessionsClaimApproverLeaseRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsClaimApproverLeaseResponse>
+client.agent.sessions.claimApproverLease(id: string, data: AgentSessionsClaimApproverLeaseRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsClaimApproverLeaseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsClaimApproverLeaseRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsClaimApproverLeaseResponse`
 
@@ -4249,19 +4647,17 @@ client.agent.sessions.claimApproverLease(id: string, data: AgentSessionsClaimApp
 Hold a live session (and its parked gate) alive.
 
 ```typescript
-client.agent.sessions.claimAttachment(id: string, data?: AgentSessionsClaimAttachmentRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsClaimAttachmentResponse>
+client.agent.sessions.claimAttachment(id: string, data?: AgentSessionsClaimAttachmentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsClaimAttachmentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsClaimAttachmentRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsClaimAttachmentResponse`
 
@@ -4276,18 +4672,16 @@ client.agent.sessions.claimAttachment(id: string, data?: AgentSessionsClaimAttac
 Close the session (teardown).
 
 ```typescript
-client.agent.sessions.close(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsCloseResponse>
+client.agent.sessions.close(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsCloseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsCloseResponse`
 
@@ -4302,7 +4696,7 @@ client.agent.sessions.close(id: string, options?: { realm?: string; XHoodyCwd?: 
 Attach to a session's event stream (WebSocket / SSE).
 
 ```typescript
-client.agent.sessions.connect(id: string, options?: { since?: number; incarnation?: string; realm?: string; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentStreamSessionWebSocket>
+client.agent.sessions.connect(id: string, options?: { since?: number; incarnation?: string; LastEventID?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentStreamSessionWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4310,13 +4704,11 @@ client.agent.sessions.connect(id: string, options?: { since?: number; incarnatio
 | `id` | `string` | Yes | path | The session id. |
 | `since` | `number` | No | query | Resume from this gateway int64 seq (also accepted as the Last-Event-ID header). |
 | `incarnation` | `string` | No | query | The incarnation the since cursor belongs to (from a frame, replay_boundary, or GET /sessions/{id}). When it differs from the live session's, the cursor is treated as invalid: a replay_gap frame, then the full retained ring. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `LastEventID` | `string` | No | header | SSE resume cursor — the gateway int64 seq to resume from (the in:header alias of ?since); sent automatically by an SSE client on reconnect. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentStreamSessionWebSocket`
 
@@ -4331,19 +4723,17 @@ client.agent.sessions.connect(id: string, options?: { since?: number; incarnatio
 Create, fork, or attach a session.
 
 ```typescript
-client.agent.sessions.create(data?: AgentSessionsCreateRequest, options?: { realm?: string; IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsCreateResponse>
+client.agent.sessions.create(data?: AgentSessionsCreateRequest, options?: { IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSessionsCreateRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `IdempotencyKey` | `string` | No | header | Opaque retry key (1–255 printable ASCII, no whitespace). A retry with the same key returns the same receipt and never re-runs the turn; the same key with a different request body is 422. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsCreateResponse`
 
@@ -4358,7 +4748,7 @@ client.agent.sessions.create(data?: AgentSessionsCreateRequest, options?: { real
 Close (and optionally hard-delete) a session.
 
 ```typescript
-client.agent.sessions.delete(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.sessions.delete(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4367,8 +4757,7 @@ client.agent.sessions.delete(id: string, options?: { XHoodyCwd?: string; XHoodyC
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 
 **Returns:** `any`
 
@@ -4383,20 +4772,18 @@ client.agent.sessions.delete(id: string, options?: { XHoodyCwd?: string; XHoodyC
 Remove one session permission rule.
 
 ```typescript
-client.agent.sessions.deleteApprovalRule(id: string, tool: string, options?: { realm?: string; IfMatch?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsDeleteApprovalRuleResponse>
+client.agent.sessions.deleteApprovalRule(id: string, tool: string, options?: { IfMatch?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsDeleteApprovalRuleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `tool` | `string` | Yes | path | The tool. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `IfMatch` | `string` | No | header | Conditional-request precondition: the ETag from GET /sessions/{id}/approval (a quoted policy revision, e.g. "3") or *. A mismatch is 412 precondition_failed. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsDeleteApprovalRuleResponse`
 
@@ -4411,7 +4798,7 @@ client.agent.sessions.deleteApprovalRule(id: string, tool: string, options?: { r
 Get a session summary.
 
 ```typescript
-client.agent.sessions.get(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentSessionsGetResponse>
+client.agent.sessions.get(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4419,7 +4806,7 @@ client.agent.sessions.get(id: string, options?: { XHoodyCwd?: string; XHoodyConf
 | `id` | `string` | Yes | path | The session id. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsGetResponse`
 
@@ -4434,18 +4821,16 @@ client.agent.sessions.get(id: string, options?: { XHoodyCwd?: string; XHoodyConf
 Read a session's approval policy.
 
 ```typescript
-client.agent.sessions.getApproval(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsGetApprovalResponse>
+client.agent.sessions.getApproval(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsGetApprovalResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsGetApprovalResponse`
 
@@ -4460,18 +4845,16 @@ client.agent.sessions.getApproval(id: string, options?: { realm?: string; XHoody
 Read a session's recoverable state.
 
 ```typescript
-client.agent.sessions.getSnapshot(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsGetSnapshotResponse>
+client.agent.sessions.getSnapshot(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsGetSnapshotResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsGetSnapshotResponse`
 
@@ -4486,7 +4869,7 @@ client.agent.sessions.getSnapshot(id: string, options?: { realm?: string; XHoody
 Read a session's transcript without attaching.
 
 ```typescript
-client.agent.sessions.getTranscript(id: string, options?: { after_turn?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentSessionsGetTranscriptResponse>
+client.agent.sessions.getTranscript(id: string, options?: { after_turn?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsGetTranscriptResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4495,11 +4878,82 @@ client.agent.sessions.getTranscript(id: string, options?: { after_turn?: number;
 | `after_turn` | `number` | No | query | Exclusive completed-turn skip cursor: return content strictly after completed turn N (0 = full transcript; values past the end clamp; negative/non-integer = 400). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsGetTranscriptResponse`
 
 **CLI:** `hoody agent sessions transcript get`
+
+---
+
+### `getUsage`
+
+**GET** `/api/v1/agent/sessions/{id}/usage`
+
+Read a session's per-call LLM usage.
+
+```typescript
+client.agent.sessions.getUsage(id: string, options?: { after_id?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsGetUsageResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The session id. |
+| `after_id` | `number` | No | query | Exclusive cursor: return rows whose id is greater than this. Omit (or 0) to start from the session's first row. Negative or non-integer = 400. |
+| `limit` | `number` | No | query | Return at most this many rows (1 to 5000, default 500). Out of range or non-integer = 400. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentSessionsGetUsageResponse`
+
+**CLI:** `hoody agent sessions usage get`
+
+---
+
+### `getUsageAll`
+
+**GET** `/api/v1/agent/sessions/{id}/usage`
+
+Read a session's per-call LLM usage. (collect all pages)
+
+```typescript
+client.agent.sessions.getUsageAll(id: string, options?: { after_id?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The session id. |
+| `after_id` | `number` | No | query | Exclusive cursor: return rows whose id is greater than this. Omit (or 0) to start from the session's first row. Negative or non-integer = 400. |
+| `limit` | `number` | No | query | Return at most this many rows (1 to 5000, default 500). Out of range or non-integer = 400. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `unknown[]`
+
+---
+
+### `getUsageIterator`
+
+**GET** `/api/v1/agent/sessions/{id}/usage`
+
+Read a session's per-call LLM usage. (async iterator)
+
+```typescript
+client.agent.sessions.getUsageIterator(id: string, options?: { after_id?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The session id. |
+| `after_id` | `number` | No | query | Exclusive cursor: return rows whose id is greater than this. Omit (or 0) to start from the session's first row. Negative or non-integer = 400. |
+| `limit` | `number` | No | query | Return at most this many rows (1 to 5000, default 500). Out of range or non-integer = 400. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AsyncIterableIterator<unknown>`
 
 ---
 
@@ -4510,17 +4964,17 @@ client.agent.sessions.getTranscript(id: string, options?: { after_turn?: number;
 List sessions.
 
 ```typescript
-client.agent.sessions.list(options?: { include_system?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentSessionsListResponse>
+client.agent.sessions.list(options?: { include_system?: boolean; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentSessionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `include_system` | `boolean` | No | query | When true, also include daemon-owned system/resident sessions in the listing. |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (sessions not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentSessionsListResponse`
 
@@ -4535,17 +4989,17 @@ client.agent.sessions.list(options?: { include_system?: boolean; page?: number; 
 List sessions. (collect all pages)
 
 ```typescript
-client.agent.sessions.listAll(options?: { include_system?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.sessions.listAll(options?: { include_system?: boolean; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `include_system` | `boolean` | No | query | When true, also include daemon-owned system/resident sessions in the listing. |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (sessions not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4558,7 +5012,7 @@ client.agent.sessions.listAll(options?: { include_system?: boolean; page?: numbe
 Which tool-call rules apply.
 
 ```typescript
-client.agent.sessions.listApplicableRules(id: string, options?: { agent?: string; tool?: string; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsListApplicableRulesResponse>
+client.agent.sessions.listApplicableRules(id: string, options?: { agent?: string; tool?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsListApplicableRulesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4566,12 +5020,10 @@ client.agent.sessions.listApplicableRules(id: string, options?: { agent?: string
 | `id` | `string` | Yes | path | The session id. |
 | `agent` | `string` | No | query | Agent name to ask about (default: the session's own agent). |
 | `tool` | `string` | No | query | Tool name to ask about (default: any tool). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsListApplicableRulesResponse`
 
@@ -4586,14 +5038,14 @@ client.agent.sessions.listApplicableRules(id: string, options?: { agent?: string
 List distinct session working directories.
 
 ```typescript
-client.agent.sessions.listDirectories(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentSessionsListDirectoriesResponse>
+client.agent.sessions.listDirectories(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsListDirectoriesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsListDirectoriesResponse`
 
@@ -4608,17 +5060,17 @@ client.agent.sessions.listDirectories(options?: { XHoodyCwd?: string; XHoodyConf
 List sessions. (async iterator)
 
 ```typescript
-client.agent.sessions.listIterator(options?: { include_system?: boolean; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.sessions.listIterator(options?: { include_system?: boolean; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `include_system` | `boolean` | No | query | When true, also include daemon-owned system/resident sessions in the listing. |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (sessions not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4631,7 +5083,7 @@ client.agent.sessions.listIterator(options?: { include_system?: boolean; page?: 
 List a session's loops.
 
 ```typescript
-client.agent.sessions.listLoops(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentSessionsListLoopsResponse>
+client.agent.sessions.listLoops(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsListLoopsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4641,7 +5093,7 @@ client.agent.sessions.listLoops(id: string, options?: { page?: number; limit?: n
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsListLoopsResponse`
 
@@ -4656,7 +5108,7 @@ client.agent.sessions.listLoops(id: string, options?: { page?: number; limit?: n
 List a session's loops. (collect all pages)
 
 ```typescript
-client.agent.sessions.listLoopsAll(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.sessions.listLoopsAll(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4666,7 +5118,7 @@ client.agent.sessions.listLoopsAll(id: string, options?: { page?: number; limit?
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4679,7 +5131,7 @@ client.agent.sessions.listLoopsAll(id: string, options?: { page?: number; limit?
 List a session's loops. (async iterator)
 
 ```typescript
-client.agent.sessions.listLoopsIterator(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.sessions.listLoopsIterator(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4689,7 +5141,7 @@ client.agent.sessions.listLoopsIterator(id: string, options?: { page?: number; l
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4702,7 +5154,7 @@ client.agent.sessions.listLoopsIterator(id: string, options?: { page?: number; l
 List a session's MCP tools.
 
 ```typescript
-client.agent.sessions.listMcpTools(id: string, options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsListMcpToolsResponse>
+client.agent.sessions.listMcpTools(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsListMcpToolsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4710,12 +5162,10 @@ client.agent.sessions.listMcpTools(id: string, options?: { page?: number; limit?
 | `id` | `string` | Yes | path | The session id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsListMcpToolsResponse`
 
@@ -4730,7 +5180,7 @@ client.agent.sessions.listMcpTools(id: string, options?: { page?: number; limit?
 List a session's MCP tools. (collect all pages)
 
 ```typescript
-client.agent.sessions.listMcpToolsAll(id: string, options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.sessions.listMcpToolsAll(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4738,12 +5188,10 @@ client.agent.sessions.listMcpToolsAll(id: string, options?: { page?: number; lim
 | `id` | `string` | Yes | path | The session id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4756,7 +5204,7 @@ client.agent.sessions.listMcpToolsAll(id: string, options?: { page?: number; lim
 List a session's MCP tools. (async iterator)
 
 ```typescript
-client.agent.sessions.listMcpToolsIterator(id: string, options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.sessions.listMcpToolsIterator(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4764,12 +5212,10 @@ client.agent.sessions.listMcpToolsIterator(id: string, options?: { page?: number
 | `id` | `string` | Yes | path | The session id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4782,7 +5228,7 @@ client.agent.sessions.listMcpToolsIterator(id: string, options?: { page?: number
 List a session's effective tool set.
 
 ```typescript
-client.agent.sessions.listTools(id: string, options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsListToolsResponse>
+client.agent.sessions.listTools(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsListToolsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4790,12 +5236,10 @@ client.agent.sessions.listTools(id: string, options?: { page?: number; limit?: n
 | `id` | `string` | Yes | path | The session id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsListToolsResponse`
 
@@ -4810,7 +5254,7 @@ client.agent.sessions.listTools(id: string, options?: { page?: number; limit?: n
 List a session's effective tool set. (collect all pages)
 
 ```typescript
-client.agent.sessions.listToolsAll(id: string, options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.sessions.listToolsAll(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4818,12 +5262,10 @@ client.agent.sessions.listToolsAll(id: string, options?: { page?: number; limit?
 | `id` | `string` | Yes | path | The session id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -4836,7 +5278,7 @@ client.agent.sessions.listToolsAll(id: string, options?: { page?: number; limit?
 List a session's effective tool set. (async iterator)
 
 ```typescript
-client.agent.sessions.listToolsIterator(id: string, options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.sessions.listToolsIterator(id: string, options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4844,12 +5286,10 @@ client.agent.sessions.listToolsIterator(id: string, options?: { page?: number; l
 | `id` | `string` | Yes | path | The session id. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -4862,19 +5302,17 @@ client.agent.sessions.listToolsIterator(id: string, options?: { page?: number; l
 Release the approver lease.
 
 ```typescript
-client.agent.sessions.releaseApproverLease(id: string, options?: { realm?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsReleaseApproverLeaseResponse>
+client.agent.sessions.releaseApproverLease(id: string, options?: { XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsReleaseApproverLeaseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyApproverLease` | `string` | No | header | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsReleaseApproverLeaseResponse`
 
@@ -4889,19 +5327,17 @@ client.agent.sessions.releaseApproverLease(id: string, options?: { realm?: strin
 Release an attachment lease.
 
 ```typescript
-client.agent.sessions.releaseAttachment(id: string, lease_id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsReleaseAttachmentResponse>
+client.agent.sessions.releaseAttachment(id: string, lease_id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsReleaseAttachmentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `lease_id` | `string` | Yes | path | The lease id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsReleaseAttachmentResponse`
 
@@ -4916,7 +5352,7 @@ client.agent.sessions.releaseAttachment(id: string, lease_id: string, options?: 
 Rename a session.
 
 ```typescript
-client.agent.sessions.rename(id: string, data: AgentSessionsRenameRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentSessionsRenameResponse>
+client.agent.sessions.rename(id: string, data: AgentSessionsRenameRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsRenameResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4925,7 +5361,7 @@ client.agent.sessions.rename(id: string, data: AgentSessionsRenameRequest, optio
 | `data` | `AgentSessionsRenameRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsRenameResponse`
 
@@ -4940,20 +5376,18 @@ client.agent.sessions.rename(id: string, data: AgentSessionsRenameRequest, optio
 Renew the approver lease.
 
 ```typescript
-client.agent.sessions.renewApproverLease(id: string, data?: AgentSessionsRenewApproverLeaseRequest, options?: { realm?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsRenewApproverLeaseResponse>
+client.agent.sessions.renewApproverLease(id: string, data?: AgentSessionsRenewApproverLeaseRequest, options?: { XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsRenewApproverLeaseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsRenewApproverLeaseRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyApproverLease` | `string` | No | header | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsRenewApproverLeaseResponse`
 
@@ -4968,7 +5402,7 @@ client.agent.sessions.renewApproverLease(id: string, data?: AgentSessionsRenewAp
 Renew an attachment lease.
 
 ```typescript
-client.agent.sessions.renewAttachment(id: string, lease_id: string, data?: AgentSessionsRenewAttachmentRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsRenewAttachmentResponse>
+client.agent.sessions.renewAttachment(id: string, lease_id: string, data?: AgentSessionsRenewAttachmentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsRenewAttachmentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -4976,12 +5410,10 @@ client.agent.sessions.renewAttachment(id: string, lease_id: string, data?: Agent
 | `id` | `string` | Yes | path | The session id. |
 | `lease_id` | `string` | Yes | path | The lease id. |
 | `data` | `AgentSessionsRenewAttachmentRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsRenewAttachmentResponse`
 
@@ -4996,18 +5428,16 @@ client.agent.sessions.renewAttachment(id: string, lease_id: string, data?: Agent
 Replay a live session's buffered events.
 
 ```typescript
-client.agent.sessions.replay(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsReplayResponse>
+client.agent.sessions.replay(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsReplayResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsReplayResponse`
 
@@ -5022,7 +5452,7 @@ client.agent.sessions.replay(id: string, options?: { realm?: string; XHoodyCwd?:
 Run a tool inside a live session (gated).
 
 ```typescript
-client.agent.sessions.runTool(id: string, name: string, data?: AgentSessionsRunToolRequest, options?: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsRunToolResponse>
+client.agent.sessions.runTool(id: string, name: string, data?: AgentSessionsRunToolRequest, options?: { confirm?: boolean; confirm_token?: string; XHoodyApproverLease?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsRunToolResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5032,17 +5462,40 @@ client.agent.sessions.runTool(id: string, name: string, data?: AgentSessionsRunT
 | `data` | `AgentSessionsRunToolRequest` | No | body |  |
 | `confirm` | `boolean` | No | query | Query alias of the body `confirm` field — re-issue a previously-parked confirmation (pair with confirm_token). |
 | `confirm_token` | `string` | No | query | Query alias of the body `confirm_token` field — the single-use token returned in the 409 tool_needs_confirmation details. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyApproverLease` | `string` | No | header | The approver-lease capability returned by POST /sessions/{id}/approver-lease. Required on every decision (/confirm, or the confirmed re-issue of a gated tool run) on an "always" session whose lease was minted; the daemon verifies it at decision consumption. On renew/release it names the lease to act on. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsRunToolResponse`
 
 **CLI:** `hoody agent sessions tools run`
+
+---
+
+### `setAfterCompaction`
+
+**PUT** `/api/v1/agent/sessions/{id}/after-compaction`
+
+Set the message re-added after every compaction.
+
+```typescript
+client.agent.sessions.setAfterCompaction(id: string, data: AgentSessionsSetAfterCompactionRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetAfterCompactionResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The session id. |
+| `data` | `AgentSessionsSetAfterCompactionRequest` | Yes | body |  |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentSessionsSetAfterCompactionResponse`
+
+**CLI:** `hoody agent sessions aftercompaction set`
 
 ---
 
@@ -5053,19 +5506,17 @@ client.agent.sessions.runTool(id: string, name: string, data?: AgentSessionsRunT
 Switch the chat agent.
 
 ```typescript
-client.agent.sessions.setAgent(id: string, data?: AgentSessionsSetAgentRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetAgentResponse>
+client.agent.sessions.setAgent(id: string, data?: AgentSessionsSetAgentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetAgentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetAgentRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetAgentResponse`
 
@@ -5080,7 +5531,7 @@ client.agent.sessions.setAgent(id: string, data?: AgentSessionsSetAgentRequest, 
 Set one session permission rule.
 
 ```typescript
-client.agent.sessions.setApprovalRule(id: string, tool: string, data: AgentSessionsSetApprovalRuleRequest, options?: { realm?: string; IfMatch?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetApprovalRuleResponse>
+client.agent.sessions.setApprovalRule(id: string, tool: string, data: AgentSessionsSetApprovalRuleRequest, options?: { IfMatch?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetApprovalRuleResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5088,13 +5539,11 @@ client.agent.sessions.setApprovalRule(id: string, tool: string, data: AgentSessi
 | `id` | `string` | Yes | path | The session id. |
 | `tool` | `string` | Yes | path | The tool. |
 | `data` | `AgentSessionsSetApprovalRuleRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `IfMatch` | `string` | No | header | Conditional-request precondition: the ETag from GET /sessions/{id}/approval (a quoted policy revision, e.g. "3") or *. A mismatch is 412 precondition_failed. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetApprovalRuleResponse`
 
@@ -5109,19 +5558,17 @@ client.agent.sessions.setApprovalRule(id: string, tool: string, data: AgentSessi
 Arm/disarm the auto-reply loop.
 
 ```typescript
-client.agent.sessions.setAutoReply(id: string, data?: AgentSessionsSetAutoReplyRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetAutoReplyResponse>
+client.agent.sessions.setAutoReply(id: string, data?: AgentSessionsSetAutoReplyRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetAutoReplyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetAutoReplyRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetAutoReplyResponse`
 
@@ -5136,19 +5583,17 @@ client.agent.sessions.setAutoReply(id: string, data?: AgentSessionsSetAutoReplyR
 Flip the auto-reply write opt-in.
 
 ```typescript
-client.agent.sessions.setAutoReplyWrites(id: string, data?: AgentSessionsSetAutoReplyWritesRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetAutoReplyWritesResponse>
+client.agent.sessions.setAutoReplyWrites(id: string, data?: AgentSessionsSetAutoReplyWritesRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetAutoReplyWritesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetAutoReplyWritesRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetAutoReplyWritesResponse`
 
@@ -5163,19 +5608,17 @@ client.agent.sessions.setAutoReplyWrites(id: string, data?: AgentSessionsSetAuto
 Set reasoning effort.
 
 ```typescript
-client.agent.sessions.setEffort(id: string, data?: AgentSessionsSetEffortRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetEffortResponse>
+client.agent.sessions.setEffort(id: string, data?: AgentSessionsSetEffortRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetEffortResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetEffortRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetEffortResponse`
 
@@ -5190,19 +5633,17 @@ client.agent.sessions.setEffort(id: string, data?: AgentSessionsSetEffortRequest
 Toggle Hoody shell-env injection.
 
 ```typescript
-client.agent.sessions.setHoodyEnv(id: string, data?: AgentSessionsSetHoodyEnvRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetHoodyEnvResponse>
+client.agent.sessions.setHoodyEnv(id: string, data?: AgentSessionsSetHoodyEnvRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetHoodyEnvResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetHoodyEnvRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetHoodyEnvResponse`
 
@@ -5217,19 +5658,17 @@ client.agent.sessions.setHoodyEnv(id: string, data?: AgentSessionsSetHoodyEnvReq
 Switch the session model.
 
 ```typescript
-client.agent.sessions.setModel(id: string, data: AgentSessionsSetModelRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetModelResponse>
+client.agent.sessions.setModel(id: string, data: AgentSessionsSetModelRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetModelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetModelRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetModelResponse`
 
@@ -5244,19 +5683,17 @@ client.agent.sessions.setModel(id: string, data: AgentSessionsSetModelRequest, o
 Set response verbosity.
 
 ```typescript
-client.agent.sessions.setVerbosity(id: string, data?: AgentSessionsSetVerbosityRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetVerbosityResponse>
+client.agent.sessions.setVerbosity(id: string, data?: AgentSessionsSetVerbosityRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetVerbosityResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetVerbosityRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetVerbosityResponse`
 
@@ -5271,19 +5708,17 @@ client.agent.sessions.setVerbosity(id: string, data?: AgentSessionsSetVerbosityR
 Arm or disarm YOLO auto-approve.
 
 ```typescript
-client.agent.sessions.setYolo(id: string, data: AgentSessionsSetYoloRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsSetYoloResponse>
+client.agent.sessions.setYolo(id: string, data: AgentSessionsSetYoloRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsSetYoloResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsSetYoloRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsSetYoloResponse`
 
@@ -5298,20 +5733,18 @@ client.agent.sessions.setYolo(id: string, data: AgentSessionsSetYoloRequest, opt
 Dispatch a turn (fire-and-observe).
 
 ```typescript
-client.agent.sessions.startTurn(id: string, data: AgentSessionsStartTurnRequest, options?: { realm?: string; IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsStartTurnResponse>
+client.agent.sessions.startTurn(id: string, data: AgentSessionsStartTurnRequest, options?: { IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsStartTurnResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsStartTurnRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `IdempotencyKey` | `string` | No | header | Opaque retry key (1–255 printable ASCII, no whitespace). A retry with the same key returns the same receipt and never re-runs the turn; the same key with a different request body is 422. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsStartTurnResponse`
 
@@ -5326,23 +5759,22 @@ client.agent.sessions.startTurn(id: string, data: AgentSessionsStartTurnRequest,
 Dispatch a turn and stream the response.
 
 ```typescript
-client.agent.sessions.startTurnAndStream(options: { id: string; policy?: string; XHoodyGatePolicy?: string; IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string; data: object }): Promise<any>
+client.agent.sessions.startTurnAndStream(id: string, data: AgentSessionsStartTurnAndStreamRequest, options?: { policy?: string; XHoodyGatePolicy?: string; IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<IEventStream<{ XHoodyTurnId?: string; }, ITypedStreamEvent<AgentSessionsStartTurnAndStreamFrames>>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
+| `data` | `AgentSessionsStartTurnAndStreamRequest` | Yes | body |  |
 | `policy` | `string` | No | query | auto_approve auto-answers confirm gates for the life of the stream (alias of the X-Hoody-Gate-Policy header); off by default; the gateway asks for no separate credentials to use it; access is decided by the container's proxy permission policy. |
 | `XHoodyGatePolicy` | `string` | No | header | Confirm-gate posture: "auto_approve" adopts the headless auto-answer posture (off by default; the in:query alias is ?policy=). Any other value is rejected 400. |
 | `IdempotencyKey` | `string` | No | header | Opaque retry key (1–255 printable ASCII, no whitespace). The turn runs at most once per key: a retry is 409 replay_unavailable with the turn's receipt (details.turn), never a re-run and never a second stream; the same key with a different request body is 422. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `data` | `object` | Yes | body |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
-**Returns:** `any`
+**Returns:** `IEventStream<{ XHoodyTurnId?: string; }, ITypedStreamEvent<AgentSessionsStartTurnAndStreamFrames>>`
 
 **CLI:** `hoody agent sessions turns start`
 
@@ -5355,7 +5787,7 @@ client.agent.sessions.startTurnAndStream(options: { id: string; policy?: string;
 Run a workflow onto an existing session.
 
 ```typescript
-client.agent.sessions.startWorkflow(id: string, name: string, data?: AgentSessionsStartWorkflowRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsStartWorkflowResponse>
+client.agent.sessions.startWorkflow(id: string, name: string, data?: AgentSessionsStartWorkflowRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsStartWorkflowResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5363,12 +5795,10 @@ client.agent.sessions.startWorkflow(id: string, name: string, data?: AgentSessio
 | `id` | `string` | Yes | path | The session id. |
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentSessionsStartWorkflowRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsStartWorkflowResponse`
 
@@ -5383,19 +5813,17 @@ client.agent.sessions.startWorkflow(id: string, name: string, data?: AgentSessio
 Trim session history to a turn index.
 
 ```typescript
-client.agent.sessions.trim(id: string, data?: AgentSessionsTrimRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsTrimResponse>
+client.agent.sessions.trim(id: string, data?: AgentSessionsTrimRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsTrimResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsTrimRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsTrimResponse`
 
@@ -5410,24 +5838,75 @@ client.agent.sessions.trim(id: string, data?: AgentSessionsTrimRequest, options?
 Set a session's approval mode and lock.
 
 ```typescript
-client.agent.sessions.updateApproval(id: string, data?: AgentSessionsUpdateApprovalRequest, options?: { realm?: string; IfMatch?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsUpdateApprovalResponse>
+client.agent.sessions.updateApproval(id: string, data?: AgentSessionsUpdateApprovalRequest, options?: { IfMatch?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsUpdateApprovalResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsUpdateApprovalRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `IfMatch` | `string` | No | header | Conditional-request precondition: the ETag from GET /sessions/{id}/approval (a quoted policy revision, e.g. "3") or *. A mismatch is 412 precondition_failed. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsUpdateApprovalResponse`
 
 **CLI:** `hoody agent sessions approval update`
+
+---
+
+## `client.agent.sessions.commands` (2 methods)
+
+### `get`
+
+**GET** `/api/v1/agent/sessions/{id}/commands/{command_id}`
+
+Get a command's receipt.
+
+```typescript
+client.agent.sessions.commands.get(id: string, command_id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsCommandsGetResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The session id. |
+| `command_id` | `string` | Yes | path | The command id. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentSessionsCommandsGetResponse`
+
+**CLI:** `hoody agent sessions commands get`
+
+---
+
+### `send`
+
+**POST** `/api/v1/agent/sessions/{id}/commands`
+
+Send a message, an interrupt or a stop to a session.
+
+```typescript
+client.agent.sessions.commands.send(id: string, data: AgentSessionsCommandsSendRequest, options?: { IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsCommandsSendResponse>
+```
+
+| Parameter | Type | Required | Location | Description |
+|-----------|------|----------|----------|-------------|
+| `id` | `string` | Yes | path | The session id. |
+| `data` | `AgentSessionsCommandsSendRequest` | Yes | body |  |
+| `IdempotencyKey` | `string` | No | header | Retry key, required on this route; the SDK and CLI send one automatically. 1–255 printable ASCII, no whitespace. A retry with the same key and command returns the stored receipt and admits nothing; the same key with a different command is 422. The key is remembered while the command waits and for 24 hours after it settled. Past 4096 remembered keys a new key is 429 idempotency_keys_exhausted; a stop is never refused because of the remembered-key limit. |
+| `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
+| `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
+| `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
+| `realm` | `"global" \| (string & {})` | No | query |  |
+
+**Returns:** `AgentSessionsCommandsSendResponse`
+
+**CLI:** `hoody agent sessions commands send`
 
 ---
 
@@ -5440,7 +5919,7 @@ client.agent.sessions.updateApproval(id: string, data?: AgentSessionsUpdateAppro
 Cancel the active turn (Esc), or one named turn.
 
 ```typescript
-client.agent.sessions.turns.cancel(id: string, data?: AgentSessionsTurnsCancelRequest, options?: { turn_id?: string; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsTurnsCancelResponse>
+client.agent.sessions.turns.cancel(id: string, data?: AgentSessionsTurnsCancelRequest, options?: { turn_id?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsTurnsCancelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5448,12 +5927,10 @@ client.agent.sessions.turns.cancel(id: string, data?: AgentSessionsTurnsCancelRe
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsTurnsCancelRequest` | No | body |  |
 | `turn_id` | `string` | No | query | Cancel only this turn (alternative to the body field). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsTurnsCancelResponse`
 
@@ -5468,20 +5945,18 @@ client.agent.sessions.turns.cancel(id: string, data?: AgentSessionsTurnsCancelRe
 Dispatch a turn (retry-safe).
 
 ```typescript
-client.agent.sessions.turns.create(id: string, data: AgentSessionsTurnsCreateRequest, options?: { realm?: string; IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsTurnsCreateResponse>
+client.agent.sessions.turns.create(id: string, data: AgentSessionsTurnsCreateRequest, options?: { IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsTurnsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsTurnsCreateRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `IdempotencyKey` | `string` | No | header | Opaque retry key (1–255 printable ASCII, no whitespace). A retry with the same key returns the same receipt and never re-runs the turn; the same key with a different request body is 422. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsTurnsCreateResponse`
 
@@ -5496,19 +5971,17 @@ client.agent.sessions.turns.create(id: string, data: AgentSessionsTurnsCreateReq
 Get a turn's durable receipt.
 
 ```typescript
-client.agent.sessions.turns.get(id: string, turn_id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsTurnsGetResponse>
+client.agent.sessions.turns.get(id: string, turn_id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsTurnsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `turn_id` | `string` | Yes | path | The turn id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsTurnsGetResponse`
 
@@ -5523,19 +5996,17 @@ client.agent.sessions.turns.get(id: string, turn_id: string, options?: { realm?:
 List a session's durable turn receipts.
 
 ```typescript
-client.agent.sessions.turns.list(id: string, options?: { limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsTurnsListResponse>
+client.agent.sessions.turns.list(id: string, options?: { limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsTurnsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `limit` | `number` | No | query | Return at most this many receipts, newest first (1–1000). A cap, not a page size: there is no next page. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsTurnsListResponse`
 
@@ -5550,7 +6021,7 @@ client.agent.sessions.turns.list(id: string, options?: { limit?: number; realm?:
 Dispatch a turn and block until it ends (no reply text: read it from the transcript)
 
 ```typescript
-client.agent.sessions.turns.run(id: string, data: AgentSessionsTurnsRunRequest, options?: { policy?: string; realm?: string; XHoodyGatePolicy?: string; IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSessionsTurnsRunResponse>
+client.agent.sessions.turns.run(id: string, data: AgentSessionsTurnsRunRequest, options?: { policy?: string; XHoodyGatePolicy?: string; IdempotencyKey?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSessionsTurnsRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5558,14 +6029,12 @@ client.agent.sessions.turns.run(id: string, data: AgentSessionsTurnsRunRequest, 
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentSessionsTurnsRunRequest` | Yes | body |  |
 | `policy` | `string` | No | query | auto_approve adopts the headless auto-answer posture (alias of the X-Hoody-Gate-Policy header); off by default; the gateway asks for no separate credentials to use it; access is decided by the container's proxy permission policy. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyGatePolicy` | `string` | No | header | Confirm-gate posture: "auto_approve" adopts the headless auto-answer posture (off by default; the in:query alias is ?policy=). Any other value is rejected 400. |
 | `IdempotencyKey` | `string` | No | header | Opaque retry key (1–255 printable ASCII, no whitespace). The turn runs at most once per key: a retry answers 200 duplicate:true with the turn's outcome (or pending_turn while it still runs) and never re-runs it; the same key with a different request body is 422. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSessionsTurnsRunResponse`
 
@@ -5582,14 +6051,13 @@ client.agent.sessions.turns.run(id: string, data: AgentSessionsTurnsRunRequest, 
 Get settings.
 
 ```typescript
-client.agent.settings.get(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentSettingsGetResponse>
+client.agent.settings.get(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentSettingsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentSettingsGetResponse`
 
@@ -5626,18 +6094,16 @@ client.agent.settings.update(data: AgentSettingsUpdateRequest): Promise<AgentSet
 Create a skill.
 
 ```typescript
-client.agent.skills.create(data: AgentSkillsCreateRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsCreateResponse>
+client.agent.skills.create(data: AgentSkillsCreateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSkillsCreateRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsCreateResponse`
 
@@ -5652,18 +6118,16 @@ client.agent.skills.create(data: AgentSkillsCreateRequest, options?: { realm?: s
 Delete a skill.
 
 ```typescript
-client.agent.skills.delete(data: AgentSkillsDeleteRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsDeleteResponse>
+client.agent.skills.delete(data: AgentSkillsDeleteRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSkillsDeleteRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsDeleteResponse`
 
@@ -5678,7 +6142,7 @@ client.agent.skills.delete(data: AgentSkillsDeleteRequest, options?: { realm?: s
 Enable/disable a skill.
 
 ```typescript
-client.agent.skills.disable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.skills.disable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5686,8 +6150,7 @@ client.agent.skills.disable(data: object, options?: { XHoodyCwd?: string; XHoody
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -5703,7 +6166,7 @@ client.agent.skills.disable(data: object, options?: { XHoodyCwd?: string; XHoody
 Enable/disable a skill.
 
 ```typescript
-client.agent.skills.enable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string }): Promise<any>
+client.agent.skills.enable(data: object, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5711,8 +6174,7 @@ client.agent.skills.enable(data: object, options?: { XHoodyCwd?: string; XHoodyC
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | Yes | body |  |
 
 **Returns:** `any`
@@ -5728,7 +6190,7 @@ client.agent.skills.enable(data: object, options?: { XHoodyCwd?: string; XHoodyC
 Read a skill's source.
 
 ```typescript
-client.agent.skills.getSource(options?: { root_dir?: string; rel_dir?: string; root?: string; rel?: string; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsGetSourceResponse>
+client.agent.skills.getSource(options?: { root_dir?: string; rel_dir?: string; root?: string; rel?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsGetSourceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -5737,12 +6199,10 @@ client.agent.skills.getSource(options?: { root_dir?: string; rel_dir?: string; r
 | `rel_dir` | `string` | No | query | Skill relative directory (identity; alias: rel). |
 | `root` | `string` | No | query | Friendly alias of root_dir (translated to root_dir server-side). |
 | `rel` | `string` | No | query | Friendly alias of rel_dir (translated to rel_dir server-side). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsGetSourceResponse`
 
@@ -5757,18 +6217,16 @@ client.agent.skills.getSource(options?: { root_dir?: string; rel_dir?: string; r
 Apply a skill import.
 
 ```typescript
-client.agent.skills.import(data: AgentSkillsImportRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsImportResponse>
+client.agent.skills.import(data: AgentSkillsImportRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsImportResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSkillsImportRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsImportResponse`
 
@@ -5783,18 +6241,16 @@ client.agent.skills.import(data: AgentSkillsImportRequest, options?: { realm?: s
 List skills.
 
 ```typescript
-client.agent.skills.list(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsListResponse>
+client.agent.skills.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsListResponse`
 
@@ -5809,18 +6265,16 @@ client.agent.skills.list(options?: { page?: number; limit?: number; realm?: stri
 List skills. (collect all pages)
 
 ```typescript
-client.agent.skills.listAll(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.skills.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -5833,18 +6287,16 @@ client.agent.skills.listAll(options?: { page?: number; limit?: number; realm?: s
 List skills. (async iterator)
 
 ```typescript
-client.agent.skills.listIterator(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.skills.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -5857,18 +6309,16 @@ client.agent.skills.listIterator(options?: { page?: number; limit?: number; real
 Rename a skill.
 
 ```typescript
-client.agent.skills.rename(data: AgentSkillsRenameRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsRenameResponse>
+client.agent.skills.rename(data: AgentSkillsRenameRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsRenameResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSkillsRenameRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsRenameResponse`
 
@@ -5883,18 +6333,15 @@ client.agent.skills.rename(data: AgentSkillsRenameRequest, options?: { realm?: s
 Scan for importable skills.
 
 ```typescript
-client.agent.skills.scan(options: { source: "claude" | "codex"; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsScanResponse>
+client.agent.skills.scan(options: { source: "claude" | "codex"; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentSkillsScanResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `source` | `"claude" \| "codex"` | Yes | query | Which tool's skills to scan. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentSkillsScanResponse`
 
@@ -5909,18 +6356,16 @@ client.agent.skills.scan(options: { source: "claude" | "codex"; realm?: string; 
 Write a skill's source.
 
 ```typescript
-client.agent.skills.setSource(data: AgentSkillsSetSourceRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsSetSourceResponse>
+client.agent.skills.setSource(data: AgentSkillsSetSourceRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsSetSourceResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSkillsSetSourceRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsSetSourceResponse`
 
@@ -5935,18 +6380,16 @@ client.agent.skills.setSource(data: AgentSkillsSetSourceRequest, options?: { rea
 Set a skill's trust state.
 
 ```typescript
-client.agent.skills.trust(data: AgentSkillsTrustRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsTrustResponse>
+client.agent.skills.trust(data: AgentSkillsTrustRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsTrustResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSkillsTrustRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsTrustResponse`
 
@@ -5963,17 +6406,14 @@ client.agent.skills.trust(data: AgentSkillsTrustRequest, options?: { realm?: str
 Clear the skill hub cache.
 
 ```typescript
-client.agent.skills.hub.clearCache(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsHubClearCacheResponse>
+client.agent.skills.hub.clearCache(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentSkillsHubClearCacheResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentSkillsHubClearCacheResponse`
 
@@ -5988,17 +6428,14 @@ client.agent.skills.hub.clearCache(options?: { realm?: string; XHoodyCwd?: strin
 Skill hub cache stats.
 
 ```typescript
-client.agent.skills.hub.getCacheStats(options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsHubGetCacheStatsResponse>
+client.agent.skills.hub.getCacheStats(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentSkillsHubGetCacheStatsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentSkillsHubGetCacheStatsResponse`
 
@@ -6013,18 +6450,16 @@ client.agent.skills.hub.getCacheStats(options?: { realm?: string; XHoodyCwd?: st
 Install a hub skill.
 
 ```typescript
-client.agent.skills.hub.install(data: AgentSkillsHubInstallRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsHubInstallResponse>
+client.agent.skills.hub.install(data: AgentSkillsHubInstallRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentSkillsHubInstallResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentSkillsHubInstallRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentSkillsHubInstallResponse`
 
@@ -6039,7 +6474,7 @@ client.agent.skills.hub.install(data: AgentSkillsHubInstallRequest, options?: { 
 Preview a hub skill.
 
 ```typescript
-client.agent.skills.hub.preview(options: { provider: string; source: string; skill_id: string; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsHubPreviewResponse>
+client.agent.skills.hub.preview(options: { provider: string; source: string; skill_id: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentSkillsHubPreviewResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6047,12 +6482,9 @@ client.agent.skills.hub.preview(options: { provider: string; source: string; ski
 | `provider` | `string` | Yes | query | Hub provider of the skill (a search result's ref.provider). |
 | `source` | `string` | Yes | query | Source of the skill on the hub, such as owner/repo (a search result's ref.source). |
 | `skill_id` | `string` | Yes | query | Hub skill id (a search result's ref.skill_id). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentSkillsHubPreviewResponse`
 
@@ -6067,18 +6499,15 @@ client.agent.skills.hub.preview(options: { provider: string; source: string; ski
 Search the skill hub.
 
 ```typescript
-client.agent.skills.hub.search(options: { query: string; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentSkillsHubSearchResponse>
+client.agent.skills.hub.search(options: { query: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string }): Promise<AgentSkillsHubSearchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `query` | `string` | Yes | query | Search text. Required and non-empty. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentSkillsHubSearchResponse`
 
@@ -6095,7 +6524,7 @@ client.agent.skills.hub.search(options: { query: string; realm?: string; XHoodyC
 Cross-session statistics.
 
 ```typescript
-client.agent.stats.get(options?: { scope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentStatsGetResponse>
+client.agent.stats.get(options?: { scope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentStatsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6103,7 +6532,7 @@ client.agent.stats.get(options?: { scope?: string; XHoodyCwd?: string; XHoodyCon
 | `scope` | `string` | No | query | cwd (default) rolls up the current working directory; all rolls up every session. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentStatsGetResponse`
 
@@ -6120,19 +6549,17 @@ client.agent.stats.get(options?: { scope?: string; XHoodyCwd?: string; XHoodyCon
 Cancel a background task.
 
 ```typescript
-client.agent.tasks.cancel(id: string, tid: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTasksCancelResponse>
+client.agent.tasks.cancel(id: string, tid: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTasksCancelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `tid` | `string` | Yes | path | The task id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTasksCancelResponse`
 
@@ -6147,7 +6574,7 @@ client.agent.tasks.cancel(id: string, tid: string, options?: { realm?: string; X
 Read a background task's transcript.
 
 ```typescript
-client.agent.tasks.getTranscript(id: string, tid: string, options?: { after_seq?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTasksGetTranscriptResponse>
+client.agent.tasks.getTranscript(id: string, tid: string, options?: { after_seq?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTasksGetTranscriptResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6155,12 +6582,10 @@ client.agent.tasks.getTranscript(id: string, tid: string, options?: { after_seq?
 | `id` | `string` | Yes | path | The session id. |
 | `tid` | `string` | Yes | path | The task id. |
 | `after_seq` | `number` | No | query | Exclusive int64 upsert-poll cursor: entries with seq strictly greater than it, plus any still-OPEN entry regardless of its seq. Omit for the whole transcript (distinct from 0, which skips a closed seq-0 entry). Negative/non-integer = 400. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTasksGetTranscriptResponse`
 
@@ -6175,18 +6600,16 @@ client.agent.tasks.getTranscript(id: string, tid: string, options?: { after_seq?
 List a session's background tasks.
 
 ```typescript
-client.agent.tasks.list(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTasksListResponse>
+client.agent.tasks.list(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTasksListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTasksListResponse`
 
@@ -6203,7 +6626,7 @@ client.agent.tasks.list(id: string, options?: { realm?: string; XHoodyCwd?: stri
 Approve a todo proposal.
 
 ```typescript
-client.agent.todos.approveProposal(id: string, pid: string, data?: AgentTodosApproveProposalRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosApproveProposalResponse>
+client.agent.todos.approveProposal(id: string, pid: string, data?: AgentTodosApproveProposalRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosApproveProposalResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6211,12 +6634,10 @@ client.agent.todos.approveProposal(id: string, pid: string, data?: AgentTodosApp
 | `id` | `string` | Yes | path | The todo id. |
 | `pid` | `string` | Yes | path | The proposal id. |
 | `data` | `AgentTodosApproveProposalRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosApproveProposalResponse`
 
@@ -6231,19 +6652,17 @@ client.agent.todos.approveProposal(id: string, pid: string, data?: AgentTodosApp
 Archive a todo.
 
 ```typescript
-client.agent.todos.archive(id: string, data: AgentTodosArchiveRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosArchiveResponse>
+client.agent.todos.archive(id: string, data: AgentTodosArchiveRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosArchiveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosArchiveRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosArchiveResponse`
 
@@ -6258,19 +6677,17 @@ client.agent.todos.archive(id: string, data: AgentTodosArchiveRequest, options?:
 Cancel a todo's run.
 
 ```typescript
-client.agent.todos.cancel(id: string, data?: AgentTodosCancelRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosCancelResponse>
+client.agent.todos.cancel(id: string, data?: AgentTodosCancelRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosCancelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosCancelRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosCancelResponse`
 
@@ -6285,19 +6702,17 @@ client.agent.todos.cancel(id: string, data?: AgentTodosCancelRequest, options?: 
 Claim a todo.
 
 ```typescript
-client.agent.todos.claim(id: string, data: AgentTodosClaimRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosClaimResponse>
+client.agent.todos.claim(id: string, data: AgentTodosClaimRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosClaimResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosClaimRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosClaimResponse`
 
@@ -6312,18 +6727,16 @@ client.agent.todos.claim(id: string, data: AgentTodosClaimRequest, options?: { r
 File a todo.
 
 ```typescript
-client.agent.todos.create(data: AgentTodosCreateRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosCreateResponse>
+client.agent.todos.create(data: AgentTodosCreateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentTodosCreateRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosCreateResponse`
 
@@ -6338,19 +6751,17 @@ client.agent.todos.create(data: AgentTodosCreateRequest, options?: { realm?: str
 Comment on a todo.
 
 ```typescript
-client.agent.todos.createComment(id: string, data: AgentTodosCreateCommentRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosCreateCommentResponse>
+client.agent.todos.createComment(id: string, data: AgentTodosCreateCommentRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosCreateCommentResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosCreateCommentRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosCreateCommentResponse`
 
@@ -6365,7 +6776,7 @@ client.agent.todos.createComment(id: string, data: AgentTodosCreateCommentReques
 Deny a todo proposal.
 
 ```typescript
-client.agent.todos.denyProposal(id: string, pid: string, data?: AgentTodosDenyProposalRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosDenyProposalResponse>
+client.agent.todos.denyProposal(id: string, pid: string, data?: AgentTodosDenyProposalRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosDenyProposalResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6373,12 +6784,10 @@ client.agent.todos.denyProposal(id: string, pid: string, data?: AgentTodosDenyPr
 | `id` | `string` | Yes | path | The todo id. |
 | `pid` | `string` | Yes | path | The proposal id. |
 | `data` | `AgentTodosDenyProposalRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosDenyProposalResponse`
 
@@ -6393,18 +6802,16 @@ client.agent.todos.denyProposal(id: string, pid: string, data?: AgentTodosDenyPr
 Read a todo.
 
 ```typescript
-client.agent.todos.get(id: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosGetResponse>
+client.agent.todos.get(id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosGetResponse`
 
@@ -6419,14 +6826,14 @@ client.agent.todos.get(id: string, options?: { realm?: string; XHoodyCwd?: strin
 Get the todos store revision.
 
 ```typescript
-client.agent.todos.getRevision(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentTodosGetRevisionResponse>
+client.agent.todos.getRevision(options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosGetRevisionResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosGetRevisionResponse`
 
@@ -6441,7 +6848,7 @@ client.agent.todos.getRevision(options?: { XHoodyCwd?: string; XHoodyConfigDir?:
 List todos.
 
 ```typescript
-client.agent.todos.list(options?: { states?: ("inbox" | "ready" | "blocked" | "in_progress" | "review" | "done" | "dropped")[]; tags?: string[]; query?: string; open_only?: boolean; all?: boolean; sort?: "default" | "closed_at"; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentTodosListResponse>
+client.agent.todos.list(options?: { states?: ("inbox" | "ready" | "blocked" | "in_progress" | "review" | "done" | "dropped")[]; tags?: string[]; query?: string; open_only?: boolean; all?: boolean; sort?: "default" | "closed_at"; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentTodosListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6452,11 +6859,11 @@ client.agent.todos.list(options?: { states?: ("inbox" | "ready" | "blocked" | "i
 | `open_only` | `boolean` | No | query | When true, only open (non-terminal) todos. |
 | `all` | `boolean` | No | query | When true, include archived/closed todos. |
 | `sort` | `"default" \| "closed_at"` | No | query | List order. `default` (or omitted): open todos first, then priority, rank, number. `closed_at`: closed todos by `closed_at`, newest first; todos without a `closed_at` follow in the default order. Any other value is 400. |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (todos not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentTodosListResponse`
 
@@ -6471,7 +6878,7 @@ client.agent.todos.list(options?: { states?: ("inbox" | "ready" | "blocked" | "i
 List todos. (collect all pages)
 
 ```typescript
-client.agent.todos.listAll(options?: { states?: ("inbox" | "ready" | "blocked" | "in_progress" | "review" | "done" | "dropped")[]; tags?: string[]; query?: string; open_only?: boolean; all?: boolean; sort?: "default" | "closed_at"; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.todos.listAll(options?: { states?: ("inbox" | "ready" | "blocked" | "in_progress" | "review" | "done" | "dropped")[]; tags?: string[]; query?: string; open_only?: boolean; all?: boolean; sort?: "default" | "closed_at"; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6482,11 +6889,11 @@ client.agent.todos.listAll(options?: { states?: ("inbox" | "ready" | "blocked" |
 | `open_only` | `boolean` | No | query | When true, only open (non-terminal) todos. |
 | `all` | `boolean` | No | query | When true, include archived/closed todos. |
 | `sort` | `"default" \| "closed_at"` | No | query | List order. `default` (or omitted): open todos first, then priority, rank, number. `closed_at`: closed todos by `closed_at`, newest first; todos without a `closed_at` follow in the default order. Any other value is 400. |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (todos not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -6499,7 +6906,7 @@ client.agent.todos.listAll(options?: { states?: ("inbox" | "ready" | "blocked" |
 List todos. (async iterator)
 
 ```typescript
-client.agent.todos.listIterator(options?: { states?: ("inbox" | "ready" | "blocked" | "in_progress" | "review" | "done" | "dropped")[]; tags?: string[]; query?: string; open_only?: boolean; all?: boolean; sort?: "default" | "closed_at"; page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.todos.listIterator(options?: { states?: ("inbox" | "ready" | "blocked" | "in_progress" | "review" | "done" | "dropped")[]; tags?: string[]; query?: string; open_only?: boolean; all?: boolean; sort?: "default" | "closed_at"; realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6510,11 +6917,11 @@ client.agent.todos.listIterator(options?: { states?: ("inbox" | "ready" | "block
 | `open_only` | `boolean` | No | query | When true, only open (non-terminal) todos. |
 | `all` | `boolean` | No | query | When true, include archived/closed todos. |
 | `sort` | `"default" \| "closed_at"` | No | query | List order. `default` (or omitted): open todos first, then priority, rank, number. `closed_at`: closed todos by `closed_at`, newest first; todos without a `closed_at` follow in the default order. Any other value is 400. |
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (todos not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6527,18 +6934,16 @@ client.agent.todos.listIterator(options?: { states?: ("inbox" | "ready" | "block
 Purge archived todos.
 
 ```typescript
-client.agent.todos.purgeArchived(data?: AgentTodosPurgeArchivedRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosPurgeArchivedResponse>
+client.agent.todos.purgeArchived(data?: AgentTodosPurgeArchivedRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosPurgeArchivedResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentTodosPurgeArchivedRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosPurgeArchivedResponse`
 
@@ -6553,19 +6958,17 @@ client.agent.todos.purgeArchived(data?: AgentTodosPurgeArchivedRequest, options?
 Release a todo.
 
 ```typescript
-client.agent.todos.release(id: string, data: AgentTodosReleaseRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosReleaseResponse>
+client.agent.todos.release(id: string, data: AgentTodosReleaseRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosReleaseResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosReleaseRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosReleaseResponse`
 
@@ -6580,19 +6983,17 @@ client.agent.todos.release(id: string, data: AgentTodosReleaseRequest, options?:
 Comment + run an orchestrator turn.
 
 ```typescript
-client.agent.todos.sendMessage(id: string, data: AgentTodosSendMessageRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosSendMessageResponse>
+client.agent.todos.sendMessage(id: string, data: AgentTodosSendMessageRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosSendMessageResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosSendMessageRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosSendMessageResponse`
 
@@ -6607,19 +7008,17 @@ client.agent.todos.sendMessage(id: string, data: AgentTodosSendMessageRequest, o
 Snooze a todo.
 
 ```typescript
-client.agent.todos.snooze(id: string, data: AgentTodosSnoozeRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosSnoozeResponse>
+client.agent.todos.snooze(id: string, data: AgentTodosSnoozeRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosSnoozeResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosSnoozeRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosSnoozeResponse`
 
@@ -6634,19 +7033,17 @@ client.agent.todos.snooze(id: string, data: AgentTodosSnoozeRequest, options?: {
 Run a todo's orchestrator.
 
 ```typescript
-client.agent.todos.start(id: string, data?: AgentTodosStartRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosStartResponse>
+client.agent.todos.start(id: string, data?: AgentTodosStartRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosStartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosStartRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosStartResponse`
 
@@ -6661,18 +7058,16 @@ client.agent.todos.start(id: string, data?: AgentTodosStartRequest, options?: { 
 Run an LLM triage pass.
 
 ```typescript
-client.agent.todos.triage(data?: AgentTodosTriageRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosTriageResponse>
+client.agent.todos.triage(data?: AgentTodosTriageRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosTriageResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `data` | `AgentTodosTriageRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosTriageResponse`
 
@@ -6687,19 +7082,17 @@ client.agent.todos.triage(data?: AgentTodosTriageRequest, options?: { realm?: st
 Update a todo (CAS).
 
 ```typescript
-client.agent.todos.update(id: string, data: AgentTodosUpdateRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentTodosUpdateResponse>
+client.agent.todos.update(id: string, data: AgentTodosUpdateRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentTodosUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The todo id. |
 | `data` | `AgentTodosUpdateRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentTodosUpdateResponse`
 
@@ -6716,7 +7109,7 @@ client.agent.todos.update(id: string, data: AgentTodosUpdateRequest, options?: {
 Get one tool schema.
 
 ```typescript
-client.agent.tools.get(name: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentToolsGetResponse>
+client.agent.tools.get(name: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentToolsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6724,7 +7117,6 @@ client.agent.tools.get(name: string, options?: { XHoodyCwd?: string; XHoodyConfi
 | `name` | `string` | Yes | path | The name. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentToolsGetResponse`
 
@@ -6739,7 +7131,7 @@ client.agent.tools.get(name: string, options?: { XHoodyCwd?: string; XHoodyConfi
 List the tool catalogue.
 
 ```typescript
-client.agent.tools.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentToolsListResponse>
+client.agent.tools.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentToolsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6748,7 +7140,6 @@ client.agent.tools.list(options?: { page?: number; limit?: number; XHoodyCwd?: s
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentToolsListResponse`
 
@@ -6763,7 +7154,7 @@ client.agent.tools.list(options?: { page?: number; limit?: number; XHoodyCwd?: s
 List the tool catalogue. (collect all pages)
 
 ```typescript
-client.agent.tools.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.tools.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6772,7 +7163,6 @@ client.agent.tools.listAll(options?: { page?: number; limit?: number; XHoodyCwd?
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -6785,7 +7175,7 @@ client.agent.tools.listAll(options?: { page?: number; limit?: number; XHoodyCwd?
 List the tool catalogue. (async iterator)
 
 ```typescript
-client.agent.tools.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.tools.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6794,7 +7184,6 @@ client.agent.tools.listIterator(options?: { page?: number; limit?: number; XHood
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6807,7 +7196,7 @@ client.agent.tools.listIterator(options?: { page?: number; limit?: number; XHood
 List the read-only tool subset.
 
 ```typescript
-client.agent.tools.listReadOnly(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentToolsListReadOnlyResponse>
+client.agent.tools.listReadOnly(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentToolsListReadOnlyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6816,7 +7205,6 @@ client.agent.tools.listReadOnly(options?: { page?: number; limit?: number; XHood
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentToolsListReadOnlyResponse`
 
@@ -6831,7 +7219,7 @@ client.agent.tools.listReadOnly(options?: { page?: number; limit?: number; XHood
 List the read-only tool subset. (collect all pages)
 
 ```typescript
-client.agent.tools.listReadOnlyAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.tools.listReadOnlyAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6840,7 +7228,6 @@ client.agent.tools.listReadOnlyAll(options?: { page?: number; limit?: number; XH
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -6853,7 +7240,7 @@ client.agent.tools.listReadOnlyAll(options?: { page?: number; limit?: number; XH
 List the read-only tool subset. (async iterator)
 
 ```typescript
-client.agent.tools.listReadOnlyIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.tools.listReadOnlyIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6862,7 +7249,6 @@ client.agent.tools.listReadOnlyIterator(options?: { page?: number; limit?: numbe
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -6875,7 +7261,7 @@ client.agent.tools.listReadOnlyIterator(options?: { page?: number; limit?: numbe
 Run a tool (sessionless, gated).
 
 ```typescript
-client.agent.tools.run(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; realm?: string; stream?: boolean }): Promise<any>
+client.agent.tools.run(name: string, data?: object, options?: { confirm?: boolean; confirm_token?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: string; stream?: boolean }): Promise<any>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6888,8 +7274,7 @@ client.agent.tools.run(name: string, data?: object, options?: { confirm?: boolea
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
+| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" (not tied to a realm) or a 24-hex realm id (also accepted as ?realm=). On a session route it names the realm the session is looked up in: a session in another realm, or in a realm this login does not serve, is 404 not_found. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes, and for any other realm on an agent pinned to one realm. |
 | `data` | `object` | No | body |  |
 | `stream` | `boolean` | No | option | Stream the tool output as server-sent events. |
 
@@ -6906,7 +7291,7 @@ client.agent.tools.run(name: string, data?: object, options?: { confirm?: boolea
 Run a tool asynchronously (sessionless, gated).
 
 ```typescript
-client.agent.tools.start(name: string, data?: AgentToolsStartRequest, options?: { confirm?: boolean; confirm_token?: string; realm?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentToolsStartResponse>
+client.agent.tools.start(name: string, data?: AgentToolsStartRequest, options?: { confirm?: boolean; confirm_token?: string; XHoodyToolMode?: string; XHoodyDirScope?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentToolsStartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6915,14 +7300,12 @@ client.agent.tools.start(name: string, data?: AgentToolsStartRequest, options?: 
 | `data` | `AgentToolsStartRequest` | No | body |  |
 | `confirm` | `boolean` | No | query | Query alias of the body `confirm` field — re-issue a previously-parked confirmation (pair with confirm_token). |
 | `confirm_token` | `string` | No | query | Query alias of the body `confirm_token` field — the single-use token returned in the 409 tool_needs_confirmation details. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyToolMode` | `string` | No | header | Sessionless tool-mode for the ephemeral session: `standard` (the default) or `orchestrator`. Any other value is refused 400 invalid_tool_mode. Ignored on the in-session run (it inherits the session's frozen tool-mode). |
 | `XHoodyDirScope` | `string` | No | header | Sessionless directory-access scope for the ephemeral session: home (the default) or full. Any other value is refused 400 invalid_dir_scope. Ignored on the in-session run (it inherits the session's frozen dir-scope). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentToolsStartResponse`
 
@@ -6939,7 +7322,7 @@ client.agent.tools.start(name: string, data?: AgentToolsStartRequest, options?: 
 Usage rollup by account.
 
 ```typescript
-client.agent.usage.listByAccount(options?: { since?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentUsageListByAccountResponse>
+client.agent.usage.listByAccount(options?: { since?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentUsageListByAccountResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6947,7 +7330,6 @@ client.agent.usage.listByAccount(options?: { since?: number; XHoodyCwd?: string;
 | `since` | `number` | No | query | Unix-seconds lower bound; omit for all-time. A negative/non-numeric value is rejected 400. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentUsageListByAccountResponse`
 
@@ -6962,7 +7344,7 @@ client.agent.usage.listByAccount(options?: { since?: number; XHoodyCwd?: string;
 Usage rollup by model.
 
 ```typescript
-client.agent.usage.listByModel(options?: { since?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentUsageListByModelResponse>
+client.agent.usage.listByModel(options?: { since?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentUsageListByModelResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6970,7 +7352,6 @@ client.agent.usage.listByModel(options?: { since?: number; XHoodyCwd?: string; X
 | `since` | `number` | No | query | Unix-seconds lower bound; omit for all-time. A negative/non-numeric value is rejected 400. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentUsageListByModelResponse`
 
@@ -6987,7 +7368,7 @@ client.agent.usage.listByModel(options?: { since?: number; XHoodyCwd?: string; X
 Cancel a workflow run.
 
 ```typescript
-client.agent.workflows.cancelRun(run_id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentWorkflowsCancelRunResponse>
+client.agent.workflows.cancelRun(run_id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsCancelRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -6995,7 +7376,7 @@ client.agent.workflows.cancelRun(run_id: string, options?: { XHoodyCwd?: string;
 | `run_id` | `string` | Yes | path | The run id. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsCancelRunResponse`
 
@@ -7010,18 +7391,16 @@ client.agent.workflows.cancelRun(run_id: string, options?: { XHoodyCwd?: string;
 Delete a workflow definition.
 
 ```typescript
-client.agent.workflows.delete(name: string, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsDeleteResponse>
+client.agent.workflows.delete(name: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsDeleteResponse`
 
@@ -7036,19 +7415,17 @@ client.agent.workflows.delete(name: string, options?: { realm?: string; XHoodyCw
 Read one workflow definition.
 
 ```typescript
-client.agent.workflows.get(name: string, options?: { include_revision?: boolean; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsGetResponse>
+client.agent.workflows.get(name: string, options?: { include_revision?: boolean; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `include_revision` | `boolean` | No | query | If "true", the tool output's first line is `revision: &lt;opaque&gt;` — pass that value as putWorkflow's expected_revision to guard against concurrent edits; the JSON below it is unchanged. Strictly parsed: exactly one value, "true" or "false"; anything else (empty, "TRUE", "1", repeated) is a 400 bad_request. |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsGetResponse`
 
@@ -7063,7 +7440,7 @@ client.agent.workflows.get(name: string, options?: { include_revision?: boolean;
 Get one workflow run by id.
 
 ```typescript
-client.agent.workflows.getRun(run_id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentWorkflowsGetRunResponse>
+client.agent.workflows.getRun(run_id: string, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsGetRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -7071,7 +7448,7 @@ client.agent.workflows.getRun(run_id: string, options?: { XHoodyCwd?: string; XH
 | `run_id` | `string` | Yes | path | The run id. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsGetRunResponse`
 
@@ -7086,18 +7463,16 @@ client.agent.workflows.getRun(run_id: string, options?: { XHoodyCwd?: string; XH
 List workflow definitions.
 
 ```typescript
-client.agent.workflows.list(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsListResponse>
+client.agent.workflows.list(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsListResponse`
 
@@ -7112,18 +7487,16 @@ client.agent.workflows.list(options?: { page?: number; limit?: number; realm?: s
 List workflow definitions. (collect all pages)
 
 ```typescript
-client.agent.workflows.listAll(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.workflows.listAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -7136,18 +7509,16 @@ client.agent.workflows.listAll(options?: { page?: number; limit?: number; realm?
 List workflow definitions. (async iterator)
 
 ```typescript
-client.agent.workflows.listIterator(options?: { page?: number; limit?: number; realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyRealm?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.workflows.listIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -7160,16 +7531,16 @@ client.agent.workflows.listIterator(options?: { page?: number; limit?: number; r
 Snapshot in-flight and recent workflow runs.
 
 ```typescript
-client.agent.workflows.listRuns(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentWorkflowsListRunsResponse>
+client.agent.workflows.listRuns(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<AgentWorkflowsListRunsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (runs not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AgentWorkflowsListRunsResponse`
 
@@ -7184,16 +7555,16 @@ client.agent.workflows.listRuns(options?: { page?: number; limit?: number; XHood
 Snapshot in-flight and recent workflow runs. (collect all pages)
 
 ```typescript
-client.agent.workflows.listRunsAll(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<unknown[]>
+client.agent.workflows.listRunsAll(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (runs not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -7206,16 +7577,16 @@ client.agent.workflows.listRunsAll(options?: { page?: number; limit?: number; XH
 Snapshot in-flight and recent workflow runs. (async iterator)
 
 ```typescript
-client.agent.workflows.listRunsIterator(options?: { page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.agent.workflows.listRunsIterator(options?: { realm?: "global" | "all" | (string & {}); page?: number; limit?: number; XHoodyCwd?: string; XHoodyConfigDir?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
+| `realm` | `"global" \| "all" \| (string & {})` | No | query | The realm to list: "global" (runs not tied to a realm), a 24-hex realm id, or "all" for every realm this login serves. Also accepted as the X-Hoody-Realm header, except "all". Omitted, the agent's current realm. |
 | `page` | `number` | No | query | 1-based page number for pagination. |
 | `limit` | `number` | No | query | Maximum items per page (0 = no pagination). |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -7228,7 +7599,7 @@ client.agent.workflows.listRunsIterator(options?: { page?: number; limit?: numbe
 Resume a failed or cancelled workflow run.
 
 ```typescript
-client.agent.workflows.resumeRun(run_id: string, data: AgentWorkflowsResumeRunRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; cache?: boolean | number }): Promise<AgentWorkflowsResumeRunResponse>
+client.agent.workflows.resumeRun(run_id: string, data: AgentWorkflowsResumeRunRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsResumeRunResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -7237,7 +7608,7 @@ client.agent.workflows.resumeRun(run_id: string, data: AgentWorkflowsResumeRunRe
 | `data` | `AgentWorkflowsResumeRunRequest` | Yes | body |  |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsResumeRunResponse`
 
@@ -7252,19 +7623,17 @@ client.agent.workflows.resumeRun(run_id: string, data: AgentWorkflowsResumeRunRe
 Send a message to a running workflow.
 
 ```typescript
-client.agent.workflows.sendMessage(id: string, data?: AgentWorkflowsSendMessageRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsSendMessageResponse>
+client.agent.workflows.sendMessage(id: string, data?: AgentWorkflowsSendMessageRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsSendMessageResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path | The session id. |
 | `data` | `AgentWorkflowsSendMessageRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsSendMessageResponse`
 
@@ -7279,19 +7648,17 @@ client.agent.workflows.sendMessage(id: string, data?: AgentWorkflowsSendMessageR
 Create or replace a workflow definition.
 
 ```typescript
-client.agent.workflows.set(name: string, data: AgentWorkflowsSetRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsSetResponse>
+client.agent.workflows.set(name: string, data: AgentWorkflowsSetRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentWorkflowsSetRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsSetResponse`
 
@@ -7306,19 +7673,17 @@ client.agent.workflows.set(name: string, data: AgentWorkflowsSetRequest, options
 Hide or un-hide a workflow.
 
 ```typescript
-client.agent.workflows.setHidden(name: string, data?: AgentWorkflowsSetHiddenRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsSetHiddenResponse>
+client.agent.workflows.setHidden(name: string, data?: AgentWorkflowsSetHiddenRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsSetHiddenResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentWorkflowsSetHiddenRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsSetHiddenResponse`
 
@@ -7333,19 +7698,17 @@ client.agent.workflows.setHidden(name: string, data?: AgentWorkflowsSetHiddenReq
 Set or clear a workflow's summary.
 
 ```typescript
-client.agent.workflows.setSummary(name: string, data: AgentWorkflowsSetSummaryRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsSetSummaryResponse>
+client.agent.workflows.setSummary(name: string, data: AgentWorkflowsSetSummaryRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsSetSummaryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentWorkflowsSetSummaryRequest` | Yes | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsSetSummaryResponse`
 
@@ -7360,19 +7723,17 @@ client.agent.workflows.setSummary(name: string, data: AgentWorkflowsSetSummaryRe
 Run a workflow in a new session.
 
 ```typescript
-client.agent.workflows.start(name: string, data?: AgentWorkflowsStartRequest, options?: { realm?: string; XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; XHoodyRealm?: string; cache?: boolean | number }): Promise<AgentWorkflowsStartResponse>
+client.agent.workflows.start(name: string, data?: AgentWorkflowsStartRequest, options?: { XHoodyCwd?: string; XHoodyConfigDir?: string; XHoodyContainer?: string; realm?: "global" | (string & {}) }): Promise<AgentWorkflowsStartResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `name` | `string` | Yes | path | The name. |
 | `data` | `AgentWorkflowsStartRequest` | No | body |  |
-| `realm` | `string` | No | query | Per-request realm selector — the in:query alias of the X-Hoody-Realm header (read only when the header is absent): "global" or a 24-hex id. Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
 | `XHoodyCwd` | `string` | No | header | Per-request working-directory scope: the .hoody project layer / record cwd / tool+workflow cwd. Required by routes that resolve a cwd (e.g. POST /todos; createTodo also accepts a body cwd). |
 | `XHoodyConfigDir` | `string` | No | header | Per-request --config-dir override selecting which on-disk .hoody install a stateless read/write resolves against. |
 | `XHoodyContainer` | `string` | No | header | Per-request bound remote container (omitted = local). Rejected (400) on routes with no container dimension. |
-| `XHoodyRealm` | `string` | No | header | Per-request realm selector: "global" or a 24-hex id (also accepted as ?realm=). Rejected (400 realm_scope_unsupported) on active-only / no-realm routes. |
-| `cache` | `boolean \| number` | No | query |  |
+| `realm` | `"global" \| (string & {})` | No | query |  |
 
 **Returns:** `AgentWorkflowsStartResponse`
 

@@ -1,6 +1,6 @@
 # `files` — 120 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.files`
 
 ```typescript
@@ -41,7 +41,7 @@ client.files.archives.extract(archive: string, options: { extract: string; dest?
 Extract file from archive
 
 ```typescript
-client.files.archives.extractMember(archive: string, options: { extract: string; dest?: string; cache?: boolean | number }): Promise<FilesArchivesExtractMemberResponse>
+client.files.archives.extractMember(archive: string, options: { extract: string; dest?: string }): Promise<FilesArchivesExtractMemberResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -49,7 +49,6 @@ client.files.archives.extractMember(archive: string, options: { extract: string;
 | `archive` | `string` | Yes | path | Path to archive file |
 | `extract` | `string` | Yes | query | Path of the file or directory inside the archive to extract (e.g. "src/" or "lib/") |
 | `dest` | `string` | No | query | Destination directory name (default: archive name) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesArchivesExtractMemberResponse`
 
@@ -64,7 +63,7 @@ client.files.archives.extractMember(archive: string, options: { extract: string;
 Preview archive contents or read file
 
 ```typescript
-client.files.archives.preview(archive: string, options?: { preview?: string; contents?: string; cache?: boolean | number }): Promise<FilesArchivesPreviewResponse>
+client.files.archives.preview(archive: string, options?: { preview?: string; contents?: string }): Promise<FilesArchivesPreviewResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -72,7 +71,6 @@ client.files.archives.preview(archive: string, options?: { preview?: string; con
 | `archive` | `string` | Yes | path | Path to archive file |
 | `preview` | `string` | No | query | Empty value lists archive contents; non-empty value reads a specific file from the archive (alias: ?contents) |
 | `contents` | `string` | No | query | Alias for ?preview |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesArchivesPreviewResponse`
 
@@ -87,14 +85,13 @@ client.files.archives.preview(archive: string, options?: { preview?: string; con
 View file from archive
 
 ```typescript
-client.files.archives.readMember(archive: string, options: { preview: string; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.files.archives.readMember(archive: string, options: { preview: string }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `archive` | `string` | Yes | path | Path to archive file |
 | `preview` | `string` | Yes | query | Path of the file inside the archive to view (e.g. "src/" or "README.md") |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -1091,14 +1088,13 @@ client.files.backends.createZoho(data: FilesBackendsCreateZohoRequest): Promise<
 Disconnect backend
 
 ```typescript
-client.files.backends.delete(id: string, options?: { uploads?: "keep" | "discard"; cache?: boolean | number }): Promise<FilesBackendsDeleteResponse>
+client.files.backends.delete(id: string, options?: { uploads?: "keep" | "discard" }): Promise<FilesBackendsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `id` | `string` | Yes | path |  |
 | `uploads` | `"keep" \| "discard"` | No | query | What becomes of what was written on the backend's mounts and is not uploaded yet: keep uploading it (`keep`) or delete it (`discard`) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesBackendsDeleteResponse`
 
@@ -1252,14 +1248,13 @@ client.files.downloads.list(): Promise<FilesDownloadsListResponse>
 List active downloads
 
 ```typescript
-client.files.downloads.listByDirectory(directory: string, options: { downloads: ""; cache?: boolean | number }): Promise<FilesDownloadsListByDirectoryResponse>
+client.files.downloads.listByDirectory(directory: string, options: { downloads: "" }): Promise<FilesDownloadsListByDirectoryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `directory` | `string` | Yes | path |  |
 | `downloads` | `""` | Yes | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesDownloadsListByDirectoryResponse`
 
@@ -1332,13 +1327,12 @@ client.files.extractions.list(): Promise<FilesExtractionsListResponse>
 List active extractions
 
 ```typescript
-client.files.extractions.listByDirectory(options: { extractions: ""; cache?: boolean | number }): Promise<FilesExtractionsListByDirectoryResponse>
+client.files.extractions.listByDirectory(options: { extractions: "" }): Promise<FilesExtractionsListByDirectoryResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `extractions` | `""` | Yes | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesExtractionsListByDirectoryResponse`
 
@@ -1373,7 +1367,7 @@ client.files.extractions.listHistory(options: { extraction_history: string }): P
 Append data to file
 
 ```typescript
-client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<FilesAppendResponse>
+client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' }): Promise<FilesAppendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1384,7 +1378,6 @@ client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `IfMatch` | `string` | No | header | Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
 | `IfNoneMatch` | `string` | No | header | '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
 | `IfUnmodifiedSince` | `string` | No | header | Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
-| `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `FilesAppendResponse`
@@ -1400,14 +1393,13 @@ client.files.append(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 Change file permissions
 
 ```typescript
-client.files.chmod(path: string, options: { chmod: string; cache?: boolean | number }): Promise<FilesChmodResponse>
+client.files.chmod(path: string, options: { chmod: string }): Promise<FilesChmodResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File or directory path |
 | `chmod` | `string` | Yes | query | Octal permission mode (e.g., 755, 644, 0755) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesChmodResponse`
 
@@ -1422,14 +1414,13 @@ client.files.chmod(path: string, options: { chmod: string; cache?: boolean | num
 Change file ownership
 
 ```typescript
-client.files.chown(path: string, options: { chown: string; cache?: boolean | number }): Promise<FilesChownResponse>
+client.files.chown(path: string, options: { chown: string }): Promise<FilesChownResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File or directory path |
 | `chown` | `string` | Yes | query | Owner and optional group (e.g., user:group, user, :group, or UID:GID) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesChownResponse`
 
@@ -1444,7 +1435,7 @@ client.files.chown(path: string, options: { chown: string; cache?: boolean | num
 Copy file or directory
 
 ```typescript
-client.files.copy(path: string, options: { copy_to: string; overwrite?: "true" | "false"; owner?: string; cache?: boolean | number }): Promise<FilesCopyResponse>
+client.files.copy(path: string, options: { copy_to: string; overwrite?: "true" | "false"; owner?: string }): Promise<FilesCopyResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1453,7 +1444,6 @@ client.files.copy(path: string, options: { copy_to: string; overwrite?: "true" |
 | `copy_to` | `string` | Yes | query | Destination path to copy the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `overwrite` | `"true" \| "false"` | No | query | Allow overwriting existing destination (default: false) |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for newly-created copies. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwritten existing files preserve their owner. Absent → server default. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesCopyResponse`
 
@@ -1468,14 +1458,13 @@ client.files.copy(path: string, options: { copy_to: string; overwrite?: "true" |
 Delete file or directory
 
 ```typescript
-client.files.delete(path: string, options?: { backend?: string; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.delete(path: string, options?: { backend?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path |  |
 | `backend` | `string` | No | query | Backend ID for remote file deletion |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -1490,7 +1479,7 @@ client.files.delete(path: string, options?: { backend?: string; cache?: boolean 
 Get file metadata
 
 ```typescript
-client.files.exists(options: { path: string; history?: string; at?: string; revision?: number; diff?: string; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number }): Promise<any>
+client.files.exists(path: string, options?: FilesExistsOptions, templateVars?: FilesReadTarget): Promise<boolean>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1507,7 +1496,7 @@ client.files.exists(options: { path: string; history?: string; at?: string; revi
 | `after_id` | `number` | No | query | Cursor for ?history pagination. Returns entries with id &gt; after_id. |
 | `limit` | `number` | No | query | Max entries to return for ?history. |
 
-**Returns:** `any`
+**Returns:** `boolean`
 
 **CLI:** `hoody files exists`
 
@@ -1520,7 +1509,7 @@ client.files.exists(options: { path: string; history?: string; at?: string; revi
 List directory or download file
 
 ```typescript
-client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?: ""; base64?: ""; preview?: ""; contents?: ""; stat?: ""; thumbnail?: string; format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; blur?: number; grayscale?: ""; bg?: string; q?: string; grep?: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: number; max_count?: number; max_matches?: number; max_depth?: number; max_filesize?: number; timeout?: number; no_ignore?: boolean; hidden?: boolean; max_results?: number; max_files_scanned?: number; sort?: "mtime" | "name" | "size"; order?: "asc" | "desc"; lines?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; zip?: ""; Range?: string; IfRange?: string; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | FilesGetResponse>
+client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?: ""; base64?: ""; preview?: ""; contents?: ""; stat?: ""; thumbnail?: string; format?: "jpeg" | "png" | "webp" | "gif" | "bmp"; size?: string; width?: number; height?: number; resize?: "fit" | "fill" | "cover" | "exact"; quality?: "low" | "medium" | "high"; blur?: number; grayscale?: ""; bg?: string; q?: string; grep?: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: number; max_count?: number; max_matches?: number; max_depth?: number; max_filesize?: number; timeout?: number; no_ignore?: boolean; hidden?: boolean; max_results?: number; max_files_scanned?: number; sort?: "mtime" | "name" | "size"; order?: "asc" | "desc"; lines?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; zip?: ""; Range?: string; IfRange?: string }): Promise<ApiResponse<ArrayBuffer> | FilesGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1571,10 +1560,9 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 | `to_ts` | `string` | No | query | Target timestamp for ?diff (RFC3339 or Unix ms). Mutually exclusive with to_seq. |
 | `after_id` | `number` | No | query | Cursor for ?history pagination. Returns entries with id &gt; after_id. |
 | `limit` | `number` | No | query | Max entries to return for ?history. |
-| `zip` | `""` | No | query | Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip. |
+| `zip` | `""` | No | query | Download a directory as a streaming zip archive (bare flag, e.g. ?zip). Local directories only (a folder of a remote backend, named with backend, answers 501), and only where the deployment enabled archive downloads (403 otherwise). Same behavior as the WebDAV-style /{directory}?zip, including its limits: a folder one archive cannot hold whole (more than 100000 files, more than 1000000 files and folders in all, or folders nested deeper than 50 levels) is refused with 422 `ARCHIVE_TOO_LARGE`. |
 | `Range` | `string` | No | header | File download only: ask for part of the file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length'. A last position past the end is clamped to the last byte, and a suffix longer than the file selects all of it. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges for a local file, while a remote file (with backend) answers 200 with the whole file. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header, another unit or more than 100 ranges is ignored (200, whole file). HEAD ignores Range. |
 | `IfRange` | `string` | No | header | File download only: honour Range only if the file still has this ETag, exactly; otherwise answer 200 with the whole file. A date never matches, since two versions saved within the same second share it. A remote file's (with backend) ETag is weak, so with If-Range a remote file is always sent whole. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | FilesGetResponse`
 
@@ -1589,7 +1577,7 @@ client.files.get(path: string, options?: { backend?: string; hash?: ""; sha256?:
 Find files by glob pattern
 
 ```typescript
-client.files.glob(path: string, options: { pattern: string; max_results?: number; max_depth?: number; max_files_scanned?: number; timeout?: number; no_ignore?: boolean; hidden?: boolean; sort?: "mtime" | "name" | "size"; order?: "asc" | "desc"; cache?: boolean | number }): Promise<FilesGlobResponse>
+client.files.glob(path: string, options: { pattern: string; max_results?: number; max_depth?: number; max_files_scanned?: number; timeout?: number; no_ignore?: boolean; hidden?: boolean; sort?: "mtime" | "name" | "size"; order?: "asc" | "desc" }): Promise<FilesGlobResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1604,7 +1592,6 @@ client.files.glob(path: string, options: { pattern: string; max_results?: number
 | `hidden` | `boolean` | No | query | Also search names starting with '.', which are otherwise skipped unless an ignore file whitelists them. '.git' folders found inside the searched folder are still skipped, and the server's configured hidden paths still apply. Refused with 403 for an account that may only list this path. |
 | `sort` | `"mtime" \| "name" \| "size"` | No | query | Sort results by: mtime (modification time), name, or size |
 | `order` | `"asc" \| "desc"` | No | query | Sort order. Default: desc for mtime, asc for name/size |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesGlobResponse`
 
@@ -1619,7 +1606,7 @@ client.files.glob(path: string, options: { pattern: string; max_results?: number
 Search file contents (grep)
 
 ```typescript
-client.files.grep(path: string, options: { pattern: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: number; max_count?: number; max_matches?: number; max_depth?: number; max_filesize?: number; timeout?: number; no_ignore?: boolean; hidden?: boolean; cache?: boolean | number }): Promise<FilesGrepResponse>
+client.files.grep(path: string, options: { pattern: string; ignore_case?: boolean; fixed_string?: boolean; glob?: string; context?: number; max_count?: number; max_matches?: number; max_depth?: number; max_filesize?: number; timeout?: number; no_ignore?: boolean; hidden?: boolean }): Promise<FilesGrepResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1637,7 +1624,6 @@ client.files.grep(path: string, options: { pattern: string; ignore_case?: boolea
 | `timeout` | `number` | No | query | Search timeout in seconds |
 | `no_ignore` | `boolean` | No | query | Also search files excluded by .gitignore (inside a git repository), .ignore, .git/info/exclude and the global git excludes |
 | `hidden` | `boolean` | No | query | Also search names starting with '.', which are otherwise skipped unless an ignore file whitelists them. '.git' folders found inside the searched folder are still skipped, and the server's configured hidden paths still apply. Refused with 403 for an account that may only list this path. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesGrepResponse`
 
@@ -1692,7 +1678,7 @@ client.files.mkdir(path: string, options?: { backend?: string; owner?: string })
 Move file or directory
 
 ```typescript
-client.files.move(path: string, options: { move_to: string; owner?: string; cache?: boolean | number }): Promise<FilesMoveResponse>
+client.files.move(path: string, options: { move_to: string; owner?: string }): Promise<FilesMoveResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1700,7 +1686,6 @@ client.files.move(path: string, options: { move_to: string; owner?: string; cach
 | `path` | `string` | Yes | path | Source file or directory path |
 | `move_to` | `string` | Yes | query | Destination path to move the file/directory to. The path is taken from the serve root: a destination without a leading '/' is also taken from the serve root, not from the source's folder. |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for newly-created destination PARENT directories. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. The moved inode itself preserves its existing owner. Absent → server default. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesMoveResponse`
 
@@ -1735,7 +1720,7 @@ client.files.realpath(path: string): Promise<FilesRealpathResponse>
 Search directory
 
 ```typescript
-client.files.search(directory: string, options: { q: string; json?: ""; theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper"; colorScheme?: "light" | "dark"; font?: "ibm-plex-mono" | "cascadia-code" | "fira-code" | "hack" | "inconsolata" | "intel-one-mono" | "iosevka" | "jetbrains-mono" | "meslo-lgs" | "roboto-mono" | "source-code-pro" | "ubuntu-mono"; fontSize?: number; embedderOrigin?: string; chromeless?: boolean; borderless?: boolean; hideHeader?: boolean; hideSidebar?: boolean; hidePreview?: boolean; hideFooter?: boolean; embedBg?: "transparent"; cache?: boolean | number }): Promise<FilesSearchResponse>
+client.files.search(directory: string, options: { q: string; json?: ""; theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper"; colorScheme?: "light" | "dark"; font?: "ibm-plex-mono" | "cascadia-code" | "fira-code" | "hack" | "inconsolata" | "intel-one-mono" | "iosevka" | "jetbrains-mono" | "meslo-lgs" | "roboto-mono" | "source-code-pro" | "ubuntu-mono"; fontSize?: number; embedderOrigin?: string; chromeless?: boolean; borderless?: boolean; hideHeader?: boolean; hideSidebar?: boolean; hidePreview?: boolean; hideFooter?: boolean; embedBg?: "transparent" }): Promise<FilesSearchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1747,7 +1732,7 @@ client.files.search(directory: string, options: { q: string; json?: ""; theme?: 
 | `colorScheme` | `"light" \| "dark"` | No | query | HTML page only: light or dark colour scheme. Without it the page follows the system setting. |
 | `font` | `"ibm-plex-mono" \| "cascadia-code" \| "fira-code" \| "hack" \| "inconsolata" \| "intel-one-mono" \| "iosevka" \| "jetbrains-mono" \| "meslo-lgs" \| "roboto-mono" \| "source-code-pro" \| "ubuntu-mono"` | No | query | HTML page only: monospace font of the editor and listing. |
 | `fontSize` | `number` | No | query | HTML page only: editor font size in pixels. Default 14. |
-| `embedderOrigin` | `string` | No | query | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted. |
+| `embedderOrigin` | `string` | No | query | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted. |
 | `chromeless` | `boolean` | No | query | HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false. |
 | `borderless` | `boolean` | No | query | HTML page only: hide the page borders. |
 | `hideHeader` | `boolean` | No | query | HTML page only: hide the header bar. |
@@ -1755,7 +1740,6 @@ client.files.search(directory: string, options: { q: string; json?: ""; theme?: 
 | `hidePreview` | `boolean` | No | query | HTML page only: hide the preview pane. |
 | `hideFooter` | `boolean` | No | query | HTML page only: hide the footer. |
 | `embedBg` | `"transparent"` | No | query | HTML page only: transparent lets the background of the embedding page show through. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesSearchResponse`
 
@@ -1770,12 +1754,13 @@ client.files.search(directory: string, options: { q: string; json?: ""; theme?: 
 Get file metadata (stat)
 
 ```typescript
-client.files.stat(path: string): Promise<FilesStatResponse>
+client.files.stat(path: string, options?: { backend?: string }): Promise<FilesStatResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | Yes | path | File or directory path |
+| `backend` | `string` | No | query | Backend ID: the metadata of the path on that remote backend instead of a local path |
 
 **Returns:** `FilesStatResponse`
 
@@ -1811,7 +1796,7 @@ client.files.touch(path: string, options: { touch: string }): Promise<any>
 Modify file properties or move/rename
 
 ```typescript
-client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?: string; chmod?: string; chown?: string; cache?: boolean | number }): Promise<FilesUpdateResponse>
+client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?: string; chmod?: string; chown?: string }): Promise<FilesUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1821,7 +1806,6 @@ client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?:
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for newly-created destination parent directories on a JSON-body move_to. Requires the deployment to have enabled chown and to permit the owner you name; cannot be root. The moved item keeps its own owner. Absent → server default. |
 | `chmod` | `string` | No | query | Set file permissions using octal mode value (e.g., ?chmod=755) |
 | `chown` | `string` | No | query | Set file ownership (e.g., ?chown=user:group or ?chown=user) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesUpdateResponse`
 
@@ -1836,7 +1820,7 @@ client.files.update(path: string, data?: FilesUpdateRequest, options?: { owner?:
 Upload or append file
 
 ```typescript
-client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<FilesUploadResponse>
+client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options?: { backend?: string; append?: ""; chmod?: string; owner?: string; XExpectedLength?: string; IfMatch?: string; IfNoneMatch?: string; IfUnmodifiedSince?: string; contentType?: 'application/octet-stream' }): Promise<FilesUploadResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1845,12 +1829,12 @@ client.files.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Readab
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
 | `backend` | `string` | No | query | Backend ID for remote upload |
 | `append` | `""` | No | query | Append body to end of existing file (create if missing) instead of overwriting |
-| `chmod` | `string` | No | query | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response echoes them in `mode`. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Every refusal comes before the body is read: nothing is created or changed. |
+| `chmod` | `string` | No | query | Permission bits the local file ends with, in octal (`644`, `0600`, `0o755`, `000`), whatever the server's umask; the response gives them in `mode`, read back from the file. Where the filesystem keeps no permission bits of its own (a mount of a remote storage without them), the upload is answered 409 PERMISSIONS_NOT_APPLIED instead: nothing is changed when the bits asked for are narrower than the file's, and otherwise the body is written whole under the file's bits. Requires both upload and chmod to be enabled (403 otherwise). setuid, setgid and sticky bits are refused, as are values above 777. Refused with 400 together with `backend` or `append`, and when the path names something other than a regular file (a directory, a pipe, a device, a socket). Each of these refusals comes before the body is read: nothing is created or changed. |
 | `owner` | `string` | No | query | Create-time owner (user[:group]/uid[:gid]) for a newly-created file. Requires the deployment to have enabled chown and to permit the owner you name; refuses root. Overwrites/appends to an existing file preserve its owner. Absent → server default. |
+| `XExpectedLength` | `string` | No | header | The length of the whole body in bytes, for a body streamed without Content-Length. A body that ends before this many bytes, or runs past them, is refused with 400 and nothing is written or appended: the file stays as it was. Send it whenever the length is known: some HTTP/2 clients end a request's body normally when they are aborted, so without it a cut-off body can look complete. Over the upload size limit it is refused with 413 before the body is read. |
 | `IfMatch` | `string` | No | header | Local files only; with backend it is refused with 400. Write only if the file has this ETag (the one a download of it answers with; a weak ETag never matches), or with '*' only if a file exists at the path. Otherwise 412 and nothing is written or created. |
 | `IfNoneMatch` | `string` | No | header | Local files only; with backend it is refused with 400. '*' writes only if nothing exists at the path (create only); a tag writes only if the file does not have that ETag. Otherwise 412 and nothing is written. |
 | `IfUnmodifiedSince` | `string` | No | header | Local files only; with backend it is refused with 400. Without If-Match, write only if the file has not changed since this HTTP date. Otherwise 412 and nothing is written. |
-| `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `FilesUploadResponse`
@@ -1933,7 +1917,7 @@ client.files.zip(directory: string, options: { zip: string }): Promise<any>
 Access file via FTP
 
 ```typescript
-client.files.ftp.get(path: string, options: { type: "ftp"; server: string; user?: string; pass?: string; ftp_secure?: boolean; ftp_passive?: boolean; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.ftp.get(path: string, options: { type: "ftp"; server: string; user?: string; pass?: string; ftp_secure?: boolean; ftp_passive?: boolean }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1945,7 +1929,6 @@ client.files.ftp.get(path: string, options: { type: "ftp"; server: string; user?
 | `pass` | `string` | No | query |  |
 | `ftp_secure` | `boolean` | No | query | Use explicit FTPS (AUTH TLS on the control connection) |
 | `ftp_passive` | `boolean` | No | query | Passive mode, the only mode supported: `false` is refused with 400 |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2027,17 +2010,16 @@ client.files.journal.getStats(): Promise<FilesJournalGetStatsResponse>
 Query journal entries
 
 ```typescript
-client.files.journal.list(options?: { path?: string; op?: string; since?: string; limit?: number; after_id?: number; cache?: boolean | number }): Promise<FilesJournalListResponse>
+client.files.journal.list(options?: { path?: string; op?: string; since?: string; limit?: number; after_id?: number }): Promise<FilesJournalListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `path` | `string` | No | query | Filter entries by path prefix |
 | `op` | `string` | No | query | Filter by operation type(s), comma-separated (e.g. 'write,delete') |
-| `since` | `string` | No | query | Filter entries since timestamp (RFC3339 or Unix ms) |
+| `since` | `string` | No | query | Return entries at or after this time: an RFC3339 timestamp (Z or an offset, any fractional precision), or a Unix timestamp in seconds or milliseconds. A number below 100000000000 is read as seconds. Omitted or empty, no time filter applies; any other value is refused with 400. |
 | `limit` | `number` | No | query | Max entries to return |
 | `after_id` | `number` | No | query | Cursor: return entries with id &gt; after_id |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesJournalListResponse`
 
@@ -2108,7 +2090,7 @@ client.files.mounts.create(data: FilesMountsCreateRequest): Promise<FilesMountsC
 Unmount filesystem
 
 ```typescript
-client.files.mounts.delete(id: string, options?: { uploads?: "keep" | "wait" | "discard"; wait_seconds?: number; cache?: boolean | number }): Promise<FilesMountsDeleteResponse>
+client.files.mounts.delete(id: string, options?: { uploads?: "keep" | "wait" | "discard"; wait_seconds?: number }): Promise<FilesMountsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2116,7 +2098,6 @@ client.files.mounts.delete(id: string, options?: { uploads?: "keep" | "wait" | "
 | `id` | `string` | Yes | path |  |
 | `uploads` | `"keep" \| "wait" \| "discard"` | No | query | What becomes of what was written on the mount and is not uploaded yet: keep uploading it (`keep`), the same and wait for it (`wait`), or delete it (`discard`) |
 | `wait_seconds` | `number` | No | query | With `uploads=wait` only: the longest the answer waits, in seconds |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesMountsDeleteResponse`
 
@@ -2151,13 +2132,12 @@ client.files.mounts.get(id: string): Promise<FilesMountsGetResponse>
 List all mounts
 
 ```typescript
-client.files.mounts.list(options?: { label?: string; cache?: boolean | number }): Promise<FilesMountsListResponse>
+client.files.mounts.list(options?: { label?: string }): Promise<FilesMountsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `label` | `string` | No | query | Filter mounts by label. Only mounts with this exact label will be returned. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesMountsListResponse`
 
@@ -2172,7 +2152,7 @@ client.files.mounts.list(options?: { label?: string; cache?: boolean | number })
 Update mount VFS configuration
 
 ```typescript
-client.files.mounts.update(id: string, data: FilesMountsUpdateRequest, options?: { switch?: "wait" | "immediate"; cache?: boolean | number }): Promise<FilesMountsUpdateResponse>
+client.files.mounts.update(id: string, data: FilesMountsUpdateRequest, options?: { switch?: "wait" | "immediate" }): Promise<FilesMountsUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2180,7 +2160,6 @@ client.files.mounts.update(id: string, data: FilesMountsUpdateRequest, options?:
 | `id` | `string` | Yes | path | Mount ID |
 | `data` | `FilesMountsUpdateRequest` | Yes | body |  |
 | `switch` | `"wait" \| "immediate"` | No | query | wait (the default): files closed before the update finish uploading before the switch. immediate: switch at once; those files upload later with the previous settings, and such an upload can replace a newer write made through the new settings. If those files cannot all be checked within 10 seconds, the update answers 409 MOUNT_BUSY and changes nothing. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesMountsUpdateResponse`
 
@@ -2197,7 +2176,7 @@ client.files.mounts.update(id: string, data: FilesMountsUpdateRequest, options?:
 Access file from S3
 
 ```typescript
-client.files.s3.get(path: string, options: { type: "s3"; server: string; s3_bucket: string; s3_region: string; user?: string; pass?: string; s3_endpoint?: string; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.s3.get(path: string, options: { type: "s3"; server: string; s3_bucket: string; s3_region: string; user?: string; pass?: string; s3_endpoint?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2210,7 +2189,6 @@ client.files.s3.get(path: string, options: { type: "s3"; server: string; s3_buck
 | `user` | `string` | No | query | Access key ID. Give both `user` and `pass`, or neither for anonymous access to a public bucket. |
 | `pass` | `string` | No | query | Secret access key (base64 encoded). Give both `user` and `pass`, or neither. |
 | `s3_endpoint` | `string` | No | query | Endpoint of an S3-compatible service (MinIO, etc.), as a host or URL. Takes precedence over `server`. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2227,7 +2205,7 @@ client.files.s3.get(path: string, options: { type: "s3"; server: string; s3_buck
 Access file via SSH/SFTP
 
 ```typescript
-client.files.ssh.get(path: string, options: { type: "ssh"; server: string; user: string; pass?: string; key?: string; passphrase?: string; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.files.ssh.get(path: string, options: { type: "ssh"; server: string; user: string; pass?: string; key?: string; passphrase?: string }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2239,7 +2217,6 @@ client.files.ssh.get(path: string, options: { type: "ssh"; server: string; user:
 | `pass` | `string` | No | query | Password (base64 encoded) |
 | `key` | `string` | No | query | Private key in PEM form (base64 encoded) |
 | `passphrase` | `string` | No | query | Key passphrase (base64 encoded) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -2254,7 +2231,7 @@ client.files.ssh.get(path: string, options: { type: "ssh"; server: string; user:
 Upload file via SSH/SFTP
 
 ```typescript
-client.files.ssh.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { server: string; user: string; pass?: string; key?: string; passphrase?: string; cache?: boolean | number; contentType?: 'application/octet-stream' }): Promise<ApiResponse<unknown>>
+client.files.ssh.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { server: string; user: string; pass?: string; key?: string; passphrase?: string; contentType?: 'application/octet-stream' }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2266,7 +2243,6 @@ client.files.ssh.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Re
 | `pass` | `string` | No | query | Password (base64 encoded) |
 | `key` | `string` | No | query | Private key in PEM form (base64 encoded) |
 | `passphrase` | `string` | No | query | Key passphrase (base64 encoded) |
-| `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/octet-stream'` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
@@ -2284,7 +2260,7 @@ client.files.ssh.upload(path: string, data: Blob | ArrayBuffer | Uint8Array | Re
 List directory contents or download file
 
 ```typescript
-client.files.ui.getPage(path: string, options?: { json?: ""; simple?: ""; sort?: "name" | "mtime" | "size"; order?: "asc" | "desc"; hash?: ""; sha256?: ""; base64?: ""; edit?: ""; view?: ""; download?: "" | "1" | "true"; contentType?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper"; colorScheme?: "light" | "dark"; font?: "ibm-plex-mono" | "cascadia-code" | "fira-code" | "hack" | "inconsolata" | "intel-one-mono" | "iosevka" | "jetbrains-mono" | "meslo-lgs" | "roboto-mono" | "source-code-pro" | "ubuntu-mono"; fontSize?: number; embedderOrigin?: string; chromeless?: boolean; borderless?: boolean; hideHeader?: boolean; hideSidebar?: boolean; hidePreview?: boolean; hideFooter?: boolean; embedBg?: "transparent"; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer> | FilesUiGetPageResponse>
+client.files.ui.getPage(path: string, options?: { json?: ""; simple?: ""; sort?: "name" | "mtime" | "size"; order?: "asc" | "desc"; hash?: ""; sha256?: ""; base64?: ""; edit?: ""; view?: ""; download?: "" | "1" | "true"; contentType?: string; history?: ""; at?: string; revision?: number; diff?: ""; from_seq?: number; from_ts?: string; to_seq?: number; to_ts?: string; after_id?: number; limit?: number; theme?: "oc-1" | "aura" | "ayu" | "carbonfox" | "catppuccin" | "dracula" | "gruvbox" | "monokai" | "nightowl" | "nord" | "onedarkpro" | "shadesofpurple" | "solarized" | "tokyonight" | "vesper"; colorScheme?: "light" | "dark"; font?: "ibm-plex-mono" | "cascadia-code" | "fira-code" | "hack" | "inconsolata" | "intel-one-mono" | "iosevka" | "jetbrains-mono" | "meslo-lgs" | "roboto-mono" | "source-code-pro" | "ubuntu-mono"; fontSize?: number; embedderOrigin?: string; chromeless?: boolean; borderless?: boolean; hideHeader?: boolean; hideSidebar?: boolean; hidePreview?: boolean; hideFooter?: boolean; embedBg?: "transparent" }): Promise<ApiResponse<ArrayBuffer> | FilesUiGetPageResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2315,7 +2291,7 @@ client.files.ui.getPage(path: string, options?: { json?: ""; simple?: ""; sort?:
 | `colorScheme` | `"light" \| "dark"` | No | query | HTML page only: light or dark colour scheme. Without it the page follows the system setting. |
 | `font` | `"ibm-plex-mono" \| "cascadia-code" \| "fira-code" \| "hack" \| "inconsolata" \| "intel-one-mono" \| "iosevka" \| "jetbrains-mono" \| "meslo-lgs" \| "roboto-mono" \| "source-code-pro" \| "ubuntu-mono"` | No | query | HTML page only: monospace font of the editor and listing. |
 | `fontSize` | `number` | No | query | HTML page only: editor font size in pixels. Default 14. |
-| `embedderOrigin` | `string` | No | query | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins, and http on localhost or 127.0.0.1, are accepted. |
+| `embedderOrigin` | `string` | No | query | HTML page only: origin of the page that embeds this one, such as https://app.example.com. The page then accepts theme and layout messages from that origin and tells it when it is ready. Only https origins are accepted. |
 | `chromeless` | `boolean` | No | query | HTML page only: hide the header, sidebar, preview, footer and borders at once. Each can be turned back on with its own parameter set to false. |
 | `borderless` | `boolean` | No | query | HTML page only: hide the page borders. |
 | `hideHeader` | `boolean` | No | query | HTML page only: hide the header bar. |
@@ -2323,7 +2299,6 @@ client.files.ui.getPage(path: string, options?: { json?: ""; simple?: ""; sort?:
 | `hidePreview` | `boolean` | No | query | HTML page only: hide the preview pane. |
 | `hideFooter` | `boolean` | No | query | HTML page only: hide the footer. |
 | `embedBg` | `"transparent"` | No | query | HTML page only: transparent lets the background of the embedding page show through. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer> | FilesUiGetPageResponse`
 
@@ -2399,7 +2374,7 @@ client.files.uploads.deliver(id: string, data?: FilesUploadsDeliverRequest): Pro
 Download a held file
 
 ```typescript
-client.files.uploads.download(id: string, options?: { path?: string; path_b64?: string; Range?: string; IfRange?: string; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.files.uploads.download(id: string, options?: { path?: string; path_b64?: string; Range?: string; IfRange?: string }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2409,7 +2384,6 @@ client.files.uploads.download(id: string, options?: { path?: string; path_b64?: 
 | `path_b64` | `string` | No | query | A path_b64 from the item's files, exactly as listed. Give this or path, not both. |
 | `Range` | `string` | No | header | Ask for part of the held file, as 'bytes=first-last', 'bytes=first-' or 'bytes=-suffix_length', as for a file download. One satisfiable range answers 206 with Content-Range; several answer 206 as multipart/byteranges. Ranges that cannot be satisfied are dropped from a list, and 416 comes only when none is left. A malformed header is ignored (200, whole file). |
 | `IfRange` | `string` | No | header | Honour Range only if the held file still has this ETag, exactly; otherwise answer 200 with the whole file. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -2424,13 +2398,12 @@ client.files.uploads.download(id: string, options?: { path?: string; path_b64?: 
 List pending uploads
 
 ```typescript
-client.files.uploads.list(options?: { backend_id?: string; cache?: boolean | number }): Promise<FilesUploadsListResponse>
+client.files.uploads.list(options?: { backend_id?: string }): Promise<FilesUploadsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `backend_id` | `string` | No | query | Only items of this backend |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesUploadsListResponse`
 
@@ -2445,7 +2418,7 @@ client.files.uploads.list(options?: { backend_id?: string; cache?: boolean | num
 List a pending upload's files
 
 ```typescript
-client.files.uploads.listFiles(id: string, options?: { cursor?: string; limit?: number; cache?: boolean | number }): Promise<FilesUploadsListFilesResponse>
+client.files.uploads.listFiles(id: string, options?: { cursor?: string; limit?: number }): Promise<FilesUploadsListFilesResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2453,7 +2426,6 @@ client.files.uploads.listFiles(id: string, options?: { cursor?: string; limit?: 
 | `id` | `string` | Yes | path | Pending upload ID |
 | `cursor` | `string` | No | query | next_cursor from the previous page. Omit it for the first page. |
 | `limit` | `number` | No | query | Largest number of files on the page |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `FilesUploadsListFilesResponse`
 
@@ -2506,7 +2478,7 @@ client.files.uploads.stop(id: string): Promise<FilesUploadsStopResponse>
 Copy a file
 
 ```typescript
-client.files.webdav.copy(path: string, options: { Destination: string; Overwrite?: "T" | "F"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.webdav.copy(path: string, options: { Destination: string; Overwrite?: "T" | "F" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2514,7 +2486,6 @@ client.files.webdav.copy(path: string, options: { Destination: string; Overwrite
 | `path` | `string` | Yes | path | Source file path |
 | `Destination` | `string` | Yes | header | Destination URL for the copy |
 | `Overwrite` | `"T" \| "F"` | No | header | T (default) replaces an existing destination; F refuses one, answering 412 and leaving it untouched. A request refused for another reason is answered for that reason instead, whatever this header says: copying or moving a resource onto itself is 403, and so is a source that is not a regular file. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2527,7 +2498,7 @@ client.files.webdav.copy(path: string, options: { Destination: string; Overwrite
 Access file via WebDAV
 
 ```typescript
-client.files.webdav.get(path: string, options: { type: "webdav"; server: string; user?: string; pass?: string; webdav_path?: string; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.webdav.get(path: string, options: { type: "webdav"; server: string; user?: string; pass?: string; webdav_path?: string }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2538,7 +2509,6 @@ client.files.webdav.get(path: string, options: { type: "webdav"; server: string;
 | `user` | `string` | No | query |  |
 | `pass` | `string` | No | query |  |
 | `webdav_path` | `string` | No | query | WebDAV endpoint path |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2571,7 +2541,7 @@ client.files.webdav.getOptions(path: string): Promise<ApiResponse<unknown>>
 Get WebDAV properties
 
 ```typescript
-client.files.webdav.getProperties(path: string, data?: string, options?: { Depth?: "0" | "1" | "infinity"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.webdav.getProperties(path: string, data?: string, options?: { Depth?: "0" | "1" | "infinity" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2579,7 +2549,6 @@ client.files.webdav.getProperties(path: string, data?: string, options?: { Depth
 | `path` | `string` | Yes | path |  |
 | `data` | `string` | No | body |  |
 | `Depth` | `"0" \| "1" \| "infinity"` | No | header | Depth of property retrieval: 0 (resource only), 1 (immediate children), infinity (recursive) |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2592,7 +2561,7 @@ client.files.webdav.getProperties(path: string, data?: string, options?: { Depth
 Lock file (WebDAV compatibility)
 
 ```typescript
-client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | "infinity"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | "infinity" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2600,7 +2569,6 @@ client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | 
 | `path` | `string` | Yes | path |  |
 | `data` | `string` | No | body |  |
 | `Depth` | `"0" \| "infinity"` | No | header |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -2613,7 +2581,7 @@ client.files.webdav.lock(path: string, data?: string, options?: { Depth?: "0" | 
 Move or rename file/directory
 
 ```typescript
-client.files.webdav.move(path: string, options: { Destination: string; Overwrite?: "T" | "F"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.files.webdav.move(path: string, options: { Destination: string; Overwrite?: "T" | "F" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -2621,7 +2589,6 @@ client.files.webdav.move(path: string, options: { Destination: string; Overwrite
 | `path` | `string` | Yes | path | Source file or directory path |
 | `Destination` | `string` | Yes | header | Destination URL for the move |
 | `Overwrite` | `"T" \| "F"` | No | header | T (default) replaces an existing destination; F refuses one, answering 412 and leaving it untouched. A request refused for another reason is answered for that reason instead, whatever this header says: copying or moving a resource onto itself is 403, and so is a source that is not a regular file. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 

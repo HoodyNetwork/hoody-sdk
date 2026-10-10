@@ -1,6 +1,6 @@
 # `notifications` — 10 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.notifications`
 
 ```typescript
@@ -18,7 +18,7 @@ import * as notifications from 'hoody-sdk/notifications';
 Get notification icon
 
 ```typescript
-client.notifications.icons.get(iconId: string, options?: { IfNoneMatch?: string; IfModifiedSince?: string; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.notifications.icons.get(iconId: string, options?: { IfNoneMatch?: string; IfModifiedSince?: string }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -26,7 +26,6 @@ client.notifications.icons.get(iconId: string, options?: { IfNoneMatch?: string;
 | `iconId` | `string` | Yes | path | The unique identifier for the icon (e.g., "6_10_1749024932903.png") |
 | `IfNoneMatch` | `string` | No | header | ETag(s) from an earlier response, or `*`. A match returns 304. Overrides If-Modified-Since. |
 | `IfModifiedSince` | `string` | No | header | HTTP date; returns 304 when the icon has not changed since then (whole seconds). Ignored when If-None-Match is sent. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -77,13 +76,12 @@ client.notifications.kit.getMetrics(): Promise<ApiResponse<string>>
 Real-time notification stream (WebSocket or SSE)
 
 ```typescript
-client.notifications.connect(options?: { displays?: string; cache?: boolean | number }): Promise<NotificationsConnectNotificationStreamWebSocket>
+client.notifications.connect(options?: { displays?: string }): Promise<NotificationsConnectNotificationStreamWebSocket>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displays` | `string` | No | query | Comma-separated display IDs (`1,:2,3`), or `all` / `*` for every display. Required for SSE (400 without it). Optional for WebSocket: without it the socket receives nothing until the client sends a `subscribe` message; an invalid ID arrives as an `error` frame after the upgrade. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotificationsConnectNotificationStreamWebSocket`
 
@@ -118,7 +116,7 @@ client.notifications.dismiss(data: NotificationsDismissRequest): Promise<Notific
 Get notifications for specified display(s)
 
 ```typescript
-client.notifications.list(display: string, options?: { limit?: number; since?: number; after_id?: number; cursor?: string; username?: string; session?: string; cache?: boolean | number }): Promise<NotificationsListResponse>
+client.notifications.list(display: string, options?: { limit?: number; since?: number; after_id?: number; cursor?: string; username?: string; session?: string }): Promise<NotificationsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -130,7 +128,6 @@ client.notifications.list(display: string, options?: { limit?: number; since?: n
 | `cursor` | `string` | No | query | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it, oldest first. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
 | `username` | `string` | No | query | Read only this user's history files (letters and digits only). See the operation description. |
 | `session` | `string` | No | query | Read only this session's history files (letters and digits only). See the operation description. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotificationsListResponse`
 
@@ -145,7 +142,7 @@ client.notifications.list(display: string, options?: { limit?: number; since?: n
 Get notifications for specified display(s) (collect all pages)
 
 ```typescript
-client.notifications.listAll(display: string, options?: { limit?: number; since?: number; after_id?: number; cursor?: string; username?: string; session?: string; cache?: boolean | number }): Promise<unknown[]>
+client.notifications.listAll(display: string, options?: { limit?: number; since?: number; after_id?: number; cursor?: string; username?: string; session?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -157,7 +154,6 @@ client.notifications.listAll(display: string, options?: { limit?: number; since?
 | `cursor` | `string` | No | query | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it, oldest first. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
 | `username` | `string` | No | query | Read only this user's history files (letters and digits only). See the operation description. |
 | `session` | `string` | No | query | Read only this session's history files (letters and digits only). See the operation description. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -170,7 +166,7 @@ client.notifications.listAll(display: string, options?: { limit?: number; since?
 Get notifications for specified display(s) (async iterator)
 
 ```typescript
-client.notifications.listIterator(display: string, options?: { limit?: number; since?: number; after_id?: number; cursor?: string; username?: string; session?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notifications.listIterator(display: string, options?: { limit?: number; since?: number; after_id?: number; cursor?: string; username?: string; session?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -182,7 +178,6 @@ client.notifications.listIterator(display: string, options?: { limit?: number; s
 | `cursor` | `string` | No | query | Keyset cursor, exclusive: pass back `data.next_cursor` from an earlier response to get the oldest `limit` notifications after it, oldest first. The cursor keeps the order of the request that produced it: (timestamp, display, id), or id order (ties broken by timestamp, display) when that request used `after_id`. Rows that share a timestamp or id are never skipped or repeated. Opaque; cannot be combined with `since` or `after_id`. |
 | `username` | `string` | No | query | Read only this user's history files (letters and digits only). See the operation description. |
 | `session` | `string` | No | query | Read only this session's history files (letters and digits only). See the operation description. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -195,13 +190,12 @@ client.notifications.listIterator(display: string, options?: { limit?: number; s
 Clear dismissed notifications
 
 ```typescript
-client.notifications.restore(options?: { displayId?: string; cache?: boolean | number }): Promise<NotificationsRestoreResponse>
+client.notifications.restore(options?: { displayId?: string }): Promise<NotificationsRestoreResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `displayId` | `string` | No | query | Clear only this display's dismissals (`1` or `:1`, 0-99999; surrounding whitespace and extra leading colons are ignored). Omit to clear everything. An invalid value is rejected with 400. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotificationsRestoreResponse`
 

@@ -1,10 +1,10 @@
 # Namespace Index
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 
 | Namespace | Description | Methods | Services | Accessor |
 |-----------|-------------|---------|----------|----------|
-| [`agent`](agent.md) | In-container AI agent — sessions, prompts, workflows, skills, memory, and tools. | 294 | 35 | `client.agent` |
+| [`agent`](agent.md) | In-container AI agent — sessions, prompts, workflows, skills, memory, and tools. | 326 | 37 | `client.agent` |
 | [`api`](api.md) | Account control plane — containers, projects, servers, realms, tokens, and billing. | 303 | 41 | `client.api` |
 | [`bot`](bot.md) |  | 17 | 2 | `client.bot` |
 | [`browser`](browser.md) | Drive a cloud headless browser — navigate, script, and screenshot. | 28 | 8 | `client.browser` |
@@ -14,7 +14,7 @@
 | [`daemon`](daemon.md) | Run and manage long-lived background services. | 21 | 3 | `client.daemon` |
 | [`display`](display.md) | Launch and stream a GUI desktop — windows, input, and screenshots. | 46 | 10 | `client.display` |
 | [`egress`](egress.md) |  | 5 | 2 | `client.egress` |
-| [`exec`](exec.md) | Run commands and turn scripts into callable HTTP endpoints. | 67 | 15 | `client.exec` |
+| [`exec`](exec.md) | Run commands and turn scripts into callable HTTP endpoints. | 68 | 16 | `client.exec` |
 | [`files`](files.md) | Read, write, stream, and mount the container filesystem. | 120 | 16 | `client.files` |
 | [`notes`](notes.md) | Store and retrieve structured notes. | 74 | 16 | `client.notes` |
 | [`notifications`](notifications.md) | Send and manage notifications and their delivery channels. | 10 | 3 | `client.notifications` |

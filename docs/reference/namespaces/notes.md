@@ -1,6 +1,6 @@
 # `notes` — 74 methods
 
-**Version:** 1.0.0-beta.16
+**Version:** 1.0.0-beta.17
 **Accessor:** `client.notes`
 
 ```typescript
@@ -172,7 +172,7 @@ client.notes.comments.create(notebookId: string, nodeId: string, data: NotesComm
 Delete a comment
 
 ```typescript
-client.notes.comments.delete(notebookId: string, nodeId: string, commentId: string, options?: { expectedVersion?: number; cache?: boolean | number }): Promise<NotesCommentsDeleteResponse>
+client.notes.comments.delete(notebookId: string, nodeId: string, commentId: string, options?: { expectedVersion?: number }): Promise<NotesCommentsDeleteResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -181,7 +181,6 @@ client.notes.comments.delete(notebookId: string, nodeId: string, commentId: stri
 | `nodeId` | `string` | Yes | path |  |
 | `commentId` | `string` | Yes | path |  |
 | `expectedVersion` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesCommentsDeleteResponse`
 
@@ -196,7 +195,7 @@ client.notes.comments.delete(notebookId: string, nodeId: string, commentId: stri
 List comments
 
 ```typescript
-client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<NotesCommentsListResponse>
+client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): Promise<NotesCommentsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -206,7 +205,6 @@ client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesCommentsListResponse`
 
@@ -221,7 +219,7 @@ client.notes.comments.list(notebookId: string, nodeId: string, options?: { limit
 List comments (collect all pages)
 
 ```typescript
-client.notes.comments.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<unknown[]>
+client.notes.comments.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -231,7 +229,6 @@ client.notes.comments.listAll(notebookId: string, nodeId: string, options?: { li
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -244,7 +241,7 @@ client.notes.comments.listAll(notebookId: string, nodeId: string, options?: { li
 List comment anchors
 
 ```typescript
-client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<NotesCommentsListAnchorsResponse>
+client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): Promise<NotesCommentsListAnchorsResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -254,7 +251,6 @@ client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: 
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesCommentsListAnchorsResponse`
 
@@ -269,7 +265,7 @@ client.notes.comments.listAnchors(notebookId: string, nodeId: string, options?: 
 List comment anchors (collect all pages)
 
 ```typescript
-client.notes.comments.listAnchorsAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): Promise<unknown[]>
+client.notes.comments.listAnchorsAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -279,7 +275,6 @@ client.notes.comments.listAnchorsAll(notebookId: string, nodeId: string, options
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -292,7 +287,7 @@ client.notes.comments.listAnchorsAll(notebookId: string, nodeId: string, options
 List comment anchors (async iterator)
 
 ```typescript
-client.notes.comments.listAnchorsIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notes.comments.listAnchorsIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -302,7 +297,6 @@ client.notes.comments.listAnchorsIterator(notebookId: string, nodeId: string, op
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -315,7 +309,7 @@ client.notes.comments.listAnchorsIterator(notebookId: string, nodeId: string, op
 List comments (async iterator)
 
 ```typescript
-client.notes.comments.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notes.comments.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cursor?: string }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -325,7 +319,6 @@ client.notes.comments.listIterator(notebookId: string, nodeId: string, options?:
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
 | `cursor` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -409,7 +402,7 @@ client.notes.comments.update(notebookId: string, nodeId: string, commentId: stri
 Append blocks to a document
 
 ```typescript
-client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { IfMatch?: string; XIdempotencyKey?: string; cache?: boolean | number }): Promise<NotesDocumentAppendResponse>
+client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocumentAppendRequest, options?: { IfMatch?: string; XIdempotencyKey?: string }): Promise<NotesDocumentAppendResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -419,7 +412,6 @@ client.notes.document.append(notebookId: string, nodeId: string, data: NotesDocu
 | `data` | `NotesDocumentAppendRequest` | Yes | body |  |
 | `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
 | `XIdempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars). Reusing the same key with an identical request body and node replays the original response; reusing it with a different body or node returns 409. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesDocumentAppendResponse`
 
@@ -456,7 +448,7 @@ client.notes.document.createExportTicket(notebookId: string, nodeId: string, dat
 Export drawing block as SVG
 
 ```typescript
-client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: string, options?: { bg?: string; scale?: number; cache?: boolean | number }): Promise<ApiResponse<ArrayBuffer>>
+client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: string, options?: { bg?: string; scale?: number }): Promise<ApiResponse<ArrayBuffer>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -466,7 +458,6 @@ client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: s
 | `blockId` | `string` | Yes | path |  |
 | `bg` | `string` | No | query |  |
 | `scale` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<ArrayBuffer>`
 
@@ -481,7 +472,7 @@ client.notes.document.exportBlock(notebookId: string, nodeId: string, blockId: s
 Get document content
 
 ```typescript
-client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; IfNoneMatch?: string; cache?: boolean | number }): Promise<NotesDocumentGetResponse>
+client.notes.document.get(notebookId: string, nodeId: string, options?: { blockIds?: string; lines?: string; output?: "json" | "md" | "html"; includeComments?: "none" | "appendix"; ticket?: string; IfNoneMatch?: string }): Promise<NotesDocumentGetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -494,7 +485,6 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 | `includeComments` | `"none" \| "appendix"` | No | query |  |
 | `ticket` | `string` | No | query |  |
 | `IfNoneMatch` | `string` | No | header | Optional (RFC 9110): ETags of copies the caller already holds, or `*`. When the document is still at one of them the JSON output answers 304 with no body. Ignored by the Markdown and HTML outputs. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesDocumentGetResponse`
 
@@ -509,7 +499,7 @@ client.notes.document.get(notebookId: string, nodeId: string, options?: { blockI
 Create or replace document
 
 ```typescript
-client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest, options?: { IfMatch?: string; cache?: boolean | number }): Promise<NotesDocumentSetResponse>
+client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumentSetRequest, options?: { IfMatch?: string }): Promise<NotesDocumentSetResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -518,7 +508,6 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentSetRequest` | Yes | body |  |
 | `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesDocumentSetResponse`
 
@@ -533,7 +522,7 @@ client.notes.document.set(notebookId: string, nodeId: string, data: NotesDocumen
 Merge document content
 
 ```typescript
-client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest, options?: { IfMatch?: string; cache?: boolean | number }): Promise<NotesDocumentUpdateResponse>
+client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocumentUpdateRequest, options?: { IfMatch?: string }): Promise<NotesDocumentUpdateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -542,7 +531,6 @@ client.notes.document.update(notebookId: string, nodeId: string, data: NotesDocu
 | `nodeId` | `string` | Yes | path |  |
 | `data` | `NotesDocumentUpdateRequest` | Yes | body |  |
 | `IfMatch` | `string` | No | header | Optional precondition (RFC 9110): write only if the document is still at one of these ETags, as returned in the `ETag` header of a document read or write (a quoted tag, or a comma-separated list of them), or `*` for "the document exists". Otherwise the write is refused with 412 `version_conflict` and nothing changes: read the document again and retry. Without it the write is unconditional: it merges into, or replaces, whatever is stored (last writer wins). |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesDocumentUpdateResponse`
 
@@ -580,7 +568,7 @@ client.notes.files.download(notebookId: string, fileId: string): Promise<ApiResp
 List all uploaded files
 
 ```typescript
-client.notes.files.list(notebookId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesFilesListResponse>
+client.notes.files.list(notebookId: string, options?: { limit?: number; offset?: number }): Promise<NotesFilesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -588,7 +576,6 @@ client.notes.files.list(notebookId: string, options?: { limit?: number; offset?:
 | `notebookId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesFilesListResponse`
 
@@ -603,7 +590,7 @@ client.notes.files.list(notebookId: string, options?: { limit?: number; offset?:
 List all uploaded files (collect all pages)
 
 ```typescript
-client.notes.files.listAll(notebookId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
+client.notes.files.listAll(notebookId: string, options?: { limit?: number; offset?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -611,7 +598,6 @@ client.notes.files.listAll(notebookId: string, options?: { limit?: number; offse
 | `notebookId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -624,7 +610,7 @@ client.notes.files.listAll(notebookId: string, options?: { limit?: number; offse
 List all uploaded files (async iterator)
 
 ```typescript
-client.notes.files.listIterator(notebookId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notes.files.listIterator(notebookId: string, options?: { limit?: number; offset?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -632,7 +618,6 @@ client.notes.files.listIterator(notebookId: string, options?: { limit?: number; 
 | `notebookId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -647,7 +632,7 @@ client.notes.files.listIterator(notebookId: string, options?: { limit?: number; 
 Abort a TUS upload
 
 ```typescript
-client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: { TusResumable: "1.0.0"; cache?: boolean | number }): Promise<ApiResponse<unknown>>
+client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: { TusResumable: "1.0.0" }): Promise<ApiResponse<unknown>>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -655,7 +640,6 @@ client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: {
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
 | `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `ApiResponse<unknown>`
 
@@ -668,7 +652,7 @@ client.notes.files.uploads.cancel(notebookId: string, fileId: string, options: {
 Create a resumable (TUS) upload
 
 ```typescript
-client.notes.files.uploads.create(notebookId: string, fileId: string, options: { TusResumable: "1.0.0"; UploadLength: number; UploadMetadata?: string; cache?: boolean | number }): Promise<NotesFilesUploadsCreateResponse>
+client.notes.files.uploads.create(notebookId: string, fileId: string, options: { TusResumable: "1.0.0"; UploadLength: number; UploadMetadata?: string }): Promise<NotesFilesUploadsCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -678,7 +662,6 @@ client.notes.files.uploads.create(notebookId: string, fileId: string, options: {
 | `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
 | `UploadLength` | `number` | Yes | header | Total size of the file in bytes. Must equal the file node's `size` (set when the node was created), which must not exceed the notebook's maximum file size. Upload-Defer-Length is not supported. |
 | `UploadMetadata` | `string` | No | header | Optional TUS metadata: comma-separated `key base64(value)` pairs. |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesFilesUploadsCreateResponse`
 
@@ -691,16 +674,16 @@ client.notes.files.uploads.create(notebookId: string, fileId: string, options: {
 Check a TUS upload's offset (for resuming)
 
 ```typescript
-client.notes.files.uploads.getOffset(options: { notebookId: string; fileId: string; TusResumable: string }): Promise<any>
+client.notes.files.uploads.getOffset(notebookId: string, fileId: string, options: { TusResumable: "1.0.0" }): Promise<ApiResponse<Record<string, string>>>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `fileId` | `string` | Yes | path |  |
-| `TusResumable` | `string` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
+| `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
 
-**Returns:** `any`
+**Returns:** `ApiResponse<Record<string, string>>`
 
 ---
 
@@ -711,7 +694,7 @@ client.notes.files.uploads.getOffset(options: { notebookId: string; fileId: stri
 Upload a chunk to a TUS upload
 
 ```typescript
-client.notes.files.uploads.writeChunk(notebookId: string, fileId: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { TusResumable: "1.0.0"; UploadOffset: number; cache?: boolean | number; contentType?: 'application/offset+octet-stream' }): Promise<NotesFilesUploadsWriteChunkResponse>
+client.notes.files.uploads.writeChunk(notebookId: string, fileId: string, data: Blob | ArrayBuffer | Uint8Array | ReadableStream<Uint8Array> | string, options: { TusResumable: "1.0.0"; UploadOffset: number; contentType?: 'application/offset+octet-stream' }): Promise<NotesFilesUploadsWriteChunkResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -721,7 +704,6 @@ client.notes.files.uploads.writeChunk(notebookId: string, fileId: string, data: 
 | `data` | `Blob \| ArrayBuffer \| Uint8Array \| ReadableStream&lt;Uint8Array&gt; \| string` | Yes | body |  |
 | `TusResumable` | `"1.0.0"` | Yes | header | TUS protocol version. Every TUS request must send `1.0.0`; anything else is refused with 412. |
 | `UploadOffset` | `number` | Yes | header | Offset this chunk starts at — the value the HEAD check (or the previous chunk) returned. |
-| `cache` | `boolean \| number` | No | query |  |
 | `contentType` | `'application/offset+octet-stream'` | No | query |  |
 
 **Returns:** `NotesFilesUploadsWriteChunkResponse`
@@ -821,13 +803,14 @@ client.notes.mutations.sync(notebookId: string, data: NotesMutationsSyncRequest)
 Create a node
 
 ```typescript
-client.notes.nodes.create(notebookId: string, data: NotesNodesCreateRequest): Promise<NotesNodesCreateResponse>
+client.notes.nodes.create(notebookId: string, data: NotesNodesCreateRequest, options?: { XIdempotencyKey?: string }): Promise<NotesNodesCreateResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
 |-----------|------|----------|----------|-------------|
 | `notebookId` | `string` | Yes | path |  |
 | `data` | `NotesNodesCreateRequest` | Yes | body |  |
+| `XIdempotencyKey` | `string` | No | header | Optional idempotency key (max 256 chars), such as a random UUID per node. Reusing the same key with an identical request body replays the original response instead of creating a second node; reusing it with a different body returns 409. |
 
 **Returns:** `NotesNodesCreateResponse`
 
@@ -884,7 +867,7 @@ client.notes.nodes.get(notebookId: string, nodeId: string): Promise<NotesNodesGe
 List nodes
 
 ```typescript
-client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesNodesListResponse>
+client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number }): Promise<NotesNodesListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -895,7 +878,6 @@ client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?
 | `rootId` | `string` | No | query |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesNodesListResponse`
 
@@ -910,7 +892,7 @@ client.notes.nodes.list(notebookId: string, options?: { type?: string; parentId?
 List nodes (collect all pages)
 
 ```typescript
-client.notes.nodes.listAll(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
+client.notes.nodes.listAll(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -921,7 +903,6 @@ client.notes.nodes.listAll(notebookId: string, options?: { type?: string; parent
 | `rootId` | `string` | No | query |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -934,7 +915,7 @@ client.notes.nodes.listAll(notebookId: string, options?: { type?: string; parent
 List child nodes
 
 ```typescript
-client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesNodesListChildrenResponse>
+client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<NotesNodesListChildrenResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -943,7 +924,6 @@ client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { 
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesNodesListChildrenResponse`
 
@@ -958,7 +938,7 @@ client.notes.nodes.listChildren(notebookId: string, nodeId: string, options?: { 
 List child nodes (collect all pages)
 
 ```typescript
-client.notes.nodes.listChildrenAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
+client.notes.nodes.listChildrenAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -967,7 +947,6 @@ client.notes.nodes.listChildrenAll(notebookId: string, nodeId: string, options?:
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -980,7 +959,7 @@ client.notes.nodes.listChildrenAll(notebookId: string, nodeId: string, options?:
 List child nodes (async iterator)
 
 ```typescript
-client.notes.nodes.listChildrenIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notes.nodes.listChildrenIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -989,7 +968,6 @@ client.notes.nodes.listChildrenIterator(notebookId: string, nodeId: string, opti
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1002,7 +980,7 @@ client.notes.nodes.listChildrenIterator(notebookId: string, nodeId: string, opti
 List nodes (async iterator)
 
 ```typescript
-client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; parentId?: string; rootId?: string; limit?: number; offset?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1013,7 +991,6 @@ client.notes.nodes.listIterator(notebookId: string, options?: { type?: string; p
 | `rootId` | `string` | No | query |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1365,7 +1342,7 @@ client.notes.records.get(notebookId: string, databaseId: string, recordId: strin
 List database records
 
 ```typescript
-client.notes.records.list(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number; cache?: boolean | number }): Promise<NotesRecordsListResponse>
+client.notes.records.list(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number }): Promise<NotesRecordsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1376,7 +1353,6 @@ client.notes.records.list(notebookId: string, databaseId: string, options?: { fi
 | `sorts` | `string` | No | query |  |
 | `page` | `number` | No | query |  |
 | `count` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesRecordsListResponse`
 
@@ -1391,7 +1367,7 @@ client.notes.records.list(notebookId: string, databaseId: string, options?: { fi
 List database records (collect all pages)
 
 ```typescript
-client.notes.records.listAll(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number; cache?: boolean | number }): Promise<unknown[]>
+client.notes.records.listAll(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1402,7 +1378,6 @@ client.notes.records.listAll(notebookId: string, databaseId: string, options?: {
 | `sorts` | `string` | No | query |  |
 | `page` | `number` | No | query |  |
 | `count` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -1415,7 +1390,7 @@ client.notes.records.listAll(notebookId: string, databaseId: string, options?: {
 List database records (async iterator)
 
 ```typescript
-client.notes.records.listIterator(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notes.records.listIterator(notebookId: string, databaseId: string, options?: { filters?: string; sorts?: string; page?: number; count?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1426,7 +1401,6 @@ client.notes.records.listIterator(notebookId: string, databaseId: string, option
 | `sorts` | `string` | No | query |  |
 | `page` | `number` | No | query |  |
 | `count` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
@@ -1439,7 +1413,7 @@ client.notes.records.listIterator(notebookId: string, databaseId: string, option
 Search database records
 
 ```typescript
-client.notes.records.search(notebookId: string, databaseId: string, options?: { q?: string; exclude?: string; cache?: boolean | number }): Promise<NotesRecordsSearchResponse>
+client.notes.records.search(notebookId: string, databaseId: string, options?: { q?: string; exclude?: string }): Promise<NotesRecordsSearchResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1448,7 +1422,6 @@ client.notes.records.search(notebookId: string, databaseId: string, options?: { 
 | `databaseId` | `string` | Yes | path |  |
 | `q` | `string` | No | query |  |
 | `exclude` | `string` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesRecordsSearchResponse`
 
@@ -1587,7 +1560,7 @@ client.notes.versions.get(notebookId: string, nodeId: string, versionId: string)
 List document versions
 
 ```typescript
-client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<NotesVersionsListResponse>
+client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<NotesVersionsListResponse>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1596,7 +1569,6 @@ client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `NotesVersionsListResponse`
 
@@ -1611,7 +1583,7 @@ client.notes.versions.list(notebookId: string, nodeId: string, options?: { limit
 List document versions (collect all pages)
 
 ```typescript
-client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): Promise<unknown[]>
+client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): Promise<unknown[]>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1620,7 +1592,6 @@ client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { li
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `unknown[]`
 
@@ -1633,7 +1604,7 @@ client.notes.versions.listAll(notebookId: string, nodeId: string, options?: { li
 List document versions (async iterator)
 
 ```typescript
-client.notes.versions.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number; cache?: boolean | number }): AsyncIterableIterator<unknown>
+client.notes.versions.listIterator(notebookId: string, nodeId: string, options?: { limit?: number; offset?: number }): AsyncIterableIterator<unknown>
 ```
 
 | Parameter | Type | Required | Location | Description |
@@ -1642,7 +1613,6 @@ client.notes.versions.listIterator(notebookId: string, nodeId: string, options?:
 | `nodeId` | `string` | Yes | path |  |
 | `limit` | `number` | No | query |  |
 | `offset` | `number` | No | query |  |
-| `cache` | `boolean \| number` | No | query |  |
 
 **Returns:** `AsyncIterableIterator<unknown>`
 
