@@ -22,6 +22,8 @@ export interface ApiAuthTokensListResponse {
   statusCode: 200;
   message: string;
   data: ({ id?: string; alias?: string; prefix?: string; public_key?: string | null; public_storage?: Record<string, unknown> | null; ip_whitelist?: string[]; realm_ids?: string[]; allow_no_realm?: boolean; permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean; env_values?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean }; subscriptions?: { purchase?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean } }; expires_at?: string | null; is_enabled?: boolean; vault_access?: boolean; event_access?: boolean; created_by_token_id?: string | null; delegation_depth?: number; last_used_at?: string | null; last_used_ip?: string | null; created_at?: string; updated_at?: string })[];
+  /** Present and true only when the list of delegated tokens was too large to return in full — the returned list is incomplete. */
+  truncated?: boolean;
 }
 
 export interface ApiAuthTokensCreateRequest {
@@ -147,7 +149,7 @@ export interface ApiAuthTokensUpdateRequest {
   /** Fine-grained permissions for this token. Any missing permission path defaults to false (deny). */
   permissions?: { containers?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; actions?: { start?: boolean; stop?: boolean; restart?: boolean; exec?: boolean; logs?: boolean }; features?: { ai?: boolean; hoody_kit?: boolean; snapshots?: boolean; networking?: boolean; kvm?: boolean; env_values?: boolean } }; projects?: { create?: boolean; read?: boolean; update?: boolean; delete?: boolean; members?: { invite?: boolean; remove?: boolean; change_roles?: boolean } }; financial?: { wallet?: { read?: boolean; transfer?: boolean; withdraw?: boolean }; billing?: { read?: boolean; manage_payment_methods?: boolean; download_invoices?: boolean }; server_rental?: { view_marketplace?: boolean; rent_servers?: boolean; extend_rentals?: boolean; terminate_rentals?: boolean }; subscriptions?: { purchase?: boolean } }; resources?: { vault?: boolean; events?: boolean; ssh_keys?: boolean; storage_shares?: boolean; proxy_aliases?: boolean; firewalls?: boolean; realms?: boolean; auth_token_public_profile?: boolean; create_tokens?: boolean; read_account?: boolean } };
   /**
-   * List of realm IDs this token is restricted to (at most 500)
+   * List of realm IDs this token is restricted to (at most 500). An empty list means every realm, so a token that has realms cannot be set to an empty list (409 LAST_REALM_REMOVAL).
    * @maxItems 500
    */
   realm_ids?: string[];
@@ -509,6 +511,7 @@ export interface ApiUsersListSecurityHistoryResponse {
   statusCode: number;
   message: string;
   data: ({ id: string; event?: string; outcome?: "success" | "failed"; ip_address?: string; country?: string | null; client?: string | null; created_at?: string })[];
+  metadata?: { total?: number; page?: number; limit?: number; pages?: number };
 }
 
 export interface ApiUsersCompleteOnboardingMilestoneRequest {
@@ -535,9 +538,9 @@ export interface ApiUsersRetrySetupRequest {
 }
 
 export interface ApiUsersRetrySetupResponse {
-  statusCode: number;
+  statusCode: 200;
   message: string;
-  data: { statusCode?: 200; data?: { server?: Record<string, unknown> | null; project?: Record<string, unknown> | null; container?: Record<string, unknown> | null; blocked_reason?: "support_required" | null } };
+  data: { server?: Record<string, unknown> | null; project?: Record<string, unknown> | null; container?: Record<string, unknown> | null; blocked_reason?: "support_required" | null };
 }
 
 export interface ApiUsersRedeemInviteRequest {
@@ -1102,11 +1105,15 @@ export type ApiFirewallCreateIngressRuleResponse =
       statusCode: 200;
       message: string;
       data: { ingress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string })[]; egress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string })[] } | { action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string; duplicate?: boolean; duplicate_of?: { direction: "ingress" | "egress"; index: number } };
+      /** Present only when there is something to warn about. `FIREWALL_RULE_COVERS_KIT_PORTS`: the rule drops or rejects TCP on ports the Hoody kits (terminal, files and others) are reached on, so while it is enabled the kits stop answering for traffic it matches. The rule was still added. */
+      warnings?: { code?: "FIREWALL_RULE_COVERS_KIT_PORTS"; message?: string; ports?: number[] }[];
     }
   | {
       statusCode: 201;
       message: string;
       data: { ingress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string })[]; egress?: ({ action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string })[] } | { action?: "allow" | "reject" | "drop"; protocol?: "tcp" | "udp" | "icmp4"; description?: string; destination_port?: string; source?: string; destination?: string; source_port?: string; state?: "enabled" | "disabled"; icmp_type?: string; icmp_code?: string; duplicate?: boolean; duplicate_of?: { direction: "ingress" | "egress"; index: number } };
+      /** Present only when there is something to warn about. `FIREWALL_RULE_COVERS_KIT_PORTS`: the rule drops or rejects TCP on ports the Hoody kits (terminal, files and others) are reached on, so while it is enabled the kits stop answering for traffic it matches. The rule was still added. */
+      warnings?: { code?: "FIREWALL_RULE_COVERS_KIT_PORTS"; message?: string; ports?: number[] }[];
     };
 
 export interface ToggleIngressRuleRequest {
@@ -1422,6 +1429,7 @@ export interface ApiInboxListResponse {
   statusCode: number;
   message: string;
   data: ({ id: string; title?: string; message?: string; type?: "MAINTENANCE" | "ANNOUNCEMENT" | "STATUS_UPDATE" | "BILLING"; severity?: "INFO" | "WARNING" | "ERROR" | "SUCCESS"; is_public?: boolean; is_global?: boolean; expires_at?: string | null; created_at?: string; updated_at?: string; is_read?: boolean; read_at?: string | null })[];
+  pagination?: { total?: number; page?: number; limit?: number; totalPages?: number; next_cursor?: string | null };
 }
 
 export interface ApiInboxMarkReadResponse {
@@ -1440,6 +1448,7 @@ export interface ApiProxyProjectPermissionsGetResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsSetRequest {
@@ -1449,7 +1458,7 @@ export interface ApiProxyProjectPermissionsSetRequest {
    */
   project: string;
   /** Authentication groups. Key is group name (^[A-Za-z0-9_-]{1,50}$), value is group config. */
-  groups: Record<string, { type?: "jwt" | "password" | "ip" | "token" | "hoody-identity"; secret?: string; algorithm?: "HS256" | "RS256" | "ES256" | "sha256"; sources?: string[]; claims?: Record<string, string | number | boolean>; username?: string; password?: string; salt?: string; range?: string; header?: string; cookie?: string; param?: string; value?: string; audience?: string; allow_types?: "user"[]; users?: string[]; max_age_seconds?: number /* min: 300 */; expose_type?: boolean }>;
+  groups: Record<string, { type?: "jwt" | "password" | "ip" | "token" | "hoody-identity"; secret?: string; algorithm?: "HS256" | "RS256" | "ES256" | "sha256"; sources?: string[]; claims?: Record<string, string | number | boolean>; username?: string; password?: string; salt?: string; range?: string; header?: string; cookie?: string; param?: string; value?: string; audience?: string; allow_types?: "user"[]; users?: string[]; max_age_seconds?: number /* min: 300 */; expose_type?: boolean; header_authoritative?: boolean }>;
   /** Per-group program permissions. Key is group name, value is map of program→access-rule. These are ACCESS CONTROL rules defining WHAT IS ALLOWED, not inventory of what exists. */
   permissions: Record<string, Record<string, boolean | number | number[] | string | "*">>;
   /** Default access policy when no rules match (defaults to "deny" if omitted) */
@@ -1464,12 +1473,14 @@ export interface ApiProxyProjectPermissionsSetResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsDeleteResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsSetDefaultRequest {
@@ -1481,6 +1492,7 @@ export interface ApiProxyProjectPermissionsSetDefaultResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface UpdateProjectProxyStateRequest {
@@ -1492,12 +1504,14 @@ export interface UpdateProjectProxyStateResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: string; enable_proxy?: boolean };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsDeleteAuthGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsSetJwtGroupRequest {
@@ -1510,18 +1524,21 @@ export interface ApiProxyProjectPermissionsSetJwtGroupRequest {
   /** JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys. */
   algorithm: "HS256" | "RS256" | "ES256";
   /**
-   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted)
+   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted). By default a valid token in any listed source counts (see header_authoritative). Name cookie sources with the __Host- prefix.
    * @minItems 1
    */
   sources: string[];
   /** Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean. */
   claims?: Record<string, string | number | boolean>;
+  /** When true and any configured header source is present in the request (any value, even empty), only header sources decide membership. When false or omitted, any configured source with a valid token counts. */
+  header_authoritative?: boolean;
 }
 
 export interface ApiProxyProjectPermissionsSetJwtGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsSetPasswordGroupRequest {
@@ -1548,6 +1565,7 @@ export interface ApiProxyProjectPermissionsSetPasswordGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsSetIpGroupRequest {
@@ -1562,6 +1580,7 @@ export interface ApiProxyProjectPermissionsSetIpGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 /**
@@ -1573,6 +1592,7 @@ export interface ApiProxyProjectPermissionsSetTokenGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsSetGroupPermissionRequest {
@@ -1589,24 +1609,28 @@ export interface ApiProxyProjectPermissionsSetGroupPermissionResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsClearGroupPermissionsResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyProjectPermissionsDeleteGroupPermissionResponse {
   statusCode: number;
   message: string;
   data: { project?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsGetResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean; hooks?: Record<string, unknown>; schema_version?: number; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsSetRequest {
@@ -1621,7 +1645,7 @@ export interface ApiProxyContainerPermissionsSetRequest {
    */
   container: string;
   /** Authentication groups. Key is group name, value is group config. */
-  groups: Record<string, { type?: "jwt" | "password" | "ip" | "token" | "hoody-identity"; secret?: string; algorithm?: "HS256" | "RS256" | "ES256" | "sha256"; sources?: string[]; claims?: Record<string, string | number | boolean>; username?: string; password?: string; salt?: string; range?: string; header?: string; cookie?: string; param?: string; value?: string; audience?: string; allow_types?: "user"[]; users?: string[]; max_age_seconds?: number /* min: 300 */; expose_type?: boolean }>;
+  groups: Record<string, { type?: "jwt" | "password" | "ip" | "token" | "hoody-identity"; secret?: string; algorithm?: "HS256" | "RS256" | "ES256" | "sha256"; sources?: string[]; claims?: Record<string, string | number | boolean>; username?: string; password?: string; salt?: string; range?: string; header?: string; cookie?: string; param?: string; value?: string; audience?: string; allow_types?: "user"[]; users?: string[]; max_age_seconds?: number /* min: 300 */; expose_type?: boolean; header_authoritative?: boolean }>;
   /** Per-group program permissions. Key is group name, value is map of program→access-rule. These are ACCESS CONTROL rules defining WHAT IS ALLOWED, not inventory of what exists. */
   permissions: Record<string, Record<string, boolean | number | number[] | string | "*">>;
   /** Defaults to deny if omitted */
@@ -1636,12 +1660,14 @@ export interface ApiProxyContainerPermissionsSetResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsDeleteResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny"; enable_proxy?: boolean };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsSetDefaultRequest {
@@ -1653,6 +1679,7 @@ export interface ApiProxyContainerPermissionsSetDefaultResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface UpdateContainerProxyStateRequest {
@@ -1664,12 +1691,14 @@ export interface UpdateContainerProxyStateResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: string; enable_proxy?: boolean };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsDeleteAuthGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsSetJwtGroupRequest {
@@ -1682,18 +1711,21 @@ export interface ApiProxyContainerPermissionsSetJwtGroupRequest {
   /** JWT algorithm to use for signature verification. HS256 uses symmetric keys, RS256/ES256 use asymmetric keys. */
   algorithm: "HS256" | "RS256" | "ES256";
   /**
-   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted)
+   * Where to look for JWT tokens in incoming requests. Format: "header:Name" or "cookie:Name" ("param:Name" is no longer accepted). By default a valid token in any listed source counts (see header_authoritative). Name cookie sources with the __Host- prefix.
    * @minItems 1
    */
   sources: string[];
   /** Optional JWT claims that must be present and match exactly. Values must be string, number, or boolean. */
   claims?: Record<string, string | number | boolean>;
+  /** When true and any configured header source is present in the request (any value, even empty), only header sources decide membership. When false or omitted, any configured source with a valid token counts. */
+  header_authoritative?: boolean;
 }
 
 export interface ApiProxyContainerPermissionsSetJwtGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsSetPasswordGroupRequest {
@@ -1720,6 +1752,7 @@ export interface ApiProxyContainerPermissionsSetPasswordGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsSetIpGroupRequest {
@@ -1734,6 +1767,7 @@ export interface ApiProxyContainerPermissionsSetIpGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 /**
@@ -1745,6 +1779,7 @@ export interface ApiProxyContainerPermissionsSetTokenGroupResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsSetGroupPermissionRequest {
@@ -1761,30 +1796,35 @@ export interface ApiProxyContainerPermissionsSetGroupPermissionResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsClearGroupPermissionsResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyContainerPermissionsDeleteGroupPermissionResponse {
   statusCode: number;
   message: string;
   data: { project?: string; container?: string; groups?: Record<string, unknown>; permissions?: Record<string, unknown>; default?: "allow" | "deny" };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksListResponse {
   statusCode: number;
   message: string;
   data: { hooks?: Record<string, ({ id?: string; position?: number /* min: 0 */; match?: { method?: string | string[]; path?: string; headers?: Record<string, string> }; script?: { subdomain?: string; execId?: string; path: string }; timeout?: number /* min: 1, max: 30000 */; applies_to?: { groups?: string[] } })[]>; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksListByServiceResponse {
   statusCode: number;
   message: string;
   data: { service?: string; hooks?: ({ id?: string; position?: number /* min: 0 */; match?: { method?: string | string[]; path?: string; headers?: Record<string, string> }; script?: { subdomain?: string; execId?: string; path: string }; timeout?: number /* min: 1, max: 30000 */; applies_to?: { groups?: string[] } })[]; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksCreateRequest {
@@ -1807,18 +1847,21 @@ export interface ApiProxyHooksCreateResponse {
   statusCode: number;
   message: string;
   data: { hook?: { id?: string; position?: number /* min: 0 */; match?: { method?: string | string[]; path?: string; headers?: Record<string, string> }; script?: { subdomain?: string; execId?: string; path: string }; timeout?: number /* min: 1, max: 30000 */; applies_to?: { groups?: string[] } }; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksClearResponse {
   statusCode: number;
   message: string;
   data: { removed?: number; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksGetResponse {
   statusCode: number;
   message: string;
   data: { hook?: { id?: string; position?: number /* min: 0 */; match?: { method?: string | string[]; path?: string; headers?: Record<string, string> }; script?: { subdomain?: string; execId?: string; path: string }; timeout?: number /* min: 1, max: 30000 */; applies_to?: { groups?: string[] } }; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksSetRequest {
@@ -1841,12 +1884,14 @@ export interface ApiProxyHooksSetResponse {
   statusCode: number;
   message: string;
   data: { hook?: { id?: string; position?: number /* min: 0 */; match?: { method?: string | string[]; path?: string; headers?: Record<string, string> }; script?: { subdomain?: string; execId?: string; path: string }; timeout?: number /* min: 1, max: 30000 */; applies_to?: { groups?: string[] } }; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksDeleteResponse {
   statusCode: number;
   message: string;
   data: { file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyHooksMoveRequest {
@@ -1858,12 +1903,14 @@ export interface ApiProxyHooksMoveResponse {
   statusCode: number;
   message: string;
   data: { hook?: { id?: string; position?: number /* min: 0 */; match?: { method?: string | string[]; path?: string; headers?: Record<string, string> }; script?: { subdomain?: string; execId?: string; path: string }; timeout?: number /* min: 1, max: 30000 */; applies_to?: { groups?: string[] } }; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxySettingsGetResponse {
   statusCode: number;
   message: string;
   data: { enable_proxy?: boolean; default?: "allow" | "deny"; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxySettingsUpdateRequest {
@@ -1875,24 +1922,28 @@ export interface ApiProxySettingsUpdateResponse {
   statusCode: number;
   message: string;
   data: { enable_proxy?: boolean; default?: string; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyGroupsListResponse {
   statusCode: number;
   message: string;
   data: { groups?: { name?: string; auth_rule_count?: number }[]; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyServicesListResponse {
   statusCode: number;
   message: string;
   data: { services?: string[]; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyServicesGetResponse {
   statusCode: number;
   message: string;
   data: { service?: string; is_reject_listed?: boolean; permissions_raw?: Record<string, unknown>; hooks?: Record<string, unknown>[]; effective_default?: "allow" | "deny"; file_version?: number; etag?: string };
+  propagation?: { committed?: boolean; complete?: boolean; state?: "pending" | "applied" | "failed" | "unknown" | "superseded"; status_scope?: "current"; generation?: number; action?: string; file_version?: number; succeeded_count?: number; failed_count?: number; pending_count?: number; target_count?: number; retained_count?: number };
 }
 
 export interface ApiProxyAliasesListResponse {
@@ -1909,7 +1960,7 @@ export interface ApiProxyAliasesCreateRequest {
   container_id: string;
   /** Custom alias name (a-z, 0-9, hyphens only, 3-61 chars, cannot start/end with hyphen) OR null/false for auto-generated 48-char hex. Two independent uniqueness rules apply, either of which answers 409 ALIAS_IN_USE: the name must be free on the container's physical server (across every tenant hosted there), AND your own account may hold a given name only once across all servers. A different account can reuse your name on a different server; you cannot. Reserved and rejected: the exact label "containers" (an infrastructure label of the container proxy domain), and anything equal to a reserved service name (such as "egress") or starting with that name followed by "-" (such as "egress-"). Distinct labels such as "containers-my-app" and "egressmyapp" are allowed. */
   alias?: string | null | false;
-  /** Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). To point an alias at an HTTP server you run yourself inside the container (a process started via the daemon, a dev server, anything listening on a TCP port) use program "http" — or "https" for a TLS backend — and give the port via the "port" field (e.g. program "http" + port 3000 forwards to http://<container>:3000). The combined "http-3000" form and the "index"-as-port form also work; when more than one is supplied the order of authority is port > the port embedded in "http-<port>" > index, so a leftover/default index can never override a real port. Must be a known Hoody program name (or one of its aliases) or protocol. */
+  /** Which container service the alias targets — a built-in Hoody program ("terminal", "files", "code", "browser", "agent", "display", …) or a transport protocol ("http", "https", "ssh"). To point an alias at an HTTP server you run yourself inside the container (a process started via the daemon, a dev server, anything listening on a TCP port) use program "http" — or "https" for a TLS backend — and give the port via the "port" field (e.g. program "http" + port 3000 forwards to http://<container>:3000). A port is required for "http"/"https": without one the request is refused (400 PORT_REQUIRED). The combined "http-3000" form and the "index"-as-port form also work; when more than one is supplied the order of authority is port > the port embedded in "http-<port>" > index, so a leftover/default index can never override a real port. Must be a known Hoody program name (or one of its aliases) or protocol. */
   program: string;
   /**
    * Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000 → http://<container>:3000). Preferred, unambiguous way to point an alias at a raw HTTP/HTTPS server; takes precedence over "index" and over any port embedded in the program string ("http-3000"). Ignored for built-in Hoody programs, which have fixed kit ports.
@@ -1918,7 +1969,7 @@ export interface ApiProxyAliasesCreateRequest {
    */
   port?: number /* min: 1, max: 65535 */;
   /**
-   * Instance index, or target port for the "http"/"https" protocol. Defaults to 1. For a built-in Hoody program it selects which running instance to route to (e.g. terminal 2). For "http"/"https" it is the port your server listens on inside the container — but prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index (so an accidental index of 1 will not route you to port 1).
+   * Instance index, or target port for the "http"/"https" protocol. For a built-in Hoody program it selects which running instance to route to (e.g. terminal 2) and defaults to 1. For "http"/"https" it is the port your server listens on inside the container and has no default: give it here, in "port" or as "http-<port>", or the request is refused (400 PORT_REQUIRED) — but prefer the dedicated "port" field; if "port" or a port embedded in the program ("http-3000") is also supplied, that wins over this index (so an accidental index of 1 will not route you to port 1).
    * @minimum 1
    */
   index?: number /* min: 1 */;
@@ -1955,7 +2006,7 @@ export interface ApiProxyAliasesUpdateRequest {
    * @pattern ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$
    */
   alias?: string;
-  /** Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). Use "http"/"https" with the "port" field to reach an HTTP server running on that port inside the container (e.g. program "http" + port 3000). The combined "http-3000" form and "index"-as-port also work; order of authority is port > embedded "http-<port>" > index. Must be a known Hoody program name (or one of its aliases) or protocol. */
+  /** Program or protocol the alias targets — a built-in Hoody program ("terminal", "files", "code", …) or a transport protocol ("http", "https", "ssh"). Use "http"/"https" with the "port" field to reach an HTTP server running on that port inside the container (e.g. program "http" + port 3000). The combined "http-3000" form and "index"-as-port also work; order of authority is port > embedded "http-<port>" > index. Switching an alias from a built-in program to "http"/"https" needs a port in the same request (400 PORT_REQUIRED). Must be a known Hoody program name (or one of its aliases) or protocol. */
   program?: string;
   /**
    * Target port for the "http"/"https" protocol — the port your server listens on inside the container (e.g. program "http" + port 3000). Preferred over "index"; takes precedence over "index" and over any port embedded in the program string. Ignored for built-in Hoody programs.
@@ -2216,6 +2267,7 @@ export interface ApiActivityListResponse {
   statusCode: number;
   message: string;
   data: ({ id: string; user_id?: string; realm_id?: string | null; method?: string; path?: string; status_code?: number; ip_address?: string; user_agent?: string | null; created_at?: string })[];
+  metadata?: { total?: number; page?: number; limit?: number; pages?: number };
 }
 
 export interface ApiActivityGetStatsResponse {
@@ -2246,6 +2298,9 @@ export interface ApiServersSubscriptionsListResponse {
   statusCode: number;
   message: string;
   data: ({ id?: string; plan_id?: string; state?: string; server_id?: string | null; server_name?: string | null; anchor_day?: number; auto_renew?: boolean; paid_through?: string | null; active_operation_id?: string | null; delete_at?: string | null; plan?: { family_id?: string; title?: string; type_label?: string; price_cents_per_month?: number; hold_days?: number; resources?: { cpu_cores?: number; ram_gb?: number; disk_limit_gb?: number; disk_io_read_mib?: number; disk_io_write_mib?: number; network_limit_mbps?: number; max_containers?: number; snapshots_per_container?: number; ai_multiplier?: number } } | null; created_at?: string | null; updated_at?: string | null })[];
+  total?: number;
+  limit?: number;
+  offset?: number;
 }
 
 export interface ApiServersSubscriptionsBuyRequest {
@@ -2431,6 +2486,7 @@ export interface ApiWalletListPaymentMethodsResponse {
   statusCode: number;
   message: string;
   data: { id: string; user_id?: string; type?: string; name?: string; status?: string; details?: Record<string, unknown>; is_default?: boolean; created_at?: string; updated_at?: string }[];
+  metadata?: { total?: number; page?: number; limit?: number; pages?: number };
 }
 
 export interface ApiWalletCreatePaymentMethodRequest {
@@ -2921,9 +2977,9 @@ export interface ApiAuthResetPasswordResponse {
 }
 
 export interface ApiServersListRegionsResponse {
-  statusCode: number;
+  statusCode: 200;
   message: string;
-  data: { statusCode?: 200; data?: { regions?: { region?: string; country?: string; city?: string; available?: boolean }[] } };
+  data: { regions?: { region?: string; country?: string; city?: string; available?: boolean }[] };
 }
 
 export interface ApiAuthOauthStartLaunchRequest {
@@ -2950,12 +3006,12 @@ export interface ApiAuthOauthStartLaunchRequest {
 export interface ApiAuthOauthStartLaunchResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { launch_url?: string } };
+  data: { launch_url?: string };
 }
 
 export interface ApiAuthDeviceStartRequest {
   /**
-   * Shown on the verification page as "X is requesting access"
+   * Shown on the verification page as the name of the client requesting access, marked there as not verified by Hoody
    * @maxLength 64
    */
   client_name?: string;
@@ -2976,7 +3032,7 @@ export interface ApiAuthDeviceStartRequest {
 export interface ApiAuthDeviceStartResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { device_code?: string; user_code?: string; verification_uri?: string; verification_uri_complete?: string; interval?: number; expires_in?: number } };
+  data: { device_code?: string; user_code?: string; verification_uri?: string; verification_uri_complete?: string; interval?: number; expires_in?: number };
 }
 
 export interface ApiAuthDeviceVerifyCodeRequest {
@@ -2990,7 +3046,7 @@ export interface ApiAuthDeviceVerifyCodeRequest {
 export interface ApiAuthDeviceVerifyCodeResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { status?: "pending" | "approved"; client_name?: string | null; expires_in?: number; device_verify_ticket?: string } };
+  data: { status?: "pending" | "approved"; client_name?: string | null; expires_in?: number; device_verify_ticket?: string };
 }
 
 export type ApiAuthDeviceLoginRequest = {
@@ -3022,7 +3078,7 @@ export type ApiAuthDeviceLoginRequest = {
 export interface ApiAuthDeviceLoginResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { status?: "approved"; requires_2fa?: boolean; temp_token?: string } };
+  data: { status?: "approved"; requires_2fa?: boolean; temp_token?: string };
 }
 
 export interface ApiAuthDeviceDenyRequest {
@@ -3036,7 +3092,7 @@ export interface ApiAuthDeviceDenyRequest {
 export interface ApiAuthDeviceDenyResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { status?: "denied" } };
+  data: { status?: "denied" };
 }
 
 export interface ApiAuthDevicePollRequest {
@@ -3053,7 +3109,7 @@ export interface ApiAuthDevicePollRequest {
 export interface ApiAuthDevicePollResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { token?: string; refreshToken?: string; expires_at?: string; expires_in?: number; refresh_expires_at?: string; refresh_expires_in?: number; identity_claim?: { kid?: string; payload_b64?: string; signature_hex?: string }; user?: { id?: string; username?: string; alias?: string; email?: string; email_verified?: boolean; signup_method?: string; avatar_url?: string | null; created_at?: string; updated_at?: string }; server?: { id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id?: string; alias?: string } | null; container?: { id?: string; name?: string; status?: string | null } | null } };
+  data: { token?: string; refreshToken?: string; expires_at?: string; expires_in?: number; refresh_expires_at?: string; refresh_expires_in?: number; identity_claim?: { kid?: string; payload_b64?: string; signature_hex?: string }; user?: { id?: string; username?: string; alias?: string; email?: string; email_verified?: boolean; signup_method?: string; avatar_url?: string | null; created_at?: string; updated_at?: string }; server?: { id?: string; name?: string; country?: string; region?: string; city?: string; datacenter?: string; is_ready?: boolean } | null; project?: { id?: string; alias?: string } | null; container?: { id?: string; name?: string; status?: string | null } | null };
 }
 
 export interface ApiAuthOauthAuthorizeRequest {
@@ -3074,7 +3130,7 @@ export interface ApiAuthOauthAuthorizeRequest {
 export interface ApiAuthOauthAuthorizeResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { code: string } };
+  data: { code: string };
 }
 
 export interface ApiAuthOauthExchangeRequest {
@@ -3103,7 +3159,7 @@ export interface ApiAuthOauthExchangeResponse {
 export interface ApiAuthGetConfigResponse {
   statusCode: number;
   message: string;
-  data: { statusCode?: number; data?: { appName?: string; logoUrl?: string; primaryColor?: string; githubEnabled?: boolean; googleEnabled?: boolean; signupEnabled?: boolean; inviteRequired?: boolean } };
+  data: { appName?: string; logoUrl?: string; primaryColor?: string; githubEnabled?: boolean; googleEnabled?: boolean; signupEnabled?: boolean; inviteRequired?: boolean };
 }
 
 export interface ApiWalletGetGithubBonusResponse {
@@ -3148,6 +3204,9 @@ export interface ApiServersReservationsListResponse {
   statusCode: number;
   message: string;
   data: ({ id?: string; offer_id?: string; days?: number; state?: "pending" | "fulfilled" | "refunded"; ready_by?: string; delivery_hours_quoted?: number; setup_time_minutes_quoted?: number; hold_days_quoted?: number; server_id?: string | null; rental_id?: string | null; created_at?: string; rental_cents?: number; setup_fee_cents?: number; total_paid_cents?: number; offer_snapshot?: Record<string, unknown> | null })[];
+  total?: number;
+  limit?: number;
+  offset?: number;
 }
 
 export interface ApiServersReservationsGetResponse {
@@ -4068,13 +4127,13 @@ export interface DisplayWindowsSearchResponse {
 export interface DisplayWindowsGetGeometryResponse {
   statusCode: number;
   message: string;
-  data: { success?: boolean; windowId?: number; x?: number; y?: number; width?: number; height?: number };
+  data: { success?: boolean; windowId?: string; x?: number; y?: number; width?: number; height?: number };
 }
 
 export interface DisplayWindowsGetTitleResponse {
   statusCode: number;
   message: string;
-  data: { success?: boolean; windowId?: number; name?: string };
+  data: { success?: boolean; windowId?: string; name?: string };
 }
 
 export type DisplayInputClickRequest = ClickAtBody;
@@ -4170,12 +4229,14 @@ export type ExecRunRequest = unknown;
 export interface ExecScriptsValidateTypesRequest {
   /** Code */
   code: string;
+  /** When true, also type-check the code with the TypeScript compiler against the hoody-sdk declarations in `<scripts>/node_modules` and the script globals (`hoody`, `req`, `res`, …). Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). The first check on a scripts directory without TypeScript 7 installs it there. A type error answers 200 with `valid: false` and `diagnostics`. */
+  typecheck?: boolean;
 }
 
 export interface ExecScriptsValidateTypesResponse {
   statusCode: number;
   message: string;
-  data: { valid: true; typeChecked: false; javascript: string; originalLength: number; transpiledLength: number; normalized: boolean; transformations: string[]; message: "TypeScript transpiles; types are not checked" };
+  data: { valid: boolean; typeChecked: boolean; diagnostics?: { line: number /* min: 1 */; column: number /* min: 1 */; code: number; message: string; source: string; hint?: { access: string; method?: { kit: string; path: string; method: string; signature: string; summary: string; example: string; file: string; params: { name: string; type: string; optional: boolean; fields?: { name: string; type: string; optional: boolean; requiredIn?: "some"; doc?: string }[]; fieldsOmitted?: number /* min: 1 */; anyOf?: string[][]; incomplete?: true }[] }; overloads?: string[]; candidates?: { path: string; method?: string; signature?: string; summary?: string; namespace?: string }[]; note?: string } }[]; truncatedDiagnostics?: number /* min: 1 */; sdkVersion?: string | null; typecheckMs?: number; typecheckError?: string; javascript: string; originalLength: number; transpiledLength: number; normalized: boolean; transformations: string[]; normalizationWarnings: string[]; message: string };
 }
 
 export interface ExecScriptsValidateSyntaxRequest {
@@ -4186,7 +4247,7 @@ export interface ExecScriptsValidateSyntaxRequest {
 export interface ExecScriptsValidateSyntaxResponse {
   statusCode: number;
   message: string;
-  data: { valid: boolean; message: "JavaScript syntax is valid"; codeLength: number; normalized: boolean; transformations: string[] };
+  data: { valid: boolean; message: "JavaScript syntax is valid"; codeLength: number; normalized: boolean; transformations: string[]; normalizationWarnings: string[] };
 }
 
 export interface ExecScriptsValidateDependenciesRequest {
@@ -4231,12 +4292,14 @@ export interface ExecScriptsValidateRequest {
   language?: string;
   /** Extension */
   extension?: string;
+  /** When true, also type-check the code with the TypeScript compiler against the hoody-sdk declarations in `<scripts>/node_modules` and the script globals (`hoody`, `req`, `res`, …). Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). The first check on a scripts directory without TypeScript 7 installs it there. Runs when the syntax is valid; the outcome is `results.typecheck`, and a type error makes `valid` false. */
+  typecheck?: boolean;
 }
 
 export interface ExecScriptsValidateResponse {
   statusCode: number;
   message: string;
-  data: { valid: boolean; results: { syntax: { valid: true; message: string } | { valid: false; error: string }; typescript: { valid: true; typeChecked: false; transpiledLength: number; direct?: boolean; message: "TypeScript transpiles; types are not checked" } | { valid: false; typeChecked: false; error: string } | null; dependencies: { total: number; installed: number; missing: number; missingModules: string[]; invalidModules: { name: string; error: string }[]; allInstalled: boolean }; magicComments: Record<string, unknown> | null; magicCommentWarnings: { directive: string; value: string; message: string }[]; normalized: boolean; transformations: string[] }; message: string };
+  data: { valid: boolean; results: { syntax: { valid: true; message: string } | { valid: false; error: string }; typescript: { valid: true; typeChecked: boolean; transpiledLength: number; direct?: boolean; message: "TypeScript transpiles; types are not checked" | "TypeScript transpiles; types are checked in results.typecheck" } | { valid: false; typeChecked: false; error: string } | null; dependencies: { total: number; installed: number; missing: number; missingModules: string[]; invalidModules: { name: string; error: string }[]; allInstalled: boolean }; magicComments: Record<string, unknown> | null; magicCommentWarnings: { directive: string; value: string; message: string }[]; normalized: boolean; transformations: string[]; normalizationWarnings: string[]; typecheck?: { typeChecked: true; valid: boolean; diagnostics: { line: number /* min: 1 */; column: number /* min: 1 */; code: number; message: string; source: string; hint?: { access: string; method?: { kit: string; path: string; method: string; signature: string; summary: string; example: string; file: string; params: { name: string; type: string; optional: boolean; fields?: { name: string; type: string; optional: boolean; requiredIn?: "some"; doc?: string }[]; fieldsOmitted?: number /* min: 1 */; anyOf?: string[][]; incomplete?: true }[] }; overloads?: string[]; candidates?: { path: string; method?: string; signature?: string; summary?: string; namespace?: string }[]; note?: string } }[]; truncated: number; sdkVersion: string | null; durationMs: number; language?: "ts" | "js"; message?: string } | { typeChecked: false; error: string } }; message: string };
 }
 
 export interface ExecTemplatesListResponse {
@@ -4342,6 +4405,8 @@ export interface ExecScriptsWriteRequest {
   validate?: boolean;
   /** Create only. When true and the name already exists as anything (a file, a directory, a live or dangling symlink, which is never followed), nothing is written and the answer is 409; a symlinked ancestor directory is still 403. The existence check and the create are one atomic step, so of several concurrent creates (from any process) exactly one succeeds. A failed create is 500 with `details.code` `CREATE_FAILED` (nothing published); a create that published the file but could not remove its temporary name is 500 with `details.code` `CREATED_CLEANUP_FAILED` and that name in `details.leftover`. */
   ifNotExists?: boolean;
+  /** When true, also type-check the code with the TypeScript compiler against the hoody-sdk declarations in `<scripts>/node_modules` and the script globals (`hoody`, `req`, `res`, …). Imports TypeScript cannot resolve are not reported; types from relative helper files are not checked (`any`). The first check on a scripts directory without TypeScript 7 installs it there. Only with validation on, for a .js/.ts path: a type error refuses the write with 400 (`details.validation.typecheck.diagnostics`); a check that could not run does not. */
+  typecheck?: boolean;
   /**
    * Optional execution scope in request body. Query execId/exec_id takes precedence when both are provided. Lowercase alphanumeric, no hyphens — the `-exec-` part of a hostname cannot carry one, so a hyphenated execId names a tree no request could route to and is rejected with 400.
    * @maxLength 64
@@ -4361,7 +4426,7 @@ export interface ExecScriptsWriteRequest {
 export interface ExecScriptsWriteResponse {
   statusCode: number;
   message: string;
-  data: { path: string; resolvedPath: string; created: boolean; updated: boolean; size: number; modified: string; validated: boolean; routable?: false; remote?: { enabled: boolean; ops: { messages: boolean; call: boolean; eval: boolean }; gate: "remote-token" | "script-token" | "open"; token_names: string[]; eval: { on: boolean; token_ready: boolean }; route: string | null; url: string | null; routable: boolean; connect?: { header: "X-Hoody-Remote"; ops: ("capabilities" | "send" | "events" | "call" | "eval")[]; events_query?: "?hoody-remote=events"; ws_subprotocol?: "hoody-remote.v1" } }; env?: Record<string, unknown> | null; schedule?: { action: string; reason?: string }; magicCommentWarnings?: { directive: string; value: string; message: string }[] };
+  data: { path: string; resolvedPath: string; created: boolean; updated: boolean; size: number; modified: string; validated: boolean; routable?: false; remote?: { enabled: boolean; ops: { messages: boolean; call: boolean; eval: boolean }; gate: "remote-token" | "script-token" | "open"; token_names: string[]; eval: { on: boolean; token_ready: boolean }; route: string | null; url: string | null; routable: boolean; connect?: { header: "X-Hoody-Remote"; ops: ("capabilities" | "send" | "events" | "call" | "eval")[]; events_query?: "?hoody-remote=events"; ws_subprotocol?: "hoody-remote.v1" } }; env?: Record<string, unknown> | null; schedule?: { action: string; reason?: string }; magicCommentWarnings?: { directive: string; value: string; message: string }[]; normalizationWarnings?: string[]; typeChecked?: boolean; typecheck?: { typeChecked: true; valid: boolean; diagnostics: { line: number /* min: 1 */; column: number /* min: 1 */; code: number; message: string; source: string; hint?: { access: string; method?: { kit: string; path: string; method: string; signature: string; summary: string; example: string; file: string; params: { name: string; type: string; optional: boolean; fields?: { name: string; type: string; optional: boolean; requiredIn?: "some"; doc?: string }[]; fieldsOmitted?: number /* min: 1 */; anyOf?: string[][]; incomplete?: true }[] }; overloads?: string[]; candidates?: { path: string; method?: string; signature?: string; summary?: string; namespace?: string }[]; note?: string } }[]; truncated: number; sdkVersion: string | null; durationMs: number; language?: "ts" | "js"; message?: string } | { typeChecked: false; error: string } };
 }
 
 export interface ExecScriptsDeleteResponse {
@@ -4465,7 +4530,7 @@ export interface ExecLogsGetResponse {
 export interface ExecLogsSearchRequest {
   /** Query */
   query?: string;
-  /** Regex */
+  /** Regular expression to search for, at most 64 characters (a longer one is refused with 400 `Invalid regex: pattern exceeds 64 chars`). Takes the place of `query` when both are sent. */
   regex?: string;
   /** Files */
   files?: string[];
@@ -4583,7 +4648,7 @@ export interface ExecRoutesResolveRequest {
 export interface ExecRoutesResolveResponse {
   statusCode: number;
   message: string;
-  data: { matched: true; path: string; scriptPath: string; routePattern: string; parameters: Record<string, string | string[]>; type: string; baseDir: string } | { matched: false; path: string; hostname: string; execId: string | null; triedDirectories: string[] };
+  data: { matched: true; path: string; scriptPath: string; routePattern: string; parameters: Record<string, string | string[]>; type: string; baseDir: string } | { matched: false; path: string; hostname: string; execId: string | null; triedDirectories: string[]; suggestions: { path: string; scriptPath: string }[] };
 }
 
 export interface ExecRoutesListRequest {
@@ -4627,7 +4692,7 @@ export interface ExecRoutesTestRequest {
 export interface ExecRoutesTestResponse {
   statusCode: number;
   message: string;
-  data: { tested: number; matched: number; notMatched: number; results: Record<string, unknown>[] };
+  data: { tested: number; matched: number; notMatched: number; results: ({ path: string; matched: boolean; scriptPath?: string; parameters?: Record<string, string | string[]>; suggestions?: { path: string; scriptPath: string }[] })[] };
 }
 
 export interface ExecKitGetStatsResponse {
@@ -4977,6 +5042,12 @@ export interface ExecNamespacesListResponse {
   data: { execIds: (({ id: string; type: "sdk"; source_url?: string; files: number; invalid?: boolean; error?: string } & { type: "sdk" }) | ({ id: string; type: "custom"; files: number } & { type: "custom" }))[]; total: number; summary: { sdk: number; custom: number } };
 }
 
+export interface ExecSdkTypesListResponse {
+  statusCode: number;
+  message: string;
+  data: { sdkVersion: string | null; kits: { name: string; methods: number }[]; total: number; truncated: boolean; methods: { kit: string; path: string; method: string; signature: string; summary: string; example: string; file: string; params: { name: string; type: string; optional: boolean; fields?: { name: string; type: string; optional: boolean; requiredIn?: "some"; doc?: string }[]; fieldsOmitted?: number /* min: 1 */; anyOf?: string[][]; incomplete?: true }[] }[]; dts?: string; dtsFiles?: string[]; dtsOmitted?: number; message: string };
+}
+
 export interface ExecMagicCommentsGetSchemaResponse {
   statusCode: number;
   message: string;
@@ -4986,7 +5057,7 @@ export interface ExecMagicCommentsGetSchemaResponse {
 export interface ExecMagicCommentsGetResponse {
   statusCode: number;
   message: string;
-  data: { path: string; resolvedPath: string; comments: Record<string, unknown> };
+  data: { path: string; resolvedPath: string; comments: Record<string, unknown>; warnings: { directive: string; value: string; message: string }[] };
 }
 
 export interface ExecMagicCommentsUpdateRequest {
@@ -5268,17 +5339,13 @@ authenticating.
 Setting this to true will skip this request, making you responsible
 for ensuring the configured authority is valid and trustworthy. */
   disable_instance_discovery?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint for the service.
 
 Leave blank normally. */
   endpoint?: string;
-  /** Read credentials from runtime (environment variables, CLI or MSI).
-
-See the [authentication docs](/azureblob#authentication) for full info. */
+  /** Read credentials from runtime (environment variables, CLI or MSI). */
   env_auth?: false;
   /** Storage Account Shared Key.
 
@@ -5492,17 +5559,13 @@ authenticating.
 Setting this to true will skip this request, making you responsible
 for ensuring the configured authority is valid and trustworthy. */
   disable_instance_discovery?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint for the service.
 
 Leave blank normally. */
   endpoint?: string;
-  /** Read credentials from runtime (environment variables, CLI or MSI).
-
-See the [authentication docs](/azureblob#authentication) for full info. */
+  /** Read credentials from runtime (environment variables, CLI or MSI). */
   env_auth?: false;
   /** Storage Account Shared Key.
 
@@ -5513,11 +5576,8 @@ Leave blank to use SAS URL or Emulator. */
 Azure files needs to know in advance how big the file will be. When
 Hoody doesn't know it uses this value instead.
 
-This will be used when Hoody is streaming data, the most common uses are:
-
-- Uploading files with `--vfs-cache-mode off` with `Hoody mount`
-- Using `Hoody rcat`
-- Copying files with unknown length
+This will be used when Hoody is streaming data, for example when
+copying a file of unknown length.
 
 You will need this much free space in the share as the file will be this size temporarily. */
   max_stream_size?: string;
@@ -5637,7 +5697,7 @@ to start uploading. */
   disable_checksum?: boolean;
   /** Time before the public link authorization token will expire in s or suffix ms|s|m|h|d.
 
-This is used in combination with "Hoody link" for making files
+This is used when making files
 accessible to the public and sets the duration before the download
 authorization token will expire.
 
@@ -5660,9 +5720,7 @@ Example:
 > https://mysubdomain.mydomain.tld
 (No trailing "/", "file" or "bucket") */
   download_url?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint for the service.
 
@@ -5689,9 +5747,7 @@ The minimum value for this parameter is 1 day.
 
 You can also enable hard_delete in the config also which will mean
 deletions won't cause versions but overwrites will still cause
-versions to be made.
-
-See: [Hoody backend lifecycle](#lifecycle) for setting lifecycles after bucket creation. */
+versions to be made. */
   lifecycle?: number;
   /** How often internal memory buffer pools will be flushed. (no longer used) (in seconds) */
   memory_pool_flush_time?: number;
@@ -5787,9 +5843,7 @@ Leave blank normally. */
   commit_retries?: number;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Impersonate this user ID when using a service account.
 
@@ -5839,9 +5893,7 @@ export interface FilesBackendsCreateCloudinaryRequest {
   cloud_name: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Wait N seconds for eventual consistency of the databases that support the backend operation */
   eventually_consistent_delay?: number;
@@ -5927,9 +5979,7 @@ HTTP/2.  HTTP/2 is therefore disabled by default for the drive backend
 but can be re-enabled here.  When the issue is solved this flag will
 be removed. */
   disable_http2?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Get IAM credentials from runtime (environment variables or instance meta data if no env vars).
 
@@ -6078,12 +6128,8 @@ forever.
 
 **WARNING**: This flag may have some unexpected consequences.
 
-It is not recommended to set this flag in your config - the
-recommended usage is using the flag form --drive-size-as-quota when
-doing Hoody ls/lsl/lsf/lsjson/etc only.
-
-If you do use this flag for syncing (not recommended) then you will
-need to use --ignore size also. */
+It is meant for listings: it is not recommended on a backend that is
+used for copying or syncing. */
   size_as_quota?: boolean;
   /** Skip checksums on Google photos and videos only.
 
@@ -6109,7 +6155,7 @@ If given, gdocs practically become invisible to Hoody. */
   /** If set skip shortcut files.
 
 Normally Hoody dereferences shortcut files making them appear as if
-they are the original file (see [the shortcuts section](#shortcuts)).
+they are the original file.
 If this flag is set then Hoody will ignore shortcut files completely. */
   skip_shortcuts?: boolean;
   /** Only show files that are starred. */
@@ -6271,9 +6317,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Comma separated list of preferred formats for exporting files
 
@@ -6287,9 +6331,8 @@ Known formats include: "html", "md" (markdown) */
   export_formats?: string;
   /** Impersonate this user when using a business account.
 
-Note that if you want to use impersonate, you should make sure this
-flag is set when running "Hoody config" as this will cause Hoody to
-request the "members.read" scope which it won't normally. This is
+Note that if you want to use impersonate, the token must carry
+the "members.read" scope, which Hoody does not request by default. This is
 needed to lookup a members email address into the internal ID that
 dropbox uses in the API.
 
@@ -6308,9 +6351,8 @@ member ID (for example "dbmid:...").
 
 This takes a team member ID directly rather than an email address.
 
-Note that if you want to use impersonate_admin, you should make sure this
-flag is set when running "Hoody config" as this will cause Hoody to
-request the "team_data.member" scope which it won't normally.
+Note that if you want to use impersonate_admin, the token must carry
+the "team_data.member" scope, which Hoody does not request by default.
 
 Using the "team_data.member" scope will require a Dropbox Team Admin
 to approve during the OAuth flow.
@@ -6405,9 +6447,7 @@ export interface FilesBackendsCreateFichierRequest {
   cdn?: boolean;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** If you want to download a shared file that is password protected, add this parameter. */
   file_password?: string;
@@ -6429,9 +6469,7 @@ export interface FilesBackendsCreateFichierResponse {
 export interface FilesBackendsCreateFilefabricRequest {
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Permanent Authentication Token.
 
@@ -6483,9 +6521,7 @@ export interface FilesBackendsCreateFilescomRequest {
   api_key?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** The password used to authenticate with Files.com. */
   password?: string;
@@ -6541,9 +6577,7 @@ So for `concurrency 3` you'd use `--checkers 2 --transfers 2
   disable_tls13?: boolean;
   /** Disable using UTF-8 even if server advertises support. */
   disable_utf8?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: "Asterisk,Ctl,Dot,Slash" | "BackSlash,Ctl,Del,Dot,RightSpace,Slash,SquareBracket" | "Ctl,LeftPeriod,Slash";
   /** Use Explicit FTPS (FTP over TLS).
 
@@ -6639,9 +6673,7 @@ Leave this blank normally, Hoody will fill it in automatically. */
   account_id?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Number of items to list in each call */
   list_chunk?: number;
@@ -6722,9 +6754,7 @@ can't check the size and hash but the file contents will be decompressed. */
 Empty folders are unsupported for bucket based remotes, this option creates an empty
 object ending with "/", to persist the folder. */
   directory_markers?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Custom endpoint for the storage API. Leave blank to use the provider default.
 
@@ -6848,9 +6878,7 @@ If you created your own client_id then enter its client secret here. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Also view and download archived media.
 
@@ -6899,8 +6927,8 @@ to your photos, otherwise Hoody will request full access. */
 
 Normally Hoody does not read the size of media items since this takes
 another transaction. This isn't necessary for syncing. However
-Hoody mount needs to know the size of files in advance of reading
-them, so setting this flag when using Hoody mount is recommended if
+a mount needs to know the size of files in advance of reading
+them, so setting this flag on a backend that is mounted is recommended if
 you want to read the media. */
   read_size?: boolean;
   /** Year limits the photos to be downloaded to those which are uploaded after the given year. */
@@ -6932,9 +6960,7 @@ and 'privacy'. Used only with KERBEROS enabled. */
   data_transfer_protection?: "privacy";
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Hadoop name nodes and ports.
 
@@ -6989,9 +7015,7 @@ Leave blank normally. */
 
 Requests may be faster if the number of objects in subdirectories is not fetched. */
   disable_fetching_member_count?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint for the service.
 
@@ -7114,9 +7138,7 @@ export interface FilesBackendsCreateIclouddriveRequest {
   cookies?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Password. */
   password: string;
@@ -7138,9 +7160,7 @@ export interface FilesBackendsCreateIclouddriveResponse {
 export interface FilesBackendsCreateImagekitRequest {
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** You can find your ImageKit.io URL endpoint in your [dashboard](https://imagekit.io/dashboard/developer/api-keys) */
   endpoint: string;
@@ -7179,9 +7199,7 @@ uploading it so it can ask the server to check the object against checksum.
 This is great for data integrity checking but can cause long delays for
 large files to start uploading. */
   disable_checksum?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** IAS3 Endpoint.
 
@@ -7238,9 +7256,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Delete files permanently rather than putting them into the trash. */
   hard_delete?: boolean;
@@ -7274,9 +7290,7 @@ export interface FilesBackendsCreateJottacloudResponse {
 export interface FilesBackendsCreateKoofrRequest {
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** The Koofr API endpoint to use. */
   endpoint: string;
@@ -7350,9 +7364,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Password.
 
@@ -7414,9 +7426,7 @@ information from the mega backend. */
   debug?: boolean;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Delete files permanently rather than putting them into the trash.
 
@@ -7540,11 +7550,7 @@ Leave blank normally. */
 If this flag is set the onedrive backend will advertise `ListR`
 support for recursive listings.
 
-Setting this flag speeds up these things greatly:
-
- Hoody lsf -R onedrive:
- Hoody size onedrive:
- Hoody rc vfs/refresh recursive=true
+Setting this flag speeds up recursive listings greatly.
 
 **However** the delta listing API **only** works at the root of the
 drive. If you use it not at the root then it recurses from the root
@@ -7560,7 +7566,7 @@ mostly not under the root then using this flag will be a big
 performance loss.
 
 It is recommended if you are mounting your onedrive at the root
-(or near the root when using crypt) and using Hoody `rc vfs/refresh`. */
+(or near the root when using crypt). */
   delta?: boolean;
   /** Description of the remote. */
   description?: string;
@@ -7576,9 +7582,7 @@ request on their own. */
   drive_id?: string;
   /** The type of the drive (personal | business | documentLibrary). */
   drive_type?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Set to make OneNote files show up in directory listings.
 
@@ -7714,9 +7718,7 @@ increase memory use. */
   chunk_size?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Password. */
   password: string;
@@ -7745,7 +7747,7 @@ The flag leave_parts_on_error must be true to resume and optimize to skip parts 
   /** Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (e.g. from "Hoody rcat" or uploaded with "Hoody mount" they will be uploaded 
+size (e.g. uploaded through a mount) they will be uploaded 
 as multipart uploads using this chunk size.
 
 Note that "upload_concurrency" chunks of this size are buffered
@@ -7801,9 +7803,7 @@ uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
 to start uploading. */
   disable_checksum?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint for Object storage API.
 
@@ -7906,15 +7906,12 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Hostname to connect to.
 
 This is normally set when Hoody initially does the oauth connection,
-however you will need to set it by hand if you are using remote config
-with Hoody authorize. */
+however you will need to set it by hand if the token was obtained elsewhere. */
   hostname?: "api.pcloud.com" | "eapi.pcloud.com";
   /** Your pcloud password. */
   password?: string;
@@ -7965,9 +7962,7 @@ statistics displayed with "-P" flag. */
   description?: string;
   /** Device ID used for authorization. */
   device_id?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Files bigger than this will be cached on disk to calculate hash if required. */
   hash_memory_limit?: string;
@@ -8075,9 +8070,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** OAuth Access Token as a JSON blob. */
   token?: string;
@@ -8138,9 +8131,7 @@ to be implemented, so updates from other clients won’t be reflected in the
 cache. Thus, if there are concurrent clients accessing the same mount point, 
 then we might have a problem with caching the stale data. */
   enable_caching?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** The mailbox password of your two-password proton account.
 
@@ -8215,9 +8206,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** OAuth Access Token as a JSON blob. */
   token?: string;
@@ -8256,9 +8245,7 @@ enough memory, then increasing this will speed up the transfers. */
   connection_retries?: number;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Enter an endpoint URL to connection QingStor API.
 
@@ -8311,9 +8298,7 @@ export interface FilesBackendsCreateQuatrixRequest {
   description?: string;
   /** Wanted upload time for one chunk */
   effective_upload_time?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Delete files permanently rather than putting them into the trash */
   hard_delete?: boolean;
@@ -8370,7 +8355,7 @@ header is added and the default (private) will be used. */
   /** Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (e.g. from "Hoody rcat" or uploaded with "Hoody mount" or google
+size (e.g. uploaded through a mount or google
 photos or google docs) they will be uploaded as multipart uploads
 using this chunk size.
 
@@ -8430,9 +8415,8 @@ Note that Directory Buckets do not support:
 
 Hoody limitations with Directory Buckets:
 
-- Hoody does not support creating Directory Buckets with `Hoody mkdir`
-- ... or removing them with `Hoody rmdir` yet
-- Directory Buckets do not appear when doing `Hoody lsf` at the top level.
+- Hoody does not support creating or removing Directory Buckets yet
+- Directory Buckets do not appear in a listing of the top level.
 - Hoody can't remove auto created directories yet. In theory this should
  work with `directory_markers = true` but it doesn't.
 - Directories don't seem to appear in recursive (ListR) listings. */
@@ -8459,9 +8443,7 @@ disabled here.  When the issue is solved this flag will be removed. */
 This is usually set to a CloudFront CDN URL as AWS S3 offers
 cheaper egress for data downloaded through the CloudFront network. */
   download_url?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint for S3 API.
 
@@ -8876,9 +8858,7 @@ The parameter should be a date, "2006-01-02", datetime "2006-01-02
 15:04:05" or a duration for that long ago, eg "100d" or "1h".
 
 Note that when using this no file write operations are permitted,
-so you can't upload files or delete them.
-
-See [the time option docs](/docs/#time-options) for valid formats. */
+so you can't upload files or delete them. */
   version_at?: string;
   /** Show deleted file markers when using versions.
 
@@ -8911,9 +8891,7 @@ export interface FilesBackendsCreateSeafileRequest {
   create_library?: boolean;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Name of the library.
 
@@ -8962,11 +8940,7 @@ and only use it if you always connect to the same server or after
 sufficiently broad testing. If you get errors such as
 "failed to send packet payload: EOF", lots of "connection lost",
 or "corrupted on transfer", when copying a larger file, try lowering
-the value. The server run by [Hoody serve sftp](/commands/hoody-vfs_serve_sftp)
-sends packets with standard 32k maximum payload so you must not
-set a different chunk_size when downloading files, but it accepts
-packets up to the 256k total size, so for uploads the chunk_size
-can be set as for the OpenSSH example above. */
+the value. */
   chunk_size?: string;
   /** Space separated list of ciphers to be used for session encryption, ordered by preference.
 
@@ -9043,9 +9017,7 @@ This option disables concurrent writes should that be necessary. */
 
 Leave blank or set to false to enable hashing (recommended), set to true to disable hashing. */
   disable_hashcheck?: boolean;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Comma separated list of supported checksum types. */
   hashes?: string;
@@ -9146,23 +9118,23 @@ different. This issue affects among others Synology NAS boxes.
 
 E.g. if shared folders can be found in directories representing volumes:
 
- Hoody sync /home/local/directory remote:/directory --sftp-path-override /volume2/directory
+ /volume2/directory
 
 E.g. if home directory can be found in a shared folder called "home":
 
- Hoody sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory
+ /volume1/homes/USER/directory
 	
 To specify only the path to the SFTP remote's root, and allow Hoody to add any relative subpaths automatically (including unwrapping/decrypting remotes as necessary), add the '@' character to the beginning of the path.
 
 E.g. the first example above could be rewritten as:
 
-	Hoody sync /home/local/directory remote:/directory --sftp-path-override @/volume2
+	@/volume2
 	
 Note that when using this method with Synology "home" folders, the full "/homes/USER" path should be specified instead of "/home".
 
 E.g. the second example above should be rewritten as:
 
-	Hoody sync /home/local/directory remote:/homes/USER/directory --sftp-path-override @/volume1 */
+	@/volume1 */
   path_override?: string;
   /** Pin the server host key on first connection (Trust On First Use).
 
@@ -9298,9 +9270,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint for API calls.
 
@@ -9343,9 +9313,7 @@ Keep default if Sia daemon runs on localhost. */
   api_url: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Siad User Agent
 
@@ -9371,9 +9339,7 @@ Always true on Windows shares. */
   description?: string;
   /** Domain name for NTLM authentication. */
   domain?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Hide special shares (e.g. print$) which users aren't supposed to access. */
   hide_special_share?: boolean;
@@ -9444,9 +9410,7 @@ Leave blank normally, will be auto configured by Hoody. */
   deleted_id?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Permanently delete files if true
 otherwise put them in the deleted files. */
@@ -9504,9 +9468,7 @@ Hoody uploads chunked files as dynamic large objects (DLO). */
   description?: string;
   /** User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME) */
   domain?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE). */
   endpoint_type?: "public" | "internal" | "admin";
@@ -9640,9 +9602,7 @@ doc https://uloz.to/upload-resumable-api-beta or obtained from customer service.
   app_token?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** The size of a single page for list commands. 1-500 */
   list_page_size?: number;
@@ -9688,8 +9648,6 @@ which Hoody otherwise refuses to do. */
   /** Description of the remote. */
   description?: string;
   /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info.
 
 Default encoding is Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8 for sharepoint-ntlm or identity otherwise. */
   encoding?: string;
@@ -9761,9 +9719,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Delete files permanently rather than putting them into the trash. */
   hard_delete?: boolean;
@@ -9819,9 +9775,7 @@ Leave blank normally. */
   client_secret?: string;
   /** Description of the remote. */
   description?: string;
-  /** The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info. */
+  /** The encoding for the backend. */
   encoding?: string;
   /** Same-folder listings allowed back-to-back before --zoho-list-folder-limit paces them.
 
@@ -10583,7 +10537,7 @@ export interface TerminalCommandsRunResponse {
 
 export interface TerminalSessionsCreateRequest {
   /**
-   * Terminal session ID (numeric 1-65535). Required unless ephemeral is true, in which case it is auto-generated (range 40000-65535).
+   * Terminal session ID (numeric 1-65535). Required unless ephemeral is true, in which case it is auto-generated (range 40000-65535), or unless the query carries terminal_id: on a terminal-N host it is N, and a body terminal_id that differs from it is refused with 400 TERMINAL_ID_MISMATCH. On the terminal-0 host only an ephemeral session can be created.
    * @pattern ^[0-9]{1,5}$
    */
   terminal_id?: string;
@@ -10961,11 +10915,17 @@ export interface WatchWatchersListResponse {
 
 export type WatchWatchersCreateRequest = CreateWatcherRequest;
 
-export interface WatchWatchersCreateResponse {
-  statusCode: number;
-  message: string;
-  data: { config: WatcherConfigView; created_at: string; id: string; stats: WatcherStats };
-}
+export type WatchWatchersCreateResponse =
+  | {
+      statusCode: number;
+      message: string;
+      data: { config: WatcherConfigView; created_at: string; id: string; stats: WatcherStats };
+    }
+  | {
+      statusCode: number;
+      message: string;
+      data: { config: WatcherConfigView; created_at: string; id: string; stats: WatcherStats };
+    };
 
 export interface WatchWatchersGetResponse {
   statusCode: number;
@@ -11027,11 +10987,17 @@ export interface CronEntriesListResponse {
 
 export type CronEntriesCreateRequest = CreateEntryRequest;
 
-export interface CronEntriesCreateResponse {
-  statusCode: number;
-  message: string;
-  data: { command: string; comment?: string | null; created_at: string; enabled: boolean; expired: boolean; expires_at?: string | null; id: string; name?: string | null; schedule: string; schedule_human: string; updated_at: string; user: string; warnings?: string[] };
-}
+export type CronEntriesCreateResponse =
+  | {
+      statusCode: number;
+      message: string;
+      data: { command: string; comment?: string | null; created_at: string; enabled: boolean; expired: boolean; expires_at?: string | null; id: string; name?: string | null; schedule: string; schedule_human: string; updated_at: string; user: string; warnings?: string[] };
+    }
+  | {
+      statusCode: number;
+      message: string;
+      data: { command: string; comment?: string | null; created_at: string; enabled: boolean; expired: boolean; expires_at?: string | null; id: string; name?: string | null; schedule: string; schedule_human: string; updated_at: string; user: string; warnings?: string[] };
+    };
 
 export interface CronEntriesGetResponse {
   statusCode: number;
@@ -11935,14 +11901,14 @@ export interface AgentFilesListResponse {
 export interface AgentDefinitionsListResponse {
   statusCode: number;
   message: string;
-  data: { items: ({ name: string; frontmatter_name?: string; description?: string; path: string; provenance: "user" | "project" | "user (shipped default)" | "shipped default (embedded)"; shadows_lower?: boolean; model?: string; labels?: string[]; effort?: string; max_turns?: number; tools?: string[]; strict_tools?: boolean; mcp_tools?: string[]; skills?: string[]; unknown_tools?: string[]; unknown_skills?: string[]; missing_vs_default?: string[]; name_mismatch?: boolean; duplicate_name?: boolean; is_configured_default?: boolean; spawn_advertised: boolean; prompt_preview?: string; prompt?: string })[]; meta: { total?: number; page?: number; limit?: number } };
+  data: { items: ({ name: string; frontmatter_name?: string; description?: string; path: string; provenance: "user" | "project" | "user (shipped default)" | "shipped default (embedded)" | "product-owned (read-only)"; shadows_lower?: boolean; model?: string; labels?: string[]; effort?: string; max_turns?: number; tools?: string[]; strict_tools?: boolean; mcp_tools?: string[]; skills?: string[]; compaction_max_tokens?: number; unknown_tools?: string[]; unknown_skills?: string[]; missing_vs_default?: string[]; name_mismatch?: boolean; duplicate_name?: boolean; is_configured_default?: boolean; spawn_advertised: boolean; prompt_preview?: string; prompt?: string; realm: string })[]; meta: { total?: number; page?: number; limit?: number } };
 }
 
 export interface AgentDefinitionsCreateRequest {
   /** Agent name (the definition file stem). */
   name: string;
-  /** Optional frontmatter keys: description, model, tools, effort, max_turns, labels, strict_tools, mcp_tools, prompt_blocks, ask_timeout, thinking, temperature, response_format. Any other key is rejected. strict_tools is a boolean: true gives the agent EXACTLY its tools list — no skill or workflow tool is added, no MCP tool unless mcp_tools names it, and a call to any other tool is refused — and with no tools list it gets only ask_question_to_user, todo_read, todo_write, task_output, list_tasks and bash_job_wait. mcp_tools is an array of the MCP tools the agent gets, each `server/tool`, `server/*` (every tool of that server) or `mcp__server__tool`: when present the agent is given exactly the matching MCP tools, strict or not, and an empty array means none; when absent a non-strict agent gets every MCP tool and a strict one none. prompt_blocks is an object of block name to boolean: false drops that optional system-prompt block when this agent runs, as the chat agent or as a helper or workflow step, and never turns on a block the box settings turned off (names: contract, transcripts, frequent_files, hook_context, memory, project_instructions, agent_instructions, team_rules, skills, workflows, verbosity, hoody_platform, hoody_exec, fleet_notice). ask_timeout is how long each approval or question this agent raises as a helper on a helper_gates session waits before it is denied: a duration string such as "10m" or a number of seconds, more than zero and at most 24h; the default is 15 minutes. thinking (enabled or disabled), temperature (a number from 0 to 2) and response_format (json_object) are model settings sent on every turn the agent runs, as the chat agent (a session's model_settings win per field), a helper or a workflow step; one the model cannot take is left out of the request and logged, not an error. thinking enabled takes its level from effort on models that take a level; thinking disabled together with an effort is rejected. */
-  frontmatter?: { description?: string; model?: string; tools?: string[]; effort?: "adaptive" | "low" | "medium" | "high" | "max"; max_turns?: number; labels?: string[]; strict_tools?: boolean; mcp_tools?: string[]; skills?: string[]; prompt_blocks?: Record<string, boolean>; ask_timeout?: string | number; thinking?: "enabled" | "disabled"; temperature?: number; response_format?: "json_object" };
+  /** Optional frontmatter keys: description, model, tools, effort, max_turns, max_steps_per_turn, labels, strict_tools, mcp_tools, skills, prompt_blocks, ask_timeout, thinking, temperature, response_format, compaction, compaction_max_tokens. Any other key is rejected. strict_tools is a boolean: true gives the agent EXACTLY its tools list — no skill or workflow tool is added, no MCP tool unless mcp_tools names it, and a call to any other tool is refused — and with no tools list it gets only ask_question_to_user, todo_read, todo_write, task_output, list_tasks and bash_job_wait. mcp_tools is an array of the MCP tools the agent gets, each `server/tool`, `server/*` (every tool of that server) or `mcp__server__tool`: when present the agent is given exactly the matching MCP tools, strict or not, and an empty array means none; when absent a non-strict agent gets every MCP tool and a strict one none. skills is an array of skill names: when present the agent gets exactly those of them that are installed and enabled, and an empty array means none; when absent the chat agent gets every enabled skill and a spawned agent none. prompt_blocks is an object of block name to boolean: false drops that optional system-prompt block when this agent runs, as the chat agent or as a helper or workflow step, and never turns on a block the box settings turned off (names: contract, transcripts, frequent_files, hook_context, memory, project_instructions, agent_instructions, team_rules, skills, workflows, verbosity, hoody_platform, hoody_exec, fleet_notice). ask_timeout is how long each approval or question this agent raises as a helper on a helper_gates session waits before it is denied: a duration string such as "10m" or a number of seconds, more than zero and at most 24h; the default is 15 minutes. thinking (enabled or disabled), temperature (a number from 0 to 2) and response_format (json_object) are model settings sent on every turn the agent runs, as the chat agent (a session's model_settings win per field), a helper or a workflow step; one the model cannot take is left out of the request and logged, not an error. thinking enabled takes its level from effort on models that take a level; thinking disabled together with an effort is rejected. compaction (same_prefix) makes a compaction resend the session's own system prompt, tools and transcript so it reuses the prompt cache (fusion models use the default compaction); omit it for the default compaction. compaction_max_tokens (a whole number of at least 8192) starts this agent's automatic compaction, as the chat agent, once the prompt reaches that many tokens when that is lower than the box's threshold, so a long conversation's prompt stays small and a cache miss stays fast. */
+  frontmatter?: { description?: string; model?: string; tools?: string[]; effort?: "adaptive" | "low" | "medium" | "high" | "max"; max_turns?: number; max_steps_per_turn?: number /* min: 1, max: 1000000 */; labels?: string[]; strict_tools?: boolean; mcp_tools?: string[]; skills?: string[]; prompt_blocks?: Record<string, boolean>; ask_timeout?: string | number; thinking?: "enabled" | "disabled"; temperature?: number; response_format?: "json_object"; compaction?: "same_prefix"; compaction_max_tokens?: number /* min: 8192, max: 1000000000 */ };
   /** The agent's system prompt body. */
   system_prompt?: string;
 }
@@ -12081,12 +12047,311 @@ export interface AgentDefinitionsSetTurnLimitResponse {
 }
 
 /**
+ * Kit list envelope: a page of items plus pagination metadata.
+ */
+export interface AgentBotsListResponse {
+  statusCode: number;
+  message: string;
+  data: { items: ({ id: string; uid: string; realm: string; address: string; name: string; role: string; session_id: string; model: string; guardrails: string; allowed_containers: string[]; allowed_agents: string[]; yolo: boolean; guardrail_check: "strict" | "lenient" | "off"; yolo_unapplied: ({ session_id: string; state: "pending" | "refused"; reason?: string })[]; created: string; created_by: { kind: "user" | "api" | "system"; id?: string }; autonomy: { used: number; max: number; per_delegate_max: number; waiting_for_you: boolean }; open_delegates: number; queued: number; pending_gate: { session_id: string; gate_id: string; type: "confirm" | "question"; summary: string; generation: number } | null })[]; meta: { total?: number; page?: number; limit?: number } };
+}
+
+export interface AgentBotsCreateRequest {
+  /**
+   * The Bot's id. Omit it to have one generated. It cannot be changed later. To retry a create safely, pass an id: when the first try created the Bot, the retry answers 409 bot_exists.
+   * @pattern ^[a-z0-9][a-z0-9_-]{0,63}$
+   */
+  id?: string;
+  /** Display name. Omitted, it is the id. */
+  name?: string;
+  /**
+   * What the Bot is for, in one paragraph.
+   * @maxLength 1000
+   */
+  role?: string;
+  /** The model the Bot's session runs. Omit it for the bot agent's own model. A model no session could start with is refused 422 model_unavailable. */
+  model?: string;
+  /** Limits that apply to the Bot and to every delegate it opens. */
+  guardrails?: string;
+  /** Containers delegates may run on. Empty or omitted means any. */
+  allowed_containers?: string[];
+  /** Agents delegates may run. Empty or omitted means any. */
+  allowed_agents?: string[];
+  /** Run every delegate with YOLO mode on (approvals granted without asking). Default false. */
+  yolo?: boolean;
+  /** How the Bot's dispatches and delegate messages are checked against its guardrails before they go out. strict: work that may break a guardrail is refused, and so is work whose check cannot be completed (the Bot tells you and can try again). lenient: work that may break a guardrail is refused; when the check cannot be completed, the work goes ahead unchecked. off: no check. A Bot with no guardrails is never checked. Default strict. */
+  guardrail_check?: "strict" | "lenient" | "off";
+}
+
+/**
+ * The new Bot.
+ */
+export interface AgentBotsCreateResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; uid: string; realm: string; address: string; name: string; role: string; session_id: string; model: string; guardrails: string; allowed_containers: string[]; allowed_agents: string[]; yolo: boolean; guardrail_check: "strict" | "lenient" | "off"; yolo_unapplied: ({ session_id: string; state: "pending" | "refused"; reason?: string })[]; created: string; created_by: { kind: "user" | "api" | "system"; id?: string }; autonomy: { used: number; max: number; per_delegate_max: number; waiting_for_you: boolean }; open_delegates: number; queued: number; pending_gate: { session_id: string; gate_id: string; type: "confirm" | "question"; summary: string; generation: number } | null };
+}
+
+/**
+ * The Bot.
+ */
+export interface AgentBotsGetResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; uid: string; realm: string; address: string; name: string; role: string; session_id: string; model: string; guardrails: string; allowed_containers: string[]; allowed_agents: string[]; yolo: boolean; guardrail_check: "strict" | "lenient" | "off"; yolo_unapplied: ({ session_id: string; state: "pending" | "refused"; reason?: string })[]; created: string; created_by: { kind: "user" | "api" | "system"; id?: string }; autonomy: { used: number; max: number; per_delegate_max: number; waiting_for_you: boolean }; open_delegates: number; queued: number; pending_gate: { session_id: string; gate_id: string; type: "confirm" | "question"; summary: string; generation: number } | null; urls: { openai: string; anthropic: string; mcp: string } };
+}
+
+export interface AgentBotsUpdateRequest {
+  /** Display name. */
+  name?: string;
+  /**
+   * What the Bot is for, in one paragraph. Empty clears it.
+   * @maxLength 1000
+   */
+  role?: string;
+  /** The model of the Bot's next session, started by POST /bots/{id}/reset; the running session keeps its model. Empty for the bot agent's own model. A model no session could start with is refused 422 model_unavailable and nothing changes. */
+  model?: string;
+  /** Containers delegates may run on. Empty means any. */
+  allowed_containers?: string[];
+  /** Agents delegates may run. Empty means any. */
+  allowed_agents?: string[];
+  /** YOLO mode for every delegate. */
+  yolo?: boolean;
+  /** How the Bot's dispatches and delegate messages are checked against its guardrails before they go out. strict: work that may break a guardrail is refused, and so is work whose check cannot be completed (the Bot tells you and can try again). lenient: work that may break a guardrail is refused; when the check cannot be completed, the work goes ahead unchecked. off: no check. A Bot with no guardrails is never checked. */
+  guardrail_check?: "strict" | "lenient" | "off";
+}
+
+/**
+ * The Bot after the change.
+ */
+export interface AgentBotsUpdateResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; uid: string; realm: string; address: string; name: string; role: string; session_id: string; model: string; guardrails: string; allowed_containers: string[]; allowed_agents: string[]; yolo: boolean; guardrail_check: "strict" | "lenient" | "off"; yolo_unapplied: ({ session_id: string; state: "pending" | "refused"; reason?: string })[]; created: string; created_by: { kind: "user" | "api" | "system"; id?: string }; autonomy: { used: number; max: number; per_delegate_max: number; waiting_for_you: boolean }; open_delegates: number; queued: number; pending_gate: { session_id: string; gate_id: string; type: "confirm" | "question"; summary: string; generation: number } | null; model_applies: "after_reset" | "next_session" };
+}
+
+/**
+ * A page of rows.
+ */
+export interface AgentBotsGetArchiveResponse {
+  statusCode: number;
+  message: string;
+  data: { items: ({ seq: number; at: string; role: "user" | "bot" | "event" | "system"; text: string; session_id?: string; turn_id?: string; message_id?: string; from?: { kind: "user" | "bot" | "delegate" | "system"; id?: string }; trigger?: "human" | "wake" | "clear"; schema_version?: number })[]; next_since: number; has_more: boolean };
+}
+
+/**
+ * Kit list envelope: a page of items plus pagination metadata.
+ */
+export interface AgentBotsListDelegatesResponse {
+  statusCode: number;
+  message: string;
+  data: { items: ({ session_id: string; container: string; agent: string; title: string; model: string; state: "open" | "closed"; opened_at: string; close_reason?: string; last_turn_id: string; capability?: "next_step" | "turn_end" | "unsupported"; current_step?: { kind: "model" | "tool" | "gate" | "idle"; tool?: string; since: string }; open_gates: ({ gate_id: string; type: "confirm" | "question"; summary: string; generation: number })[]; queued_commands?: number; last_command?: { command_id?: string; kind: "message" | "interrupt" | "stop"; state: "sending" | "queued" | "committed" | "superseded" | "refused" | "failed"; how?: "next_step" | "new_turn" | "stop"; from: "bot" | "user"; at: string; reason?: string } })[]; meta: { total?: number; page?: number; limit?: number } };
+}
+
+export interface AgentBotsStopDelegateRequest {
+  /** Also close the delegate's session for good. Default false. */
+  close?: boolean;
+}
+
+export type AgentBotsStopDelegateResponse =
+  | {
+      statusCode: number;
+      message: string;
+      data: { command_id: string; session_id: string; title: string; state: "queued" | "committed"; stopped: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[]; closed: boolean; dropped_messages?: number };
+    }
+  | {
+      statusCode: number;
+      message: string;
+      data: { command_id: string; session_id: string; title: string; state: "queued" | "committed"; stopped: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[]; closed: boolean; dropped_messages?: number };
+    };
+
+/**
+ * What was archived.
+ */
+export interface AgentBotsForgetResponse {
+  statusCode: number;
+  message: string;
+  data: { archived: number };
+}
+
+export interface AgentBotsSetGuardrailsRequest {
+  /** The new limits; empty clears them. */
+  guardrails: string;
+}
+
+/**
+ * The Bot after the change.
+ */
+export interface AgentBotsSetGuardrailsResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; uid: string; realm: string; address: string; name: string; role: string; session_id: string; model: string; guardrails: string; allowed_containers: string[]; allowed_agents: string[]; yolo: boolean; guardrail_check: "strict" | "lenient" | "off"; yolo_unapplied: ({ session_id: string; state: "pending" | "refused"; reason?: string })[]; created: string; created_by: { kind: "user" | "api" | "system"; id?: string }; autonomy: { used: number; max: number; per_delegate_max: number; waiting_for_you: boolean }; open_delegates: number; queued: number; pending_gate: { session_id: string; gate_id: string; type: "confirm" | "question"; summary: string; generation: number } | null };
+}
+
+/**
+ * A page of rows.
+ */
+export interface AgentBotsGetLogResponse {
+  statusCode: number;
+  message: string;
+  data: { items: ({ seq: number; at: string; role: "user" | "bot" | "event" | "system"; text: string; session_id?: string; turn_id?: string; message_id?: string; from?: { kind: "user" | "bot" | "delegate" | "system"; id?: string }; trigger?: "human" | "wake" | "clear"; schema_version?: number })[]; next_since: number; has_more: boolean };
+}
+
+export interface AgentBotsSendMessageRequest {
+  /** The message (at most 64 KiB). */
+  text: string;
+}
+
+/**
+ * Where the message is.
+ */
+export interface AgentBotsSendMessageResponse {
+  statusCode: number;
+  message: string;
+  data: { message_id: string; state: "posted" | "queued"; turn_id?: string };
+}
+
+/**
+ * Done.
+ */
+export interface AgentBotsPurgeArchiveResponse {
+  statusCode: number;
+  message: string;
+  data: { purged: boolean };
+}
+
+/**
+ * The new session.
+ */
+export interface AgentBotsResetResponse {
+  statusCode: number;
+  message: string;
+  data: { session_id: string; archived: number };
+}
+
+/**
+ * The door's answer in the client's format: a chat completion, a Responses response, an Anthropic message or the one-model list.
+ */
+export interface AgentGetBotURLResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * The door's answer in the client's format: a chat completion, a Responses response, an Anthropic message or the one-model list.
+ */
+export interface AgentPostBotURLResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * The door's answer in the client's format: a chat completion, a Responses response, an Anthropic message or the one-model list.
+ */
+export interface AgentDeleteBotURLResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * The door's answer in the client's format: a chat completion, a Responses response, an Anthropic message or the one-model list.
+ */
+export interface AgentGetBotURLPathResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * The door's answer in the client's format: a chat completion, a Responses response, an Anthropic message or the one-model list.
+ */
+export interface AgentPostBotURLPathResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+/**
+ * The door's answer in the client's format: a chat completion, a Responses response, an Anthropic message or the one-model list.
+ */
+export interface AgentDeleteBotURLPathResponse {
+  statusCode: number;
+  message: string;
+  data: Record<string, unknown>;
+}
+
+/**
  * The change tokens.
  */
 export interface AgentChangesGetResponse {
   statusCode: number;
   message: string;
   data: { scope: string; tokens: { sessions?: string; todos?: string; workflow_runs?: string; loops?: string; tasks?: string; gates?: string; agents?: string; rules?: string }; unavailable?: Record<string, string> };
+}
+
+/**
+ * The Bot's answer as an Anthropic message; with stream true, the message_start … message_stop events instead.
+ */
+export interface AgentCreateCompatAnthropicMessageResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; type: "message"; role: "assistant"; model: string; content: { type?: "text"; text?: string }[]; stop_reason: "end_turn"; stop_sequence: string | null; usage: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number } };
+}
+
+/**
+ * The Bots, in the Anthropic model list shape.
+ */
+export interface AgentListCompatAnthropicModelsResponse {
+  statusCode: number;
+  message: string;
+  data: { data: { type?: "model"; id?: string; display_name?: string; created_at?: string }[]; has_more: boolean; first_id: string | null; last_id: string | null };
+}
+
+/**
+ * The Bot, in the Anthropic model shape.
+ */
+export interface AgentGetCompatAnthropicModelResponse {
+  statusCode: number;
+  message: string;
+  data: { type: "model"; id: string; display_name: string; created_at: string };
+}
+
+/**
+ * The Bot's answer as an OpenAI chat completion; with stream true, chat.completion.chunk events ending in [DONE] instead.
+ */
+export interface AgentCreateCompatOpenAIChatCompletionResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; object: "chat.completion"; created: number; model: string; choices: { index?: number; message?: { role?: "assistant"; content?: string }; finish_reason?: "stop" }[]; usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } };
+}
+
+/**
+ * The Bots, in the OpenAI model list shape.
+ */
+export interface AgentListCompatOpenAIModelsResponse {
+  statusCode: number;
+  message: string;
+  data: { object: "list"; data: { id?: string; object?: "model"; created?: number; owned_by?: string }[] };
+}
+
+/**
+ * The Bot, in the OpenAI model shape.
+ */
+export interface AgentGetCompatOpenAIModelResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; object: "model"; created: number; owned_by: string };
+}
+
+/**
+ * The Bot's answer as an OpenAI response; with stream true, the response.created … response.completed events instead.
+ */
+export interface AgentCreateCompatOpenAIResponseResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; object: "response"; created_at: number; status: "completed"; model: string; output: { type?: "message"; id?: string; role?: "assistant"; content?: Record<string, unknown>[] }[]; output_text?: string; usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number } };
 }
 
 export interface AgentCreateCompletionRequest {
@@ -12143,7 +12408,7 @@ export interface AgentContainersListResponse {
 export interface AgentGatesListResponse {
   statusCode: number;
   message: string;
-  data: { items: ({ session_id?: string; gate_id?: string; generation?: number; kind?: "confirm" | "question"; helper_id?: string; parent_tool_call_id?: string; task_id?: string; agent?: string; parked_at?: string; rules?: Record<string, unknown>; gate?: Record<string, unknown> })[]; meta: { total?: number; page?: number; limit?: number; omitted?: number } };
+  data: { items: ({ session_id?: string; realm?: string; gate_id?: string; generation?: number; kind?: "confirm" | "question"; helper_id?: string; parent_tool_call_id?: string; task_id?: string; agent?: string; parked_at?: string; rules?: Record<string, unknown>; gate?: Record<string, unknown> })[]; meta: { total?: number; page?: number; limit?: number; omitted?: number } };
 }
 
 export interface AgentGithubUseAccountRequest {
@@ -12739,7 +13004,7 @@ export interface AgentDisableAllHooksResponse {
 }
 
 export interface AgentHooksReloadRequest {
-  /** Optional: without it every live session reloads its own hooks and the reply has no summary; with it the session must be visible to the caller, and the reply adds its summary. */
+  /** Optional: without it every live session in a realm the login serves reloads its own hooks, sessions counts those, and the reply has no summary; with it only that session reloads (it must be visible to the caller), sessions is 1, and the reply adds its summary. */
   session_id?: string;
 }
 
@@ -12770,7 +13035,7 @@ export interface AgentHooksSetRulesRequest {
   scope?: string;
   /** The complete rule list for the scope (at most 32 checked and 32 guidance/playbook rules; ids unique). An empty array removes the scope's rules. */
   rules?: ({ id: string; text: string; kind: "limit" | "check_in" | "guidance" | "playbook"; tools?: string[]; agents?: string[] })[];
-  /** Optional: the scope's Jev budget for one rules check, 100 to 120000 ms; 0 removes it (back to the default 1200). Omit to leave it unchanged. This is the only way to write rules_timeout_ms. */
+  /** Optional: the scope's Jev budget for one rules check, 100 to 120000 ms; 0 removes it (back to the default 3000). Omit to leave it unchanged. This is the only way to write rules_timeout_ms. */
   timeout_ms?: number;
   /** Optional: the COMPLETE list of per-container exec trust grants, replacing the scope's (at most 64 rows, each (container_id, realm) once, validated all-or-nothing); [] revokes every grant. Accepted only for the user scope (the realm's profile, or the X-Hoody-Config-Dir override); any other scope is 400. When it is sent, `rules` may be omitted and the rules stay as they are. The grants share the scope's revision with the rules. */
   exec_trust?: ({ container_id: string; realm: string; name?: string; granted_at?: string; source?: "card" | "rules_panel" })[];
@@ -13192,8 +13457,8 @@ export interface AgentMemoryGetDataHostResponse {
 export interface AgentMemoryClaimDataHostRequest {
   /** Assign THIS computer. Only true is implemented; false is refused 400 unsupported. */
   use_self: boolean;
-  /** REQUIRED. The realm this assignment is for: "global" for the global partition, or a 24-hex realm id. Refused 400 when absent — an empty value means the global realm to the daemon, never "unspecified". */
-  expect_realm: string;
+  /** The realm this assignment is for: "global" for the global partition, or a 24-hex realm id. Required unless X-Hoody-Realm or ?realm= names the realm; refused 400 when neither does (an empty value means the global realm to the daemon, never "unspecified"), and 400 bad_request when it names another realm than they do. */
+  expect_realm?: string;
 }
 
 /**
@@ -13263,7 +13528,7 @@ export interface AgentMemoryCreateItemRequest {
   ttl_days?: number;
   /** Initial ranking strength, a whole number from 1 (weakest) to 10 (strongest). Omitted or 0 takes the store's default of 7. Any other value — a negative number, anything above 10, a fractional value or a numeric string — is REFUSED, never coerced and never silently replaced with the default. */
   strength?: number;
-  /** Optional realm assertion: "global" or a 24-hex realm id. The write is refused when the daemon's active realm no longer matches, so it cannot land in a realm the caller switched away from. */
+  /** Optional realm assertion: "global" or a 24-hex realm id. The write is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm), so it cannot land in a realm the caller switched away from. */
   expect_realm?: string;
 }
 
@@ -13289,7 +13554,7 @@ export interface AgentMemoryDeleteItemRequest {
   kind?: "memory" | "observation" | "lesson" | "slot";
   /** Optional reason recorded on the governance audit row. */
   reason?: string;
-  /** Optional realm assertion: "global" or a 24-hex realm id. The delete is refused when the daemon's active realm no longer matches. */
+  /** Optional realm assertion: "global" or a 24-hex realm id. The delete is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm). */
   expect_realm?: string;
 }
 
@@ -13334,7 +13599,7 @@ export interface AgentMemoryUpdateItemRequest {
   context?: string;
   /** kind=lesson: replacement confidence. */
   confidence?: number;
-  /** Optional realm assertion: "global" or a 24-hex realm id. The edit is refused when the daemon's active realm no longer matches. */
+  /** Optional realm assertion: "global" or a 24-hex realm id. The edit is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm). */
   expect_realm?: string;
 }
 
@@ -13361,7 +13626,7 @@ export interface AgentMemoryDeleteProjectRequest {
   nonce: string;
   /** Optional reason recorded on the audit row. */
   reason?: string;
-  /** Optional realm assertion: "global" or a 24-hex realm id. The request is refused when the daemon's active realm no longer matches. */
+  /** Optional realm assertion: "global" or a 24-hex realm id. The request is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm). */
   expect_realm?: string;
 }
 
@@ -13410,7 +13675,7 @@ export interface AgentMemoryCreateWriteIntentRequest {
   op: "wipe_project";
   /** Project key the write will target. The intent is valid for this project alone. */
   project: string;
-  /** Optional realm assertion: "global" or a 24-hex realm id. The request is refused when the daemon's active realm no longer matches. */
+  /** Optional realm assertion: "global" or a 24-hex realm id. The request is refused when it does not name the realm the request acts in (the named realm, else the agent's active realm). */
   expect_realm?: string;
 }
 
@@ -13450,6 +13715,46 @@ export interface AgentProvidersListResponse {
   data: { items: Record<string, unknown>[]; meta: { total?: number; page?: number; limit?: number } };
 }
 
+export interface AgentProvidersCreateRequest {
+  /**
+   * The provider id: 1-40 lowercase letters, digits or inner hyphens. It cannot be changed later.
+   * @pattern ^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$
+   */
+  id: string;
+  /**
+   * The prefix of the provider's model specs (acme for acme/<model>). It must equal the id; omitted, it is the id. No provider's id or prefix may already use it, and fusion is reserved.
+   * @pattern ^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$
+   */
+  model_prefix?: string;
+  /**
+   * Display name. Omitted on create, it is the id.
+   * @maxLength 80
+   */
+  display_name?: string;
+  /** The API the endpoint speaks: chat_completions (OpenAI-compatible Chat Completions, the default on create), responses (OpenAI Responses) or messages (Anthropic Messages). */
+  wire_format?: "chat_completions" | "responses" | "messages";
+  /**
+   * The endpoint's base URL, the part before /chat/completions, /responses or /v1/messages (e.g. https://api.acme.example/v1). base_url must be an https URL with no user name, password, query or fragment, at a public address: an internal address, a name that only resolves inside a network, or a name that resolves to an internal address when a request is made is refused.
+   * @maxLength 2048
+   */
+  base_url: string;
+  /** How the stored key is sent. It follows wire_format: bearer (Authorization: Bearer <key>) with chat_completions and responses, x-api-key with messages. Omitted, it is that value; any other pairing is refused 422 provider_invalid. */
+  auth_scheme?: "bearer" | "x-api-key";
+  /** Static request headers sent on every request, chat_completions only, at most 16. Credential and transport headers (Authorization, x-api-key, api-key, Cookie, Host, Content-Type, Content-Length, Connection and the other hop-by-hop headers) are refused. Values must not contain ${...}. On PATCH the object replaces the current headers; {} or null clears them. */
+  headers?: Record<string, string>;
+  /** The provider's models, 1 to 500, each selectable as <model_prefix>/<model>. On PATCH the list replaces the current one. */
+  models: { model: string; context_window?: number /* min: 0, max: 100000000 */; output_limit?: number /* min: 0, max: 100000000 */; reasoning?: boolean }[];
+}
+
+/**
+ * The new provider.
+ */
+export interface AgentProvidersCreateResponse {
+  statusCode: number;
+  message: string;
+  data: { provider: { id: string; display_name: string; model_prefix: string; prefix: string; wire_format: "chat_completions" | "responses" | "messages"; base_url: string; auth_scheme: "bearer" | "x-api-key"; headers: Record<string, string>; models: { spec: string; display_name: string; model: string; context_window: number /* min: 0, max: 100000000 */; output_limit: number /* min: 0, max: 100000000 */; reasoning: boolean }[] } };
+}
+
 /**
  * The operation's JSON reply, passed through verbatim.
  */
@@ -13457,6 +13762,47 @@ export interface AgentProvidersGetResponse {
   statusCode: number;
   message: string;
   data: Record<string, unknown>;
+}
+
+export interface AgentProvidersUpdateRequest {
+  /**
+   * Display name. Omitted on create, it is the id.
+   * @maxLength 80
+   */
+  display_name?: string;
+  /** The API the endpoint speaks: chat_completions (OpenAI-compatible Chat Completions, the default on create), responses (OpenAI Responses) or messages (Anthropic Messages). */
+  wire_format?: "chat_completions" | "responses" | "messages";
+  /**
+   * The endpoint's base URL, the part before /chat/completions, /responses or /v1/messages (e.g. https://api.acme.example/v1). base_url must be an https URL with no user name, password, query or fragment, at a public address: an internal address, a name that only resolves inside a network, or a name that resolves to an internal address when a request is made is refused.
+   * @maxLength 2048
+   */
+  base_url?: string;
+  /** How the stored key is sent. It follows wire_format: bearer (Authorization: Bearer <key>) with chat_completions and responses, x-api-key with messages. Omitted, it is that value; any other pairing is refused 422 provider_invalid. */
+  auth_scheme?: "bearer" | "x-api-key";
+  /** Static request headers sent on every request, chat_completions only, at most 16. Credential and transport headers (Authorization, x-api-key, api-key, Cookie, Host, Content-Type, Content-Length, Connection and the other hop-by-hop headers) are refused. Values must not contain ${...}. On PATCH the object replaces the current headers; {} or null clears them. */
+  headers?: Record<string, string>;
+  /** The provider's models, 1 to 500, each selectable as <model_prefix>/<model>. On PATCH the list replaces the current one. */
+  models?: { model: string; context_window?: number /* min: 0, max: 100000000 */; output_limit?: number /* min: 0, max: 100000000 */; reasoning?: boolean }[];
+  /** Fixed at creation. Accepted only when equal to the current prefix; any other value is refused 400 provider_field_immutable. */
+  model_prefix?: string;
+}
+
+/**
+ * The changed provider.
+ */
+export interface AgentProvidersUpdateResponse {
+  statusCode: number;
+  message: string;
+  data: { provider: { id: string; display_name: string; model_prefix: string; prefix: string; wire_format: "chat_completions" | "responses" | "messages"; base_url: string; auth_scheme: "bearer" | "x-api-key"; headers: Record<string, string>; models: { spec: string; display_name: string; model: string; context_window: number /* min: 0, max: 100000000 */; output_limit: number /* min: 0, max: 100000000 */; reasoning: boolean }[] } };
+}
+
+/**
+ * The removal.
+ */
+export interface AgentProvidersDeleteResponse {
+  statusCode: number;
+  message: string;
+  data: { id: string; deleted: boolean; api_key_removed: boolean };
 }
 
 /**
@@ -13606,11 +13952,11 @@ export interface AgentRealmsListResponse {
 export interface AgentSessionsListResponse {
   statusCode: number;
   message: string;
-  data: { items: ({ id: string; cwd: string; model: string; agent?: string; first_message?: string; name?: string; started_at?: string; last_request_at?: string; attached?: boolean; attached_clients?: number; tool_mode?: "standard" | "orchestrator"; tool_mode_locked?: boolean; dir_scope?: "workspace" | "home" | "full"; dir_scope_locked?: boolean; total_cost_usd?: number; realm_selector?: string; container_id?: string; kind?: string; todo_ref?: string; backend_kind?: "acp"; delegated_agent?: string; auto_approving?: boolean; routes_writes?: boolean; routes_exec?: boolean; brutal?: boolean; delegated_model?: string; delegated_effort?: string; model_settings?: { thinking?: { type: "enabled" | "disabled"; effort?: "low" | "medium" | "high" | "xhigh" | "max" }; temperature?: number; max_tokens?: number; response_format?: { type: "json_object" | "json_schema"; schema?: Record<string, unknown>; name?: string; strict?: boolean } } })[]; meta: { total?: number; page?: number; limit?: number } };
+  data: { items: ({ id: string; cwd: string; model: string; agent?: string; first_message?: string; name?: string; started_at?: string; last_request_at?: string; attached?: boolean; attached_clients?: number; tool_mode?: "standard" | "orchestrator"; tool_mode_locked?: boolean; dir_scope?: "workspace" | "home" | "full"; dir_scope_locked?: boolean; total_cost_usd?: number; realm_selector?: string; realm: string; container_id?: string; kind?: string; todo_ref?: string; backend_kind?: "acp"; delegated_agent?: string; auto_approving?: boolean; routes_writes?: boolean; routes_exec?: boolean; brutal?: boolean; delegated_model?: string; delegated_effort?: string; model_settings?: { thinking?: { type: "enabled" | "disabled"; effort?: "low" | "medium" | "high" | "xhigh" | "max" }; temperature?: number; max_tokens?: number; response_format?: { type: "json_object" | "json_schema"; schema?: Record<string, unknown>; name?: string; strict?: boolean } } })[]; meta: { total?: number; page?: number; limit?: number } };
 }
 
 export interface AgentSessionsCreateRequest {
-  /** Realm selector to scope the session (frozen at start). */
+  /** Realm selector to scope the session (frozen at start): global or a realm id. A realm the agent's login does not serve is 404 not_found. */
   realm?: string;
   /** Container id/selector to run tools on (frozen at start). */
   container?: string;
@@ -13620,7 +13966,7 @@ export interface AgentSessionsCreateRequest {
   config_dir?: string;
   /** Model for this session. On a fresh create/fork it OVERRIDES the chat agent's pinned model for this session only (it is NOT written to the agent; use PATCH /sessions/{id}/model to change it and repin the agent globally). Omit it to use the agent's pinned model (or your default). A model with no known provider prefix, or a fusion composite that does not exist, is refused 422 unknown_model and no session is created (listModels lists the choices). Rejected (400) together with attach (a resumed session keeps its model) or backend:"acp" (the delegated agent selects its own). */
   model?: string;
-  /** Initial chat-agent name. Rejected (400) together with fork (a fork inherits its parent's chat agent) or attach (a resumed session keeps its agent). */
+  /** Initial chat-agent name. Rejected (400) together with fork (a fork inherits its parent's chat agent) or attach (a resumed session keeps its agent). The bot agent is refused 400 bad_request: it runs only inside a Bot (POST /bots). A fork of a Bot's session continues on the default chat agent. */
   agent?: string;
   /** Initial tool mode (frozen at start): standard (the default) or orchestrator. Any other value is refused 400 invalid_tool_mode. */
   tool_mode?: "standard" | "orchestrator";
@@ -13678,7 +14024,7 @@ export interface AgentSessionsListDirectoriesResponse {
 export interface AgentSessionsGetResponse {
   statusCode: number;
   message: string;
-  data: { session: { id: string; cwd?: string; model?: string; agent?: string; first_message?: string; name?: string; started_at?: string; last_request_at?: string; attached?: boolean; attached_clients?: number; tool_mode?: "standard" | "orchestrator"; tool_mode_locked?: boolean; dir_scope?: "workspace" | "home" | "full"; dir_scope_locked?: boolean; total_cost_usd?: number; realm_selector?: string; container_id?: string; kind?: string; todo_ref?: string; backend_kind?: "acp"; delegated_agent?: string; auto_approving?: boolean; routes_writes?: boolean; routes_exec?: boolean; brutal?: boolean; delegated_model?: string; delegated_effort?: string; model_settings?: { thinking?: { type: "enabled" | "disabled"; effort?: "low" | "medium" | "high" | "xhigh" | "max" }; temperature?: number; max_tokens?: number; response_format?: { type: "json_object" | "json_schema"; schema?: Record<string, unknown>; name?: string; strict?: boolean } }; live?: boolean; started?: boolean; effort?: "low" | "medium" | "high" | "xhigh" | "max"; verbosity?: "normal" | "concise" | "terse" | "minimal" }; attached?: boolean; started?: Record<string, unknown>; incarnation?: string; pending_gate?: { id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: string; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; params?: Record<string, unknown>; lease_required?: boolean; lease_generation?: number }; pending_helper_gates?: ({ id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: string; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string })[] };
+  data: { session: { id: string; cwd?: string; model?: string; agent?: string; first_message?: string; name?: string; started_at?: string; last_request_at?: string; attached?: boolean; attached_clients?: number; tool_mode?: "standard" | "orchestrator"; tool_mode_locked?: boolean; dir_scope?: "workspace" | "home" | "full"; dir_scope_locked?: boolean; total_cost_usd?: number; realm_selector?: string; realm?: string; container_id?: string; kind?: string; todo_ref?: string; backend_kind?: "acp"; delegated_agent?: string; auto_approving?: boolean; routes_writes?: boolean; routes_exec?: boolean; brutal?: boolean; delegated_model?: string; delegated_effort?: string; model_settings?: { thinking?: { type: "enabled" | "disabled"; effort?: "low" | "medium" | "high" | "xhigh" | "max" }; temperature?: number; max_tokens?: number; response_format?: { type: "json_object" | "json_schema"; schema?: Record<string, unknown>; name?: string; strict?: boolean } }; live?: boolean; started?: boolean; effort?: "low" | "medium" | "high" | "xhigh" | "max"; verbosity?: "normal" | "concise" | "terse" | "minimal"; command_capability?: "next_step" | "turn_end" | "unsupported"; current_step?: { kind: "model" | "tool" | "gate" | "idle"; tool?: string; since?: string }; context?: { tokens: number; window: number; estimated: boolean }; after_compaction?: string; origin?: { kind: "bot"; bot_uid?: string; bot_id?: string; realm?: string; ref?: string } }; attached?: boolean; started?: Record<string, unknown>; incarnation?: string; pending_gate?: { id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; params?: Record<string, unknown>; lease_required?: boolean; lease_generation?: number }; pending_helper_gates?: ({ id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string })[] };
 }
 
 export interface AgentSessionsRenameRequest {
@@ -13704,8 +14050,22 @@ export interface AgentDeleteSessionResponse {
   data: { status?: string; closed?: boolean; hard?: boolean };
 }
 
+export interface AgentSessionsSetAfterCompactionRequest {
+  /** The message text, at most 16384 bytes in UTF-8. Empty or whitespace-only removes the message. */
+  text: string;
+}
+
+/**
+ * The saved after-compaction message.
+ */
+export interface AgentSessionsSetAfterCompactionResponse {
+  statusCode: number;
+  message: string;
+  data: { status?: string; bytes?: number };
+}
+
 export interface AgentSessionsSetAgentRequest {
-  /** Chat-agent name to switch to. */
+  /** Chat-agent name to switch to. The bot agent is refused 400 bad_request (details.field agent) on every session: it runs only inside a Bot (POST /bots). */
   agent?: string;
 }
 
@@ -13727,9 +14087,9 @@ export interface AgentGatesAnswerRequest {
    * @maximum 9007199254740991
    */
   generation?: number /* min: 0, max: 9007199254740991 */;
-  /** Free-form answer text. Always send it; it may be empty when answers carries a structured answer. */
-  answer: string;
-  /** Alternate answer text field (forwarded alongside answer). */
+  /** Free-form answer text. When it is absent or blank, text is used in its place. It may be empty when text or answers carries the answer. */
+  answer?: string;
+  /** Answer text used when answer is absent or blank; ignored otherwise. */
   text?: string;
   /** Structured per-field answers for a multi-field question. */
   answers?: Record<string, string>;
@@ -13953,6 +14313,41 @@ export interface AgentSessionsCloseResponse {
   data: { status?: string };
 }
 
+export interface AgentSessionsCommandsSendRequest {
+  /** message, interrupt or stop. */
+  kind: "message" | "interrupt" | "stop";
+  /** The message (message and interrupt: required, non-empty, at most 32 KiB). Delivered verbatim. A stop takes none. */
+  text?: string;
+  /** A stop only: close the session once its work is stopped. */
+  close?: boolean;
+  /** A message only: deny (default) declines a confirmation or question the session is waiting on so the message is read now; wait leaves it waiting. */
+  on_gate?: "deny" | "wait";
+  /** Optional, at least 0: a sequence number for one caller's commands. A message or interrupt with a lower order than a stop already received is superseded. */
+  order?: number;
+  /** Optional: who sends it. It changes how the message is introduced to the model (from the user, from the user via their Bot, from another session, from the system). The agent does not verify it: it is a claim made by the caller and grants nothing. Set it only when your client relays a message on someone's behalf (a Bot runtime, a session forwarding to another); a client sending a person's own message leaves it out, which reads as from the user. */
+  from?: { kind: "user" | "bot" | "delegate" | "system"; id?: string };
+  /** Optional: what caused it, recorded on the receipt. With from kind bot, human introduces the message as the user's via their Bot and wake or clear as the Bot's own. Like from, it is the caller's claim, not verified, and grants nothing; leave it out unless your client relays messages. */
+  trigger?: "human" | "wake" | "clear";
+}
+
+/**
+ * A command receipt: what the command became. It never contains the command's text.
+ */
+export interface AgentSessionsCommandsSendResponse {
+  statusCode: number;
+  message: string;
+  data: { command_id: string; kind: "message" | "interrupt" | "stop"; state: "queued" | "committed" | "superseded" | "refused" | "failed"; admitted_at: string; duplicate?: boolean; turn_id?: string; how?: "next_step" | "new_turn" | "stop"; committed_at?: string; interrupted?: boolean; reason?: "stop" | "order" | "hook" | "closed" | "unsupported" | "write_failed"; detail?: string; superseded_by?: string; stopped?: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[]; close?: boolean; order?: number; from?: { kind: "user" | "bot" | "delegate" | "system"; id?: string }; trigger?: "human" | "wake" | "clear" };
+}
+
+/**
+ * A command receipt: what the command became. It never contains the command's text.
+ */
+export interface AgentSessionsCommandsGetResponse {
+  statusCode: number;
+  message: string;
+  data: { command_id: string; kind: "message" | "interrupt" | "stop"; state: "queued" | "committed" | "superseded" | "refused" | "failed"; admitted_at: string; duplicate?: boolean; turn_id?: string; how?: "next_step" | "new_turn" | "stop"; committed_at?: string; interrupted?: boolean; reason?: "stop" | "order" | "hook" | "closed" | "unsupported" | "write_failed"; detail?: string; superseded_by?: string; stopped?: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[]; close?: boolean; order?: number; from?: { kind: "user" | "bot" | "delegate" | "system"; id?: string }; trigger?: "human" | "wake" | "clear" };
+}
+
 export interface AgentConfirmGateRequest {
   /** Echo of the parked gate id, as published on the frame that parked it (gate.id), by GET /sessions/{id} (pending_gate.id) and in 409 details. Valid only for the session in the path. Optional for compatibility, but an answer without it applies to whatever gate is parked when it arrives — a client binding an answer to a gate the user saw must send it. Ids are unique per session incarnation, so an id from before a re-attach never matches (stale/mismatch → 409). Required on a session that requires approval on every action: a confirm without it is rejected 400. */
   gate_id?: string;
@@ -13964,8 +14359,17 @@ export interface AgentConfirmGateRequest {
   generation?: number /* min: 0, max: 9007199254740991 */;
   /** Required: true to approve, false to deny. There is no default; a missing, null or non-boolean value is rejected 400. */
   approved: boolean;
+  /**
+   * Optional, with approved false only: why the action is refused. The agent reads it in the refused call's result, flattened to one line, together with the instruction not to reach the same effect another way. At most 500 characters; sent with approved true, or longer, it is rejected 400 bad_request.
+   * @maxLength 500
+   */
+  reason?: string;
   /** Persist an approved directory grant to settings.json (WS↔REST parity). */
   persist_dirs?: boolean;
+  /** With approved true: false approves this call only. Omitted or true, approving a file change also lets later changes to that file run without asking for the rest of the session, and persist_dirs is honoured; false asks again for the next change and saves nothing to settings.json (persist_dirs is ignored). */
+  remember?: boolean;
+  /** With approved false only, and no reason or session_scope: the call is declined because the user sent a new message instead of answering. The agent reads that the call was not run and that the new message decides what to do; it does not read a refusal, so it may still do the same thing if the new message asks for it, and the tool is not denied for the session. Sent with approved true, a reason or session_scope, it is rejected 400 bad_request. */
+  superseded?: boolean;
   /** Remember this decision for the rest of the session (the Allow/Deny for session answer): with approved true the tool stops asking, with approved false it is refused without asking. Offer allow-for-session only when the gate's event.confirm_request carried offer_session_allow. Under a locked approval policy the wider grant is refused, but the one-shot decision still applies and the reply says so (session_scope_applied false, note). */
   session_scope?: boolean;
   /** With approved true, accept the gate's exec_trust offer (event.confirm_request): the call runs and exec cards on that container in this realm stop until the grant is revoked (setHookRules exec_trust). Ignored when the gate carried no offer or the approval policy is locked. */
@@ -14191,7 +14595,7 @@ export interface AgentSessionsTurnsRunRequest {
 export interface AgentSessionsTurnsRunResponse {
   statusCode: number;
   message: string;
-  data: { status?: string; session_id?: string; turn_id?: string; pending_gate?: { id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: string; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; params?: Record<string, unknown>; lease_required?: boolean; lease_generation?: number }; pending_turn?: string; duplicate?: boolean; outcome?: "completed" | "failed" | "cancelled" | "interrupted"; error_code?: string; event?: Record<string, unknown>; note?: string };
+  data: { status?: string; session_id?: string; turn_id?: string; pending_gate?: { id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; params?: Record<string, unknown>; lease_required?: boolean; lease_generation?: number }; pending_turn?: string; duplicate?: boolean; outcome?: "completed" | "failed" | "cancelled" | "interrupted"; error_code?: string; event?: Record<string, unknown>; note?: string };
 }
 
 /**
@@ -14200,7 +14604,7 @@ export interface AgentSessionsTurnsRunResponse {
 export interface AgentSessionsReplayResponse {
   statusCode: number;
   message: string;
-  data: { session_id?: string; incarnation?: string; min_seq?: number; max_seq?: number; events?: Record<string, unknown>[]; pending_gate?: { id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: string; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; params?: Record<string, unknown>; lease_required?: boolean; lease_generation?: number } };
+  data: { session_id?: string; incarnation?: string; min_seq?: number; max_seq?: number; events?: Record<string, unknown>[]; pending_gate?: { id: string; generation: number; type: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; provenance?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; params?: Record<string, unknown>; lease_required?: boolean; lease_generation?: number } };
 }
 
 /**
@@ -14218,7 +14622,7 @@ export interface AgentSessionsListApplicableRulesResponse {
 export interface AgentSessionsGetSnapshotResponse {
   statusCode: number;
   message: string;
-  data: { session_id?: string; live?: boolean; epoch?: string; state?: "idle" | "running" | "parked" | "closed"; current_turn_id?: string | null; queued_turn_ids?: string[]; approval?: Record<string, unknown>; pending_gate?: { type?: "confirm" | "question"; gate_id?: number; question_id?: number; generation?: number; tool_name?: string; requested_dirs?: string[]; gate_cause?: string; risk?: string; human_only?: boolean; lease_required?: boolean; status?: string; params?: Record<string, unknown> | null; detail?: string; offer_session_allow?: boolean; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; question?: string; options?: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view"; request: string; id: string }; questions?: { id: string; category: string; question: string; options?: string[] }[] } | null; last_detach?: Record<string, unknown> | null; effort?: "low" | "medium" | "high" | "xhigh" | "max"; verbosity?: "normal" | "concise" | "terse" | "minimal"; incarnation?: string; seq?: number; pending_lead_gates?: Record<string, unknown>[]; pending_lead_gate_refs?: Record<string, unknown>[]; pending_helper_gate_refs?: Record<string, unknown>[]; turn_since?: number; pending_gate_ref?: { id?: string; generation?: number; type?: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: string; human_only?: boolean; provenance?: string } };
+  data: { session_id?: string; live?: boolean; epoch?: string; state?: "idle" | "running" | "parked" | "closed"; current_turn_id?: string | null; queued_turn_ids?: string[]; approval?: Record<string, unknown>; pending_gate?: { type?: "confirm" | "question"; gate_id?: number; question_id?: number; generation?: number; tool_name?: string; requested_dirs?: string[]; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only?: boolean; lease_required?: boolean; status?: string; params?: Record<string, unknown> | null; detail?: string; offer_session_allow?: boolean; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; question?: string; options?: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view" | "bot.dispatch" | "bot.message" | "bot.stop" | "bot.delegates" | "bot.answer_gate" | "bot.peek"; request: string; id: string; tool_use_id?: string }; questions?: { id: string; category: string; question: string; options?: string[] }[] } | null; last_detach?: Record<string, unknown> | null; effort?: "low" | "medium" | "high" | "xhigh" | "max"; verbosity?: "normal" | "concise" | "terse" | "minimal"; command_capability?: "next_step" | "turn_end" | "unsupported"; current_step?: { kind: "model" | "tool" | "gate" | "idle"; tool?: string; since?: string }; context?: { tokens: number; window: number; estimated: boolean }; after_compaction?: string; origin?: { kind: "bot"; bot_uid?: string; bot_id?: string; realm?: string; ref?: string }; incarnation?: string; seq?: number; pending_lead_gates?: Record<string, unknown>[]; pending_lead_gate_refs?: Record<string, unknown>[]; pending_helper_gate_refs?: Record<string, unknown>[]; turn_since?: number; pending_gate_ref?: { id?: string; generation?: number; type?: "confirm" | "question"; tool_name?: string; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only?: boolean; provenance?: string } };
 }
 
 /**
@@ -14360,6 +14764,15 @@ export interface AgentSessionsTurnsGetResponse {
   data: { turn_id?: string; job_id?: string | null; state?: "accepted" | "dispatched" | "completed" | "failed" | "cancelled" | "interrupted"; duplicate?: boolean; outcome?: string; error_code?: string; effects_may_have_occurred?: boolean; accepted_at?: string; dispatched_at?: string; source?: string; terminal_at?: string; result_url?: string; stream_url?: string; notices?: { code: string; message?: string; detail?: string }[] };
 }
 
+/**
+ * A page of the session's usage rows plus its totals.
+ */
+export interface AgentSessionsGetUsageResponse {
+  statusCode: number;
+  message: string;
+  data: { items: { id: number; ts: number; turn_id: string; attempt: number; model: string; provider: string; input_tokens: number; output_tokens: number; cache_read_tokens: number; cache_write_tokens: number; cost_usd: number; latency_ms: number; success: boolean; error_code: string }[]; totals: { calls: number; input_tokens: number; cache_read_tokens: number; cache_write_tokens: number; output_tokens: number; cost_usd: number; cache_read_pct: number }; next_after_id: number; has_more: boolean };
+}
+
 export interface AgentSessionsSetVerbosityRequest {
   /** normal|concise|terse|minimal. Any other value is 400 bad_request (details.field level); the applied level is echoed on the stream as event.verbosity. */
   level?: "normal" | "concise" | "terse" | "minimal";
@@ -14479,7 +14892,7 @@ export interface AgentFusionsDeleteResponse {
 export interface AgentSkillsListResponse {
   statusCode: number;
   message: string;
-  data: { items: Record<string, unknown>[]; meta: { total?: number; page?: number; limit?: number } };
+  data: { items: { name: string; description?: string; root_id: string; root_dir: string; rel_dir: string; dir: string; disabled?: boolean; shadowed?: boolean; parse_err?: string; model?: string; allowed_tools?: string[]; bundled_files?: string[]; dynamic_cmds?: number; dynamic_cmd_list?: string[]; trust?: Record<string, unknown>; realm: string }[]; meta: { total?: number; page?: number; limit?: number } };
 }
 
 export interface AgentSkillsCreateRequest {
@@ -14701,7 +15114,7 @@ export interface AgentStopAllWorkResponse {
 export interface AgentTodosListResponse {
   statusCode: number;
   message: string;
-  data: { items: { id: string; num: number; revision: number; content_rev?: number; title: string; title_auto?: boolean; body?: string; state: string; priority: number; rank: number; tags?: string[]; tags_auto?: boolean; cwd: string; container_id?: string; container_name?: string; realm_id?: string; owner_fingerprint?: string; source: Record<string, unknown>; links?: Record<string, unknown>[]; acceptance?: string[]; automation?: string; parent_id?: string; fingerprint?: string; needs_human?: boolean; question_for_human?: string; suggested_agent?: string; blocked_reason?: string; lease?: { daemon_id: string; session_id?: string; run_id?: string; acquired_at: string; expires_at: string }; attempts?: number; wake_at?: string; tombstone?: boolean; archived_at?: string; comment_count?: number; last_activity?: string; created_at: string; updated_at: string; triaged_at?: string; closed_at?: string }[]; meta: { total?: number; page?: number; limit?: number }; revision: number };
+  data: { items: { id: string; num: number; revision: number; content_rev?: number; title: string; title_auto?: boolean; body?: string; state: string; priority: number; rank: number; tags?: string[]; tags_auto?: boolean; cwd: string; container_id?: string; container_name?: string; realm_id?: string; owner_fingerprint?: string; source: Record<string, unknown>; links?: Record<string, unknown>[]; acceptance?: string[]; automation?: string; parent_id?: string; fingerprint?: string; needs_human?: boolean; question_for_human?: string; suggested_agent?: string; blocked_reason?: string; lease?: { daemon_id: string; session_id?: string; run_id?: string; acquired_at: string; expires_at: string }; attempts?: number; wake_at?: string; tombstone?: boolean; archived_at?: string; comment_count?: number; last_activity?: string; created_at: string; updated_at: string; triaged_at?: string; closed_at?: string; realm: string }[]; meta: { total?: number; page?: number; limit?: number }; revision: number | null };
 }
 
 export interface AgentTodosCreateRequest {
@@ -15045,7 +15458,7 @@ export interface AgentKitGetVersionResponse {
 export interface AgentWorkflowsListResponse {
   statusCode: number;
   message: string;
-  data: { items: Record<string, unknown>[]; meta: { total?: number; page?: number; limit?: number } };
+  data: { items: { name: string; summary?: string; step_count: number; entry_point: string; steps?: Record<string, unknown>[]; params?: Record<string, unknown>[]; labels?: string[]; created_at?: string; updated_at?: string; system?: boolean; project?: boolean; customized?: boolean; env_keys?: string[]; timeout_sec?: number; max_concurrency?: number; output_count?: number; realm: string }[]; meta: { total?: number; page?: number; limit?: number } };
 }
 
 /**
@@ -15054,7 +15467,7 @@ export interface AgentWorkflowsListResponse {
 export interface AgentWorkflowsListRunsResponse {
   statusCode: number;
   message: string;
-  data: { items: ({ run_id: string; workflow_name: string; session_id: string; cwd?: string; started_at: string; finished_at?: string; current_step?: string; current_idx: number; total_steps: number; status: "running" | "completed" | "failed" | "cancelled"; input_tokens?: number; output_tokens?: number; cost?: number; error?: string; last_step?: string; realm_id?: string; owner_fingerprint?: string; resumed_from?: string; container_binding?: string })[]; meta: { total?: number; page?: number; limit?: number } };
+  data: { items: ({ run_id: string; workflow_name: string; session_id: string; cwd?: string; started_at: string; finished_at?: string; current_step?: string; current_idx: number; total_steps: number; status: "running" | "completed" | "failed" | "cancelled"; input_tokens?: number; output_tokens?: number; cost?: number; error?: string; last_step?: string; realm_id?: string; owner_fingerprint?: string; resumed_from?: string; container_binding?: string; realm: string })[]; meta: { total?: number; page?: number; limit?: number } };
 }
 
 /**
@@ -16367,9 +16780,10 @@ export interface WebManifest {
 }
 
 export interface CurlErrorResponse {
-  statusCode: number;
-  message: string;
-  data: { code: "INVALID_PARAMETER" | "INVALID_URL" | "INVALID_CRON_EXPRESSION" | "PAYLOAD_TOO_LARGE" | "ORIGIN_NOT_ALLOWED" | "JOB_NOT_FOUND" | "JOB_RESULT_NOT_READY" | "SESSION_NOT_FOUND" | "FILE_NOT_FOUND" | "SCHEDULE_NOT_FOUND" | "REQUEST_TIMEOUT" | "JOB_NOT_FINISHED" | "JOB_CANCELLED" | "STORAGE_ERROR" | "INTERNAL_ERROR" | "SSE_PARSE_ERROR" | "UPSTREAM_ERROR" | "DNS_RESOLUTION_FAILED" | "RESPONSE_TOO_LARGE" | "QUEUE_FULL" | "SSE_CAPACITY_EXHAUSTED" | "UPSTREAM_TIMEOUT" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "REQUEST_HEADERS_TOO_LARGE"; error: string };
+  /** Machine-readable code; the operation's x-error-codes lists the ones it can return */
+  code: "INVALID_PARAMETER" | "INVALID_URL" | "INVALID_CRON_EXPRESSION" | "PAYLOAD_TOO_LARGE" | "ORIGIN_NOT_ALLOWED" | "JOB_NOT_FOUND" | "JOB_RESULT_NOT_READY" | "SESSION_NOT_FOUND" | "FILE_NOT_FOUND" | "SCHEDULE_NOT_FOUND" | "SCHEDULE_EXISTS" | "REQUEST_TIMEOUT" | "JOB_NOT_FINISHED" | "JOB_CANCELLED" | "STORAGE_ERROR" | "INTERNAL_ERROR" | "SSE_PARSE_ERROR" | "UPSTREAM_ERROR" | "DNS_RESOLUTION_FAILED" | "RESPONSE_TOO_LARGE" | "QUEUE_FULL" | "SSE_CAPACITY_EXHAUSTED" | "UPSTREAM_TIMEOUT" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "REQUEST_HEADERS_TOO_LARGE";
+  /** Human-readable message */
+  error: string;
 }
 
 export interface CurlJobCompletedEvent {
@@ -16431,6 +16845,8 @@ export interface Error3 {
   success: boolean;
   /** Human-readable error message */
   error: string;
+  /** Machine-readable error code, present on some errors. `INVALID_QUERY`: a list route was given a query parameter it does not accept. */
+  code?: string;
 }
 
 /**
@@ -16490,14 +16906,14 @@ export interface Error4 {
   error: string;
   /** Machine-readable error code. Every error body on this API has this
 shape: `error`, `code`, and `details` with `message` and `help`. */
-  code: "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "DISPLAY_NOT_AVAILABLE" | "WINDOW_NOT_FOUND" | "QUEUE_FULL" | "COMMAND_DEADLINE_EXCEEDED" | "NO_WINDOW_MANAGER" | "INPUT_ACTION_FAILED" | "WINDOW_LIST_FAILED" | "WINDOW_PROPERTIES_FAILED" | "DISPLAY_INFO_FAILED" | "SCREENSHOT_FAILED" | "SCREENSHOT_NOT_FOUND" | "SCREENSHOTS_FAILED" | "THUMBNAIL_FAILED" | "THUMBNAIL_NOT_FOUND" | "CLIPBOARD_FAILED" | "INTERNAL_ERROR";
+  code: "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "DISPLAY_NOT_AVAILABLE" | "WINDOW_NOT_FOUND" | "QUEUE_FULL" | "COMMAND_DEADLINE_EXCEEDED" | "NO_WINDOW_MANAGER" | "WINDOW_NOT_VIEWABLE" | "INPUT_ACTION_FAILED" | "WINDOW_LIST_FAILED" | "WINDOW_PROPERTIES_FAILED" | "DISPLAY_INFO_FAILED" | "SCREENSHOT_FAILED" | "SCREENSHOT_NOT_FOUND" | "SCREENSHOTS_FAILED" | "THUMBNAIL_FAILED" | "THUMBNAIL_NOT_FOUND" | "CLIPBOARD_FAILED" | "INTERNAL_ERROR";
   details?: { message?: string; help?: string; reason?: "dependency_missing: xpra" | "dependency_missing: jq" | "dependency_missing: imagemagick" | "dependency_missing: python3" };
 }
 
 export interface InputError {
   /** Human-readable error message */
   error: string;
-  code: "INPUT_ACTION_FAILED" | "DISPLAY_NOT_AVAILABLE" | "WINDOW_NOT_FOUND" | "VALIDATION_ERROR" | "QUEUE_FULL" | "COMMAND_DEADLINE_EXCEEDED" | "NO_WINDOW_MANAGER" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "INTERNAL_ERROR";
+  code: "INPUT_ACTION_FAILED" | "DISPLAY_NOT_AVAILABLE" | "WINDOW_NOT_FOUND" | "VALIDATION_ERROR" | "QUEUE_FULL" | "COMMAND_DEADLINE_EXCEEDED" | "NO_WINDOW_MANAGER" | "WINDOW_NOT_VIEWABLE" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "INTERNAL_ERROR";
   details?: { message?: string; help?: string; reason?: "dependency_missing: xpra" | "dependency_missing: jq" | "dependency_missing: imagemagick" | "dependency_missing: python3" };
 }
 
@@ -16529,9 +16945,11 @@ export interface ErrorWithSuccess {
  * Standard error response format
  */
 export interface ErrorResponse {
-  statusCode: number;
-  message: string;
-  data: { code?: string; error: string; success: boolean };
+  /** The error code, one of those listed for the response. Only some responses carry it; where it is absent, rely on the status and the message. */
+  code?: string;
+  /** Error message */
+  error: string;
+  success: boolean;
 }
 
 /**
@@ -16580,45 +16998,66 @@ export interface Error6 {
 }
 
 export interface main_CreateDatabaseErrorResponse {
-  statusCode: number;
-  message: string;
-  data: { code: string; error: string; exists?: boolean; path: string };
+  /** Machine-readable error code. The codes each status can carry are listed in that response's x-error-codes. */
+  code: string;
+  /** Human-readable description of the failure. Not a contract: match on code. */
+  error: string;
+  /** True when an entry already exists at the path. 409 only; absent when the file could not be created safely. */
+  exists?: boolean;
+  /** The path parameter as sent. */
+  path: string;
 }
 
 export interface main_DeleteDatabaseErrorResponse {
-  statusCode: number;
-  message: string;
-  data: { code: string; error: string; files_removed?: number };
+  /** INTERNAL_ERROR or DELETE_INCOMPLETE. */
+  code: string;
+  /** Human-readable description of the failure. Not a contract: match on code. */
+  error: string;
+  /** DELETE_INCOMPLETE only: files removed before the failure (sidecars; the database file itself is always still in place). */
+  files_removed?: number;
 }
 
 export interface main_ErrorResponse {
-  statusCode: number;
-  message: string;
-  data: { code: string; error: string };
+  /** Machine-readable error code. The codes each status can carry are listed in that response's x-error-codes. */
+  code: string;
+  /** Human-readable description of the failure. Not a contract: match on code. */
+  error: string;
 }
 
 export interface main_KVBatchPreconditionFailedResponse {
-  statusCode: number;
-  message: string;
-  data: { code: string; error: string; failed: main_KVBatchConditionFailure[] };
+  /** PRECONDITION_FAILED. */
+  code: string;
+  /** Human-readable description of the failure. Not a contract: match on code. */
+  error: string;
+  /** Every item whose condition failed. */
+  failed: main_KVBatchConditionFailure[];
 }
 
 export interface main_KVChangeCursorErrorResponse {
-  statusCode: number;
-  message: string;
-  data: { code: string; error: string; reason: "cursor_expired" | "database_replaced" | "table_changed" | "future_cursor" };
+  /** CHANGE_CURSOR_EXPIRED or CHANGE_CURSOR_INVALID. */
+  code: string;
+  /** Human-readable description of the failure. Not a contract: match on code. */
+  error: string;
+  /** Why the cursor is no longer valid. */
+  reason: "cursor_expired" | "database_replaced" | "table_changed" | "future_cursor";
 }
 
 export interface main_KVPreconditionFailedResponse {
-  statusCode: number;
-  message: string;
-  data: { code?: string; current_etag?: string | null; error: string };
+  /** PRECONDITION_FAILED. Absent on a failed PUT compare-and-swap (the if_match parameter). */
+  code?: string;
+  /** The key's current ETag; null when the key does not exist or has expired. Absent on a failed PUT compare-and-swap. */
+  current_etag?: string | null;
+  /** Human-readable description of the failure. Not a contract: match on code. */
+  error: string;
 }
 
 export interface main_MaintenanceErrorResponse {
-  statusCode: number;
-  message: string;
-  data: { code: string; error: string; reqIdx?: number };
+  /** Machine-readable error code. The codes each status can carry are listed in that response's x-error-codes. */
+  code: string;
+  /** Human-readable description of the failure. Not a contract: match on code. */
+  error: string;
+  /** -1 when present: the error concerns the whole request. Some errors, such as an expired request deadline, leave it out. */
+  reqIdx?: number;
 }
 
 export interface main_wsError {
@@ -16679,6 +17118,8 @@ export interface NotesApiError {
 }
 
 export interface KillError {
+  /** Machine-readable error code: `INVALID_GRACE_MS` or `SESSION_NOT_FOUND`. */
+  code: string;
   error: string;
 }
 
@@ -17051,7 +17492,10 @@ keeps the clear values. */
   request: CurlRequest;
   response?: null | CurlResponse;
   /**
-   * Number of attempts the executor has actually made so far.
+   * Number of attempts the executor has actually made so far: 1 for a
+job that ran once, plus one per retry after a transfer error (see
+`request.retry_count`). Following a redirect is not a new attempt;
+0 while the job is pending or when it was cancelled before it ran.
    * @minimum 0
    */
   retry_attempts: number /* min: 0 */;
@@ -17089,9 +17533,19 @@ export interface CurlJobDeleteResult {
  * JSON-wrapped response
  */
 export interface JsonResponse {
-  statusCode: number;
-  message: string;
-  data: { body: string; headers: Record<string, string>; is_binary: boolean; job_id?: string | null; metadata: ResponseMetadata; status_code: number /* min: 0 */; success: boolean; timing: ResponseTiming };
+  /** UTF-8 text for text responses, or base64 for binary responses.
+
+Check `is_binary` before decoding. */
+  body: string;
+  headers: Record<string, string>;
+  /** Indicates whether `body` contains base64 (`true`) or plain UTF-8 text (`false`). */
+  is_binary: boolean;
+  job_id?: string | null;
+  metadata: ResponseMetadata;
+  /** @minimum 0 */
+  status_code: number /* min: 0 */;
+  success: boolean;
+  timing: ResponseTiming;
 }
 
 /**
@@ -17108,6 +17562,10 @@ export interface PaginatedSchedules {
 export interface CreateScheduleRequest2 {
   /** Six-field cron expression: `second minute hour day month weekday`. */
   cron: string;
+  /** `false` creates the schedule disabled: it never fires until it is
+enabled, and its expression need not have a future occurrence yet.
+Defaults to `true`. */
+  enabled?: boolean | null;
   request: CurlRequest;
 }
 
@@ -17148,15 +17606,27 @@ export interface PaginatedStorageEntries {
 }
 
 export interface HealthResponse {
-  statusCode: number;
-  message: string;
-  data: { status: "ok"; service: string; built?: string | null; started: string; memory?: HealthMemory | null; fds?: number | null; pid: number; ingressReplyRoute?: "healthy" | "degraded" | "unverified" | "not_installed"; ip: string; userAgent?: string | null; sandbox?: { bwrap?: boolean; nft?: boolean; systemd_run?: boolean; landlock_abi?: number; bwrap_version?: string | null; bwrap_tmpfs_size?: boolean; firewall?: "ok" | "degraded" | "none" } };
+  status: "ok";
+  service: string;
+  /** Executable mtime as RFC3339 string */
+  built?: string | null;
+  /** Process start time as RFC3339 string */
+  started: string;
+  memory?: HealthMemory | null;
+  /** Count of open file descriptors */
+  fds?: number | null;
+  pid: number;
+  /** State of the container's ingress reply routing. `degraded` means published services for this container are unreachable because a VPN's routing rules outrank the daemon's; it is not self-repairable. Reported as a field rather than by flipping `status`, because the daemon itself is serving. */
+  ingressReplyRoute?: "healthy" | "degraded" | "unverified" | "not_installed";
+  ip: string;
+  userAgent?: string | null;
+  /** Availability of the mechanisms the program sandbox needs, probed once and cached. Which ones a program needs depends on its policy: every effective sandbox needs `bwrap` and `systemd_run`; an ingress policy additionally needs `nft`; `network.mode: restricted` additionally needs `landlock_abi` of 4 or more; `process.tmp_size` additionally needs `bwrap_tmpfs_size`. A program whose policy needs a missing mechanism fails closed: it never execs. Sandbox problems do not change this endpoint's HTTP status or its top-level `status`. */
+  sandbox?: { bwrap?: boolean; nft?: boolean; systemd_run?: boolean; landlock_abi?: number; bwrap_version?: string | null; bwrap_tmpfs_size?: boolean; firewall?: "ok" | "degraded" | "none" };
 }
 
 export interface ProgramListResponse {
-  statusCode: number;
-  message: string;
-  data: { programs: Program[] };
+  /** Array of all configured programs */
+  programs: Program[];
 }
 
 export interface ProgramInput {
@@ -17384,9 +17854,8 @@ export interface RemoveProgramResponse2 {
 }
 
 export interface ProgramResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; program: Program };
+  success: boolean;
+  program: Program;
 }
 
 export interface Success {
@@ -17417,27 +17886,38 @@ export interface SandboxStatus {
 }
 
 export interface AllStatusResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; statuses: { id: number; name: string; enabled: boolean; status: ProgramStatus }[] };
+  success: boolean;
+  /** Status information for all programs */
+  statuses: { id: number; name: string; enabled: boolean; status: ProgramStatus }[];
 }
 
 /**
  * Runtime status for one program. Three shapes are returned, distinguished by which field is present: standard programs carry `status`; a port-range program queried with a `port` carries `instance`; a port-range program queried without one carries `instances` plus `running_count`/`total_count`. Only `success` is common to all three, which is why it is the sole required field.
  */
 export interface StatusResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; status?: ProgramStatus; stats?: ProgramStats; instance?: ProgramInstance; instances?: ProgramInstance[]; running_count?: number; total_count?: number };
+  success: boolean;
+  status?: ProgramStatus;
+  /** Standard (non-port-range) programs only: resource stats for the program's process tree. Port-range programs carry their stats on each instance instead (ProgramInstance.stats), whether one port was asked about or all of them. Only present when include_stats=true and the program is running. */
+  stats?: ProgramStats;
+  /** Port-range programs, single-port query: the one instance that was asked about. */
+  instance?: ProgramInstance;
+  /** Port-range programs, no port given: one entry per non-stopped instance. */
+  instances?: ProgramInstance[];
+  /** Port-range programs: number of instances that are `starting` or `running`. `instances` lists every non-stopped instance, so it can be longer: check each instance's own `status`. */
+  running_count?: number;
+  /** Port-range programs: total number of possible instances */
+  total_count?: number;
 }
 
 /**
  * Response listing all ephemeral programs
  */
 export interface QuickStartListResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; count: number; ephemeral_programs: EphemeralProgram[] };
+  success: boolean;
+  /** Number of ephemeral programs currently tracked */
+  count: number;
+  /** Array of all ephemeral programs */
+  ephemeral_programs: EphemeralProgram[];
 }
 
 /**
@@ -17560,18 +18040,29 @@ export interface QuickStartResponse2 {
 }
 
 export interface LogResponse {
-  statusCode: number;
-  message: string;
-  data: { success?: boolean; error?: string | null; logs?: string | null; type?: "stdout" | "stderr"; lines?: number; log_file?: string };
+  success?: boolean;
+  error?: string | null;
+  /** Log content (last N lines) */
+  logs?: string | null;
+  /** Log type that was read */
+  type?: "stdout" | "stderr";
+  /** Number of lines returned */
+  lines?: number;
+  /** Path to the log file that was read */
+  log_file?: string;
 }
 
 /**
  * Response from stopping ephemeral program
  */
 export interface QuickStartStopResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; temporary_id: string; cleaned_up: boolean; message?: string };
+  success: boolean;
+  /** Identifier of stopped program */
+  temporary_id: string;
+  /** Whether the program's supervisord definition is withdrawn. `false` means the withdrawal is retried in the background; the result is recorded either way. */
+  cleaned_up: boolean;
+  /** Status message */
+  message?: string;
 }
 
 export interface HealthResponse2 {
@@ -17587,9 +18078,8 @@ export interface HealthResponse2 {
 }
 
 export interface Base64ScreenshotResponse {
-  statusCode: number;
-  message: string;
-  data: { info: ScreenshotInfo; image: Base64ImageData };
+  info: ScreenshotInfo;
+  image: Base64ImageData;
 }
 
 export interface DisplayInfo {
@@ -17726,7 +18216,10 @@ export interface MouseLocationResult {
 }
 
 export interface KeyboardTypeBody {
-  /** @maxLength 10000 */
+  /**
+   * Text to type. A line break presses Return, a tab presses Tab
+   * @maxLength 10000
+   */
   text: string;
   /** Target window ID */
   window?: number | string;
@@ -17774,9 +18267,9 @@ export interface KeyboardKeyDownBody {
 }
 
 export interface WindowFocusResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; action: string; details: { windowId: number /* min: 0, max: 4294967295 */ | string; inputFocus: boolean; warning?: string } };
+  success: boolean;
+  action: string;
+  details: { windowId: number /* min: 0, max: 4294967295 */ | string; inputFocus: boolean; warning?: string };
 }
 
 export interface WindowMoveBody {
@@ -17814,9 +18307,9 @@ export interface WindowRestoreBody {
 }
 
 export interface WindowRestoreResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; action: string; details: { windowId: number; previousState: "iconic" | "normal"; state: "normal" | null; synced: boolean } };
+  success: boolean;
+  action: string;
+  details: { windowId: number; previousState: "iconic" | "normal"; state: "normal" | null; synced: boolean };
 }
 
 export interface WindowIdBody {
@@ -17862,7 +18355,11 @@ export interface WindowSearchResult {
 
 export interface WindowGeometryResult {
   success?: boolean;
-  windowId?: number;
+  /**
+   * The window ID exactly as written in the request path (decimal or hex 0x...).
+   * @pattern ^(\d{1,10}|0x[0-9a-fA-F]{1,8})$
+   */
+  windowId?: string;
   x?: number;
   y?: number;
   width?: number;
@@ -17871,7 +18368,11 @@ export interface WindowGeometryResult {
 
 export interface WindowNameResult {
   success?: boolean;
-  windowId?: number;
+  /**
+   * The window ID exactly as written in the request path (decimal or hex 0x...).
+   * @pattern ^(\d{1,10}|0x[0-9a-fA-F]{1,8})$
+   */
+  windowId?: string;
   name?: string;
 }
 
@@ -17912,7 +18413,10 @@ under the desktop's double-click time.
 export interface TypeAtBody {
   x: number;
   y: number;
-  /** @maxLength 10000 */
+  /**
+   * Text to type. A line break presses Return, a tab presses Tab
+   * @maxLength 10000
+   */
   text: string;
   /**
    * @minimum 0
@@ -18088,9 +18592,9 @@ for a `windowId` check and for `window-absent`. */
 }
 
 export interface InputActionResponse {
-  statusCode: number;
-  message: string;
-  data: { success: boolean; action: string; details?: Record<string, unknown> };
+  success: boolean;
+  action: string;
+  details?: Record<string, unknown>;
 }
 
 export interface DisplayGeometryResult {
@@ -18146,21 +18650,39 @@ export interface FileListing {
  * File or directory metadata (stat)
  */
 export interface FileStatResponse {
-  statusCode: number;
-  message: string;
-  data: { group: string; is_symlink: boolean; mtime: number; name: string; owner: string; path: string; path_type: "File" | "Dir" | "SymlinkFile" | "SymlinkDir" | "Fifo" | "Socket" | "CharDevice" | "BlockDevice"; permissions: string; revisions?: number | null; size: number; symlink_target: string | null };
+  /** Group name or GID */
+  group: string;
+  is_symlink: boolean;
+  /** Unix timestamp in milliseconds */
+  mtime: number;
+  name: string;
+  /** Owner name or UID */
+  owner: string;
+  /** API path of the file */
+  path: string;
+  /** What the path is. A named pipe (Fifo), a socket or a device has no content to read: reading one is refused with 403. */
+  path_type: "File" | "Dir" | "SymlinkFile" | "SymlinkDir" | "Fifo" | "Socket" | "CharDevice" | "BlockDevice";
+  /** Octal permission mode (e.g., '755') */
+  permissions: string;
+  /** Number of journal revisions for this file (null if never mutated via API or journal disabled) */
+  revisions?: number | null;
+  /** File size in bytes */
+  size: number;
+  /** Symlink target path (null if not a symlink) */
+  symlink_target: string | null;
 }
 
 export interface FileHashResponse {
-  statusCode: number;
-  message: string;
-  data: { algorithm: "sha256"; hash: string };
+  algorithm: "sha256";
+  /** Hex digest */
+  hash: string;
 }
 
 export interface FileBase64Response {
-  statusCode: number;
-  message: string;
-  data: { base64: string; size: number };
+  /** The file's content, base64 encoded (files up to 50 MB) */
+  base64: string;
+  /** Bytes before encoding */
+  size: number;
 }
 
 /**
@@ -18208,18 +18730,23 @@ export interface GlobResults {
  * Result of a copy operation
  */
 export interface CopyResponse {
-  statusCode: number;
-  message: string;
-  data: { destination?: string; skipped?: { path: string; reason: string }[]; skipped_count?: number; source?: string; success?: boolean };
+  destination?: string;
+  /** Entries of a directory copy that were left out because they cannot be copied (a pipe, a socket, a device), at most 1000; empty for a file copy */
+  skipped?: { path: string; reason: string }[];
+  /** How many entries were left out, including any beyond those listed in skipped */
+  skipped_count?: number;
+  source?: string;
+  success?: boolean;
 }
 
 /**
  * Result of an append operation
  */
 export interface AppendResponse {
-  statusCode: number;
-  message: string;
-  data: { new_size?: number; path?: string; success?: boolean };
+  /** New total file size after append */
+  new_size?: number;
+  path?: string;
+  success?: boolean;
 }
 
 /**
@@ -18234,27 +18761,29 @@ export interface MoveRequest {
  * Result of a chmod operation
  */
 export interface ChmodResponse {
-  statusCode: number;
-  message: string;
-  data: { mode?: string; path?: string; success?: boolean };
+  /** The octal mode the path has after the change, read back from the filesystem */
+  mode?: string;
+  path?: string;
+  success?: boolean;
 }
 
 /**
  * Result of a chown operation
  */
 export interface ChownResponse {
-  statusCode: number;
-  message: string;
-  data: { group?: string; owner?: string; path?: string; success?: boolean };
+  group?: string;
+  owner?: string;
+  path?: string;
+  success?: boolean;
 }
 
 /**
  * Result of a move operation
  */
 export interface MoveResponse {
-  statusCode: number;
-  message: string;
-  data: { destination?: string; source?: string; success?: boolean };
+  destination?: string;
+  source?: string;
+  success?: boolean;
 }
 
 /**
@@ -18326,13 +18855,13 @@ export interface Mount {
 }
 
 /**
- * With `uploads=wait` or `uploads=discard` only: what became of what was written on the removed mount, or the removed backend's mounts, and not uploaded yet. Absent with `uploads=keep`.
+ * With `uploads=wait` or `uploads=discard`, and with `uploads=keep` on a mount served by its backend's shared connection that held files not uploaded yet or open: what became of what was written on the removed mount, or the removed backend's mounts, and not uploaded yet. Absent with `uploads=keep` otherwise.
  */
 export interface MountDeleteUploads {
-  /** true: nothing is held open and nothing is left to upload. false: with `wait`, the deadline passed first, or the uploads had already stopped with something left (that is then kept on the server and is not uploaded); with `discard`, always. */
+  /** true: nothing is held open and nothing is left to upload. false: with `wait`, the deadline passed first, or the uploads had already stopped with something left (that is then kept on the server and is not uploaded); with `keep`, files were left: kept on the server as the pending upload `pending_upload_id`, or still uploading through the shared connection, which another mount of the backend or a request to it uses; with `discard`, always. */
   delivered: boolean;
   /**
-   * With `wait`, when delivered is false: files written and not uploaded yet. null when that could not be seen in full: a stored record that cannot be read leaves every wait unsure until it is deleted (GET /api/v1/pending-uploads/unreadable).
+   * With `wait` or `keep`, when delivered is false: files written and not uploaded yet. null when that could not be seen in full: a stored record that cannot be read leaves every wait unsure until it is deleted (GET /api/v1/pending-uploads/unreadable).
    * @minimum 0
    */
   dirty?: number /* min: 0 */ | null;
@@ -18342,10 +18871,12 @@ export interface MountDeleteUploads {
    */
   discarded?: number /* min: 0 */ | null;
   /**
-   * With `wait`, when delivered is false: files and folders still held open on the mount. null when that could not be seen in full.
+   * With `wait` or `keep`, when delivered is false: files and folders still held open on the mount. null when that could not be seen in full.
    * @minimum 0
    */
   open_handles?: number /* min: 0 */ | null;
+  /** With `keep` on a mount served by its backend's shared connection: the pending upload that keeps what was not uploaded, listed by GET /api/v1/pending-uploads before the answer. Absent when nothing was left, or the files still upload through the connection because another mount or a request to the backend uses it. */
+  pending_upload_id?: string;
 }
 
 /**
@@ -18626,9 +19157,16 @@ export interface Notification {
 }
 
 export interface main_KVChangesResponse {
-  statusCode: number;
-  message: string;
-  data: { cursor: string; events: main_KVChangeEvent[]; has_more: boolean; next_cursor: string; oldest_cursor: string };
+  /** The newest position of the change log when the page was read. Without since, start from here. */
+  cursor: string;
+  /** Matching events after since, in log order. Empty without since (bootstrap). */
+  events: main_KVChangeEvent[];
+  /** true when more changes are already available after next_cursor. */
+  has_more: boolean;
+  /** Where to continue: pass as since. The position scanned, which can be past the last event when later changes did not match prefix. */
+  next_cursor: string;
+  /** The oldest cursor still accepted; older ones get 410 CHANGE_CURSOR_EXPIRED. */
+  oldest_cursor: string;
 }
 
 export interface main_request {
@@ -18642,39 +19180,89 @@ export interface main_response {
 }
 
 export interface main_DeleteDatabaseResponse {
-  statusCode: number;
+  /** Number of files removed: the database itself plus any -wal, -shm or -journal file beside it. */
+  files_removed: number;
+  /** Human-readable confirmation. */
   message: string;
-  data: { files_removed: number; message: string; path: string; success: boolean };
+  /** The db parameter as sent (the server-resolved path is not disclosed). */
+  path: string;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_CreateDatabaseResponse {
-  statusCode: number;
+  /** The kv_table parameter (default kv_store). Present even when init_kv is false, in which case no KV table was created. */
+  kv_table: string;
+  /** Human-readable confirmation. */
   message: string;
-  data: { kv_table: string; message: string; path: string; size: number; success: boolean; tables: string[] };
+  /** The path parameter as sent (the server-resolved path is not disclosed). */
+  path: string;
+  /** Size of the new database file in bytes. */
+  size: number;
+  /** Always true on a 201. */
+  success: boolean;
+  /** Tables created: always _query_history, plus the KV table and its _history table when init_kv is true. */
+  tables: string[];
 }
 
 export interface main_DatabaseListResponse {
-  statusCode: number;
-  message: string;
-  data: { count: number; databases: main_DatabaseInfo[] | null; dir: string; success: boolean };
+  /** Number of entries in databases. */
+  count: number;
+  /** The matching files, newest first, or null when nothing matches. */
+  databases: main_DatabaseInfo[] | null;
+  /** The directory that was listed. */
+  dir: string;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_HealthResponse {
-  statusCode: number;
-  message: string;
-  data: { built?: string | null; cache?: main_HealthCacheSnapshot; counters?: Record<string, number>; fds?: number | null; features?: string[]; ip?: string; memory?: main_HealthMemory | null; pid?: number; service?: string; started?: string; status: string; userAgent?: string | null };
+  /** Modification time of the server binary (RFC 3339), or null when it cannot be read. Verbose only. */
+  built?: string | null;
+  /** Cache snapshot, the same object GET /health/cache returns. Verbose only. */
+  cache?: main_HealthCacheSnapshot;
+  /** Operational counters and gauges keyed by name. New names may be added. Verbose only. */
+  counters?: Record<string, number>;
+  /** Number of open file descriptors, or null when it cannot be read. Verbose only. */
+  fds?: number | null;
+  /** API features this server supports, for clients that talk to servers of different versions. New names may be added. Verbose only. kv_etag: ETags on KV reads and writes; kv_conditional_writes: If-Match / If-None-Match on KV writes and batch item conditions; kv_conditional_reads: If-None-Match (304) on KV reads; kv_entry: GET /kv/{key}/entry; kv_ttl_controls: POST /kv/{key}/expire and /persist; kv_idempotency: Idempotency-Key on KV writes; kv_changes: the change feed (/changes, /changes/stream); kv_list_cursor: after / next_after paging of GET /kv; retry_after: Retry-After on retryable failures. */
+  features?: string[];
+  /** The caller's IP address as the server sees it. Verbose only. */
+  ip?: string;
+  /** Process memory, or null when it cannot be read. Verbose only. */
+  memory?: main_HealthMemory | null;
+  /** Server process ID. Verbose only. */
+  pid?: number;
+  /** Service name, "hoody-sqlite". Verbose only. */
+  service?: string;
+  /** When the server started (RFC 3339). Verbose only. */
+  started?: string;
+  /** Always "ok" when the server answers. */
+  status: string;
+  /** The caller's User-Agent header, or null when none was sent. Verbose only. */
+  userAgent?: string | null;
 }
 
 export interface main_QueryHistoryResponse {
-  statusCode: number;
-  message: string;
-  data: { count: number; entries: main_QueryHistoryEntry[] | null; history: main_QueryHistoryEntry[] | null; limit: number; offset: number; total: number };
+  /** Number of entries in this page. */
+  count: number;
+  /** The same page as history (kept for older clients). */
+  entries: main_QueryHistoryEntry[] | null;
+  /** The page of entries, newest first, or null when the page is empty. */
+  history: main_QueryHistoryEntry[] | null;
+  /** The page size applied, after the default and the 1000 cap. */
+  limit: number;
+  /** The offset applied, as requested. */
+  offset: number;
+  /** Number of entries stored for the database (at most about 1000), independent of limit and offset. */
+  total: number;
 }
 
 export interface main_SuccessMessageResponse {
-  statusCode: number;
+  /** Human-readable confirmation. */
   message: string;
-  data: { message: string; success: boolean };
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_HistoryStats {
@@ -18693,27 +19281,81 @@ export interface main_HistoryStats {
 }
 
 export interface main_KVListResponse {
-  statusCode: number;
-  message: string;
-  data: { candidate_truncated?: boolean; change_cursor?: string | null; count: number; directory_mode?: boolean; gap_keys?: string[] | null; has_gaps?: boolean; has_more?: boolean; items: main_KVListItem[] | null; limit?: number; next_after?: string | null; offset: number; scan_errors?: number; success: boolean; timestamp?: number; total?: number };
+  /** True when the candidate-key scan stopped at its internal cap, so keys may be missing from items without appearing in gap_keys; narrow the request with prefix to get a complete listing. at_timestamp mode only, where it is always present. */
+  candidate_truncated?: boolean;
+  /** Change-feed cursor read in the same snapshot as items: pass it as since to GET /changes or /changes/stream to receive every write made after this page was read. Regular mode only, where it is always present; null when the page was read without versions (the database was busy). */
+  change_cursor?: string | null;
+  /** Number of entries in items. */
+  count: number;
+  /** Always true when present. Directory mode only. */
+  directory_mode?: boolean;
+  /** Keys left out of items because a write made with history=false leaves their state at the timestamp unknown. at_timestamp mode only, where it is always present: null when has_gaps is false, a non-empty array when it is true. */
+  gap_keys?: string[] | null;
+  /** True when gap_keys is non-empty. at_timestamp mode only, where it is always present. */
+  has_gaps?: boolean;
+  /** True when at least one more key follows this page. Regular and directory mode only, where it is always present. */
+  has_more?: boolean;
+  /** The page of keys, or null. In regular mode an empty page is always null. In directory and at_timestamp mode it is null only when no key matches at all; an offset past the end of a non-empty listing gives an empty array. */
+  items: main_KVListItem[] | null;
+  /** The page size applied, after the 1000 cap. Regular and directory mode only; absent in at_timestamp mode. */
+  limit?: number;
+  /** Cursor for the next page: pass it as after. The last key this page covered (a key left out of items because it could not be read, or whose file vanished in directory mode, still counts), or null when no key follows. With limit=0 it echoes after, null when after was not given. Regular and directory mode only, where it is always present. */
+  next_after?: string | null;
+  /** The offset applied, as requested. */
+  offset: number;
+  /** Rows that could not be read and were left out of items. Regular mode only, and present only when at least one row was left out. */
+  scan_errors?: number;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The requested at_timestamp. at_timestamp mode only. */
+  timestamp?: number;
+  /** Number of keys matching prefix before pagination. Directory mode only. */
+  total?: number;
 }
 
 export interface main_KVValueAtTimestampResponse {
-  statusCode: number;
-  message: string;
-  data: { content_type: string; key: string; op_number?: number; op_timestamp?: number; success: boolean; timestamp: number; value?: unknown | null; value_base64?: string };
+  /** The content type the value had at the timestamp. */
+  content_type: string;
+  /** The key. */
+  key: string;
+  /** History operation number of the write that set the value; 0 when no recorded write establishes it and the current value is reported. Absent when the key has no recorded history at all. */
+  op_number?: number;
+  /** Time of that write, Unix seconds; 0 when op_number is 0. Absent when op_number is absent. */
+  op_timestamp?: number;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The requested at_timestamp, Unix seconds. */
+  timestamp: number;
+  /** The value, parsed, when it is JSON content that parses; null for a stored JSON null. Absent otherwise. */
+  value?: unknown | null;
+  /** The value as base64, when it is not JSON content or does not parse as JSON; an empty string for an empty value. Absent otherwise. */
+  value_base64?: string;
 }
 
 export interface main_KVSetResponse {
-  statusCode: number;
-  message: string;
-  data: { directory_mode?: boolean; etag?: string; file_path?: string; key: string; path?: string; size: number; success: boolean };
+  /** Always true when present. Directory mode only. */
+  directory_mode?: boolean;
+  /** The key's ETag after the write (also sent as the ETag header). SQLite mode only. */
+  etag?: string;
+  /** Absolute path of the file that holds the value. Directory mode only. */
+  file_path?: string;
+  /** The key written. */
+  key: string;
+  /** The path that was set. Present only when path was sent. */
+  path?: string;
+  /** Size of the stored value in bytes. With path, the size of the whole updated value. */
+  size: number;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_KVDeleteResponse {
-  statusCode: number;
-  message: string;
-  data: { deleted: boolean; directory_mode?: boolean; success: boolean };
+  /** Always true on a 200 (a missing key is a 404). */
+  deleted: boolean;
+  /** Always true when present. Directory mode only. */
+  directory_mode?: boolean;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_KVEntry {
@@ -18736,27 +19378,55 @@ export interface main_KVEntry {
 }
 
 export interface main_KVCounterResponse {
-  statusCode: number;
-  message: string;
-  data: { etag: string; key: string; path?: string; success: boolean; value: number };
+  /** The key's ETag after the write (also sent as the ETag header). */
+  etag: string;
+  /** The key changed. */
+  key: string;
+  /** The path that was changed. Present only when path was sent. */
+  path?: string;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The value after the change; with path, the nested value. */
+  value: number;
 }
 
 export interface main_KVTTLResponse {
-  statusCode: number;
-  message: string;
-  data: { etag: string; expire_at: number | null; key: string; success: boolean };
+  /** The key's ETag after the change (also sent as the ETag header). */
+  etag: string;
+  /** When the key now expires, Unix seconds; null when it has no TTL. */
+  expire_at: number | null;
+  /** The key. */
+  key: string;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_KVPopResponse {
-  statusCode: number;
-  message: string;
-  data: { etag: string; key: string; length: number; path?: string; success: boolean; value: unknown | null };
+  /** The key's ETag after the write (also sent as the ETag header). */
+  etag: string;
+  /** The key changed. */
+  key: string;
+  /** Number of elements left in the array. */
+  length: number;
+  /** The path of the array. Present only when path was sent. */
+  path?: string;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The element removed from the end of the array; any JSON value, null included. */
+  value: unknown | null;
 }
 
 export interface main_KVPushResponse {
-  statusCode: number;
-  message: string;
-  data: { etag: string; key: string; length: number; path?: string; success: boolean };
+  /** The key's ETag after the write (also sent as the ETag header). */
+  etag: string;
+  /** The key changed. */
+  key: string;
+  /** Number of elements in the array after the append. */
+  length: number;
+  /** The path of the array. Present only when path was sent. */
+  path?: string;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_kvRemoveRequest {
@@ -18765,21 +19435,40 @@ export interface main_kvRemoveRequest {
 }
 
 export interface main_KVRemoveResponse {
-  statusCode: number;
-  message: string;
-  data: { etag: string; key: string; length: number; path?: string; removed: unknown | null; success: boolean };
+  /** The key's ETag after the write (also sent as the ETag header). */
+  etag: string;
+  /** The key changed. */
+  key: string;
+  /** Number of elements left in the array. */
+  length: number;
+  /** The path of the array. Present only when path was sent. */
+  path?: string;
+  /** The element that was removed; any JSON value, null included. */
+  removed: unknown | null;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_KVKeyRollbackResponse {
-  statusCode: number;
-  message: string;
-  data: { key: string; rolled_back: number; success: boolean };
+  /** The key rolled back. */
+  key: string;
+  /** Number of operations reversed. */
+  rolled_back: number;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_KVKeySnapshotResponse {
-  statusCode: number;
-  message: string;
-  data: { content_type: string; op_number: number; success: boolean; value?: unknown | null; value_base64?: string };
+  /** The content type the value had after that operation. */
+  content_type: string;
+  /** The requested operation number. */
+  op_number: number;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The value, parsed, when it is JSON content that parses; null for a stored JSON null. Absent otherwise. */
+  value?: unknown | null;
+  /** The value as base64, when it is not JSON content or does not parse as JSON. Absent otherwise. */
+  value_base64?: string;
 }
 
 export interface main_kvBatchDeleteRequest {
@@ -18790,9 +19479,10 @@ export interface main_kvBatchDeleteRequest {
 }
 
 export interface main_KVBatchDeleteResponse {
-  statusCode: number;
-  message: string;
-  data: { deleted: number; success: boolean };
+  /** Number of keys that existed and were deleted. */
+  deleted: number;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_kvBatchGetRequest {
@@ -18801,9 +19491,10 @@ export interface main_kvBatchGetRequest {
 }
 
 export interface main_KVBatchGetResponse {
-  statusCode: number;
-  message: string;
-  data: { results: Record<string, main_KVBatchGetResult | null>; success: boolean };
+  /** One entry per requested key, keyed by the key: null when the key does not exist or has expired. */
+  results: Record<string, main_KVBatchGetResult | null>;
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_kvBatchSetRequest {
@@ -18812,15 +19503,31 @@ export interface main_kvBatchSetRequest {
 }
 
 export interface main_KVBatchSetResponse {
-  statusCode: number;
-  message: string;
-  data: { count: number; items: main_KVBatchSetItemResult[]; success: boolean };
+  /** Number of items stored. */
+  count: number;
+  /** One entry per item, in request order, with the key's ETag after the batch (for a key written twice, both entries carry the final ETag). */
+  items: main_KVBatchSetItemResult[];
+  /** Always true on a 200. */
+  success: boolean;
 }
 
 export interface main_KVDiffResponse {
-  statusCode: number;
-  message: string;
-  data: { candidate_truncated: boolean; changes: main_KVDiffChange[] | null; from_timestamp: number; gap_keys: string[] | null; has_gaps: boolean; stats: main_KVDiffStats; success: boolean; to_timestamp: number };
+  /** True when the candidate-key scan stopped at its internal cap, so changed keys may be missing without appearing in gap_keys; name the keys with keys to get a complete answer for them. Always false when keys is given. */
+  candidate_truncated: boolean;
+  /** One entry per key that was created, modified or deleted between the two timestamps. Unchanged keys are only counted in stats. null when nothing changed. */
+  changes: main_KVDiffChange[] | null;
+  /** The requested from timestamp, Unix seconds. */
+  from_timestamp: number;
+  /** Keys left out of changes because a write made with history=false leaves their value at either timestamp unknown. null when has_gaps is false, a non-empty array when it is true. */
+  gap_keys: string[] | null;
+  /** True when gap_keys is non-empty. */
+  has_gaps: boolean;
+  /** Per-kind counts. */
+  stats: main_KVDiffStats;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The requested to timestamp, Unix seconds. */
+  to_timestamp: number;
 }
 
 export interface main_kvTableRollbackRequest {
@@ -18833,15 +19540,47 @@ At most 10000 entries; more is rejected with 413. */
 }
 
 export interface main_KVTableRollbackResponse {
-  statusCode: number;
-  message: string;
-  data: { deleted?: number; dry_run?: boolean; duration_ms?: number; preview?: main_KVTableRollbackPreview; restored?: number; rolled_back?: number; success: boolean; to_timestamp: number; total_operations_reversed?: number; untouched_keys?: string[] };
+  /** Real run only: keys deleted because they did not exist at to_timestamp. */
+  deleted?: number;
+  /** Dry run only: always true. */
+  dry_run?: boolean;
+  /** Real run only: time the rollback took, in milliseconds. */
+  duration_ms?: number;
+  /** Dry run only: what a real run would change. */
+  preview?: main_KVTableRollbackPreview;
+  /** Real run only: keys recreated because they existed at to_timestamp and are gone now. */
+  restored?: number;
+  /** Real run only: keys whose value was set back. */
+  rolled_back?: number;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The requested to_timestamp. */
+  to_timestamp: number;
+  /** Real run only: operations undone across the rolled-back keys. */
+  total_operations_reversed?: number;
+  /** Real run only: keys with nothing to roll back (their history holds only writes made with history=false, and they no longer exist). */
+  untouched_keys?: string[];
 }
 
 export interface main_KVSnapshotResponse {
-  statusCode: number;
-  message: string;
-  data: { candidate_truncated: boolean; count: number; gap_keys: string[] | null; has_gaps: boolean; keys: main_KVSnapshotEntry[] | null; snapshot_time: string; success: boolean; timestamp: number; total_keys_at_snapshot: number };
+  /** True when the candidate-key scan stopped at its internal cap, so keys may be missing from keys without appearing in gap_keys; narrow the request with prefix to get a complete view. */
+  candidate_truncated: boolean;
+  /** Number of entries in keys. */
+  count: number;
+  /** Keys left out of keys because a write made with history=false leaves their value at the timestamp unknown. null when has_gaps is false, a non-empty array when it is true. */
+  gap_keys: string[] | null;
+  /** True when gap_keys is non-empty. */
+  has_gaps: boolean;
+  /** The keys that existed at the timestamp with their values, ordered by key and cut to limit. null when none did. */
+  keys: main_KVSnapshotEntry[] | null;
+  /** The requested timestamp as an RFC 3339 UTC string. */
+  snapshot_time: string;
+  /** Always true on a 200. */
+  success: boolean;
+  /** The requested timestamp, Unix seconds. */
+  timestamp: number;
+  /** Number of keys that existed at the timestamp before limit was applied. */
+  total_keys_at_snapshot: number;
 }
 
 export interface main_maintenanceRequest {
@@ -18850,13 +19589,19 @@ ignored by the others. Jailed like the db parameter, and it must not
 already exist. */
   dest_path?: string;
   /** Which maintenance operation to run. */
-  op: "wal_checkpoint_truncate" | "vacuum_into" | "quick_check" | "reset_changes";
+  op: "wal_checkpoint_truncate" | "vacuum_into" | "quick_check" | "reset_changes" | "restore";
+  /** Source file for restore: an existing SQLite database, such as a
+vacuum_into copy. Required for that operation and ignored by the
+others. Jailed like the db parameter, and it must not be the database
+itself. It is only read. */
+  src_path?: string;
 }
 
 export interface main_MaintenanceResponse {
-  statusCode: number;
-  message: string;
-  data: { op: string; result: string };
+  /** The operation that ran, as requested. */
+  op: string;
+  /** "ok" when the operation completed; for quick_check, the first result row ("ok" on a healthy database, otherwise the first problem found). */
+  result: string;
 }
 
 export interface main_ShareableQueryResult {
@@ -18922,9 +19667,13 @@ export interface HealthResponse4 {
 }
 
 export interface WatcherListResponse {
-  statusCode: number;
-  message: string;
-  data: { items: WatcherResponse[]; limit: number /* min: 0 */; page: number /* min: 0 */; total: number /* min: 0 */ };
+  items: WatcherResponse[];
+  /** @minimum 0 */
+  limit: number /* min: 0 */;
+  /** @minimum 0 */
+  page: number /* min: 0 */;
+  /** @minimum 0 */
+  total: number /* min: 0 */;
 }
 
 /**
@@ -18994,21 +19743,40 @@ event; shrinking drops only the oldest events beyond the new cap. */
 }
 
 export interface DeleteWatcherResponse {
-  statusCode: number;
-  message: string;
-  data: { deleted: boolean; id: string };
+  deleted: boolean;
+  id: string;
 }
 
 export interface EventHistoryResponse {
-  statusCode: number;
-  message: string;
-  data: { has_more?: boolean; items: FileEvent[]; limit: number /* min: 0 */; newest_available_id?: number | null; newest_available_timestamp?: string | null; next_after_id?: string | null; oldest_available_id?: number | null; oldest_available_timestamp?: string | null; page: number /* min: 0 */; total: number /* min: 0 */ };
+  /** More events follow this page. */
+  has_more?: boolean;
+  items: FileEvent[];
+  /** @minimum 0 */
+  limit: number /* min: 0 */;
+  newest_available_id?: number | null;
+  newest_available_timestamp?: string | null;
+  /** When `has_more`: pass as `after_id` to fetch the next page. A decimal
+event id. */
+  next_after_id?: string | null;
+  oldest_available_id?: number | null;
+  oldest_available_timestamp?: string | null;
+  /** @minimum 0 */
+  page: number /* min: 0 */;
+  /**
+   * Events matching the request's cursor now (all pages, not this page).
+   * @minimum 0
+   */
+  total: number /* min: 0 */;
 }
 
 export interface RawCrontabListResponse {
-  statusCode: number;
-  message: string;
-  data: { items: RawCrontabResponse[]; limit: number /* min: 0 */; page: number /* min: 0 */; total: number /* min: 0 */ };
+  items: RawCrontabResponse[];
+  /** @minimum 0 */
+  limit: number /* min: 0 */;
+  /** @minimum 0 */
+  page: number /* min: 0 */;
+  /** @minimum 0 */
+  total: number /* min: 0 */;
 }
 
 export interface HealthResponse5 {
@@ -19029,15 +19797,21 @@ export interface RawCrontabRequest {
 }
 
 export interface RawCrontabUpdateResponse {
-  statusCode: number;
-  message: string;
-  data: { crontab: string; removed_expired: number /* min: 0 */; user: string };
+  crontab: string;
+  /** @minimum 0 */
+  removed_expired: number /* min: 0 */;
+  user: string;
 }
 
 export interface EntryListResponse {
-  statusCode: number;
-  message: string;
-  data: { entries: CrontabEntryView[]; limit: number /* min: 0 */; page: number /* min: 0 */; total: number /* min: 0 */; user: string };
+  entries: CrontabEntryView[];
+  /** @minimum 0 */
+  limit: number /* min: 0 */;
+  /** @minimum 0 */
+  page: number /* min: 0 */;
+  /** @minimum 0 */
+  total: number /* min: 0 */;
+  user: string;
 }
 
 export interface CreateEntryRequest {
@@ -19060,15 +19834,24 @@ export interface UpdateEntryRequest {
 }
 
 export interface ManagedEntryResponse {
-  statusCode: number;
-  message: string;
-  data: { command: string; comment?: string | null; created_at: string; enabled: boolean; expired: boolean; expires_at?: string | null; id: string; name?: string | null; schedule: string; schedule_human: string; updated_at: string; user: string; warnings?: string[] };
+  command: string;
+  comment?: string | null;
+  created_at: string;
+  enabled: boolean;
+  expired: boolean;
+  expires_at?: string | null;
+  id: string;
+  name?: string | null;
+  schedule: string;
+  schedule_human: string;
+  updated_at: string;
+  user: string;
+  /** Present when the schedule is valid but can never fire (e.g. `0 0 31 2 *`). */
+  warnings?: string[];
 }
 
 export interface DeleteEntryResponse {
-  statusCode: number;
-  message: string;
-  data: { deleted: boolean };
+  deleted: boolean;
 }
 
 export interface HealthResponse6 {
@@ -19118,9 +19901,9 @@ export interface PipeStatus {
 }
 
 export interface BindingsResponse {
-  statusCode: number;
-  message: string;
-  data: { bindings: BindingDetail[]; total: number /* min: 0 */ };
+  bindings: BindingDetail[];
+  /** @minimum 0 */
+  total: number /* min: 0 */;
 }
 
 export interface HealthResponse7 {
@@ -19137,15 +19920,14 @@ export interface HealthResponse7 {
 }
 
 export interface SessionsResponse {
-  statusCode: number;
-  message: string;
-  data: { sessions: SessionInfo[]; total: number /* min: 0 */ };
+  sessions: SessionInfo[];
+  /** @minimum 0 */
+  total: number /* min: 0 */;
 }
 
 export interface KillResponse {
-  statusCode: number;
-  message: string;
-  data: { sessionId: string; status: string };
+  sessionId: string;
+  status: string;
 }
 
 export interface TunnelOverview {
@@ -19221,15 +20003,23 @@ export interface PagedSearchRequest {
 }
 
 export interface PagedSearchResponse {
-  statusCode: number;
-  message: string;
-  data: { set_id: string; total_count: number; items: Candidate[]; next_cursor?: string; warnings?: WarningEntry[] };
+  set_id: string;
+  total_count: number;
+  items: Candidate[];
+  next_cursor?: string;
+  /** Source warnings of the search that built the set (empty on cursor pages, which read the cached set) */
+  warnings?: WarningEntry[];
 }
 
 export interface PreflightResponse {
-  statusCode: number;
-  message: string;
-  data: { set_id: string; selected?: Candidate; shell_command?: string; recommended_mode: RecommendedMode; handoff?: RunHandoff; missing_requirements: MissingRequirement[]; warnings: WarningEntry[]; effective_policy: EffectivePolicy };
+  set_id: string;
+  selected?: Candidate;
+  shell_command?: string;
+  recommended_mode: RecommendedMode;
+  handoff?: RunHandoff;
+  missing_requirements: MissingRequirement[];
+  warnings: WarningEntry[];
+  effective_policy: EffectivePolicy;
 }
 
 export interface BatchRequest {
@@ -19237,9 +20027,7 @@ export interface BatchRequest {
 }
 
 export interface BatchResponse {
-  statusCode: number;
-  message: string;
-  data: { items?: BatchItemResult[] };
+  items?: BatchItemResult[];
 }
 
 /**
@@ -19305,9 +20093,8 @@ export interface ProfileUpdate {
  * Confirms which profile is currently selected as the active default profile.
  */
 export interface SelectedProfileResponse {
-  statusCode: number;
-  message: string;
-  data: { selected_profile: string };
+  /** Name of the active profile */
+  selected_profile: string;
 }
 
 /**
@@ -19358,9 +20145,10 @@ export interface proxyLogs_UrlData {
 }
 
 export interface proxyLogs_InlineResponse {
-  statusCode: number;
-  message: string;
-  data: { type?: "inline"; status?: number; headers?: Record<string, unknown>; body?: string };
+  type?: "inline";
+  status?: number;
+  headers?: Record<string, unknown>;
+  body?: string;
 }
 
 export interface proxyLogs_LogQueryResult {
@@ -19547,7 +20335,7 @@ export interface SessionRevocation {
   /** @minimum 0 */
   sessions_deleted: number /* min: 0 */;
   /**
-   * Browser sessions (`hb_session`) invalidated.
+   * Browser sessions (`__Host-hb_session`) invalidated.
    * @minimum 0
    */
   browser_sessions_revoked: number /* min: 0 */;
@@ -19816,9 +20604,33 @@ export interface JobSummary {
  * cURL response
  */
 export interface CurlResponse {
-  statusCode: number;
-  message: string;
-  data: { body: number /* min: 0 */[]; connect_time: number; content_type?: string | null; effective_url: string; headers: Record<string, string>; namelookup_time: number; pretransfer_time: number; primary_ip?: string | null; raw_headers?: ResponseHeader[]; redirect_count: number /* min: 0 */; redirect_time: number; size_download: number /* min: 0 */; size_upload: number /* min: 0 */; speed_download: number; speed_upload: number; starttransfer_time: number; status_code: number /* min: 0 */; total_time: number };
+  body: number /* min: 0 */[];
+  connect_time: number;
+  content_type?: string | null;
+  effective_url: string;
+  headers: Record<string, string>;
+  namelookup_time: number;
+  pretransfer_time: number;
+  /** The IP libcurl actually connected to on the terminal hop
+(`CURLINFO_PRIMARY_IP`), serialized as a string. `None` if the
+transfer never connected (cancelled before connect) OR if the IP
+couldn't be parsed. Skipped in serialization to keep the wire
+shape stable for existing clients. */
+  primary_ip?: string | null;
+  raw_headers?: ResponseHeader[];
+  /** @minimum 0 */
+  redirect_count: number /* min: 0 */;
+  redirect_time: number;
+  /** @minimum 0 */
+  size_download: number /* min: 0 */;
+  /** @minimum 0 */
+  size_upload: number /* min: 0 */;
+  speed_download: number;
+  speed_upload: number;
+  starttransfer_time: number;
+  /** @minimum 0 */
+  status_code: number /* min: 0 */;
+  total_time: number;
 }
 
 /**
@@ -20630,9 +21442,11 @@ export interface HealthMemory4 {
 }
 
 export interface WatcherResponse {
-  statusCode: number;
-  message: string;
-  data: { config: WatcherConfigView; created_at: string; id: string; stats: WatcherStats };
+  config: WatcherConfigView;
+  created_at: string;
+  /** @pattern ^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ */
+  id: string;
+  stats: WatcherStats;
 }
 
 export interface FileEvent {
@@ -20658,9 +21472,8 @@ export interface FileEvent {
 }
 
 export interface RawCrontabResponse {
-  statusCode: number;
-  message: string;
-  data: { crontab: string; user: string };
+  crontab: string;
+  user: string;
 }
 
 export interface HealthMemory5 {
@@ -21032,6 +21845,9 @@ export interface CurlRequest {
   auth_method?: string | null;
   auth_password?: string | null;
   auth_user?: string | null;
+  /** Sent as `Authorization: Bearer <token>`. An `Authorization` entry in
+`headers` wins: the token is then not sent, so the request carries
+one `Authorization` header. */
   bearer_token?: string | null;
   compressed?: boolean | null;
   connect_timeout?: number | null;
@@ -21339,9 +22155,12 @@ export interface Selector {
  * Response from the search endpoint containing a set ID for race-free selection and the ranked list of candidates.
  */
 export interface SearchResponse {
-  statusCode: number;
-  message: string;
-  data: { set_id: string; candidates: Candidate[]; warnings?: WarningEntry[] };
+  /** Stable identifier for this candidate set (hash of ordered candidate IDs). Can be used with pick=id to ensure race-free selection. */
+  set_id: string;
+  /** Ranked list of candidates (highest score first) */
+  candidates: Candidate[];
+  /** Sources that failed, timed out or were skipped during this search (SOURCE_* codes); the candidates are partial when it is not empty */
+  warnings?: WarningEntry[];
 }
 
 /**
@@ -21352,9 +22171,21 @@ export interface SearchResponse {
 - error: set_id + error message
  */
 export interface RunResponse {
-  statusCode: number;
-  message: string;
-  data: { status: RunStatus; set_id?: string; candidates?: Candidate[]; selected?: Candidate; shell_command?: string; curl?: string; error?: string; handoff?: RunHandoff; warnings?: WarningEntry[] };
+  status: RunStatus;
+  /** Candidate set identifier */
+  set_id?: string;
+  /** Full candidate list (present when status=resolved) */
+  candidates?: Candidate[];
+  selected?: Candidate;
+  /** Exact shell command for the selected candidate (present when a candidate is selected) */
+  shell_command?: string;
+  /** Generated curl command (present when print_curl is set) */
+  curl?: string;
+  /** Error message (present when status=error) */
+  error?: string;
+  handoff?: RunHandoff;
+  /** Non-fatal advisories, including sources that failed, timed out or were skipped (SOURCE_* codes, see WarningEntry) */
+  warnings?: WarningEntry[];
 }
 
 /**
@@ -21367,7 +22198,7 @@ export interface ApiError {
 (runBatch lists its per-item codes at operation level). The generic codes, which come from the layers around
 the handlers (routing, the access check, request parsing, serialization), are listed here in x-error-codes:
 INVALID_REQUEST (400), INVALID_JSON (400, malformed body), INVALID_BODY (400, the body does not fit the schema,
-e.g. an unknown enum value), INVALID_QUERY (400), INVALID_PATH (400), UNSUPPORTED_MEDIA_TYPE (415),
+e.g. an unknown enum value; 413, a JSON body larger than 2 MiB), INVALID_QUERY (400), INVALID_PATH (400), UNSUPPORTED_MEDIA_TYPE (415),
 NOT_FOUND (404), METHOD_NOT_ALLOWED (405), FORBIDDEN (403), INTERNAL_ERROR (500). */
   code: string;
   /** HTTP status code of the response */
@@ -22098,6 +22929,23 @@ export interface NotesSocketsConnectEvents {
 }
 
 /**
+ * The event payloads of agent_streamBotLog's stream, keyed by message title
+ * (the message name when it has none), from the operation's x-async-api messages.
+ */
+export interface AgentBotsStreamEvents {
+  /** The Bot, as GET /bots/{id} returns it. Sent first and again when it changes; it has no id. */
+  "state": { id?: string; uid?: string; realm?: string; address?: string; name?: string; role?: string; session_id?: string; model?: string; guardrails?: string; allowed_containers?: string[]; allowed_agents?: string[]; yolo?: boolean; guardrail_check?: "strict" | "lenient" | "off"; yolo_unapplied?: ({ session_id: string; state: "pending" | "refused"; reason?: string })[]; created?: string; created_by?: { kind: "user" | "api" | "system"; id?: string }; autonomy?: { used: number; max: number; per_delegate_max: number; waiting_for_you: boolean }; open_delegates?: number; queued?: number; pending_gate?: { session_id: string; gate_id: string; type: "confirm" | "question"; summary: string; generation: number } | null };
+  /** One log row (as getBotLog's items); the frame's id is its seq. */
+  "row": { seq?: number; at?: string; role?: "user" | "bot" | "event" | "system"; text?: string; session_id?: string; turn_id?: string; message_id?: string; from?: { kind: "user" | "bot" | "delegate" | "system"; id?: string }; trigger?: "human" | "wake" | "clear"; schema_version?: number };
+  /** The rows between the resume cursor and min_seq are not in the log (read them from GET /bots/{id}/archive), or the cursor was ahead of it; the rows that follow start at min_seq. It has no id. */
+  "lagged": { code?: "replay_gap"; min_seq?: number; max_seq?: number };
+  /** The log was moved to the archive (POST /bots/{id}/forget or /reset) while the stream was open: drop the rows shown so far (they are in GET /bots/{id}/archive). The rows that follow start at min_seq. It has no id. */
+  "archived": { reason?: "forget" | "reset"; archived?: number; min_seq?: number };
+  /** Sent when the Bot is deleted or the server ends the stream; the stream closes after it. */
+  "end": { reason?: string };
+}
+
+/**
  * The event payloads of agent_streamChanges's stream, keyed by message title
  * (the message name when it has none), from the operation's x-async-api messages.
  */
@@ -22182,8 +23030,12 @@ export interface AgentSessionsStartTurnAndStreamEvents {
   "event.clear": Record<string, unknown>;
   /** The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
   "event.command_accepted": Record<string, unknown>;
+  /** Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. */
+  "event.command_committed": { command_ids: string[]; turn_id?: string; how: "next_step" | "new_turn" | "stop"; stopped?: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[] };
   /** A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
   "event.command_refused": Record<string, unknown>;
+  /** Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. */
+  "event.command_settled": { command_ids: string[]; state: "superseded" | "refused" | "failed"; reason?: "stop" | "order" | "hook" | "closed" | "unsupported" | "write_failed"; detail?: string; superseded_by?: string };
   /** Context window compacted. */
   "event.compacted": Record<string, unknown>;
   /** A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). */
@@ -22191,7 +23043,7 @@ export interface AgentSessionsStartTurnAndStreamEvents {
   /** Context compaction started. */
   "event.compaction_started": Record<string, unknown>;
   /** Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
-  "event.confirm_request": { tool_name: string; params: Record<string, unknown> | null; requested_dirs?: string[]; detail?: string; offer_session_allow?: boolean; gate_id: number; gate_cause?: string; risk?: string; human_only: boolean; generation?: number; lease_required: boolean; task_id?: string; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; helper_id?: string; parent_tool_call_id?: string };
+  "event.confirm_request": { tool_name: string; params: Record<string, unknown> | null; requested_dirs?: string[]; detail?: string; offer_session_allow?: boolean; gate_id: number; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; generation?: number; lease_required: boolean; task_id?: string; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; helper_id?: string; parent_tool_call_id?: string };
   /** The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. */
   "event.decision_requirements": { gate_id: number; generation: number; lease_required: boolean; helper_id?: string };
   /** Directory-access scope changed/locked. */
@@ -22201,9 +23053,9 @@ export interface AgentSessionsStartTurnAndStreamEvents {
   /** A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). */
   "event.delegated_idle": { agent: string; idle_ms: number; message: string };
   /** Session error (e.g. join_not_ready). */
-  "event.error": { message: string; code?: string; diag?: { provider?: string; model?: string; base_url?: string; key_source?: string; key_prefix?: string; http_status?: number; retryable?: boolean; attempts?: number; req_id?: string; err_code?: "timeout" | "rate_limit" | "auth" | "network" | "provider" | "canceled" | "context_overflow" | "provider_incomplete_response" | "unknown"; last_error?: string } };
+  "event.error": { message: string; code?: string; diag?: { provider?: string; model?: string; base_url?: string; key_source?: string; key_prefix?: string; http_status?: number; retryable?: boolean; attempts?: number; req_id?: string; err_code?: "timeout" | "rate_limit" | "auth" | "network" | "provider" | "canceled" | "context_overflow" | "provider_incomplete_response" | "max_tokens" | "bad_tool_args" | "unknown"; stop_reason?: string; last_error?: string }; max_steps?: number; retry_after_secs?: number };
   /** A parked confirm/question gate was resolved (possibly by another attached client). */
-  "event.gate_resolved": { kind: "confirm" | "question"; gate_id?: number; question_id?: number; outcome?: "answered" | "cancelled" | "yolo" | "timeout"; provenance?: "decision" | "yolo" | "cancelled" | "closed" | "context_cancelled" | "timeout"; holder?: string; generation?: number; request_id?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_container?: boolean }; session_scope_applied?: boolean; note?: string };
+  "event.gate_resolved": { kind: "confirm" | "question"; gate_id?: number; question_id?: number; outcome?: "answered" | "cancelled" | "yolo" | "timeout"; provenance?: "decision" | "yolo" | "cancelled" | "closed" | "context_cancelled" | "timeout"; holder?: string; generation?: number; request_id?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_container?: boolean; remember?: boolean; superseded?: boolean }; session_scope_applied?: boolean; note?: string };
   /** Files-tab import progress. */
   "event.files_import_progress": Record<string, unknown>;
   /** Fusion configuration changed. */
@@ -22304,12 +23156,14 @@ export interface AgentSessionsStartTurnAndStreamEvents {
   "event.tool_mode": { tool_mode: string; locked: boolean };
   /** Tool result. */
   "event.tool_result": { tool_id: string; name: string; output: string; is_error: boolean; detail?: string; error_code?: string; hint?: string; hint_cmd?: string; elapsed_ms?: number; exit_code?: number; truncated?: boolean; original_bytes?: number; helper_id?: string; parent_tool_call_id?: string; rules?: { rule_ids: string[]; outcome: "deny" | "unchecked"; reason?: string } };
+  /** A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. */
+  "event.turn_discarded": { turn_id?: string; outcome?: "cancelled"; error_code?: string };
   /** The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. */
   "event.turn_receipt": Record<string, unknown>;
   /** Echo of the user's input. */
   "event.user_echo": { text?: string; echo_tag?: string; loop_id?: string; run?: number; task_ids?: string[]; auto_model?: string; auto_round?: number; attachments?: { name: string; media_type?: string; size?: number; delivered: boolean }[] };
   /** Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
-  "event.user_question": { question: string; options: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view"; request: string; id: string }; questions?: { id: string; category: string; question: string; options?: string[] }[]; question_id?: number; task_id?: string; helper_id?: string; parent_tool_call_id?: string };
+  "event.user_question": { question: string; options: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view" | "bot.dispatch" | "bot.message" | "bot.stop" | "bot.delegates" | "bot.answer_gate" | "bot.peek"; request: string; id: string; tool_use_id?: string }; questions?: { id: string; category: string; question: string; options?: string[] }[]; question_id?: number; task_id?: string; helper_id?: string; parent_tool_call_id?: string };
   /** Verbosity setting changed. */
   "event.verbosity": Record<string, unknown>;
   /** Workflow run complete. */
@@ -22334,7 +23188,7 @@ export interface AgentSessionsStartTurnAndStreamEvents {
   "replay_boundary": { max_seq?: number; incarnation?: string; turn_id?: string; turn_since?: number };
   /** Gateway control frame: the stream is terminating because the session closed. Carries {reason}. */
   "end": { reason?: string };
-  /** Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. */
+  /** Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. */
   "refused": Record<string, unknown>;
   /** Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
   "gate_resolved_ack": Record<string, unknown>;
@@ -22365,8 +23219,12 @@ export interface AgentSessionsConnectEvents {
   "event.clear": Record<string, unknown>;
   /** The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
   "event.command_accepted": Record<string, unknown>;
+  /** Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. */
+  "event.command_committed": { command_ids: string[]; turn_id?: string; how: "next_step" | "new_turn" | "stop"; stopped?: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[] };
   /** A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
   "event.command_refused": Record<string, unknown>;
+  /** Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. */
+  "event.command_settled": { command_ids: string[]; state: "superseded" | "refused" | "failed"; reason?: "stop" | "order" | "hook" | "closed" | "unsupported" | "write_failed"; detail?: string; superseded_by?: string };
   /** Context window compacted. */
   "event.compacted": Record<string, unknown>;
   /** A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). */
@@ -22374,7 +23232,7 @@ export interface AgentSessionsConnectEvents {
   /** Context compaction started. */
   "event.compaction_started": Record<string, unknown>;
   /** Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
-  "event.confirm_request": { tool_name: string; params: Record<string, unknown> | null; requested_dirs?: string[]; detail?: string; offer_session_allow?: boolean; gate_id: number; gate_cause?: string; risk?: string; human_only: boolean; generation?: number; lease_required: boolean; task_id?: string; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; helper_id?: string; parent_tool_call_id?: string };
+  "event.confirm_request": { tool_name: string; params: Record<string, unknown> | null; requested_dirs?: string[]; detail?: string; offer_session_allow?: boolean; gate_id: number; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; generation?: number; lease_required: boolean; task_id?: string; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; helper_id?: string; parent_tool_call_id?: string };
   /** The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. */
   "event.decision_requirements": { gate_id: number; generation: number; lease_required: boolean; helper_id?: string };
   /** Directory-access scope changed/locked. */
@@ -22384,9 +23242,9 @@ export interface AgentSessionsConnectEvents {
   /** A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). */
   "event.delegated_idle": { agent: string; idle_ms: number; message: string };
   /** Session error (e.g. join_not_ready). */
-  "event.error": { message: string; code?: string; diag?: { provider?: string; model?: string; base_url?: string; key_source?: string; key_prefix?: string; http_status?: number; retryable?: boolean; attempts?: number; req_id?: string; err_code?: "timeout" | "rate_limit" | "auth" | "network" | "provider" | "canceled" | "context_overflow" | "provider_incomplete_response" | "unknown"; last_error?: string } };
+  "event.error": { message: string; code?: string; diag?: { provider?: string; model?: string; base_url?: string; key_source?: string; key_prefix?: string; http_status?: number; retryable?: boolean; attempts?: number; req_id?: string; err_code?: "timeout" | "rate_limit" | "auth" | "network" | "provider" | "canceled" | "context_overflow" | "provider_incomplete_response" | "max_tokens" | "bad_tool_args" | "unknown"; stop_reason?: string; last_error?: string }; max_steps?: number; retry_after_secs?: number };
   /** A parked confirm/question gate was resolved (possibly by another attached client). */
-  "event.gate_resolved": { kind: "confirm" | "question"; gate_id?: number; question_id?: number; outcome?: "answered" | "cancelled" | "yolo" | "timeout"; provenance?: "decision" | "yolo" | "cancelled" | "closed" | "context_cancelled" | "timeout"; holder?: string; generation?: number; request_id?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_container?: boolean }; session_scope_applied?: boolean; note?: string };
+  "event.gate_resolved": { kind: "confirm" | "question"; gate_id?: number; question_id?: number; outcome?: "answered" | "cancelled" | "yolo" | "timeout"; provenance?: "decision" | "yolo" | "cancelled" | "closed" | "context_cancelled" | "timeout"; holder?: string; generation?: number; request_id?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_container?: boolean; remember?: boolean; superseded?: boolean }; session_scope_applied?: boolean; note?: string };
   /** Files-tab import progress. */
   "event.files_import_progress": Record<string, unknown>;
   /** Fusion configuration changed. */
@@ -22487,12 +23345,14 @@ export interface AgentSessionsConnectEvents {
   "event.tool_mode": { tool_mode: string; locked: boolean };
   /** Tool result. */
   "event.tool_result": { tool_id: string; name: string; output: string; is_error: boolean; detail?: string; error_code?: string; hint?: string; hint_cmd?: string; elapsed_ms?: number; exit_code?: number; truncated?: boolean; original_bytes?: number; helper_id?: string; parent_tool_call_id?: string; rules?: { rule_ids: string[]; outcome: "deny" | "unchecked"; reason?: string } };
+  /** A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. */
+  "event.turn_discarded": { turn_id?: string; outcome?: "cancelled"; error_code?: string };
   /** The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. */
   "event.turn_receipt": Record<string, unknown>;
   /** Echo of the user's input. */
   "event.user_echo": { text?: string; echo_tag?: string; loop_id?: string; run?: number; task_ids?: string[]; auto_model?: string; auto_round?: number; attachments?: { name: string; media_type?: string; size?: number; delivered: boolean }[] };
   /** Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
-  "event.user_question": { question: string; options: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view"; request: string; id: string }; questions?: { id: string; category: string; question: string; options?: string[] }[]; question_id?: number; task_id?: string; helper_id?: string; parent_tool_call_id?: string };
+  "event.user_question": { question: string; options: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view" | "bot.dispatch" | "bot.message" | "bot.stop" | "bot.delegates" | "bot.answer_gate" | "bot.peek"; request: string; id: string; tool_use_id?: string }; questions?: { id: string; category: string; question: string; options?: string[] }[]; question_id?: number; task_id?: string; helper_id?: string; parent_tool_call_id?: string };
   /** Verbosity setting changed. */
   "event.verbosity": Record<string, unknown>;
   /** Workflow run complete. */
@@ -22517,7 +23377,7 @@ export interface AgentSessionsConnectEvents {
   "replay_boundary": { max_seq?: number; incarnation?: string; turn_id?: string; turn_since?: number };
   /** Gateway control frame: the stream is terminating because the session closed. Carries {reason}. */
   "end": { reason?: string };
-  /** Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. */
+  /** Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. */
   "refused": Record<string, unknown>;
   /** Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
   "gate_resolved_ack": Record<string, unknown>;
@@ -22539,3 +23399,3256 @@ export interface AgentStreamToolEvents {
   /** Stream complete (always last). */
   "end": Record<string, unknown>;
 }
+
+/** The frames sqlite_streamKvChanges's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface SqliteKvStreamChangesFrames {
+  /** First frame. Its id is the cursor the stream continues from (the supplied one, or the current position). */
+  "ready": { cursor: string; oldest_cursor: string };
+  /** One change of a matching key. Its id is the event cursor. */
+  "change": { content_type?: string; cursor: string; etag?: string; expire_at: number | null; key: string; op: "set" | "ttl" | "delete" | "expire"; seq: number; table: string; ts: number; value?: unknown; value_base64?: string; value_omitted?: "superseded" | "expired" | "too_large" };
+  /** Position scanned so far (every 15 s and after 1000 skipped changes). Its id is a valid resume point; nothing to apply. */
+  "checkpoint": { cursor: string };
+  /** The stream cannot continue from its position: re-read the state and start from a new cursor. The server closes the stream after it. */
+  "reset": { reason: "cursor_expired" | "database_replaced" | "table_changed" | "future_cursor" };
+  /** The server closes the stream. Reconnect with the last id for shutdown and max_lifetime; database_deleted is final. */
+  "end": { reason: "database_deleted" | "shutdown" | "max_lifetime" };
+}
+
+/** The frames watch_streamWatcherEventsSse's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface WatchEventsStreamFrames {
+  "file_event": { details?: string; id: number /* min: 0 */; is_dir?: boolean; kind: "created" | "modified" | "removed" | "renamed" | "metadata" | "overflow" | "other"; new_size_bytes?: number /* min: 0 */; old_path?: string; old_size_bytes?: number /* min: 0 */; path: string; timestamp: string; watcher_id: string };
+  "lag": { newest_available_id?: number | null; newest_available_timestamp?: string | null; oldest_available_id?: number | null; oldest_available_timestamp?: string | null; recoverable: boolean; requested_cursor?: Record<string, unknown>; skipped: number /* min: 0 */; type: "lag" };
+  "end": { reason: "watcher_deleted" | "shutdown"; type: "end" };
+}
+
+/** The frames agent_streamBotLog's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentBotsStreamFrames {
+  /** The Bot, as GET /bots/{id} returns it. Sent first and again when it changes; it has no id. */
+  "state": { id?: string; uid?: string; realm?: string; address?: string; name?: string; role?: string; session_id?: string; model?: string; guardrails?: string; allowed_containers?: string[]; allowed_agents?: string[]; yolo?: boolean; guardrail_check?: "strict" | "lenient" | "off"; yolo_unapplied?: ({ session_id: string; state: "pending" | "refused"; reason?: string })[]; created?: string; created_by?: { kind: "user" | "api" | "system"; id?: string }; autonomy?: { used: number; max: number; per_delegate_max: number; waiting_for_you: boolean }; open_delegates?: number; queued?: number; pending_gate?: { session_id: string; gate_id: string; type: "confirm" | "question"; summary: string; generation: number } | null };
+  /** One log row (as getBotLog's items); the frame's id is its seq. */
+  "row": { seq?: number; at?: string; role?: "user" | "bot" | "event" | "system"; text?: string; session_id?: string; turn_id?: string; message_id?: string; from?: { kind: "user" | "bot" | "delegate" | "system"; id?: string }; trigger?: "human" | "wake" | "clear"; schema_version?: number };
+  /** The rows between the resume cursor and min_seq are not in the log (read them from GET /bots/{id}/archive), or the cursor was ahead of it; the rows that follow start at min_seq. It has no id. */
+  "lagged": { code?: "replay_gap"; min_seq?: number; max_seq?: number };
+  /** The log was moved to the archive (POST /bots/{id}/forget or /reset) while the stream was open: drop the rows shown so far (they are in GET /bots/{id}/archive). The rows that follow start at min_seq. It has no id. */
+  "archived": { reason?: "forget" | "reset"; archived?: number; min_seq?: number };
+  /** Sent when the Bot is deleted or the server ends the stream; the stream closes after it. */
+  "end": { reason?: string };
+}
+
+/** The frames agent_streamChanges's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentChangesStreamFrames {
+  /** {scope, tokens[, unavailable]}: every topic's token. Sent first and whenever the scope changes. */
+  "snapshot": Record<string, unknown>;
+  /** {topic, token}: one topic's token moved (token null when the topic became unavailable). */
+  "changed": Record<string, unknown>;
+  /** {reason}: the tokens could not be read; the stream closes. */
+  "end": Record<string, unknown>;
+}
+
+/** The frames agent_streamCompletion's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentStreamCompletionFrames {
+  /** The model call started; carries {model}. */
+  "start": Record<string, unknown>;
+  /** A piece of reply text; carries {text}. */
+  "delta": Record<string, unknown>;
+  /** A piece of reasoning text; carries {text}. Sent only by adapters that stream reasoning (Anthropic Messages, OpenAI Responses, Bedrock). */
+  "thinking": Record<string, unknown>;
+  /** The finished completion: the createCompletion 200 body. */
+  "result": Record<string, unknown>;
+  /** The call failed after start; carries {code, message, details?} with code upstream_error, timeout or internal_error. */
+  "error": Record<string, unknown>;
+  /** Stream complete (always last). */
+  "end": Record<string, unknown>;
+}
+
+/** The frames agent_createHeadlessRun's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentCreateHeadlessRunFrames {
+  /** Stream opened. The payload is the fixed marker {"format":"stream-json"} — it does NOT echo the prompt, workflow, model or any other request field, so there is nothing here to correlate against; it only tells you the SSE stream is live and the run has been handed to the daemon. */
+  "start": Record<string, unknown>;
+  /** The captured headless run. The output TEXT is the `result` field — there is no `text` field. `status` is ok, or cancelled when the run's turn was cancelled (a cancelled run is not a success: its partial output is kept). `outcome` is the turn's terminal outcome. Also carries session_id (the only handle on the run afterwards), model, agent, is_error, error, error_code (present only when the daemon refused the run's own input or workflow before any turn, e.g. realm_not_allowed or restriction_unknown), num_turns, duration_ms, a `steps` list, and `usage` with input_tokens, output_tokens, cache_creation_tokens and cache_read_tokens — usage is NOT keyed tokens.input/tokens.output. */
+  "result": { status?: "ok" | "cancelled"; outcome?: "completed" | "failed" | "cancelled" | "" };
+  /** The run failed/timed out; carries {code,message}. This is where a DAEMON failure surfaces in the stream form — e.g. code:"timeout" when the run exceeds its bound, or code:"admin_unauthorized" if the daemon's own administrator check rejects it (these are NOT HTTP statuses on this op — the run starts after the 200 SSE response). */
+  "error": Record<string, unknown>;
+  /** Stream complete (always last). The payload is an empty object {} — it carries no status and no summary; read the outcome from the result or error frame. */
+  "end": Record<string, unknown>;
+}
+
+/** The frames agent_streamLogs's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentLogsStreamFrames {
+  /** One redacted log row (id: <seq>). */
+  "entry": Record<string, unknown>;
+  /** The cursor fell behind the ring; carries {code:replay_gap, min_seq, max_seq}. Reconcile from min_seq. */
+  "lagged": Record<string, unknown>;
+  /** Stream complete (client disconnect or server drain). */
+  "end": Record<string, unknown>;
+}
+
+/** The frames agent_promptStream's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentSessionsStartTurnAndStreamFrames {
+  /** Provider account rotated mid-turn. */
+  "account_rotated": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.account_rotated"; data: Record<string, unknown> } };
+  /** Turn complete — terminates a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}] — advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy (open set). */
+  "agent_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.agent_done"; data: { turns?: number; outcome?: "completed" | "failed" | "cancelled"; turn_id?: string; error_code?: string; notices?: { code: string; message?: string; detail?: string }[]; workflow_note?: { run_id: string; note: string; ack: string } } } };
+  /** The session's approval policy (mode / lock / rules) changed; carries the new revision. */
+  "approval_policy_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.approval_policy_changed"; data: Record<string, unknown> } };
+  /** Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors GET /hoody/auth/status). */
+  "auth_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.auth_changed"; data: Record<string, unknown> } };
+  /** Auto-user composed the next user turn. */
+  "auto_reply": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.auto_reply"; data: Record<string, unknown> } };
+  /** Auto-user composition progress. */
+  "auto_reply_progress": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.auto_reply_progress"; data: Record<string, unknown> } };
+  /** Background bash job list snapshot. */
+  "bash_job_list": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.bash_job_list"; data: Record<string, unknown> } };
+  /** Background bash job output tail chunk. */
+  "bash_job_output": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.bash_job_output"; data: Record<string, unknown> } };
+  /** Conversation cleared. */
+  "clear": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.clear"; data: Record<string, unknown> } };
+  /** The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
+  "command_accepted": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_accepted"; data: Record<string, unknown> } };
+  /** Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. */
+  "command_committed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_committed"; data: { command_ids: string[]; turn_id?: string; how: "next_step" | "new_turn" | "stop"; stopped?: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[] } } };
+  /** A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
+  "command_refused": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_refused"; data: Record<string, unknown> } };
+  /** Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. */
+  "command_settled": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_settled"; data: { command_ids: string[]; state: "superseded" | "refused" | "failed"; reason?: "stop" | "order" | "hook" | "closed" | "unsupported" | "write_failed"; detail?: string; superseded_by?: string } } };
+  /** Context window compacted. */
+  "compacted": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.compacted"; data: Record<string, unknown> } };
+  /** A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). */
+  "context_reset": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.context_reset"; data: { reason?: string } } };
+  /** Context compaction started. */
+  "compaction_started": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.compaction_started"; data: Record<string, unknown> } };
+  /** Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
+  "confirm_request": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.confirm_request"; data: { tool_name: string; params: Record<string, unknown> | null; requested_dirs?: string[]; detail?: string; offer_session_allow?: boolean; gate_id: number; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; generation?: number; lease_required: boolean; task_id?: string; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; helper_id?: string; parent_tool_call_id?: string } } };
+  /** The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. */
+  "decision_requirements": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.decision_requirements"; data: { gate_id: number; generation: number; lease_required: boolean; helper_id?: string } } };
+  /** Directory-access scope changed/locked. */
+  "dir_scope": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.dir_scope"; data: Record<string, unknown> } };
+  /** A peer client detached from this shared live session (multi-attach presence). */
+  "client_left": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.client_left"; data: Record<string, unknown> } };
+  /** A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). */
+  "delegated_idle": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.delegated_idle"; data: { agent: string; idle_ms: number; message: string } } };
+  /** Session error (e.g. join_not_ready). */
+  "error": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.error"; data: { message: string; code?: string; diag?: { provider?: string; model?: string; base_url?: string; key_source?: string; key_prefix?: string; http_status?: number; retryable?: boolean; attempts?: number; req_id?: string; err_code?: "timeout" | "rate_limit" | "auth" | "network" | "provider" | "canceled" | "context_overflow" | "provider_incomplete_response" | "max_tokens" | "bad_tool_args" | "unknown"; stop_reason?: string; last_error?: string }; max_steps?: number; retry_after_secs?: number } } };
+  /** A parked confirm/question gate was resolved (possibly by another attached client). */
+  "gate_resolved": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.gate_resolved"; data: { kind: "confirm" | "question"; gate_id?: number; question_id?: number; outcome?: "answered" | "cancelled" | "yolo" | "timeout"; provenance?: "decision" | "yolo" | "cancelled" | "closed" | "context_cancelled" | "timeout"; holder?: string; generation?: number; request_id?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_container?: boolean; remember?: boolean; superseded?: boolean }; session_scope_applied?: boolean; note?: string } } };
+  /** Files-tab import progress. */
+  "files_import_progress": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.files_import_progress"; data: Record<string, unknown> } };
+  /** Fusion configuration changed. */
+  "fusion_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.fusion_changed"; data: Record<string, unknown> } };
+  /** A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /sessions/{id}/jev/decide; the standalone /jev routes report usage only in their reply and in GET /jev/settings. */
+  "jev_usage": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.jev_usage"; data: Record<string, unknown> } };
+  /** Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. */
+  "fusion_progress": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.fusion_progress"; data: Record<string, unknown> } };
+  /** Hoody concept mode toggled. */
+  "hoody_mode": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.hoody_mode"; data: Record<string, unknown> } };
+  /** A hook executed. */
+  "hook_run": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.hook_run"; data: Record<string, unknown> } };
+  /** Hook execution summary. */
+  "hooks_summary": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.hooks_summary"; data: Record<string, unknown> } };
+  /** Initial session state snapshot. */
+  "init_state": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.init_state"; data: Record<string, unknown> } };
+  /** Available loops list updated. */
+  "loops_available": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.loops_available"; data: Record<string, unknown> } };
+  /** A master TODO was filed. */
+  "master_todo_filed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.master_todo_filed"; data: Record<string, unknown> } };
+  /** Memory subsystem notice. */
+  "memory_notice": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.memory_notice"; data: Record<string, unknown> } };
+  /** Orchestrator delegation finished. */
+  "orchestrator_delegate_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_delegate_done"; data: { delegate_id: string; agent_type: string; role: string; verdict?: string; is_error?: boolean; duration_ms?: number } } };
+  /** Orchestrator delegated a task to a subagent. */
+  "orchestrator_delegate_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_delegate_start"; data: { delegate_id: string; agent_type: string; role: string; prompt_preview?: string; background?: boolean; task_id?: string } } };
+  /** Orchestrator run complete. */
+  "orchestrator_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_done"; data: { run_id: string; files: number; bash_n: number; errors: number; duration_ms: number; success: boolean } } };
+  /** Orchestrator narration. */
+  "orchestrator_narration": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_narration"; data: Record<string, unknown> } };
+  /** Orchestrator run started. */
+  "orchestrator_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_start"; data: Record<string, unknown> } };
+  /** Orchestrator step progress. */
+  "orchestrator_step": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_step"; data: Record<string, unknown> } };
+  /** On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. */
+  "outcome_claims": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.outcome_claims"; data: { turn_id?: string; tool_id?: string; claims?: ({ text: string; evidence: ({ tool_call_id: string; status: "linked" | "foreign" | "ambiguous" | "unknown"; receipt?: { tool_name: string; is_error: boolean; exit_code?: number; truncated?: boolean; after_last_write: boolean } })[]; evidence_status: "linked" | "none" })[]; replaced?: boolean } } };
+  /** global pause-freeze state changed. */
+  "pause_state": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.pause_state"; data: Record<string, unknown> } };
+  /** A session permission rule auto-applied (first time). */
+  "permission_auto": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.permission_auto"; data: Record<string, unknown> } };
+  /** Session permission rules snapshot. */
+  "permission_rules": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.permission_rules"; data: Record<string, unknown> } };
+  /** Plan-mode planning complete. */
+  "plan_complete": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.plan_complete"; data: Record<string, unknown> } };
+  /** Question-assist suggestion. */
+  "question_suggestion": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.question_suggestion"; data: { gen: number; mode: string; model: string; items?: { id: string; answer: string; text?: string; rationale?: string; confident: boolean }[]; error?: string; cost_usd?: number } } };
+  /** Daemon quitting. */
+  "quit": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.quit"; data: Record<string, unknown> } };
+  /** A delegated agent's subscription usage limits (session/weekly windows) changed. */
+  "rate_limit": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.rate_limit"; data: Record<string, unknown> } };
+  /** Active realm changed (global broadcast). */
+  "realm_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.realm_changed"; data: Record<string, unknown> } };
+  /** Resolved default working dir of the bound container (filetree/chip scope hint). */
+  "remote_cwd": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.remote_cwd"; data: Record<string, unknown> } };
+  /** Full viewport snapshot after session_started. */
+  "replay": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.replay"; data: Record<string, unknown> } };
+  /** Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). */
+  "replay_gap": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.replay_gap"; data: Record<string, unknown> } };
+  /** LLM call retried. */
+  "retry": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.retry"; data: Record<string, unknown> } };
+  /** The session was archived for every attached client. */
+  "session_closed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.session_closed"; data: Record<string, unknown> } };
+  /** The set of listable sessions (or a session's attach state) changed — clients re-list. */
+  "sessions_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.sessions_changed"; data: {  } } };
+  /** Session title set or cleared. */
+  "session_renamed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.session_renamed"; data: { id?: string; name?: string } } };
+  /** Session attached. Built by the gateway from the attach acknowledgement; its data is the same `started` object POST /sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /sessions/{id}, which carries it while the session is attached. */
+  "session_started": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.session_started"; data: Record<string, unknown> } };
+  /** Available skills list updated. */
+  "skills_available": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.skills_available"; data: Record<string, unknown> } };
+  /** Skill enable/trust state changed. */
+  "skills_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.skills_changed"; data: Record<string, unknown> } };
+  /** Assistant text stream chunk. */
+  "stream_chunk": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.stream_chunk"; data: { text: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Assistant text stream complete. */
+  "stream_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.stream_done"; data: { input_tokens: number; output_tokens: number; cache_creation_tokens: number; cache_read_tokens: number; elapsed_ms: number; context_window?: number; context_estimated?: boolean; context_input_tokens?: number; cost_usd?: number; total_cost_usd?: number; background?: boolean; run_id?: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Profile sync status. */
+  "sync_status": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.sync_status"; data: Record<string, unknown> } };
+  /** Background task activity. */
+  "task_activity": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_activity"; data: { task?: Record<string, unknown>; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Background task finished. */
+  "task_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_done"; data: { task?: Record<string, unknown>; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Background task started. */
+  "task_started": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_started"; data: { task?: Record<string, unknown>; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Background task transcript entry (upsert-poll). */
+  "task_transcript": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_transcript"; data: Record<string, unknown> } };
+  /** Snapshot of background tasks. */
+  "tasks_snapshot": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tasks_snapshot"; data: { tasks?: Record<string, unknown>[]; rev?: number } } };
+  /** Reasoning/thinking stream chunk. */
+  "thinking_chunk": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.thinking_chunk"; data: { text: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Thinking stall warning. */
+  "thinking_stall": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.thinking_stall"; data: Record<string, unknown> } };
+  /** TODO list updated. */
+  "todo_list_updated": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.todo_list_updated"; data: Record<string, unknown> } };
+  /** Tool invocation. */
+  "tool_call": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tool_call"; data: { tool_id: string; name: string; arguments?: Record<string, unknown>; summary: string; reason?: string; timeout_sec?: number; reason_not_read_file?: string; reason_not_edit_file?: string; reason_not_glob_files?: string; reason_to_increase_timeout?: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Tool mode changed/locked. */
+  "tool_mode": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tool_mode"; data: { tool_mode: string; locked: boolean } } };
+  /** Tool result. */
+  "tool_result": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tool_result"; data: { tool_id: string; name: string; output: string; is_error: boolean; detail?: string; error_code?: string; hint?: string; hint_cmd?: string; elapsed_ms?: number; exit_code?: number; truncated?: boolean; original_bytes?: number; helper_id?: string; parent_tool_call_id?: string; rules?: { rule_ids: string[]; outcome: "deny" | "unchecked"; reason?: string } } } };
+  /** A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. */
+  "turn_discarded": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.turn_discarded"; data: { turn_id?: string; outcome?: "cancelled"; error_code?: string } } };
+  /** The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. */
+  "turn_receipt": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.turn_receipt"; data: Record<string, unknown> } };
+  /** Echo of the user's input. */
+  "user_echo": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.user_echo"; data: { text?: string; echo_tag?: string; loop_id?: string; run?: number; task_ids?: string[]; auto_model?: string; auto_round?: number; attachments?: { name: string; media_type?: string; size?: number; delivered: boolean }[] } } };
+  /** Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
+  "user_question": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.user_question"; data: { question: string; options: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view" | "bot.dispatch" | "bot.message" | "bot.stop" | "bot.delegates" | "bot.answer_gate" | "bot.peek"; request: string; id: string; tool_use_id?: string }; questions?: { id: string; category: string; question: string; options?: string[] }[]; question_id?: number; task_id?: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Verbosity setting changed. */
+  "verbosity": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.verbosity"; data: Record<string, unknown> } };
+  /** Workflow run complete. */
+  "workflow_complete": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_complete"; data: Record<string, unknown> } };
+  /** Workflow run started. */
+  "workflow_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_start"; data: Record<string, unknown> } };
+  /** Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. */
+  "workflow_step_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_step_done"; data: { step_id: string; step_idx: number; total: number; success: boolean; timed_out?: boolean; display?: string; command?: string; bash_output?: string; model?: string; input_tokens?: number; output_tokens?: number; cache_creation_tokens?: number; cache_read_tokens?: number; cost?: number; tool_stats?: { name: string; calls: number; summary: string }[]; duration_ms?: number; depth?: number; replayed?: boolean } } };
+  /** Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. */
+  "workflow_step_output": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_step_output"; data: Record<string, unknown> } };
+  /** Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. */
+  "workflow_step_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_step_start"; data: Record<string, unknown> } };
+  /** The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. */
+  "workflow_tools": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_tools"; data: { available: boolean } } };
+  /** Available workflows list updated. */
+  "workflows_available": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflows_available"; data: Record<string, unknown> } };
+  /** YOLO auto-approve mode toggled. */
+  "yolo_mode": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.yolo_mode"; data: Record<string, unknown> } };
+  /** Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. */
+  "lagged": { code?: "lagged" | "replay_gap"; min_seq?: number; max_seq?: number; incarnation?: string; resume?: string };
+  /** Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). */
+  "replay_boundary": { max_seq?: number; incarnation?: string; turn_id?: string; turn_since?: number };
+  /** Gateway control frame: the stream is terminating because the session closed. Carries {reason}. */
+  "end": { reason?: string };
+  /** Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. */
+  "refused": Record<string, unknown>;
+  /** Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
+  "gate_resolved_ack": Record<string, unknown>;
+}
+
+/** The frames agent_streamSessionEvents's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentSessionsStreamFrames {
+  /** Provider account rotated mid-turn. */
+  "account_rotated": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.account_rotated"; data: Record<string, unknown> } };
+  /** Turn complete — terminates a prompt turn. Carries the turn's typed outcome / error_code and notices [{code, message?, detail?}] — advisory, never an error: hook_skipped_by_policy when a configured user hook was skipped under the always policy (open set). */
+  "agent_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.agent_done"; data: { turns?: number; outcome?: "completed" | "failed" | "cancelled"; turn_id?: string; error_code?: string; notices?: { code: string; message?: string; detail?: string }[]; workflow_note?: { run_id: string; note: string; ack: string } } } };
+  /** The session's approval policy (mode / lock / rules) changed; carries the new revision. */
+  "approval_policy_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.approval_policy_changed"; data: Record<string, unknown> } };
+  /** Hoody platform auth state changed — login, token adopt, or logout (global broadcast; mirrors GET /hoody/auth/status). */
+  "auth_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.auth_changed"; data: Record<string, unknown> } };
+  /** Auto-user composed the next user turn. */
+  "auto_reply": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.auto_reply"; data: Record<string, unknown> } };
+  /** Auto-user composition progress. */
+  "auto_reply_progress": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.auto_reply_progress"; data: Record<string, unknown> } };
+  /** Background bash job list snapshot. */
+  "bash_job_list": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.bash_job_list"; data: Record<string, unknown> } };
+  /** Background bash job output tail chunk. */
+  "bash_job_output": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.bash_job_output"; data: Record<string, unknown> } };
+  /** Conversation cleared. */
+  "clear": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.clear"; data: Record<string, unknown> } };
+  /** The daemon admitted and forwarded a command that carried a request_id — the sender-only positive counterpart of event.command_refused {type, request_id}; the command's effect still arrives as its ordinary broadcast event. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
+  "command_accepted": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_accepted"; data: Record<string, unknown> } };
+  /** Commands sent with POST /sessions/{id}/commands reached the session: messages added to the conversation (how next_step inside the running turn, new_turn in a turn of their own, with turn_id), or a stop carried out (how stop, with what it stopped). Carries command_ids. */
+  "command_committed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_committed"; data: { command_ids: string[]; turn_id?: string; how: "next_step" | "new_turn" | "stop"; stopped?: ({ kind: "session" | "task" | "workflow_run" | "bash_job" | "loop"; id: string; outcome: "stopped" | "already_done" | "failed"; detail?: string })[] } } };
+  /** A session command was refused (unregistered type, a setter frozen by a locked approval policy, an incomplete decision, a decision dropped at consumption) — a sender-only frame carrying type, code, reason, protocol_version, request_id; never fails a turn. CONSUMED BY THE GATEWAY: it answers the HTTP request / WS frame that sent the command and is never fanned out to stream subscribers. */
+  "command_refused": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_refused"; data: Record<string, unknown> } };
+  /** Commands sent with POST /sessions/{id}/commands ended without reaching the session: superseded by a stop, refused (a hook blocked them, the session closed, or the session cannot take them) or failed (the session could not record them). Carries command_ids, state and reason. */
+  "command_settled": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.command_settled"; data: { command_ids: string[]; state: "superseded" | "refused" | "failed"; reason?: "stop" | "order" | "hook" | "closed" | "unsupported" | "write_failed"; detail?: string; superseded_by?: string } } };
+  /** Context window compacted. */
+  "compacted": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.compacted"; data: Record<string, unknown> } };
+  /** A delegated agent discarded its conversation and started a new one: the context meter no longer describes anything (clear it). */
+  "context_reset": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.context_reset"; data: { reason?: string } } };
+  /** Context compaction started. */
+  "compaction_started": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.compaction_started"; data: Record<string, unknown> } };
+  /** Tool/plan confirmation requested (parks a gate). On a helper_gates session a helper's request carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
+  "confirm_request": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.confirm_request"; data: { tool_name: string; params: Record<string, unknown> | null; requested_dirs?: string[]; detail?: string; offer_session_allow?: boolean; gate_id: number; gate_cause?: string; risk?: "read" | "write" | "destructive" | "high" | "credential_access" | "unknown"; human_only: boolean; generation?: number; lease_required: boolean; task_id?: string; exec_trust?: { container_id: string; container_name?: string; realm: string; label: string }; rules?: { rule_ids: string[]; outcome: "ask" | "unchecked"; reason?: string }; helper_id?: string; parent_tool_call_id?: string } } };
+  /** The decision requirements of the PARKED gate changed (the approver lease was acquired, taken over, renewed past expiry or released while a gate is parked): {gate_id, generation, lease_required, helper_id?} — a client that captured the gate at park time refreshes what its decision must carry. On a helper_gates session each parked helper confirm is re-announced too, with its helper_id. */
+  "decision_requirements": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.decision_requirements"; data: { gate_id: number; generation: number; lease_required: boolean; helper_id?: string } } };
+  /** Directory-access scope changed/locked. */
+  "dir_scope": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.dir_scope"; data: Record<string, unknown> } };
+  /** A peer client detached from this shared live session (multi-attach presence). */
+  "client_left": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.client_left"; data: Record<string, unknown> } };
+  /** A delegated turn went quiet past the stall window but is still running (NON-FATAL — not an error). */
+  "delegated_idle": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.delegated_idle"; data: { agent: string; idle_ms: number; message: string } } };
+  /** Session error (e.g. join_not_ready). */
+  "error": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.error"; data: { message: string; code?: string; diag?: { provider?: string; model?: string; base_url?: string; key_source?: string; key_prefix?: string; http_status?: number; retryable?: boolean; attempts?: number; req_id?: string; err_code?: "timeout" | "rate_limit" | "auth" | "network" | "provider" | "canceled" | "context_overflow" | "provider_incomplete_response" | "max_tokens" | "bad_tool_args" | "unknown"; stop_reason?: string; last_error?: string }; max_steps?: number; retry_after_secs?: number } } };
+  /** A parked confirm/question gate was resolved (possibly by another attached client). */
+  "gate_resolved": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.gate_resolved"; data: { kind: "confirm" | "question"; gate_id?: number; question_id?: number; outcome?: "answered" | "cancelled" | "yolo" | "timeout"; provenance?: "decision" | "yolo" | "cancelled" | "closed" | "context_cancelled" | "timeout"; holder?: string; generation?: number; request_id?: string; helper_id?: string; parent_tool_call_id?: string; task_id?: string; decision?: { approved?: boolean; persist_dirs?: boolean; session_scope?: boolean; trust_container?: boolean; remember?: boolean; superseded?: boolean }; session_scope_applied?: boolean; note?: string } } };
+  /** Files-tab import progress. */
+  "files_import_progress": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.files_import_progress"; data: Record<string, unknown> } };
+  /** Fusion configuration changed. */
+  "fusion_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.fusion_changed"; data: Record<string, unknown> } };
+  /** A Jev decision made for this session finished (success, error or invalid answer): {cost_usd (null when any attempt's spend is unknown), known_cost_usd, cost_unknown_attempts, attempts, latency_ms, model, request_id, input_tokens, output_tokens, error_code}. Produced by POST /sessions/{id}/jev/decide; the standalone /jev routes report usage only in their reply and in GET /jev/settings. */
+  "jev_usage": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.jev_usage"; data: Record<string, unknown> } };
+  /** Fusion member trajectory progress. Not sent while the fusion runs inside a silent workflow step. */
+  "fusion_progress": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.fusion_progress"; data: Record<string, unknown> } };
+  /** Hoody concept mode toggled. */
+  "hoody_mode": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.hoody_mode"; data: Record<string, unknown> } };
+  /** A hook executed. */
+  "hook_run": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.hook_run"; data: Record<string, unknown> } };
+  /** Hook execution summary. */
+  "hooks_summary": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.hooks_summary"; data: Record<string, unknown> } };
+  /** Initial session state snapshot. */
+  "init_state": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.init_state"; data: Record<string, unknown> } };
+  /** Available loops list updated. */
+  "loops_available": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.loops_available"; data: Record<string, unknown> } };
+  /** A master TODO was filed. */
+  "master_todo_filed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.master_todo_filed"; data: Record<string, unknown> } };
+  /** Memory subsystem notice. */
+  "memory_notice": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.memory_notice"; data: Record<string, unknown> } };
+  /** Orchestrator delegation finished. */
+  "orchestrator_delegate_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_delegate_done"; data: { delegate_id: string; agent_type: string; role: string; verdict?: string; is_error?: boolean; duration_ms?: number } } };
+  /** Orchestrator delegated a task to a subagent. */
+  "orchestrator_delegate_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_delegate_start"; data: { delegate_id: string; agent_type: string; role: string; prompt_preview?: string; background?: boolean; task_id?: string } } };
+  /** Orchestrator run complete. */
+  "orchestrator_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_done"; data: { run_id: string; files: number; bash_n: number; errors: number; duration_ms: number; success: boolean } } };
+  /** Orchestrator narration. */
+  "orchestrator_narration": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_narration"; data: Record<string, unknown> } };
+  /** Orchestrator run started. */
+  "orchestrator_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_start"; data: Record<string, unknown> } };
+  /** Orchestrator step progress. */
+  "orchestrator_step": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.orchestrator_step"; data: Record<string, unknown> } };
+  /** On an outcome_claims session, the report the turn closes with, sent just before event.agent_done: the model's claims and, for each tool call it cited, whether it is this turn's own call and what it returned. The claims are the model's words; nothing here says they are true. */
+  "outcome_claims": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.outcome_claims"; data: { turn_id?: string; tool_id?: string; claims?: ({ text: string; evidence: ({ tool_call_id: string; status: "linked" | "foreign" | "ambiguous" | "unknown"; receipt?: { tool_name: string; is_error: boolean; exit_code?: number; truncated?: boolean; after_last_write: boolean } })[]; evidence_status: "linked" | "none" })[]; replaced?: boolean } } };
+  /** global pause-freeze state changed. */
+  "pause_state": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.pause_state"; data: Record<string, unknown> } };
+  /** A session permission rule auto-applied (first time). */
+  "permission_auto": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.permission_auto"; data: Record<string, unknown> } };
+  /** Session permission rules snapshot. */
+  "permission_rules": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.permission_rules"; data: Record<string, unknown> } };
+  /** Plan-mode planning complete. */
+  "plan_complete": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.plan_complete"; data: Record<string, unknown> } };
+  /** Question-assist suggestion. */
+  "question_suggestion": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.question_suggestion"; data: { gen: number; mode: string; model: string; items?: { id: string; answer: string; text?: string; rationale?: string; confident: boolean }[]; error?: string; cost_usd?: number } } };
+  /** Daemon quitting. */
+  "quit": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.quit"; data: Record<string, unknown> } };
+  /** A delegated agent's subscription usage limits (session/weekly windows) changed. */
+  "rate_limit": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.rate_limit"; data: Record<string, unknown> } };
+  /** Active realm changed (global broadcast). */
+  "realm_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.realm_changed"; data: Record<string, unknown> } };
+  /** Resolved default working dir of the bound container (filetree/chip scope hint). */
+  "remote_cwd": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.remote_cwd"; data: Record<string, unknown> } };
+  /** Full viewport snapshot after session_started. */
+  "replay": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.replay"; data: Record<string, unknown> } };
+  /** Mid-turn join with an overflowed turn journal — the active turn's earlier output is elided (connection-local frame). */
+  "replay_gap": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.replay_gap"; data: Record<string, unknown> } };
+  /** LLM call retried. */
+  "retry": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.retry"; data: Record<string, unknown> } };
+  /** The session was archived for every attached client. */
+  "session_closed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.session_closed"; data: Record<string, unknown> } };
+  /** The set of listable sessions (or a session's attach state) changed — clients re-list. */
+  "sessions_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.sessions_changed"; data: {  } } };
+  /** Session title set or cleared. */
+  "session_renamed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.session_renamed"; data: { id?: string; name?: string } } };
+  /** Session attached. Built by the gateway from the attach acknowledgement; its data is the same `started` object POST /sessions returns. It is the first frame (seq 1) of a fresh attach while the stream still retains seq 1. A resume with `since` does not repeat it, except when the cursor cannot be resumed: an invalid `since` (or Last-Event-ID), an `incarnation` that does not match the session's current one, or a cursor ahead of the stream is each answered with a `lagged` frame (code replay_gap) and the whole retained stream, which includes it if seq 1 is still retained. A late attach after the oldest frames were evicted starts with a `lagged` frame (code replay_gap) instead and does not carry it. In either case read the same object as `started` from GET /sessions/{id}, which carries it while the session is attached. */
+  "session_started": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.session_started"; data: Record<string, unknown> } };
+  /** Available skills list updated. */
+  "skills_available": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.skills_available"; data: Record<string, unknown> } };
+  /** Skill enable/trust state changed. */
+  "skills_changed": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.skills_changed"; data: Record<string, unknown> } };
+  /** Assistant text stream chunk. */
+  "stream_chunk": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.stream_chunk"; data: { text: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Assistant text stream complete. */
+  "stream_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.stream_done"; data: { input_tokens: number; output_tokens: number; cache_creation_tokens: number; cache_read_tokens: number; elapsed_ms: number; context_window?: number; context_estimated?: boolean; context_input_tokens?: number; cost_usd?: number; total_cost_usd?: number; background?: boolean; run_id?: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Profile sync status. */
+  "sync_status": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.sync_status"; data: Record<string, unknown> } };
+  /** Background task activity. */
+  "task_activity": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_activity"; data: { task?: Record<string, unknown>; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Background task finished. */
+  "task_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_done"; data: { task?: Record<string, unknown>; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Background task started. */
+  "task_started": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_started"; data: { task?: Record<string, unknown>; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Background task transcript entry (upsert-poll). */
+  "task_transcript": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.task_transcript"; data: Record<string, unknown> } };
+  /** Snapshot of background tasks. */
+  "tasks_snapshot": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tasks_snapshot"; data: { tasks?: Record<string, unknown>[]; rev?: number } } };
+  /** Reasoning/thinking stream chunk. */
+  "thinking_chunk": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.thinking_chunk"; data: { text: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Thinking stall warning. */
+  "thinking_stall": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.thinking_stall"; data: Record<string, unknown> } };
+  /** TODO list updated. */
+  "todo_list_updated": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.todo_list_updated"; data: Record<string, unknown> } };
+  /** Tool invocation. */
+  "tool_call": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tool_call"; data: { tool_id: string; name: string; arguments?: Record<string, unknown>; summary: string; reason?: string; timeout_sec?: number; reason_not_read_file?: string; reason_not_edit_file?: string; reason_not_glob_files?: string; reason_to_increase_timeout?: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Tool mode changed/locked. */
+  "tool_mode": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tool_mode"; data: { tool_mode: string; locked: boolean } } };
+  /** Tool result. */
+  "tool_result": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.tool_result"; data: { tool_id: string; name: string; output: string; is_error: boolean; detail?: string; error_code?: string; hint?: string; hint_cmd?: string; elapsed_ms?: number; exit_code?: number; truncated?: boolean; original_bytes?: number; helper_id?: string; parent_tool_call_id?: string; rules?: { rule_ids: string[]; outcome: "deny" | "unchecked"; reason?: string } } } };
+  /** A prompt or workflow dispatch was accepted but discarded without running, because it was queued while another client's turn waited on a confirmation or question. It closes that dispatch only (its turn_id); the waiting turn keeps running and no event.agent_done is sent for the discarded one. */
+  "turn_discarded": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.turn_discarded"; data: { turn_id?: string; outcome?: "cancelled"; error_code?: string } } };
+  /** The durable admission receipt for a prompt or workflow turn — a sender-only frame {turn_id, state, duplicate, accepted_at, request_id, …} written once the ledger row is on disk. CONSUMED BY THE GATEWAY: it is the 202 body of the request that dispatched the turn and is never fanned out to stream subscribers. */
+  "turn_receipt": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.turn_receipt"; data: Record<string, unknown> } };
+  /** Echo of the user's input. */
+  "user_echo": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.user_echo"; data: { text?: string; echo_tag?: string; loop_id?: string; run?: number; task_ids?: string[]; auto_model?: string; auto_round?: number; attachments?: { name: string; media_type?: string; size?: number; delivered: boolean }[] } } };
+  /** Question posed to the user (parks a gate). On a helper_gates session a helper's question carries helper_id, parent_tool_call_id and, for a background helper, task_id; it parks beside the session's own gate and is answered by its own id. */
+  "user_question": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.user_question"; data: { question: string; options: string[] | null; rich_options?: { title: string; description: string; has_user_input?: boolean }[]; placeholder?: string; category?: string; frame_request?: { kind: "view" | "bot.dispatch" | "bot.message" | "bot.stop" | "bot.delegates" | "bot.answer_gate" | "bot.peek"; request: string; id: string; tool_use_id?: string }; questions?: { id: string; category: string; question: string; options?: string[] }[]; question_id?: number; task_id?: string; helper_id?: string; parent_tool_call_id?: string } } };
+  /** Verbosity setting changed. */
+  "verbosity": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.verbosity"; data: Record<string, unknown> } };
+  /** Workflow run complete. */
+  "workflow_complete": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_complete"; data: Record<string, unknown> } };
+  /** Workflow run started. */
+  "workflow_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_start"; data: Record<string, unknown> } };
+  /** Workflow step done. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. */
+  "workflow_step_done": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_step_done"; data: { step_id: string; step_idx: number; total: number; success: boolean; timed_out?: boolean; display?: string; command?: string; bash_output?: string; model?: string; input_tokens?: number; output_tokens?: number; cache_creation_tokens?: number; cache_read_tokens?: number; cost?: number; tool_stats?: { name: string; calls: number; summary: string }[]; duration_ms?: number; depth?: number; replayed?: boolean } } };
+  /** Workflow step output. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. */
+  "workflow_step_output": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_step_output"; data: Record<string, unknown> } };
+  /** Workflow step start. Not sent for a silent step: one marked `silent: true`, a step of a background run, or a nested workflow's step the panel does not show. */
+  "workflow_step_start": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_step_start"; data: Record<string, unknown> } };
+  /** The workflow-authoring tools became available or unavailable mid-session (the session's tool mode, standard or orchestrator, was applied by its first dispatch; the chat agent was switched; or the agent's `tools:` frontmatter was edited on disk). Not sent for the initial value, which the init state carries as workflow_tools_available. */
+  "workflow_tools": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflow_tools"; data: { available: boolean } } };
+  /** Available workflows list updated. */
+  "workflows_available": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.workflows_available"; data: Record<string, unknown> } };
+  /** YOLO auto-approve mode toggled. */
+  "yolo_mode": { seq: number; incarnation: string; turn_id?: string; gate?: { id: string; generation: number; type: string; [key: string]: unknown }; event: { type: "event.yolo_mode"; data: Record<string, unknown> } };
+  /** Gateway control frame: the subscriber was dropped for slowness, or a ?since= resume cursor fell past the replay ring or belongs to another incarnation. Carries {code: lagged|replay_gap[, min_seq, max_seq, incarnation, resume]}; reconcile by reconnecting with ?since= and ?incarnation=. */
+  "lagged": { code?: "lagged" | "replay_gap"; min_seq?: number; max_seq?: number; incarnation?: string; resume?: string };
+  /** Gateway control frame: the ring→live boundary. Everything before it is buffered replay; everything after is live. Carries {max_seq, incarnation, turn_id?, turn_since?}; turn_id names the turn being watched and turn_since the cursor before its first frame (see the payload). */
+  "replay_boundary": { max_seq?: number; incarnation?: string; turn_id?: string; turn_since?: number };
+  /** Gateway control frame: the stream is terminating because the session closed. Carries {reason}. */
+  "end": { reason?: string };
+  /** Gateway control frame, connection-local: the WS command this client just sent was REJECTED and nothing was forwarded to the daemon — the WS twin of a REST error envelope. Carries {frame: the client frame type that was refused, code, reason}. Codes match the REST ones for the same condition: bad_frame (the frame did not decode — the reason names the field and the JSON type it must carry, e.g. a gate_id sent as the daemon number instead of the addressable string), no_pending_gate / stale_gate / gate_already_answered / gate_type_mismatch (the frame did not match the parked gate), approved_required (a confirm frame without a boolean approved; it never resolves a gate), decision_incomplete (an always session needs an explicit approved, the exact gate_id and its generation; or a confirm without gate_id while several gates are parked). For a confirm: gate_already_resolved (the gate already ended and this decision was not applied; the frame also carries gate_id, generation, outcome, decision {approved, persist_dirs, session_scope, trust_container, remember?, superseded?} or decision_unknown:true, and request_id when the decision consumed carried that request_id) and gate_decision_pending (a decision for the gate is in flight and its outcome is not known yet — another client's, or this one past the wait; carries gate_id, generation and reason:connection_lost when the agent connection was lost; retry naming the gate to learn the outcome). For an answer: gate_cancelled (the question was resolved without consuming this answer) and decision_unconfirmed (the daemon did not acknowledge within the wait — it may still apply). It is sent ONLY to the client that sent the frame, never broadcast. */
+  "refused": Record<string, unknown>;
+  /** Gateway control frame, connection-local: the replayed acknowledgement of a question answer. When an answer frame is a RETRY naming the question gate this client already resolved, it carries replayed:true and {resolved: the ORIGINAL event.gate_resolved payload} — a retry never forwards a second answer. A confirm retry is refused gate_already_resolved instead. Sent only to the client that sent the frame. */
+  "gate_resolved_ack": Record<string, unknown>;
+}
+
+/** The frames agent_streamTool's event stream types, by SSE event name: each frame's `data`; see ITypedStreamEvent. */
+export interface AgentStreamToolFrames {
+  /** Stream opened; carries the tool name. */
+  "start": Record<string, unknown>;
+  /** The executed tool result {output,is_error,hint?}. */
+  "result": Record<string, unknown>;
+  /** The gate parked; carries the echoed tool+params for a confirm re-issue. */
+  "needs_confirmation": Record<string, unknown>;
+  /** The run failed; carries {code,message}. */
+  "error": Record<string, unknown>;
+  /** Stream complete (always last). */
+  "end": Record<string, unknown>;
+}
+
+/** The error codes api_listAuthTokens documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_createAuthToken documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensCreateErrorCode = "VALIDATION_ERROR" | "UNKNOWN_FIELD" | "MISSING_REQUIRED_FIELD" | "OTP_REQUIRED" | "INVALID_ALIAS_FORMAT" | "INVALID_IP_FORMAT" | "IP_WHITELIST_TOO_LARGE" | "INVALID_REALM_ID_FORMAT" | "INVALID_EXPIRATION_FORMAT" | "INVALID_PUBLIC_KEY_FORMAT" | "PUBLIC_STORAGE_TOO_LARGE" | "EXPIRATION_IN_PAST" | "DUPLICATE_ALIAS" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "TOKEN_CEILING_EXCEEDED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "AUTH_TOKEN_LIMIT_REACHED";
+
+/** The error codes api_copyAuthToken documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensCopyErrorCode = "VALIDATION_ERROR" | "UNKNOWN_FIELD" | "INVALID_ID_FORMAT" | "OTP_REQUIRED" | "INVALID_ALIAS_FORMAT" | "INVALID_EXPIRATION_FORMAT" | "EXPIRATION_IN_PAST" | "DUPLICATE_ALIAS" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "TOKEN_CEILING_EXCEEDED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TOKEN_NOT_FOUND" | "AUTH_TOKEN_LIMIT_REACHED";
+
+/** The error codes api_listAuthTokenPermissionTemplates documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensListTemplatesErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getCurrentAuthToken documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensGetCurrentErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_updateCurrentAuthTokenPublicProfilePatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensUpdatePublicProfileErrorCode = "VALIDATION_ERROR" | "INVALID_PUBLIC_KEY_FORMAT" | "PUBLIC_STORAGE_TOO_LARGE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getAuthTokenPublicProfileByPublicKey documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensGetPublicProfileErrorCode = "VALIDATION_ERROR" | "INVALID_PUBLIC_KEY_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TOKEN_NOT_FOUND";
+
+/** The error codes api_getAuthTokenById documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensGetErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TOKEN_NOT_FOUND";
+
+/** The error codes api_updateAuthTokenPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensUpdateErrorCode = "VALIDATION_ERROR" | "UNKNOWN_FIELD" | "INVALID_ID_FORMAT" | "OTP_REQUIRED" | "INVALID_ALIAS_FORMAT" | "INVALID_IP_FORMAT" | "IP_WHITELIST_TOO_LARGE" | "INVALID_REALM_ID_FORMAT" | "INVALID_EXPIRATION_FORMAT" | "INVALID_PUBLIC_KEY_FORMAT" | "PUBLIC_STORAGE_TOO_LARGE" | "EXPIRATION_IN_PAST" | "DUPLICATE_ALIAS" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "TOKEN_CEILING_EXCEEDED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TOKEN_NOT_FOUND" | "AUTH_TOKEN_LIMIT_REACHED" | "LAST_REALM_REMOVAL";
+
+/** The error codes api_deleteAuthToken documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensDeleteErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TOKEN_NOT_FOUND";
+
+/** The error codes api_addRealmToAuthToken documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensAddRealmErrorCode = "OTP_REQUIRED" | "INVALID_REALM_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "TOKEN_CEILING_EXCEEDED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_removeRealmFromAuthToken documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTokensRemoveRealmErrorCode = "OTP_REQUIRED" | "INVALID_REALM_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "TOKEN_CEILING_EXCEEDED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "LAST_REALM_REMOVAL";
+
+/** The error codes api_getVaultStatistics documents (x-error-codes); see isApiErrorCode. */
+export type ApiVaultGetStatsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listVaultKeys documents (x-error-codes); see isApiErrorCode. */
+export type ApiVaultListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getVaultKey documents (x-error-codes); see isApiErrorCode. */
+export type ApiVaultGetErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "VAULT_KEY_NOT_FOUND";
+
+/** The error codes api_setVaultKeyPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiVaultSetErrorCode = "VALIDATION_ERROR" | "VAULT_LIMIT_EXCEEDED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_deleteVaultKey documents (x-error-codes); see isApiErrorCode. */
+export type ApiVaultDeleteErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "VAULT_KEY_NOT_FOUND";
+
+/** The error codes api_clearVault documents (x-error-codes); see isApiErrorCode. */
+export type ApiVaultClearErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_login documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthLoginErrorCode = "VALIDATION_ERROR" | "MISSING_REQUIRED_FIELD" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "ACCOUNT_BANNED";
+
+/** The error codes api_refreshToken documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthRefreshErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "ACCOUNT_BANNED";
+
+/** The error codes api_verify2fa documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTwoFactorVerifyErrorCode = "VALIDATION_ERROR" | "MISSING_REQUIRED_FIELD" | "INVALID_OTP_CODE" | "INVALID_BACKUP_CODE" | "INVALID_TEMP_TOKEN" | "DEVICE_BINDING_GONE" | "ACCOUNT_BANNED" | "TWOFACTOR_RATE_LIMIT";
+
+/** The error codes api_setup2fa documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTwoFactorStartSetupErrorCode = "VALIDATION_ERROR" | "MISSING_REQUIRED_FIELD" | "INCORRECT_PASSWORD" | "TWOFACTOR_ALREADY_ENABLED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_verifySetup2fa documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTwoFactorConfirmSetupErrorCode = "VALIDATION_ERROR" | "MISSING_REQUIRED_FIELD" | "INVALID_OTP_CODE" | "TWOFACTOR_NOT_VERIFIED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TWOFACTOR_RATE_LIMIT";
+
+/** The error codes api_get2faStatus documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTwoFactorGetStatusErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "INVALID_OTP_CODE" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TWOFACTOR_RATE_LIMIT";
+
+/** The error codes api_disable2fa documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTwoFactorDisableErrorCode = "VALIDATION_ERROR" | "MISSING_REQUIRED_FIELD" | "INCORRECT_PASSWORD" | "INVALID_OTP_CODE" | "INVALID_BACKUP_CODE" | "TWOFACTOR_NOT_ENABLED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TWOFACTOR_RATE_LIMIT";
+
+/** The error codes api_regenerateBackupCodes documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthTwoFactorRotateBackupCodesErrorCode = "VALIDATION_ERROR" | "MISSING_REQUIRED_FIELD" | "INCORRECT_PASSWORD" | "INVALID_OTP_CODE" | "TWOFACTOR_NOT_ENABLED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "TWOFACTOR_RATE_LIMIT";
+
+/** The error codes api_setTokenGatePatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiSetTokenGatePatchErrorCode = "OTP_REQUIRED" | "TWOFACTOR_NOT_ENABLED" | "INVALID_OTP_CODE" | "INCORRECT_PASSWORD" | "TWOFACTOR_RATE_LIMIT";
+
+/** The error codes api_getCurrentUser documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthWhoamiErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getCurrentUserAlias documents (x-error-codes); see isApiErrorCode. */
+export type ApiGetCurrentUserAliasErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_logout documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthLogoutAllErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserById documents (x-error-codes); see isApiErrorCode. */
+export type ApiUsersGetErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "USER_NOT_FOUND";
+
+/** The error codes api_updateUserPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiUsersUpdateErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "INVALID_PUBLIC_KEY_FORMAT" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_REQUIRED" | "RESERVED_IDENTITY" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "CURRENT_PASSWORD_INCORRECT" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "CANNOT_MODIFY_OTHER_USER" | "USER_NOT_FOUND";
+
+/** The error codes api_api_issueIdentityClaim documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthCreateIdentityClaimErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_markOnboardingMilestone documents (x-error-codes); see isApiErrorCode. */
+export type ApiUsersCompleteOnboardingMilestoneErrorCode = "VALIDATION_ERROR" | "ONBOARDING_LIMIT";
+
+/** The error codes api_retrySetup documents (x-error-codes); see isApiErrorCode. */
+export type ApiUsersRetrySetupErrorCode = "FREE_TIER_INVITE_REQUIRED" | "INSUFFICIENT_PERMISSIONS";
+
+/** The error codes api_redeemInviteCode documents (x-error-codes); see isApiErrorCode. */
+export type ApiUsersRedeemInviteErrorCode = "VALIDATION_ERROR" | "INVALID_INVITE_CODE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes api_getFreeTierStatus documents (x-error-codes); see isApiErrorCode. */
+export type ApiUsersGetFreeTierStatusErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes api_listProjects documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsListErrorCode = "INVALID_PARAMETER_VALUE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_createProject documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsCreateErrorCode = "VALIDATION_ERROR" | "MISSING_REQUIRED_FIELD" | "INVALID_ALIAS_FORMAT" | "INVALID_COLOR_FORMAT" | "INVALID_QUOTA_VALUE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "DUPLICATE_ALIAS";
+
+/** The error codes api_getProjectById documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsGetErrorCode = "INVALID_ID_FORMAT" | "INVALID_PARAMETER_VALUE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PROJECT_NOT_FOUND";
+
+/** The error codes api_updateProjectPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsUpdateErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "INVALID_ALIAS_FORMAT" | "INVALID_COLOR_FORMAT" | "INVALID_QUOTA_VALUE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PROJECT_NOT_FOUND" | "DUPLICATE_ALIAS";
+
+/** The error codes api_deleteProject documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsDeleteErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PROJECT_NOT_FOUND" | "RESOURCE_ALREADY_EXISTS" | "PROJECT_HAS_CONTAINERS";
+
+/** The error codes api_getProjectPermissions documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsListPermissionsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_addProjectPermission documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsCreatePermissionErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "MISSING_REQUIRED_FIELD" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PROJECT_NOT_FOUND" | "RESOURCE_NOT_FOUND" | "PERMISSION_ALREADY_EXISTS" | "CANNOT_GRANT_SELF_PERMISSION";
+
+/** The error codes api_updateProjectPermissionPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsUpdatePermissionErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "MISSING_REQUIRED_FIELD" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PROJECT_NOT_FOUND" | "PERMISSION_NOT_FOUND";
+
+/** The error codes api_removeProjectPermission documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsDeletePermissionErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listProjectContainers documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersListByProjectErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RESOURCE_NOT_FOUND";
+
+/** The error codes api_createProjectContainer documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersCreateErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "INVALID_CONTAINER_NAME" | "SERVER_CONTAINER_LIMIT" | "PROJECT_CONTAINER_LIMIT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RESOURCE_NOT_FOUND" | "CONTAINER_NAME_IN_USE" | "SSH_PUBLIC_KEY_IN_USE" | "QUOTA_EXCEEDED" | "CONTAINER_CREATE_DISPATCH_FAILED" | "CONTAINER_HOST_UNAVAILABLE";
+
+/** The error codes api_listContainers documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersListErrorCode = "VALIDATION_ERROR" | "INVALID_PARAMETER_VALUE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getContainerById documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersGetErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "CONTAINER_NOT_FOUND";
+
+/** The error codes api_updateContainerPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersUpdateErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "INVALID_CONTAINER_NAME" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "OPERATION_NOT_PERMITTED_ON_EXPIRED" | "CONTAINER_NOT_FOUND" | "RESOURCE_NOT_FOUND" | "CONTAINER_NAME_IN_USE" | "SSH_PUBLIC_KEY_IN_USE";
+
+/** The error codes api_deleteContainer documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersDeleteErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "OPERATION_NOT_PERMITTED_ON_EXPIRED" | "CONTAINER_NOT_FOUND" | "RESOURCE_IN_USE" | "OPERATION_STATE_CONFLICT" | "INTERNAL_SERVER_ERROR" | "EXTERNAL_SERVICE_ERROR";
+
+/** The error codes api_setContainerKvmPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiSetContainerKvmPatchErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "CONTAINER_NOT_FOUND" | "RESOURCE_NOT_FOUND";
+
+/** The error codes api_getContainerStatusLogs documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersListStatusHistoryErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "CONTAINER_NOT_FOUND";
+
+/** The error codes api_copyContainer documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersCopyErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "INVALID_CONTAINER_NAME" | "SERVER_CONTAINER_LIMIT" | "PROJECT_CONTAINER_LIMIT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "SOURCE_CONTAINER_NOT_FOUND" | "RESOURCE_NOT_FOUND" | "CONTAINER_NAME_IN_USE" | "SSH_PUBLIC_KEY_IN_USE" | "OPERATION_STATE_CONFLICT" | "CONTAINER_COPY_DISPATCH_FAILED" | "CONTAINER_HOST_UNAVAILABLE";
+
+/** The error codes api_syncContainer documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersSyncErrorCode = "INVALID_ID_FORMAT" | "SERVER_CONTAINER_LIMIT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "CONTAINER_NOT_FOUND" | "CONTAINER_NOT_COPIED" | "OPERATION_STATE_CONFLICT";
+
+/** The error codes api_authorizeContainer documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersCreateClaimErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INSUFFICIENT_PERMISSIONS" | "CONTAINER_NOT_FOUND" | "OPERATION_STATE_CONFLICT";
+
+/** The error codes api_manageContainer documents (x-error-codes); see isApiErrorCode. */
+export type ApiManageContainerErrorCode = "VALIDATION_ERROR" | "INVALID_ID_FORMAT" | "OPERATION_STATE_CONFLICT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "OPERATION_NOT_PERMITTED_ON_EXPIRED" | "CONTAINER_ACCESS_SUSPENDED" | "CONTAINER_NOT_FOUND" | "CONTAINER_OPERATION_IN_PROGRESS" | "container_finalizing" | "SUBSERVER_DORMANT" | "INTERNAL_SERVER_ERROR" | "EXTERNAL_SERVICE_ERROR" | "CONTAINER_HOST_COMMAND_FAILED" | "CONTAINER_HOST_TIMEOUT";
+
+/** The error codes api_listUserImages documents (x-error-codes); see isApiErrorCode. */
+export type ApiImagesListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_importFreeImage documents (x-error-codes); see isApiErrorCode. */
+export type ApiImagesImportErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_purchaseImage documents (x-error-codes); see isApiErrorCode. */
+export type ApiImagesBuyErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_rateImage documents (x-error-codes); see isApiErrorCode. */
+export type ApiImagesRateErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getContainerNetworkConfig documents (x-error-codes); see isApiErrorCode. */
+export type ApiNetworkGetErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_updateContainerNetworkConfigPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiNetworkUpdateErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_removeContainerNetworkConfig documents (x-error-codes); see isApiErrorCode. */
+export type ApiNetworkDeleteErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_startContainerNetwork documents (x-error-codes); see isApiErrorCode. */
+export type ApiNetworkStartErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_stopContainerNetwork documents (x-error-codes); see isApiErrorCode. */
+export type ApiNetworkStopErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listContainerSnapshots documents (x-error-codes); see isApiErrorCode. */
+export type ApiSnapshotsListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_createContainerSnapshot documents (x-error-codes); see isApiErrorCode. */
+export type ApiSnapshotsCreateErrorCode = "CONTAINER_SNAPSHOT_LIMIT" | "SNAPSHOT_PRESPAWN_FORBIDDEN" | "VALIDATION_ERROR" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "SNAPSHOT_OPERATION_IN_PROGRESS" | "container_finalizing" | "RESOURCE_ALREADY_EXISTS" | "SNAPSHOT_INVENTORY_UNAVAILABLE";
+
+/** The error codes api_restoreContainerSnapshotPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiSnapshotsRestoreErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_deleteContainerSnapshot documents (x-error-codes); see isApiErrorCode. */
+export type ApiSnapshotsDeleteErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_updateSnapshotAliasPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiSnapshotsSetAliasErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "SNAPSHOT_INVENTORY_UNAVAILABLE";
+
+/** The error codes api_listFirewallRules documents (x-error-codes); see isApiErrorCode. */
+export type ApiFirewallListRulesErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "INSUFFICIENT_PERMISSIONS" | "CONTAINER_NOT_FOUND" | "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_resetFirewall documents (x-error-codes); see isApiErrorCode. */
+export type ApiFirewallResetErrorCode = "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_addIngressRule documents (x-error-codes); see isApiErrorCode. */
+export type ApiFirewallCreateIngressRuleErrorCode = "INVALID_RULE_DEFINITION" | "CONTAINER_FIREWALL_RULE_LIMIT" | "CONTAINER_FIREWALL_BYTES_LIMIT" | "FIREWALL_INVENTORY_UNAVAILABLE" | "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_toggleIngressRule documents (x-error-codes); see isApiErrorCode. */
+export type ApiToggleIngressRuleErrorCode = "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_removeIngressRule documents (x-error-codes); see isApiErrorCode. */
+export type ApiFirewallDeleteIngressRuleErrorCode = "FIREWALL_UNKNOWN_FILTER" | "INVALID_RULE_DEFINITION" | "FIREWALL_FILTER_REQUIRED" | "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_addEgressRule documents (x-error-codes); see isApiErrorCode. */
+export type ApiFirewallCreateEgressRuleErrorCode = "INVALID_RULE_DEFINITION" | "CONTAINER_FIREWALL_RULE_LIMIT" | "CONTAINER_FIREWALL_BYTES_LIMIT" | "FIREWALL_INVENTORY_UNAVAILABLE" | "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_toggleEgressRule documents (x-error-codes); see isApiErrorCode. */
+export type ApiToggleEgressRuleErrorCode = "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_removeEgressRule documents (x-error-codes); see isApiErrorCode. */
+export type ApiFirewallDeleteEgressRuleErrorCode = "FIREWALL_UNKNOWN_FILTER" | "INVALID_RULE_DEFINITION" | "FIREWALL_FILTER_REQUIRED" | "FIREWALL_HOST_UNAVAILABLE";
+
+/** The error codes api_listContainerEnvVars documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersEnvListErrorCode = "MISSING_TOKEN" | "RESOURCE_ACCESS_DENIED" | "CONTAINER_NOT_FOUND";
+
+/** The error codes api_bulkSetContainerEnvVarsPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersEnvUpdateErrorCode = "VALIDATION_ERROR" | "INVALID_ENV_KEY" | "RESERVED_ENV_PREFIX" | "MISSING_TOKEN" | "RESOURCE_ACCESS_DENIED" | "CONTAINER_NOT_FOUND";
+
+/** The error codes api_setContainerEnvVarPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersEnvSetErrorCode = "VALIDATION_ERROR" | "INVALID_ENV_KEY" | "RESERVED_ENV_PREFIX" | "MISSING_TOKEN" | "RESOURCE_ACCESS_DENIED" | "CONTAINER_NOT_FOUND";
+
+/** The error codes api_deleteContainerEnvVar documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersEnvDeleteErrorCode = "RESERVED_ENV_PREFIX" | "MISSING_TOKEN" | "RESOURCE_ACCESS_DENIED" | "CONTAINER_NOT_FOUND";
+
+/** The error codes api_getContainerStats documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersGetStatsErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RESOURCE_ACCESS_DENIED" | "CONTAINER_NOT_FOUND" | "RESOURCE_NOT_FOUND" | "INTERNAL_SERVER_ERROR" | "EXTERNAL_SERVICE_ERROR";
+
+/** The error codes api_getProjectStats documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsGetStatsErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RESOURCE_ACCESS_DENIED" | "RESOURCE_NOT_FOUND" | "INTERNAL_SERVER_ERROR" | "EXTERNAL_SERVICE_ERROR";
+
+/** The error codes api_getContainerProxyUsage documents (x-error-codes); see isApiErrorCode. */
+export type ApiContainersGetProxyUsageErrorCode = "INVALID_ID_FORMAT" | "INVALID_PARAMETER_VALUE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "RESOURCE_ACCESS_DENIED" | "ACCOUNT_BANNED" | "RESOURCE_NOT_FOUND" | "RATE_LIMIT_EXCEEDED" | "INTERNAL_SERVER_ERROR";
+
+/** The error codes api_getProjectProxyUsage documents (x-error-codes); see isApiErrorCode. */
+export type ApiProjectsGetProxyUsageErrorCode = "INVALID_ID_FORMAT" | "INVALID_PARAMETER_VALUE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "RESOURCE_ACCESS_DENIED" | "ACCOUNT_BANNED" | "RESOURCE_NOT_FOUND" | "RATE_LIMIT_EXCEEDED" | "INTERNAL_SERVER_ERROR";
+
+/** The error codes api_getUserNotificationSummary documents (x-error-codes); see isApiErrorCode. */
+export type ApiInboxGetSummaryErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listUserNotifications documents (x-error-codes); see isApiErrorCode. */
+export type ApiInboxListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_markUserNotificationAsReadPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiInboxMarkReadErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_markAllUserNotificationsAsReadPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiInboxMarkAllReadErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getProjectProxyPermissions documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyProjectPermissionsGetErrorCode = "PROJECT_NOT_FOUND";
+
+/** The error codes api_replaceProjectProxyPermissionsPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyProjectPermissionsSetErrorCode = "VALIDATION_ERROR" | "INVALID_JWT_CONFIG" | "INVALID_IP_RANGE" | "PROJECT_NOT_FOUND";
+
+/** The error codes api_deleteProjectProxyPermissions documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyProjectPermissionsDeleteErrorCode = "PROJECT_NOT_FOUND";
+
+/** The error codes api_updateProjectProxyDefault documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyProjectPermissionsSetDefaultErrorCode = "VALIDATION_ERROR" | "PROJECT_NOT_FOUND";
+
+/** The error codes api_updateProjectProxyState documents (x-error-codes); see isApiErrorCode. */
+export type ApiUpdateProjectProxyStateErrorCode = "VALIDATION_ERROR" | "PROJECT_NOT_FOUND";
+
+/** The error codes api_listContainerProxyHooks documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksListErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_listContainerProxyServiceHooks documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksListByServiceErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_addContainerProxyHook documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksCreateErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_clearContainerProxyServiceHooks documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksClearErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_getContainerProxyHook documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksGetErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_updateContainerProxyHookPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksSetErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_removeContainerProxyHook documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksDeleteErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_moveContainerProxyHook documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyHooksMoveErrorCode = "NOT_FOUND" | "VALIDATION_ERROR" | "PRECONDITION_REQUIRED" | "PRECONDITION_FAILED";
+
+/** The error codes api_listProxyAliases documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyAliasesListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_createProxyAlias documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyAliasesCreateErrorCode = "VALIDATION_ERROR" | "INVALID_ALIAS_FORMAT" | "PORT_REQUIRED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "CONTAINER_NOT_FOUND" | "ALIAS_IN_USE";
+
+/** The error codes api_getProxyAliasById documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyAliasesGetErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_updateProxyAlias documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyAliasesUpdateErrorCode = "VALIDATION_ERROR" | "INVALID_ALIAS_FORMAT" | "PORT_REQUIRED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "ALIAS_IN_USE";
+
+/** The error codes api_deleteProxyAlias documents (x-error-codes); see isApiErrorCode. */
+export type ApiProxyAliasesDeleteErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_setProxyAliasState documents (x-error-codes); see isApiErrorCode. */
+export type ApiSetProxyAliasStateErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listStorageShares documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesListByContainerErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_createStorageShare documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesCreateErrorCode = "VALIDATION_ERROR" | "INVALID_PATH" | "SELF_SHARE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "CONTAINER_NOT_FOUND" | "RESOURCE_NOT_FOUND" | "SHARE_ALREADY_EXISTS" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes api_getStorageShareById documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesGetErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_updateStorageShare documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesUpdateErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_deleteStorageShare documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesDeleteErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getIncomingShares documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesListIncomingByContainerErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getAllIncomingShares documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesListIncomingErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listAllStorageShares documents (x-error-codes); see isApiErrorCode. */
+export type ApiStorageSharesListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_toggleIncomingShareMount documents (x-error-codes); see isApiErrorCode. */
+export type ApiToggleIncomingShareMountErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getEventStatistics documents (x-error-codes); see isApiErrorCode. */
+export type ApiEventsGetStatsErrorCode = "INVALID_DATE_RANGE" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listEvents documents (x-error-codes); see isApiErrorCode. */
+export type ApiEventsListErrorCode = "VALIDATION_ERROR" | "INVALID_PARAMETER_VALUE" | "INVALID_DATE_RANGE" | "EVENTS_CURSOR_INVALID" | "EVENTS_QUERY_CONFLICT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "EVENTS_CURSOR_EXPIRED" | "EVENTS_HISTORY_RESET";
+
+/** The error codes api_bulkDeleteEvents documents (x-error-codes); see isApiErrorCode. */
+export type ApiEventsClearErrorCode = "VALIDATION_ERROR" | "INVALID_BULK_DELETE_PARAMS" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getEventById documents (x-error-codes); see isApiErrorCode. */
+export type ApiEventsGetErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "EVENT_NOT_FOUND";
+
+/** The error codes api_deleteEvent documents (x-error-codes); see isApiErrorCode. */
+export type ApiEventsDeleteErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "EVENT_NOT_FOUND";
+
+/** The error codes api_cleanupOldEvents documents (x-error-codes); see isApiErrorCode. */
+export type ApiEventsPurgeErrorCode = "VALIDATION_ERROR" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_purchaseSubserverSubscription documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersSubscriptionsBuyErrorCode = "INSUFFICIENT_BALANCE" | "SUBSCRIPTION_NOT_FOUND" | "PLAN_NOT_AVAILABLE" | "PLAN_CHANGE_NOT_UPGRADE" | "SUBSCRIPTION_PERIOD_ENDED" | "SUBSCRIPTION_NOT_PAYABLE" | "SUBSERVER_WIPE_IN_PROGRESS" | "NO_PAID_CAPACITY" | "HOST_UNAVAILABLE" | "PAID_SUBSERVER_LIMIT_REACHED" | "SUBSERVER_DORMANT" | "IDEMPOTENCY_INTENT_MISMATCH" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_quoteSubserverPurchase documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersPlansQuoteErrorCode = "PLAN_NOT_AVAILABLE" | "PLAN_CHANGE_NOT_UPGRADE" | "SUBSCRIPTION_PERIOD_ENDED" | "SUBSCRIPTION_NOT_PAYABLE" | "SUBSERVER_WIPE_IN_PROGRESS" | "NO_PAID_CAPACITY" | "HOST_UNAVAILABLE" | "PAID_SUBSERVER_LIMIT_REACHED" | "SUBSERVER_DORMANT" | "IDEMPOTENCY_INTENT_MISMATCH" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_getSubserverSubscription documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersSubscriptionsGetErrorCode = "SUBSCRIPTION_NOT_FOUND";
+
+/** The error codes api_quoteSubserverSubscriptionChange documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersSubscriptionsQuoteErrorCode = "SUBSCRIPTION_NOT_FOUND" | "PLAN_NOT_AVAILABLE" | "PLAN_CHANGE_NOT_UPGRADE" | "SUBSCRIPTION_PERIOD_ENDED" | "SUBSCRIPTION_NOT_PAYABLE" | "SUBSERVER_WIPE_IN_PROGRESS" | "NO_PAID_CAPACITY" | "HOST_UNAVAILABLE" | "PAID_SUBSERVER_LIMIT_REACHED" | "SUBSERVER_DORMANT" | "IDEMPOTENCY_INTENT_MISMATCH" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_upgradeSubserverSubscription documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersSubscriptionsUpgradeErrorCode = "INSUFFICIENT_BALANCE" | "SUBSCRIPTION_NOT_FOUND" | "PLAN_NOT_AVAILABLE" | "PLAN_CHANGE_NOT_UPGRADE" | "SUBSCRIPTION_PERIOD_ENDED" | "SUBSCRIPTION_NOT_PAYABLE" | "SUBSERVER_WIPE_IN_PROGRESS" | "NO_PAID_CAPACITY" | "HOST_UNAVAILABLE" | "PAID_SUBSERVER_LIMIT_REACHED" | "SUBSERVER_DORMANT" | "IDEMPOTENCY_INTENT_MISMATCH" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_paySubserverSubscription documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersSubscriptionsPayErrorCode = "INSUFFICIENT_BALANCE" | "SUBSCRIPTION_NOT_FOUND" | "PLAN_NOT_AVAILABLE" | "PLAN_CHANGE_NOT_UPGRADE" | "SUBSCRIPTION_PERIOD_ENDED" | "SUBSCRIPTION_NOT_PAYABLE" | "SUBSERVER_WIPE_IN_PROGRESS" | "NO_PAID_CAPACITY" | "HOST_UNAVAILABLE" | "PAID_SUBSERVER_LIMIT_REACHED" | "SUBSERVER_DORMANT" | "IDEMPOTENCY_INTENT_MISMATCH" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_setSubserverSubscriptionAutoRenewPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiSetSubserverSubscriptionAutoRenewPatchErrorCode = "SUBSCRIPTION_NOT_FOUND" | "PLAN_NOT_AVAILABLE" | "PLAN_CHANGE_NOT_UPGRADE" | "SUBSCRIPTION_PERIOD_ENDED" | "SUBSCRIPTION_NOT_PAYABLE" | "SUBSERVER_WIPE_IN_PROGRESS" | "NO_PAID_CAPACITY" | "HOST_UNAVAILABLE" | "PAID_SUBSERVER_LIMIT_REACHED" | "SUBSERVER_DORMANT" | "IDEMPOTENCY_INTENT_MISMATCH" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_cancelSubserverSubscription documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersSubscriptionsCancelErrorCode = "SUBSCRIPTION_NOT_FOUND" | "PLAN_NOT_AVAILABLE" | "PLAN_CHANGE_NOT_UPGRADE" | "SUBSCRIPTION_PERIOD_ENDED" | "SUBSCRIPTION_NOT_PAYABLE" | "SUBSERVER_WIPE_IN_PROGRESS" | "NO_PAID_CAPACITY" | "HOST_UNAVAILABLE" | "PAID_SUBSERVER_LIMIT_REACHED" | "SUBSERVER_DORMANT" | "IDEMPOTENCY_INTENT_MISMATCH" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_getSubserverOperation documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersJobsGetErrorCode = "SUBSERVER_OPERATION_NOT_FOUND";
+
+/** The error codes api_listRealms documents (x-error-codes); see isApiErrorCode. */
+export type ApiRealmsListErrorCode = "UNAUTHORIZED" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "PERMISSION_DENIED" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserAggregateBalances documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetBalancesErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getPaymentAvailability documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetPaymentAvailabilityErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserGeneralBalance documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetBalanceErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserAiBalance documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetCreditsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_transferUserBalanceToAi documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletTransferToCreditsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listUserWalletTransactions documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletListTransactionsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserWalletTransactionById documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetTransactionErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserAiFeeHistory documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletListCreditFeesErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listUserPaymentMethods documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletListPaymentMethodsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_addUserPaymentMethod documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletCreatePaymentMethodErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserPaymentMethodById documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetPaymentMethodErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_updateUserPaymentMethodPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletUpdatePaymentMethodErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_deleteUserPaymentMethod documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletDeletePaymentMethodErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_setUserDefaultPaymentMethodPatch documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletSetDefaultPaymentMethodErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_createStripeCheckout documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletCreateStripeCheckoutErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PAYMENT_PROVIDER_UNAVAILABLE";
+
+/** The error codes api_listStripePaymentIntents documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletListStripePaymentIntentsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PAYMENT_PROVIDER_UNAVAILABLE";
+
+/** The error codes api_getStripePaymentIntent documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetStripePaymentIntentErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PAYMENT_PROVIDER_UNAVAILABLE";
+
+/** The error codes api_createCryptoInvoice documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletCreateCryptoInvoiceErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PAYMENT_PROVIDER_UNAVAILABLE";
+
+/** The error codes api_listCryptoPaymentIntents documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletListCryptoPaymentIntentsErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PAYMENT_PROVIDER_UNAVAILABLE";
+
+/** The error codes api_getCryptoPaymentIntent documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetCryptoPaymentIntentErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "PAYMENT_PROVIDER_UNAVAILABLE";
+
+/** The error codes api_listUserInvoices documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletListInvoicesErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_getUserInvoiceById documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetInvoiceErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_downloadUserInvoicePdf documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletDownloadInvoiceErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_generateUserInvoiceForTransaction documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletCreateInvoiceErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listPendingPoolInvitations documents (x-error-codes); see isApiErrorCode. */
+export type ApiPoolsInvitationsListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_rentServer documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersRentErrorCode = "INSUFFICIENT_BALANCE" | "INVALID_DURATION" | "NO_PRICING" | "SERVER_UNAVAILABLE" | "SETUP_FEE_CONFIRMATION_REQUIRED" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX" | "PRICING_INVALID";
+
+/** The error codes api_extendUserRental documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersExtendErrorCode = "EXTENSION_ALREADY_APPLIED" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX";
+
+/** The error codes api_getRentalRuntime documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersGetStatsErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RESOURCE_NOT_FOUND" | "RUNTIME_HOST_SHARED" | "RATE_LIMIT_EXCEEDED" | "RUNTIME_UNAVAILABLE";
+
+/** The error codes api_getServerRuntime documents (x-error-codes); see isApiErrorCode. */
+export type ApiGetServerRuntimeErrorCode = "INVALID_ID_FORMAT" | "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED" | "RESOURCE_NOT_FOUND" | "RUNTIME_HOST_SHARED" | "RATE_LIMIT_EXCEEDED" | "RUNTIME_UNAVAILABLE";
+
+/** The error codes api_executeServerCommand documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersCommandsRunErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_listServerAvailableCommands documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersCommandsListErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_verifyEmail documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthVerifyEmailErrorCode = "ACCOUNT_BANNED";
+
+/** The error codes api_oauthDeviceVerifyCode documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthDeviceVerifyCodeErrorCode = "VALIDATION_ERROR" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes api_oauthDeviceLogin documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthDeviceLoginErrorCode = "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "ACCOUNT_BANNED" | "VALIDATION_ERROR" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes api_oauthDeviceDeny documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthDeviceDenyErrorCode = "VALIDATION_ERROR" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes api_oauthAuthorize documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthOauthAuthorizeErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_oauthExchange documents (x-error-codes); see isApiErrorCode. */
+export type ApiAuthOauthExchangeErrorCode = "ACCOUNT_BANNED";
+
+/** The error codes api_getGithubBonus documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletGetGithubBonusErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_claimGithubBonus documents (x-error-codes); see isApiErrorCode. */
+export type ApiWalletClaimGithubBonusErrorCode = "MISSING_TOKEN" | "INVALID_TOKEN" | "TOKEN_EXPIRED" | "AUTH_TOKEN_LINEAGE_REVOKED" | "INVALID_CREDENTIALS" | "EMAIL_NOT_VERIFIED" | "INVALID_OTP_CODE" | "INSUFFICIENT_PERMISSIONS" | "ACCOUNT_BANNED";
+
+/** The error codes api_reserveServerOffer documents (x-error-codes); see isApiErrorCode. */
+export type ApiServersOffersReserveErrorCode = "OFFER_UNAVAILABLE" | "OUT_OF_STOCK" | "IDEMPOTENCY_INTENT_MISMATCH" | "SETUP_FEE_CONFIRMATION_REQUIRED" | "CHARGE_CONFIRMATION_REQUIRED" | "CHARGE_EXCEEDS_MAX" | "PRICING_INVALID";
+
+/** The error codes browser_startInstance documents (x-error-codes); see isApiErrorCode. */
+export type BrowserInstancesStartErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "INSTANCE_BACKEND_MISMATCH" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INTERNAL_ERROR" | "INSTANCE_QUARANTINED" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_stopInstance documents (x-error-codes); see isApiErrorCode. */
+export type BrowserInstancesStopErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND";
+
+/** The error codes browser_restartInstance documents (x-error-codes); see isApiErrorCode. */
+export type BrowserInstancesRestartErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "INSTANCE_BACKEND_MISMATCH" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INTERNAL_ERROR" | "INSTANCE_QUARANTINED" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_takeScreenshot documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageCaptureScreenshotErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "TAB_NOT_FOUND" | "PORT_IN_USE" | "NAVIGATION_IS_DOWNLOAD" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "PAGE_CRASHED" | "BROWSER_DISCONNECTED" | "NAVIGATION_ERROR" | "UPSTREAM_RESPONSE_TOO_LARGE" | "PROXY_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_browse documents (x-error-codes); see isApiErrorCode. */
+export type BrowserBrowseErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NAVIGATION_IS_DOWNLOAD" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_browsePost documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageNavigateErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NAVIGATION_IS_DOWNLOAD" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_evalGet documents (x-error-codes); see isApiErrorCode. */
+export type BrowserEvalGetErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "TAB_NOT_FOUND" | "PAGE_NAVIGATED" | "PORT_IN_USE" | "EVAL_ERROR" | "RESULT_NOT_SERIALIZABLE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "PAGE_CRASHED" | "BROWSER_DISCONNECTED" | "UPSTREAM_RESPONSE_TOO_LARGE" | "PROXY_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_evalPost documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageEvaluateErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "PAGE_NAVIGATED" | "PORT_IN_USE" | "EVAL_ERROR" | "RESULT_NOT_SERIALIZABLE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "PAGE_CRASHED" | "BROWSER_DISCONNECTED" | "UPSTREAM_RESPONSE_TOO_LARGE" | "PROXY_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_getMetadata documents (x-error-codes); see isApiErrorCode. */
+export type BrowserInstancesGetErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_listTabs documents (x-error-codes); see isApiErrorCode. */
+export type BrowserTabsListErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_closeTab documents (x-error-codes); see isApiErrorCode. */
+export type BrowserTabsCloseErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_shutdown documents (x-error-codes); see isApiErrorCode. */
+export type BrowserInstancesShutdownErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_getDevtoolsUrl documents (x-error-codes); see isApiErrorCode. */
+export type BrowserInstancesGetDevtoolsUrlsErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND";
+
+/** The error codes browser_getSnapshot documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageGetSnapshotErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT";
+
+/** The error codes browser_performAction documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageActErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT";
+
+/** The error codes browser_waitFor documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageWaitErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT";
+
+/** The error codes browser_getViewport documents (x-error-codes); see isApiErrorCode. */
+export type BrowserViewportGetErrorCode = "VALIDATION_ERROR" | "AMBIGUOUS_INSTANCE" | "INSTANCE_SELECTOR_CONFLICT";
+
+/** The error codes browser_setViewport documents (x-error-codes); see isApiErrorCode. */
+export type BrowserViewportSetErrorCode = "VALIDATION_ERROR" | "AMBIGUOUS_INSTANCE" | "INSTANCE_SELECTOR_CONFLICT";
+
+/** The error codes browser_getPageHtml documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageGetHtmlErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "PAGE_NAVIGATED" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "PAGE_CRASHED" | "BROWSER_DISCONNECTED" | "UPSTREAM_RESPONSE_TOO_LARGE" | "PROXY_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_getPageText documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageGetTextErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "PAGE_NAVIGATED" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "PAGE_CRASHED" | "BROWSER_DISCONNECTED" | "UPSTREAM_RESPONSE_TOO_LARGE" | "PROXY_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_exportPdf documents (x-error-codes); see isApiErrorCode. */
+export type BrowserPageExportPdfErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "PORT_IN_USE" | "NAVIGATION_IS_DOWNLOAD" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "PAGE_CRASHED" | "BROWSER_DISCONNECTED" | "NAVIGATION_ERROR" | "UPSTREAM_RESPONSE_TOO_LARGE" | "PROXY_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE" | "TIMEOUT";
+
+/** The error codes browser_getCookies documents (x-error-codes); see isApiErrorCode. */
+export type BrowserCookiesListErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_setCookies documents (x-error-codes); see isApiErrorCode. */
+export type BrowserCookiesSetManyErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_clearCookies documents (x-error-codes); see isApiErrorCode. */
+export type BrowserCookiesClearErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "NOT_FOUND" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_getConsoleLogs documents (x-error-codes); see isApiErrorCode. */
+export type BrowserLogsListConsoleErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_getNetworkLogs documents (x-error-codes); see isApiErrorCode. */
+export type BrowserLogsListNetworkErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT" | "PORT_IN_USE" | "INSTANCE_START_TIMEOUT" | "BROWSER_LAUNCH_ERROR" | "CHILD_PROCESS_ERROR" | "INSTALL_IN_PROGRESS" | "DISPLAY_UNAVAILABLE";
+
+/** The error codes browser_getHistory documents (x-error-codes); see isApiErrorCode. */
+export type BrowserHistoryListErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT";
+
+/** The error codes browser_deleteHistory documents (x-error-codes); see isApiErrorCode. */
+export type BrowserHistoryClearErrorCode = "VALIDATION_ERROR" | "INSTANCE_SELECTOR_CONFLICT";
+
+/** The error codes code_stopVSCode documents (x-error-codes); see isApiErrorCode. */
+export type CodeStopErrorCode = "invalid-selector" | "unknown-instance" | "internal-error";
+
+/** The error codes code_installExtension documents (x-error-codes); see isApiErrorCode. */
+export type CodeExtensionsInstallErrorCode = "invalid-request" | "invalid-selector" | "destination-refused" | "unknown-instance" | "downgrade-refused" | "extension-too-large" | "request-too-large" | "unsupported-media-type" | "not-a-vsix" | "internal-error" | "upstream-error" | "installs-at-capacity" | "upstream-timeout" | "insufficient-storage";
+
+/** The error codes code_listExtensions documents (x-error-codes); see isApiErrorCode. */
+export type CodeExtensionsListErrorCode = "invalid-selector" | "unknown-instance" | "internal-error";
+
+/** The error codes curl_wsRequestChannel documents (x-error-codes); see isApiErrorCode. */
+export type CurlChannelConnectErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED";
+
+/** The error codes curl_healthCheck documents (x-error-codes); see isApiErrorCode. */
+export type CurlKitGetHealthErrorCode = "ORIGIN_NOT_ALLOWED";
+
+/** The error codes curl_listJobs documents (x-error-codes); see isApiErrorCode. */
+export type CurlJobsListErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_getJob documents (x-error-codes); see isApiErrorCode. */
+export type CurlJobsGetErrorCode = "ORIGIN_NOT_ALLOWED" | "JOB_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_cancelJob documents (x-error-codes); see isApiErrorCode. */
+export type CurlCancelJobErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "JOB_NOT_FOUND" | "JOB_NOT_FINISHED" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_getJobResult documents (x-error-codes); see isApiErrorCode. */
+export type CurlJobsGetResultErrorCode = "ORIGIN_NOT_ALLOWED" | "JOB_NOT_FOUND" | "JOB_RESULT_NOT_READY" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_executeCurlRequestGet documents (x-error-codes); see isApiErrorCode. */
+export type CurlExecuteCurlRequestGetErrorCode = "INVALID_PARAMETER" | "INVALID_URL" | "ORIGIN_NOT_ALLOWED" | "SESSION_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR" | "UPSTREAM_ERROR" | "DNS_RESOLUTION_FAILED" | "RESPONSE_TOO_LARGE" | "QUEUE_FULL" | "SSE_CAPACITY_EXHAUSTED" | "UPSTREAM_TIMEOUT";
+
+/** The error codes curl_executeCurlRequest documents (x-error-codes); see isApiErrorCode. */
+export type CurlRunErrorCode = "INVALID_PARAMETER" | "INVALID_URL" | "ORIGIN_NOT_ALLOWED" | "SESSION_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "STORAGE_ERROR" | "INTERNAL_ERROR" | "UPSTREAM_ERROR" | "DNS_RESOLUTION_FAILED" | "RESPONSE_TOO_LARGE" | "QUEUE_FULL" | "SSE_CAPACITY_EXHAUSTED" | "UPSTREAM_TIMEOUT";
+
+/** The error codes curl_listSchedules documents (x-error-codes); see isApiErrorCode. */
+export type CurlSchedulesListErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_createSchedule documents (x-error-codes); see isApiErrorCode. */
+export type CurlSchedulesCreateErrorCode = "INVALID_CRON_EXPRESSION" | "INVALID_PARAMETER" | "INVALID_URL" | "ORIGIN_NOT_ALLOWED" | "SCHEDULE_EXISTS" | "PAYLOAD_TOO_LARGE" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_getSchedule documents (x-error-codes); see isApiErrorCode. */
+export type CurlSchedulesGetErrorCode = "ORIGIN_NOT_ALLOWED" | "SCHEDULE_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_updateSchedule documents (x-error-codes); see isApiErrorCode. */
+export type CurlSchedulesUpdateErrorCode = "INVALID_CRON_EXPRESSION" | "INVALID_PARAMETER" | "INVALID_URL" | "ORIGIN_NOT_ALLOWED" | "SCHEDULE_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_deleteSchedule documents (x-error-codes); see isApiErrorCode. */
+export type CurlSchedulesDeleteErrorCode = "ORIGIN_NOT_ALLOWED" | "SCHEDULE_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_toggleSchedule documents (x-error-codes); see isApiErrorCode. */
+export type CurlToggleScheduleErrorCode = "INVALID_PARAMETER" | "INVALID_CRON_EXPRESSION" | "ORIGIN_NOT_ALLOWED" | "SCHEDULE_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_listSessions documents (x-error-codes); see isApiErrorCode. */
+export type CurlSessionsListErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_getSession documents (x-error-codes); see isApiErrorCode. */
+export type CurlSessionsGetErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "SESSION_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_deleteSession documents (x-error-codes); see isApiErrorCode. */
+export type CurlSessionsDeleteErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "SESSION_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_getSessionCookies documents (x-error-codes); see isApiErrorCode. */
+export type CurlSessionsListCookiesErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "SESSION_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_sseJobEvents documents (x-error-codes); see isApiErrorCode. */
+export type CurlJobsStreamErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "SSE_CAPACITY_EXHAUSTED";
+
+/** The error codes curl_listStorage documents (x-error-codes); see isApiErrorCode. */
+export type CurlStorageListErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_getStorageFile documents (x-error-codes); see isApiErrorCode. */
+export type CurlStorageGetErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "FILE_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_deleteStorageFile documents (x-error-codes); see isApiErrorCode. */
+export type CurlStorageDeleteErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED" | "FILE_NOT_FOUND" | "STORAGE_ERROR" | "INTERNAL_ERROR";
+
+/** The error codes curl_wsJobEvents documents (x-error-codes); see isApiErrorCode. */
+export type CurlJobsConnectErrorCode = "INVALID_PARAMETER" | "ORIGIN_NOT_ALLOWED";
+
+/** The error codes curl_metrics documents (x-error-codes); see isApiErrorCode. */
+export type CurlKitGetMetricsErrorCode = "ORIGIN_NOT_ALLOWED";
+
+/** The error codes display_captureDisplayScreenshot documents (x-error-codes); see isApiErrorCode. */
+export type DisplayCaptureDisplayScreenshotErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "SCREENSHOT_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_captureDisplayScreenshotMetadata documents (x-error-codes); see isApiErrorCode. */
+export type DisplayCaptureDisplayScreenshotMetadataErrorCode = "NO_DISPLAY_CONTEXT" | "SCREENSHOT_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayLatestScreenshot documents (x-error-codes); see isApiErrorCode. */
+export type DisplayGetDisplayLatestScreenshotErrorCode = "NO_DISPLAY_CONTEXT" | "SCREENSHOT_NOT_FOUND" | "SCREENSHOT_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayLatestScreenshotMetadata documents (x-error-codes); see isApiErrorCode. */
+export type DisplayGetDisplayLatestScreenshotMetadataErrorCode = "NO_DISPLAY_CONTEXT" | "SCREENSHOT_NOT_FOUND" | "SCREENSHOT_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayScreenshotByTimestamp documents (x-error-codes); see isApiErrorCode. */
+export type DisplayScreenshotsGetErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "SCREENSHOT_NOT_FOUND" | "SCREENSHOT_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_captureDisplayThumbnail documents (x-error-codes); see isApiErrorCode. */
+export type DisplayThumbnailsCaptureErrorCode = "NO_DISPLAY_CONTEXT" | "THUMBNAIL_NOT_FOUND" | "THUMBNAIL_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayLatestThumbnail documents (x-error-codes); see isApiErrorCode. */
+export type DisplayThumbnailsGetLatestErrorCode = "NO_DISPLAY_CONTEXT" | "SCREENSHOT_NOT_FOUND" | "THUMBNAIL_NOT_FOUND" | "THUMBNAIL_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayThumbnailByTimestamp documents (x-error-codes); see isApiErrorCode. */
+export type DisplayThumbnailsGetErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "SCREENSHOT_NOT_FOUND" | "THUMBNAIL_NOT_FOUND" | "THUMBNAIL_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayInformation documents (x-error-codes); see isApiErrorCode. */
+export type DisplayGetErrorCode = "NO_DISPLAY_CONTEXT" | "DISPLAY_INFO_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_listDisplayScreenshots documents (x-error-codes); see isApiErrorCode. */
+export type DisplayScreenshotsListErrorCode = "NO_DISPLAY_CONTEXT" | "SCREENSHOTS_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayClipboard documents (x-error-codes); see isApiErrorCode. */
+export type DisplayClipboardGetErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "CLIPBOARD_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_setDisplayClipboard documents (x-error-codes); see isApiErrorCode. */
+export type DisplayClipboardSetErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "CLIPBOARD_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_listDisplayWindows documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsListErrorCode = "NO_DISPLAY_CONTEXT" | "NO_WINDOW_MANAGER" | "WINDOW_LIST_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_getDisplayWindowProperties documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsGetErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "WINDOW_NOT_FOUND" | "WINDOW_PROPERTIES_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseClick documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseClickErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseDoubleClick documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseDoubleClickErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseMove documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseMoveErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseMoveRelative documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseMoveByErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseDown documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseDownErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseUp documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseUpErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseScroll documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseScrollErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayMouseLocation documents (x-error-codes); see isApiErrorCode. */
+export type DisplayMouseGetPositionErrorCode = "NO_DISPLAY_CONTEXT" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayKeyboardType documents (x-error-codes); see isApiErrorCode. */
+export type DisplayKeyboardTypeErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "WINDOW_NOT_VIEWABLE" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayKeyboardKey documents (x-error-codes); see isApiErrorCode. */
+export type DisplayKeyboardPressErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "WINDOW_NOT_VIEWABLE" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayKeyboardKeyDown documents (x-error-codes); see isApiErrorCode. */
+export type DisplayKeyboardDownErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayKeyboardKeyUp documents (x-error-codes); see isApiErrorCode. */
+export type DisplayKeyboardUpErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowFocus documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsFocusErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "NO_WINDOW_MANAGER" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowMove documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsMoveErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowResize documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsResizeErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowMinimize documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsMinimizeErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowRestore documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsRestoreErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "NO_WINDOW_MANAGER" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowClose documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsCloseErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowRaise documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsRaiseErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowActive documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsGetActiveErrorCode = "NO_DISPLAY_CONTEXT" | "NO_WINDOW_MANAGER" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowSearch documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsSearchErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowGeometry documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsGetGeometryErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "WINDOW_NOT_FOUND" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayWindowName documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsGetTitleErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "WINDOW_NOT_FOUND" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputClickAt documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputClickErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_VIEWABLE" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputTypeAt documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputTypeErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_VIEWABLE" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputDrag documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputDragErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputSelect documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputSelectErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputAct documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputActErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "WINDOW_NOT_FOUND" | "NO_WINDOW_MANAGER" | "WINDOW_NOT_VIEWABLE" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputWait documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputWaitErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputBatch documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputActManyErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR";
+
+/** The error codes display_displayInputWaitUntil documents (x-error-codes); see isApiErrorCode. */
+export type DisplayWindowsWaitErrorCode = "NO_DISPLAY_CONTEXT" | "VALIDATION_ERROR" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputReset documents (x-error-codes); see isApiErrorCode. */
+export type DisplayInputResetErrorCode = "NO_DISPLAY_CONTEXT" | "INVALID_JSON" | "PAYLOAD_TOO_LARGE" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes display_displayInputDisplayGeometry documents (x-error-codes); see isApiErrorCode. */
+export type DisplayGetGeometryErrorCode = "NO_DISPLAY_CONTEXT" | "QUEUE_FULL" | "INPUT_ACTION_FAILED" | "INTERNAL_ERROR" | "DISPLAY_NOT_AVAILABLE";
+
+/** The error codes exec_validateTypeScript documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsValidateTypesErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_validateSyntax documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsValidateSyntaxErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_validateDependencies documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsValidateDependenciesErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_validateReturnType documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsValidateReturnTypeErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_validateMagicComments documents (x-error-codes); see isApiErrorCode. */
+export type ExecMagicCommentsValidateErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_validateScript documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsValidateErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listTemplates documents (x-error-codes); see isApiErrorCode. */
+export type ExecTemplatesListErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_previewTemplate documents (x-error-codes); see isApiErrorCode. */
+export type ExecTemplatesPreviewErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_generateFromTemplate documents (x-error-codes); see isApiErrorCode. */
+export type ExecTemplatesGenerateErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_createCustomTemplate documents (x-error-codes); see isApiErrorCode. */
+export type ExecTemplatesCreateErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_408" | "ERROR_409" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_updateCustomTemplate documents (x-error-codes); see isApiErrorCode. */
+export type ExecTemplatesUpdateErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_deleteCustomTemplate documents (x-error-codes); see isApiErrorCode. */
+export type ExecTemplatesDeleteErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_readScript documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsReadErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_writeScript documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsWriteErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_408" | "ERROR_409" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_deleteScript documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsDeleteErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listScripts documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsListErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getScriptTree documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsGetTreeErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_moveScript documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsMoveErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listLogs documents (x-error-codes); see isApiErrorCode. */
+export type ExecLogsListErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_readLog documents (x-error-codes); see isApiErrorCode. */
+export type ExecLogsGetErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_streamLogs documents (x-error-codes); see isApiErrorCode. */
+export type ExecLogsStreamErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_searchLogs documents (x-error-codes); see isApiErrorCode. */
+export type ExecLogsSearchErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_clearLogs documents (x-error-codes); see isApiErrorCode. */
+export type ExecLogsClearErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_clearCache documents (x-error-codes); see isApiErrorCode. */
+export type ExecCacheClearErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getSharedState documents (x-error-codes); see isApiErrorCode. */
+export type ExecStoreGetErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_setSharedState documents (x-error-codes); see isApiErrorCode. */
+export type ExecStoreSetErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_clearSharedState documents (x-error-codes); see isApiErrorCode. */
+export type ExecStoreClearErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_resolveRoute documents (x-error-codes); see isApiErrorCode. */
+export type ExecRoutesResolveErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_discoverRoutes documents (x-error-codes); see isApiErrorCode. */
+export type ExecRoutesListErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_testRoute documents (x-error-codes); see isApiErrorCode. */
+export type ExecRoutesTestErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getStats documents (x-error-codes); see isApiErrorCode. */
+export type ExecKitGetStatsErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getActiveRequests documents (x-error-codes); see isApiErrorCode. */
+export type ExecKitListRequestsErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listMonitorScripts documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsListStatsErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getScriptPerformance documents (x-error-codes); see isApiErrorCode. */
+export type ExecScriptsGetStatsErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_prometheusExport documents (x-error-codes); see isApiErrorCode. */
+export type ExecKitGetMetricsErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_healthCheck documents (x-error-codes); see isApiErrorCode. */
+export type ExecKitGetHealthErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listBundledDependencies documents (x-error-codes); see isApiErrorCode. */
+export type ExecModulesListBundledErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_checkDependencies documents (x-error-codes); see isApiErrorCode. */
+export type ExecModulesTestErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_installDependencies documents (x-error-codes); see isApiErrorCode. */
+export type ExecModulesInstallErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_restartServer documents (x-error-codes); see isApiErrorCode. */
+export type ExecKitRestartErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getRestartStatus documents (x-error-codes); see isApiErrorCode. */
+export type ExecKitGetStatusErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_readPackageJson documents (x-error-codes); see isApiErrorCode. */
+export type ExecPackagesGetManifestErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_updatePackageJson documents (x-error-codes); see isApiErrorCode. */
+export type ExecPackagesUpdateManifestErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_installPackages documents (x-error-codes); see isApiErrorCode. */
+export type ExecPackagesInstallErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_comparePackages documents (x-error-codes); see isApiErrorCode. */
+export type ExecPackagesCompareErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_pinVersions documents (x-error-codes); see isApiErrorCode. */
+export type ExecPackagesPinErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_initPackageJson documents (x-error-codes); see isApiErrorCode. */
+export type ExecPackagesCreateManifestErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_409" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_generateUserOpenAPI documents (x-error-codes); see isApiErrorCode. */
+export type ExecOpenapiGenerateErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listUserScripts documents (x-error-codes); see isApiErrorCode. */
+export type ExecOpenapiListScriptsErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_validateUserSchema documents (x-error-codes); see isApiErrorCode. */
+export type ExecOpenapiValidateSchemaErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_serveSchemaFile documents (x-error-codes); see isApiErrorCode. */
+export type ExecOpenapiGetSchemaErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_serveGeneratedSpec documents (x-error-codes); see isApiErrorCode. */
+export type ExecOpenapiGetErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_mergeOpenAPISpecs documents (x-error-codes); see isApiErrorCode. */
+export type ExecOpenapiMergeErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_importSDK documents (x-error-codes); see isApiErrorCode. */
+export type ExecSdksImportErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listSDKs documents (x-error-codes); see isApiErrorCode. */
+export type ExecSdksListErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getSDK documents (x-error-codes); see isApiErrorCode. */
+export type ExecSdksGetErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_deleteSDK documents (x-error-codes); see isApiErrorCode. */
+export type ExecSdksDeleteErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listAllExecIds documents (x-error-codes); see isApiErrorCode. */
+export type ExecNamespacesListErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getSdkTypes documents (x-error-codes); see isApiErrorCode. */
+export type ExecSdkTypesListErrorCode = "ERROR_400" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_getMagicCommentsSchema documents (x-error-codes); see isApiErrorCode. */
+export type ExecMagicCommentsGetSchemaErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_readMagicComments documents (x-error-codes); see isApiErrorCode. */
+export type ExecMagicCommentsGetErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_updateMagicCommentsHandler documents (x-error-codes); see isApiErrorCode. */
+export type ExecMagicCommentsUpdateErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_bulkUpdateMagicComments documents (x-error-codes); see isApiErrorCode. */
+export type ExecMagicCommentsUpdateManyErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_listSchedules documents (x-error-codes); see isApiErrorCode. */
+export type ExecSchedulesListErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_triggerSchedule documents (x-error-codes); see isApiErrorCode. */
+export type ExecSchedulesRunErrorCode = "ERROR_400" | "ERROR_403" | "ERROR_404" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500" | "ERROR_503";
+
+/** The error codes exec_reloadSchedules documents (x-error-codes); see isApiErrorCode. */
+export type ExecSchedulesReloadErrorCode = "ERROR_400" | "ERROR_408" | "ERROR_413" | "ERROR_429" | "ERROR_500";
+
+/** The error codes exec_scheduleHistory documents (x-error-codes); see isApiErrorCode. */
+export type ExecSchedulesListHistoryErrorCode = "ERROR_400" | "ERROR_429" | "ERROR_500";
+
+/** The error codes files_listRootDirectory documents (x-error-codes); see isApiErrorCode. */
+export type FilesListRootDirectoryErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_getDownloadHistory documents (x-error-codes); see isApiErrorCode. */
+export type FilesGetDownloadHistoryErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_getExtractionHistory documents (x-error-codes); see isApiErrorCode. */
+export type FilesGetExtractionHistoryErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_listActiveExtractions documents (x-error-codes); see isApiErrorCode. */
+export type FilesExtractionsListByDirectoryErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_listBackends documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsListErrorCode = "INVALID_PARAMETER";
+
+/** The error codes files_connectAzureblobBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateAzureblobErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectAzurefilesBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateAzurefilesErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectB2Backend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateB2ErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectBoxBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateBoxErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectCloudinaryBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateCloudinaryErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectDriveBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateDriveErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectDropboxBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateDropboxErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectFichierBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateFichierErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectFilefabricBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateFilefabricErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectFilescomBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateFilescomErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectFtpBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateFtpErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectGofileBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateGofileErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectGoogleCloudStorageBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateGoogleCloudStorageErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectGooglePhotosBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateGooglePhotosErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectHdfsBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateHdfsErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectHidriveBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateHidriveErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectHttpBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateHttpErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectIclouddriveBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateIclouddriveErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectImagekitBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateImagekitErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectInternetarchiveBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateInternetarchiveErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectJottacloudBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateJottacloudErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectKoofrBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateKoofrErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectLinkboxBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateLinkboxErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectMailruBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateMailruErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectMegaBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateMegaErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectNetstorageBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateNetstorageErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectOnedriveBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateOnedriveErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectOpendriveBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateOpendriveErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectOracleobjectstorageBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateOracleobjectstorageErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectPcloudBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreatePcloudErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectPikpakBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreatePikpakErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectPixeldrainBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreatePixeldrainErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectPremiumizemeBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreatePremiumizemeErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectProtondriveBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateProtondriveErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectPutioBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreatePutioErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectQingstorBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateQingstorErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectQuatrixBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateQuatrixErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectS3Backend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateS3ErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectSeafileBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateSeafileErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectSftpBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateSftpErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectSharefileBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateSharefileErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectSiaBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateSiaErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectSmbBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateSmbErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectSugarsyncBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateSugarsyncErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectSwiftBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateSwiftErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectUloztoBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateUloztoErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectWebdavBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateWebdavErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectYandexBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateYandexErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_connectZohoBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsCreateZohoErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_getBackendDetails documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsGetErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_updateBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsUpdateErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_disconnectBackend documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsDeleteErrorCode = "INVALID_PARAMETER" | "BACKEND_NOT_FOUND" | "MOUNT_PATH_CHANGED" | "MOUNT_PATH_IN_USE" | "UPLOADS_DISCARD_SHARED" | "SERVICE_STOPPING" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_testBackendConnection documents (x-error-codes); see isApiErrorCode. */
+export type FilesBackendsTestErrorCode = "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_listApiActiveDownloads documents (x-error-codes); see isApiErrorCode. */
+export type FilesDownloadsListErrorCode = "INVALID_PARAMETER";
+
+/** The error codes files_listApiActiveExtractions documents (x-error-codes); see isApiErrorCode. */
+export type FilesExtractionsListErrorCode = "INVALID_PARAMETER";
+
+/** The error codes files_appendFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesAppendErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "PRECONDITION_FAILED";
+
+/** The error codes files_chmodFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesChmodErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "PERMISSIONS_NOT_APPLIED";
+
+/** The error codes files_chownFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesChownErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "OWNER_NOT_APPLIED" | "PATH_CONFLICT";
+
+/** The error codes files_copyFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesCopyErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT";
+
+/** The error codes files_globFiles documents (x-error-codes); see isApiErrorCode. */
+export type FilesGlobErrorCode = "INVALID_PARAMETER" | "INVALID_PATH";
+
+/** The error codes files_grepFiles documents (x-error-codes); see isApiErrorCode. */
+export type FilesGrepErrorCode = "INVALID_PARAMETER" | "INVALID_PATH";
+
+/** The error codes files_moveFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesMoveErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "FILE_MOVE_CROSSES_DEVICES" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT";
+
+/** The error codes files_realpathFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesRealpathErrorCode = "INVALID_PATH" | "INVALID_PARAMETER" | "PATH_CONFLICT";
+
+/** The error codes files_statFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesStatErrorCode = "INVALID_PATH" | "PATH_CONFLICT" | "BACKEND_UNREACHABLE" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_getFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesGetErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "PATH_CONFLICT" | "ARCHIVE_TOO_LARGE" | "BACKEND_UNREACHABLE" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_postFileOperation documents (x-error-codes); see isApiErrorCode. */
+export type FilesPostFileOperationErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "BACKEND_READ_ONLY" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "FILE_MOVE_CROSSES_DEVICES" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "JOB_COUNT_LIMIT" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_putFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "BACKEND_READ_ONLY" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "PERMISSIONS_NOT_APPLIED" | "PRECONDITION_FAILED" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_patchFileApi documents (x-error-codes); see isApiErrorCode. */
+export type FilesUpdateErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "FILE_MOVE_CROSSES_DEVICES" | "MOUNT_PATH_RESERVED" | "OWNER_NOT_APPLIED" | "PATH_CONFLICT" | "PERMISSIONS_NOT_APPLIED";
+
+/** The error codes files_deleteFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesDeleteErrorCode = "INVALID_PATH" | "BACKEND_READ_ONLY" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_queryJournal documents (x-error-codes); see isApiErrorCode. */
+export type FilesJournalListErrorCode = "INVALID_PARAMETER";
+
+/** The error codes files_listMounts documents (x-error-codes); see isApiErrorCode. */
+export type FilesMountsListErrorCode = "INVALID_PARAMETER";
+
+/** The error codes files_createMount documents (x-error-codes); see isApiErrorCode. */
+export type FilesMountsCreateErrorCode = "INVALID_JSON" | "VFS_FIELD_UNKNOWN" | "VFS_FIELD_NULL" | "VFS_FIELD_NOT_SETTABLE" | "VFS_CONFIG_INVALID" | "VFS_CONFIG_UNSUPPORTED_BACKEND" | "MOUNT_PATH_INVALID" | "MOUNT_PATH_RESERVED" | "VFS_PATCH_EMPTY" | "INVALID_PARAMETER" | "REMOTE_DISABLED" | "BACKEND_NOT_FOUND" | "MOUNT_BUSY" | "MOUNT_PATH_EXISTS" | "MOUNT_PATH_CHANGED" | "MOUNT_PATH_IN_USE" | "MOUNT_UPDATE_IN_PROGRESS" | "PAYLOAD_TOO_LARGE" | "MOUNT_COUNT_LIMIT" | "DEDICATED_VFS_LIMIT" | "MOUNT_CREATE_FAILED" | "MOUNTS_UNSUPPORTED" | "MOUNT_START_FAILED" | "MOUNT_NOT_READY" | "MOUNT_STORAGE_UNAVAILABLE" | "SERVICE_STOPPING" | "PENDING_UPLOADS_LIMIT";
+
+/** The error codes files_getMountDetails documents (x-error-codes); see isApiErrorCode. */
+export type FilesMountsGetErrorCode = "MOUNT_NOT_FOUND" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_updateMount documents (x-error-codes); see isApiErrorCode. */
+export type FilesMountsUpdateErrorCode = "VFS_PATCH_EMPTY" | "INVALID_JSON" | "VFS_FIELD_UNKNOWN" | "VFS_FIELD_NULL" | "VFS_FIELD_NOT_SETTABLE" | "VFS_CONFIG_INVALID" | "VFS_CONFIG_UNSUPPORTED_BACKEND" | "MOUNT_PATH_INVALID" | "MOUNT_PATH_RESERVED" | "INVALID_PARAMETER" | "REMOTE_DISABLED" | "MOUNT_NOT_FOUND" | "MOUNT_BUSY" | "MOUNT_UPDATE_IN_PROGRESS" | "MOUNT_BACKEND_UNAVAILABLE" | "MOUNT_PATH_CHANGED" | "MOUNT_PATH_IN_USE" | "PAYLOAD_TOO_LARGE" | "DEDICATED_VFS_LIMIT" | "MOUNT_PERSIST_FAILED" | "MOUNT_SWAP_FAILED" | "MOUNTS_UNSUPPORTED" | "MOUNT_REMOUNT_FAILED" | "MOUNT_STORAGE_UNAVAILABLE" | "SERVICE_STOPPING" | "PENDING_UPLOADS_LIMIT";
+
+/** The error codes files_unmount documents (x-error-codes); see isApiErrorCode. */
+export type FilesMountsDeleteErrorCode = "INVALID_PARAMETER" | "MOUNT_NOT_FOUND" | "MOUNT_PATH_CHANGED" | "MOUNT_PATH_IN_USE" | "UPLOADS_DISCARD_SHARED" | "MOUNT_STORAGE_UNAVAILABLE" | "SERVICE_STOPPING";
+
+/** The error codes files_listPendingUploads documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsListErrorCode = "INVALID_PARAMETER" | "REMOTE_DISABLED";
+
+/** The error codes files_listUnreadablePendingUploads documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsListUnreadableErrorCode = "INVALID_PARAMETER" | "REMOTE_DISABLED";
+
+/** The error codes files_discardUnreadablePendingUpload documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsDeleteUnreadableErrorCode = "REMOTE_DISABLED" | "PENDING_UPLOAD_NOT_FOUND" | "PENDING_UPLOAD_BUSY" | "PENDING_UPLOAD_PERSIST_FAILED";
+
+/** The error codes files_discardPendingUpload documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsDeleteErrorCode = "REMOTE_DISABLED" | "PENDING_UPLOAD_NOT_FOUND" | "PENDING_UPLOAD_BUSY" | "PENDING_UPLOAD_PERSIST_FAILED";
+
+/** The error codes files_deliverPendingUpload documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsDeliverErrorCode = "INVALID_JSON" | "INVALID_PATH" | "INVALID_PARAMETER" | "REMOTE_DISABLED" | "PENDING_UPLOAD_NOT_FOUND" | "BACKEND_NOT_FOUND" | "PENDING_UPLOAD_BUSY" | "PENDING_UPLOAD_NOT_DELIVERABLE" | "PENDING_UPLOAD_FILE_INCOMPLETE" | "PAYLOAD_TOO_LARGE" | "DEDICATED_VFS_LIMIT" | "PENDING_UPLOAD_PERSIST_FAILED" | "SERVICE_STOPPING";
+
+/** The error codes files_downloadPendingUploadFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsDownloadErrorCode = "INVALID_PATH" | "INVALID_PARAMETER" | "REMOTE_DISABLED" | "PENDING_UPLOAD_NOT_FOUND" | "PENDING_UPLOAD_FILE_NOT_FOUND" | "PENDING_UPLOAD_BUSY";
+
+/** The error codes files_listPendingUploadFiles documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsListFilesErrorCode = "INVALID_PARAMETER" | "REMOTE_DISABLED" | "PENDING_UPLOAD_NOT_FOUND";
+
+/** The error codes files_stopPendingUpload documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadsStopErrorCode = "REMOTE_DISABLED" | "PENDING_UPLOAD_NOT_FOUND" | "PENDING_UPLOAD_BUSY" | "PENDING_UPLOAD_PERSIST_FAILED";
+
+/** The error codes files_extractArchive documents (x-error-codes); see isApiErrorCode. */
+export type FilesExtractArchiveErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "JOB_COUNT_LIMIT";
+
+/** The error codes files_extractArchiveFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesArchivesExtractMemberErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "JOB_COUNT_LIMIT";
+
+/** The error codes files_previewArchive documents (x-error-codes); see isApiErrorCode. */
+export type FilesArchivesPreviewErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_viewArchiveFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesArchivesReadMemberErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_downloadFromUrl documents (x-error-codes); see isApiErrorCode. */
+export type FilesDownloadFromUrlErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "JOB_COUNT_LIMIT";
+
+/** The error codes files_listActiveDownloads documents (x-error-codes); see isApiErrorCode. */
+export type FilesDownloadsListByDirectoryErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_searchDirectory documents (x-error-codes); see isApiErrorCode. */
+export type FilesSearchErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_downloadDirectoryAsZip documents (x-error-codes); see isApiErrorCode. */
+export type FilesDownloadDirectoryAsZipErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "ARCHIVE_TOO_LARGE";
+
+/** The error codes files_processImage documents (x-error-codes); see isApiErrorCode. */
+export type FilesProcessImageErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_listDirectory documents (x-error-codes); see isApiErrorCode. */
+export type FilesUiGetPageErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_uploadFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesUploadFileErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "UPLOAD_INCOMPLETE" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "FILE_PATH_BUSY" | "REMOTE_UPLOAD_FAILED" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_patchFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesPatchFileErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_BUSY" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "OWNER_NOT_APPLIED" | "PATH_CONFLICT" | "PERMISSIONS_NOT_APPLIED" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE";
+
+/** The error codes files_deleteFileOrDirectory documents (x-error-codes); see isApiErrorCode. */
+export type FilesDeleteFileOrDirectoryErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "FILE_PATH_BUSY" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_getFileMetadata documents (x-error-codes); see isApiErrorCode. */
+export type FilesExistsErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_createDirectory documents (x-error-codes); see isApiErrorCode. */
+export type FilesCreateDirectoryErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "DIRECTORY_EXISTS" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "FILE_PATH_BUSY" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_copyResource documents (x-error-codes); see isApiErrorCode. */
+export type FilesWebdavCopyErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "OVERWRITE_REFUSED" | "FILE_PATH_BUSY";
+
+/** The error codes files_moveResource documents (x-error-codes); see isApiErrorCode. */
+export type FilesWebdavMoveErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "OVERWRITE_REFUSED" | "FILE_PATH_BUSY";
+
+/** The error codes files_lockResource documents (x-error-codes); see isApiErrorCode. */
+export type FilesWebdavLockErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_unlockResource documents (x-error-codes); see isApiErrorCode. */
+export type FilesWebdavUnlockErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_propfindResource documents (x-error-codes); see isApiErrorCode. */
+export type FilesWebdavGetPropertiesErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_proppatchResource documents (x-error-codes); see isApiErrorCode. */
+export type FilesWebdavUpdatePropertiesErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND";
+
+/** The error codes files_checkAuth documents (x-error-codes); see isApiErrorCode. */
+export type FilesWhoamiErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN";
+
+/** The error codes files_logout documents (x-error-codes); see isApiErrorCode. */
+export type FilesLogoutErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN";
+
+/** The error codes files_touchFile documents (x-error-codes); see isApiErrorCode. */
+export type FilesTouchFileErrorCode = "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "CONTAINS_SERVICE_STORAGE" | "FILE_PATH_CHANGED" | "MOUNT_PATH_RESERVED" | "PATH_CONFLICT" | "FILE_PATH_BUSY";
+
+/** The error codes files_accessViaFTP documents (x-error-codes); see isApiErrorCode. */
+export type FilesFtpGetErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "BACKEND_UNREACHABLE" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_accessFromS3 documents (x-error-codes); see isApiErrorCode. */
+export type FilesS3GetErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "BACKEND_UNREACHABLE" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_accessViaSSH documents (x-error-codes); see isApiErrorCode. */
+export type FilesSshGetErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "BACKEND_UNREACHABLE" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_uploadViaSSH documents (x-error-codes); see isApiErrorCode. */
+export type FilesSshUploadErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "UPLOAD_INCOMPLETE" | "ACCESS_FORBIDDEN" | "PAYLOAD_TOO_LARGE" | "REMOTE_UPLOAD_FAILED" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes files_accessViaWebDAV documents (x-error-codes); see isApiErrorCode. */
+export type FilesWebdavGetErrorCode = "INVALID_PARAMETER" | "INVALID_PATH" | "ACCESS_FORBIDDEN" | "RESOURCE_NOT_FOUND" | "BACKEND_UNREACHABLE" | "MOUNT_STORAGE_UNAVAILABLE";
+
+/** The error codes notifications_dismissNotifications documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsDismissErrorCode = "VALIDATION_ERROR" | "INVALID_DISPLAY_ID" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes notifications_clearDismissedNotifications documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsRestoreErrorCode = "INVALID_DISPLAY_ID" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes notifications_healthCheck documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsKitGetHealthErrorCode = "RATE_LIMIT_EXCEEDED";
+
+/** The error codes notifications_getNotificationIcon documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsIconsGetErrorCode = "ICON_NOT_FOUND" | "INVALID_ICON_ID" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes notifications_getMetrics documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsKitGetMetricsErrorCode = "RATE_LIMIT_EXCEEDED";
+
+/** The error codes notifications_triggerNotification documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsSendErrorCode = "VALIDATION_ERROR" | "INVALID_DISPLAY_ID" | "FIELD_TOO_LONG" | "INVALID_CHARACTERS" | "RATE_LIMIT_EXCEEDED" | "DISPATCH_FAILED" | "DISPLAY_NOT_AVAILABLE" | "DISPLAY_NOT_READY";
+
+/** The error codes notifications_connectNotificationStream documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsConnectErrorCode = "VALIDATION_ERROR" | "INVALID_DISPLAY_ID" | "ORIGIN_NOT_ALLOWED" | "RATE_LIMIT_EXCEEDED" | "SERVER_SHUTTING_DOWN";
+
+/** The error codes notifications_getNotifications documents (x-error-codes); see isApiErrorCode. */
+export type NotificationsListErrorCode = "VALIDATION_ERROR" | "INVALID_DISPLAY_ID" | "INVALID_CURSOR" | "RATE_LIMIT_EXCEEDED";
+
+/** The error codes sqlite_listKvChanges documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvListChangesErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "CHANGE_CURSOR_EXPIRED" | "CHANGE_CURSOR_INVALID" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_streamKvChanges documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvStreamChangesErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "CHANGE_CURSOR_EXPIRED" | "CHANGE_CURSOR_INVALID" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_executeSqlTransaction documents (x-error-codes); see isApiErrorCode. */
+export type SqliteSqlRunTransactionErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "SQL_ERROR" | "SQL_BIND_ERROR" | "UNKNOWN_FIELD" | "VALUES_CONFLICT" | "CONFLICT" | "SQL_CONSTRAINT" | "DATABASE_READONLY" | "PAYLOAD_TOO_LARGE" | "RESPONSE_TOO_LARGE" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_deleteDatabase documents (x-error-codes); see isApiErrorCode. */
+export type SqliteDatabasesDeleteErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "DATABASE_NOT_FOUND" | "INTERNAL_ERROR" | "DELETE_INCOMPLETE" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_createDatabase documents (x-error-codes); see isApiErrorCode. */
+export type SqliteDatabasesCreateErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "FORBIDDEN" | "CONFLICT" | "DATABASE_EXISTS" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_listDatabases documents (x-error-codes); see isApiErrorCode. */
+export type SqliteDatabasesListErrorCode = "INVALID_PARAMETERS" | "FORBIDDEN" | "INTERNAL_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT";
+
+/** The error codes sqlite_getQueryHistory documents (x-error-codes); see isApiErrorCode. */
+export type SqliteHistoryListErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_clearQueryHistory documents (x-error-codes); see isApiErrorCode. */
+export type SqliteHistoryClearErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_deleteHistoryEntry documents (x-error-codes); see isApiErrorCode. */
+export type SqliteHistoryDeleteErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "NOT_FOUND" | "HISTORY_ENTRY_NOT_FOUND" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_getHistoryStats documents (x-error-codes); see isApiErrorCode. */
+export type SqliteHistoryGetStatsErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_listKvKeys documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvListErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "FORBIDDEN" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_getKvValue documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvGetErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "FORBIDDEN" | "NOT_FOUND" | "KEY_NOT_FOUND" | "KEY_EXPIRED" | "CONFLICT" | "TIME_TRAVEL_CHAIN_GAP" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_setKvValue documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvSetErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "INVALID_JSON_VALUE" | "FORBIDDEN" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_deleteKvKey documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvDeleteErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "FORBIDDEN" | "NOT_FOUND" | "KEY_NOT_FOUND" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_checkKvKeyExists documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvExistsErrorCode = "KEY_NOT_FOUND" | "KEY_EXPIRED";
+
+/** The error codes sqlite_decrKvValue documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvDecrementErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_getKvEntry documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvGetEntryErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "FORBIDDEN" | "NOT_FOUND" | "KEY_NOT_FOUND" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_expireKvKey documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvSetTtlErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "FORBIDDEN" | "NOT_FOUND" | "KEY_NOT_FOUND" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_getKvKeyHistory documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvListHistoryErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_incrKvValue documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvIncrementErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_persistKvKey documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvClearTtlErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "FORBIDDEN" | "NOT_FOUND" | "KEY_NOT_FOUND" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_popKvArray documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvPopErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "NOT_FOUND" | "KEY_NOT_FOUND" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_pushKvArray documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvPushErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_removeKvArrayElement documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvRemoveErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "NOT_FOUND" | "KEY_NOT_FOUND" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_rollbackKvKey documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvRollbackErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "NOT_FOUND" | "HISTORY_ENTRY_NOT_FOUND" | "CONFLICT" | "TIME_TRAVEL_CHAIN_GAP" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_getKvKeySnapshot documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvGetSnapshotErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "NOT_FOUND" | "KEY_NOT_FOUND" | "HISTORY_ENTRY_NOT_FOUND" | "CONFLICT" | "TIME_TRAVEL_CHAIN_GAP" | "PAYLOAD_TOO_LARGE" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_batchDeleteKvKeys documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvDeleteManyErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_batchGetKvKeys documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvGetManyErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_batchSetKvKeys documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvSetManyErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "PRECONDITION_FAILED" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_compareKvTableSnapshots documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvCompareTableSnapshotsErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "PAYLOAD_TOO_LARGE" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_rollbackKvTable documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvRollbackTableErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "CONFLICT" | "TIME_TRAVEL_CHAIN_GAP" | "PAYLOAD_TOO_LARGE" | "IDEMPOTENT_RESPONSE_TOO_LARGE" | "IDEMPOTENCY_KEY_MISMATCH" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_getKvTableSnapshot documents (x-error-codes); see isApiErrorCode. */
+export type SqliteKvGetTableSnapshotErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "PAYLOAD_TOO_LARGE" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_runMaintenance documents (x-error-codes); see isApiErrorCode. */
+export type SqliteDatabasesRunMaintenanceErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "NOT_FOUND" | "CONFLICT" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes sqlite_executeShareableQuery documents (x-error-codes); see isApiErrorCode. */
+export type SqliteSqlQueryReadOnlyErrorCode = "INVALID_PARAMETERS" | "INVALID_DB_PATH" | "DATABASE_NOT_FOUND" | "INVALID_SQLITE_HEADER" | "PATH_IS_DIRECTORY" | "SQL_ERROR" | "SQL_BIND_ERROR" | "PAYLOAD_TOO_LARGE" | "RESPONSE_TOO_LARGE" | "INTERNAL_ERROR" | "DATABASE_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT" | "DATABASE_BUSY";
+
+/** The error codes terminal_executeCommand documents (x-error-codes); see isApiErrorCode. */
+export type TerminalCommandsRunErrorCode = "VALIDATION_ERROR" | "INVALID_TERMINAL_ID" | "INVALID_MODE" | "INVALID_BASE64" | "RAW_WAIT_UNSUPPORTED" | "RAW_MODE_LOCAL_ONLY" | "COMMAND_TOO_LONG" | "INVALID_CWD" | "CWD_PERMISSION_DENIED" | "DAEMON_TERMINAL" | "EXECUTE_QUEUE_BUSY" | "SHELL_REPLACED" | "PERSISTENT_SESSION" | "EXECUTE_BACKLOG_FULL" | "EXECUTION_FAILED" | "SPAWN_FAILED" | "RAW_EXEC_UNAVAILABLE" | "RAW_EXEC_BUSY" | "SERVER_SHUTTING_DOWN";
+
+/** The error codes terminal_createTerminal documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsCreateErrorCode = "MISSING_TERMINAL_ID" | "INVALID_TERMINAL_ID" | "TERMINAL_ID_MISMATCH" | "CWD_PERMISSION_DENIED" | "DAEMON_TERMINAL" | "EPHEMERAL_SESSION" | "SPAWN_FAILED";
+
+/** The error codes terminal_getCommandResult documents (x-error-codes); see isApiErrorCode. */
+export type TerminalCommandsGetErrorCode = "COMMAND_NOT_FOUND";
+
+/** The error codes terminal_getTerminalHistory documents (x-error-codes); see isApiErrorCode. */
+export type TerminalCommandsListErrorCode = "MISSING_TERMINAL_ID" | "TERMINAL_ID_MISMATCH" | "SESSION_NOT_FOUND";
+
+/** The error codes terminal_deleteTerminalSession documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsDeleteErrorCode = "TERMINAL_ID_MISMATCH" | "SESSION_NOT_FOUND";
+
+/** The error codes terminal_getRawTerminalOutput documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsReadErrorCode = "TERMINAL_ID_ZERO" | "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_captureTerminalScreenshot documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsCaptureScreenshotErrorCode = "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL" | "TOOL_NOT_AVAILABLE";
+
+/** The error codes terminal_sendProcessSignal documents (x-error-codes); see isApiErrorCode. */
+export type TerminalProcessesSignalErrorCode = "MISSING_TARGET" | "INVALID_SIGNAL" | "PERMISSION_DENIED" | "SIGNAL_FAILED";
+
+/** The error codes terminal_freezeProcess documents (x-error-codes); see isApiErrorCode. */
+export type TerminalProcessesPauseErrorCode = "MISSING_TARGET" | "INVALID_PID" | "PERMISSION_DENIED" | "PROCESS_NOT_FOUND" | "FREEZE_FAILED" | "PROC_SNAPSHOT_OOM" | "PROC_TABLE_TOO_LARGE";
+
+/** The error codes terminal_unfreezeProcess documents (x-error-codes); see isApiErrorCode. */
+export type TerminalProcessesResumeErrorCode = "MISSING_TARGET" | "INVALID_PID" | "PERMISSION_DENIED" | "PROCESS_NOT_FOUND" | "UNFREEZE_FAILED" | "PROC_SNAPSHOT_OOM" | "PROC_TABLE_TOO_LARGE";
+
+/** The error codes terminal_writeTerminalInput documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsWriteErrorCode = "MISSING_TERMINAL_ID" | "MISSING_INPUT" | "SSH_ONLY" | "SESSION_NOT_FOUND" | "NO_PROCESS" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL" | "WRITE_FAILED";
+
+/** The error codes terminal_shutdownSystem documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSystemShutdownErrorCode = "ROOT_REQUIRED" | "SHUTDOWN_FAILED";
+
+/** The error codes terminal_rebootSystem documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSystemRebootErrorCode = "ROOT_REQUIRED" | "REBOOT_FAILED";
+
+/** The error codes terminal_postTerminalExecuteAbort documents (x-error-codes); see isApiErrorCode. */
+export type TerminalCommandsCancelErrorCode = "ALREADY_COMPLETED";
+
+/** The error codes terminal_stopDisplay documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSystemStopDisplayErrorCode = "INVALID_DISPLAY" | "PERMISSION_DENIED" | "DISPLAY_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "DISPLAY_STOP_FAILED" | "DISPLAY_LOOKUP_FAILED";
+
+/** The error codes terminal_getTerminalSnapshot documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsGetSnapshotErrorCode = "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_findInTerminal documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsSearchErrorCode = "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_pressTerminalKeys documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsPressKeysErrorCode = "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_sendTerminalMouseEvents documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsSendMouseEventsErrorCode = "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_pasteTerminalText documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsPasteErrorCode = "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_waitForTerminal documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsWaitErrorCode = "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_getSessionAutomationState documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsGetAutomationStatusErrorCode = "TERMINAL_ID_MISMATCH" | "SSH_ONLY" | "DAEMON_PROGRAM_NOT_RUNNING" | "DAEMON_TERMINAL";
+
+/** The error codes terminal_connectTerminalWebSocket documents (x-error-codes); see isApiErrorCode. */
+export type TerminalSessionsConnectErrorCode = "INVALID_TERMINAL_ID" | "INVALID_PARAMETERS" | "MAX_CLIENTS_REACHED" | "ORIGIN_CHECK_FAILED";
+
+/** The error codes terminal_getProcessDetails documents (x-error-codes); see isApiErrorCode. */
+export type TerminalProcessesGetErrorCode = "PROCESS_NOT_FOUND";
+
+/** The error codes watch_listWatchers documents (x-error-codes); see isApiErrorCode. */
+export type WatchWatchersListErrorCode = "INVALID_REQUEST" | "INVALID_PAGINATION" | "INVALID_CURSOR";
+
+/** The error codes watch_createWatcher documents (x-error-codes); see isApiErrorCode. */
+export type WatchWatchersCreateErrorCode = "INVALID_REQUEST" | "INVALID_PAGINATION" | "INVALID_CURSOR" | "LIMIT_EXCEEDED" | "IDEMPOTENCY_KEY_REUSED" | "HISTORY_GAP" | "WATCHER_START_FAILED";
+
+/** The error codes watch_getWatcher documents (x-error-codes); see isApiErrorCode. */
+export type WatchWatchersGetErrorCode = "WATCHER_NOT_FOUND";
+
+/** The error codes watch_updateWatcher documents (x-error-codes); see isApiErrorCode. */
+export type WatchWatchersUpdateErrorCode = "INVALID_REQUEST" | "INVALID_PAGINATION" | "INVALID_CURSOR" | "WATCHER_NOT_FOUND" | "LIMIT_EXCEEDED" | "HISTORY_GAP" | "WATCHER_START_FAILED";
+
+/** The error codes watch_deleteWatcher documents (x-error-codes); see isApiErrorCode. */
+export type WatchWatchersDeleteErrorCode = "WATCHER_NOT_FOUND";
+
+/** The error codes watch_listWatcherEvents documents (x-error-codes); see isApiErrorCode. */
+export type WatchEventsListErrorCode = "INVALID_REQUEST" | "INVALID_PAGINATION" | "INVALID_CURSOR" | "WATCHER_NOT_FOUND" | "LIMIT_EXCEEDED" | "HISTORY_GAP";
+
+/** The error codes watch_streamWatcherEventsSse documents (x-error-codes); see isApiErrorCode. */
+export type WatchEventsStreamErrorCode = "INVALID_REQUEST" | "INVALID_PAGINATION" | "INVALID_CURSOR" | "WATCHER_NOT_FOUND" | "LIMIT_EXCEEDED" | "HISTORY_GAP" | "MAX_CLIENTS_REACHED";
+
+/** The error codes watch_streamWatcherEventsWs documents (x-error-codes); see isApiErrorCode. */
+export type WatchEventsConnectErrorCode = "INVALID_REQUEST" | "INVALID_PAGINATION" | "INVALID_CURSOR" | "WATCHER_NOT_FOUND" | "LIMIT_EXCEEDED" | "HISTORY_GAP" | "MAX_CLIENTS_REACHED";
+
+/** The error codes cron_listAllCrontabs documents (x-error-codes); see isApiErrorCode. */
+export type CronCrontabsListErrorCode = "INVALID_PAGINATION" | "STORED_CRONTAB_INVALID" | "BACKEND_ERROR";
+
+/** The error codes cron_getCrontab documents (x-error-codes); see isApiErrorCode. */
+export type CronCrontabsGetErrorCode = "INVALID_USER" | "USER_NOT_FOUND" | "STORED_CRONTAB_INVALID" | "BACKEND_ERROR";
+
+/** The error codes cron_putCrontab documents (x-error-codes); see isApiErrorCode. */
+export type CronCrontabsSetErrorCode = "INVALID_USER" | "INVALID_SCHEDULE" | "INVALID_COMMAND" | "INVALID_NAME" | "INVALID_COMMENT" | "INVALID_ID" | "INVALID_CRONTAB" | "INVALID_JSON" | "INVALID_BODY" | "USER_NOT_FOUND" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "BACKEND_ERROR";
+
+/** The error codes cron_listEntries documents (x-error-codes); see isApiErrorCode. */
+export type CronEntriesListErrorCode = "INVALID_USER" | "INVALID_PAGINATION" | "USER_NOT_FOUND" | "STORED_CRONTAB_INVALID" | "BACKEND_ERROR";
+
+/** The error codes cron_createEntry documents (x-error-codes); see isApiErrorCode. */
+export type CronEntriesCreateErrorCode = "INVALID_USER" | "INVALID_SCHEDULE" | "INVALID_COMMAND" | "INVALID_NAME" | "INVALID_COMMENT" | "INVALID_EXPIRES_AT" | "EXPIRES_IN_PAST" | "INVALID_CRONTAB" | "INVALID_JSON" | "INVALID_BODY" | "USER_NOT_FOUND" | "STORED_CRONTAB_INVALID" | "ENTRY_EXISTS" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "BACKEND_ERROR";
+
+/** The error codes cron_getEntry documents (x-error-codes); see isApiErrorCode. */
+export type CronEntriesGetErrorCode = "INVALID_USER" | "INVALID_ID" | "USER_NOT_FOUND" | "ENTRY_NOT_FOUND" | "STORED_CRONTAB_INVALID" | "BACKEND_ERROR";
+
+/** The error codes cron_updateEntry documents (x-error-codes); see isApiErrorCode. */
+export type CronEntriesUpdateErrorCode = "INVALID_USER" | "INVALID_SCHEDULE" | "INVALID_COMMAND" | "INVALID_NAME" | "INVALID_COMMENT" | "INVALID_EXPIRES_AT" | "EXPIRES_IN_PAST" | "INVALID_ID" | "INVALID_CRONTAB" | "INVALID_JSON" | "INVALID_BODY" | "USER_NOT_FOUND" | "ENTRY_NOT_FOUND" | "STORED_CRONTAB_INVALID" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "BACKEND_ERROR";
+
+/** The error codes cron_deleteEntry documents (x-error-codes); see isApiErrorCode. */
+export type CronEntriesDeleteErrorCode = "INVALID_USER" | "INVALID_ID" | "USER_NOT_FOUND" | "ENTRY_NOT_FOUND" | "STORED_CRONTAB_INVALID" | "BACKEND_ERROR";
+
+/** The error codes pipe_getMetrics documents (x-error-codes); see isApiErrorCode. */
+export type PipeKitGetMetricsErrorCode = "METHOD_NOT_ALLOWED";
+
+/** The error codes pipe_receiveData documents (x-error-codes); see isApiErrorCode. */
+export type PipeReceiveDataErrorCode = "SERVICE_WORKER" | "ACTIVE_TRANSFER" | "RECEIVER_SLOTS_FULL" | "INVALID_N" | "N_MISMATCH" | "INVALID_WAIT" | "WAIT_OUT_OF_RANGE" | "INVALID_TRANSFER_ID" | "LIVE_WITH_N" | "LIVE_WITH_SHA256" | "WS_TRANSFER_UNSUPPORTED" | "WS_N_UNSUPPORTED" | "WS_LIVE_UNSUPPORTED" | "WS_INVALID_PROTOCOL" | "WS_INVALID_HANDSHAKE" | "TRANSFER_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "TTL_EXPIRED" | "TTL_EXPIRED_RECEIVERS" | "WS_PAIR_FULL" | "WS_IN_USE_BY_TRANSFER" | "IN_USE_BY_WS" | "WS_PROTOCOL_MISMATCH" | "IN_USE_BY_LIVE" | "IN_USE_BY_TRANSFER" | "PATH_TOO_LONG" | "WS_UPGRADE_REQUIRED" | "TOO_MANY_PENDING" | "TOO_MANY_ACTIVE" | "TOO_MANY_WS_PAIRS" | "LIVE_FULL" | "TOO_MANY_LIVE_VIEWERS" | "WS_NOT_ENABLED" | "SHUTTING_DOWN";
+
+/** The error codes pipe_sendData documents (x-error-codes); see isApiErrorCode. */
+export type PipeSendErrorCode = "RESERVED_PATH" | "DUPLICATE_SENDER" | "ACTIVE_TRANSFER" | "INVALID_N" | "N_MISMATCH" | "CONTENT_RANGE" | "INVALID_WAIT" | "WAIT_OUT_OF_RANGE" | "LIVE_WITH_N" | "LIVE_WITH_SHA256" | "INVALID_TRANSFER" | "LIVE_WITH_WS" | "LIVE_MULTIPART" | "METHOD_NOT_ALLOWED" | "IN_USE_BY_WS" | "IN_USE_BY_LIVE" | "IN_USE_BY_TRANSFER" | "TRANSFER_ID_IN_USE" | "PATH_TOO_LONG" | "TOO_MANY_PENDING" | "TOO_MANY_ACTIVE" | "TOO_MANY_LIVE";
+
+/** The error codes pipe_sendDataPut documents (x-error-codes); see isApiErrorCode. */
+export type PipeSendDataPutErrorCode = "RESERVED_PATH" | "DUPLICATE_SENDER" | "INVALID_N" | "CONTENT_RANGE" | "INVALID_WAIT" | "WAIT_OUT_OF_RANGE" | "LIVE_WITH_N" | "LIVE_WITH_SHA256" | "INVALID_TRANSFER" | "LIVE_WITH_WS" | "LIVE_MULTIPART" | "METHOD_NOT_ALLOWED" | "IN_USE_BY_WS" | "IN_USE_BY_LIVE" | "IN_USE_BY_TRANSFER" | "TRANSFER_ID_IN_USE" | "PATH_TOO_LONG" | "TOO_MANY_PENDING" | "TOO_MANY_LIVE";
+
+/** The error codes pipe_headPipeStatus documents (x-error-codes); see isApiErrorCode. */
+export type PipeHeadPipeStatusErrorCode = "METHOD_NOT_ALLOWED";
+
+/** The error codes notes_uploadAvatar documents (x-error-codes); see isApiErrorCode. */
+export type NotesAvatarsUploadErrorCode = "avatar_file_not_uploaded" | "avatar_upload_failed" | "avatar_processing_busy";
+
+/** The error codes notes_downloadAvatar documents (x-error-codes); see isApiErrorCode. */
+export type NotesAvatarsDownloadErrorCode = "avatar_not_found" | "avatar_download_failed";
+
+/** The error codes notes_listNotebooks documents (x-error-codes); see isApiErrorCode. */
+export type NotesNotebooksListErrorCode = "bad_request";
+
+/** The error codes notes_createNotebook documents (x-error-codes); see isApiErrorCode. */
+export type NotesNotebooksCreateErrorCode = "notebook_name_required";
+
+/** The error codes notes_getNotebook documents (x-error-codes); see isApiErrorCode. */
+export type NotesNotebooksGetErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_updateNotebook documents (x-error-codes); see isApiErrorCode. */
+export type NotesNotebooksUpdateErrorCode = "notebook_readonly" | "notebook_update_not_allowed" | "notebook_no_access" | "notebook_not_found" | "notebook_update_failed";
+
+/** The error codes notes_deleteNotebook documents (x-error-codes); see isApiErrorCode. */
+export type NotesNotebooksDeleteErrorCode = "notebook_delete_not_allowed" | "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_tusCreateUpload documents (x-error-codes); see isApiErrorCode. */
+export type NotesFilesUploadsCreateErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_tusUploadChunk documents (x-error-codes); see isApiErrorCode. */
+export type NotesFilesUploadsWriteChunkErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_tusAbortUpload documents (x-error-codes); see isApiErrorCode. */
+export type NotesFilesUploadsCancelErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_tusCheckUpload documents (x-error-codes); see isApiErrorCode. */
+export type NotesFilesUploadsGetOffsetErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_downloadFile documents (x-error-codes); see isApiErrorCode. */
+export type NotesFilesDownloadErrorCode = "file_not_found" | "file_no_access" | "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_listFiles documents (x-error-codes); see isApiErrorCode. */
+export type NotesFilesListErrorCode = "notebook_not_found" | "notebook_no_access";
+
+/** The error codes notes_listNodes documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesListErrorCode = "forbidden" | "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_createNode documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesCreateErrorCode = "bad_request" | "parent_required" | "section_must_be_root" | "forbidden" | "notebook_no_access" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_getNodeByAlias documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesResolveErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_getNode documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesGetErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_updateNode documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesUpdateErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_deleteNode documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesDeleteErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_listNodeChildren documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesListChildrenErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_createNodeExportTicket documents (x-error-codes); see isApiErrorCode. */
+export type NotesDocumentCreateExportTicketErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_getDocument documents (x-error-codes); see isApiErrorCode. */
+export type NotesDocumentGetErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_putDocument documents (x-error-codes); see isApiErrorCode. */
+export type NotesDocumentSetErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "version_conflict" | "unknown";
+
+/** The error codes notes_patchDocument documents (x-error-codes); see isApiErrorCode. */
+export type NotesDocumentUpdateErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "version_conflict" | "unknown";
+
+/** The error codes notes_appendDocument documents (x-error-codes); see isApiErrorCode. */
+export type NotesDocumentAppendErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "version_conflict" | "unknown";
+
+/** The error codes notes_listCollaborators documents (x-error-codes); see isApiErrorCode. */
+export type NotesCollaboratorsListErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_addCollaborator documents (x-error-codes); see isApiErrorCode. */
+export type NotesCollaboratorsAddErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "user_not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_updateCollaborator documents (x-error-codes); see isApiErrorCode. */
+export type NotesCollaboratorsSetRoleErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_removeCollaborator documents (x-error-codes); see isApiErrorCode. */
+export type NotesCollaboratorsRemoveErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_listReactions documents (x-error-codes); see isApiErrorCode. */
+export type NotesReactionsListErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_addReaction documents (x-error-codes); see isApiErrorCode. */
+export type NotesReactionsAddErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "bad_request" | "unknown";
+
+/** The error codes notes_removeReaction documents (x-error-codes); see isApiErrorCode. */
+export type NotesReactionsRemoveErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_markNodeSeen documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesMarkSeenErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "bad_request" | "unknown";
+
+/** The error codes notes_markNodeOpened documents (x-error-codes); see isApiErrorCode. */
+export type NotesNodesMarkOpenedErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "bad_request" | "unknown";
+
+/** The error codes notes_exportBlockSvg documents (x-error-codes); see isApiErrorCode. */
+export type NotesDocumentExportBlockErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_listComments documents (x-error-codes); see isApiErrorCode. */
+export type NotesCommentsListErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_createComment documents (x-error-codes); see isApiErrorCode. */
+export type NotesCommentsCreateErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_listCommentAnchors documents (x-error-codes); see isApiErrorCode. */
+export type NotesCommentsListAnchorsErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_editComment documents (x-error-codes); see isApiErrorCode. */
+export type NotesCommentsUpdateErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_deleteComment documents (x-error-codes); see isApiErrorCode. */
+export type NotesCommentsDeleteErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_resolveComment documents (x-error-codes); see isApiErrorCode. */
+export type NotesCommentsResolveErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_reanchorComment documents (x-error-codes); see isApiErrorCode. */
+export type NotesCommentsSetAnchorErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_listDocumentVersions documents (x-error-codes); see isApiErrorCode. */
+export type NotesVersionsListErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_createDocumentVersion documents (x-error-codes); see isApiErrorCode. */
+export type NotesVersionsCreateErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_getDocumentVersion documents (x-error-codes); see isApiErrorCode. */
+export type NotesVersionsGetErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_deleteDocumentVersion documents (x-error-codes); see isApiErrorCode. */
+export type NotesVersionsDeleteErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_restoreDocumentVersion documents (x-error-codes); see isApiErrorCode. */
+export type NotesVersionsRestoreErrorCode = "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_listRecords documents (x-error-codes); see isApiErrorCode. */
+export type NotesRecordsListErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_createRecord documents (x-error-codes); see isApiErrorCode. */
+export type NotesRecordsCreateErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "bad_request" | "unknown";
+
+/** The error codes notes_searchRecords documents (x-error-codes); see isApiErrorCode. */
+export type NotesRecordsSearchErrorCode = "bad_request" | "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_getRecord documents (x-error-codes); see isApiErrorCode. */
+export type NotesRecordsGetErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found";
+
+/** The error codes notes_updateRecord documents (x-error-codes); see isApiErrorCode. */
+export type NotesRecordsUpdateErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_deleteRecord documents (x-error-codes); see isApiErrorCode. */
+export type NotesRecordsDeleteErrorCode = "forbidden" | "notebook_no_access" | "not_found" | "notebook_not_found" | "unknown";
+
+/** The error codes notes_createUsers documents (x-error-codes); see isApiErrorCode. */
+export type NotesMembersInviteErrorCode = "user_input_required" | "notebook_readonly" | "user_invite_no_access" | "notebook_no_access" | "notebook_not_found";
+
+/** The error codes notes_updateUserRole documents (x-error-codes); see isApiErrorCode. */
+export type NotesMembersSetRoleErrorCode = "notebook_readonly" | "user_update_no_access" | "notebook_no_access" | "user_not_found" | "notebook_not_found";
+
+/** The error codes notes_syncMutations documents (x-error-codes); see isApiErrorCode. */
+export type NotesMutationsSyncErrorCode = "notebook_readonly" | "notebook_no_access" | "notebook_not_found";
+
+/** The error codes tunnel_killSession documents (x-error-codes); see isApiErrorCode. */
+export type TunnelSessionsCloseErrorCode = "INVALID_GRACE_MS" | "SESSION_NOT_FOUND";
+
+/** The error codes run_searchCandidates documents (x-error-codes); see isApiErrorCode. */
+export type RunSearchCandidatesErrorCode = "MISSING_APP" | "INVALID_SELECTOR" | "UNKNOWN_PROFILE" | "SOURCE_RESOLUTION_FAILED";
+
+/** The error codes run_searchCandidatesPaged documents (x-error-codes); see isApiErrorCode. */
+export type RunSearchErrorCode = "MISSING_APP" | "INVALID_SELECTOR" | "UNKNOWN_PROFILE" | "INVALID_CURSOR" | "CURSOR_SET_EXPIRED" | "SOURCE_RESOLUTION_FAILED";
+
+/** The error codes run_createSearchJob documents (x-error-codes); see isApiErrorCode. */
+export type RunJobsCreateSearchErrorCode = "MISSING_APP" | "INVALID_SELECTOR" | "UNKNOWN_PROFILE" | "JOB_START_FAILED";
+
+/** The error codes run_preflightRun documents (x-error-codes); see isApiErrorCode. */
+export type RunTestErrorCode = "MISSING_APP" | "INVALID_SELECTOR" | "UNKNOWN_PROFILE" | "INVALID_PICK" | "NO_CANDIDATES" | "POLICY_DENIED" | "SET_EXPIRED" | "SOURCE_RESOLUTION_FAILED";
+
+/** The error codes run_runBatch documents (x-error-codes); see isApiErrorCode. */
+export type RunResolveManyErrorCode = "INVALID_BATCH_ITEM" | "MISSING_APP" | "INVALID_SELECTOR" | "UNKNOWN_PROFILE" | "INVALID_PICK" | "NO_CANDIDATES" | "SET_EXPIRED" | "POLICY_DENIED" | "SOURCE_RESOLUTION_FAILED" | "INVALID_JSON" | "INVALID_BODY";
+
+/** The error codes run_resolveGet documents (x-error-codes); see isApiErrorCode. */
+export type RunResolveGetErrorCode = "MISSING_APP" | "INVALID_SELECTOR" | "UNKNOWN_PROFILE" | "INVALID_PICK" | "NO_CANDIDATES" | "POLICY_DENIED" | "SET_EXPIRED" | "INTERNAL_ERROR" | "SOURCE_RESOLUTION_FAILED";
+
+/** The error codes run_resolve documents (x-error-codes); see isApiErrorCode. */
+export type RunResolveErrorCode = "MISSING_APP" | "INVALID_SELECTOR" | "UNKNOWN_PROFILE" | "INVALID_PICK" | "NO_CANDIDATES" | "POLICY_DENIED" | "SET_EXPIRED" | "INTERNAL_ERROR" | "SOURCE_RESOLUTION_FAILED";
+
+/** The error codes run_createSource documents (x-error-codes); see isApiErrorCode. */
+export type RunSourcesCreateErrorCode = "MISSING_SOURCE_ID" | "INVALID_SOURCE_ID" | "SOURCE_PROVIDER_MISMATCH" | "INVALID_SOURCE" | "INVALID_BODY" | "SOURCE_ALREADY_EXISTS" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_updateSource documents (x-error-codes); see isApiErrorCode. */
+export type RunSourcesUpdateErrorCode = "INVALID_SOURCE" | "INVALID_JSON" | "SOURCE_NOT_FOUND" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_deleteSource documents (x-error-codes); see isApiErrorCode. */
+export type RunSourcesDeleteErrorCode = "SOURCE_NOT_FOUND" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_syncSource documents (x-error-codes); see isApiErrorCode. */
+export type RunSourcesSyncErrorCode = "SOURCE_NOT_FOUND" | "SYNC_START_FAILED";
+
+/** The error codes run_syncAllSources documents (x-error-codes); see isApiErrorCode. */
+export type RunSourcesSyncAllErrorCode = "SYNC_START_FAILED";
+
+/** The error codes run_getSourceDiagnostics documents (x-error-codes); see isApiErrorCode. */
+export type RunSourcesGetDiagnosticsErrorCode = "SOURCE_NOT_FOUND";
+
+/** The error codes run_createProfile documents (x-error-codes); see isApiErrorCode. */
+export type RunProfilesCreateErrorCode = "MISSING_PROFILE_NAME" | "INVALID_BODY" | "INVALID_JSON" | "PROFILE_ALREADY_EXISTS" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_updateProfile documents (x-error-codes); see isApiErrorCode. */
+export type RunProfilesUpdateErrorCode = "INVALID_PROFILE" | "INVALID_JSON" | "PROFILE_NOT_FOUND" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_deleteProfile documents (x-error-codes); see isApiErrorCode. */
+export type RunProfilesDeleteErrorCode = "PROFILE_NOT_FOUND" | "BUILTIN_PROFILE" | "PROFILE_SELECTED" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_selectProfile documents (x-error-codes); see isApiErrorCode. */
+export type RunProfilesUseErrorCode = "PROFILE_NOT_FOUND" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_createRecipe documents (x-error-codes); see isApiErrorCode. */
+export type RunRecipesCreateErrorCode = "MISSING_RECIPE_NAME" | "INVALID_BODY" | "RECIPE_ALREADY_EXISTS" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_getRecipe documents (x-error-codes); see isApiErrorCode. */
+export type RunRecipesGetErrorCode = "RECIPE_NOT_FOUND";
+
+/** The error codes run_updateRecipe documents (x-error-codes); see isApiErrorCode. */
+export type RunRecipesUpdateErrorCode = "INVALID_RECIPE" | "INVALID_JSON" | "RECIPE_NOT_FOUND" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_deleteRecipe documents (x-error-codes); see isApiErrorCode. */
+export type RunRecipesDeleteErrorCode = "RECIPE_NOT_FOUND" | "CONFIG_SAVE_FAILED";
+
+/** The error codes run_searchRecipe documents (x-error-codes); see isApiErrorCode. */
+export type RunRecipesSearchErrorCode = "OVERRIDE_NOT_ALLOWED" | "UNKNOWN_PROFILE" | "RECIPE_NOT_FOUND" | "SOURCE_RESOLUTION_FAILED";
+
+/** The error codes run_runRecipe documents (x-error-codes); see isApiErrorCode. */
+export type RunRecipesResolveErrorCode = "OVERRIDE_NOT_ALLOWED" | "UNKNOWN_PROFILE" | "INVALID_PICK" | "NO_CANDIDATES" | "POLICY_DENIED" | "RECIPE_NOT_FOUND" | "SET_EXPIRED" | "SOURCE_RESOLUTION_FAILED";
+
+/** The error codes run_getJobStatus documents (x-error-codes); see isApiErrorCode. */
+export type RunJobsGetErrorCode = "JOB_NOT_FOUND";
+
+/** The error codes run_listJobs documents (x-error-codes); see isApiErrorCode. */
+export type RunJobsListErrorCode = "INVALID_QUERY";
+
+/** The error codes run_cancelJob documents (x-error-codes); see isApiErrorCode. */
+export type RunJobsCancelErrorCode = "JOB_NOT_FOUND" | "JOB_ALREADY_FINISHED" | "JOB_NOT_CANCELLABLE";
+
+/** The error codes proxyLogs_listLogs documents (x-error-codes); see isApiErrorCode. */
+export type ProxyLogsListErrorCode = "rate_limited" | "audit_quota_exceeded" | "audit_write_blocked" | "audit_write_failed";
+
+/** The error codes proxyLogs_getLogStats documents (x-error-codes); see isApiErrorCode. */
+export type ProxyLogsGetStatsErrorCode = "rate_limited" | "audit_quota_exceeded" | "audit_write_blocked" | "audit_write_failed";
+
+/** The error codes proxyLogs_streamLogs documents (x-error-codes); see isApiErrorCode. */
+export type ProxyLogsStreamErrorCode = "scope_mismatch" | "rate_limited" | "audit_quota_exceeded" | "audit_write_blocked" | "audit_write_failed" | "check_timeout";
+
+/** The error codes agent_getACPStatus documents (x-error-codes); see isApiErrorCode. */
+export type AgentAcpGetStatusErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setACPEnabled documents (x-error-codes); see isApiErrorCode. */
+export type AgentSetACPEnabledErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "unknown_agent" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setACPAgentModel documents (x-error-codes); see isApiErrorCode. */
+export type AgentAcpSetModelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "unknown_agent" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setACPSecret documents (x-error-codes); see isApiErrorCode. */
+export type AgentAcpSetSecretErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "unknown_agent" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_listAgentFiles documents (x-error-codes); see isApiErrorCode. */
+export type AgentFilesListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_listAgents documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_createAgent documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsCreateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteAgent documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsDeleteErrorCode = "bad_request" | "tool_mutation_refused" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "tool_not_found" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_copyAgent documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsCopyErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setAgentModel documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsSetModelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_renameAgent documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsRenameErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_resetAgentToShipped documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsResetErrorCode = "bad_request" | "tool_mutation_refused" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "tool_not_found" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_getAgentSource documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsGetSourceErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_putAgentSource documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsSetSourceErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "revision_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setAgentTools documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsSetToolsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_toggleAgentTool documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsToggleToolErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setAgentTurns documents (x-error-codes); see isApiErrorCode. */
+export type AgentDefinitionsSetTurnLimitErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listBots documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_createBot documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsCreateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "bot_exists" | "realm_blocked" | "payload_too_large" | "model_unavailable" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getBot documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_updateBot documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsUpdateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "field_immutable" | "forbidden" | "not_found" | "realm_blocked" | "payload_too_large" | "model_unavailable" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteBot documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsDeleteErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getBotArchive documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsGetArchiveErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listBotDelegates documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsListDelegatesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_stopBotDelegate documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsStopDelegateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "session_closed" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_forgetBot documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsForgetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_putBotGuardrails documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsSetGuardrailsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getBotLog documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsGetLogErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_postBotMessage documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsSendMessageErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "idempotency_keys_exhausted" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_purgeBotArchive documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsPurgeArchiveErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_resetBot documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsResetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_streamBotLog documents (x-error-codes); see isApiErrorCode. */
+export type AgentBotsStreamErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getBotURL documents (x-error-codes); see isApiErrorCode. */
+export type AgentGetBotURLErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "method_not_allowed" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_postBotURL documents (x-error-codes); see isApiErrorCode. */
+export type AgentPostBotURLErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "model_not_found" | "method_not_allowed" | "realm_blocked" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "idempotency_keys_exhausted" | "bot_busy" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteBotURL documents (x-error-codes); see isApiErrorCode. */
+export type AgentDeleteBotURLErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "method_not_allowed" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getBotURLPath documents (x-error-codes); see isApiErrorCode. */
+export type AgentGetBotURLPathErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "method_not_allowed" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_postBotURLPath documents (x-error-codes); see isApiErrorCode. */
+export type AgentPostBotURLPathErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "model_not_found" | "method_not_allowed" | "realm_blocked" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "idempotency_keys_exhausted" | "bot_busy" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteBotURLPath documents (x-error-codes); see isApiErrorCode. */
+export type AgentDeleteBotURLPathErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "method_not_allowed" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getChanges documents (x-error-codes); see isApiErrorCode. */
+export type AgentChangesGetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_streamChanges documents (x-error-codes); see isApiErrorCode. */
+export type AgentChangesStreamErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_createCompatAnthropicMessage documents (x-error-codes); see isApiErrorCode. */
+export type AgentCreateCompatAnthropicMessageErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "model_not_found" | "realm_blocked" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "idempotency_keys_exhausted" | "bot_busy" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listCompatAnthropicModels documents (x-error-codes); see isApiErrorCode. */
+export type AgentListCompatAnthropicModelsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getCompatAnthropicModel documents (x-error-codes); see isApiErrorCode. */
+export type AgentGetCompatAnthropicModelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "model_not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_createCompatOpenAIChatCompletion documents (x-error-codes); see isApiErrorCode. */
+export type AgentCreateCompatOpenAIChatCompletionErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "model_not_found" | "realm_blocked" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "idempotency_keys_exhausted" | "bot_busy" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listCompatOpenAIModels documents (x-error-codes); see isApiErrorCode. */
+export type AgentListCompatOpenAIModelsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getCompatOpenAIModel documents (x-error-codes); see isApiErrorCode. */
+export type AgentGetCompatOpenAIModelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "model_not_found" | "realm_blocked" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_createCompatOpenAIResponse documents (x-error-codes); see isApiErrorCode. */
+export type AgentCreateCompatOpenAIResponseErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "model_not_found" | "realm_blocked" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "idempotency_keys_exhausted" | "bot_busy" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_createCompletion documents (x-error-codes); see isApiErrorCode. */
+export type AgentCreateCompletionErrorCode = "bad_request" | "unsupported_setting" | "realm_scope_unsupported" | "forbidden" | "payload_too_large" | "model_unavailable" | "rate_limited" | "internal_error" | "upstream_error" | "service_unavailable" | "timeout";
+
+/** The error codes agent_streamCompletion documents (x-error-codes); see isApiErrorCode. */
+export type AgentStreamCompletionErrorCode = "bad_request" | "unsupported_setting" | "realm_scope_unsupported" | "forbidden" | "payload_too_large" | "model_unavailable" | "rate_limited" | "internal_error" | "service_unavailable" | "timeout";
+
+/** The error codes agent_listContainers documents (x-error-codes); see isApiErrorCode. */
+export type AgentContainersListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "not_logged_in" | "hoody_auth_expired" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listPendingGates documents (x-error-codes); see isApiErrorCode. */
+export type AgentGatesListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_githubSetActiveAccount documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubUseAccountErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubLogin documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubLoginErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "github_token_rejected" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubLoginPoll documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubPollLoginErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "github_login_denied" | "forbidden" | "not_found" | "github_login_expired" | "payload_too_large" | "github_token_rejected" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubLogout documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubLogoutErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubAuthStatus documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubGetAuthErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_store_corrupt" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubCreateBranch documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCreateBranchErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubDeleteBranch documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubDeleteBranchErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubSwitchBranch documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubUseBranchErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubBranches documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubListBranchesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubClone documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCloneErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubCommit documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCommitErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "unresolved_conflicts" | "nothing_to_commit" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubCommitPush documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCommitPushErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "unresolved_conflicts" | "unsafe_transport_config" | "unsafe_push_config" | "detached_head" | "invalid_branch" | "invalid_remote" | "no_remote" | "ambiguous_remote" | "unsafe_push_destination" | "upstream_exists" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "push_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubSuggestCommitMessage documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubSuggestCommitMessageErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "nothing_to_commit" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubDiff documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubDiffErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubRepoIdentity documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubResolveRepoErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubListIssues documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubListIssuesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubCreateIssue documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCreateIssueErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubLog documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubListCommitsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubListPRs documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubListPrsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubPullRequest documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCreatePrErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "github_token_forbidden" | "forbidden" | "not_found" | "unsafe_transport_config" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubCheckoutPR documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCheckoutPrErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "unsafe_transport_config" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubMergePR documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubMergePrErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubReconnectRepo documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubSetRepoCredentialsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubRepos documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubListReposErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "rate_limited" | "internal_error" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubStash documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubPushStashErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubStashPop documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubPopStashErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubStatus documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubGetStatusErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubSync documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubSyncErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "github_token_forbidden" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "github_token_invalid" | "github_account_missing" | "payload_too_large" | "rate_limited" | "internal_error" | "sync_step_failed" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubListWorktrees documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubListWorktreesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubAddWorktree documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubCreateWorktreeErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_githubRemoveWorktree documents (x-error-codes); see isApiErrorCode. */
+export type AgentGithubDeleteWorktreeErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "github_not_linked" | "github_store_corrupt" | "payload_too_large" | "rate_limited" | "internal_error" | "git_command_failed" | "service_unavailable" | "github_store_unavailable" | "restriction_unknown";
+
+/** The error codes agent_createHeadlessRun documents (x-error-codes); see isApiErrorCode. */
+export type AgentCreateHeadlessRunErrorCode = "bad_request" | "invalid_realm" | "realm_scope_unsupported" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_bootstrapHoodyToken documents (x-error-codes); see isApiErrorCode. */
+export type AgentBootstrapHoodyTokenErrorCode = "bad_request" | "realm_scope_unsupported" | "token_rejected" | "login_not_for_this_box" | "login_grant_insufficient" | "login_expiring" | "admin_login_refused" | "forbidden" | "not_found" | "credential_present" | "agent_login_conflict" | "bootstrap_in_progress" | "login_changed" | "payload_too_large" | "rate_limited" | "internal_error" | "commit_failed" | "service_unavailable" | "platform_starting" | "platform_unavailable";
+
+/** The error codes agent_getHoodyAuthStatus documents (x-error-codes); see isApiErrorCode. */
+export type AgentWhoamiErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_setActiveRealm documents (x-error-codes); see isApiErrorCode. */
+export type AgentRealmsUseErrorCode = "bad_request" | "realm_scope_unsupported" | "realm_not_allowed" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listHooks documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_upsertHook documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksUpsertErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "write_intent_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteHook documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksDeleteErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "write_intent_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_beginHookWrite documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksCreateWriteIntentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_disableAllHooks documents (x-error-codes); see isApiErrorCode. */
+export type AgentDisableAllHooksErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "write_intent_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_reloadHooks documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksReloadErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getHookRules documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksGetRulesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setHookRules documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksSetRulesErrorCode = "bad_request" | "realm_scope_unsupported" | "rule_tools_not_allowed" | "invalid_realm" | "forbidden" | "not_found" | "revision_conflict" | "write_intent_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_testHook documents (x-error-codes); see isApiErrorCode. */
+export type AgentTestHookErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approval_policy_unsatisfiable" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_toggleHook documents (x-error-codes); see isApiErrorCode. */
+export type AgentToggleHookErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "write_intent_invalid" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_ackHookTrust documents (x-error-codes); see isApiErrorCode. */
+export type AgentHooksTrustErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_decideJev documents (x-error-codes); see isApiErrorCode. */
+export type AgentJevDecideErrorCode = "bad_request" | "realm_scope_unsupported" | "jev_bad_request" | "forbidden" | "jev_disabled" | "payload_too_large" | "jev_too_large" | "jev_no_key" | "rate_limited" | "internal_error" | "jev_auth" | "jev_payment" | "jev_invalid_answer" | "jev_unavailable" | "jev_cancelled" | "restriction_unknown" | "jev_timeout";
+
+/** The error codes agent_listJevModels documents (x-error-codes); see isApiErrorCode. */
+export type AgentJevListModelsErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_getJevSettings documents (x-error-codes); see isApiErrorCode. */
+export type AgentJevGetSettingsErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_updateJevSettings documents (x-error-codes); see isApiErrorCode. */
+export type AgentJevUpdateSettingsErrorCode = "bad_request" | "realm_scope_unsupported" | "jev_bad_request" | "forbidden" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed";
+
+/** The error codes agent_testJev documents (x-error-codes); see isApiErrorCode. */
+export type AgentJevTestErrorCode = "bad_request" | "realm_scope_unsupported" | "jev_bad_request" | "forbidden" | "jev_disabled" | "payload_too_large" | "jev_too_large" | "jev_no_key" | "rate_limited" | "internal_error" | "jev_auth" | "jev_payment" | "jev_invalid_answer" | "jev_unavailable" | "jev_cancelled" | "jev_timeout";
+
+/** The error codes agent_getJob documents (x-error-codes); see isApiErrorCode. */
+export type AgentJobsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error";
+
+/** The error codes agent_deleteJob documents (x-error-codes); see isApiErrorCode. */
+export type AgentJobsDeleteErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "job_not_cancellable" | "rate_limited" | "internal_error";
+
+/** The error codes agent_getJobResult documents (x-error-codes); see isApiErrorCode. */
+export type AgentJobsGetResultErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error";
+
+/** The error codes agent_queryLogs documents (x-error-codes); see isApiErrorCode. */
+export type AgentLogsListErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_readLogEntry documents (x-error-codes); see isApiErrorCode. */
+export type AgentLogsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_exportLogs documents (x-error-codes); see isApiErrorCode. */
+export type AgentLogsExportErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_logsSources documents (x-error-codes); see isApiErrorCode. */
+export type AgentLogsListSourcesErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_logsStats documents (x-error-codes); see isApiErrorCode. */
+export type AgentLogsGetStatsErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_streamLogs documents (x-error-codes); see isApiErrorCode. */
+export type AgentLogsStreamErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listAllLoops documents (x-error-codes); see isApiErrorCode. */
+export type AgentLoopsListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_importMCPServers documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpImportServersErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "mcp_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_parseMCPImport documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpPreviewImportErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_probeMCPServer documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpTestServerErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "human_only" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_reconnectMCP documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpReconnectErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listMCPServers documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpListServersErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_upsertMCPServer documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpUpsertServerErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "mcp_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteMCPServer documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpDeleteServerErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "mcp_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setMCPServerEnabled documents (x-error-codes); see isApiErrorCode. */
+export type AgentSetMCPServerEnabledErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "mcp_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_beginMCPWrite documents (x-error-codes); see isApiErrorCode. */
+export type AgentMcpCreateWriteIntentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_consolidateMemory documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryConsolidateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "human_only" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error";
+
+/** The error codes agent_getMemoryDataHost documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryGetDataHostErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_assignMemoryDataHost documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryClaimDataHostErrorCode = "bad_request" | "realm_scope_unsupported" | "unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "fleet_disabled" | "refused_no_coordinator" | "refused_realm_changed" | "payload_too_large" | "rate_limited" | "internal_error" | "stopped" | "refused" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_setMemoryEnabled documents (x-error-codes); see isApiErrorCode. */
+export type AgentSetMemoryEnabledErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_flushMemory documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryFlushErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_getMemoryGraph documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryGetGraphErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listMemoryItems documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryListItemsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_saveMemoryItem documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryCreateItemErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "realm_mismatch" | "payload_too_large" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteMemoryItem documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryDeleteItemErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "realm_mismatch" | "payload_too_large" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getMemoryItem documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryGetItemErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_editMemoryItem documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryUpdateItemErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "realm_mismatch" | "payload_too_large" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listMemoryProjects documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryListProjectsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteMemoryProject documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryDeleteProjectErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "write_intent_invalid" | "realm_mismatch" | "payload_too_large" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_searchMemory documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemorySearchErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_unavailable" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getMemoryStatus documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryGetStatusErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_beginMemoryWrite documents (x-error-codes); see isApiErrorCode. */
+export type AgentMemoryCreateWriteIntentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "realm_mismatch" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_metrics documents (x-error-codes); see isApiErrorCode. */
+export type AgentKitGetMetricsErrorCode = "forbidden" | "rate_limited";
+
+/** The error codes agent_listModels documents (x-error-codes); see isApiErrorCode. */
+export type AgentModelsListErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_getModel documents (x-error-codes); see isApiErrorCode. */
+export type AgentModelsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listProviders documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersListErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_createProvider documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersCreateErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "provider_exists" | "model_prefix_taken" | "payload_too_large" | "provider_invalid" | "idempotency_key_reused" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_getProvider documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersGetErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_updateProvider documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersUpdateErrorCode = "bad_request" | "realm_scope_unsupported" | "provider_field_immutable" | "admin_unauthorized" | "forbidden" | "not_found" | "provider_builtin" | "provider_not_managed" | "payload_too_large" | "provider_invalid" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_deleteProvider documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersDeleteErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "provider_builtin" | "provider_not_managed" | "provider_invalid" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_getProviderAuth documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersGetAuthErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listProviderAccounts documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersListAccountsErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "oauth_unsupported" | "rate_limited" | "internal_error" | "store_failed";
+
+/** The error codes agent_addProviderAccount documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersAddAccountErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "job_not_found" | "payload_too_large" | "oauth_unsupported" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_removeProviderAccount documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersRemoveAccountErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "oauth_unsupported" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_setProviderAccountActive documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersUseAccountErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "oauth_unsupported" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_setProviderAPIKey documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersSetApiKeyErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "oauth_unsupported" | "auth_method_unsupported" | "credential_not_stored" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_deleteProviderAPIKey documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersDeleteApiKeyErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "oauth_unsupported" | "auth_method_unsupported" | "credential_not_stored" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_setProviderDefault documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersSetDefaultAuthErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "oauth_unsupported" | "auth_method_unsupported" | "credential_not_stored" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_startProviderOAuth documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersStartOauthErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "job_not_found" | "payload_too_large" | "oauth_unsupported" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_logoutProviderOAuth documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersLogoutOauthErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "job_not_found" | "oauth_unsupported" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_pollProviderOAuth documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersPollOauthErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "job_not_found" | "oauth_unsupported" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_submitProviderOAuthCode documents (x-error-codes); see isApiErrorCode. */
+export type AgentProvidersSubmitOauthCodeErrorCode = "bad_request" | "realm_scope_unsupported" | "admin_unauthorized" | "forbidden" | "not_found" | "job_not_found" | "payload_too_large" | "oauth_unsupported" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listRealms documents (x-error-codes); see isApiErrorCode. */
+export type AgentRealmsListErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "not_logged_in" | "hoody_auth_expired" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listSessions documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_createSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsCreateErrorCode = "bad_request" | "realm_blocked" | "realm_corrupt" | "realm_conflict" | "invalid_realm" | "container_conflict" | "delegated_agent_invalid" | "helper_gates_unavailable" | "outcome_claims_unavailable" | "frame_tools_unavailable" | "invalid_tool_mode" | "invalid_dir_scope" | "realm_not_allowed" | "forbidden" | "not_found" | "session_busy" | "session_not_attachable" | "approval_policy_unsatisfiable" | "approval_policy_locked" | "binding_mismatch" | "binding_unverifiable" | "creation_interrupted" | "approver_lease_invalid" | "payload_too_large" | "cwd_not_found" | "container_gone" | "acp_container_unsupported" | "idempotency_key_reused" | "unknown_model" | "rate_limited" | "internal_error" | "service_unavailable" | "admission_write_failed" | "policy_commit_failed" | "session_terminating" | "restriction_unknown";
+
+/** The error codes agent_listSessionCwds documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsListDirectoriesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_getSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_renameSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsRenameErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "restriction_unknown";
+
+/** The error codes agent_deleteSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentDeleteSessionErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "session_live" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "session_terminating" | "restriction_unknown";
+
+/** The error codes agent_setSessionAfterCompaction documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetAfterCompactionErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "delegated_session" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "restriction_unknown";
+
+/** The error codes agent_setSessionAgent documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetAgentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_answerQuestion documents (x-error-codes); see isApiErrorCode. */
+export type AgentGatesAnswerErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "no_pending_gate" | "stale_gate" | "gate_already_answered" | "gate_type_mismatch" | "gate_cancelled" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "decision_unconfirmed";
+
+/** The error codes agent_answerAssist documents (x-error-codes); see isApiErrorCode. */
+export type AgentGatesSuggestErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "no_pending_gate" | "assist_in_flight" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getSessionApproval documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsGetApprovalErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_setSessionApproval documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsUpdateApprovalErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approval_policy_locked" | "approval_policy_unsatisfiable" | "session_busy" | "precondition_failed" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "policy_commit_failed" | "restriction_unknown";
+
+/** The error codes agent_setSessionApprovalRule documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetApprovalRuleErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approval_policy_locked" | "approval_policy_active" | "precondition_failed" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "policy_commit_failed" | "restriction_unknown";
+
+/** The error codes agent_deleteSessionApprovalRule documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsDeleteApprovalRuleErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approval_policy_locked" | "approval_policy_active" | "precondition_failed" | "rate_limited" | "internal_error" | "service_unavailable" | "policy_commit_failed" | "restriction_unknown";
+
+/** The error codes agent_acquireApproverLease documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsClaimApproverLeaseErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approver_lease_held" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_renewApproverLease documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsRenewApproverLeaseErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approver_lease_invalid" | "approver_lease_expired" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_releaseApproverLease documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsReleaseApproverLeaseErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approver_lease_invalid" | "approver_lease_expired" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_acquireSessionAttachment documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsClaimAttachmentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_renewSessionAttachment documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsRenewAttachmentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "attachment_expired" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_releaseSessionAttachment documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsReleaseAttachmentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_setSessionAutoReply documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetAutoReplyErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_setSessionAutoReplyWrites documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetAutoReplyWritesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_cancelSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsTurnsCancelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_closeSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsCloseErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_postSessionCommand documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsCommandsSendErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "session_closed" | "command_unsupported" | "payload_too_large" | "idempotency_key_reused" | "command_queue_full" | "idempotency_keys_exhausted" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown" | "admission_write_failed" | "admission_unconfirmed";
+
+/** The error codes agent_getSessionCommand documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsCommandsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "session_closed" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_confirmGate documents (x-error-codes); see isApiErrorCode. */
+export type AgentConfirmGateErrorCode = "bad_request" | "realm_scope_unsupported" | "approved_required" | "invalid_realm" | "forbidden" | "not_found" | "gate_decision_pending" | "gate_already_resolved" | "no_pending_gate" | "stale_gate" | "gate_type_mismatch" | "decision_incomplete" | "approver_lease_required" | "approver_lease_invalid" | "approver_lease_expired" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_setSessionEffort documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetEffortErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_setSessionHoodyEnv documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetHoodyEnvErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_decideSessionJev documents (x-error-codes); see isApiErrorCode. */
+export type AgentJevDecideForSessionErrorCode = "bad_request" | "realm_scope_unsupported" | "jev_bad_request" | "invalid_realm" | "forbidden" | "not_found" | "jev_disabled" | "payload_too_large" | "jev_too_large" | "jev_no_key" | "rate_limited" | "internal_error" | "jev_auth" | "jev_payment" | "jev_invalid_answer" | "jev_unavailable" | "jev_cancelled" | "restriction_unknown" | "jev_timeout";
+
+/** The error codes agent_listLoops documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsListLoopsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_createLoop documents (x-error-codes); see isApiErrorCode. */
+export type AgentLoopsCreateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_updateLoop documents (x-error-codes); see isApiErrorCode. */
+export type AgentLoopsUpdateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_deleteLoop documents (x-error-codes); see isApiErrorCode. */
+export type AgentLoopsDeleteErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_runLoopNow documents (x-error-codes); see isApiErrorCode. */
+export type AgentLoopsStartRunErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_postSessionMessage documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsStartTurnErrorCode = "bad_request" | "realm_scope_unsupported" | "empty_prompt" | "invalid_tool_mode" | "invalid_dir_scope" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "gate_parked" | "turn_in_flight" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "internal_error" | "service_unavailable" | "admission_unconfirmed" | "admission_write_failed" | "restriction_unknown";
+
+/** The error codes agent_setSessionModel documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetModelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "gate_parked" | "turn_in_flight" | "delegated_session" | "payload_too_large" | "model_unavailable" | "rate_limited" | "internal_error" | "service_unavailable" | "timeout";
+
+/** The error codes agent_promptStream documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsStartTurnAndStreamErrorCode = "bad_request" | "realm_scope_unsupported" | "empty_prompt" | "invalid_tool_mode" | "invalid_dir_scope" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "gate_parked" | "turn_in_flight" | "approval_policy_active" | "replay_unavailable" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "internal_error" | "service_unavailable" | "admission_unconfirmed" | "admission_write_failed" | "restriction_unknown";
+
+/** The error codes agent_promptSync documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsTurnsRunErrorCode = "bad_request" | "realm_scope_unsupported" | "empty_prompt" | "invalid_tool_mode" | "invalid_dir_scope" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "turn_in_flight" | "approval_policy_active" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "internal_error" | "service_unavailable" | "admission_unconfirmed" | "admission_write_failed" | "restriction_unknown";
+
+/** The error codes agent_replaySession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsReplayErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_getSessionRulesApplies documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsListApplicableRulesErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_getSessionState documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsGetSnapshotErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_streamSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsConnectErrorCode = "realm_scope_unsupported" | "bad_request" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "service_unavailable";
+
+/** The error codes agent_listTasks documents (x-error-codes); see isApiErrorCode. */
+export type AgentTasksListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_cancelAllTasks documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsCancelTasksErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_cancelTask documents (x-error-codes); see isApiErrorCode. */
+export type AgentTasksCancelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getTaskTranscript documents (x-error-codes); see isApiErrorCode. */
+export type AgentTasksGetTranscriptErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_listSessionTools documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsListToolsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listSessionMCPTools documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsListMcpToolsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_runSessionTool documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsRunToolErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "tool_not_found" | "tool_needs_confirmation" | "turn_in_flight" | "approver_lease_required" | "approver_lease_invalid" | "gate_parked" | "approval_policy_unsatisfiable" | "approver_lease_expired" | "payload_too_large" | "tool_not_directly_runnable" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_getSessionTranscript documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsGetTranscriptErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_trimSession documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsTrimErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listSessionTurns documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsTurnsListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_createSessionTurn documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsTurnsCreateErrorCode = "bad_request" | "realm_scope_unsupported" | "empty_prompt" | "invalid_tool_mode" | "invalid_dir_scope" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "gate_parked" | "turn_in_flight" | "payload_too_large" | "idempotency_key_reused" | "rate_limited" | "internal_error" | "service_unavailable" | "admission_unconfirmed" | "admission_write_failed" | "restriction_unknown";
+
+/** The error codes agent_getSessionTurn documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsTurnsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "turn_not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_getSessionUsage documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsGetUsageErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "restriction_unknown";
+
+/** The error codes agent_setSessionVerbosity documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetVerbosityErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_postWorkflowMessage documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsSendMessageErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "no_active_workflow" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown" | "admission_unconfirmed";
+
+/** The error codes agent_runSessionWorkflow documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsStartWorkflowErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "not_found" | "workflow_not_found" | "turn_in_flight" | "gate_parked" | "approval_policy_unsatisfiable" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "admission_write_failed" | "admission_unconfirmed" | "restriction_unknown";
+
+/** The error codes agent_setSessionYolo documents (x-error-codes); see isApiErrorCode. */
+export type AgentSessionsSetYoloErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approval_policy_locked" | "approval_policy_active" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_getSettings documents (x-error-codes); see isApiErrorCode. */
+export type AgentSettingsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_patchSettings documents (x-error-codes); see isApiErrorCode. */
+export type AgentSettingsUpdateErrorCode = "bad_request" | "realm_scope_unsupported" | "settings_key_protected" | "forbidden" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed";
+
+/** The error codes agent_listFusion documents (x-error-codes); see isApiErrorCode. */
+export type AgentFusionsListErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_upsertFusion documents (x-error-codes); see isApiErrorCode. */
+export type AgentFusionsSetErrorCode = "bad_request" | "realm_scope_unsupported" | "slug_mismatch" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_deleteFusion documents (x-error-codes); see isApiErrorCode. */
+export type AgentFusionsDeleteErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_listSkills documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error";
+
+/** The error codes agent_createSkill documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsCreateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_deleteSkill documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsDeleteErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_getSkillHubCache documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsHubGetCacheStatsErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_clearSkillHubCache documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsHubClearCacheErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_installSkillHub documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsHubInstallErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_previewSkillHub documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsHubPreviewErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_searchSkillHub documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsHubSearchErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_applySkillImport documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsImportErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_scanSkillImport documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsScanErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_renameSkill documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsRenameErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_getSkillSource documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsGetSourceErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_putSkillSource documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsSetSourceErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "revision_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_toggleSkill documents (x-error-codes); see isApiErrorCode. */
+export type AgentToggleSkillErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_trustSkill documents (x-error-codes); see isApiErrorCode. */
+export type AgentSkillsTrustErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable";
+
+/** The error codes agent_getStatistics documents (x-error-codes); see isApiErrorCode. */
+export type AgentStatsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_stopAll documents (x-error-codes); see isApiErrorCode. */
+export type AgentStopAllWorkErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_listTodos documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "restriction_unknown";
+
+/** The error codes agent_createTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosCreateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_purgeTodos documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosPurgeArchivedErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getTodosRevision documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosGetRevisionErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "store_failed" | "restriction_unknown";
+
+/** The error codes agent_triageTodos documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosTriageErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosGetErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_updateTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosUpdateErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "todo_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_archiveTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosArchiveErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "todo_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_cancelTodoRun documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosCancelErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_claimTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosClaimErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "todo_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_messageTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosSendMessageErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_postTodoComment documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosCreateCommentErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_approveTodoProposal documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosApproveProposalErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_denyTodoProposal documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosDenyProposalErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_releaseTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosReleaseErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_runTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosStartErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "admin_unauthorized" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_snoozeTodo documents (x-error-codes); see isApiErrorCode. */
+export type AgentTodosSnoozeErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "todo_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_listTools documents (x-error-codes); see isApiErrorCode. */
+export type AgentToolsListErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_listReadOnlyTools documents (x-error-codes); see isApiErrorCode. */
+export type AgentToolsListReadOnlyErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_getTool documents (x-error-codes); see isApiErrorCode. */
+export type AgentToolsGetErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "tool_not_found" | "rate_limited" | "internal_error";
+
+/** The error codes agent_runTool documents (x-error-codes); see isApiErrorCode. */
+export type AgentRunToolErrorCode = "bad_request" | "tool_mutation_refused" | "realm_scope_unsupported" | "invalid_tool_mode" | "invalid_dir_scope" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "tool_not_found" | "not_found" | "tool_needs_confirmation" | "approver_lease_required" | "approver_lease_invalid" | "approver_lease_expired" | "payload_too_large" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_runToolAsync documents (x-error-codes); see isApiErrorCode. */
+export type AgentToolsStartErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_tool_mode" | "invalid_dir_scope" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_streamTool documents (x-error-codes); see isApiErrorCode. */
+export type AgentStreamToolErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_tool_mode" | "invalid_dir_scope" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_usageByAccount documents (x-error-codes); see isApiErrorCode. */
+export type AgentUsageListByAccountErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_usageByModel documents (x-error-codes); see isApiErrorCode. */
+export type AgentUsageListByModelErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "rate_limited" | "internal_error";
+
+/** The error codes agent_getAgentVersion documents (x-error-codes); see isApiErrorCode. */
+export type AgentKitGetVersionErrorCode = "bad_request" | "realm_scope_unsupported" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_listWorkflows documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsListErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_listWorkflowRuns documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsListRunsErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_getWorkflowRun documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsGetRunErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "rate_limited" | "internal_error" | "service_unavailable";
+
+/** The error codes agent_cancelWorkflowRun documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsCancelRunErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_resumeWorkflowRun documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsResumeRunErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "approval_policy_unsatisfiable" | "session_busy" | "payload_too_large" | "rate_limited" | "internal_error" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_getWorkflow documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsGetErrorCode = "bad_request" | "tool_mutation_refused" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "tool_not_found" | "not_found" | "tool_needs_confirmation" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_putWorkflow documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsSetErrorCode = "bad_request" | "tool_mutation_refused" | "realm_scope_unsupported" | "reserved_name" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "tool_not_found" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_deleteWorkflow documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsDeleteErrorCode = "bad_request" | "tool_mutation_refused" | "realm_scope_unsupported" | "invalid_realm" | "realm_not_allowed" | "forbidden" | "tool_not_found" | "not_found" | "rate_limited" | "internal_error" | "restriction_unknown";
+
+/** The error codes agent_hideWorkflow documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsSetHiddenErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "service_unavailable" | "restriction_unknown";
+
+/** The error codes agent_runWorkflow documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsStartErrorCode = "bad_request" | "realm_blocked" | "realm_corrupt" | "realm_conflict" | "invalid_realm" | "container_conflict" | "invalid_tool_mode" | "invalid_dir_scope" | "realm_not_allowed" | "forbidden" | "not_found" | "workflow_not_found" | "session_busy" | "session_not_attachable" | "approval_policy_unsatisfiable" | "approval_policy_locked" | "approver_lease_invalid" | "turn_in_flight" | "gate_parked" | "payload_too_large" | "cwd_not_found" | "container_gone" | "acp_container_unsupported" | "unknown_model" | "rate_limited" | "internal_error" | "service_unavailable" | "policy_commit_failed" | "session_terminating" | "restriction_unknown" | "admission_write_failed" | "admission_unconfirmed";
+
+/** The error codes agent_setWorkflowSummary documents (x-error-codes); see isApiErrorCode. */
+export type AgentWorkflowsSetSummaryErrorCode = "bad_request" | "realm_scope_unsupported" | "invalid_realm" | "forbidden" | "not_found" | "revision_conflict" | "payload_too_large" | "rate_limited" | "internal_error" | "store_failed" | "restriction_unknown";
+
+/** The error codes bot_keysRotate documents (x-error-codes); see isApiErrorCode. */
+export type BotKitRotateKeysErrorCode = "invalid_query" | "query_ambiguous" | "keys_rotate_refused" | "keys_rotate_failed" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_manifest documents (x-error-codes); see isApiErrorCode. */
+export type BotKitGetManifestErrorCode = "manifest_unavailable" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_list documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsListErrorCode = "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_register documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsCreateErrorCode = "invalid_body" | "unsupported_channel" | "invalid_token" | "invalid_label" | "channel_token_rejected" | "channel_unavailable" | "registration_duplicate" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_get documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsGetErrorCode = "registration_not_found" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_delete documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsDeleteErrorCode = "registration_not_found" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_commandsSync documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsSyncCommandsErrorCode = "registration_not_found" | "channel_token_rejected" | "channel_unavailable" | "channel_sync_failed" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_logsRead documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsListLogsErrorCode = "registration_not_found" | "invalid_query" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_logsPurge documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsPurgeLogsErrorCode = "registration_not_found" | "invalid_query" | "query_ambiguous" | "logs_purge_refused" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_policyGet documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsGetPolicyErrorCode = "registration_not_found" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_policySet documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsUpdatePolicyErrorCode = "registration_not_found" | "invalid_body" | "invalid_policy" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_profileSet documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsUpdateProfileErrorCode = "registration_not_found" | "invalid_body" | "invalid_profile" | "channel_token_rejected" | "channel_unavailable" | "channel_sync_failed" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_sessionsRevoke documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsRevokeSessionErrorCode = "registration_not_found" | "session_not_found" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_start documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsStartErrorCode = "registration_not_found" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_stop documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsStopErrorCode = "registration_not_found" | "query_ambiguous" | "internal_error" | "admission_unavailable";
+
+/** The error codes bot_tokensRevokeAll documents (x-error-codes); see isApiErrorCode. */
+export type BotRegistrationsRevokeAllTokensErrorCode = "registration_not_found" | "query_ambiguous" | "internal_error" | "admission_unavailable";
