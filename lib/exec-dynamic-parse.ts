@@ -39,6 +39,30 @@ export interface RawScriptEntry {
   [key: string]: unknown;
 }
 
+// ─── Script list extraction ──────────────────────────────────────────────────
+
+/**
+ * Find the script array in an `openapi.listScripts` response.
+ *
+ * The kit answers `{success, data: {directory, totalScripts, withSchemas,
+ * scripts: [...]}}`, and the SDK HttpClient wraps that body as
+ * `{statusCode, message, data: <body>}`, so the array sits two `data` levels
+ * below the response. Each level is probed for an array, `scripts` or
+ * `items` before stepping into its `data`; reading one fixed level found
+ * nothing and discovery was always empty (BT2-EXEC-001).
+ */
+export function extractRawScriptList(response: unknown): RawScriptEntry[] {
+  let node: unknown = response;
+  for (let depth = 0; depth < 4 && node && typeof node === 'object'; depth++) {
+    if (Array.isArray(node)) return node as RawScriptEntry[];
+    const record = node as Record<string, unknown>;
+    if (Array.isArray(record.scripts)) return record.scripts as RawScriptEntry[];
+    if (Array.isArray(record.items)) return record.items as RawScriptEntry[];
+    node = record.data;
+  }
+  return [];
+}
+
 // ─── Single-entry parser ─────────────────────────────────────────────────────
 
 /**

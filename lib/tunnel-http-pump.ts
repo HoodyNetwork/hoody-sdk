@@ -81,6 +81,20 @@ function safeHeaderEntries(raw: unknown): Array<[unknown, unknown]> {
   return out;
 }
 
+/**
+ * Whether the visitor's headers declare a request body: any Transfer-Encoding, or a
+ * Content-Length other than 0. Such a request goes the streaming way whatever its method,
+ * so the body that follows is forwarded with framing that matches it.
+ */
+function declaresBody(raw: unknown): boolean {
+  for (const [name, value] of safeHeaderEntries(raw)) {
+    const lower = String(name).toLowerCase();
+    if (lower === "transfer-encoding") return true;
+    if (lower === "content-length" && String(value).trim() !== "0") return true;
+  }
+  return false;
+}
+
 type FrameHandler = Parameters<TunnelSession["onStream"]>[1];
 
 /**
@@ -186,7 +200,8 @@ async function forwardFetch(
 
   // The visitor's RESET aborts the local request at once: an idle response (server-sent
   // events, long-poll) would otherwise keep its local connection until it sent again. The
-  // request's EOF only ends a body this request does not have.
+  // request's EOF only ends a body this request does not have: one that declares a body is
+  // routed to forwardHttpStream, and DATA arriving here anyway is dropped.
   const end = streamEnd(session, streamId);
   const visitorGone = new AbortController();
   end.on((f) => {
@@ -210,6 +225,7 @@ async function forwardFetch(
     const lower = String(name).toLowerCase();
     if (lower === "host" || lower === "connection" || lower === "upgrade"
         || lower === "keep-alive" || lower === "transfer-encoding"
+        || lower === "content-length"
         || lower === "proxy-authenticate" || lower === "proxy-authorization"
         || lower === "te" || lower === "trailer") continue;
     // Drop headers whose name or value contains CR/LF/NUL/invalid tokens.
@@ -299,7 +315,7 @@ async function forwardHttpStream(
   }
 
   const methodUpper = String(method).toUpperCase();
-  const hasBody = !["GET", "HEAD"].includes(methodUpper);
+  const hasBody = !["GET", "HEAD"].includes(methodUpper) || declaresBody(reqHeaders);
 
   let finished = false;
   type BufferedFrame = { kind: "data" | "eof" | "reset"; payload?: Uint8Array };
@@ -818,8 +834,11 @@ function routeAutoForwarded(
         forwardUpgradeToLocal(session, streamId, payload, httpTarget);
         return;
       }
+      // GET/HEAD take the body-less fast path only when they declare no body: forwarding
+      // a Content-Length without the bytes behind it hangs the local app, or leaves the owed
+      // bytes to be read from the next request on the pooled connection.
       const methodUpper = String(payload.method || "GET").toUpperCase();
-      if (methodUpper === "GET" || methodUpper === "HEAD") {
+      if ((methodUpper === "GET" || methodUpper === "HEAD") && !declaresBody(payload.headers)) {
         forwardFetch(session, streamId, payload, httpTarget);
       } else {
         forwardHttpStream(session, streamId, payload, httpTarget);

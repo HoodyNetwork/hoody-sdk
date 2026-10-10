@@ -113,6 +113,7 @@ export {
   isApiError,
   isRetryableApiError,
   ValidationError,
+  isApiErrorCode,
 } from '../generated/errors.js';
 export type {
   ApiErrorRequestContext,
@@ -133,7 +134,7 @@ export type { HoodySessionTokens, HoodySessionUpdate, RealmScopeApiError, Contai
 export { HttpClient } from '../generated/http-client.js';
 // Whether this process sends through the SDK's own undici transport (Node 22.19+), as the README describes.
 export { nodeTransportInUse } from '../generated/http-client.js';
-export type { HoodyFetch, IEventStream, IStreamEvent, IStreamEventsOptions, IStreamResponse } from '../generated/http-client.js';
+export type { HoodyFetch, IEventStream, IStreamEvent, ITypedStreamEvent, IStreamEventsOptions, IStreamResponse } from '../generated/http-client.js';
 // Every generated request/response/schema type, type-only so it adds nothing
 // at runtime: `import type { DaemonProgramsAddRequest } from 'hoody-sdk'`.
 // Names this entry exports itself take precedence over the star.
@@ -603,6 +604,17 @@ export type {
   NotesUploadResult,
   NotesUploadFileResult,
 } from './notes-upload.js';
+
+// -- Bot chat (box.agent.bots.ask / follow) --
+export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
+export type {
+  BotAskOptions,
+  BotAskResult,
+  BotFollowOptions,
+  BotLogRow,
+  BotMessageReceipt,
+  BotStreamFrame,
+} from './bot-chat.js';
 export { pipeTransportFromClient } from './pipe-transport.js';
 export type { PipeTransport, PipeTransportRequest } from './pipe-transport.js';
 export type { ExecScriptCallOptions, ExecScriptMethod } from './exec-script-execution.js';

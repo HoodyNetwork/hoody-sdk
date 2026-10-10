@@ -661,7 +661,7 @@ export class PipeStream {
    * through `client.http` so the client's injected transport and kitAuth
    * apply (lib/pipe-transport.ts).
    */
-  static fromClient(client: { getKitUrl: (kit: string, container: unknown, idx?: number) => string }, container: unknown, serviceIndex = 1): PipeStream {
+  static fromClient(client: { getKitUrl(kit: string, container: import('../generated/client.js').ContainerLike | null, serviceIndex?: number): string }, container: import('../generated/client.js').ContainerLike, serviceIndex = 1): PipeStream {
     const pipeBaseUrl = client.getKitUrl('pipe', container, serviceIndex);
     const transport = pipeTransportFromClient(client);
     const kitAuth = clientKitAuth(client);

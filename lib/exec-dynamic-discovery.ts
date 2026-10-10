@@ -13,7 +13,7 @@
 
 import type { OpenapiService } from '../generated/exec/openapi.service.js';
 import type { ScriptsService } from '../generated/exec/scripts.service.js';
-import { parseRawScriptEntries, type RawScriptEntry } from './exec-dynamic-parse.js';
+import { extractRawScriptList, parseRawScriptEntries } from './exec-dynamic-parse.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -239,18 +239,11 @@ export async function discoverScripts(
 ): Promise<DiscoveredScript[]> {
   const templateVars = options?.templateVars as Parameters<OpenapiService['listScripts']>[1];
 
-  // listScripts is not paginated (spec returns a union with inline scripts
-  // array); call it directly and extract the array from the response.
+  // listScripts is not paginated; call it directly and extract the array
+  // from the response.
   const requestOptions = options?.signal ? { signal: options.signal } : undefined;
   const response = await openapiService.listScripts(requestOptions, templateVars);
-  // Response shape is a union (anyOf — its branches have subset `required` sets,
-  // so `oneOf` would reject a full response) — look for `scripts` or `items` in .data.
-  const data = (response as { data?: unknown }).data ?? response;
-  const scriptsArr =
-    (data as { scripts?: unknown }).scripts
-    ?? (data as { items?: unknown }).items
-    ?? data;
-  const rawScripts: RawScriptEntry[] = (Array.isArray(scriptsArr) ? scriptsArr : []) as RawScriptEntry[];
+  const rawScripts = extractRawScriptList(response);
 
   // Pre-enrich: load companion .schema.json for scripts that declare hasSchema
   // but don't include an inline schema. Skipped when no ScriptsService handle

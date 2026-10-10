@@ -7,6 +7,7 @@
  */
 
 import type { HoodyClient } from './hoody-client.js';
+import { ApiError, isApiError } from '../generated/errors.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,7 +28,11 @@ export interface TerminalExecOptions {
   signal?: AbortSignal;
   /** Polling interval in ms (default: 250, min: 100) */
   pollIntervalMs?: number;
-  /** Terminal service instance index (default: 0 — ephemeral PTY uses terminal-0) */
+  /**
+   * The terminal to run in. 0 (the default) is a fresh ephemeral session on the terminal-0
+   * host, cleaned up after the run. N >= 1 runs the command in terminal N itself (created
+   * when it does not exist yet), as a plain execute: its display and environment stay.
+   */
   serviceIndex?: number;
 }
 
@@ -106,6 +111,37 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
+/**
+ * What a terminal-kit refusal of the start request means for this call. The kit's own message
+ * names the terminal by its id; this says what to change on the run() call.
+ */
+const TERMINAL_REFUSAL_HINTS: Readonly<Record<string, (index: number) => string>> = {
+  PERSISTENT_SESSION: (index) =>
+    `terminal ${index} has a display and is not turned into an ephemeral session. `
+    + 'Omit serviceIndex for a fresh ephemeral session',
+  EPHEMERAL_SESSION: (index) =>
+    `terminal ${index} is an ephemeral session. Omit serviceIndex for a fresh one, `
+    + `or delete it (terminal.sessions.delete('${index}')) and run again`,
+  TERMINAL_ID_MISMATCH: (index) =>
+    `the request named another terminal than the terminal-${index} host. Use serviceIndex alone to pick the terminal`,
+};
+
+function explainTerminalRefusal(err: unknown, index: number): unknown {
+  if (!isApiError(err) || err.code === undefined) return err;
+  if (!Object.prototype.hasOwnProperty.call(TERMINAL_REFUSAL_HINTS, err.code)) return err;
+  const hint = TERMINAL_REFUSAL_HINTS[err.code]!;
+  return new ApiError({
+    message: `terminal.run(): ${hint(index)} (${err.code}: ${err.message})`,
+    status: err.status,
+    code: err.code,
+    ...(err.url !== undefined ? { url: err.url } : {}),
+    ...(err.method !== undefined ? { method: err.method } : {}),
+    ...(err.request !== undefined ? { request: err.request } : {}),
+    response: err.response,
+    cause: err,
+  });
+}
+
 /** Maximum number of poll iterations before giving up (safety valve).
  * With adaptive backoff (250ms → 500ms → 1000ms), 2400 iterations
  * allows approximately 30-40 minutes of polling. */
@@ -148,10 +184,19 @@ async function execImpl(
     throw new Error('Terminal commands service not available');
   }
 
-  // Ephemeral PTY must use terminal-0 in the URL hostname.
-  // The default urlTemplates set serviceIndex=1 (for interactive terminals),
-  // so we always override to 0 for terminal.run().
+  if (!Number.isInteger(serviceIndex) || serviceIndex < 0 || serviceIndex > 65535) {
+    throw new TypeError(`terminal.run(): serviceIndex must be an integer from 0 to 65535, got ${JSON.stringify(serviceIndex)}`);
+  }
+  // The host picks the terminal: the containers proxy sets terminal_id from its index.
+  // terminal-0 is the only host where the kit makes a fresh ephemeral session; on
+  // terminal-N the command runs in terminal N as a plain execute. ephemeral=true there
+  // would ask the kit to turn terminal N ephemeral (refused when it has a display).
+  // The default urlTemplates set serviceIndex=1 (for interactive terminals), so the
+  // index is always passed.
   const templateVars = { serviceIndex };
+  const sessionQuery = serviceIndex === 0
+    ? { terminal_id: '0', ephemeral: true, skip_display_wait: true }
+    : { terminal_id: String(serviceIndex) };
 
   // Remote cancellation: POST /api/v1/terminal/execute/{command_id}/abort
   // (`terminal.commands.cancel`) on the SAME terminal host the command runs on
@@ -209,7 +254,7 @@ async function execImpl(
   try {
     // 1. Fire command (wait: false — we poll ourselves)
     const startTime = Date.now();
-    startPromise = terminalApi.commands.run(
+    const start: Promise<unknown> = terminalApi.commands.run(
       {
         command,
         timeout: timeout || undefined,
@@ -218,20 +263,20 @@ async function execImpl(
         env: env || undefined,
       } as any,
       {
-        terminal_id: '0',
-        ephemeral: true,
-        skip_display_wait: true,
+        ...sessionQuery,
         shell: shellType || undefined,
         user: user || undefined,
       },
       templateVars,
     );
+    startPromise = start;
+    const started = start.catch((err: unknown) => { throw explainTerminalRefusal(err, serviceIndex); });
     const executeResponse = signal
       ? await Promise.race([
-          startPromise,
+          started,
           new Promise<never>((_, reject) => { rejectOnAbort = reject; }),
         ])
-      : await startPromise;
+      : await started;
     rejectOnAbort = undefined;
 
     // Runtime guard: extract command_id from response

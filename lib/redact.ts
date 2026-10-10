@@ -360,8 +360,58 @@ export function redactUrl(url: string, extraParamNames?: readonly string[]): str
 }
 
 /**
+ * A byte or stream value is never walked: Object.entries gives a typed array
+ * one key per byte, and an error answer to a 4 MiB upload ran the process out
+ * of memory. Only its type and size are kept (the Node http-client template
+ * inlines the same check as `_binaryPlaceholder`). Type and size come from
+ * the built-in getters, which check the value's internal slots, so a
+ * shadowed `byteLength` or `Symbol.toStringTag` cannot put text in the
+ * placeholder, and the label is one of a fixed set.
+ */
+const TYPED_ARRAY_PROTO = Object.getPrototypeOf(Uint8Array.prototype) as object;
+const typedArrayName = Object.getOwnPropertyDescriptor(TYPED_ARRAY_PROTO, Symbol.toStringTag)!.get!;
+const typedArrayByteLength = Object.getOwnPropertyDescriptor(TYPED_ARRAY_PROTO, 'byteLength')!.get!;
+const dataViewByteLength = Object.getOwnPropertyDescriptor(DataView.prototype, 'byteLength')!.get!;
+const arrayBufferByteLength = Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, 'byteLength')!.get!;
+const sharedArrayBufferByteLength = typeof SharedArrayBuffer === 'function'
+  ? Object.getOwnPropertyDescriptor(SharedArrayBuffer.prototype, 'byteLength')?.get
+  : undefined;
+
+/** The getter's answer for `v`, or undefined when `v` is not the type the getter belongs to. */
+function brandedSize(get: (() => unknown) | undefined, v: object): unknown {
+  if (get === undefined) return undefined;
+  try { return get.call(v); } catch { return undefined; }
+}
+
+function binaryPlaceholder(v: object): string | undefined {
+  if (ArrayBuffer.isView(v)) {
+    const name = typedArrayName.call(v);
+    return typeof name === 'string'
+      ? `[binary ${name}, ${Number(typedArrayByteLength.call(v))} bytes]`
+      : `[binary DataView, ${Number(dataViewByteLength.call(v))} bytes]`;
+  }
+  // An async iterable is a stream body whatever its prototype (an object literal can be one).
+  if (typeof (v as { [Symbol.asyncIterator]?: unknown })[Symbol.asyncIterator] === 'function') return '[stream]';
+  // A JSON body is made of plain objects: no other byte or stream type to look for.
+  const proto = Object.getPrototypeOf(v);
+  if (proto === Object.prototype || proto === null) return undefined;
+  const ab = brandedSize(arrayBufferByteLength, v);
+  if (ab !== undefined) return `[binary ArrayBuffer, ${Number(ab)} bytes]`;
+  const sab = brandedSize(sharedArrayBufferByteLength, v);
+  if (sab !== undefined) return `[binary SharedArrayBuffer, ${Number(sab)} bytes]`;
+  const g = globalThis as unknown as { Blob?: { prototype: object }; File?: abstract new (...args: never[]) => unknown; ReadableStream?: abstract new (...args: never[]) => unknown };
+  const blob = g.Blob === undefined ? undefined : brandedSize(Object.getOwnPropertyDescriptor(g.Blob.prototype, 'size')?.get, v);
+  if (blob !== undefined) return `[binary ${g.File !== undefined && v instanceof g.File ? 'File' : 'Blob'}, ${Number(blob)} bytes]`;
+  if (g.ReadableStream !== undefined && v instanceof g.ReadableStream) return '[stream]';
+  return undefined;
+}
+
+/**
  * Recursively clone an object/array with any secret key redacted. Protects
- * against circular references and caps recursion depth.
+ * against circular references and caps recursion depth. A byte or stream
+ * value becomes a placeholder with its type and size (`binaryPlaceholder`),
+ * and an object that throws while it is read becomes `[unreadable]`: this
+ * runs while an error is being built, and must not replace that error.
  *
  * `extraFieldNames`: names to treat as secret in addition to the built-in
  * pattern (the request's recorded credential query parameters). They redact
@@ -385,15 +435,21 @@ export function redactSensitiveValue(
   // gets the scrub redactUrl gives the request URL.
   if (typeof v === 'string') return scrubNamedParams(scrubUrlValue(v.replace(HDY_TOKEN_VALUE_RE, PLACEHOLDER), extraFieldNames), extraFieldNames);
   if (typeof v !== 'object') return v;
-  if (seen.has(v as object)) return '[Circular]';
-  seen.add(v as object);
-  if (Array.isArray(v)) return v.map((x) => redactSensitiveValue(x, _depth + 1, seen, extraFieldNames));
-  const out: Record<string, unknown> = {};
-  const oauth = isOauthCodeContext(Object.keys(v as Record<string, unknown>));
-  for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
-    out[k] = isSecretFieldName(k) || isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
-      ? PLACEHOLDER
-      : redactSensitiveValue(val, _depth + 1, seen, extraFieldNames);
+  try {
+    const binary = binaryPlaceholder(v);
+    if (binary !== undefined) return binary;
+    if (seen.has(v as object)) return '[Circular]';
+    seen.add(v as object);
+    if (Array.isArray(v)) return v.map((x) => redactSensitiveValue(x, _depth + 1, seen, extraFieldNames));
+    const out: Record<string, unknown> = {};
+    const oauth = isOauthCodeContext(Object.keys(v as Record<string, unknown>));
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      out[k] = isSecretFieldName(k) || isExtraName(k, extraFieldNames) || (oauth && k.toLowerCase() === 'code')
+        ? PLACEHOLDER
+        : redactSensitiveValue(val, _depth + 1, seen, extraFieldNames);
+    }
+    return out;
+  } catch {
+    return '[unreadable]';
   }
-  return out;
 }

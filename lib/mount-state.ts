@@ -21,7 +21,7 @@ import {
   type Stats,
 } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { exec as execCb } from 'node:child_process';
 
@@ -205,6 +205,10 @@ export async function checkLiveness(rec: MountStateFile): Promise<LivenessResult
     } catch (err: unknown) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code === 'ESRCH' || code === 'ENOENT') {
+        // A mount that outlived its rclone (left busy) keeps its record until it is unmounted.
+        if ((await mountTableHas(rec.localPath)) === true) {
+          return { alive: 'stale', reason: `pid ${rec.pid} no longer running but mountpoint still in OS mount table` };
+        }
         return { alive: 'dead', reason: `pid ${rec.pid} no longer running` };
       }
     }
@@ -267,6 +271,46 @@ async function isInMountTable(localPath: string): Promise<boolean> {
     return false;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Whether `localPath` is a mount point in the OS mount table: true or false, or null when the
+ * table cannot be read (and on Windows). Reads the table only and never touches the path,
+ * which hangs on a dead FUSE mount. Compares both the path as given and the path with its
+ * parent's symlinks resolved (macOS lists /private/tmp for /tmp).
+ */
+export async function mountTableHas(localPath: string): Promise<boolean | null> {
+  const given = resolve(localPath);
+  const candidates = new Set([given]);
+  try {
+    candidates.add(join(await fs.realpath(dirname(given)), basename(given)));
+  } catch {
+    // parent gone: the path as given is all there is
+  }
+  try {
+    if (process.platform === 'linux') {
+      const table = await fs.readFile('/proc/self/mounts', 'utf8');
+      for (const line of table.split('\n')) {
+        const field = line.split(' ')[1];
+        if (field === undefined) continue;
+        // The kernel writes space, tab, newline and backslash as octal escapes.
+        const target = field.replace(/\\([0-7]{3})/g, (_m, o: string) => String.fromCharCode(parseInt(o, 8)));
+        if (candidates.has(target)) return true;
+      }
+      return false;
+    }
+    if (process.platform === 'darwin') {
+      const { stdout } = await exec('mount', { timeout: 5000 });
+      for (const line of stdout.split('\n')) {
+        const m = line.match(/ on (.+) \([^()]*\)$/);
+        if (m && candidates.has(m[1]!)) return true;
+      }
+      return false;
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 

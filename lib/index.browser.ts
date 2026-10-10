@@ -46,6 +46,7 @@ export {
   isApiError,
   isRetryableApiError,
   ValidationError,
+  isApiErrorCode,
 } from '../generated/errors.js';
 export type {
   ApiErrorRequestContext,
@@ -325,6 +326,17 @@ export type {
   NotesUploadResult,
   NotesUploadFileResult,
 } from './notes-upload.js';
+
+// -- Bot chat (box.agent.bots.ask / follow) --
+export { BOT_MESSAGE_IDEMPOTENCY_CAPABILITY } from './bot-chat.js';
+export type {
+  BotAskOptions,
+  BotAskResult,
+  BotFollowOptions,
+  BotLogRow,
+  BotMessageReceipt,
+  BotStreamFrame,
+} from './bot-chat.js';
 
 // -- Pipe media streaming helpers (browser-only) --
 export { PipeMedia, mediaStreamToReadableStream } from './pipe-media.js';

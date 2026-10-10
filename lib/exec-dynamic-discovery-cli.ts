@@ -11,32 +11,14 @@
  */
 
 import type { DiscoveredScript } from './exec-dynamic-discovery.js';
-import { parseRawScriptEntries, type RawScriptEntry } from './exec-dynamic-parse.js';
+import { extractRawScriptList, parseRawScriptEntries } from './exec-dynamic-parse.js';
 
 /**
  * Parse a raw API response from openapi.listScripts into DiscoveredScript[].
- * Works with both `{ data: [...] }` and `{ data: { data: [...] } }` shapes.
+ * The script array is found by `extractRawScriptList`, which accepts the
+ * client envelope around the kit body as well as a bare array or `scripts`
+ * list at any of the first `data` levels.
  */
 export function discoverScriptsFromRawResponse(response: unknown): DiscoveredScript[] {
-  if (!response || typeof response !== 'object') return [];
-
-  const rawData = (response as Record<string, unknown>).data;
-  let rawScripts: RawScriptEntry[];
-
-  if (Array.isArray(rawData)) {
-    rawScripts = rawData as RawScriptEntry[];
-  } else if (rawData && typeof rawData === 'object') {
-    const nested = rawData as Record<string, unknown>;
-    if (Array.isArray(nested.data)) {
-      rawScripts = nested.data as RawScriptEntry[];
-    } else if (Array.isArray(nested.scripts)) {
-      rawScripts = nested.scripts as RawScriptEntry[];
-    } else {
-      return [];
-    }
-  } else {
-    return [];
-  }
-
-  return parseRawScriptEntries(rawScripts);
+  return parseRawScriptEntries(extractRawScriptList(response));
 }
