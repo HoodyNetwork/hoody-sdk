@@ -34,7 +34,7 @@ TypeScript SDK for [Hoody](https://hoody.com). Hoody runs full Linux containers 
 | **Batteries included** | Create a container with the Kit (`hoody_kit: true`) and the full service layer is available at stable HTTPS URLs: shell, files, cloud browser, GUI desktop, databases, cron, tunnels, and a built-in AI agent, each starting on demand with the first call. |
 | **Who it's for** | Cloud IDEs, AI-agent platforms, browser-automation pipelines, remote-desktop products, and education: anything that needs a real Linux environment on demand without running the infrastructure. |
 | **The economics** | Flat-rate bare metal: a dedicated machine, marketplace-priced from ~$30/month, with no per-container fee or usage meter. Run dev through prod for every project on one box. [How ↓](#bare-metal-underneath) |
-| **The surface** | <!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces · <!-- ref:sdk-methods -->1179<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->1023<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
+| **The surface** | <!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces · <!-- ref:sdk-methods -->1212<!-- /ref:sdk-methods --> typed SDK methods · <!-- ref:cli-commands -->1046<!-- /ref:cli-commands --> CLI commands, with one client, one URL grammar, and every auth mode handled by the SDK. |
 
 **Prefer references?** Nearly the whole surface fits in three lists: [CLI commands](./docs/reference/CLI-COMMANDS.md) · [SDK methods](./docs/reference/SDK-METHODS.md) · [HTTP endpoints](./docs/reference/HTTP-METHODS.md). The HTTP list maps every endpoint to its SDK method and to a CLI command wherever one exists.
 
@@ -144,6 +144,7 @@ import { mount } from 'hoody-sdk/mount';
 
 const drive = await mount({
   container,
+  client: hoody,              // the kit URL is built on this client's API domain
   subpath: '/home/user',      // the container's default Linux account (uid 1000)
   localPath: './hoody-drive',
   background: true,           // detached mount — Linux/macOS only (throws on Windows;
@@ -151,6 +152,8 @@ const drive = await mount({
 });
 // ./hoody-drive now *is* the container's home directory. drive.unmount() when you're done.
 ```
+
+A file you change is uploaded whole once it has been closed and idle for about 1 s. If the file on the kit is a version your mount never received (another machine or the container changed it in the meantime), the files kit keeps that version as a conflict copy next to the file (`report (conflict <host> <time>).txt`) and your upload lands at the name; neither side gets an error and neither version is lost (safe save). Conflict copies stay until you delete them. A change made elsewhere shows up at the next lookup once it has landed and the mount's 5 s directory cache has expired; a program that already has the file open may keep its old view. `hoody mount --help` covers the details and the cases safe save does not cover.
 
 The box also includes an AI agent, on the same `box` client and the same container URL as every other kit:
 
@@ -205,14 +208,14 @@ bun add hoody-sdk@beta
 Browser (IIFE global, exposes `window.HoodySDK`). Pin to the SDK version you develop against:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.16/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.17/dist/hoody-sdk.browser.min.js"></script>
 ```
 
 Browser (ESM):
 
 ```html
 <script type="module">
-  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.16/dist/hoody-sdk.browser.esm.js';
+  import { HoodyClient } from 'https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.17/dist/hoody-sdk.browser.esm.js';
 </script>
 ```
 
@@ -271,6 +274,9 @@ const { data: container } = await hoody.api.containers.create(project.data!.id, 
 });
 // Yours immediately; Kit routing comes up within a few seconds (poll `containers.get(id)`
 // until status is 'running'), then hand it to `hoody.withContainer()` as above.
+// Its services finish starting about 10 seconds after that. A read call (GET) waits for them
+// on its own, up to `kitStartingWaitMs` (default 20000; 0 turns it off), and then fails with
+// code KIT_NOT_READY; to send a write first, wait for a read such as `box.files.kit.getHealth()`.
 ```
 
 Containers are disposable. Check that creation returned an ID, then delete the container to remove it and every URL it answered on:
@@ -308,7 +314,7 @@ const box       = await hoody.withContainer(container);
 
 Three conventions every snippet relies on:
 
-- **Response envelope.** By default every request method resolves to a typed `{ statusCode, message, data }`; payloads live on `response.data` (streaming, WebSocket, and iterator helpers return their own types, and `rawResponse: true` skips envelope normalization to hand back the parsed body directly, which you cast, since the declared return type stays enveloped).
+- **Response envelope.** By default every request method resolves to a typed `{ statusCode, message, data }`; payloads live on `response.data`, and any other top-level field the operation documents (`propagation`, `pagination`, `total`) sits beside them (streaming, WebSocket, and iterator helpers return their own types, and `rawResponse: true` skips envelope normalization to hand back the parsed body directly, which you cast, since the declared return type stays enveloped).
 - **Options object.** Most methods take a trailing options bag that mixes query params with per-request overrides (`retries`, `timeoutMs`, `responseType`, `signal`, …); the opener's `{ display: '1' }` is one.
 - **Pagination triad.** A list endpoint that pages ships three forms: `list()` (one page), `listAll()` (collect all pages), `listIterator()` (async iterator). The helpers follow the page, offset or cursor parameter the operation actually takes, and start where your arguments say (a `page`, `offset` or cursor you pass). An operation that declares pagination but takes no page, offset or cursor parameter gets a `listAll()` that is one request; a list that declares no pagination, such as `daemon.programs.list()`, has only `list()`. A walk that stops advancing throws instead of returning a partial list when two consecutive pages echo the same numeric page or offset position; when, with no position echo on the current page, two consecutive pages hold the same ordered ids (at least two rows, each with a string or number id unique within the page); when a walk from the first row returns more rows than the largest numeric total the server reported; or when it needs more than 1000 requests. Singleton pages and rows without usable ids can evade the id comparison, leaving the other checks and the request cap. A cursor walk started without a cursor also throws when it stops while a numeric total says more rows exist, as does a one-request `listAll()` whose response holds fewer rows than its own numeric total. A page or offset walk ends on an empty page.
 
@@ -489,7 +495,7 @@ Paste this into a `.html` file and open it in a browser. It logs into Hoody, pic
 ```html
 <!doctype html>
 <title>An entire desktop, served from a static file</title>
-<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.16/dist/hoody-sdk.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hoody-sdk@1.0.0-beta.17/dist/hoody-sdk.browser.min.js"></script>
 <script type="module">
   const { HoodyClient } = window.HoodySDK;
   const hoody = new HoodyClient({ baseURL: 'https://api.hoody.com' });
@@ -645,7 +651,7 @@ A tunnel gated by a proxy permission rule takes the credential as `kitAuth` (fro
 
 ### The built-in agent
 
-Every Hoody Kit container ships an agent. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->294<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the SDK's largest container-scoped namespace.
+Every Hoody Kit container ships an agent. `box.agent.*` exposes <!-- ref:agent-sdk-methods -->326<!-- /ref:agent-sdk-methods --> methods across sessions, models, skills, memory, todos, workflows, hooks, GitHub integration, tools, and logs. It is the SDK's largest container-scoped namespace.
 
 The agent kit takes the same auth as the rest: none of its own. A bare
 `withContainer(container)` can list models, create a session, and prompt it, because
@@ -1021,7 +1027,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 
 ## Namespaces
 
-<!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces, <!-- ref:sdk-methods -->1179<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
+<!-- ref:sdk-namespaces -->21<!-- /ref:sdk-namespaces --> namespaces, <!-- ref:sdk-methods -->1212<!-- /ref:sdk-methods --> typed methods. Account-level (`hoody.api.*`) needs no container; everything else uses a container-scoped client (`box = await hoody.withContainer(c)`).
 
 <details>
 <summary>The full namespace map: scope, coverage, and a one-liner you'd actually call</summary>
@@ -1048,7 +1054,7 @@ These layers are built in. Choose the one that fits your trust model, and keep c
 | `tunnel`          | Container | Reverse tunnels: publish HTTP/WebSocket to a public URL, or pull TCP onto container-loopback ([recipe](#reverse-tunnel-localhost-to-a-public-url)) | `box.tunnel.sessions.list()`                                                |
 | `proxyLogs`       | Container | Reverse-proxy access logs and stats                                                     | `box.proxyLogs.list()`                                                |
 | `bot`             | Container | Chat-app control: register a chat bot, run its poll loop, set who it serves, read its audit log ([front doors](#every-front-door)) | `box.bot.registrations.list()`                                             |
-| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->294<!-- /ref:agent-sdk-methods --> methods): sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.turns.run(id, { text })`                              |
+| `agent`           | Container | AI agent (<!-- ref:agent-sdk-methods -->326<!-- /ref:agent-sdk-methods --> methods): sessions/prompt, models, skills, memory, todos, workflows, hooks, github, tools, logs ([recipe](#the-built-in-agent)) | `box.agent.sessions.turns.run(id, { text })`                              |
 
 </details>
 
@@ -1155,7 +1161,7 @@ try {
 } catch (err) {
   if (isApiError(err)) {
     console.error(err.status);    // HTTP status code, or 0 for a transport, timeout, or parse failure
-    console.error(err.code);      // error code, may be undefined: server-supplied on HTTP errors, 'ABORTED' / 'PARSE_ERROR' / 'ETIMEDOUT' from the client
+    console.error(err.code);      // error code, may be undefined: server-supplied on HTTP errors; from the client 'ABORTED' (your signal), 'ETIMEDOUT' (a timeout) or 'PARSE_ERROR'
     console.error(err.response);  // parsed server body (ApiErrorResponseDetails | unknown — plain text on non-JSON errors)
     console.error(err.request);   // { method, url, headers, body, query } — secrets redacted
 
@@ -1198,7 +1204,7 @@ await box.files.get('/bigfile', {
 
 Per-call `headers` add request headers to one call; `Authorization`, `X-Hoody-Client-ID` and `X-Hoody-Client-Name` are set by the client and refused there. A direct call to a kit service that takes its own `headers`, such as `box.exec.run(…)` with `headers: { Authorization: 'Bearer …' }` in its options, does deliver that `Authorization` to the script. The account token is still never sent to a kit.
 
-`timeoutMs` bounds the wait for the response headers; a buffered body then fails with code `ETIMEDOUT` only when no data arrives for that long. GET responses are not cached unless you turn it on, with `cache: { enabled: true, ttl }` on the client or `cache: true` (or a TTL in milliseconds) on one call.
+`timeoutMs` bounds the wait for the response headers (code `ETIMEDOUT`, "Request timed out after <ms>ms"); a buffered body then fails with code `ETIMEDOUT` only when no data arrives for that long. A call your `signal` aborts fails with code `ABORTED` and the message "Request aborted by the caller", followed by the reason when you passed one to `abort()`. Neither is retried. GET responses are not cached unless you turn it on, with `cache: { enabled: true, ttl }` on the client or `cache: true` (or a TTL in milliseconds) on one call.
 
 ### Middleware
 

@@ -435,7 +435,7 @@ The URL is the capability; gate it before showing it to users.
 const box = await hoody.withContainer(container);
 
 const created = await box.agent.sessions.create();
-const sessionId = (created.data!.session_id ?? created.data!.id) as string;
+const sessionId = created.data!.session_id!;
 const turn = await box.agent.sessions.turns.run(sessionId, {
   text: 'Run the tests and fix the first failure.',
 });
