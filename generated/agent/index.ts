@@ -8,6 +8,7 @@
 export { AcpService } from './acp.service.js';
 export { FilesService } from './files.service.js';
 export { DefinitionsService } from './definitions.service.js';
+export { BotsService } from './bots.service.js';
 export { ChangesService } from './changes.service.js';
 export { ContainersService } from './containers.service.js';
 export { GatesService } from './gates.service.js';
@@ -26,6 +27,7 @@ export { ModelsService } from './models.service.js';
 export { ProvidersService } from './providers.service.js';
 export { SessionsService } from './sessions.service.js';
 export { SessionsTurnsService } from './sessions-turns.service.js';
+export { SessionsCommandsService } from './sessions-commands.service.js';
 export { TasksService } from './tasks.service.js';
 export { WorkflowsService } from './workflows.service.js';
 export { SettingsService } from './settings.service.js';

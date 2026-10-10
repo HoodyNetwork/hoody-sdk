@@ -1172,7 +1172,7 @@
         "notifications.landing"
       ],
       "refused": {},
-      "publicDescription": "Notification landing page: recent notifications and a live feed from all displays, plus a test sender for one display.",
+      "publicDescription": "Notification landing page: recent notifications and a live feed from all displays, plus a test sender for one display or all of them.",
       "defaultView": "notifications.landing"
     },
     "pipe": {
@@ -5001,15 +5001,15 @@
           "in": "query",
           "type": "string",
           "class": "typed",
-          "pattern": "^\\d{1,5}$",
-          "publicDescription": "Display number to send the test notification to. Takes precedence over the display named by the host. The feed always shows every display."
+          "pattern": "^(\\d{1,5}|all|\\*)$",
+          "publicDescription": "Display number to send the test notification to, or all (also *) to send it to every display the page has seen notifications from. Takes precedence over the display named by the host. The feed always shows every display."
         },
         "displays": {
           "wire": "displays",
           "in": "query",
           "type": "string",
           "class": "typed",
-          "pattern": "^\\d{1,5}$",
+          "pattern": "^(\\d{1,5}|all|\\*)$",
           "publicDescription": "Alternative name for display; read only when display is absent."
         }
       },

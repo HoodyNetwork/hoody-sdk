@@ -1,6 +1,6 @@
 /**
- * DownloadsService
- * User-extensible Downloads service
+ * BotsService
+ * User-extensible Bots service
  * 
  * ✅ SAFE TO EDIT ✅
  * This file extends the generated base class and is yours to customize.
@@ -9,9 +9,9 @@
  * Generated at: 2026-10-10T08:37:08.000Z
  */
 
-import { DownloadsServiceBase } from './downloads.service.generated.js';
+import { BotsServiceBase } from './bots.service.generated.js';
 
-export class DownloadsService extends DownloadsServiceBase {
+export class BotsService extends BotsServiceBase {
   // Add custom properties here
 
 }

@@ -79,7 +79,7 @@ export * as bot from './bot/index.js';
 
 // Export shared runtime/types
 export * from './types.js';
-export { ApiError, isApiError, isRetryableApiError, ValidationError, type ApiErrorRequestContext, type ApiErrorResponseDetails, type RetryableApiError, type RetryableStatus } from './errors.js';
+export { ApiError, isApiError, isRetryableApiError, ValidationError, isApiErrorCode, type ApiErrorRequestContext, type ApiErrorResponseDetails, type RetryableApiError, type RetryableStatus } from './errors.js';
 export { HttpClient } from './http-client.js';
 export { createStreamFrameBuffer, parseSseChunk, finishSseStream, DEFAULT_MAX_STREAM_FRAME_BYTES } from './http-client.js';
 export type {
@@ -88,6 +88,7 @@ export type {
   IRequestData,
   IEventStream,
   IStreamEvent,
+  ITypedStreamEvent,
   IStreamEventsOptions,
   IStreamFrameBuffer,
   IStreamResponse,

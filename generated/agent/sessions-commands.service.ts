@@ -1,6 +1,6 @@
 /**
- * DownloadsService
- * User-extensible Downloads service
+ * SessionsCommandsService
+ * User-extensible SessionsCommands service
  * 
  * ✅ SAFE TO EDIT ✅
  * This file extends the generated base class and is yours to customize.
@@ -9,9 +9,9 @@
  * Generated at: 2026-10-10T08:37:08.000Z
  */
 
-import { DownloadsServiceBase } from './downloads.service.generated.js';
+import { SessionsCommandsServiceBase } from './sessions-commands.service.generated.js';
 
-export class DownloadsService extends DownloadsServiceBase {
+export class SessionsCommandsService extends SessionsCommandsServiceBase {
   // Add custom properties here
 
 }

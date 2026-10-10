@@ -6,7 +6,7 @@
  * This file extends the generated base class and is yours to customize.
  * Add your own methods, override base methods, or add custom logic here.
  * 
- * Generated at: 2026-10-07T18:32:17.000Z
+ * Generated at: 2026-10-10T08:37:08.000Z
  */
 
 import { RecordsServiceBase } from './records.service.generated.js';

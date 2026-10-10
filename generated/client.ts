@@ -535,8 +535,11 @@ function _effectiveBaseURL(baseURL: string): string {
 
 /**
  * Whether url is inside the API's credential scope: the same scheme and port
- * as the account base URL, its host or a subdomain of it (a realm host), and
- * a path under its base path. Account credentials go nowhere else.
+ * as the account base URL, its host or a realm host of it (exactly one label,
+ * a realm id, in front of it), and a path under its base path. Account
+ * credentials go nowhere else. Any subdomain used to count, and the kit hosts
+ * withContainer() derives from a base with no api. label
+ * (containers.<base host>) are subdomains of it.
  *
  * Both are resolved as the transport resolves them (_resolveTransportUrl), an
  * omitted base being the page's origin. When neither resolves (no page, and a
@@ -555,7 +558,10 @@ function _inApiCredentialScope(url: string, accountBaseURL: string): boolean {
   if (target.protocol !== base.protocol || target.port !== base.port) return false;
   const host = target.hostname.toLowerCase();
   const baseHost = base.hostname.toLowerCase();
-  if (host !== baseHost && !host.endsWith('.' + baseHost)) return false;
+  if (host !== baseHost
+    && !(host.endsWith('.' + baseHost) && REALM_ID_PATTERN.test(host.slice(0, -baseHost.length - 1)))) {
+    return false;
+  }
   const basePath = base.pathname.replace(/[/]+$/, '');
   return basePath === '' || target.pathname === basePath || target.pathname.startsWith(basePath + '/');
 }
@@ -1036,6 +1042,7 @@ export class HoodyClient {
     routes: exec.RoutesService;
     schedules: exec.SchedulesService;
     scripts: exec.ScriptsService;
+    sdkTypes: exec.SdkTypesService;
     sdks: exec.SdksService;
     store: exec.StoreService;
     templates: exec.TemplatesService;
@@ -1140,6 +1147,7 @@ export class HoodyClient {
 
   public readonly agent: agent.AgentService & {
     acp: agent.AcpService;
+    bots: agent.BotsService;
     changes: agent.ChangesService;
     completions: agent.CompletionsService;
     containers: agent.ContainersService;
@@ -1162,6 +1170,7 @@ export class HoodyClient {
     providers: agent.ProvidersService;
     realms: agent.RealmsService;
     sessions: agent.SessionsService & {
+      commands: agent.SessionsCommandsService;
       turns: agent.SessionsTurnsService;
     };
     settings: agent.SettingsService;
@@ -1285,7 +1294,7 @@ export class HoodyClient {
     // account host itself is moved to a realm host unless the generated
     // service that sent it chose the account host (see _RouteDecision):
     //  - a service call goes to the host its service chose whenever it ends
-    //    up anywhere inside the API (the account host or any subdomain of
+    //    up anywhere inside the API (the account host or a realm host of
     //    it): a middleware that strips its realm, or swaps it for a sibling
     //    realm, is overruled. This runs on EVERY client, with or without a
     //    realm of its own, so a per-call _realm holds on an account-wide
@@ -1300,7 +1309,7 @@ export class HoodyClient {
     const clientRealm = this.target === 'account' ? this.realmId : undefined;
     const realmHost = clientRealm ? _realmHostOf(splitBase.baseURL, clientRealm) : undefined;
     // API scope is _inApiCredentialScope's: the account origin's scheme and
-    // port, its host or any subdomain of it. A kit-target client (a kit URL
+    // port, its host or a realm host of it. A kit-target client (a kit URL
     // used directly) has no API scope and is never rerouted here.
     const apiBaseURL = splitBase.baseURL;
     const realmScope = (context: IHttpClientMiddlewareRequestContext, routeTag: object | undefined) => {
@@ -1340,9 +1349,9 @@ export class HoodyClient {
     // a service sent (_isCredentialAuthCall), is REFUSED unless it is still
     // inside the API's credential scope: withholding the header alone would
     // still post the credential in the body to wherever a middleware pointed
-    // the request. The scope is the account host and EVERY subdomain of it,
-    // not only realm labels: the deployment owns the whole *.api.hoody.com
-    // zone, and this check trusts it.
+    // the request. The scope is the account host and its realm hosts
+    // ({realmId}.<account host>), never any other subdomain: a kit host is
+    // one when the account host has no api. label.
     const accountBaseURL = splitBase.baseURL;
     const refreshCredential = (context: IHttpClientMiddlewareRequestContext, routeTag: object | undefined) => {
       const carried = context.middlewareContext as { hoodyAuth?: { refreshToken?: unknown } } | undefined;
@@ -1549,6 +1558,7 @@ export class HoodyClient {
       routes: new exec.RoutesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       schedules: new exec.SchedulesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       scripts: new exec.ScriptsService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
+      sdkTypes: new exec.SdkTypesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       sdks: new exec.SdksService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       store: new exec.StoreService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
       templates: new exec.TemplatesService(kitHttp('exec'), 'exec', this.urlTemplates?.['exec'] as any, this.getKitUrlTemplatePattern('exec')),
@@ -1653,6 +1663,7 @@ export class HoodyClient {
 
     this.agent = Object.assign(new agent.AgentService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
       acp: new agent.AcpService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
+      bots: new agent.BotsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       changes: new agent.ChangesService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       completions: new agent.CompletionsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       containers: new agent.ContainersService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
@@ -1675,6 +1686,7 @@ export class HoodyClient {
       providers: new agent.ProvidersService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       realms: new agent.RealmsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       sessions: Object.assign(new agent.SessionsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')), {
+        commands: new agent.SessionsCommandsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
         turns: new agent.SessionsTurnsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
       }),
       settings: new agent.SettingsService(kitHttp('agent'), 'agent', this.urlTemplates?.['agent'] as any, this.getKitUrlTemplatePattern('agent')),
@@ -1860,7 +1872,7 @@ export class HoodyClient {
   /**
    * Adopt a session that was issued outside login(): the result of
    * api.auth.twoFactor.verify(), api.auth.oauth.exchange() or
-   * oauthDeviceToken(), or tokens saved from an earlier run. Pass the response
+   * api.auth.device.poll(), or tokens saved from an earlier run. Pass the response
    * envelope or its data. The access token becomes this client's bearer and
    * the refresh token is kept for automatic refresh, shared with clients
    * derived from this one. Returns the access token.
@@ -2282,6 +2294,7 @@ export class HoodyClient {
       if (parentConfig.forceIPv4Cache) introspectionConfig.forceIPv4Cache = parentConfig.forceIPv4Cache;
       if (parentConfig.clientId) introspectionConfig.clientId = parentConfig.clientId;
       if (parentConfig.clientName) introspectionConfig.clientName = parentConfig.clientName;
+      if (parentConfig.kitStartingWaitMs !== undefined) introspectionConfig.kitStartingWaitMs = parentConfig.kitStartingWaitMs;  // keep 0 (off)
       const baseHttp = new HttpClient(introspectionConfig);
       const meResult: any = await baseHttp.get('/api/v1/auth/tokens/me', {});
       const realms = meResult?.data?.restrictions?.allowed_realm_ids;
@@ -2384,6 +2397,7 @@ export class HoodyClient {
     if (config.timeout !== undefined) newConfig.timeout = config.timeout;       // keep timeout:0
     if (config.retries !== undefined) newConfig.retries = config.retries;       // keep retries:0
     if (config.retryDelayMs !== undefined) newConfig.retryDelayMs = config.retryDelayMs;
+    if (config.kitStartingWaitMs !== undefined) newConfig.kitStartingWaitMs = config.kitStartingWaitMs;  // keep 0 (off)
     if (config.retryOnStatuses) newConfig.retryOnStatuses = config.retryOnStatuses;
     if (config.headers) newConfig.headers = config.headers;
     if (config.cache) newConfig.cache = config.cache;
@@ -2637,6 +2651,7 @@ export class HoodyClient {
     if (config.timeout !== undefined) newConfig.timeout = config.timeout;
     if (config.retries !== undefined) newConfig.retries = config.retries;
     if (config.retryDelayMs !== undefined) newConfig.retryDelayMs = config.retryDelayMs;
+    if (config.kitStartingWaitMs !== undefined) newConfig.kitStartingWaitMs = config.kitStartingWaitMs;  // keep 0 (off)
     if (config.retryOnStatuses) newConfig.retryOnStatuses = config.retryOnStatuses;
     if (config.headers) newConfig.headers = config.headers;
     if (config.cache) newConfig.cache = config.cache;
@@ -2993,7 +3008,9 @@ export class HoodyClient {
       return `${resolvedProtocol}-${port}`;
     }
 
-    if (!Number.isInteger(serviceIndex) || serviceIndex < 1) {
+    // terminal-0 is the terminal kit's "no terminal id" host, where an ephemeral session is made.
+    const minIndex = normalizedKit === 'terminal' ? 0 : 1;
+    if (!Number.isInteger(serviceIndex) || serviceIndex < minIndex) {
       throw new Error(`Invalid serviceIndex for kit URL: ${serviceIndex}`);
     }
 

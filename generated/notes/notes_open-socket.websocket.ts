@@ -188,12 +188,13 @@ export interface IWebSocketConnectionOptions {
    * other drop. Every received message counts as activity.
    *
    * Default: 75000 when the transport can send protocol pings (the `ws`
-   * package, used on Node whenever headers are sent); the client then
-   * pings on its own and counts pings and pongs too, so a quiet but
-   * healthy stream is never cut. A browser WebSocket, and Node's
-   * built-in one, hide pings: there the check is off unless you set this,
-   * and it should exceed the longest silence the server allows itself.
-   * 0 turns it off.
+   * package, which this client uses on Node); the client then pings on
+   * its own and counts pings and pongs too, so a quiet but healthy stream
+   * is never cut. A browser WebSocket (and Bun's or Deno's) hides pings:
+   * there the default is 75000 only on a channel with its own ping frame,
+   * which the client then sends, and off otherwise. Set it there only
+   * above the longest silence the server allows itself, such as its
+   * heartbeat interval. 0 turns it off.
    */
   idleTimeoutMs?: number;
   /**
@@ -545,6 +546,15 @@ const nodeBuiltinWebSocketUnsafe =
 ;
 
 export class NotesOpenSocketWebSocket implements INotesOpenSocketWebSocket {
+  /**
+   * The socket constructor every instance of this client uses, in place of
+   * its own choice (the `ws` package on Node, the global WebSocket
+   * elsewhere). It is called as `new ctor(url, protocols)`, like a browser
+   * WebSocket, so headers are not passed. A webSocketFactory in the options
+   * still wins. Unset (the default) restores the client's own choice.
+   */
+  static webSocketImpl: IRawWebSocketCtor | undefined = undefined;
+
   private ws: IRawWebSocketLike | null = null;
   private eventHandlers: Map<string, Set<Function>> = new Map();
   private options: IWebSocketConnectionOptions;
@@ -882,10 +892,11 @@ export class NotesOpenSocketWebSocket implements INotesOpenSocketWebSocket {
               terminate?: () => void;
             };
             const canProbe = typeof probe.ping === "function" && typeof probe.on === "function";
+            const appPing = false;
             const configuredIdle = this.options.idleTimeoutMs;
             const idleMs = typeof configuredIdle === "number"
               ? (Number.isFinite(configuredIdle) && configuredIdle > 0 ? configuredIdle : 0)
-              : (canProbe ? 75000 : 0);
+              : (canProbe || appPing ? 75000 : 0);
             if (idleMs > 0) {
               if (canProbe) {
                 // `ws` shows protocol pings and pongs; the client pings too, so
@@ -912,6 +923,9 @@ export class NotesOpenSocketWebSocket implements INotesOpenSocketWebSocket {
                 }
                 if (canProbe && socket.readyState === RAW_WEBSOCKET_OPEN) {
                   try { probe.ping!(); } catch { /* closing */ }
+                } else if (appPing && socket.readyState === RAW_WEBSOCKET_OPEN) {
+                  // The pong is a message, and every message counts as activity.
+                  try { socket.send('{"type":"ping"}'); } catch { /* closing */ }
                 }
               }, Math.max(50, Math.floor(idleMs / 3)));
               (timer as unknown as { unref?: () => void }).unref?.();
@@ -1184,6 +1198,8 @@ export class NotesOpenSocketWebSocket implements INotesOpenSocketWebSocket {
       }
       return socket;
     }
+    const impl = NotesOpenSocketWebSocket.webSocketImpl;
+    if (typeof impl === "function") return new impl(connectUrl, this.options.protocols);
 
     // Runtime detection: on Node >=22 `globalThis.WebSocket` exists but cannot
     // accept custom headers. When the caller supplied `options.headers`, prefer
@@ -1203,6 +1219,10 @@ export class NotesOpenSocketWebSocket implements INotesOpenSocketWebSocket {
     const runtime = (globalThis as { process?: { versions?: Record<string, string | undefined> } }).process;
     const runtimeVersions = runtime?.versions;
     const builtinUnsafe = nodeBuiltinWebSocketUnsafe(runtimeVersions);
+    // Node itself (not Bun or Deno) opens with `ws` even without headers: its
+    // built-in WebSocket hides protocol pings, so it could not tell a quiet
+    // stream from a dead link (see idleTimeoutMs).
+    const isNode = !!runtimeVersions?.node && !runtimeVersions.bun && !runtimeVersions.deno;
     const builtinRefused = (cause: unknown): Error => Object.assign(
       new Error(
         `The built-in WebSocket of Node ${runtimeVersions?.node ?? "unknown"} (${runtimeVersions?.undici ? "undici " + runtimeVersions.undici : "undici version not reported"}) `
@@ -1212,7 +1232,7 @@ export class NotesOpenSocketWebSocket implements INotesOpenSocketWebSocket {
       ),
       { cause },
     );
-    if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || !hasHeaders)) {
+    if (typeof globalCtor === "function" && !builtinUnsafe && (isBrowserRuntime || (!hasHeaders && !isNode))) {
       if (isBrowserRuntime && hasHeaders) {
         // A browser WebSocket cannot send headers, so kitAuth password, jwt
         // and identity headers never reach the upgrade. The proxy accepts two
